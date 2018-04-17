@@ -95,11 +95,7 @@ SCHEMA = {
 
     # Virus settings
     "restrict_source_types": get_default_boolean(True),
-    "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]},
-
-    # Analysis settings
-    "use_internal_control": get_default_boolean(False),
-    "internal_control_id": {"type": "string", "default": ""}
+    "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]}
 }
 
 TASK_SPECIFIC_LIMIT_KEYS = [
@@ -114,29 +110,6 @@ TASK_SPECIFIC_LIMIT_KEYS = [
     "build_index_proc",
     "build_index_mem"
 ]
-
-
-async def attach_virus_name(db, settings):
-    internal_control_id = settings.get("internal_control_id")
-
-    virus = None
-
-    if internal_control_id:
-        virus = await db.viruses.find_one(internal_control_id, ["name"])
-
-    if not virus:
-        settings.set("internal_control_id", "")
-        await settings.write()
-        return settings.data
-
-    to_send = dict(settings.data)
-
-    to_send["internal_control_id"] = {
-        "id": internal_control_id,
-        "name": virus["name"]
-    }
-
-    return to_send
 
 
 def check_resource_limits(proc, mem, settings_data):
