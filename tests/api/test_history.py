@@ -149,7 +149,7 @@ class TestRemove:
         Test that a valid request results in a reversion and a ``204`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await create_mock_history(remove)
 
@@ -195,7 +195,7 @@ class TestRemove:
         Test that a request for a non-existent ``change_id`` results in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         resp = await client.delete("/api/history/6116cba1.1")
 

@@ -205,7 +205,7 @@ class TestGet:
         Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"] = []
 
@@ -239,7 +239,7 @@ class TestGet:
         Test that an isolate with no sequences can be detected and be reported by the handler in a ``400`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert(test_virus)
 
@@ -279,7 +279,7 @@ class TestGet:
         Test that an empty sequence field can be detected and be reported by the handler in a ``400`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert(test_virus)
 
@@ -342,7 +342,7 @@ class TestGet:
         Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"].append({
             "id": "foobar",
@@ -452,7 +452,7 @@ class TestCreate:
         Test that a valid request results in the creation of a virus document and a ``201`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         async def get_fake_id(*args):
             return "test"
@@ -533,7 +533,7 @@ class TestCreate:
         Test that invalid input results in a ``422`` response with error data.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         data = {
             "virus_name": "Tobacco mosaic virus",
@@ -578,7 +578,7 @@ class TestCreate:
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(existing)
 
@@ -669,7 +669,7 @@ class TestEdit:
         history record.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["abbreviation"] = existing_abbreviation
 
@@ -767,7 +767,7 @@ class TestEdit:
         Test that invalid input results in a ``422`` response with error data.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         data = {
             "virus_name": "Tobacco mosaic virus",
@@ -788,7 +788,7 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_many([
             {
@@ -823,7 +823,7 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_many([
             {
@@ -859,7 +859,7 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_many([
             {
@@ -897,7 +897,7 @@ class TestEdit:
         ("Tobacco mosaic virus", "TMV", {"abbreviation": "TMV"})
     ])
     async def test_no_change(self, old_name, old_abbr, data, spawn_client):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one({
             "_id": "test",
@@ -926,7 +926,7 @@ class TestEdit:
         }
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         data = {
             "name": "Tobacco mosaic virus",
@@ -949,7 +949,7 @@ class TestRemove:
         Test that an existing virus can be removed.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["abbreviation"] = abbreviation
 
@@ -986,7 +986,7 @@ class TestRemove:
         Test that attempting to remove a non-existent virus results in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         resp = await client.delete("/api/viruses/6116cba1")
 
@@ -1097,7 +1097,7 @@ class TestAddIsolate:
         process.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         client.app["settings"]["restrict_source_types"] = True
         client.app["settings"]["allowed_source_types"] = ["isolate"]
@@ -1176,7 +1176,7 @@ class TestAddIsolate:
         Test that a non-default isolate can be properly added
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         client.app["settings"]["restrict_source_types"] = True
         client.app["settings"]["allowed_source_types"] = ["isolate"]
@@ -1256,7 +1256,7 @@ class TestAddIsolate:
         in the POST input.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         client.app["settings"]["restrict_source_types"] = True
         client.app["settings"]["allowed_source_types"] = ["isolate"]
@@ -1326,7 +1326,7 @@ class TestAddIsolate:
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         client.app["settings"]["restrict_source_types"] = True
         client.app["settings"]["allowed_source_types"] = ["isolate"]
@@ -1393,7 +1393,7 @@ class TestAddIsolate:
         default values.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1444,7 +1444,7 @@ class TestAddIsolate:
         )
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         data = {
             "source_name": "Beta",
@@ -1470,7 +1470,7 @@ class TestEditIsolate:
         Test that a change to the isolate name results in the correct changes, history, and response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"].append({
             "id": "test",
@@ -1532,7 +1532,7 @@ class TestEditIsolate:
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1580,7 +1580,7 @@ class TestEditIsolate:
         Test that invalid input results in a ``422`` response and a list of errors.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1605,7 +1605,7 @@ class TestEditIsolate:
         Test that a request for a non-existent virus or isolate results in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1626,7 +1626,7 @@ class TestSetAsDefault:
         Test changing the default isolate results in the correct changes, history, and response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"].append({
             "id": "test",
@@ -1698,7 +1698,7 @@ class TestSetAsDefault:
         Specifically no increment in version and no dispatch.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"].append({
             "id": "test",
@@ -1756,7 +1756,7 @@ class TestSetAsDefault:
         Test that ``404 Not found`` is returned if the virus or isolate does not exist
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1773,7 +1773,7 @@ class TestRemoveIsolate:
         database.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
         await client.db.sequences.insert_one(test_sequence)
@@ -1853,7 +1853,7 @@ class TestRemoveIsolate:
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         test_virus["isolates"].append({
             "default": False,
@@ -1962,7 +1962,7 @@ class TestRemoveIsolate:
         Test that removal fails with ``404`` if the virus does not exist.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -2040,7 +2040,7 @@ class TestGetSequence:
 class TestCreateSequence:
 
     async def test(self, spawn_client, test_virus, test_add_history, test_dispatch):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -2131,7 +2131,7 @@ class TestCreateSequence:
         )
 
     async def test_exists(self, spawn_client, test_virus, test_sequence, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert(test_virus)
         await client.db.sequences.insert(test_sequence)
@@ -2149,7 +2149,7 @@ class TestCreateSequence:
         Test that invalid input results in a ``422`` response with error information.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         resp = await client.post("/api/viruses/6116cba1/isolates/cab8b360/sequences", {
             "id": 2016,
@@ -2173,7 +2173,7 @@ class TestCreateSequence:
         Test that non-existent virus or isolate ids in the URL result in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         data = {
             "id": "FOOBAR",
@@ -2192,7 +2192,7 @@ class TestCreateSequence:
 class TestEditSequence:
 
     async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert(test_virus)
         await client.db.sequences.insert(test_sequence)
@@ -2276,7 +2276,7 @@ class TestEditSequence:
         )
 
     async def test_empty_input(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872", {})
 
@@ -2285,7 +2285,7 @@ class TestEditSequence:
         assert await resp_is.bad_request(resp, "Empty Input")
 
     async def test_invalid_input(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872", {
             "plant": "Grapevine",
@@ -2302,7 +2302,7 @@ class TestEditSequence:
 
     @pytest.mark.parametrize("foobar", ["virus_id", "isolate_id", "sequence_id"])
     async def test_not_found(self, foobar, spawn_client, test_virus, test_sequence, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert(test_virus)
         await client.db.sequences.insert(test_sequence)
@@ -2325,7 +2325,7 @@ class TestEditSequence:
 class TestRemoveSequence:
 
     async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.viruses.insert_one(test_virus)
         await client.db.sequences.insert_one(test_sequence)
@@ -2369,7 +2369,7 @@ class TestRemoveSequence:
     async def test_virus_not_found(self, virus_id, isolate_id, sequence_id, test_virus, test_sequence,
                                    spawn_client, resp_is):
 
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True)
 
         await client.db.sequences.insert_one(test_virus)
         await client.db.viruses.insert_one(test_sequence)

@@ -13,7 +13,7 @@ class TestConnection:
         """
         assert test_ws_connection.user_id == "test"
         assert test_ws_connection.groups == ["admin", "test"]
-        assert test_ws_connection.permissions == ["modify_virus"]
+        assert test_ws_connection.permissions == ["create_sample"]
 
     async def test_send(self, test_ws_connection):
         await test_ws_connection.send({

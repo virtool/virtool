@@ -63,15 +63,10 @@ async def test_edit(error, spawn_client, resp_is):
             "permissions": {
                 "cancel_job": False,
                 "create_sample": False,
-                "manage_users": False,
                 "modify_hmm": False,
-                "modify_settings": False,
                 "modify_subtraction": False,
-                "modify_virus": False,
-                "build_index": False,
                 "remove_file": False,
                 "remove_job": False,
-                "remove_virus": False,
                 "upload_file": False
             },
             "groups": [],
@@ -241,10 +236,7 @@ class TestCreateAPIKey:
             "manage_users": True,
             "modify_hmm": True,
             "modify_settings": True,
-            "modify_virus": True,
-            "build_index": True,
             "remove_job": True,
-            "remove_virus": True
         }
     ])
     async def test(self, req_permissions, mocker, spawn_client, static_time, test_motor):
@@ -363,11 +355,8 @@ class TestUpdateAPIKey:
                 "modify_hmm": False,
                 "modify_host": False,
                 "modify_options": False,
-                "modify_virus": False,
-                "build_index": False,
                 "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
+                "remove_job": False
             }
         }
 

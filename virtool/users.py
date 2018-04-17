@@ -8,10 +8,8 @@ PERMISSIONS = [
     "create_sample",
     "modify_hmm",
     "modify_subtraction",
-    "modify_virus",
     "remove_file",
     "remove_job",
-    "remove_virus",
     "upload_file"
 ]
 

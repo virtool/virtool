@@ -147,7 +147,7 @@ class TestUpdatePermissions:
         Test that a valid request results in permission changes.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True)
 
         await client.db.groups.insert_one({
             "_id": "test",
@@ -155,12 +155,12 @@ class TestUpdatePermissions:
         })
 
         resp = await client.patch("/api/groups/test", data={
-            "modify_virus": True
+            "create_sample": True
         })
 
         assert resp.status == 200
 
-        no_permissions["modify_virus"] = True
+        no_permissions["create_sample"] = True
 
         assert await resp.json() == {
             "id": "test",
@@ -200,7 +200,7 @@ class TestUpdatePermissions:
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
         resp = await client.patch("/api/groups/test", data={
-            "modify_virus": True
+            "create_sample": True
         })
 
         assert await resp_is.not_found(resp)

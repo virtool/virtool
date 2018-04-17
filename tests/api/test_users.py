@@ -198,7 +198,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
     if error != "group_dne":
         groups_to_insert.append({
             "_id": "tech",
-            "permissions": dict(no_permissions, modify_virus=True)
+            "permissions": dict(no_permissions)
         })
 
     await client.db.groups.insert_many(groups_to_insert)
@@ -259,13 +259,13 @@ async def test_add_group(error, spawn_client, resp_is, create_user, no_permissio
 
     groups_to_insert = [{
         "_id": "test",
-        "permissions": dict(no_permissions, build_index=True)
+        "permissions": dict(no_permissions, create_sample=True)
     }]
 
     if error != "group_dne":
         groups_to_insert.append({
             "_id": "tech",
-            "permissions": dict(no_permissions, modify_virus=True)
+            "permissions": dict(no_permissions, create_subtraction=True)
         })
 
     await client.db.groups.insert_many(groups_to_insert)
@@ -314,18 +314,18 @@ async def test_remove_group(user_exists, spawn_client, create_user, resp_is, no_
     await client.db.groups.insert_many([
         {
             "_id": "tech",
-            "permissions": dict(no_permissions, modify_virus=True)
+            "permissions": dict(no_permissions, create_sample=True)
         },
         {
             "_id": "test",
-            "permissions": dict(no_permissions, build_index=True)
+            "permissions": dict(no_permissions, create_subtraction=True)
         }
     ])
 
     bob = create_user(
         "bob",
         groups=["tech", "test"],
-        permissions=["modify_virus", "build_index"]
+        permissions=["create_sample", "create_subtraction"]
     )
 
     if user_exists:
@@ -340,7 +340,7 @@ async def test_remove_group(user_exists, spawn_client, create_user, resp_is, no_
         assert await client.db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
             "_id": "bob",
             "groups": ["tech", "test"],
-            "permissions": dict(no_permissions, modify_virus=True, build_index=True)
+            "permissions": dict(no_permissions, create_sample=True, create_subtraction=True)
         }
 
     resp = await client.delete("/api/users/bob/groups/tech")
