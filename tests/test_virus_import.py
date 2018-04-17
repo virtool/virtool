@@ -39,7 +39,7 @@ def iresine_sequence():
     }
 
 
-class TestVerifyKindList:
+class TestValidateKinds:
 
     def test(self, test_kind_list):
         """
@@ -264,7 +264,7 @@ class TestImportFile:
     async def test(self, errors, dups, mocker, test_motor, test_dispatch, import_data):
 
         m = mocker.patch(
-            "virtool.virus_import.validate_kinds",
+            "virtool.refs.validate_kinds",
             return_value=("Duplicates" if dups else None, "Errors" if errors else None)
         )
 
