@@ -23,7 +23,7 @@ UNITE_PATH = os.path.join(TEST_NUVS_PATH, "unite.json")
 @pytest.fixture
 async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch):
     # Add index files.
-    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "viruses", "index"))
+    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "kinds", "index"))
 
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
@@ -63,18 +63,18 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch):
     return job
 
 
-async def test_map_viruses(mock_job):
+async def test_map_kinds(mock_job):
     os.mkdir(mock_job.analysis_path)
 
     mock_job.read_paths = [
         os.path.join(mock_job.sample_path, "reads_1.fq")
     ]
 
-    await mock_job.map_viruses()
+    await mock_job.map_kinds()
 
     assert filecmp.cmp(
-        os.path.join(mock_job.analysis_path, "unmapped_viruses.fq"),
-        os.path.join(TEST_NUVS_PATH, "unmapped_viruses.fq")
+        os.path.join(mock_job.analysis_path, "unmapped_kinds.fq"),
+        os.path.join(TEST_NUVS_PATH, "unmapped_kinds.fq")
     )
 
 
@@ -84,8 +84,8 @@ async def test_map_subtraction(mock_job):
     mock_job.subtraction_path = os.path.join(TEST_FILES_PATH, "index", "host")
 
     shutil.copy(
-        os.path.join(TEST_NUVS_PATH, "unmapped_viruses.fq"),
-        os.path.join(mock_job.analysis_path, "unmapped_viruses.fq")
+        os.path.join(TEST_NUVS_PATH, "unmapped_kinds.fq"),
+        os.path.join(mock_job.analysis_path, "unmapped_kinds.fq")
     )
 
     await mock_job.map_subtraction()

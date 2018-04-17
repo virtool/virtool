@@ -10,8 +10,7 @@ from virtool.api.utils import conflict, json_response, protected, validation
 
 
 async def get(req):
-    amended = await virtool.app_settings.attach_virus_name(req.app["db"], req.app["settings"])
-    return json_response(amended)
+    return json_response(req.app["settings"])
 
 
 @validation(virtool.app_settings.SCHEMA)

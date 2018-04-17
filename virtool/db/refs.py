@@ -1,7 +1,7 @@
 import pymongo
 from pymongo import ReturnDocument
 
-import virtool.db
+import virtool.db.history
 import virtool.db.kinds
 import virtool.db.utils
 import virtool.errors
@@ -31,9 +31,9 @@ async def clone(db, name, user_id, source_id):
 
     created_at = virtool.utils.timestamp()
 
-    async for source_virus in db.targets.find({"_id": source["_id"]}):
-        source_virus.update({
-            "_id": await virtool.db.utils.get_new_id("targets"),
+    async for source_kind in db.kinds.find({"_id": source["_id"]}):
+        source_kind.update({
+            "_id": await virtool.db.utils.get_new_id("kinds"),
             "version": 0,
             "created_at": created_at,
             "ref": {
@@ -49,7 +49,7 @@ async def create(db, name, organism, user_id=None, cloned_from=None, created_at=
     if await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.db.utils.get_new_id(db.viruses)
+    ref_id = ref_id or await virtool.db.utils.get_new_id(db.kinds)
 
     user = None
 
@@ -112,7 +112,7 @@ async def create_original(db):
 
         users.update({
             "modify": user["administrator"],
-            "modify_viruses": permissions.get("modify_virus", False)
+            "modify_kinds": permissions.get("modify_virus", False)
         })
 
     return await create(db, "Original", "Virus", created_at=created_at, public=True, ref_id="original", ready=ready)
@@ -125,7 +125,7 @@ async def get_last_build(db, ref_id):
 
 async def import_data(db, dispatch, data, user_id):
     """
-    Import a previously exported Virtool virus reference.
+    Import a previously exported Virtool kind reference.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -133,14 +133,14 @@ async def import_data(db, dispatch, data, user_id):
     :param dispatch: the dispatcher's dispatch function
     :type dispatch: func
 
-    :param data: the virus data to import
+    :param data: the kind data to import
     :type data: dict
 
     :param user_id: the requesting ``user_id``
     :type user_id: str
 
     """
-    viruses = data["data"]
+    kinds = data["data"]
 
     await db.status.replace_one({"_id": "virus_import"}, {"_id": "virus_import"}, upsert=True)
 
@@ -155,7 +155,7 @@ async def import_data(db, dispatch, data, user_id):
 
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    duplicates, errors = verify_virus_list(viruses)
+    duplicates, errors = verify_kind_list(kinds)
 
     if duplicates or errors:
         document = await db.status.find_one_and_update({"_id": "virus_import"}, {
@@ -170,8 +170,8 @@ async def import_data(db, dispatch, data, user_id):
     isolate_counts = list()
     sequence_counts = list()
 
-    for virus in viruses:
-        isolates = virus["isolates"]
+    for kind in kinds:
+        isolates = kind["isolates"]
         isolate_counts.append(len(isolates))
 
         for isolate in isolates:
@@ -181,7 +181,7 @@ async def import_data(db, dispatch, data, user_id):
         "$set": {
             "inserted": 0,
             "totals": {
-                "viruses": len(viruses),
+                "kinds": len(kinds),
                 "isolates": sum(isolate_counts),
                 "sequences": sum(sequence_counts)
             }
@@ -190,11 +190,11 @@ async def import_data(db, dispatch, data, user_id):
 
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    _virus_buffer = list()
+    _kind_buffer = list()
     _sequence_buffer = list()
 
-    for virus in viruses:
-        document, sequences = virtool.kinds.split_species(virus)
+    for kind in kinds:
+        document, sequences = virtool.kinds.split(kind)
 
         document.update({
             "lower_name": document["name"].lower(),
@@ -204,13 +204,13 @@ async def import_data(db, dispatch, data, user_id):
             "version": 0
         })
 
-        _virus_buffer.append(document)
+        _kind_buffer.append(document)
 
         for sequence in sequences:
             _sequence_buffer.append(sequence)
 
-        if len(_virus_buffer) == 50:
-            await db.viruses.insert_many(_virus_buffer)
+        if len(_kind_buffer) == 50:
+            await db.kinds.insert_many(_kind_buffer)
 
             document = await db.status.find_one_and_update({"_id": "virus_import"}, {
                 "$inc": {
@@ -220,20 +220,20 @@ async def import_data(db, dispatch, data, user_id):
 
             await dispatch("status", "update", virtool.utils.base_processor(document))
 
-            _virus_buffer = list()
+            _kind_buffer = list()
 
         if len(_sequence_buffer) == 50:
             await db.sequences.insert_many(_sequence_buffer)
             _sequence_buffer = list()
 
-    virus_buffer_length = len(_virus_buffer)
+    kind_buffer_length = len(_kind_buffer)
 
-    if virus_buffer_length:
-        await db.viruses.insert_many(_virus_buffer)
+    if kind_buffer_length:
+        await db.kinds.insert_many(_kind_buffer)
 
         document = await db.status.find_one_and_update({"_id": "virus_import"}, {
             "$inc": {
-                "inserted": virus_buffer_length,
+                "inserted": kind_buffer_length,
             }
         }, return_document=ReturnDocument.AFTER)
 
@@ -242,11 +242,11 @@ async def import_data(db, dispatch, data, user_id):
     if len(_sequence_buffer):
         await db.sequences.insert_many(_sequence_buffer)
 
-    for virus in viruses:
-        # Join the virus document into a complete virus record. This will be used for recording history.
-        joined = await virtool.db.kinds.join(db, virus["_id"])
+    for kind in kinds:
+        # Join the kind document into a complete kind record. This will be used for recording history.
+        joined = await virtool.db.kinds.join(db, kind["_id"])
 
-        # Build a ``description`` field for the virus creation change document.
+        # Build a ``description`` field for the kind creation change document.
         description = "Created {}".format(joined["name"])
 
         abbreviation = document.get("abbreviation", None)
@@ -267,88 +267,88 @@ async def import_data(db, dispatch, data, user_id):
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
 
-async def check_import_abbreviation(db, virus_document, lower_name=None):
+async def check_import_abbreviation(db, kind_document, lower_name=None):
     """
-    Check if the abbreviation for a virus document to be imported already exists in the database. If the abbreviation
-    exists, set the ``abbreviation`` field in the virus document to an empty string and return warning text to
+    Check if the abbreviation for a kind document to be imported already exists in the database. If the abbreviation
+    exists, set the ``abbreviation`` field in the kind document to an empty string and return warning text to
     send to the client.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param virus_document: the virus document that is being imported
-    :type virus_document: dict
+    :param kind_document: the kind document that is being imported
+    :type kind_document: dict
 
-    :param lower_name: the name of the virus coerced to lowercase
+    :param lower_name: the name of the kind coerced to lowercase
     :type lower_name: str
 
     """
-    lower_name = lower_name or virus_document["name"].lower()
+    lower_name = lower_name or kind_document["name"].lower()
 
     # Check if abbreviation exists already.
-    virus_with_abbreviation = None
+    kind_with_abbreviation = None
 
     # Don't count empty strings as duplicate abbreviations!
-    if virus_document["abbreviation"]:
-        virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus_document["abbreviation"]})
+    if kind_document["abbreviation"]:
+        kind_with_abbreviation = await db.kinds.find_one({"abbreviation": kind_document["abbreviation"]})
 
-    if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
-        # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
-        virus_document["abbreviation"] = ""
+    if kind_with_abbreviation and kind_with_abbreviation["lower_name"] != lower_name:
+        # Remove the imported kind's abbreviation because it is already assigned to an existing kind.
+        kind_document["abbreviation"] = ""
 
         # Record a message for the user.
         return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-            virus_with_abbreviation["abbreviation"], virus_with_abbreviation["name"], virus_document["name"]
+            kind_with_abbreviation["abbreviation"], kind_with_abbreviation["name"], kind_document["name"]
         )
 
     return None
 
 
-async def insert_from_import(db, virus_document, user_id):
+async def insert_from_import(db, kind_document, user_id):
     """
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param virus_document: the virus document to add
-    :type virus_document: dict
+    :param kind_document: the kind document to add
+    :type kind_document: dict
 
     :param user_id: the requesting ``user_id``
     :type user_id: str
 
     """
-    # Modified is set to ``False`` so the user does not have to verify every single imported virus.
-    virus_document.update({
+    # Modified is set to ``False`` so the user does not have to verify every single imported kind.
+    kind_document.update({
         "version": 0,
         "last_indexed_version": None,
-        "lower_name": virus_document["name"].lower(),
+        "lower_name": kind_document["name"].lower(),
         "imported": True,
         "verified": False
     })
 
     # Perform the actual database insert operation, retaining the response.
-    await db.viruses.insert_one(virus_document)
+    await db.kinds.insert_one(kind_document)
 
-    issues = await virtool.db.kinds.verify(db, virus_document["_id"], virus_document)
+    issues = await virtool.db.kinds.verify(db, kind_document["_id"], kind_document)
 
     if issues is None:
-        await db.viruses.update_one({"_id": virus_document["_id"]}, {
+        await db.kinds.update_one({"_id": kind_document["_id"]}, {
             "$set": {
                 "verified": True
             }
         })
 
-        virus_document["verified"] = True
+        kind_document["verified"] = True
 
-    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.kinds.LIST_PROJECTION})
+    to_dispatch = virtool.utils.base_processor({key: kind_document[key] for key in virtool.kinds.LIST_PROJECTION})
 
-    joined = await virtool.db.kinds.join(db, virus_document["_id"])
+    joined = await virtool.db.kinds.join(db, kind_document["_id"])
 
     change = await virtool.db.history.add(
         db,
         "create",
         None,
         joined,
-        "Created {}".format(virus_document["name"]),
+        "Created {}".format(kind_document["name"]),
         user_id
     )
 
@@ -359,31 +359,31 @@ async def insert_from_import(db, virus_document, user_id):
     return to_dispatch, change_to_dispatch
 
 
-async def delete_for_import(db, virus_id, user_id):
+async def delete_for_import(db, kind_id, user_id):
     """
-    Delete a virus document and its sequences as part of an import process.
+    Delete a kind document and its sequences as part of an import process.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param virus_id: the ``virus_id`` to remove
-    :type virus_id: str
+    :param kind_id: the ``kind_id`` to remove
+    :type kind_id: str
 
     :param user_id: the requesting ``user_id``
     :type user_id: str
 
     """
-    joined = await virtool.db.kinds.join(db, virus_id)
+    joined = await virtool.db.kinds.join(db, kind_id)
 
     if not joined:
-        raise ValueError("Could not find virus_id {}".format(virus_id))
+        raise ValueError("Could not find kind_id {}".format(kind_id))
 
     # Perform database operations.
     await db.sequences.delete_many({"isolate_id": {"$in": virtool.kinds.extract_isolate_ids(joined)}})
 
-    await db.viruses.delete_one({"_id": virus_id})
+    await db.kinds.delete_one({"_id": kind_id})
 
-    # Put an entry in the history collection saying the virus was removed.
+    # Put an entry in the history collection saying the kind was removed.
     change = await virtool.db.history.add(
         db,
         "remove",
@@ -397,4 +397,4 @@ async def delete_for_import(db, virus_id, user_id):
 
     change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
-    return virus_id, change_to_dispatch
+    return kind_id, change_to_dispatch

@@ -19,8 +19,8 @@ async def test_all(get, missing, spawn_client):
             "source_name": "Foo"
         })
 
-    if missing != "virus":
-        await client.db.viruses.insert_one({
+    if missing != "kind":
+        await client.db.kinds.insert_one({
             "_id": "foobar",
             "name": "Foobar virus",
             "isolates": isolates
@@ -28,7 +28,7 @@ async def test_all(get, missing, spawn_client):
 
     sequences = [{
         "_id": "test_1",
-        "virus_id": "foobar",
+        "kind_id": "foobar",
         "isolate_id": "baz",
         "sequence": "ATAGGGACATA"
     }]
@@ -36,14 +36,14 @@ async def test_all(get, missing, spawn_client):
     if missing != "sequence":
         sequences.append({
             "_id": "test_2",
-            "virus_id": "foobar",
+            "kind_id": "foobar",
             "isolate_id": "foo",
             "sequence": "ATAGGGACATA"
         })
 
     await client.db.sequences.insert_many(sequences)
 
-    url = "/download/viruses/foobar"
+    url = "/download/kinds/foobar"
 
     if get == "isolate":
         url += "/isolates/foo"

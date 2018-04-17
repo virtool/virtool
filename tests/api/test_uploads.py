@@ -6,7 +6,7 @@ import sys
 class TestUpload:
 
     @pytest.mark.parametrize("path,file_type", [
-        ("/upload/viruses", "viruses"),
+        ("/upload/kinds", "kinds"),
         ("/upload/reads", "reads"),
         ("/upload/hmm/profiles", "profiles"),
         ("/upload/hmm/annotations", "annotations"),

@@ -10,7 +10,7 @@ TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
 @pytest.fixture("session")
 def import_data_file():
-    with gzip.open(os.path.join(TEST_FILES_PATH, "viruses.json.gz"), "rt") as f:
+    with gzip.open(os.path.join(TEST_FILES_PATH, "kinds.json.gz"), "rt") as f:
         data = json.load(f)
 
     return data

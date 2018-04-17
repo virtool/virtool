@@ -28,9 +28,9 @@ async def get(req):
                 "doc": "https://docs.virtool.ca/web-api/analyses.html"
             },
 
-            "viruses": {
-                "url": "/api/viruses",
-                "doc": "https://docs.virtool.ca/web-api/viruses.html"
+            "kinds": {
+                "url": "/api/kinds",
+                "doc": "https://docs.virtool.ca/web-api/kinds.html"
             }
         }
     })

@@ -93,7 +93,7 @@ SCHEMA = {
     "cert_path": {"type": "string", "default": ""},
     "key_path": {"type": "string", "default": ""},
 
-    # Virus settings
+    # kind settings
     "restrict_source_types": get_default_boolean(True),
     "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]}
 }

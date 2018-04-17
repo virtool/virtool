@@ -309,7 +309,7 @@ async def save_and_reload(req):
 
     subdirs = [
         "files",
-        "reference/viruses",
+        "reference/kinds",
         "reference/subtraction",
         "samples",
         "hmm",

@@ -7,7 +7,7 @@ import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found, protected
 
 FILE_TYPES = {
-    "/upload/viruses": "viruses",
+    "/upload/kinds": "kinds",
     "/upload/reads": "reads",
     "/upload/hmm/profiles": "profiles",
     "/upload/hmm/annotations": "annotations",

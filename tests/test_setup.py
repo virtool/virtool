@@ -41,7 +41,7 @@ class TestUnavailable:
     async def test(self, spawn_client):
         client = await spawn_client(setup_mode=True)
 
-        resp = await client.get("/api/viruses")
+        resp = await client.get("/api/kinds")
 
         assert resp.status == 503
 
@@ -53,7 +53,7 @@ class TestUnavailable:
         assert resp.headers["Location"] == "/setup"
 
 
-@pytest.mark.parametrize("url", ["/viruses", "/hosts", "/foobar"])
+@pytest.mark.parametrize("url", ["/kinds", "/hosts", "/foobar"])
 async def test_setup_redirect(url, spawn_client):
     client = await spawn_client(setup_mode=True)
 
@@ -399,7 +399,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     sub_dirs = [
         "files",
-        "reference/viruses",
+        "reference/kinds",
         "reference/subtraction",
         "samples",
         "hmm",

@@ -44,7 +44,7 @@ class TestFind:
                     "user": {
                         "id": "test"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "6116cba1",
                         "name": "Prunus virus F",
                         "version": 1
@@ -62,7 +62,7 @@ class TestFind:
                     "user": {
                         "id": "test"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "6116cba1",
                         "name": "Prunus virus F",
                         "version": 1
@@ -80,7 +80,7 @@ class TestFind:
                     "user": {
                         "id": "test"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "6116cba1",
                         "name": "Prunus virus F",
                         "version": 1
@@ -122,7 +122,7 @@ class TestGet:
             "user": {
                 "id": "test"
             },
-            "virus": {
+            "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 1
@@ -174,7 +174,7 @@ class TestRemove:
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "virus_id": "6116cba1",
+                            "kind_id": "6116cba1",
                             "segment": None
                          }
                     ],

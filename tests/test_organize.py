@@ -229,7 +229,7 @@ async def test_organize_sequences(test_motor, test_random_alphanumeric):
 
 
 async def test_organize_kinds(test_motor):
-    await test_motor.viruses.insert_many([
+    await test_motor.kinds.insert_many([
         {
             "_id": 1
         },
@@ -251,7 +251,7 @@ async def test_organize_kinds(test_motor):
         }
     ]
 
-    assert "viruses" not in await test_motor.collection_names()
+    assert "kinds" not in await test_motor.collection_names()
 
 
 @pytest.mark.parametrize("has_update", [True, False])

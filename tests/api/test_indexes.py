@@ -104,7 +104,7 @@ class TestGet:
         await client.db.history.insert_many([
             {
                 "_id": "zxbbvngc.0",
-                "virus": {
+                "kind": {
                     "version": 0,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -119,7 +119,7 @@ class TestGet:
             },
             {
                 "_id": "zxbbvngc.1",
-                "virus": {
+                "kind": {
                     "version": 1,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -135,7 +135,7 @@ class TestGet:
             },
             {
                 "_id": "zxbbvngc.2",
-                "virus": {
+                "kind": {
                     "version": 2,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -151,7 +151,7 @@ class TestGet:
             },
             {
                 "_id": "kjs8sa99.3",
-                "virus": {
+                "kind": {
                     "version": 3,
                     "name": "Foo",
                     "id": "kjs8sa99"
@@ -190,7 +190,7 @@ class TestGet:
             "id": "foobar",
             "version": 0,
             "change_count": 4,
-            "viruses": [
+            "kinds": [
                 {
                     "id": "kjs8sa99",
                     "name": "Foo",
@@ -351,12 +351,12 @@ class TestCreate:
 
     async def test_unverified(self, spawn_client, resp_is):
         """
-        Test that the request fails with ``400`` when there are unverified viruses included in the build.
+        Test that the request fails with ``400`` when there are unverified kinds included in the build.
 
         """
         client = await spawn_client(authorize=True, permissions=["build_index"])
 
-        await client.db.viruses.insert_many([
+        await client.db.kinds.insert_many([
             {
                 "_id": "foo",
                 "verified": False
@@ -369,7 +369,7 @@ class TestCreate:
 
         resp = await client.post("/api/indexes", {})
 
-        assert await resp_is.bad_request(resp, message="There are unverified viruses")
+        assert await resp_is.bad_request(resp, message="There are unverified kinds")
 
     async def test_no_unbuilt(self, spawn_client, resp_is):
         """
@@ -405,7 +405,7 @@ class TestFindHistory:
         await client.db.history.insert_many([
             {
                 "_id": "zxbbvngc.0",
-                "virus": {
+                "kind": {
                     "version": 0,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -420,7 +420,7 @@ class TestFindHistory:
             },
             {
                 "_id": "zxbbvngc.1",
-                "virus": {
+                "kind": {
                     "version": 1,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -436,7 +436,7 @@ class TestFindHistory:
             },
             {
                 "_id": "zxbbvngc.2",
-                "virus": {
+                "kind": {
                     "version": 2,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -452,7 +452,7 @@ class TestFindHistory:
             },
             {
                 "_id": "kjs8sa99.3",
-                "virus": {
+                "kind": {
                     "version": 3,
                     "name": "Foo",
                     "id": "kjs8sa99"
@@ -502,7 +502,7 @@ class TestFindHistory:
                     "user": {
                         "id": "fred"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "kjs8sa99",
                         "name": "Foo",
                         "version": 3
@@ -517,7 +517,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 2
@@ -532,7 +532,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 1
@@ -547,7 +547,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "virus": {
+                    "kind": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 0

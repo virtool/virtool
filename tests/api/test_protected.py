@@ -45,15 +45,15 @@ parameters = [
     ("delete", ("/api/users/foobar/groups/baz",)),
     ("delete", ("/api/users/foobar",)),
 
-    # Viruses
-    ("post", ("/api/viruses", {})),
-    ("patch", ("/api/viruses/foobar", {})),
-    ("delete", ("/api/viruses/foobar",)),
-    ("post", ("/api/viruses/foobar/isolates", {})),
-    ("patch", ("/api/viruses/foobar/isolates/test", {})),
-    ("delete", ("/api/viruses/foobar/isolates/test",)),
-    ("post", ("/api/viruses/foobar/isolates/test/sequences", {})),
-    ("patch", ("/api/viruses/foobar/isolates/test/sequences/foobar", {})),
+    # kinds
+    ("post", ("/api/kinds", {})),
+    ("patch", ("/api/kinds/foobar", {})),
+    ("delete", ("/api/kinds/foobar",)),
+    ("post", ("/api/kinds/foobar/isolates", {})),
+    ("patch", ("/api/kinds/foobar/isolates/test", {})),
+    ("delete", ("/api/kinds/foobar/isolates/test",)),
+    ("post", ("/api/kinds/foobar/isolates/test/sequences", {})),
+    ("patch", ("/api/kinds/foobar/isolates/test/sequences/foobar", {})),
 
 ]
 
