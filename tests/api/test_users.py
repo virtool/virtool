@@ -192,7 +192,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     groups_to_insert = [{
         "_id": "test",
-        "permissions": dict(no_permissions, rebuild_index=True)
+        "permissions": dict(no_permissions, build_index=True)
     }]
 
     if error != "group_dne":
@@ -259,7 +259,7 @@ async def test_add_group(error, spawn_client, resp_is, create_user, no_permissio
 
     groups_to_insert = [{
         "_id": "test",
-        "permissions": dict(no_permissions, rebuild_index=True)
+        "permissions": dict(no_permissions, build_index=True)
     }]
 
     if error != "group_dne":
@@ -318,14 +318,14 @@ async def test_remove_group(user_exists, spawn_client, create_user, resp_is, no_
         },
         {
             "_id": "test",
-            "permissions": dict(no_permissions, rebuild_index=True)
+            "permissions": dict(no_permissions, build_index=True)
         }
     ])
 
     bob = create_user(
         "bob",
         groups=["tech", "test"],
-        permissions=["modify_virus", "rebuild_index"]
+        permissions=["modify_virus", "build_index"]
     )
 
     if user_exists:
@@ -340,7 +340,7 @@ async def test_remove_group(user_exists, spawn_client, create_user, resp_is, no_
         assert await client.db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
             "_id": "bob",
             "groups": ["tech", "test"],
-            "permissions": dict(no_permissions, modify_virus=True, rebuild_index=True)
+            "permissions": dict(no_permissions, modify_virus=True, build_index=True)
         }
 
     resp = await client.delete("/api/users/bob/groups/tech")

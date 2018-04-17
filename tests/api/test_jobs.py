@@ -16,7 +16,7 @@ async def test_get(status, spawn_client, test_job, resp_is):
         assert await resp_is.not_found(resp)
     else:
         assert await resp.json() == {
-            "task": "rebuild_index",
+            "task": "build_index",
             "mem": 16,
             "args": {
                 "name": None,

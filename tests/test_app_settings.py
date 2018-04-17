@@ -46,8 +46,8 @@ def test_check_resource_limits(proc, mem, error_message, mocker):
         "create_sample_mem": 4,
         "create_subtraction_proc": 2,
         "create_subtraction_mem": 4,
-        "rebuild_index_proc": 2,
-        "rebuild_index_mem": 4
+        "build_index_proc": 2,
+        "build_index_mem": 4
     }
 
     mocker.patch("virtool.job_resources.get", return_value=return_value)

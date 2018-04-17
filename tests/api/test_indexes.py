@@ -232,7 +232,7 @@ class TestGet:
 class TestCreate:
 
     async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric):
-        client = await spawn_client(authorize=True, permissions=["rebuild_index"], job_manager=True)
+        client = await spawn_client(authorize=True, permissions=["build_index"], job_manager=True)
 
         m = mocker.stub(name="new")
 
@@ -319,7 +319,7 @@ class TestCreate:
 
         # Check that ``job_manager.new`` is called with the expected args and kwargs.
         assert m.call_args[0] == (
-            "rebuild_index",
+            "build_index",
             {
                 "index_id": expected_id,
                 "index_version": 1,
@@ -338,7 +338,7 @@ class TestCreate:
         Test that the request fails with ``409`` when there is already an index build in progress.
 
         """
-        client = await spawn_client(authorize=True, permissions=["rebuild_index"])
+        client = await spawn_client(authorize=True, permissions=["build_index"])
 
         await client.db.indexes.insert_one({
             "_id": "foobar",
@@ -354,7 +354,7 @@ class TestCreate:
         Test that the request fails with ``400`` when there are unverified viruses included in the build.
 
         """
-        client = await spawn_client(authorize=True, permissions=["rebuild_index"])
+        client = await spawn_client(authorize=True, permissions=["build_index"])
 
         await client.db.viruses.insert_many([
             {
@@ -377,7 +377,7 @@ class TestCreate:
         index.
 
         """
-        client = await spawn_client(authorize=True, permissions=["rebuild_index"])
+        client = await spawn_client(authorize=True, permissions=["build_index"])
 
         await client.db.history.insert_one({
             "_id": "foobar",

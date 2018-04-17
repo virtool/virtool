@@ -145,7 +145,7 @@ async def test_organize_groups(test_motor):
             "modify_settings": False,
             "modify_subtraction": False,
             "modify_virus": False,
-            "rebuild_index": False,
+            "build_index": False,
             "remove_file": False,
             "remove_job": False,
             "remove_virus": False,

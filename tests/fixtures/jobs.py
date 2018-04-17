@@ -48,7 +48,7 @@ class MockSettings:
             "db_name": "test",
             "db_host": "localhost",
             "db_port": 27017,
-            "rebuild_index_inst": 2,
+            "build_index_inst": 2,
             "proc": 4,
             "mem": 8
         }
@@ -99,7 +99,7 @@ def mock_job_class(monkeypatch, mocker):
     mock_class = mocker.Mock(name="RebuildIndex", return_value=mock_obj)
 
     monkeypatch.setattr("virtool.job_classes.TASK_CLASSES", {
-        "rebuild_index": mock_class
+        "build_index": mock_class
     })
 
     return mock_class, mock_obj
@@ -114,7 +114,7 @@ def test_job(static_time):
         },
         "proc": 10,
         "mem": 16,
-        "task": "rebuild_index",
+        "task": "build_index",
         "args": {
             "name": None,
             "username": "igboyes",

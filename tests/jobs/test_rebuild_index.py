@@ -25,7 +25,7 @@ def test_rebuild_job(mocker, tmpdir, loop, test_motor, test_dispatch):
         test_dispatch,
         mocker.stub("capture_exception"),
         "foobar",
-        "rebuild_index",
+        "build_index",
         dict(index_id="foobar"),
         1,
         4

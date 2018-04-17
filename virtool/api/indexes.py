@@ -120,7 +120,7 @@ async def create(req):
     }
 
     # Start the job.
-    await req.app["job_manager"].new("rebuild_index", task_args, user_id, job_id=job_id)
+    await req.app["job_manager"].new("build_index", task_args, user_id, job_id=job_id)
 
     headers = {
         "Location": "/api/indexes/" + index_id

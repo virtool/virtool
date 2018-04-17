@@ -68,7 +68,7 @@ async def test_edit(error, spawn_client, resp_is):
                 "modify_settings": False,
                 "modify_subtraction": False,
                 "modify_virus": False,
-                "rebuild_index": False,
+                "build_index": False,
                 "remove_file": False,
                 "remove_job": False,
                 "remove_virus": False,
@@ -233,7 +233,7 @@ class TestCreateAPIKey:
         },
         {
             "modify_subtraction": True,
-            "rebuild_index": True
+            "build_index": True
         },
         {
             "cancel_job": True,
@@ -242,7 +242,7 @@ class TestCreateAPIKey:
             "modify_hmm": True,
             "modify_settings": True,
             "modify_virus": True,
-            "rebuild_index": True,
+            "build_index": True,
             "remove_job": True,
             "remove_virus": True
         }
@@ -364,7 +364,7 @@ class TestUpdateAPIKey:
                 "modify_host": False,
                 "modify_options": False,
                 "modify_virus": False,
-                "rebuild_index": False,
+                "build_index": False,
                 "remove_host": False,
                 "remove_job": False,
                 "remove_virus": False

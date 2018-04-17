@@ -29,7 +29,7 @@ def test_processor(test_db, test_job, static_time):
         "progress": 1.0,
         "stage": "import_results",
         "state": "complete",
-        "task": "rebuild_index",
+        "task": "build_index",
         "user": {
             "id": "igboyes"
         }
