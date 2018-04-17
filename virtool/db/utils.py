@@ -79,8 +79,26 @@ async def id_exists(collection, _id):
     :param _id: the _id to check for
     :type _id: str
 
-    :return: ``bool`` indicating if the user exists
+    :return: ``bool`` indicating if the id exists
     :rtype: bool
 
     """
     return bool(await collection.count({"_id": _id}))
+
+
+async def ids_exist(collection, id_list):
+    """
+    Check if all of the ids passed in ``id_list`` exist in the collection.
+
+    :param collection: the Mongo collection to check ``id_list`` against
+    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    :param id_list: the ids to check for
+    :type id_list: str
+
+    :return: ``bool`` indicating if the ids exist
+    :rtype: bool
+
+    """
+    return await collection.count({"_id": {"$in": data["files"]}}) != len(id_list)
+
