@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import virtool.errors
 import virtool.jobs.create_subtraction
-import virtool.subtraction
+import virtool.subtractions
 
 
 @pytest.fixture

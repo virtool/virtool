@@ -1,3 +1,4 @@
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,3 +29,12 @@ def calculate_fasta_gc(path):
     nucleotides_sum = sum(nucleotides.values())
 
     return {k: round(nucleotides[k] / nucleotides_sum, 3) for k in nucleotides}, count
+
+
+def calculate_index_path(settings, subtraction_id):
+    return os.path.join(
+        settings.get("data_path"),
+        "reference",
+        "subtraction",
+        subtraction_id.replace(" ", "_").lower()
+    )

@@ -1,7 +1,7 @@
 import os
 import pytest
 
-import virtool.subtraction
+import virtool.subtractions
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def mock_fasta(tmpdir, write_mock_fasta):
 
 
 async def test_calculate_gc(mock_fasta):
-    assert virtool.subtraction.calculate_fasta_gc(mock_fasta) == ({
+    assert virtool.subtractions.calculate_fasta_gc(mock_fasta) == ({
         "a": 0.149,
         "t": 0.345,
         "g": 0.253,

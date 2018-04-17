@@ -7,7 +7,7 @@ import pymongo.errors
 import virtool.db.subtractions
 import virtool.db.utils
 import virtool.samples
-import virtool.subtraction
+import virtool.subtractions
 import virtool.utils
 from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate, \
     protected, validation
@@ -56,8 +56,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
-    document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
+    document["linked_samples"] = await virtool.db.subtractions.get_linked_samples(db, subtraction_id)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -70,7 +69,7 @@ async def get(req):
 })
 async def create(req):
     """
-    Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
+    Add a new subtraction. Starts an :class:`.CreateSubtraction` job process.
 
     """
     db = req.app["db"]
@@ -109,10 +108,7 @@ async def create(req):
         }
     }
 
-    try:
-        await db.subtraction.insert_one(document)
-    except pymongo.errors.DuplicateKeyError:
-        return conflict("Subtraction id already exists")
+    await db.subtraction.insert_one(document)
 
     task_args = {
         "subtraction_id": subtraction_id,
@@ -165,21 +161,16 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    if await db.samples.count({"subtraction.id": subtraction_id}, ["name"]):
+    if await db.samples.count({"subtraction.id": subtraction_id}):
         return conflict("Has linked samples")
-
-    reference_path = os.path.join(
-        req.app["settings"].get("data_path"),
-        "reference",
-        "subtraction",
-        subtraction_id.replace(" ", "_").lower()
-    )
 
     delete_result = await db.subtraction.delete_one({"_id": subtraction_id})
 
     if delete_result.deleted_count == 0:
         return not_found()
 
-    await req.loop.run_in_executor(None, shutil.rmtree, reference_path, True)
+    index_path = virtool.subtractions.calculate_index_path(req["settings"], subtraction_id)
+
+    await req.loop.run_in_executor(None, shutil.rmtree, index_path, True)
 
     return no_content()

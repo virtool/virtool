@@ -5,7 +5,7 @@ from aiohttp import web
 
 import virtool.utils
 import virtool.http.login
-from virtool.api import root, jobs, samples, kinds, history, hmm, subtraction, settings, account, groups, users,\
+from virtool.api import root, jobs, samples, kinds, history, hmm, subtractions, settings, account, groups, users,\
     genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
 
 
@@ -192,11 +192,11 @@ def setup_hmm_routes(app):
 
 
 def setup_subtraction_routes(app):
-    app.router.add_get("/api/subtraction", subtraction.find)
-    app.router.add_get("/api/subtraction/{subtraction_id}", subtraction.get)
-    app.router.add_post("/api/subtraction", subtraction.create)
-    app.router.add_patch("/api/subtraction/{subtraction_id}", subtraction.edit)
-    app.router.add_delete("/api/subtraction/{subtraction_id}", subtraction.remove)
+    app.router.add_get("/api/subtraction", subtractions.find)
+    app.router.add_get("/api/subtraction/{subtraction_id}", subtractions.get)
+    app.router.add_post("/api/subtraction", subtractions.create)
+    app.router.add_patch("/api/subtraction/{subtraction_id}", subtractions.edit)
+    app.router.add_delete("/api/subtraction/{subtraction_id}", subtractions.remove)
 
 
 def setup_settings_routes(app):

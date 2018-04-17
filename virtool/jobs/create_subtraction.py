@@ -4,7 +4,7 @@ import pymongo
 
 import virtool.jobs.job
 import virtool.utils
-import virtool.subtraction
+import virtool.subtractions
 import virtool.db.subtractions
 
 
@@ -57,7 +57,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         length distribution, and sequence count.
 
         """
-        gc, count = await self.run_in_executor(virtool.subtraction.calculate_fasta_gc, self.fasta_path)
+        gc, count = await self.run_in_executor(virtool.subtractions.calculate_fasta_gc, self.fasta_path)
 
         document = await self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
             "$set": {
