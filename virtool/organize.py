@@ -69,7 +69,20 @@ async def organize_groups(db):
 
 
 async def organize_history(db):
-    await add_original_ref(db.history)
+    document_ids = await db.history.distinct("_id", {"$exists": {"ref": False}})
+
+    document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
+
+    await db.history.update_many({"_id": {"$in": document_ids}}, {
+        "$set": {
+            "diff.ref": {
+                "id": "original"
+            },
+            "ref": {
+                "id": "original"
+            }
+        }
+    })
 
 
 async def organize_indexes(db):
