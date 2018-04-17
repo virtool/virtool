@@ -97,8 +97,9 @@ async def test_detect_create_close_and_delete(called, patched_test_manager_insta
 
 
 @pytest.mark.parametrize("has_ext", [True, False])
-async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test_random_alphanumeric,
-                                  test_manager_instance):
+async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test_manager_instance):
+
+    mocker.patch("virtool.db.utils.get_new_id", make_mocked_coro("foobar"))
 
     mocker.patch("virtool.files.has_read_extension", return_value=has_ext)
 
@@ -113,7 +114,7 @@ async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test
     if has_ext:
         # Check if a new file document was created if the file had a valid extension.
         assert await test_motor.files.find_one() == {
-            "_id": "9pfsom1b-test.fq",
+            "_id": "foobar-test.fq",
             "name": "test.fq",
             "type": "reads",
             "user": None,
@@ -128,7 +129,7 @@ async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test
         }
 
     # Make sure the watched file was moved to the files directory ONLY if it had a valid extension.
-    assert os.listdir(test_manager_instance.files_path) == (["9pfsom1b-test.fq"] if has_ext else [])
+    assert os.listdir(test_manager_instance.files_path) == (["foobar-test.fq"] if has_ext else [])
 
     # Make sure watched file was removed, whether it had a valid extension or not.
     assert os.listdir(test_manager_instance.watch_path) == []

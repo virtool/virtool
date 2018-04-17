@@ -1,4 +1,4 @@
-from virtool.utils import random_alphanumeric
+import virtool.utils
 
 
 def apply_projection(document, projection):
@@ -48,11 +48,11 @@ async def get_new_id(collection, excluded=None):
     :rtype: str
 
     """
-    excluded = set(excluded) or set()
+    excluded = excluded or list()
 
-    excluded += set(await collection.distinct("_id"))
+    excluded += await collection.distinct("_id")
 
-    return random_alphanumeric(length=8, excluded=list(excluded))
+    return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
 
 
 async def get_one_field(collection, field, query):
@@ -100,5 +100,5 @@ async def ids_exist(collection, id_list):
     :rtype: bool
 
     """
-    return await collection.count({"_id": {"$in": data["files"]}}) != len(id_list)
+    return await collection.count({"_id": {"$in": id_list}}) != len(id_list)
 

@@ -95,6 +95,9 @@ def test_merged_kind():
                 "source_type": "isolate"
             }
         ],
+        "ref": {
+            "id": "abc12345"
+        },
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "verified": False,
