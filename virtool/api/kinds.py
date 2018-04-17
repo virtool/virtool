@@ -90,7 +90,6 @@ async def get(req):
     return json_response(complete)
 
 
-@protected("modify_virus")
 @validation({
     "name": {"type": "string", "required": True, "min": 1},
     "abbreviation": {"type": "string", "min": 1},
@@ -164,7 +163,6 @@ async def create(req):
     return json_response(complete, status=201, headers=headers)
 
 
-@protected("modify_virus")
 @validation({
     "name": {"type": "string"},
     "abbreviation": {"type": "string"},
@@ -291,7 +289,6 @@ async def edit(req):
     return json_response(await virtool.db.kinds.join_and_format(db, virus_id, joined=new, issues=issues))
 
 
-@protected("modify_virus")
 async def remove(req):
     """
     Remove a virus document and its associated sequence documents.
@@ -377,7 +374,6 @@ async def get_isolate(req):
     return json_response(isolate)
 
 
-@protected("modify_virus")
 @validation({
     "source_type": {"type": "string", "default": ""},
     "source_name": {"type": "string", "default": ""},
@@ -487,7 +483,6 @@ async def add_isolate(req):
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
-@protected("modify_virus")
 async def edit_isolate(req):
     """
     Edit an existing isolate.
@@ -571,7 +566,6 @@ async def edit_isolate(req):
             return json_response(isolate, status=200)
 
 
-@protected("modify_virus")
 async def set_as_default(req):
     """
     Set an isolate as default.
@@ -654,7 +648,6 @@ async def set_as_default(req):
             return json_response(isolate)
 
 
-@protected("modify_virus")
 async def remove_isolate(req):
     """
     Remove an isolate and its sequences from a virus.
@@ -772,7 +765,6 @@ async def get_sequence(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_virus")
 @validation({
     "id": {"type": "string", "minlength": 1, "required": True},
     "definition": {"type": "string", "minlength": 1, "required": True},
@@ -859,7 +851,6 @@ async def create_sequence(req):
     return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
 
 
-@protected("modify_virus")
 @validation({
     "host": {"type": "string"},
     "definition": {"type": "string"},
@@ -1002,7 +993,6 @@ async def list_history(req):
     return json_response(documents)
 
 
-@protected("modify_virus")
 async def get_import(req):
     db = req.app["db"]
 
@@ -1054,7 +1044,6 @@ async def get_import(req):
     })
 
 
-@protected("modify_virus")
 async def import_viruses(req):
     db, data = await unpack_request(req)
 

@@ -4,6 +4,70 @@ import virtool.utils
 import virtool.kinds
 
 
+async def check_name_and_abbreviation(db, name=None, abbreviation=None):
+    """
+    Check is a kind name and abbreviation are already in use in the database. Returns a message if the ``name`` or
+    ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param name: a kind name
+    :type name: str
+
+    :param abbreviation: a kind abbreviation
+    :type abbreviation: str
+
+    """
+    name_count = 0
+
+    if name:
+        name_count = await db.kinds.count({"lower_name": name.lower()})
+
+    abbr_count = 0
+
+    if abbreviation:
+        abbr_count = await db.kinds.find({"abbreviation": abbreviation}).count()
+
+    unique_name = not name or not name_count
+    unique_abbreviation = not abbreviation or not abbr_count
+
+    if not unique_name and not unique_abbreviation:
+        return "Name and abbreviation already exist"
+
+    if not unique_name:
+        return "Name already exists"
+
+    if not unique_abbreviation:
+        return "Abbreviation already exists"
+
+    return False
+
+
+async def get_new_isolate_id(db, excluded=None):
+    """
+    Generates a unique isolate id.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param excluded: a list or set of strings that may not be returned.
+    :type excluded: list
+
+    :return: a new unique isolate id
+    :rtype: Coroutine[str]
+
+    """
+    used_isolate_ids = await db.kinds.distinct("isolates.id")
+
+    print(used_isolate_ids)
+
+    if excluded:
+        used_isolate_ids += excluded
+
+    return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
+
+
 async def join(db, kind_id, document=None):
     """
     Join the kind associated with the supplied ``kind_id`` with its sequences. If a kind entry is also passed,
@@ -89,46 +153,6 @@ async def join_and_format(db, kind_id, joined=None, issues=False):
     return joined
 
 
-async def check_name_and_abbreviation(db, name=None, abbreviation=None):
-    """
-    Check is a kind name and abbreviation are already in use in the database. Returns a message if the ``name`` or
-    ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param name: a kind name
-    :type name: str
-
-    :param abbreviation: a kind abbreviation
-    :type abbreviation: str
-
-    """
-    name_count = 0
-
-    if name:
-        name_count = await db.kinds.count({"lower_name": name.lower()})
-
-    abbr_count = 0
-
-    if abbreviation:
-        abbr_count = await db.kinds.find({"abbreviation": abbreviation}).count()
-
-    unique_name = not name or not name_count
-    unique_abbreviation = not abbreviation or not abbr_count
-
-    if not unique_name and not unique_abbreviation:
-        return "Name and abbreviation already exist"
-
-    if not unique_name:
-        return "Name already exists"
-
-    if not unique_abbreviation:
-        return "Abbreviation already exists"
-
-    return False
-
-
 async def verify(db, kind_id, joined=None):
     """
     Verifies that the associated kind is ready to be included in an index rebuild. Returns verification errors if
@@ -144,7 +168,7 @@ async def verify(db, kind_id, joined=None):
     return virtool.kinds.validate_kind(joined)
 
 
-async def update_last_indexed_version(db, kind_ids, version):
+async def update_last_indexed_version(db, id_list, version):
     """
     Called from a index rebuild job. Updates the last indexed version and _version fields
     of all kind involved in the rebuild when the build completes.
@@ -152,8 +176,8 @@ async def update_last_indexed_version(db, kind_ids, version):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param kind_ids: a list the ``kind_id`` of each kind to update
-    :type kind_ids: list
+    :param id_list: a list the ``kind_id`` of each kind to update
+    :type id_list: list
 
     :param version: the value to set for the kind ``version`` and ``last_indexed_version`` fields
     :type: int
@@ -162,7 +186,7 @@ async def update_last_indexed_version(db, kind_ids, version):
     :rtype: :class:`~pymongo.results.UpdateResult`
 
     """
-    result = await db.kinds.update_many({"_id": {"$in": kind_ids}}, {
+    result = await db.kinds.update_many({"_id": {"$in": id_list}}, {
         "$set": {
             "last_indexed_version": version,
             "version": version
@@ -171,23 +195,3 @@ async def update_last_indexed_version(db, kind_ids, version):
 
     return result
 
-
-async def get_new_isolate_id(db, excluded=None):
-    """
-    Generates a unique isolate id.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param excluded: a list or set of strings that may not be returned.
-    :type excluded: Union[list, set]
-
-    :return: a new unique isolate id
-    :rtype: Coroutine[str]
-
-    """
-    used_isolate_ids = excluded or list()
-
-    used_isolate_ids += await db.kinds.distinct("isolates.id")
-
-    return virtool.utils.random_alphanumeric(8, excluded=set(used_isolate_ids))
