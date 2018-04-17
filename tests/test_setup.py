@@ -336,6 +336,15 @@ class TestClear:
 async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_time):
     client = await spawn_client(setup_mode=True)
 
+    connection = motor.motor_asyncio.AsyncIOMotorClient(
+        io_loop=client.app.loop,
+        host="localhost",
+        port=27017,
+        serverSelectionTimeoutMS=1500
+    )
+
+    await connection.drop_database("foobar")
+
     m_reload = mocker.patch("virtool.utils.reload")
     m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", new=make_mocked_coro())
 
@@ -366,16 +375,9 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     await client.get("/setup/save")
 
-    connection = motor.motor_asyncio.AsyncIOMotorClient(
-        io_loop=client.app.loop,
-        host="localhost",
-        port=27017,
-        serverSelectionTimeoutMS=1500
-    )
-
     assert await connection.foobar.users.find_one() == {
         "_id": "fred",
-        "groups": ["administrator"],
+        "administrator": True,
         "invalidate_sessions": False,
         "password": "hashed",
         "last_password_change": static_time,
@@ -395,7 +397,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     assert os.path.isdir(str(data))
     assert os.path.isdir(str(watch))
 
-    subdirs = [
+    sub_dirs = [
         "files",
         "reference/viruses",
         "reference/subtraction",
@@ -404,7 +406,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
         "logs/jobs"
     ]
 
-    for sub in subdirs:
+    for sub in sub_dirs:
         assert os.path.isdir(os.path.join(str(data), sub))
 
     assert m_reload.called
