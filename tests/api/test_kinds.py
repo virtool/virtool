@@ -200,7 +200,7 @@ class TestGet:
             "issues": None
         }
 
-    async def test_empty_virus(self, spawn_client, test_kind):
+    async def test_empty_kind(self, spawn_client, test_kind):
         """
         Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
 
@@ -229,7 +229,7 @@ class TestGet:
             "issues": {
                 "empty_isolate": False,
                 "empty_sequence": False,
-                "empty_virus": True,
+                "empty_kind": True,
                 "isolate_inconsistency": False
             }
         }
@@ -269,7 +269,7 @@ class TestGet:
             "issues": {
                 "empty_isolate": ["cab8b360"],
                 "empty_sequence": False,
-                "empty_virus": False,
+                "empty_kind": False,
                 "isolate_inconsistency": False
             }
         }
@@ -332,7 +332,7 @@ class TestGet:
                         "segment": None
                     }
                 ],
-                "empty_virus": False,
+                "empty_kind": False,
                 "isolate_inconsistency": False
             }
         }
@@ -418,7 +418,7 @@ class TestGet:
             "issues": {
                 "empty_isolate": False,
                 "empty_sequence": False,
-                "empty_virus": False,
+                "empty_kind": False,
                 "isolate_inconsistency": True
             }
         }
@@ -478,7 +478,7 @@ class TestCreate:
             "id": "test",
             "schema": [],
             "issues": {
-                "empty_virus": True,
+                "empty_kind": True,
                 "empty_isolate": False,
                 "empty_sequence": False,
                 "isolate_inconsistency": False
@@ -699,7 +699,7 @@ class TestEdit:
             "version": 1,
             "schema": [],
             "issues": {
-                "empty_virus": False,
+                "empty_kind": False,
                 "empty_sequence": False,
                 "isolate_inconsistency": False,
                 "empty_isolate": ["cab8b360"]
@@ -918,7 +918,7 @@ class TestEdit:
             "most_recent_change": None,
             "name": "Tobacco mosaic virus",
             "issues": {
-                "empty_virus": True,
+                "empty_kind": True,
                 "empty_sequence": False,
                 "isolate_inconsistency": False,
                 "empty_isolate": False

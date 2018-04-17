@@ -46,7 +46,7 @@ class TestVerifyKindList:
         Test that a valid virus list returns no duplicates or errors.
 
         """
-        result = virtool.refs.verify_kinds(test_kind_list)
+        result = virtool.refs.validate_kinds(test_kind_list)
         assert result == (None, None)
 
     @pytest.mark.parametrize("multiple", [False, True])
@@ -56,7 +56,7 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[3]["_id"] = "067jz213"
 
-        duplicates, error = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
 
         assert error is None
 
@@ -77,7 +77,7 @@ class TestVerifyKindList:
         test_kind_list[0]["abbreviation"] = ""
         test_kind_list[1]["abbreviation"] = ""
 
-        result = virtool.refs.verify_kinds(test_kind_list)
+        result = virtool.refs.validate_kinds(test_kind_list)
 
         assert result == (None, None)
 
@@ -93,7 +93,7 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[3]["abbreviation"] = "EXV"
 
-        duplicates, error = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
 
         assert error is None
 
@@ -120,7 +120,7 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[3]["name"] = "Example virus"
 
-        duplicates, error = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
 
         assert error is None
 
@@ -149,7 +149,7 @@ class TestVerifyKindList:
                 dict(test_kind_list[1]["isolates"][0]["sequences"][0])
             )
 
-        duplicates, error = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
 
         assert error is None
 
@@ -190,14 +190,14 @@ class TestVerifyKindList:
 
         extra_isolate["sequences"].append(extra_sequence)
 
-        duplicates, errors = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
 
         assert duplicates is None
 
         assert errors["prunus virus f"]["isolate_inconsistency"]
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_virus(self, multiple, test_kind_list):
+    def test_empty_kind(self, multiple, test_kind_list):
         """
         Test that kinds with no isolates are detected. Use parametrization to test if single and multiple occurrences
         are detected.
@@ -208,14 +208,14 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[1]["isolates"] = list()
 
-        duplicates, errors = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
 
         assert duplicates is None
 
-        assert errors["prunus virus f"]["empty_virus"]
+        assert errors["prunus virus f"]["empty_kind"]
 
         if multiple:
-            assert errors["test virus"]["empty_virus"] is True
+            assert errors["test virus"]["empty_kind"] is True
 
     @pytest.mark.parametrize("multiple", [False, True])
     def test_empty_isolate(self, multiple, test_kind_list):
@@ -229,7 +229,7 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[1]["isolates"][0]["sequences"] = list()
 
-        _, errors = virtool.refs.verify_kinds(test_kind_list)
+        _, errors = virtool.refs.validate_kinds(test_kind_list)
 
         assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
 
@@ -248,7 +248,7 @@ class TestVerifyKindList:
         if multiple:
             test_kind_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        duplicates, errors = virtool.refs.verify_kinds(test_kind_list)
+        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
 
         assert duplicates is None
 
@@ -264,7 +264,7 @@ class TestImportFile:
     async def test(self, errors, dups, mocker, test_motor, test_dispatch, import_data):
 
         m = mocker.patch(
-            "virtool.virus_import.verify_kinds",
+            "virtool.virus_import.validate_kinds",
             return_value=("Duplicates" if dups else None, "Errors" if errors else None)
         )
 

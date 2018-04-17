@@ -8,7 +8,7 @@ import virtool.jobs.build_index
 
 @pytest.fixture
 def test_rebuild_job(mocker, tmpdir, loop, test_motor, test_dispatch):
-    tmpdir.mkdir("reference").mkdir("species")
+    tmpdir.mkdir("reference").mkdir("kinds")
     tmpdir.mkdir("logs").mkdir("jobs")
 
     executor = ProcessPoolExecutor()
@@ -37,22 +37,22 @@ def test_rebuild_job(mocker, tmpdir, loop, test_motor, test_dispatch):
 async def test_mk_index_dir(tmpdir, test_rebuild_job):
     await test_rebuild_job.mk_index_dir()
 
-    assert os.listdir(os.path.join(str(tmpdir), "reference", "species")) == [
+    assert os.listdir(os.path.join(str(tmpdir), "reference", "kinds")) == [
         "foobar"
     ]
 
 
-@pytest.mark.parametrize("species_version", [1, 2])
-async def test_write_fasta(species_version, test_motor, mocker, test_rebuild_job):
+@pytest.mark.parametrize("kind_version", [1, 2])
+async def test_write_fasta(kind_version, test_motor, mocker, test_rebuild_job):
     m = mocker.stub(name="join")
     m = mocker.stub(name="patch_to_version")
 
-    await test_motor.species.insert_one({
+    await test_motor.kinds.insert_one({
         "_id": "foobar",
-        "version": species_version
+        "version": kind_version
     })
 
-    mock_species = {
+    mock_kind = {
         "isolates": [
             {
                 "default": True,
@@ -85,16 +85,16 @@ async def test_write_fasta(species_version, test_motor, mocker, test_rebuild_job
 
     async def join(*args):
         m(*args)
-        return mock_species
+        return mock_kind
 
     async def patch_to_version(*args):
         m(*args)
-        return None, mock_species, None
+        return None, mock_kind, None
 
     mocker.patch("virtool.db.history.patch_to_version", patch_to_version)
-    mocker.patch("virtool.db.species.join", join)
+    mocker.patch("virtool.db.kinds.join", join)
 
-    test_rebuild_job.task_args["species_manifest"] = {
+    test_rebuild_job.task_args["kind_manifest"] = {
         "foobar": 2
     }
 
@@ -163,7 +163,7 @@ async def test_replace_old(in_use, mocker, tmpdir, test_motor, test_rebuild_job)
 
     assert m.call_args[0][0:2] == (
         virtool.jobs.build_index.remove_unused_index_files,
-        os.path.join(str(tmpdir), "reference", "species")
+        os.path.join(str(tmpdir), "reference", "kinds")
     )
 
     assert set(m.call_args[0][2]) == expected

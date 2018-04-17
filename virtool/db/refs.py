@@ -155,7 +155,7 @@ async def import_data(db, dispatch, data, user_id):
 
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    duplicates, errors = verify_kind_list(kinds)
+    duplicates, errors = virtool.refs.validate_kinds(kinds)
 
     if duplicates or errors:
         document = await db.status.find_one_and_update({"_id": "virus_import"}, {

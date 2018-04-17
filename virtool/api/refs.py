@@ -3,6 +3,14 @@ import virtool.utils
 from virtool.api.utils import json_response
 
 
+async def find(req):
+    pass
+
+
+async def get(req):
+    pass
+
+
 async def get_unbuilt_changes(req):
     """
     Get a JSON document describing the unbuilt changes that could be used to create a new index.

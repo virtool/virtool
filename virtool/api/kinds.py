@@ -1026,7 +1026,7 @@ async def get_import(req):
 
     duplicates, errors = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.verify_kinds,
+        virtool.refs.validate_kinds,
         data["data"]
     )
 
