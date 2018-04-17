@@ -114,7 +114,7 @@ class TestRecalculateAlgorithmTags:
             }
         ])
 
-        m = mocker.patch("virtool.sample.calculate_algorithm_tags", return_value={
+        m = mocker.patch("virtool.samples.calculate_algorithm_tags", return_value={
             "pathoscope": True,
             "nuvs": "ip"
         })
