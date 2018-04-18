@@ -155,7 +155,7 @@ def setup_hmm_routes(app):
 def setup_indexes_routes(app):
     app.router.add_get("/api/indexes", indexes.find)
     app.router.add_get("/api/indexes/{index_id_or_version}", indexes.get)
-    app.router.add_post("/api/indexes", indexes.create)
+    app.router.add_post("/api/refs/{ref_id}/indexes", indexes.create)
     app.router.add_get("/api/indexes/{index_id_or_version}/history", indexes.find_history)
 
 
