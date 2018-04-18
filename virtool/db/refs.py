@@ -74,7 +74,7 @@ async def create(db, name, organism, user_id=None, cloned_from=None, created_at=
     users = users or list()
 
     if not any(user["id"] == user_id for user in users):
-        users.append(get_owner_user(user_id))
+        users.append(virtool.refs.get_owner_user(user_id))
 
     document = {
         "_id": ref_id,
