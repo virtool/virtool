@@ -4,7 +4,7 @@ import json
 import virtool.kinds
 
 
-async def get_owner_user(user_id):
+def get_owner_user(user_id):
     return {
         "id": user_id,
         "build": True,
