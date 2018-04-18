@@ -44,18 +44,40 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.parametrize("error", [False, True])
-async def test_edit(error, spawn_client, resp_is):
+@pytest.mark.parametrize("error", [
+    None,
+    "email_error",
+    "password_length_error",
+    "missing_old_password",
+    "credentials_error"
+])
+async def test_edit(error, spawn_client, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
-    email = "dev-at-virtool.ca" if error else "dev@virtool.ca"
+    client.app["settings"]["minimum_password_length"] = 8
 
-    resp = await client.patch("/api/account", {
-        "email": email
-    })
+    data = {
+        "email": "dev-at-virtool.ca" if error == "email_error" else "dev@virtool.ca",
+        "password": "foo" if error == "password_length_error" else "foo_bar_1"
+    }
 
-    if error:
+    if error != "missing_old_password":
+        data["old_password"] = "not_right" if error == "credentials_error" else "hello_world"
+
+    resp = await client.patch("/api/account", data)
+
+    if error == "email_error":
         await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+
+    elif error == "password_length_error":
+        await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+
+    elif error == "missing_old_password":
+        await resp_is.invalid_input(resp, {"password": ["field 'old_password' is required"]})
+
+    elif error == "credentials_error":
+        await resp_is.bad_request(resp, "Invalid credentials")
+
     else:
         assert resp.status == 200
 
@@ -93,13 +115,23 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
     data = {
-        "show_ids": False,
-        "foo_bar": True
+        "show_ids": False
     }
+
+    if invalid_input:
+        data = {
+            "foo_bar": True,
+            "show_ids": "yes"
+        }
 
     resp = await client.patch("/api/account/settings", data)
 
     if invalid_input:
+        assert await resp_is.invalid_input(resp, {
+            "show_ids": ["must be of boolean type"],
+            "foo_bar": ["unknown field"]
+        })
+    else:
         assert resp.status == 200
 
         assert await resp.json() == {
@@ -108,79 +140,6 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
             "show_versions": True,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         }
-    else:
-        assert await resp_is.invalid_input(resp, {
-            "show_ids": ["must be of boolean type"],
-            "foo_bar": ["unknown field"]
-        })
-
-
-class TestChangePassword:
-
-    async def test(self, spawn_client):
-        """
-        Test that requests to ``PUT /account/password`` return 400 for unauthorized sessions.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar_1"})
-
-        assert resp.status == 200
-
-        document = await client.db.users.find_one({"_id": "test"}, ["password"])
-
-        assert virtool.users.check_password("foo_bar_1", document["password"])
-
-    async def test_too_short(self, spawn_client, resp_is):
-        """
-        Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        resp = await client.put("/api/account/password", {
-            "old_password": "not_right",
-            "new_password": "foo_bar"
-        })
-
-        assert await resp_is.invalid_input(resp, {'new_password': ['min length is 8']})
-
-    async def test_invalid_old(self, spawn_client, resp_is):
-        """
-        Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        resp = await client.put("/api/account/password", {
-            "old_password": "not_right",
-            "new_password": "foo_bar_1"
-        })
-
-        assert await resp_is.bad_request(resp, "Invalid old password")
-
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that requests to ``PUT /account/password`` return 422 for invalid fields.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        resp = await client.put("/api/account/password", {"new_password": 1234})
-
-        assert await resp_is.invalid_input(resp, {
-            "old_password": ["required field"],
-            "new_password": ["must be of string type"]
-        })
 
 
 async def test_get_api_keys(spawn_client):
@@ -228,14 +187,11 @@ class TestCreateAPIKey:
         },
         {
             "modify_subtraction": True,
-            "build_index": True
         },
         {
             "cancel_job": True,
             "create_sample": True,
-            "manage_users": True,
             "modify_hmm": True,
-            "modify_settings": True,
             "remove_job": True,
         }
     ])
@@ -244,7 +200,7 @@ class TestCreateAPIKey:
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
         """
-        mocker.patch("virtool.user.get_api_key", return_value="abc123xyz789")
+        mocker.patch("virtool.db.account.get_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -260,7 +216,7 @@ class TestCreateAPIKey:
         assert resp.status == 201
 
         expected = {
-            "_id": "57f614878f6056613d77f38b8b105bed8bb452f49a98c70cc63099a5129bac80",
+            "_id": "hashed_key",
             "id": "foobar_0",
             "name": "Foobar",
             "created_at": static_time,
@@ -277,7 +233,7 @@ class TestCreateAPIKey:
         assert await test_motor.keys.find_one() == expected
 
         expected.update({
-            "key": "abc123xyz789",
+            "key": "raw_key",
             "created_at": "2015-10-06T20:00:00Z"
         })
 
@@ -291,7 +247,7 @@ class TestCreateAPIKey:
         Test that uniqueness is ensured on the ``id`` field.
 
         """
-        mocker.patch("virtool.user.get_api_key", return_value="987zyx321cba")
+        mocker.patch("virtool.db.account.get_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -310,7 +266,7 @@ class TestCreateAPIKey:
         assert resp.status == 201
 
         expected = {
-            "_id": "b85815a74c3c42fe4a0aa79069defc59f93a8b344d509fdae87cfaa795a2fd68",
+            "_id": "hashed_key",
             "id": "foobar_1",
             "name": "Foobar",
             "created_at": static_time,
@@ -324,7 +280,7 @@ class TestCreateAPIKey:
         assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
 
         expected.update({
-            "key": "987zyx321cba",
+            "key": "raw_key",
             "created_at": "2015-10-06T20:00:00Z"
         })
 
@@ -348,27 +304,18 @@ class TestUpdateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {
-                "cancel_job": False,
-                "create_sample": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_host": False,
-                "modify_options": False,
-                "remove_host": False,
-                "remove_job": False
-            }
+            "permissions": {p: False for p in virtool.users.PERMISSIONS}
         }
 
         await client.db.keys.insert_one(expected)
 
         resp = await client.patch("/api/account/keys/foobar_0", {
-            "permissions": {"manage_users": True}
+            "permissions": {"create_sample": True}
         })
 
         assert resp.status == 200
 
-        expected["permissions"]["manage_users"] = True
+        expected["permissions"]["create_sample"] = True
 
         assert await client.db.keys.find_one() == expected
 
@@ -482,9 +429,15 @@ async def test_logout(spawn_client):
 
 @pytest.mark.parametrize("method,path", [
     ("GET", "/api/account"),
+    ("PATCH", "/api/account"),
     ("GET", "/api/account/settings"),
     ("PATCH", "/api/account/settings"),
-    ("PUT", "/api/account/password"),
+    ("PATCH", "/api/account/settings"),
+    ("GET", "/api/account/keys"),
+    ("POST", "/api/account/keys"),
+    ("PATCH", "/api/account/keys/foobar"),
+    ("DELETE", "/api/account/keys/foobar"),
+    ("DELETE", "/api/account/keys")
 ])
 async def test_requires_authorization(method, path, spawn_client):
     """
@@ -495,10 +448,12 @@ async def test_requires_authorization(method, path, spawn_client):
 
     if method == "GET":
         resp = await client.get(path)
+    elif method == "POST":
+        resp = await client.post(path, {})
     elif method == "PATCH":
         resp = await client.patch(path, {})
     else:
-        resp = await client.put(path, {})
+        resp = await client.delete(path)
 
     assert await resp.json() == {
         "id": "requires_authorization",

@@ -3,10 +3,11 @@ from pymongo import ReturnDocument
 
 import virtool.db.account
 import virtool.db.users
+import virtool.db.utils
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import invalid_input, json_response, no_content, not_found, protected, validation
+from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected, validation
 
 API_KEY_PROJECTION = {
     "_id": False,
@@ -56,8 +57,8 @@ async def edit(req):
 
     v = Validator({
         "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"},
-        "old_password": {"type": "string", "minlength": minlength, "required": True},
-        "new_password": {"type": "string", "minlength": minlength, "required": True}
+        "old_password": {"type": "string", "minlength": minlength},
+        "password": {"type": "string", "minlength": minlength, "dependencies": "old_password"}
     })
 
     if not v.validate(data):
@@ -65,12 +66,17 @@ async def edit(req):
 
     data = v.document
 
-    update = await virtool.db.account.compose_password_update(
-        db,
-        user_id,
-        data["old_password"],
-        data["new_password"]
-    )
+    try:
+        update = await virtool.db.account.compose_password_update(
+            db,
+            user_id,
+            data["old_password"],
+            data["password"]
+        )
+    except ValueError as err:
+        if "Invalid credentials" in str(err):
+            return bad_request("Invalid credentials")
+        raise
 
     if "email" in data:
         update["email"] = data["email"]
@@ -104,7 +110,7 @@ async def update_settings(req):
     """
     db, data = req.app["db"], req["data"]
 
-    user_id = req.match_info["user_id"]
+    user_id = req["client"].user_id
 
     document = await db.users.find_one(user_id, ["settings"])
 
@@ -163,7 +169,7 @@ async def create_api_key(req):
     name = data["name"]
 
     permissions = {
-        **{key: False for key in virtool.users.PERMISSIONS},
+        **{p: False for p in virtool.users.PERMISSIONS},
         **data.get("permissions", {})
     }
 
@@ -207,15 +213,16 @@ async def update_api_key(req):
 
     user_id = req["client"].user_id
 
-    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, ["permissions"])
+    permissions = await virtool.db.utils.get_one_field(db.keys, "permissions", {"id": key_id, "user.id": user_id})
 
-    if document is None:
+    if permissions is None:
         return not_found()
 
-    document = await db.keys.find_one_and_update({"_id": document["_id"]}, {
+    permissions.update(data["permissions"])
+
+    document = await db.keys.find_one_and_update({"id": key_id}, {
         "$set": {
-            **document["permissions"],
-            **data["permissions"]
+            "permissions": permissions
         }
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
