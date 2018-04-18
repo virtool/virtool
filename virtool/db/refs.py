@@ -31,15 +31,28 @@ async def clone(db, name, user_id, source_id):
 
     created_at = virtool.utils.timestamp()
 
-    async for source_kind in db.kinds.find({"_id": source["_id"]}):
-        source_kind.update({
-            "_id": await virtool.db.utils.get_new_id("kinds"),
+    async for kind in db.kinds.find({"_id": source["_id"]}):
+
+        kind_id = await virtool.db.utils.get_new_id("kinds")
+
+        kind.update({
+            "_id": kind_id,
             "version": 0,
             "created_at": created_at,
+            "last_indexed_version": None,
             "ref": {
                 "id": ref["_id"]
+            },
+            "user": {
+                "id": user_id
             }
         })
+
+        issues = await virtool.db.kinds.verify(db, kind_id, kind)
+
+        kind["verified"] = issues is None
+
+        await db.kinds.insert(kind)
 
 
 async def create(db, name, organism, user_id=None, cloned_from=None, created_at=None, data_type="whole_genome", github=None, imported_from=None, public=False, ref_id=None, ready=False, users=None):
