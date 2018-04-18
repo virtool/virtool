@@ -64,9 +64,9 @@ async def generate_isolate_fasta(db, kind_id, isolate_id):
     :rtype: Tuple[str, str]
 
     """
-    kind = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id}, ["name", "isolates"])
-
     kind_name, isolate_name = await get_kind_and_isolate_names(db, kind_id, isolate_id)
+
+    kind = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id}, ["name", "isolates"])
 
     fasta = list()
 
@@ -154,7 +154,7 @@ async def get_kind_and_isolate_names(db, kind_id, isolate_id):
     kind = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id}, ["name", "isolates"])
 
     if not kind:
-        raise virtool.errors.DatabaseError("kind does not exist")
+        raise virtool.errors.DatabaseError("Kind does not exist")
 
     isolate = virtool.kinds.find_isolate(kind["isolates"], isolate_id)
 
