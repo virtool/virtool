@@ -3,14 +3,14 @@ from copy import deepcopy
 from aiohttp.test_utils import make_mocked_coro
 
 
+@pytest.mark.parametrize("ready", [True, False], ids=["ready", "unready"])
 @pytest.mark.parametrize("not_found", [False, True], ids=["200", "404"])
-async def test_get(mocker, not_found, spawn_client):
+async def test_get(ready, not_found, mocker, spawn_client):
     client = await spawn_client(authorize=True)
 
     document = {
         "_id": "foobar",
-        "ready": True,
-        "formatted": False,
+        "ready": ready,
         "algorithm": "pathoscope_bowtie",
         "results": {}
     }
@@ -18,35 +18,38 @@ async def test_get(mocker, not_found, spawn_client):
     if not not_found:
         await client.db.analyses.insert_one(document)
 
-    m = mocker.stub(name="format_analysis")
-
-    return_value = dict(document, formatted=True)
-
-    async def format_analysis(db, document):
-        m(db, document)
-        return return_value
-
-    mocker.patch("virtool.sample_analysis.format_analysis", new=format_analysis)
+    m = mocker.patch("virtool.db.analyses.format_analysis", new=make_mocked_coro({"_id": "foo", "formatted": True}))
 
     resp = await client.get("/api/analyses/foobar")
 
     if not_found:
         assert resp.status == 404
+
+    elif ready:
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "id": "foo",
+            "formatted": True
+        }
+
+        m.assert_called_with(
+            client.db,
+            client.app["settings"],
+            document
+        )
+
     else:
         assert resp.status == 200
 
         assert await resp.json() == {
             "id": "foobar",
-            "ready": True,
-            "formatted": True,
+            "ready": False,
             "algorithm": "pathoscope_bowtie",
             "results": {}
         }
 
-        assert m.call_args[0] == (
-            client.db,
-            document
-        )
+        assert not m.called
 
 
 @pytest.mark.parametrize("has_sample", [True, False], ids=["with_sample", "without_sample"])
@@ -55,7 +58,7 @@ async def test_remove(has_sample, status, mocker, spawn_client, resp_is, test_di
 
     client = await spawn_client(authorize=True)
 
-    mocker.patch("virtool.sample.get_sample_rights", return_value=(True, status != 403))
+    mocker.patch("virtool.samples.get_sample_rights", return_value=(True, status != 403))
 
     if has_sample:
         sample = {
@@ -141,7 +144,7 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
 
         await client.db.analyses.insert_one(analysis_document)
 
-    m_format_analysis = make_mocked_coro(return_value={
+    m_format_analysis = make_mocked_coro({
         "_id": "foobar",
         "algorithm": "nuvs",
         "ready": True,
@@ -152,7 +155,7 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
         ]
     })
 
-    mocker.patch("virtool.sample_analysis.format_analysis", new=m_format_analysis)
+    mocker.patch("virtool.db.analyses.format_analysis", new=m_format_analysis)
 
     # Do a bunch of mocking in virtool.bio module.
     m_initialize_ncbi_blast = make_mocked_coro(return_value=("FOOBAR1337", 23))
@@ -226,10 +229,11 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
         assert m_check_rid.call_args[0] == ({}, "FOOBAR1337")
 
         expected_format_arg = deepcopy(analysis_document)
-        expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at= static_time)
+        expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at=static_time)
 
         assert m_format_analysis.call_args[0] == (
             client.db,
+            client.app["settings"],
             expected_format_arg
         )
 

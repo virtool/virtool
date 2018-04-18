@@ -29,7 +29,7 @@ async def get(req):
         return not_found()
 
     if document["ready"]:
-        document = await virtool.db.analyses.format_analysis(req.app["settings"], document)
+        document = await virtool.db.analyses.format_analysis(db, req.app["settings"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -91,10 +91,13 @@ async def blast(req):
 
     sequence = virtool.analyses.get_nuvs_sequence_by_index(document, sequence_index)
 
+    if sequence is None:
+        return not_found("Sequence not found")
+
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
 
-    document = await virtool.db.analyses.update_nuvs_blast(db, settings, analysis_id, sequence_index, rid)
+    blast_data, document = await virtool.db.analyses.update_nuvs_blast(db, settings, analysis_id, sequence_index, rid)
 
     formatted = await virtool.db.analyses.format_analysis(db, settings, document)
 
@@ -115,4 +118,4 @@ async def blast(req):
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
     }
 
-    return json_response(data, headers=headers, status=200)
+    return json_response(blast_data, headers=headers, status=200)

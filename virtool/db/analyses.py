@@ -237,7 +237,9 @@ async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
     :param analysis_id:
     :param sequence_index:
     :param rid:
-    :return:
+
+    :return: the blast data and the complete analysis document
+    :rtype: Tuple[dict, dict]
 
     """
     # Do initial check of RID to populate BLAST embedded document.
@@ -253,3 +255,5 @@ async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
             "results.$.blast": data
         }
     })
+
+    return data, document
