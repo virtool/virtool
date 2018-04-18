@@ -208,7 +208,7 @@ class TestUpdatePermissions:
 
 class TestRemove:
 
-    async def test_valid(self, monkeypatch, spawn_client, no_permissions):
+    async def test(self, monkeypatch, spawn_client, no_permissions):
         """
         Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
 
@@ -222,7 +222,7 @@ class TestRemove:
 
         m = make_mocked_coro(None)
 
-        monkeypatch.setattr("virtool.user_groups.update_member_users", m)
+        monkeypatch.setattr("virtool.db.groups.update_member_users", m)
 
         resp = await client.delete("/api/groups/test")
 
@@ -247,14 +247,3 @@ class TestRemove:
         assert await resp_is.not_found(resp)
 
         assert resp.status == 404
-
-    async def test_administrator(self, spawn_client, resp_is):
-        """
-        Test that the administrator group cannot be removed (400).
-
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
-
-        resp = await client.delete("/api/groups/administrator")
-
-        assert await resp_is.bad_request(resp, "Cannot remove administrator group")
