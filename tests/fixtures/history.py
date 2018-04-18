@@ -321,14 +321,6 @@ def create_mock_history(test_motor):
 
         await test_motor.history.insert_many(documents)
 
-        for document in documents:
-            document.update({
-                "_id": "baz.{}".format(document["_id"].split(".")[1]),
-                "ref": {"id": "foobar"}
-            })
-
-        await test_motor.history.insert_many(documents)
-
         return kind
 
     return func

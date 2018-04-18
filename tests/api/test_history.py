@@ -6,107 +6,110 @@ import virtool.kinds
 import virtool.history
 
 
-class TestFind:
+async def test_find(spawn_client, test_changes):
+    """
+    Test that a list of processed change documents are returned with a ``200`` status.
 
-    async def test(self, spawn_client, test_changes):
-        """
-        Test that a list of processed change documents are returned with a ``200`` status.
+    """
+    client = await spawn_client()
 
-        """
-        client = await spawn_client()
+    await client.db.history.insert_many(test_changes)
 
-        await client.db.history.insert_many(test_changes)
+    resp = await client.get("/api/history")
 
-        resp = await client.get("/api/history")
+    assert resp.status == 200
 
-        assert resp.status == 200
+    resp_json = await resp.json()
 
-        resp_json = await resp.json()
+    resp_json["documents"] = sorted(resp_json["documents"], key=itemgetter("id"))
 
-        resp_json["documents"] = sorted(resp_json["documents"], key=itemgetter("id"))
-
-        assert resp_json == {
-            "found_count": 3,
-            "page": 1,
-            "page_count": 1,
-            "per_page": 15,
-            "total_count": 3,
-            "documents": sorted([
-                {
-                    "description": "Edited virus Prunus virus E",
-                    "id": "6116cba1.1",
-                    "index": {
-                        "id": "unbuilt",
-                        "version": "unbuilt"
-                    },
-                    "method_name": "edit",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "user": {
-                        "id": "test"
-                    },
-                    "kind": {
-                        "id": "6116cba1",
-                        "name": "Prunus virus F",
-                        "version": 1
-                    }
+    assert resp_json == {
+        "found_count": 3,
+        "page": 1,
+        "page_count": 1,
+        "per_page": 15,
+        "total_count": 3,
+        "documents": sorted([
+            {
+                "description": "Edited Prunus virus E",
+                "id": "6116cba1.1",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
                 },
-                {
-                    "description": "Edited virus Prunus virus E",
-                    "id": "foobar.1",
-                    "index": {
-                        "id": "unbuilt",
-                        "version": "unbuilt"
-                    },
-                    "method_name": "edit",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "user": {
-                        "id": "test"
-                    },
-                    "kind": {
-                        "id": "6116cba1",
-                        "name": "Prunus virus F",
-                        "version": 1
-                    }
+                "method_name": "edit",
+                "created_at": "2015-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
                 },
-                {
-                    "description": "Edited virus Prunus virus E",
-                    "id": "foobar.2",
-                    "index": {
-                        "id": "unbuilt",
-                        "version": "unbuilt"
-                    },
-                    "method_name": "edit",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "user": {
-                        "id": "test"
-                    },
-                    "kind": {
-                        "id": "6116cba1",
-                        "name": "Prunus virus F",
-                        "version": 1
-                    }
+                "kind": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
                 }
-            ], key=itemgetter("id"))
-        }
+            },
+            {
+                "description": "Edited Prunus virus E",
+                "id": "foobar.1",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "edit",
+                "created_at": "2015-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
+                },
+                "kind": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            },
+            {
+                "description": "Edited Prunus virus E",
+                "id": "foobar.2",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "edit",
+                "created_at": "2015-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
+                },
+                "kind": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            }
+        ], key=itemgetter("id"))
+    }
 
 
-class TestGet:
+@pytest.mark.parametrize("not_found", [False, True])
+async def test_get(not_found, resp_is, spawn_client, test_changes):
+    """
+    Test that a specific history change can be retrieved by its change_id.
 
-    async def test(self, spawn_client, test_changes):
-        """
-        Test that a specific history change can be retrieved by its change_id.
+    """
+    client = await spawn_client()
 
-        """
-        client = await spawn_client()
+    await client.db.history.insert_many(test_changes)
 
-        await client.db.history.insert_many(test_changes)
+    change_id = "baz.1" if not_found else "6116cba1.1"
 
-        resp = await client.get("/api/history/6116cba1.1")
+    resp = await client.get("/api/history/" + change_id)
 
+    if not_found:
+        assert await resp_is.not_found(resp)
+
+    else:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "description": "Edited virus Prunus virus E",
+            "description": "Edited Prunus virus E",
             "diff": [
                 ["change", "abbreviation", ["PVF", ""]],
                 ["change", "name", ["Prunus virus F", "Prunus virus E"]],
@@ -129,35 +132,29 @@ class TestGet:
             }
         }
 
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that a specific history change can be retrieved by its change_id.
 
-        """
-        client = await spawn_client()
+@pytest.mark.parametrize("not_found", [False, True])
+@pytest.mark.parametrize("remove", [False, True])
+async def test_remove(not_found, remove, create_mock_history, spawn_client, resp_is):
+    """
+    Test that a valid request results in a reversion and a ``204`` response.
 
-        resp = await client.get("/api/history/foobar.1")
+    """
+    client = await spawn_client(authorize=True)
 
+    await create_mock_history(remove)
+
+    change_id = "foo.1" if not_found else "6116cba1.2"
+
+    resp = await client.delete("/api/history/" + change_id)
+
+    if not_found:
         assert await resp_is.not_found(resp)
 
+    else:
+        assert resp.status == 204
 
-class TestRemove:
-
-    @pytest.mark.parametrize("remove", [True, False])
-    async def test(self, remove, spawn_client, create_mock_history):
-        """
-        Test that a valid request results in a reversion and a ``204`` response.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        await create_mock_history(remove)
-
-        await client.delete("/api/history/6116cba1.2")
-
-        joined = await virtool.db.kinds.join(client.db, "6116cba1")
-
-        assert joined == {
+        assert await virtool.db.kinds.join(client.db, "6116cba1") == {
             "_id": "6116cba1",
             "abbreviation": "TST",
             "imported": True,
@@ -182,6 +179,9 @@ class TestRemove:
                     "source_type": "isolate"
                 }
             ],
+            "ref": {
+                "id": "hxn167"
+            },
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus F",
@@ -189,14 +189,3 @@ class TestRemove:
             "schema": [],
             "version": 1
         }
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that a request for a non-existent ``change_id`` results in a ``404`` response.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        resp = await client.delete("/api/history/6116cba1.1")
-
-        assert await resp_is.not_found(resp)
