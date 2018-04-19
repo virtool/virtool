@@ -2,6 +2,8 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+from virtool.utils import base_processor
+
 
 class TestFind:
     @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
@@ -193,7 +195,7 @@ class TestFind:
 class TestGet:
 
     async def test(self, mocker, spawn_client, static_time):
-        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
         client = await spawn_client()
 
@@ -221,7 +223,7 @@ class TestGet:
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, monkeypatch, spawn_client, test_motor, test_dispatch, static_time,
+    async def test(self, group_setting, mocker, spawn_client, test_motor, test_dispatch, static_time,
                    test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
@@ -249,16 +251,14 @@ class TestCreate:
             "sample_unique_names": True
         })
 
-        m_reserve = make_mocked_coro()
-        monkeypatch.setattr("virtool.file.reserve", m_reserve)
+        m_reserve = mocker.patch("virtool.db.files.reserve", make_mocked_coro())
 
-        m_new = make_mocked_coro()
-        monkeypatch.setattr(client.app["job_manager"], "new", m_new)
+        m_new = mocker.patch.object(client.app["job_manager"], "new", make_mocked_coro())
 
         request_data = {
             "name": "Foobar",
             "files": ["test.fq"],
-            "subtraction": "apple"
+            "subtraction": "apple",
         }
 
         if group_setting == "force_choice":
@@ -352,7 +352,7 @@ class TestCreate:
 
         assert await resp_is.conflict(resp, "Sample name is already in use")
 
-    async def test_force_choice(self, spawn_client, static_time, resp_is):
+    async def test_force_choice(self, mocker, spawn_client, static_time, resp_is):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in an error.
         response.
@@ -363,6 +363,13 @@ class TestCreate:
         client.app["settings"]["sample_group"] = "force_choice"
         client.app["settings"]["sample_unique_names"] = True
 
+        await client.db.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        mocker.patch("virtool.db.utils.ids_exist", new=make_mocked_coro(True))
+
         resp = await client.post("/api/samples", {
             "name": "Foobar",
             "files": ["test.fq"],
@@ -371,11 +378,18 @@ class TestCreate:
 
         assert await resp_is.bad_request(resp, "Server requires a 'group' field for sample creation")
 
-    async def test_group_dne(self, spawn_client, resp_is):
+    async def test_group_dne(self, mocker, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
         client.app["settings"]["sample_unique_names"] = True
+
+        await client.db.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        mocker.patch("virtool.db.utils.ids_exist", new=make_mocked_coro(True))
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -441,7 +455,7 @@ class TestRemove:
     async def test(self, delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
         client = await spawn_client(authorize=True)
 
-        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
         if resp_is_attr == "no_content":
             await client.db.samples.insert_one({
@@ -456,7 +470,7 @@ class TestRemove:
             m(*args, **kwargs)
             return create_delete_result(delete_result)
 
-        mocker.patch("virtool.sample.remove_samples", new=mock_remove_samples)
+        mocker.patch("virtool.db.samples.remove_samples", new=mock_remove_samples)
 
         resp = await client.delete("/api/samples/test")
 
@@ -472,7 +486,7 @@ class TestListAnalyses:
 
     async def test(self, mocker, spawn_client, static_time):
 
-        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
         client = await spawn_client()
 
@@ -625,18 +639,21 @@ class TestAnalyze:
 
     @pytest.mark.parametrize("error", [None, "sample", "no_index", "no_ready_index"])
     async def test(self, error, mocker, spawn_client, static_time, resp_is):
-        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
         client = await spawn_client(job_manager=True)
 
-        m = mocker.Mock(return_value={
-            "_id": "test_analysis",
+        test_analysis = {
+            "id": "test_analysis",
             "ready": False,
-            "created_at": static_time,
+            "created_at": "'2015-10-06T20:00:00Z'",
             "job": {
                 "id": "baz"
             },
             "algorithm": "pathoscope_bowtie",
+            "ref": {
+                "id": "foo"
+            },
             "sample": {
                 "id": "test"
             },
@@ -647,29 +664,32 @@ class TestAnalyze:
             "user": {
                 "id": "test",
             }
-        })
+        }
 
-        async def mock_new(*args, **kwargs):
-            return m(*args, **kwargs)
+        m = mocker.Mock(return_value=test_analysis)
 
         if error != "sample":
             await client.db.samples.insert_one({
                 "_id": "test",
                 "created_at": static_time,
-                "all_ready": True,
+                "all_read": True,
                 "all_write": True
             })
 
         if error != "no_index":
             await client.db.indexes.insert_one({
                 "_id": "test",
+                "ref": {
+                    "id": "foo"
+                },
                 "ready": error != "no_ready_index"
             })
 
-        mocker.patch("virtool.sample_analysis.new", new=mock_new)
+        m_new = mocker.patch("virtool.db.analyses.new", new=make_mocked_coro(test_analysis))
 
         resp = await client.post("/api/samples/test/analyses", data={
-            "algorithm": "pathoscope_bowtie"
+            "algorithm": "pathoscope_bowtie",
+            "ref_id": "foo"
         })
 
         if error is None:
@@ -677,33 +697,13 @@ class TestAnalyze:
 
             assert resp.headers["Location"] == "/api/analyses/test_analysis"
 
-            assert await resp.json() == {
-                "id": "test_analysis",
-                "ready": False,
-                "algorithm": "pathoscope_bowtie",
-                "created_at": "2015-10-06T20:00:00Z",
-                "sample": {
-                    "id": "test"
-                },
-                "index": {
-                    "id": "foobar",
-                    "version": 3
-                },
+            assert await resp.json() == test_analysis
 
-                "user": {
-                    "id": "test"
-                },
-
-                "job": {
-                    "id": "baz"
-                }
-            }
-
-            assert m.call_args[0] == (
+            m_new.assert_called_with(
                 client.db,
-                client.app["settings"],
                 client.app["job_manager"],
                 "test",
+                "foo",
                 None,
                 "pathoscope_bowtie"
             )
@@ -722,5 +722,5 @@ class TestAnalyze:
         })
 
         assert await resp_is.invalid_input(resp, {
-            "algorithm": ["required field"], "foobar": ["unknown field"]
+            "algorithm": ["required field"], "foobar": ["unknown field"], "ref_id": ["required field"]
         })

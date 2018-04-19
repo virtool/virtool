@@ -7,6 +7,7 @@ import virtool.db.analyses
 import virtool.db.files
 import virtool.db.samples
 import virtool.db.utils
+import virtool.errors
 import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
@@ -110,7 +111,7 @@ async def create(req):
         return conflict(name_error_message)
 
     # Make sure a subtraction host was submitted and it exists.
-    if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
+    if not await db.subtraction.count({"_id": data["subtraction"], "is_host": True}):
         return not_found("Subtraction not found")
 
     # Make sure all of the passed file ids exist.
@@ -128,11 +129,14 @@ async def create(req):
         force_choice_error_message = await virtool.db.samples.validate_force_choice_group(db, data)
 
         if force_choice_error_message:
-            return json_response(force_choice_error_message)
+            if "not found" in force_choice_error_message:
+                return not_found(force_choice_error_message)
+
+            return bad_request(force_choice_error_message)
 
     # Assign the user"s primary group as the sample owner group if the setting is ``users_primary_group``.
     elif sample_group_setting == "users_primary_group":
-        document["group"] = await virtool.db.utils.get_one_field(db.users, user_id, "primary_group")
+        document["group"] = await virtool.db.utils.get_one_field(db.users, "primary_group", user_id)
 
     # Make the owner group none if the setting is none.
     elif sample_group_setting == "none":
@@ -265,8 +269,14 @@ async def remove(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
-        return insufficient_rights()
+    try:
+        if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
+            return insufficient_rights()
+    except virtool.errors.DatabaseError as err:
+        if "Sample does not exist" in str(err):
+            return not_found()
+
+        raise
 
     await virtool.db.samples.remove_samples(
         db,
@@ -286,8 +296,14 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await virtool.db.samples.check_rights(db, sample_id, req["client"], write=False):
-        return insufficient_rights()
+    try:
+        if not await virtool.db.samples.check_rights(db, sample_id, req["client"], write=False):
+            return insufficient_rights()
+    except virtool.errors.DatabaseError as err:
+        if "Sample does not exist" in str(err):
+            return not_found()
+
+        raise
 
     documents = await db.analyses.find({"sample.id": sample_id}, virtool.jobs.analysis.LIST_PROJECTION).to_list(None)
 
@@ -310,11 +326,18 @@ async def analyze(req):
     data = req["data"]
 
     sample_id = req.match_info["sample_id"]
+    ref_id = data["ref_id"]
 
-    if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
-        return insufficient_rights()
+    try:
+        if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
+            return insufficient_rights()
+    except virtool.errors.DatabaseError as err:
+        if "Sample does not exist" in str(err):
+            return not_found()
 
-    if not await db.indexes.count({"ref.id": "ref_id", "ready": True}):
+        raise
+
+    if not await db.indexes.count({"ref.id": ref_id, "ready": True}):
         return not_found("Ready index not found")
 
     # Generate a unique _id for the analysis entry
@@ -322,15 +345,15 @@ async def analyze(req):
         db,
         req.app["job_manager"],
         sample_id,
-        data["ref_id"],
+        ref_id,
         req["client"].user_id,
         data["algorithm"]
     )
 
     return json_response(
-        virtool.utils.base_processor(document),
+        document,
         status=201,
         headers={
-            "Location": "/api/analyses/{}".format(document["_id"])
+            "Location": "/api/analyses/{}".format(document["id"])
         }
     )

@@ -71,6 +71,9 @@ def test_kind_edit():
                     "source_type": "isolate"
                 }
             ],
+            "ref": {
+                "id": "hxn167"
+            },
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus F",
@@ -100,6 +103,9 @@ def test_kind_edit():
                     "source_type": "isolate"
                 }
             ],
+            "ref": {
+                "id": "hxn167"
+            },
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus E",

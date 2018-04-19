@@ -41,7 +41,7 @@ def test_kind():
         "name": "Prunus virus F",
         "schema": [],
         "ref": {
-            "id": "abc12345"
+            "id": "hxn167"
         },
         "_id": "6116cba1"
     }
@@ -96,7 +96,7 @@ def test_merged_kind():
             }
         ],
         "ref": {
-            "id": "abc12345"
+            "id": "hxn167"
         },
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",

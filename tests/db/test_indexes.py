@@ -13,7 +13,7 @@ async def test_create_manifest(test_motor, test_kind):
         dict(test_kind, _id="bar", version=11)
     ])
 
-    assert await virtool.db.indexes.create_manifest(test_motor, "abc12345") == {
+    assert await virtool.db.indexes.create_manifest(test_motor, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11
@@ -73,6 +73,15 @@ async def test_get_next_version(empty, has_ref, test_indexes, test_motor):
 
 async def test_tag_unbuilt_changes(test_motor, create_mock_history):
     await create_mock_history(False)
+
+    async for document in test_motor.history.find():
+        await test_motor.history.insert({
+            **document,
+            "_id": "foo_" + document["_id"],
+            "ref": {
+                "id": "foobar"
+            }
+        })
 
     assert await test_motor.history.count({"index.id": "unbuilt"}) == 8
     assert await test_motor.history.count({"ref.id": "foobar", "index.id": "unbuilt"}) == 4

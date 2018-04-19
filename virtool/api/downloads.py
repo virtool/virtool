@@ -24,6 +24,8 @@ async def download_isolate(req):
     try:
         filename, fasta = await virtool.db.downloads.generate_isolate_fasta(db, kind_id, isolate_id)
     except virtool.errors.DatabaseError as err:
+        print(str(err))
+
         if "Kind does not exist" in str(err):
             return not_found("Kind does not exist")
 
@@ -46,7 +48,16 @@ async def download_kind(req):
 
     kind_id = req.match_info["kind_id"]
 
-    filename, fasta = await virtool.db.downloads.generate_kind_fasta(db, kind_id)
+    try:
+        filename, fasta = await virtool.db.downloads.generate_kind_fasta(db, kind_id)
+    except virtool.errors.DatabaseError as err:
+        if "Sequence does not exist" in str(err):
+            return not_found("Sequence does not exist")
+
+        if "Kind does not exist" in str(err):
+            return not_found("Kind does not exist")
+
+        raise
 
     if not fasta:
         return web.Response(status=404)
@@ -65,7 +76,19 @@ async def download_sequence(req):
 
     sequence_id = req.match_info["sequence_id"]
 
-    filename, fasta = await virtool.db.downloads.generate_sequence_fasta(db, sequence_id)
+    try:
+        filename, fasta = await virtool.db.downloads.generate_sequence_fasta(db, sequence_id)
+    except virtool.errors.DatabaseError as err:
+        if "Sequence does not exist" in str(err):
+            return not_found("Sequence does not exist")
+
+        if "Isolate does not exist" in str(err):
+            return not_found("Isolate does not exist")
+
+        if "Kind does not exist" in str(err):
+            return not_found("Kind does not exist")
+
+        raise
 
     if fasta is None:
         return web.Response(status=404)

@@ -32,7 +32,7 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, user_id):
+async def add(db, method_name, old, new, description, ref_id, user_id):
     """
     Add a change document to the history collection.
 
@@ -50,6 +50,9 @@ async def add(db, method_name, old, new, description, user_id):
 
     :param description: a human readable description of the change
     :type description: str
+
+    :param ref_id: the ref the change is being made in
+    :type ref_id: str
 
     :param user_id: the id of the requesting user
     :type user_id: str
@@ -82,6 +85,9 @@ async def add(db, method_name, old, new, description, user_id):
             "id": kind_id,
             "name": kind_name,
             "version": kind_version
+        },
+        "ref": {
+            "id": ref_id
         },
         "index": {
             "id": "unbuilt",

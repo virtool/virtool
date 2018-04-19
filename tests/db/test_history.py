@@ -17,6 +17,7 @@ class TestAdd:
             old,
             new,
             "Edited {}".format(new["name"]),
+            "hxn167",
             "test"
         )
 
@@ -46,6 +47,9 @@ class TestAdd:
             "user": {
                 "id": "test"
             },
+            "ref": {
+                "id": "hxn167"
+            },
             "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
@@ -61,7 +65,7 @@ class TestAdd:
 
         description = "Created {}".format(new["name"])
 
-        returned_change = await virtool.db.history.add(test_motor, "create", old, new, description, "test")
+        returned_change = await virtool.db.history.add(test_motor, "create", old, new, description, "hxn167", "test")
 
         document = await test_motor.history.find_one()
 
@@ -99,7 +103,7 @@ class TestAdd:
 
         description = "Removed {}".format(old["name"])
 
-        returned_change = await virtool.db.history.add(test_motor, "remove", old, new, description, "test")
+        returned_change = await virtool.db.history.add(test_motor, "remove", old, new, description, "hxn167", "test")
 
         document = await test_motor.history.find_one()
 

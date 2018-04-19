@@ -13,6 +13,8 @@ async def test_get(spawn_client):
     assert await resp.json() == {
         "groups": [],
         "id": "test",
+        "administrator": False,
+        "identicon": "identicon",
         "last_password_change": "2015-10-06T20:00:00Z",
         "permissions": {p: False for p in virtool.users.PERMISSIONS},
         "primary_group": "technician",
@@ -92,6 +94,8 @@ async def test_edit(error, spawn_client, resp_is, static_time):
                 "upload_file": False
             },
             "groups": [],
+            "identicon": "identicon",
+            "administrator": False,
             "last_password_change": "2015-10-06T20:00:00Z",
             "primary_group": "technician",
             "settings": {

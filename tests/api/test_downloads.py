@@ -1,8 +1,8 @@
 import pytest
 
 
-@pytest.mark.parametrize("get", ["virus", "isolate", "sequence"])
-@pytest.mark.parametrize("missing", [None, "virus", "isolate", "sequence"])
+@pytest.mark.parametrize("get", ["kind", "isolate", "sequence"])
+@pytest.mark.parametrize("missing", [None, "kind", "isolate", "sequence"])
 async def test_all(get, missing, spawn_client):
     client = await spawn_client(authorize=True)
 
@@ -53,8 +53,8 @@ async def test_all(get, missing, spawn_client):
 
     resp = await client.get(url)
 
-    get_isolate_error = get == "isolate" and missing == "virus"
-    get_sequence_error = get == "sequence" and missing in ["virus", "isolate"]
+    get_isolate_error = get == "isolate" and missing == "kind"
+    get_sequence_error = get == "sequence" and missing in ["kind", "isolate"]
 
     if get == missing or get_isolate_error or get_sequence_error:
         assert resp.status == 404

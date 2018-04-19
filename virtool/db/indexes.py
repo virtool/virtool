@@ -26,6 +26,7 @@ async def create_manifest(db, ref_id):
     :param ref_id: the id of the reference to get the current index for
     :type ref_id: str
 
+
     :return: a manifest of kind ids and versions
     :rtype: dict
 

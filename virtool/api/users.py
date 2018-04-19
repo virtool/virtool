@@ -1,6 +1,7 @@
 from cerberus import Validator
 
 import virtool.db.users
+import virtool.db.utils
 import virtool.errors
 import virtool.groups
 import virtool.users
@@ -55,7 +56,7 @@ async def create(req):
     user_id = data["user_id"]
 
     try:
-        document = await virtool.db.users.create(db, user_id, **data)
+        document = await virtool.db.users.create(db, user_id, data["password"], data["force_reset"])
     except virtool.errors.DatabaseError:
         return conflict("User already exists")
 
@@ -75,8 +76,12 @@ async def edit(req):
     db = req.app["db"]
     data = await req.json()
 
+    groups = await db.groups.distinct("_id")
+
     v = Validator({
+        "administrator": {"type": "boolean"},
         "force_reset": {"type": "boolean"},
+        "groups": {"type": "list", "allowed": groups},
         "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"]},
         "primary_group": {"type": "string"}
     })
@@ -87,12 +92,16 @@ async def edit(req):
     user_id = req.match_info["user_id"]
 
     try:
-        document = await virtool.db.users.edit(db, user_id, **data)
+        document = await virtool.db.users.edit(
+            db,
+            user_id,
+            **data
+        )
     except virtool.errors.DatabaseError as err:
         if "User does not exist" in str(err):
-            return conflict("User does not exist")
+            return not_found("User does not exist")
 
-        if "Group does not exist" in str(err):
+        if "Non-existent group" in str(err):
             return not_found("Group does not exist")
 
         if "User is not member of group" in str(err):
@@ -100,7 +109,9 @@ async def edit(req):
 
         raise
 
-    return json_response(virtool.utils.base_processor(document))
+    projected = virtool.db.utils.apply_projection(document, virtool.db.users.PROJECTION)
+
+    return json_response(virtool.utils.base_processor(projected))
 
 
 @protected()

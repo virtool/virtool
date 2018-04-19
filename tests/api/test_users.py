@@ -1,4 +1,3 @@
-import datetime
 import pytest
 from operator import itemgetter
 
@@ -10,7 +9,7 @@ async def test_find(spawn_client, create_user):
     Test that a ``GET /users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True, permissions=["create_sample"])
 
     user_ids = ["bob", "fred", "john"]
 
@@ -21,6 +20,8 @@ async def test_find(spawn_client, create_user):
     assert resp.status == 200
 
     base_dict = {
+        "administrator": False,
+        "identicon": "identicon",
         "force_reset": False,
         "groups": [],
         "last_password_change": "2015-10-06T20:00:00Z",
@@ -30,46 +31,44 @@ async def test_find(spawn_client, create_user):
 
     expected = [dict(base_dict, id=user_id) for user_id in user_ids + ["test"]]
 
-    expected[3]["permissions"] = dict(base_dict["permissions"], manage_users=True)
+    expected[3]["permissions"] = dict(base_dict["permissions"], create_sample=True)
 
     assert sorted(await resp.json(), key=itemgetter("id")) == sorted(expected, key=itemgetter("id"))
 
 
-class TestGet:
+@pytest.mark.parametrize("not_found", [False, True])
+async def test_get(not_found, spawn_client, create_user, resp_is, no_permissions):
+    """
+    Test that a ``GET /api/users`` returns a list of users.
 
-    async def test_exists(self, spawn_client, create_user):
-        """
-        Test that a ``GET /api/users`` returns a list of users.
+    """
+    client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+    users = [create_user("bob")]
 
-        bob, fred = [create_user(user_id) for user_id in ("bob", "fred")]
+    if not not_found:
+        users.append(create_user("fred"))
 
-        await client.db.users.insert_many([bob, fred])
+    await client.db.users.insert_many(users)
 
-        resp = await client.get("/api/users/fred")
+    resp = await client.get("/api/users/fred")
 
+    if not_found:
+        assert await resp_is.not_found(resp)
+
+    else:
         assert resp.status == 200
 
         assert await resp.json() == {
             "id": "fred",
+            "administrator": False,
             "force_reset": False,
             "groups": [],
+            "identicon": "identicon",
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": bob["permissions"],
+            "permissions": no_permissions,
             "primary_group": "technician"
         }
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that a ``GET /api/users/:user_id`` for a non-existent ``user_id`` results in a ``404`` response.
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
-
-        resp = await client.get("/api/users/fred")
-
-        assert await resp_is.not_found(resp)
 
 
 class TestCreate:
@@ -83,7 +82,7 @@ class TestCreate:
         - check password
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True)
 
         client.app["settings"]["minimum_password_length"] = 8
 
@@ -100,7 +99,7 @@ class TestCreate:
         assert resp.headers["Location"] == "/api/users/bob"
 
         expected = {
-            "id": "bob",
+            "id": "bob","administrator": False,
             "force_reset": False,
             "groups": [],
             "last_password_change": "2015-10-06T20:00:00Z",
@@ -179,7 +178,7 @@ class TestCreate:
 @pytest.mark.parametrize("error", [None, "invalid_input", "user_dne", "group_dne", "not_group_member"])
 async def test_edit(data, error, spawn_client, resp_is, static_time, create_user, no_permissions):
 
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True)
 
     client.app["settings"]["minimum_password_length"] = 8
 
@@ -212,10 +211,10 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     if "primary_group" in data:
         if error == "group_dne":
-            assert await resp_is.not_found(resp, "Group not found")
+            assert await resp_is.not_found(resp, "Group does not exist")
 
         elif error == "not_group_member":
-            assert await resp_is.bad_request(resp, "User is not member of group: tech")
+            assert await resp_is.conflict(resp, "User is not member of group")
 
     elif error == "invalid_input":
         assert await resp_is.invalid_input(resp, {
@@ -223,7 +222,8 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         })
 
     elif error == "user_dne":
-        assert await resp_is.not_found(resp)
+        print(await resp.json())
+        assert await resp_is.not_found(resp, "User does not exist")
 
     else:
         expected = dict(bob, last_password_change=static_time)
@@ -249,116 +249,13 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         assert await resp.json() == expected
 
 
-@pytest.mark.parametrize("error", [None, "invalid_input", "user_dne", "group_dne"])
-async def test_add_group(error, spawn_client, resp_is, create_user, no_permissions):
-    """
-    Test that a valid request results in the addition of a group to a user document.
-
-    """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
-
-    groups_to_insert = [{
-        "_id": "test",
-        "permissions": dict(no_permissions, create_sample=True)
-    }]
-
-    if error != "group_dne":
-        groups_to_insert.append({
-            "_id": "tech",
-            "permissions": dict(no_permissions, create_subtraction=True)
-        })
-
-    await client.db.groups.insert_many(groups_to_insert)
-
-    if error != "user_dne":
-        bob = create_user("bob")
-        await client.db.users.insert(bob)
-
-    if error == "invalid_input":
-        data = {
-            "group": "tech"
-        }
-    else:
-        data = {
-            "group_id": "tech"
-        }
-
-    resp = await client.post("/api/users/bob/groups", data)
-
-    if error is None:
-        assert resp.status == 200
-        assert await resp.json() == ["tech"]
-
-    elif error == "user_dne":
-        assert await resp_is.not_found(resp)
-
-    elif error == "group_dne":
-        assert await resp_is.not_found(resp, "Group not found")
-
-    else:
-        assert await resp_is.invalid_input(resp, {
-            "group": ["unknown field"],
-            "group_id": ["required field"]
-        })
-
-
-@pytest.mark.parametrize("user_exists", [True, False])
-async def test_remove_group(user_exists, spawn_client, create_user, resp_is, no_permissions):
-    """
-    Test that a valid request can result in removal of a group from a user and recalculation of the user"s
-    permissions.
-
-    """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
-
-    await client.db.groups.insert_many([
-        {
-            "_id": "tech",
-            "permissions": dict(no_permissions, create_sample=True)
-        },
-        {
-            "_id": "test",
-            "permissions": dict(no_permissions, create_subtraction=True)
-        }
-    ])
-
-    bob = create_user(
-        "bob",
-        groups=["tech", "test"],
-        permissions=["create_sample", "create_subtraction"]
-    )
-
-    if user_exists:
-        await client.db.users.insert_one(bob)
-
-        await client.db.users.update_one({"_id": "bob"}, {
-            "$set": {
-                "primary_group": "tech"
-            }
-        })
-
-        assert await client.db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
-            "_id": "bob",
-            "groups": ["tech", "test"],
-            "permissions": dict(no_permissions, create_sample=True, create_subtraction=True)
-        }
-
-    resp = await client.delete("/api/users/bob/groups/tech")
-
-    if user_exists:
-        assert resp.status == 200
-        assert await resp.json() == ["test"]
-    else:
-        assert await resp_is.not_found(resp)
-
-
 @pytest.mark.parametrize("exists", [True, False])
 async def test_remove(exists, spawn_client, resp_is, create_user):
     """
     Test that a group is removed from the user for a valid request.
 
     """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True)
 
     if exists:
         await client.db.users.insert_one(create_user("bob"))

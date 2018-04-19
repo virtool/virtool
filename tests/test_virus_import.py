@@ -272,7 +272,7 @@ class TestImportFile:
             "_id": "virus_import"
         })
 
-        await virtool.db.refs.import_data(test_motor, test_dispatch, import_data, "test")
+        await virtool.db.refs.import_data(test_motor, test_dispatch, "foo", import_data, "test")
 
         expected = {
             "_id": "virus_import",

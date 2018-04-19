@@ -30,11 +30,14 @@ def bob(no_permissions, static_time):
 
 @pytest.fixture(scope="session")
 def create_user():
-    def func(name="test", groups=None, permissions=None):
+    def func(name="test", administrator=False, groups=None, permissions=None):
+
         permissions = permissions or list()
 
         return {
             "_id": name,
+            "administrator": administrator,
+            "identicon": "identicon",
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},
             "groups": groups or list(),
             "invalidate_sessions": False,

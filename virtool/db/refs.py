@@ -136,7 +136,7 @@ async def get_last_build(db, ref_id):
     return virtool.utils.base_processor(document)
 
 
-async def import_data(db, dispatch, data, user_id):
+async def import_data(db, dispatch, ref_id, data, user_id):
     """
     Import a previously exported Virtool kind reference.
 
@@ -145,6 +145,9 @@ async def import_data(db, dispatch, data, user_id):
 
     :param dispatch: the dispatcher's dispatch function
     :type dispatch: func
+
+    :param ref_id: the id of the ref to import data for
+    :type ref_id: str
 
     :param data: the kind data to import
     :type data: dict
@@ -274,6 +277,7 @@ async def import_data(db, dispatch, data, user_id):
             None,
             joined,
             description,
+            ref_id,
             user_id
         )
 

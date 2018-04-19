@@ -98,7 +98,7 @@ async def generate_sequence_fasta(db, sequence_id):
     sequence = await db.sequences.find_one(sequence_id, ["sequence", "kind_id", "isolate_id"])
 
     if not sequence:
-        return None
+        raise virtool.errors.DatabaseError("Sequence does not exist")
 
     kind_name, isolate_name = await get_kind_and_isolate_names(db, sequence["kind_id"], sequence["isolate_id"])
 
@@ -131,7 +131,7 @@ async def generate_kind_fasta(db, kind_id):
     kind = await db.kinds.find_one(kind_id, ["name", "isolates"])
 
     if not kind:
-        return None
+        raise virtool.errors.DatabaseError("Kind does not exist")
 
     fasta = list()
 

@@ -8,6 +8,7 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
+    "administrator",
     "force_reset",
     "groups",
     "identicon",
@@ -18,6 +19,7 @@ PROJECTION = [
 
 ACCOUNT_PROJECTION = [
     "_id",
+    "administrator",
     "email",
     "groups",
     "identicon",
