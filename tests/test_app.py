@@ -48,7 +48,7 @@ async def test_init_executors(loop):
     """
     app = web.Application(loop=loop)
 
-    virtool.app.init_executors(app)
+    await virtool.app.init_executors(app)
 
     assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
 
@@ -93,14 +93,14 @@ class TestInitSettings:
         assert app["settings"].stub.called
 
 
-def test_init_dispatcher(loop):
+async def test_init_dispatcher(loop):
     """
     Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
 
     """
     app = web.Application(loop=loop)
 
-    virtool.app.init_dispatcher(app)
+    await virtool.app.init_dispatcher(app)
 
     assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)
 
