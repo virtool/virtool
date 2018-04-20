@@ -18,3 +18,4 @@ settings.json
 .coverage.cog*
 .coverage
 .cache
+/.pytest_cache

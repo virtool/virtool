@@ -34,7 +34,7 @@ async def init_version(app):
         app["version"] = await find_server_version(app.loop, sys.path[0])
 
 
-def init_executors(app):
+async def init_executors(app):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
     ``app`` object.
@@ -51,7 +51,7 @@ def init_executors(app):
     app["process_executor"] = executor
 
 
-def init_resources(app):
+async def init_resources(app):
     app["resources"] = virtool.resources.get()
 
 
@@ -73,7 +73,7 @@ async def init_sentry(app):
         app["sentry"] = virtool.sentry.setup(app["version"])
 
 
-def init_dispatcher(app):
+async def init_dispatcher(app):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object and attaches it to
     the ``app`` object.
@@ -195,11 +195,11 @@ async def init_file_manager(app):
         app["file_manager"] = None
 
 
-def init_routes(app):
+async def init_routes(app):
     virtool.app_routes.setup_routes(app)
 
 
-def init_setup(app):
+async def init_setup(app):
     virtool.setup.setup_routes(app)
 
     app["setup"] = {

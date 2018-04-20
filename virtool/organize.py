@@ -90,6 +90,9 @@ async def organize_indexes(db):
 
 
 async def organize_kinds(db):
+    if "kinds" in await db.collection_names():
+        return
+
     if "viruses" in await db.collection_names():
         await db.viruses.rename("kinds")
 
