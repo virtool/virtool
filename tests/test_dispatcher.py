@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.api.utils
+import virtool.handlers.utils
 from virtool.app_dispatcher import Dispatcher
 
 
@@ -13,7 +13,7 @@ class TestConnection:
         """
         assert test_ws_connection.user_id == "test"
         assert test_ws_connection.groups == ["admin", "test"]
-        assert test_ws_connection.permissions == ["create_sample"]
+        assert test_ws_connection.permissions == ["modify_virus"]
 
     async def test_send(self, test_ws_connection):
         await test_ws_connection.send({
@@ -32,7 +32,7 @@ class TestConnection:
             },
             'interface': 'users',
             'operation': 'update'
-        }, virtool.api.utils.dumps)
+        }, virtool.handlers.utils.dumps)
 
     async def test_close(self, test_ws_connection):
         await test_ws_connection.close()

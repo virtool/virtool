@@ -8,7 +8,7 @@ from aiohttp import web
 import virtool.app
 import virtool.app_settings
 import virtool.app_dispatcher
-import virtool.jobs.manager
+import virtool.job_manager
 
 
 @pytest.mark.parametrize("override", [True, False])
@@ -114,7 +114,7 @@ async def test_init_job_manager(mocker, loop):
 
     await virtool.app.init_job_manager(app)
 
-    assert isinstance(app["job_manager"], virtool.jobs.manager.Manager)
+    assert isinstance(app["job_manager"], virtool.job_manager.Manager)
 
     assert app["job_manager"].loop == loop
     assert app["job_manager"].db is None

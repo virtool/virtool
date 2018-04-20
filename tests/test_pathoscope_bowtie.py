@@ -6,8 +6,8 @@ import pytest
 import filecmp
 from concurrent.futures import ProcessPoolExecutor
 
-import virtool.jobs.job
-import virtool.jobs.analysis
+import virtool.job
+import virtool.sample_analysis
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
@@ -24,30 +24,30 @@ TO_SUBTRACTION_PATH = os.path.join(TEST_FILES_PATH, "to_subtraction.json")
 
 
 @pytest.fixture("session")
-def kind_resource():
+def virus_resource():
     map_dict = dict()
-    kinds = dict()
+    viruses = dict()
 
     with open(VTA_PATH, "r") as handle:
         for line in handle:
             ref_id = line.split(",")[1]
 
-            kind_id = "kind_{}".format(ref_id)
+            virus_id = "virus_{}".format(ref_id)
 
-            map_dict[ref_id] = kind_id
+            map_dict[ref_id] = virus_id
 
-            kinds[kind_id] = {
-                "kind": kind_id,
+            viruses[virus_id] = {
+                "id": virus_id,
                 "version": 2
             }
 
-    return map_dict, kinds
+    return map_dict, viruses
 
 
 @pytest.fixture
-async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resource):
+async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, virus_resource):
     # Add index files.
-    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "kinds", "index"))
+    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "viruses", "index"))
 
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
@@ -64,17 +64,17 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resourc
         "data_path": str(tmpdir)
     }
 
-    sequence_kind_map, kind_dict = kind_resource
+    sequence_virus_map, virus_dict = virus_resource
 
     task_args = {
         "sample_id": "foobar",
         "analysis_id": "baz",
         "index_id": "index",
-        "sequence_kind_map": sequence_kind_map,
-        "kind_dict": kind_dict
+        "sequence_virus_map": sequence_virus_map,
+        "virus_dict": virus_dict
     }
 
-    job = virtool.jobs.analysis.PathoscopeBowtie(
+    job = virtool.sample_analysis.PathoscopeBowtie(
         loop,
         executor,
         test_motor,
@@ -159,16 +159,16 @@ async def test_mk_analysis_dir(mock_job):
     assert os.path.isdir(mock_job.analysis_path)
 
 
-async def test_map_kinds(tmpdir, mock_job):
+async def test_map_viruses(tmpdir, mock_job):
     os.makedirs(mock_job.analysis_path)
 
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
-    await mock_job.map_kinds()
+    await mock_job.map_viruses()
 
-    assert mock_job.intermediate["to_kinds"] == {
+    assert mock_job.intermediate["to_viruses"] == {
         "NC_013110",
         "NC_017938",
         "NC_006057",
@@ -197,7 +197,7 @@ async def test_map_isolates(tmpdir, mock_job):
     ]
 
     sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-    index_path = os.path.join(str(tmpdir), "reference", "kinds", "index")
+    index_path = os.path.join(str(tmpdir), "reference", "viruses", "index")
 
     for filename in os.listdir(index_path):
         shutil.copyfile(
@@ -254,7 +254,10 @@ async def test_pathoscope(mock_job):
     with open(DIAGNOSIS_PATH, "r") as handle:
         report_dict = json.load(handle)
 
-    mock_job.sequence_kind_map = {
+        for key in report_dict:
+            print(key)
+
+    mock_job.sequence_virus_map = {
         "NC_016509": "foobar",
         "NC_001948": "foobar",
         "13TF149_Reovirus_TF1_Seg06": "reo",
@@ -282,7 +285,7 @@ async def test_pathoscope(mock_job):
         "NC_007448": "foobar"
     }
 
-    mock_job.kind_dict = {
+    mock_job.virus_dict = {
         "foobar": {
             "name": "Foobar",
             "version": 10

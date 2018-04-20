@@ -1,5 +1,4 @@
 import logging
-
 from raven import Client
 from raven.conf import setup_logging
 from raven.handlers.logging import SentryHandler
