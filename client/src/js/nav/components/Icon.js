@@ -57,7 +57,9 @@ class NotificationIcon extends React.Component {
     render () {
 
         const availableUpdates = this.props.updates ? this.props.updates.releases.length : null;
-        const unbuiltIndex = this.props.unbuilt ? this.props.unbuilt.history.length : null;
+        const unbuiltIndex = ((this.props.modifiedVirusCount || this.props.modifiedCount) && this.props.unbuilt)
+            ? this.props.unbuilt.history.length
+            : null;
 
         const iconStyle = (availableUpdates || unbuiltIndex) ? "icon-pulse" : "icon";
 
@@ -86,7 +88,9 @@ class NotificationIcon extends React.Component {
 
 const mapStateToProps = (state) => ({
     updates: state.updates.software,
-    unbuilt: state.indexes.unbuilt
+    unbuilt: state.indexes.unbuilt,
+    modifiedVirusCount: state.indexes.modified_virus_count,
+    modifiedCount: state.viruses.modified_count
 });
 
 const mapDispatchToProps = (dispatch) => ({
