@@ -1,18 +1,19 @@
-import aiohttp
 import asyncio
 import json
 import logging
-import pymongo
 import os
-import semver
-import sys
 import shutil
+import sys
 import tempfile
+
+import aiohttp
+import pymongo
+import semver
 
 import virtool.app
 import virtool.errors
 import virtool.github
-import virtool.proxy
+import virtool.http.proxy
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -37,8 +38,14 @@ async def get_releases(db, settings, channel, server_version):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
+
     :param channel: the software channel to use
     :type channel: str
+
+    :param server_version: the current server version
+    :type server_version: str
 
     :return: a list of Github releases
     :rtype: Coroutine[list]
@@ -50,7 +57,7 @@ async def get_releases(db, settings, channel, server_version):
     url = "https://www.virtool.ca/releases"
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, url) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, url) as resp:
             data = await resp.text()
             data = json.loads(data)
 

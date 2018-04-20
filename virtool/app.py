@@ -1,13 +1,13 @@
-import aiofiles
 import concurrent.futures
 import logging
 import os
+import ssl
+import subprocess
+import sys
+
+import aiofiles
 import pymongo
 import pymongo.errors
-import ssl
-import sys
-import subprocess
-
 from aiohttp import web
 from motor import motor_asyncio
 
@@ -15,13 +15,13 @@ import virtool.app_auth
 import virtool.app_dispatcher
 import virtool.app_routes
 import virtool.app_settings
-import virtool.job_manager
-import virtool.job_resources
 import virtool.errors
-import virtool.error_pages
-import virtool.file_manager
+import virtool.files
+import virtool.http.errors
+import virtool.http.proxy
+import virtool.jobs.manager
 import virtool.organize
-import virtool.proxy
+import virtool.resources
 import virtool.sentry
 import virtool.setup
 import virtool.utils
@@ -52,7 +52,7 @@ def init_executors(app):
 
 
 def init_resources(app):
-    app["resources"] = virtool.job_resources.get()
+    app["resources"] = virtool.resources.get()
 
 
 async def init_settings(app):
@@ -116,52 +116,21 @@ async def init_check_db(app):
 
     db = app["db"]
 
-    logger.info("Checking viruses...")
-    await virtool.organize.organize_viruses(db, logger.info)
-
-    logger.info("Checking hmms...")
-    await virtool.organize.organize_hmms(db)
-
-    logger.info("Checking jobs...")
-    await virtool.organize.organize_jobs(db)
-
-    logger.info("Checking samples...")
-    await virtool.organize.organize_samples(db, app["settings"])
-
-    logger.info("Checking analyses...")
-    await virtool.organize.organize_analyses(db, logger.info)
-
-    logger.info("Checking indexes...")
-    await virtool.organize.organize_indexes(db)
-
-    logger.info("Checking subtraction...")
-    await virtool.organize.organize_subtraction(db, app["settings"])
-
-    logger.info("Checking groups...")
-    await virtool.organize.organize_groups(db)
-
-    logger.info("Checking users...")
-    await virtool.organize.organize_users(db)
-
-    logger.info("Checking status...")
-    await virtool.organize.organize_status(db)
-
-    logger.info("Checking files...")
-    await virtool.organize.organize_files(db)
+    logger.info("Checking database...")
+    await virtool.organize.organize(db, app["version"])
 
     logger.info("Creating database indexes...")
-
     await db.analyses.create_index("sample.id")
-    await db.history.create_index("virus.id")
+    await db.history.create_index("kind.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
     await db.indexes.create_index("version", unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
     await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("virus_id")
-    await db.viruses.create_index("name")
-    await db.viruses.create_index("abbreviation")
+    await db.sequences.create_index("kind_id")
+    await db.kinds.create_index("name")
+    await db.kinds.create_index("abbreviation")
 
 
 async def init_client_path(app):
@@ -187,7 +156,7 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["job_manager"] = virtool.job_manager.Manager(
+    app["job_manager"] = virtool.jobs.manager.Manager(
         app.loop,
         app["db"],
         app["settings"],
@@ -210,7 +179,7 @@ async def init_file_manager(app):
     files_path = os.path.join(app["settings"].get("data_path"), "files")
 
     if os.path.isdir(files_path):
-        app["file_manager"] = virtool.file_manager.Manager(
+        app["file_manager"] = virtool.files.Manager(
             app.loop,
             app["executor"],
             app["db"],
@@ -291,8 +260,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.proxy.middleware,
-        virtool.error_pages.middleware
+        virtool.http.proxy.middleware,
+        virtool.http.errors.middleware
     ]
 
     if skip_setup:
