@@ -4,11 +4,21 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
+import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
-import { Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
-import {createFindURL, getFindTerm} from "../../utils";
+import {
+    Alert,
+    Button,
+    Flex,
+    FlexItem,
+    Icon,
+    ListGroupItem,
+    LoadingPlaceholder,
+    NoneFound,
+    ViewHeader
+} from "../../base";
+import { createFindURL, getFindTerm } from "../../utils";
 
 const SubtractionList = (props) => {
 
@@ -58,15 +68,10 @@ const SubtractionList = (props) => {
 
     if (!props.ready_host_count) {
         alert = (
-            <Alert bsStyle="warning">
-                <Flex alignItems="center">
-                    <Icon name="notification" />
-                    <FlexItem pad={5}>
-                        <strong>
-                            A host genome must be added before samples can be created and analyzed.
-                        </strong>
-                    </FlexItem>
-                </Flex>
+            <Alert bsStyle="warning" icon="notification">
+                <strong>
+                    A host genome must be added before samples can be created and analyzed.
+                </strong>
             </Alert>
         );
     }

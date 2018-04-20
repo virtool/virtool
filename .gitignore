@@ -9,6 +9,7 @@ __pycache__
 /client/node_modules
 /client/dist
 /client/doc
+/client/coverage
 /.idea
 settings.json
 /doc/_build

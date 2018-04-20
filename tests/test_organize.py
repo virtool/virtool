@@ -1,6 +1,6 @@
 import pymongo
 import pytest
-import aiohttp.test_utils
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.organize
 
@@ -135,44 +135,37 @@ async def test_organize_groups(test_motor):
 
     documents = await test_motor.groups.find().to_list(None)
 
+    import pprint
+    pprint.pprint(documents)
+
     assert documents == [{
         "_id": "foobar",
         "permissions": {
             "cancel_job": False,
             "create_sample": True,
-            "manage_users": False,
             "modify_hmm": False,
-            "modify_settings": False,
             "modify_subtraction": False,
-            "modify_virus": False,
-            "rebuild_index": False,
             "remove_file": False,
             "remove_job": False,
-            "remove_virus": False,
             "upload_file": False
         }
     }]
 
 
-@pytest.mark.parametrize("collection_name,func", [
-    ("history", virtool.organize.organize_history),
-    ("indexes", virtool.organize.organize_indexes)
-], ids=["history", "indexes"])
-async def test_organize_history_and_indexes(collection_name, func, mocker):
-    m_add_original_ref = mocker.patch("virtool.organize.add_original_ref", new=aiohttp.test_utils.make_mocked_coro())
-
+async def test_organize_indexes(mocker):
+    m_add_original_ref = mocker.patch("virtool.organize.add_original_ref", new=make_mocked_coro())
     m_db = mocker.Mock()
 
-    await func(m_db)
+    await virtool.organize.organize_indexes(m_db)
 
-    m_add_original_ref.assert_called_with(getattr(m_db, collection_name))
+    m_add_original_ref.assert_called_with(m_db.indexes)
 
 
-@pytest.mark.parametrize("has_species", [True, False])
+@pytest.mark.parametrize("has_kind", [True, False])
 @pytest.mark.parametrize("has_references", [True, False])
-async def test_organize_references(has_references, has_species, mocker, test_motor):
-    if has_species:
-        await test_motor.species.insert_one({
+async def test_organize_references(has_references, has_kind, mocker, test_motor):
+    if has_kind:
+        await test_motor.kinds.insert_one({
             "_id": "foobar"
         })
 
@@ -181,13 +174,13 @@ async def test_organize_references(has_references, has_species, mocker, test_mot
             "_id": "baz"
         })
 
-    m = mocker.patch("virtool.references.create_original", new=aiohttp.test_utils.make_mocked_coro())
+    m = mocker.patch("virtool.db.refs.create_original", new=make_mocked_coro())
 
     await virtool.organize.organize_references(test_motor)
 
     document = await test_motor.references.find_one()
 
-    if has_species and not has_references:
+    if has_kind and not has_references:
         assert document is None
         m.assert_called_with(test_motor,)
 
@@ -201,6 +194,7 @@ async def test_organize_references(has_references, has_species, mocker, test_mot
 
 
 async def test_organize_sequences(test_motor, test_random_alphanumeric):
+
     await test_motor.sequences.insert_many([
         {
             "_id": "foo"
@@ -234,7 +228,7 @@ async def test_organize_sequences(test_motor, test_random_alphanumeric):
     ]
 
 
-async def test_organize_species(test_motor):
+async def test_organize_kinds(test_motor):
     await test_motor.viruses.insert_many([
         {
             "_id": 1
@@ -244,9 +238,9 @@ async def test_organize_species(test_motor):
         }
     ])
 
-    await virtool.organize.organize_species(test_motor)
+    await virtool.organize.organize_kinds(test_motor)
 
-    assert await test_motor.species.find().to_list(None) == [
+    assert await test_motor.kinds.find().to_list(None) == [
         {
             "_id": 1,
             "ref": ORIGINAL_REF
@@ -292,7 +286,7 @@ async def test_organize_status(has_update, has_version, test_motor):
 
 
 async def test_organize_subtraction(mocker):
-    m_delete_unready = mocker.patch("virtool.organize.delete_unready", new=aiohttp.test_utils.make_mocked_coro())
+    m_delete_unready = mocker.patch("virtool.organize.delete_unready", new=make_mocked_coro())
 
     m_db = mocker.Mock()
 

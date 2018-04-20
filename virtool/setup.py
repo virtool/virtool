@@ -1,18 +1,18 @@
+import copy
+import logging
 import os
 import sys
-import copy
+
 import motor.motor_asyncio
-import logging
 import pymongo.errors
 from aiohttp import web
-from mako.template import Template
 from cerberus import Validator
+from mako.template import Template
 
 import virtool.app_settings
-import virtool.user
-import virtool.user_permissions
+import virtool.users
 import virtool.utils
-from virtool.handlers.utils import json_response
+from virtool.api.utils import json_response
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ async def setup_db(req):
         "db_name": {"type": "string", "coerce": lambda x: x if x else "virtool", "required": True, "empty": False}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data = v.document
 
@@ -127,7 +127,7 @@ async def setup_user(req):
         "password_confirm": {"type": "string", "required": True},
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data = v.document
 
@@ -135,7 +135,7 @@ async def setup_user(req):
         req.app["setup"]["errors"]["password_confirmation_error"] = False
         req.app["setup"].update({
             "first_user_id": data["user_id"],
-            "first_user_password": virtool.user.hash_password(data["password"])
+            "first_user_password": virtool.users.hash_password(data["password"])
         })
     else:
         req.app["setup"]["errors"]["password_confirmation_error"] = True
@@ -154,7 +154,7 @@ async def setup_data(req):
         "data_path": {"type": "string", "coerce": lambda x: x if x else "data", "required": True}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data_path = v.document["data_path"]
 
@@ -203,7 +203,7 @@ async def setup_watch(req):
         "watch_path": {"type": "string", "coerce": lambda x: x if x else "watch", "required": True}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     watch_path = v.document["watch_path"]
 
@@ -288,14 +288,15 @@ async def save_and_reload(req):
     await connection[db_name].users.insert_one({
         "_id": req.app["setup"]["first_user_id"],
         # A list of group _ids the user is associated with.
-        "groups": ["administrator"],
+        "administrator": True,
+        "groups": list(),
         "settings": {
             "skip_quick_analyze_dialog": True,
             "show_ids": False,
             "show_versions": False,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
-        "permissions": {p: True for p in virtool.user_permissions.PERMISSIONS},
+        "permissions": {p: True for p in virtool.users.PERMISSIONS},
         "password": req.app["setup"]["first_user_password"],
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
@@ -309,7 +310,7 @@ async def save_and_reload(req):
 
     subdirs = [
         "files",
-        "reference/viruses",
+        "reference/kinds",
         "reference/subtraction",
         "samples",
         "hmm",

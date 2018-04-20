@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.user_permissions
+import virtool.users
 
 
 @pytest.fixture
@@ -17,6 +17,6 @@ def user_document():
             "show_versions": True,
             "skip_quick_analyze_dialog": True
         },
-        "permissions": {p: False for p in virtool.user_permissions.PERMISSIONS},
+        "permissions": {p: False for p in virtool.users.PERMISSIONS},
         "force_reset": False
     }

@@ -7,85 +7,95 @@ import { getTaskDisplayName } from "../../../utils";
 
 import TaskField from "./TaskField";
 
+const getInitialState = () => ({
+    exceedsError: false,
+    zeroError: false
+});
+
 const readOnlyFields = ["create_subtraction", "rebuild_index"];
 
 class Task extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = {
-            error: false
-        };
+        this.state = getInitialState();
     }
 
     componentWillReceiveProps (nextProps) {
         const { proc, mem, inst } = this.props;
 
         if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
-            this.setState({ error: false });
+            this.handleClearError();
         }
     }
 
     handleChangeLimit = (name, value) => {
-        this.setState({ error: false });
+        this.handleClearError();
         this.props.onChangeLimit(this.props.taskPrefix, name, value);
     };
 
     handleClearError = () => {
-        this.setState({ error: false });
+        this.setState(getInitialState());
     };
 
-    handleInvalid = () => {
-        this.setState({ error: true });
+    handleInvalid = (e) => {
+        const zeroError = e.target.value === "0";
+
+        this.setState({
+            exceedsError: !zeroError,
+            zeroError
+        });
     };
 
     render () {
 
-        const { inst, mem, proc, taskPrefix } = this.props;
+        const { inst, mem, proc, taskPrefix, currentLimitProc, currentLimitMem } = this.props;
 
         const readOnly = includes(readOnlyFields, taskPrefix);
 
-        const upperLimits = this.props.upperLimits ? this.props.upperLimits : null;
-        const procUpperLimit = upperLimits ? upperLimits.proc.length : proc;
-        const memUpperLimit = upperLimits
-            ? parseFloat((upperLimits.mem.total / Math.pow(1024, 3)).toFixed(1))
-            : mem;
+        let error;
 
+        if (this.state.zeroError) {
+            error = "Value cannot be 0";
+        }
 
-        const errorMessage = (
-            <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
+        if (this.state.exceedsError) {
+            error = "Value cannot exceed system resource limits";
+        }
+
+        const errorComponent = (
+            <div className={error ? "input-form-error" : "input-form-error-none"}>
                 <span className="input-error-message">
-                    {this.state.error ? "Cannot go over or under resource limits" : "None"}
+                    {error || "None"}
                 </span>
             </div>
         );
 
         return (
-            <ListGroupItem allowFocus className={this.state.error ? "list-group-item-danger" : ""}>
+            <ListGroupItem allowFocus bsStyle={this.state.error ? "danger" : null}>
                 <h5><strong>{getTaskDisplayName(taskPrefix)}</strong></h5>
                 <Row>
                     <Col md={4}>
                         <TaskField
                             name="proc"
-                            value={proc > procUpperLimit ? procUpperLimit : proc}
+                            value={currentLimitProc < proc ? currentLimitProc : proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
                             lowerLimit={this.props.procLowerLimit}
-                            upperLimit={procUpperLimit}
+                            upperLimit={currentLimitProc}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
                     <Col md={4}>
                         <TaskField
                             name="mem"
-                            value={mem > memUpperLimit ? memUpperLimit : mem}
+                            value={currentLimitMem < mem ? currentLimitMem : mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
                             lowerLimit={this.props.memLowerLimit}
-                            upperLimit={memUpperLimit}
+                            upperLimit={currentLimitMem}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
@@ -101,7 +111,8 @@ class Task extends React.Component {
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
-                    {errorMessage}
+
+                    {errorComponent}
                 </Row>
             </ListGroupItem>
         );
@@ -116,7 +127,8 @@ Task.propTypes = {
     onChangeLimit: PropTypes.func,
     procLowerLimit: PropTypes.number,
     memLowerLimit: PropTypes.number,
-    upperLimits: PropTypes.object
+    currentLimitProc: PropTypes.number,
+    currentLimitMem: PropTypes.number
 };
 
 export default Task;

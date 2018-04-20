@@ -161,9 +161,12 @@ export const simpleActionCreator = (type) => (
  * @type {object}
  */
 export const taskDisplayNames = {
+    create_sample: "Create Sample",
+    create_subtraction: "Create Subtraction",
     nuvs: "NuVs",
     pathoscope_bowtie: "PathoscopeBowtie",
-    pathoscope_snap: "PathoscopeSNAP"
+    pathoscope_snap: "PathoscopeSNAP",
+    rebuild_index: "Rebuild Index"
 };
 
 /**

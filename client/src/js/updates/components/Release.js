@@ -1,18 +1,14 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import CX from "classnames";
 import React from "react";
 import Marked from "marked";
 import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
+import { Button, Col, ListGroupItem, Row } from "react-bootstrap";
 
-export const renderReleaseMarkdown = (body) => {
+import { Icon } from "../../base";
+
+export const ReleaseMarkdown = ({ body, noMargin = false }) => {
+
     let html = Marked(body);
 
     html = replace(
@@ -21,7 +17,11 @@ export const renderReleaseMarkdown = (body) => {
         "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
     );
 
-    return <div style={{marginTop: "10px"}} dangerouslySetInnerHTML={{__html: html}} />;
+    return (
+        <div className={CX("markdown-container", {"no-margin": noMargin})}>
+            <div dangerouslySetInnerHTML={{__html: html}} />
+        </div>
+    );
 };
 
 export default class Release extends React.Component {
@@ -40,21 +40,48 @@ export default class Release extends React.Component {
         html_url: PropTypes.string
     };
 
+    handleClick = () => {
+        this.setState({
+            in: !this.state.in
+        });
+    };
+
     render () {
+
+        const caret = (
+            <Icon
+                className="fixed-width"
+                name={`caret-${this.state.in ? "down" : "right"}`}
+            />
+        );
+
+        let markdown;
+
+        if (this.state.in) {
+            markdown = (
+                <Col xs={12}>
+                    <ReleaseMarkdown body={this.props.body} />
+                </Col>
+            );
+        }
+
         return (
             <ListGroupItem>
                 <Row>
                     <Col xs={12}>
-                        <strong>{this.props.name}</strong>
-                        <span className="pull-right">
-                            <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                                <i className="i-github" /> GitHub
-                            </Button>
-                        </span>
+                        <Row>
+                            <Col xs={9} style={{cursor: "pointer"}} onClick={this.handleClick}>
+                                {caret} <strong>{this.props.name}</strong>
+                            </Col>
+                            <Col xs={3}>
+                                <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
+                                    <i className="i-github" /> GitHub
+                                </Button>
+                            </Col>
+                        </Row>
                     </Col>
-                    <Col xs={12}>
-                        {renderReleaseMarkdown(this.props.body)}
-                    </Col>
+
+                    {markdown}
                 </Row>
             </ListGroupItem>
         );

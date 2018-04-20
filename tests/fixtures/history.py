@@ -7,7 +7,7 @@ def test_change(static_time):
     return {
         "_id": "6116cba1.1",
         "method_name": "edit",
-        "description": "Edited virus Prunus virus E",
+        "description": "Edited Prunus virus E",
         "created_at": static_time,
         "diff": [
             ["change", "abbreviation", ["PVF", ""]],
@@ -18,10 +18,13 @@ def test_change(static_time):
             "id": "unbuilt",
             "version": "unbuilt"
         },
+        "ref": {
+            "id": "hxn167"
+        },
         "user": {
             "id": "test"
         },
-        "virus": {
+        "kind": {
             "id": "6116cba1",
             "name": "Prunus virus F",
             "version": 1
@@ -39,9 +42,9 @@ def test_changes(test_change):
 
 
 @pytest.fixture
-def test_virus_edit():
+def test_kind_edit():
     """
-    An :class:`tuple` containing old and new virus documents for testing history diffing.
+    An :class:`tuple` containing old and new kind documents for testing history diffing.
 
     """
     return (
@@ -68,6 +71,9 @@ def test_virus_edit():
                     "source_type": "isolate"
                 }
             ],
+            "ref": {
+                "id": "hxn167"
+            },
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus F",
@@ -97,6 +103,9 @@ def test_virus_edit():
                     "source_type": "isolate"
                 }
             ],
+            "ref": {
+                "id": "hxn167"
+            },
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus E",
@@ -134,12 +143,15 @@ def create_mock_history(test_motor):
                                     "host": "sweet cherry",
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "virus_id": "6116cba1",
+                                    "kind_id": "6116cba1",
                                     "segment": None
                                 }
                             ]
                         }
                     ],
+                    "ref": {
+                        "id": "hxn167"
+                    },
                     "schema": [],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
@@ -155,7 +167,10 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "ref": {
+                    "id": "hxn167"
+                },
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 0
@@ -177,7 +192,10 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "ref": {
+                    "id": "hxn167"
+                },
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -199,7 +217,10 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "ref": {
+                    "id": "hxn167"
+                },
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 2
@@ -221,7 +242,7 @@ def create_mock_history(test_motor):
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "virus_id": "6116cba1",
+                            "kind_id": "6116cba1",
                             "segment": None
                         }],
                         "source_name": "8816-v2",
@@ -235,7 +256,10 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "ref": {
+                    "id": "hxn167"
+                },
+                "kind": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": 3
@@ -243,7 +267,7 @@ def create_mock_history(test_motor):
             }
         ]
 
-        virus = None
+        kind = None
 
         if remove:
             documents.append({
@@ -259,6 +283,9 @@ def create_mock_history(test_motor):
                     "lower_name": "prunus virus f",
                     "verified": False,
                     "name": "Test Virus",
+                    "ref": {
+                        "id": "hxn167"
+                    },
                     "version": 3,
                     "schema": [],
                 },
@@ -266,18 +293,21 @@ def create_mock_history(test_motor):
                     "id": "unbuilt",
                     "version": "unbuilt"
                 },
+                "ref": {
+                    "id": "hxn167"
+                },
                 "method_name": "remove",
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": "removed"
                 }
             })
         else:
-            virus = {
+            kind = {
                 "_id": "6116cba1",
                 "abbreviation": "TST",
                 "imported": True,
@@ -286,15 +316,17 @@ def create_mock_history(test_motor):
                 "lower_name": "prunus virus f",
                 "verified": False,
                 "name": "Test Virus",
+                "ref": {
+                    "id": "hxn167"
+                },
                 "version": 3,
                 "schema": [],
             }
 
-            await test_motor.viruses.insert_one(virus)
+            await test_motor.kinds.insert_one(kind)
 
         await test_motor.history.insert_many(documents)
 
-        return virus
+        return kind
 
     return func
-

@@ -1,13 +1,13 @@
-import os
-import sys
 import json
 import logging
+import os
+import sys
+
 import aiofiles
 from cerberus import Validator
 
-import virtool.job_resources
+import virtool.resources
 import virtool.utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,9 @@ SCHEMA = {
     "create_subtraction_proc": get_default_integer(2),
     "create_subtraction_mem": get_default_integer(4),
     "create_subtraction_inst": get_default_integer(2),
-    "rebuild_index_proc": get_default_integer(2),
-    "rebuild_index_mem": get_default_integer(4),
-    "rebuild_index_inst": get_default_integer(1),
+    "build_index_proc": get_default_integer(2),
+    "build_index_mem": get_default_integer(4),
+    "build_index_inst": get_default_integer(1),
 
     # Samples
     "sample_group": {"type": "string", "default": "none"},
@@ -93,13 +93,9 @@ SCHEMA = {
     "cert_path": {"type": "string", "default": ""},
     "key_path": {"type": "string", "default": ""},
 
-    # Virus settings
+    # kind settings
     "restrict_source_types": get_default_boolean(True),
-    "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]},
-
-    # Analysis settings
-    "use_internal_control": get_default_boolean(False),
-    "internal_control_id": {"type": "string", "default": ""}
+    "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]}
 }
 
 TASK_SPECIFIC_LIMIT_KEYS = [
@@ -111,32 +107,9 @@ TASK_SPECIFIC_LIMIT_KEYS = [
     "nuvs_mem",
     "pathoscope_bowtie_proc",
     "pathoscope_bowtie_mem",
-    "rebuild_index_proc",
-    "rebuild_index_mem"
+    "build_index_proc",
+    "build_index_mem"
 ]
-
-
-async def attach_virus_name(db, settings):
-    internal_control_id = settings.get("internal_control_id")
-
-    virus = None
-
-    if internal_control_id:
-        virus = await db.viruses.find_one(internal_control_id, ["name"])
-
-    if not virus:
-        settings.set("internal_control_id", "")
-        await settings.write()
-        return settings.data
-
-    to_send = dict(settings.data)
-
-    to_send["internal_control_id"] = {
-        "id": internal_control_id,
-        "name": virus["name"]
-    }
-
-    return to_send
 
 
 def check_resource_limits(proc, mem, settings_data):
@@ -150,8 +123,8 @@ def check_resource_limits(proc, mem, settings_data):
     :param mem: memory in gigabytes
     :type mem: int
 
-    :param settings: the server settings
-    :type settings: dict
+    :param settings_data: the server settings
+    :type settings_data: dict
 
     :return: an error message if applicable
     :rtype: Union[str, None]
@@ -159,7 +132,7 @@ def check_resource_limits(proc, mem, settings_data):
     """
     if proc or mem:
 
-        resources = virtool.job_resources.get()
+        resources = virtool.resources.get()
 
         if proc:
             if proc > len(resources["proc"]):
@@ -186,8 +159,8 @@ def check_task_specific_limits(proc, mem, update):
     :param mem: memory in gigabytes
     :type mem: int
 
-    :param settings: the server settings
-    :type settings: dict
+    :param update: the limit update to be applied
+    :type update: dict
 
     :return: ab error message if applicable
     :rtype Union[str, None]
@@ -202,7 +175,6 @@ def check_task_specific_limits(proc, mem, update):
 
             if "_mem" in key and value > mem:
                 return "Exceeds mem resource specific limit"
-
 
 
 async def write_settings_file(path, settings_dict):
@@ -240,6 +212,13 @@ class Settings:
                 content = json.loads(await f.read())
         except IOError:
             content = dict()
+
+        if "rebuild_index_proc" in content:
+            content.update({
+                "build_index_proc": content["rebuild_index_proc"],
+                "build_index_mem": content["rebuild_index_mem"],
+                "build_index_inst": content["rebuild_index_inst"]
+            })
 
         self.data = self.validate(content)
 

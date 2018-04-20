@@ -1,7 +1,8 @@
-import virtool.references
+import virtool.db.refs
+import virtool.db.utils
+import virtool.refs
+import virtool.users
 import virtool.utils
-from virtool.user_permissions import PERMISSIONS
-
 
 REF_QUERY = {
     "ref": {
@@ -27,13 +28,12 @@ async def delete_unready(collection):
 async def organize(db, server_version):
     await organize_analyses(db)
     await organize_files(db)
-    await organize_groups(db)
     await organize_history(db)
     await organize_indexes(db)
     await organize_references(db)
-    await organize_species(db)
+    await organize_groups(db)
+    await organize_kinds(db)
     await organize_sequences(db)
-    await organize_species(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_users(db)
@@ -63,28 +63,48 @@ async def organize_groups(db):
     async for group in db.groups.find():
         await db.groups.update_one({"_id": group["_id"]}, {
             "$set": {
-                "permissions": {perm: group["permissions"].get(perm, False) for perm in PERMISSIONS}
+                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
             }
         })
 
 
 async def organize_history(db):
-    await add_original_ref(db.history)
+    document_ids = await db.history.distinct("_id", {"ref": {"$exists": False}})
+
+    document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
+
+    await db.history.update_many({"_id": {"$in": document_ids}}, {
+        "$set": {
+            "diff.ref": {
+                "id": "original"
+            },
+            "ref": {
+                "id": "original"
+            }
+        }
+    })
 
 
 async def organize_indexes(db):
     await add_original_ref(db.indexes)
 
 
+async def organize_kinds(db):
+    if "viruses" in await db.collection_names():
+        await db.viruses.rename("kinds")
+
+    await add_original_ref(db.kinds)
+
+
 async def organize_references(db):
-    if await db.species.count() and not await db.references.count():
-        await virtool.references.create_original(db)
+    if await db.kinds.count() and not await db.references.count():
+        await virtool.db.refs.create_original(db)
 
 
 async def organize_sequences(db):
     async for document in db.sequences.find(REF_QUERY):
         document.update({
-            "_id": await virtool.utils.get_new_id(db.sequences),
+            "_id": await virtool.db.utils.get_new_id(db.sequences),
             "accession": document["_id"],
             "ref": {
                 "id": "original"
@@ -94,13 +114,6 @@ async def organize_sequences(db):
         await db.sequences.insert_one(document)
 
     await db.sequences.delete_many(REF_QUERY)
-
-
-async def organize_species(db):
-    if "viruses" in await db.collection_names():
-        await db.viruses.rename("species")
-
-    await add_original_ref(db.species)
 
 
 async def organize_status(db, server_version):
