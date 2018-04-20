@@ -96,20 +96,6 @@ describe("<InputSave />", () => {
             expect(wrapper.find(FormControl).length).toEqual(1);
         });
 
-        it("onChange triggers state change that updates input value", () => {
-            props = {
-                onSave: jest.fn()
-            };
-            wrapper = shallow(<InputSave {...props} />);
-        });
-
-        it("onBlur triggers handler", () => {
-            props = {
-                onSave: jest.fn()
-            };
-            wrapper = shallow(<InputSave {...props} />);
-        });
-
     });
 
     describe("Button subcomponent", () => {
