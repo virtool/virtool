@@ -10,52 +10,45 @@ import virtool.refs
 import virtool.utils
 
 
-async def clone(db, name, user_id, source_id):
+async def check_import_abbreviation(db, kind_document, lower_name=None):
+    """
+    Check if the abbreviation for a kind document to be imported already exists in the database. If the abbreviation
+    exists, set the ``abbreviation`` field in the kind document to an empty string and return warning text to
+    send to the client.
 
-    source = await db.references.find_one(source_id)
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    if source is None:
-        raise ValueError("Source not found")
+    :param kind_document: the kind document that is being imported
+    :type kind_document: dict
 
-    ref = await create(
-        db,
-        name,
-        source["organism"],
-        user_id=user_id,
-        data_type=source["data_type"],
-        users=[virtool.refs.get_owner_user(user_id)],
-        cloned_from={
-            "id": source["_id"]
-        }
-    )
+    :param lower_name: the name of the kind coerced to lowercase
+    :type lower_name: str
 
-    created_at = virtool.utils.timestamp()
+    """
+    lower_name = lower_name or kind_document["name"].lower()
 
-    async for kind in db.kinds.find({"_id": source["_id"]}):
+    # Check if abbreviation exists already.
+    kind_with_abbreviation = None
 
-        kind_id = await virtool.db.utils.get_new_id("kinds")
+    # Don't count empty strings as duplicate abbreviations!
+    if kind_document["abbreviation"]:
+        kind_with_abbreviation = await db.kinds.find_one({"abbreviation": kind_document["abbreviation"]})
 
-        kind.update({
-            "_id": kind_id,
-            "version": 0,
-            "created_at": created_at,
-            "last_indexed_version": None,
-            "ref": {
-                "id": ref["_id"]
-            },
-            "user": {
-                "id": user_id
-            }
-        })
+    if kind_with_abbreviation and kind_with_abbreviation["lower_name"] != lower_name:
+        # Remove the imported kind's abbreviation because it is already assigned to an existing kind.
+        kind_document["abbreviation"] = ""
 
-        issues = await virtool.db.kinds.verify(db, kind_id, kind)
+        # Record a message for the user.
+        return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
+            kind_with_abbreviation["abbreviation"], kind_with_abbreviation["name"], kind_document["name"]
+        )
 
-        kind["verified"] = issues is None
-
-        await db.kinds.insert(kind)
+    return None
 
 
-async def create(db, name, organism, user_id=None, cloned_from=None, created_at=None, data_type="whole_genome", github=None, imported_from=None, public=False, ref_id=None, ready=False, users=None):
+async def create(db, name, organism, user_id, description="", created_at=None, data_type="genome", public=False,
+                 ref_id=None):
 
     created_at = created_at or virtool.utils.timestamp()
 
@@ -64,46 +57,24 @@ async def create(db, name, organism, user_id=None, cloned_from=None, created_at=
 
     ref_id = ref_id or await virtool.db.utils.get_new_id(db.kinds)
 
-    user = None
+    user = {
+        "id": user_id
+    }
 
-    if user_id:
-        user = {
-            "id": user_id
-        }
-
-    users = users or list()
-
-    if not any(user["id"] == user_id for user in users):
-        users.append(virtool.refs.get_owner_user(user_id))
+    users = [virtool.refs.get_owner_user(user_id)]
 
     document = {
         "_id": ref_id,
         "created_at": created_at,
         "data_type": data_type,
+        "description": description,
         "name": name,
         "organism": organism,
         "public": public,
-        "ready": ready,
+        "ready": False,
         "users": users,
         "user": user
     }
-
-    if len([x for x in (cloned_from, github) if x]):
-        raise ValueError("Can only take one of cloned_from, github, imported_from")
-
-    if cloned_from:
-        source = await db.references.find_one({"_id": cloned_from}, ["name", "organism"])
-
-        if source is None:
-            raise virtool.errors.DatabaseError("Clone source ref does not exist")
-
-        document["cloned_from"] = {
-            "id": cloned_from,
-            "name": source["name"]
-        }
-
-    if github:
-        document["github"] = github
 
     await db.references.insert_one(document)
 
@@ -131,9 +102,45 @@ async def create_original(db):
     return await create(db, "Original", "Virus", created_at=created_at, public=True, ref_id="original", ready=ready)
 
 
-async def get_last_build(db, ref_id):
-    document = await db.indexes.find_one({"ref.id": ref_id}, ["created_at", "user"])
-    return virtool.utils.base_processor(document)
+async def delete_for_import(db, kind_id, user_id):
+    """
+    Delete a kind document and its sequences as part of an import process.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param kind_id: the ``kind_id`` to remove
+    :type kind_id: str
+
+    :param user_id: the requesting ``user_id``
+    :type user_id: str
+
+    """
+    joined = await virtool.db.kinds.join(db, kind_id)
+
+    if not joined:
+        raise ValueError("Could not find kind_id {}".format(kind_id))
+
+    # Perform database operations.
+    await db.sequences.delete_many({"isolate_id": {"$in": virtool.kinds.extract_isolate_ids(joined)}})
+
+    await db.kinds.delete_one({"_id": kind_id})
+
+    # Put an entry in the history collection saying the kind was removed.
+    change = await virtool.db.history.add(
+        db,
+        "remove",
+        joined,
+        None,
+        "Removed",
+        user_id
+    )
+
+    change_to_dispatch = {key: change[key] for key in virtool.db.history.LIST_PROJECTION}
+
+    change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
+
+    return kind_id, change_to_dispatch
 
 
 async def import_data(db, dispatch, ref_id, data, user_id):
@@ -284,43 +291,6 @@ async def import_data(db, dispatch, ref_id, data, user_id):
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
 
-async def check_import_abbreviation(db, kind_document, lower_name=None):
-    """
-    Check if the abbreviation for a kind document to be imported already exists in the database. If the abbreviation
-    exists, set the ``abbreviation`` field in the kind document to an empty string and return warning text to
-    send to the client.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param kind_document: the kind document that is being imported
-    :type kind_document: dict
-
-    :param lower_name: the name of the kind coerced to lowercase
-    :type lower_name: str
-
-    """
-    lower_name = lower_name or kind_document["name"].lower()
-
-    # Check if abbreviation exists already.
-    kind_with_abbreviation = None
-
-    # Don't count empty strings as duplicate abbreviations!
-    if kind_document["abbreviation"]:
-        kind_with_abbreviation = await db.kinds.find_one({"abbreviation": kind_document["abbreviation"]})
-
-    if kind_with_abbreviation and kind_with_abbreviation["lower_name"] != lower_name:
-        # Remove the imported kind's abbreviation because it is already assigned to an existing kind.
-        kind_document["abbreviation"] = ""
-
-        # Record a message for the user.
-        return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-            kind_with_abbreviation["abbreviation"], kind_with_abbreviation["name"], kind_document["name"]
-        )
-
-    return None
-
-
 async def insert_from_import(db, kind_document, user_id):
     """
     :param db: the application database client
@@ -374,44 +344,3 @@ async def insert_from_import(db, kind_document, user_id):
     change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
     return to_dispatch, change_to_dispatch
-
-
-async def delete_for_import(db, kind_id, user_id):
-    """
-    Delete a kind document and its sequences as part of an import process.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param kind_id: the ``kind_id`` to remove
-    :type kind_id: str
-
-    :param user_id: the requesting ``user_id``
-    :type user_id: str
-
-    """
-    joined = await virtool.db.kinds.join(db, kind_id)
-
-    if not joined:
-        raise ValueError("Could not find kind_id {}".format(kind_id))
-
-    # Perform database operations.
-    await db.sequences.delete_many({"isolate_id": {"$in": virtool.kinds.extract_isolate_ids(joined)}})
-
-    await db.kinds.delete_one({"_id": kind_id})
-
-    # Put an entry in the history collection saying the kind was removed.
-    change = await virtool.db.history.add(
-        db,
-        "remove",
-        joined,
-        None,
-        "Removed",
-        user_id
-    )
-
-    change_to_dispatch = {key: change[key] for key in virtool.db.history.LIST_PROJECTION}
-
-    change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
-
-    return kind_id, change_to_dispatch
