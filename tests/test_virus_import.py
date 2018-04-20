@@ -2,8 +2,7 @@ import os
 import pytest
 from copy import deepcopy
 
-import virtool.db.refs
-import virtool.refs
+import virtool.virus_import
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
@@ -39,24 +38,24 @@ def iresine_sequence():
     }
 
 
-class TestValidateKinds:
+class TestVerifyVirusList:
 
-    def test(self, test_kind_list):
+    def test(self, test_virus_list):
         """
         Test that a valid virus list returns no duplicates or errors.
 
         """
-        result = virtool.refs.validate_kinds(test_kind_list)
+        result = virtool.virus_import.verify_virus_list(test_virus_list)
         assert result == (None, None)
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_kind_ids(self, multiple, test_kind_list):
-        test_kind_list[0]["_id"] = "067jz0t3"
+    def test_duplicate_virus_ids(self, multiple, test_virus_list):
+        test_virus_list[0]["_id"] = "067jz0t3"
 
         if multiple:
-            test_kind_list[3]["_id"] = "067jz213"
+            test_virus_list[3]["_id"] = "067jz213"
 
-        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -69,31 +68,31 @@ class TestValidateKinds:
 
         assert set(duplicates["_id"]) == expected
 
-    def test_empty_abbreviations(self, test_kind_list):
+    def test_empty_abbreviations(self, test_virus_list):
         """
         Ensure that abbreviations with value "" are not counted as duplicates.
 
         """
-        test_kind_list[0]["abbreviation"] = ""
-        test_kind_list[1]["abbreviation"] = ""
+        test_virus_list[0]["abbreviation"] = ""
+        test_virus_list[1]["abbreviation"] = ""
 
-        result = virtool.refs.validate_kinds(test_kind_list)
+        result = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert result == (None, None)
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_abbreviations(self, multiple, test_kind_list):
+    def test_duplicate_abbreviations(self, multiple, test_virus_list):
         """
         Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
         are detected.
 
         """
-        test_kind_list[0]["abbreviation"] = "TST"
+        test_virus_list[0]["abbreviation"] = "TST"
 
         if multiple:
-            test_kind_list[3]["abbreviation"] = "EXV"
+            test_virus_list[3]["abbreviation"] = "EXV"
 
-        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -108,19 +107,19 @@ class TestValidateKinds:
         assert set(duplicates["abbreviation"]) == expected
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_names(self, multiple, test_kind_list):
+    def test_duplicate_names(self, multiple, test_virus_list):
         """
         Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
         detected.
 
         """
         # Add a duplicate virus name to the list.
-        test_kind_list[1]["name"] = "Prunus virus F"
+        test_virus_list[1]["name"] = "Prunus virus F"
 
         if multiple:
-            test_kind_list[3]["name"] = "Example virus"
+            test_virus_list[3]["name"] = "Example virus"
 
-        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -134,42 +133,42 @@ class TestValidateKinds:
         assert set(duplicates["name"]) == expected
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_sequence_ids(self, multiple, test_kind_list):
+    def test_duplicate_sequence_ids(self, multiple, test_virus_list):
         """
         Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
         multiple occurrences are detected.
 
         """
-        test_kind_list[0]["isolates"][0]["sequences"].append(
-            dict(test_kind_list[0]["isolates"][0]["sequences"][0])
+        test_virus_list[0]["isolates"][0]["sequences"].append(
+            dict(test_virus_list[0]["isolates"][0]["sequences"][0])
         )
 
         if multiple:
-            test_kind_list[1]["isolates"][0]["sequences"].append(
-                dict(test_kind_list[1]["isolates"][0]["sequences"][0])
+            test_virus_list[1]["isolates"][0]["sequences"].append(
+                dict(test_virus_list[1]["isolates"][0]["sequences"][0])
             )
 
-        duplicates, error = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
         assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
 
-        expected = {test_kind_list[0]["isolates"][0]["sequences"][0]["_id"]}
+        expected = {test_virus_list[0]["isolates"][0]["sequences"][0]["_id"]}
 
         if multiple:
-            expected.add(test_kind_list[1]["isolates"][0]["sequences"][0]["_id"])
+            expected.add(test_virus_list[1]["isolates"][0]["sequences"][0]["_id"])
 
         assert set(duplicates["sequence_id"]) == expected
 
-    def test_isolate_inconsistency(self, test_kind_list):
+    def test_isolate_inconsistency(self, test_virus_list):
         """
-        Test that kinds containing isolates associated with disparate numbers of sequences are detected.
+        Test that viruses containing isolates associated with disparate numbers of sequences are detected.
 
         """
-        extra_isolate = deepcopy(test_kind_list[0]["isolates"][0])
+        extra_isolate = deepcopy(test_virus_list[0]["isolates"][0])
 
-        test_kind_list[0]["isolates"].append(extra_isolate)
+        test_virus_list[0]["isolates"].append(extra_isolate)
 
         extra_isolate.update({
             "_id": "extra",
@@ -181,7 +180,7 @@ class TestValidateKinds:
             "isolate_id": "extra"
         })
 
-        extra_sequence = dict(test_kind_list[0]["isolates"][0]["sequences"][0])
+        extra_sequence = dict(test_virus_list[0]["isolates"][0]["sequences"][0])
 
         extra_sequence.update({
             "_id": "extra_1",
@@ -190,46 +189,46 @@ class TestValidateKinds:
 
         extra_isolate["sequences"].append(extra_sequence)
 
-        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
         assert errors["prunus virus f"]["isolate_inconsistency"]
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_kind(self, multiple, test_kind_list):
+    def test_empty_virus(self, multiple, test_virus_list):
         """
-        Test that kinds with no isolates are detected. Use parametrization to test if single and multiple occurrences
+        Test that viruses with no isolates are detected. Use parametrization to test if single and multiple occurrences
         are detected.
 
         """
-        test_kind_list[0]["isolates"] = list()
+        test_virus_list[0]["isolates"] = list()
 
         if multiple:
-            test_kind_list[1]["isolates"] = list()
+            test_virus_list[1]["isolates"] = list()
 
-        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
-        assert errors["prunus virus f"]["empty_kind"]
+        assert errors["prunus virus f"]["empty_virus"]
 
         if multiple:
-            assert errors["test virus"]["empty_kind"] is True
+            assert errors["test virus"]["empty_virus"] is True
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_isolate(self, multiple, test_kind_list):
+    def test_empty_isolate(self, multiple, test_virus_list):
         """
         Test that isolates with no sequences are detected. Use parametrization to test if single and multiple
         occurrences are detected.
 
         """
-        test_kind_list[0]["isolates"][0]["sequences"] = list()
+        test_virus_list[0]["isolates"][0]["sequences"] = list()
 
         if multiple:
-            test_kind_list[1]["isolates"][0]["sequences"] = list()
+            test_virus_list[1]["isolates"][0]["sequences"] = list()
 
-        _, errors = virtool.refs.validate_kinds(test_kind_list)
+        _, errors = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
 
@@ -237,18 +236,18 @@ class TestValidateKinds:
             assert errors["test virus"]["empty_isolate"] == ["second_0"]
 
     @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_sequences(self, multiple, test_kind_list):
+    def test_empty_sequences(self, multiple, test_virus_list):
         """
         Test that sequences with empty ``sequence`` fields are detected. Use parametrization to test if single and
         multiple occurrences are detected.
 
         """
-        test_kind_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
+        test_virus_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
 
         if multiple:
-            test_kind_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
+            test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        duplicates, errors = virtool.refs.validate_kinds(test_kind_list)
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
@@ -264,7 +263,7 @@ class TestImportFile:
     async def test(self, errors, dups, mocker, test_motor, test_dispatch, import_data):
 
         m = mocker.patch(
-            "virtool.refs.validate_kinds",
+            "virtool.virus_import.verify_virus_list",
             return_value=("Duplicates" if dups else None, "Errors" if errors else None)
         )
 
@@ -272,7 +271,7 @@ class TestImportFile:
             "_id": "virus_import"
         })
 
-        await virtool.db.refs.import_data(test_motor, test_dispatch, "foo", import_data, "test")
+        await virtool.virus_import.import_data(test_motor, test_dispatch, import_data, "test")
 
         expected = {
             "_id": "virus_import",
@@ -314,7 +313,7 @@ class TestImportFile:
             return
 
         expected["totals"] = {
-            "kinds": 1419,
+            "viruses": 1419,
             "isolates": 2053,
             "sequences": 2752
         }
@@ -331,7 +330,7 @@ class TestImportFile:
         expected.update({
             "inserted": 1419,
             "totals": {
-                "kinds": 1419,
+                "viruses": 1419,
                 "isolates": 2053,
                 "sequences": 2752
             }

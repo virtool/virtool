@@ -2,7 +2,7 @@ import json
 import pytest
 
 import virtool.app
-import virtool.users
+import virtool.user
 
 
 class VTClient:
@@ -17,7 +17,7 @@ class VTClient:
         self.app = None
         self.db = None
 
-    async def connect(self, authorize=False, administrator=False, groups=None, permissions=None, job_manager=False, file_manager=False,
+    async def connect(self, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False,
                       setup_mode=False):
 
         self._client = await self._test_client(
@@ -40,7 +40,7 @@ class VTClient:
         self.db = self.app.get("db", None)
 
         if authorize:
-            user_document = self._create_user("test", administrator, groups, permissions)
+            user_document = self._create_user("test", groups, permissions)
 
             await self.db.users.insert_one(user_document)
 

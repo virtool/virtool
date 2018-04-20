@@ -1,43 +1,16 @@
 import pytest
 import datetime
 
-from virtool.users import PERMISSIONS
-
-
-@pytest.fixture
-def bob(no_permissions, static_time):
-    return {
-        "_id": "bob",
-        "administrator": False,
-        "force_reset": False,
-        "groups": [
-            "peasants"
-        ],
-        "last_password_change": static_time,
-        "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
-        "invalidate_sessions": False,
-        "password": "hashed_password",
-        "permissions": no_permissions,
-        "primary_group": "",
-        "settings": {
-            "skip_quick_analyze_dialog": True,
-            "show_ids": True,
-            "show_versions": True,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
-        }
-    }
+from virtool.user_permissions import PERMISSIONS
 
 
 @pytest.fixture(scope="session")
 def create_user():
-    def func(name="test", administrator=False, groups=None, permissions=None):
-
+    def func(name="test", groups=None, permissions=None):
         permissions = permissions or list()
 
         return {
             "_id": name,
-            "administrator": administrator,
-            "identicon": "identicon",
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},
             "groups": groups or list(),
             "invalidate_sessions": False,

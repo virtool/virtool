@@ -60,6 +60,6 @@ def test_ws_connection(mocker):
 
     client.user_id = "test"
     client.groups = ["admin", "test"]
-    client.permissions = ["create_sample"]
+    client.permissions = ["modify_virus"]
 
     return Connection(ws, client)
