@@ -23,24 +23,20 @@ const JobsSettings = () => (
 );
 
 const Jobs = (props) => {
-    let content;
-
     if (props.settings === null) {
-        content = <LoadingPlaceholder />;
-    } else {
-        content = (
-            <div className="container">
-                <Switch>
-                    <Route path="/jobs" component={JobsList} exact />
-                    <Route path="/jobs/resources" component={JobsResources} />
-                    <Route path="/jobs/settings" component={JobsSettings} />
-                    <Route path="/jobs/:jobId" component={JobDetail} />
-                </Switch>
-            </div>
-        );
+        return <LoadingPlaceholder />;
     }
-
-    return content;
+    
+    return (
+        <div className="container">
+            <Switch>
+                <Route path="/jobs" component={JobsList} exact />
+                <Route path="/jobs/resources" component={JobsResources} />
+                <Route path="/jobs/settings" component={JobsSettings} />
+                <Route path="/jobs/:jobId" component={JobDetail} />
+            </Switch>
+        </div>
+    );
 };
 
 const mapStateToProps = (state) => ({

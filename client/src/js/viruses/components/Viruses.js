@@ -22,25 +22,21 @@ const VirusSettings = () => (
 );
 
 const Viruses = (props) => {
-    let content;
-
     if (props.settings === null) {
-        content = <LoadingPlaceholder />;
-    } else {
-        content = (
-            <div className="container">
-                <Switch>
-                    <Route path="/viruses" component={VirusesList} exact />
-                    <Route path="/viruses/create" component={VirusesList} />
-                    <Route path="/viruses/settings" component={VirusSettings} />
-                    <Route path="/viruses/indexes" component={Indexes} />
-                    <Route path="/viruses/:virusId" component={VirusDetail} />
-                </Switch>
-            </div>
-        );
+        return <LoadingPlaceholder />;
     }
-
-    return content;
+    
+    return (
+        <div className="container">
+            <Switch>
+                <Route path="/viruses" component={VirusesList} exact />
+                <Route path="/viruses/create" component={VirusesList} />
+                <Route path="/viruses/settings" component={VirusSettings} />
+                <Route path="/viruses/indexes" component={Indexes} />
+                <Route path="/viruses/:virusId" component={VirusDetail} />
+            </Switch>
+        </div>
+    );
 };
 
 const mapStateToProps = (state) => ({

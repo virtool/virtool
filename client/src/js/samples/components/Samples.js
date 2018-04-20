@@ -26,24 +26,20 @@ const SampleSettings = () => (
 );
 
 const Samples = (props) => {
-    let content;
-
     if (props.settings === null) {
-        content = <LoadingPlaceholder />;
-    } else {
-        content = (
-            <div className="container">
-                <Switch>
-                    <Route path="/samples" component={SamplesList} exact />
-                    <Route path="/samples/files" component={SampleFileManager} exact />
-                    <Route path="/samples/settings" component={SampleSettings} />
-                    <Route path="/samples/:sampleId" component={SampleDetail} />
-                </Switch>
-            </div>
-        );
+        return <LoadingPlaceholder />;
     }
-
-    return content;
+    
+    return (
+        <div className="container">
+            <Switch>
+                <Route path="/samples" component={SamplesList} exact />
+                <Route path="/samples/files" component={SampleFileManager} exact />
+                <Route path="/samples/settings" component={SampleSettings} />
+                <Route path="/samples/:sampleId" component={SampleDetail} />
+            </Switch>
+        </div>
+    );
 };
 
 const mapStateToProps = (state) => ({
