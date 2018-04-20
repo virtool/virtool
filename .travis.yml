@@ -59,7 +59,7 @@ install:
 before_script:
 - sleep 15
 script:
-- pytest --loop uvloop --cov --cov-report xml
+- pytest --aiohttp-loop uvloop --cov --cov-report xml
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
