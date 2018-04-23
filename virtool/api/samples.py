@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from cerberus import Validator
 from pymongo import ReturnDocument
 
@@ -8,13 +6,17 @@ import virtool.db.files
 import virtool.db.samples
 import virtool.db.utils
 import virtool.errors
+import virtool.http.routes
 import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found, paginate, protected, validation
+    json_response, no_content, not_found, paginate
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/samples")
 async def find(req):
     """
     Find samples, filtering by data passed as URL parameters.
@@ -73,6 +75,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/samples/{sample_id}")
 async def get(req):
     """
     Get a complete sample document.
@@ -89,8 +92,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("create_sample")
-@validation({
+@routes.post("/api/samples", permission="create_sample", schema={
     "name": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
     "isolate": {"type": "string"},
@@ -183,7 +185,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@validation({
+@routes.patch("/api/samples/{sample_id}", schema={
     "name": {"type": "string", "minlength": 1},
     "host": {"type": "string"},
     "isolate": {"type": "string"},
@@ -218,7 +220,7 @@ async def edit(req):
     return json_response(processed)
 
 
-@validation({
+@routes.post("/api/samples/rights", schema={
     "group": {"type": "string"},
     "all_read": {"type": "boolean"},
     "all_write": {"type": "boolean"},
@@ -260,6 +262,7 @@ async def set_rights(req):
     return json_response(document)
 
 
+@routes.delete("/api/samples/{sample_id}")
 async def remove(req):
     """
     Remove a sample document and all associated analyses.
@@ -287,6 +290,7 @@ async def remove(req):
     return no_content()
 
 
+@routes.get("/api/samples/{sample_id}/analyses")
 async def list_analyses(req):
     """
     List the analyses associated with the given ``sample_id``.
@@ -313,7 +317,7 @@ async def list_analyses(req):
     })
 
 
-@validation({
+@routes.post("/api/samples/{sample_id}/analyses", schema={
     "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]},
     "ref_id": {"type": "string", "required": True}
 })

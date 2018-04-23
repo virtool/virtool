@@ -1,11 +1,15 @@
 import asyncio
 
+import virtool.http.routes
 import virtool.db.hmm
 import virtool.hmm
 import virtool.utils
-from virtool.api.utils import compose_regex_query, json_response, not_found, paginate, protected
+from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/hmms")
 async def find(req):
     """
     Find HMM annotation documents.
@@ -35,6 +39,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/hmms/{hmm_id}")
 async def get(req):
     """
     Get a complete individual HMM annotation document.
@@ -48,6 +53,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.get("/api/hmms/install")
 async def get_install(req):
     """
     Get the HMM install document. Create one first if none exists.
@@ -58,7 +64,7 @@ async def get_install(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_hmm")
+@routes.patch("/api/hmms/install", permission="modify_hmm")
 async def install(req):
     """
     Install the official HMM database from GitHub.

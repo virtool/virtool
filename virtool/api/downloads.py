@@ -7,10 +7,14 @@ from aiohttp import web
 import virtool.bio
 import virtool.db.downloads
 import virtool.errors
+import virtool.http.routes
 import virtool.kinds
 from virtool.api.utils import not_found
 
+routes = virtool.http.routes.Routes()
 
+
+@routes.get("/download/kinds/{kind_id}/isolates/{isolate_id}")
 async def download_isolate(req):
     """
     Download a FASTA file containing the sequences for a single Virtool isolate.
@@ -39,6 +43,7 @@ async def download_isolate(req):
     })
 
 
+@routes.get("/download/kinds/{kind_id}")
 async def download_kind(req):
     """
     Download a FASTA file containing the sequences for all isolates in a single Virtool kind.
@@ -67,6 +72,7 @@ async def download_kind(req):
     })
 
 
+@routes.get("/download/sequences/{sequence_id}")
 async def download_sequence(req):
     """
     Download a FASTA file containing a single Virtool sequence.

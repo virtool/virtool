@@ -13,13 +13,14 @@ import virtool.db.history
 import virtool.db.refs
 import virtool.db.kinds
 import virtool.history
+import virtool.http.routes
 import virtool.refs
 import virtool.refs
 import virtool.kinds
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
-    paginate, protected, unpack_request, validation
+    paginate, unpack_request
 
 SCHEMA_VALIDATOR = {
     "type": "list",
@@ -43,7 +44,10 @@ SCHEMA_VALIDATOR = {
     }
 }
 
+routes = virtool.http.routes.Routes()
 
+
+@routes.get("/api/kinds")
 async def find(req):
     """
     Find kinds.
@@ -73,6 +77,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/kinds/{kind_id}")
 async def get(req):
     """
     Get a complete kind document. Joins the kind document with its associated sequence documents.
@@ -90,7 +95,7 @@ async def get(req):
     return json_response(complete)
 
 
-@validation({
+@routes.post("/api/kinds", schema={
     "name": {"type": "string", "required": True, "min": 1},
     "abbreviation": {"type": "string", "min": 1},
     "schema": SCHEMA_VALIDATOR
@@ -163,7 +168,7 @@ async def create(req):
     return json_response(complete, status=201, headers=headers)
 
 
-@validation({
+@routes.patch("/api/kinds/{kind_id}", schema={
     "name": {"type": "string"},
     "abbreviation": {"type": "string"},
     "schema": SCHEMA_VALIDATOR
@@ -289,6 +294,7 @@ async def edit(req):
     return json_response(await virtool.db.kinds.join_and_format(db, kind_id, joined=new, issues=issues))
 
 
+@routes.delete("/api/kinds/{kind_id}")
 async def remove(req):
     """
     Remove a kind document and its associated sequence documents.
@@ -333,6 +339,7 @@ async def remove(req):
     return web.Response(status=204)
 
 
+@routes.get("/api/kinds/{kind_id}/isolates")
 async def list_isolates(req):
     """
     Return a list of isolate records for a given kind.
@@ -350,6 +357,7 @@ async def list_isolates(req):
     return json_response(document["isolates"])
 
 
+@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}")
 async def get_isolate(req):
     """
     Get a complete specific isolate sub-document, including its sequences.
@@ -374,7 +382,7 @@ async def get_isolate(req):
     return json_response(isolate)
 
 
-@validation({
+@routes.post("/api/kinds/{kind_id}/isolates", schema={
     "source_type": {"type": "string", "default": ""},
     "source_name": {"type": "string", "default": ""},
     "default": {"type": "boolean", "default": False}
@@ -479,7 +487,7 @@ async def add_isolate(req):
     return json_response(dict(data, sequences=[]), status=201, headers=headers)
 
 
-@validation({
+@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
@@ -566,6 +574,10 @@ async def edit_isolate(req):
             return json_response(isolate, status=200)
 
 
+@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+    "source_type": {"type": "string"},
+    "source_name": {"type": "string"}
+})
 async def set_as_default(req):
     """
     Set an isolate as default.
@@ -648,6 +660,10 @@ async def set_as_default(req):
             return json_response(isolate)
 
 
+@routes.delete("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+    "source_type": {"type": "string"},
+    "source_name": {"type": "string"}
+})
 async def remove_isolate(req):
     """
     Remove an isolate and its sequences from a kind.
@@ -729,6 +745,7 @@ async def remove_isolate(req):
     return no_content()
 
 
+@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences")
 async def list_sequences(req):
     db = req.app["db"]
 
@@ -748,6 +765,7 @@ async def list_sequences(req):
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
+@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def get_sequence(req):
     """
     Get a single sequence document by its ``accession`.
@@ -765,7 +783,7 @@ async def get_sequence(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@validation({
+@routes.post("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences", schema={
     "id": {"type": "string", "minlength": 1, "required": True},
     "definition": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
@@ -851,7 +869,7 @@ async def create_sequence(req):
     return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
 
 
-@validation({
+@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
     "host": {"type": "string"},
     "definition": {"type": "string"},
     "segment": {"type": "string"},
@@ -921,6 +939,7 @@ async def edit_sequence(req):
     return json_response(virtool.utils.base_processor(updated_sequence))
 
 
+@routes.delete("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def remove_sequence(req):
     """
     Remove a sequence from an isolate.
@@ -980,6 +999,7 @@ async def remove_sequence(req):
     return no_content()
 
 
+@routes.get("/api/kinds/{kind_id}/history")
 async def list_history(req):
     db = req.app["db"]
 

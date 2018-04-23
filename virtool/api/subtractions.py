@@ -1,4 +1,3 @@
-import os
 import shutil
 
 import pymongo
@@ -6,13 +5,16 @@ import pymongo.errors
 
 import virtool.db.subtractions
 import virtool.db.utils
+import virtool.http.routes
 import virtool.samples
 import virtool.subtractions
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate, \
-    protected, validation
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/subtractions")
 async def find(req):
     db = req.app["db"]
 
@@ -42,6 +44,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/subtractions/{subtraction_id}")
 async def get(req):
     """
     Get a complete host document.
@@ -61,8 +64,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_subtraction")
-@validation({
+@routes.post("/api/subtractions", permission="modify_subtraction", schema={
     "subtraction_id": {"type": "string", "required": True},
     "nickname": {"type": "string", "default": ""},
     "file_id": {"type": "string", "required": True}
@@ -129,8 +131,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-@protected("modify_subtraction")
-@validation({
+@routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
     "nickname": {"type": "string", "required": True}
 })
 async def edit(req):
@@ -155,7 +156,7 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_subtraction")
+@routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
 async def remove(req):
     db = req.app["db"]
 

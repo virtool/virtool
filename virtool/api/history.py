@@ -1,11 +1,15 @@
 import virtool.db.history
 import virtool.errors
 import virtool.history
+import virtool.http.routes
 import virtool.kinds
 import virtool.utils
 from virtool.api.utils import conflict, json_response, no_content, not_found, paginate
 
+routes = virtool.http.routes.Routes()
 
+
+@routes.get("/api/history")
 async def find(req):
     """
     Get a list of change documents.
@@ -25,6 +29,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/history/{change_id}")
 async def get(req):
     """
     Get a specific change document by its ``change_id``.
@@ -42,6 +47,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.delete("/api/history/{change_id}")
 async def revert(req):
     """
     Remove the change document with the given ``change_id`` and any subsequent changes.

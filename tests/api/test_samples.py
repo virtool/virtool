@@ -2,8 +2,6 @@ import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-from virtool.utils import base_processor
-
 
 class TestFind:
     @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
@@ -178,7 +176,7 @@ class TestFind:
         assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
 
     async def test_invalid_query(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         resp = await client.get("/api/samples?per_page=five")
 
@@ -197,7 +195,7 @@ class TestGet:
     async def test(self, mocker, spawn_client, static_time):
         mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -214,7 +212,7 @@ class TestGet:
         }
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         resp = await client.get("/api/samples/foobar")
         assert await resp_is.not_found(resp)
@@ -477,7 +475,7 @@ class TestRemove:
         assert await getattr(resp_is, resp_is_attr)(resp)
 
         if resp_is_attr == "no_content":
-            assert m.call_args[0] == (client.db, client.app["settings"], ["test"])
+            m.assert_called_with(client.db, client.app["settings"], ["test"])
         else:
             assert not m.called
 
@@ -488,7 +486,7 @@ class TestListAnalyses:
 
         mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         await client.db.samples.insert_one({
             "_id": "test",
@@ -628,7 +626,7 @@ class TestListAnalyses:
         }
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         resp = await client.get("/api/samples/test/analyses")
 
@@ -641,7 +639,7 @@ class TestAnalyze:
     async def test(self, error, mocker, spawn_client, static_time, resp_is):
         mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-        client = await spawn_client(job_manager=True)
+        client = await spawn_client(authorize=True, job_manager=True)
 
         test_analysis = {
             "id": "test_analysis",
@@ -665,8 +663,6 @@ class TestAnalyze:
                 "id": "test",
             }
         }
-
-        m = mocker.Mock(return_value=test_analysis)
 
         if error != "sample":
             await client.db.samples.insert_one({
@@ -699,12 +695,15 @@ class TestAnalyze:
 
             assert await resp.json() == test_analysis
 
+            import pprint
+            pprint.pprint(m_new.call_args)
+
             m_new.assert_called_with(
                 client.db,
                 client.app["job_manager"],
                 "test",
                 "foo",
-                None,
+                "test",
                 "pathoscope_bowtie"
             )
 
@@ -715,7 +714,7 @@ class TestAnalyze:
             assert await resp_is.not_found(resp, "Ready index not found")
 
     async def test_invalid_input(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         resp = await client.post("/api/samples/test/analyses", data={
             "foobar": True

@@ -11,7 +11,7 @@ async def test_find(spawn_client, test_changes):
     Test that a list of processed change documents are returned with a ``200`` status.
 
     """
-    client = await spawn_client()
+    client = await spawn_client(authorize=True)
 
     await client.db.history.insert_many(test_changes)
 
@@ -94,7 +94,7 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
     Test that a specific history change can be retrieved by its change_id.
 
     """
-    client = await spawn_client()
+    client = await spawn_client(authorize=True)
 
     await client.db.history.insert_many(test_changes)
 

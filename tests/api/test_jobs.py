@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(status, spawn_client, test_job, resp_is):
-    client = await spawn_client()
+    client = await spawn_client(authorize=True)
 
     if status == 200:
         await client.db.jobs.insert_one(test_job)

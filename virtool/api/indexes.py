@@ -2,12 +2,15 @@ import virtool.db.history
 import virtool.db.indexes
 import virtool.db.utils
 import virtool.history
+import virtool.http.routes
 import virtool.jobs.build_index
 import virtool.utils
-from virtool.api.utils import json_response, bad_request, not_found, compose_regex_query, paginate, \
-    conflict
+from virtool.api.utils import json_response, not_found, compose_regex_query, paginate, conflict
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/indexes")
 async def find(req):
     """
     Return a list of indexes.
@@ -40,6 +43,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/indexes/{index_id_or_version}")
 async def get(req):
     """
     Get the complete document for a given index.
@@ -63,6 +67,7 @@ async def get(req):
     return json_response(document)
 
 
+@routes.post("/api/refs/{ref_id}/indexes")
 async def create(req):
     """
     Starts a job to rebuild the kinds Bowtie2 index on disk. Does a check to make sure there are no unverified
@@ -131,6 +136,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
+@routes.get("/api/indexes/{index_id_or_version}/history")
 async def find_history(req):
     """
     Find history changes for a specific index.

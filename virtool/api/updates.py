@@ -3,11 +3,15 @@ import asyncio
 import pymongo
 
 import virtool.app
+import virtool.http.routes
 import virtool.updates
 import virtool.utils
-from virtool.api.utils import json_response, not_found, protected
+from virtool.api.utils import json_response, not_found
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/updates/software")
 async def get(req):
     db = req.app["db"]
     settings = req.app["settings"]
@@ -26,7 +30,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected()
+@routes.post("/api/updates/software", admin=True)
 async def upgrade(req):
     db = req.app["db"]
     dispatch = req.app["dispatcher"].dispatch
