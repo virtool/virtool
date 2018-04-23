@@ -6,7 +6,6 @@ import math
 import re
 
 from aiohttp import web
-from cerberus import Validator
 
 import virtool.users
 import virtool.utils
@@ -210,50 +209,6 @@ def invalid_query(errors):
         "message": "Invalid query",
         "errors": errors
     }, status=422)
-
-
-def protected(required_perm=None):
-    if required_perm and required_perm not in virtool.users.PERMISSIONS:
-        raise ValueError("Requires permission: {}".format(required_perm))
-
-    def decorator(handler):
-        async def wrapped(req):
-            if not req["client"].user_id:
-                return json_response({
-                    "id": "requires_authorization",
-                    "message": "Requires authorization"
-                }, status=401)
-
-            if required_perm and not req["client"].permissions[required_perm]:
-                return json_response({
-                    "id": "not_permitted",
-                    "message": "Not permitted"
-                }, status=403)
-
-            return await handler(req)
-
-        return wrapped
-
-    return decorator
-
-
-def validation(schema):
-    def decorator(handler):
-        async def wrapped(req):
-            v = Validator(schema)
-
-            data = await req.json()
-
-            if not v.validate(data):
-                return invalid_input(v.errors)
-
-            req["data"] = v.document
-
-            return await handler(req)
-
-        return wrapped
-
-    return decorator
 
 
 async def paginate(collection, db_query, url_query, sort=None, projection=None, base_query=None,

@@ -7,8 +7,8 @@ import virtool.groups
 import virtool.http.routes
 import virtool.users
 import virtool.utils
-from virtool.api.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found, \
-    protected
+from virtool.api.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found
+
 
 routes = virtool.http.routes.Routes()
 

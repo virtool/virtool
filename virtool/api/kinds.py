@@ -20,7 +20,7 @@ import virtool.kinds
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
-    paginate, unpack_request, validation
+    paginate, unpack_request
 
 SCHEMA_VALIDATOR = {
     "type": "list",
