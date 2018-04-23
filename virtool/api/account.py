@@ -4,10 +4,11 @@ from pymongo import ReturnDocument
 import virtool.db.account
 import virtool.db.users
 import virtool.db.utils
+import virtool.http.routes
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected, validation
+from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found
 
 API_KEY_PROJECTION = {
     "_id": False,
@@ -29,8 +30,10 @@ SETTINGS_SCHEMA = {
     }
 }
 
+routes = virtool.http.routes.Routes()
 
-@protected()
+
+@routes.get("/api/account")
 async def get(req):
     """
     Get complete user document
@@ -43,7 +46,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected()
+@routes.patch("/api/account")
 async def edit(req):
     """
     Edit the user account.
@@ -88,7 +91,7 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected()
+@routes.get("/api/account/settings")
 async def get_settings(req):
     """
     Get account settings
@@ -101,14 +104,16 @@ async def get_settings(req):
     return json_response(document["settings"])
 
 
-@protected()
-@validation(SETTINGS_SCHEMA)
+@routes.patch("/api/account/settings", schema=SETTINGS_SCHEMA)
 async def update_settings(req):
     """
     Update account settings.
 
     """
-    db, data = req.app["db"], req["data"]
+    print(req)
+
+    db = req.app["db"]
+    data = req["data"]
 
     user_id = req["client"].user_id
 
@@ -126,7 +131,7 @@ async def update_settings(req):
     return json_response(settings)
 
 
-@protected()
+@routes.get("/api/account/keys")
 async def get_api_keys(req):
     db = req.app["db"]
 
@@ -137,7 +142,7 @@ async def get_api_keys(req):
     return json_response(api_keys, status=200)
 
 
-@protected()
+@routes.get("/api/account/keys/{key_id}")
 async def get_api_key(req):
     db = req.app["db"]
     user_id = req["client"].user_id
@@ -151,8 +156,7 @@ async def get_api_key(req):
     return json_response(document, status=200)
 
 
-@protected()
-@validation({
+@routes.post("/api/account/keys", schema={
     "name": {"type": "string", "required": True, "minlength": 1},
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
@@ -201,8 +205,7 @@ async def create_api_key(req):
     return json_response(document, headers=headers, status=201)
 
 
-@protected()
-@validation({
+@routes.patch("/api/account/keys/{key_id}", schema={
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def update_api_key(req):
@@ -229,7 +232,7 @@ async def update_api_key(req):
     return json_response(document)
 
 
-@protected()
+@routes.delete("/api/account/keys/{key_id}")
 async def remove_api_key(req):
     db = req.app["db"]
 
@@ -244,7 +247,7 @@ async def remove_api_key(req):
     return no_content()
 
 
-@protected()
+@routes.delete("/api/account/keys")
 async def remove_all_api_keys(req):
     db = req.app["db"]
 
@@ -253,7 +256,7 @@ async def remove_all_api_keys(req):
     return no_content()
 
 
-@protected()
+@routes.get("/api/account/logout")
 async def logout(req):
     """
     Invalidates the requesting session, effectively logging out the user.

@@ -3,23 +3,25 @@ import os
 from cerberus import Validator
 
 import virtool.db.files
+import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found, protected
 
-FILE_TYPES = {
-    "/upload/kinds": "kinds",
-    "/upload/reads": "reads",
-    "/upload/hmm/profiles": "profiles",
-    "/upload/hmm/annotations": "annotations",
-    "/upload/subtraction": "subtraction"
-}
+FILE_TYPES = [
+    "kinds",
+    "reads",
+    "hmm",
+    "subtraction"
+]
+
+routes = virtool.http.routes.Routes()
 
 
-@protected("upload_file")
+@routes.post("/upload/{file_type}", permission="upload_file")
 async def upload(req):
-    try:
-        file_type = FILE_TYPES[req.path]
-    except KeyError:
+    file_type = req.match_info["file_type"]
+
+    if file_type not in FILE_TYPES:
         return not_found()
 
     v = Validator({

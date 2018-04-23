@@ -4,13 +4,16 @@ import virtool.db.users
 import virtool.db.utils
 import virtool.errors
 import virtool.groups
+import virtool.http.routes
 import virtool.users
 import virtool.utils
 from virtool.api.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found, \
-    protected, validation
+    protected
+
+routes = virtool.http.routes.Routes()
 
 
-@protected()
+@routes.get("/api/users", admin=True)
 async def find(req):
     """
     Get a list of all user documents in the database.
@@ -21,7 +24,7 @@ async def find(req):
     return json_response([virtool.utils.base_processor(user) for user in users])
 
 
-@protected()
+@routes.get("/api/users/{user_id}", admin=True)
 async def get(req):
     """
     Get a near-complete user document. Password data are removed.
@@ -35,7 +38,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected()
+@routes.post("/api/users", admin=True)
 async def create(req):
     """
     Add a new user to the user database.
@@ -71,7 +74,7 @@ async def create(req):
     )
 
 
-@protected()
+@routes.patch("/api/users/{user_id}", admin=True)
 async def edit(req):
     db = req.app["db"]
     data = await req.json()
@@ -114,7 +117,7 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(projected))
 
 
-@protected()
+@routes.delete("/api/users/{user_id}", admin=True)
 async def remove(req):
     """
     Remove a user.

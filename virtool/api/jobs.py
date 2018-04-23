@@ -1,13 +1,17 @@
 import os
 
 import virtool.db.jobs
+import virtool.http.routes
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate, \
     protected
 
+routes = virtool.http.routes.Routes()
 
+
+@routes.get("/api/jobs")
 async def find(req):
     """
     Return a list of job documents.
@@ -35,6 +39,7 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/jobs/{job_id}")
 async def get(req):
     """
     Return the complete document for a given job.
@@ -50,7 +55,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("cancel_job")
+@routes.put("/api/jobs/{job_id}/cancel", permission="cancel_job")
 async def cancel(req):
     """
     Cancel a job.
@@ -75,7 +80,7 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("remove_job")
+@routes.delete("/api/jobs/{job_id}/cancel", permission="cancel_job")
 async def remove(req):
     """
     Remove a job.
@@ -109,7 +114,7 @@ async def remove(req):
     return no_content()
 
 
-@protected("remove_job")
+@routes.delete("/api/jobs", permission="remove_job")
 async def clear(req):
     db = req.app["db"]
 
@@ -126,25 +131,3 @@ async def clear(req):
     return json_response({
         "removed": removed
     })
-
-
-async def dummy_job(req):
-    """
-    Submit a dummy job
-
-    """
-    data = await req.json()
-
-    task_args = {key: data.get(key, False) for key in ["generate_python_error", "generate_process_error", "long"]}
-
-    task_args["message"] = "hello world"
-    task_args["long"] = True
-    task_args["use_executor"] = True
-
-    document = await req.app["job_manager"].new(
-        "dummy",
-        task_args,
-        req["client"].user_id or "test"
-    )
-
-    return json_response(document)

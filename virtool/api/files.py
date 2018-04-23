@@ -5,10 +5,15 @@ Provides request handlers for managing and viewing files.
 import os
 
 import virtool.db.files
+import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import json_response, not_found, paginate, protected
 
 
+routes = virtool.http.routes.Routes()
+
+
+@routes.get("/api/files")
 async def find(req):
     """
     Find files based on an optional text query that is matched against file names. Only ready, unreserved files are
@@ -41,7 +46,7 @@ async def find(req):
     return json_response(data)
 
 
-@protected("remove_file")
+@routes.delete("/api/files/{file_id}", permission="remove_file")
 async def remove(req):
     file_id = req.match_info["file_id"]
 

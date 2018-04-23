@@ -8,12 +8,17 @@ import virtool.analyses
 import virtool.bio
 import virtool.db.analyses
 import virtool.errors
+import virtool.http.routes
 import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 
+routes = virtool.http.routes.Routes()
+
+
+@routes.get("/api/analyses/{analysis_id}")
 async def get(req):
     """
     Get a complete analysis document.
@@ -34,6 +39,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.delete("/api/analyses/{analysis_id}")
 async def remove(req):
     """
     Remove an analysis document by its id.
@@ -66,6 +72,7 @@ async def remove(req):
     return no_content()
 
 
+@routes.put("/api/analyses/{analysis_id}/{sequence_index}/blast")
 async def blast(req):
     """
     BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that

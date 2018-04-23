@@ -1,18 +1,17 @@
-import logging
-
 import pymongo.errors
 from pymongo import ReturnDocument
 
 import virtool.db.groups
 import virtool.db.users
+import virtool.http.routes
 import virtool.users
 import virtool.utils
-from virtool.api.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
+from virtool.api.utils import conflict, json_response, not_found, no_content, protected, validation
 
-logger = logging.getLogger(__name__)
+routes = virtool.http.routes.Routes()
 
 
-@protected()
+@routes.get("/api/groups")
 async def find(req):
     """
     Get a list of all existing group documents.
@@ -23,8 +22,7 @@ async def find(req):
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
-@protected()
-@validation({
+@routes.post("/api/groups", admin=True, schema={
     "group_id": {
         "type": "string",
         "required": True,
@@ -55,7 +53,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@protected()
+@routes.get("/api/groups/{group_id}")
 async def get(req):
     """
     Gets a complete group document.
@@ -69,8 +67,9 @@ async def get(req):
     return not_found()
 
 
-@protected()
-@validation({key: {"type": "boolean"} for key in virtool.users.PERMISSIONS})
+@routes.patch("/api/groups/{group_id}", admin=True, schema={
+    key: {"type": "boolean"} for key in virtool.users.PERMISSIONS
+})
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
@@ -99,7 +98,7 @@ async def update_permissions(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected()
+@routes.delete("/api/groups/{group_id}", admin=True)
 async def remove(req):
     """
     Remove a group.

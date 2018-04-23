@@ -4,16 +4,20 @@ import aiohttp
 import aiohttp.client_exceptions
 
 import virtool.app_settings
+import virtool.http.routes
 import virtool.resources
 import virtool.utils
-from virtool.api.utils import conflict, json_response, protected, validation
+from virtool.api.utils import conflict, json_response, validation
+
+routes = virtool.http.routes.Routes()
 
 
+@routes.get("/api/settings")
 async def get(req):
     return json_response(req.app["settings"].data)
 
 
-@validation(virtool.app_settings.SCHEMA)
+@routes.patch("/api/settings", admin=True, schema=virtool.app_settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
@@ -49,6 +53,7 @@ async def update(req):
     return json_response(app_settings.data)
 
 
+@routes.get("/api/settings/proxy")
 async def check_proxy(req):
     """
     Check that the proxy settings are working.
