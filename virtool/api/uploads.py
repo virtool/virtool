@@ -5,7 +5,7 @@ from cerberus import Validator
 import virtool.db.files
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import invalid_query, json_response, not_found, protected
+from virtool.api.utils import invalid_query, json_response, not_found
 
 FILE_TYPES = [
     "kinds",

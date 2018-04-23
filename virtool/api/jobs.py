@@ -5,8 +5,7 @@ import virtool.http.routes
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.utils
-from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate, \
-    protected
+from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 

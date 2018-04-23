@@ -7,7 +7,7 @@ import virtool.app_settings
 import virtool.http.routes
 import virtool.resources
 import virtool.utils
-from virtool.api.utils import conflict, json_response, validation
+from virtool.api.utils import conflict, json_response
 
 routes = virtool.http.routes.Routes()
 

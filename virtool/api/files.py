@@ -7,7 +7,7 @@ import os
 import virtool.db.files
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import json_response, not_found, paginate, protected
+from virtool.api.utils import json_response, not_found, paginate
 
 
 routes = virtool.http.routes.Routes()

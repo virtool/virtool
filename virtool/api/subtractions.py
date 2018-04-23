@@ -9,8 +9,7 @@ import virtool.http.routes
 import virtool.samples
 import virtool.subtractions
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate, \
-    protected, validation
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 

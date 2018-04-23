@@ -11,7 +11,7 @@ import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query, \
-    json_response, no_content, not_found, paginate, protected, validation
+    json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 

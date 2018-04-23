@@ -12,7 +12,6 @@ import virtool.api.groups
 import virtool.api.history
 import virtool.api.hmm
 import virtool.api.indexes
-import virtool.api.uploads
 import virtool.api.jobs
 import virtool.api.kinds
 import virtool.api.resources
