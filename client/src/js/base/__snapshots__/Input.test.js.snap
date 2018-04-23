@@ -18,52 +18,116 @@ exports[`<Input /> renders a FormGroup 1`] = `
 `;
 
 exports[`<Input /> renders correctly 1`] = `
-<FormGroup
-  bsClass="form-group"
+<Input
+  autoComplete={false}
+  disabled={false}
+  error="test_error"
+  formGroupStyle={Object {}}
+  label="test_label"
+  max={10}
+  min={0}
+  name="test_input"
+  noMargin={true}
+  onBlur={[MockFunction]}
+  onChange={[MockFunction]}
+  onFocus={[MockFunction]}
+  onHide={[MockFunction]}
+  onInvalid={[MockFunction]}
+  placeholder="test_placeholder"
+  readOnly={false}
+  rows={1}
+  step={1}
   style={
     Object {
-      "marginBottom": 0,
+      "width": "100px",
     }
   }
+  type="select"
+  value={1}
 >
-  <ControlLabel
-    bsClass="control-label"
-    srOnly={false}
-  >
-    test_label
-  </ControlLabel>
-  <FormControl
-    autoComplete="off"
-    bsClass="form-control"
-    className="form-control-error"
-    componentClass="input"
-    disabled={false}
-    inputRef={[Function]}
-    max={10}
-    min={0}
-    name="test_input"
-    onBlur={[MockFunction]}
-    onChange={[MockFunction]}
-    onFocus={[MockFunction]}
-    onInvalid={[MockFunction]}
-    placeholder="test_placeholder"
-    readOnly={false}
-    rows={1}
-    step={1}
+  <FormGroup
+    bsClass="form-group"
     style={
       Object {
-        "paddingRight": "12px",
-        "width": "100px",
+        "marginBottom": 0,
       }
     }
-    type="number"
-    value={1}
   >
-    <div>
-      Test Node
+    <div
+      className="form-group"
+      style={
+        Object {
+          "marginBottom": 0,
+        }
+      }
+    >
+      <ControlLabel
+        bsClass="control-label"
+        srOnly={false}
+      >
+        <label
+          className="control-label"
+        >
+          test_label
+        </label>
+      </ControlLabel>
+      <FormControl
+        autoComplete="off"
+        bsClass="form-control"
+        className="form-control-error"
+        componentClass="select"
+        disabled={false}
+        inputRef={[Function]}
+        max={10}
+        min={0}
+        name="test_input"
+        onBlur={[MockFunction]}
+        onChange={[MockFunction]}
+        onFocus={[MockFunction]}
+        onInvalid={[MockFunction]}
+        placeholder="test_placeholder"
+        readOnly={false}
+        rows={1}
+        step={1}
+        style={
+          Object {
+            "width": "100px",
+          }
+        }
+        type="select"
+        value={1}
+      >
+        <select
+          autoComplete="off"
+          className="form-control-error form-control"
+          disabled={false}
+          max={10}
+          min={0}
+          name="test_input"
+          onBlur={[MockFunction]}
+          onChange={[MockFunction]}
+          onFocus={[MockFunction]}
+          onInvalid={[MockFunction]}
+          placeholder="test_placeholder"
+          readOnly={false}
+          rows={1}
+          step={1}
+          style={
+            Object {
+              "width": "100px",
+            }
+          }
+          type="select"
+          value={1}
+        >
+          <option>
+            Test Node
+          </option>
+        </select>
+      </FormControl>
     </div>
-  </FormControl>
-</FormGroup>
+  </FormGroup>
+</Input>
 `;
 
 exports[`<Input /> renders two children: optional ControlLabel + FormControl components 1`] = `

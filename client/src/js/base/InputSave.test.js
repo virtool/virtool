@@ -23,7 +23,9 @@ describe("<InputSave />", () => {
             noMargin: true,
             error: "test error"
         };
-        wrapper = shallow(<InputSave {...props} />);
+        wrapper = mount(<InputSave {...props} />);
+        wrapper.instance().focus();
+        wrapper.instance().blur();
 
         expect(wrapper).toMatchSnapshot();
     });
@@ -35,7 +37,7 @@ describe("<InputSave />", () => {
             onSave: jest.fn(),
             initialValue: "initial_value"
         };
-        wrapper = shallow(<InputSave {...props} /> );
+        wrapper = shallow(<InputSave {...props} />);
 
         expect(spy).not.toHaveBeenCalled();
         expect(wrapper.state('value')).toEqual(props.initialValue);
@@ -45,6 +47,28 @@ describe("<InputSave />", () => {
         
         expect(spy).toHaveBeenCalled();
         expect(wrapper.state('value')).toEqual(update.initialValue);
+
+        spy.mockReset();
+        spy.mockRestore();
+    });
+
+    it("should call componentWillReceiveProps and not update if initialValue props have not changed", () => {
+        const spy = jest.spyOn(InputSave.prototype, "componentWillReceiveProps");
+        
+        props = {
+            onSave: jest.fn(),
+            initialValue: "initial_value"
+        };
+        wrapper = shallow(<InputSave {...props} />);
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(wrapper.state('value')).toEqual(props.initialValue);
+
+        const update = { initialValue: props.initialValue };
+        wrapper.setProps(update);
+        
+        expect(spy).toHaveBeenCalled();
+        expect(wrapper.state('value')).toEqual(props.initialValue);
 
         spy.mockReset();
         spy.mockRestore();
@@ -98,7 +122,127 @@ describe("<InputSave />", () => {
 
     });
 
-    describe("Button subcomponent", () => {
+    describe("handleChange:", () => {
+        let spy;
+        let mockEvent;
+        
+        it("should update state on input change", () => {
+            props = {
+                onSave: jest.fn(),
+                onChange: jest.fn(),
+                initialValue: "test",
+                disabled: false
+            };
+            mockEvent = {
+                target: {
+                    value: "new_value"
+                }
+            };
+            wrapper = mount(<InputSave {...props} />);
+    
+            spy = jest.spyOn(wrapper.instance(), "handleChange");
+            wrapper.instance().forceUpdate();
+
+            expect(wrapper.state('value')).toEqual(props.initialValue);
+
+            wrapper.find(FormControl).simulate('change', mockEvent);
+            
+            expect(spy).toHaveBeenCalled();
+            expect(props.onChange).toHaveBeenCalled();
+
+            expect(wrapper.state('value')).toEqual(mockEvent.target.value);
+
+            spy.mockReset();
+            spy.mockRestore();
+        });
+
+        it("should not update state if [props.disabled=true]", () => {
+            props = {
+                onSave: jest.fn(),
+                onChange: jest.fn(),
+                initialValue: "test",
+                disabled: true
+            };
+            mockEvent = {
+                target: {
+                    value: "new_value"
+                }
+            };
+            wrapper = mount(<InputSave {...props} />);
+    
+            spy = jest.spyOn(wrapper.instance(), "handleChange");
+            wrapper.instance().forceUpdate();
+
+            expect(wrapper.state('value')).toEqual(props.initialValue);
+
+            wrapper.find(FormControl).simulate('change');
+            
+            expect(spy).toHaveBeenCalled();
+            expect(props.onChange).toHaveBeenCalled();
+
+            expect(wrapper.state('value')).not.toEqual(mockEvent.target.value);
+
+            spy.mockReset();
+            spy.mockRestore();
+        });
+
+    });
+
+    describe("handleBlur: should handle input and button blur depending on click placement", () => {
+        let spy;
+        let mockEvent;
+
+        beforeEach(() => {
+            props = {
+                onSave: jest.fn(),
+                onChange: jest.fn(),
+                initialValue: "test"
+            };
+            wrapper = mount(<InputSave {...props} />);
+    
+            spy = jest.spyOn(wrapper.instance(), "handleBlur");
+            wrapper.instance().forceUpdate();
+        });
+
+        afterEach(() => {
+            spy.mockReset();
+            spy.mockRestore();
+        });
+
+        it("should reset input value if blur is caused by clicking on a different focus element", () => {
+            mockEvent = {
+                relatedTarget: {
+                    type: "not-submit"
+                }
+            };
+            wrapper.find(FormControl).simulate('blur', mockEvent);
+
+            expect(spy).toHaveBeenCalled();
+            expect(wrapper.state('value')).toEqual(props.initialValue);
+        });
+
+        it("should reset input value if blur is caused by clicking on a non focus element", () => {
+            mockEvent = {};
+            wrapper.find(FormControl).simulate('blur', mockEvent);
+
+            expect(spy).toHaveBeenCalled();
+            expect(wrapper.state('value')).toEqual(props.initialValue);
+        });
+
+        it("should save input value if the blur is caused by a valid submit event", () => {
+            mockEvent = {
+                relatedTarget: {
+                    type: "submit"
+                }
+            };
+            wrapper.find(FormControl).simulate('blur', mockEvent);
+
+            expect(spy).toHaveBeenCalled();
+            expect(props.onChange).toHaveBeenCalled();
+        });
+    });
+
+    describe("Button subcomponent, handleSubmit:", () => {
 
         let spyHandler;
         let spyBlur;

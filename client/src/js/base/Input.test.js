@@ -9,7 +9,7 @@ describe("<Input />", () => {
         props = {
             label: "test_label",
             name: "test_input",
-            type: "number",
+            type: "select",
             rows: 1,
             value: 1,
             min: 0,
@@ -26,11 +26,13 @@ describe("<Input />", () => {
             onChange: jest.fn(),
             style: { width: "100px" },
             formGroupStyle: {},
-            children: <div>Test Node</div>,
+            children: <option>Test Node</option>,
             noMargin: true,
             disabled: false
         };
-        wrapper = shallow(<Input {...props} />);
+        wrapper = mount(<Input {...props} />);
+        wrapper.instance().blur();
+        wrapper.instance().focus();
 
         expect(wrapper).toMatchSnapshot();
     });
@@ -40,6 +42,26 @@ describe("<Input />", () => {
 
         expect(wrapper.find(FormGroup).length).toEqual(1);
         expect(wrapper.find(FormGroup)).toMatchSnapshot();
+    });
+
+    it("renders the appropriate input type depending on [props.type]", () => {
+        props = {
+            name: "i-test",
+            type: "textarea"
+        };
+        wrapper = shallow(<Input {...props} />);
+        expect(wrapper.find(FormControl).prop('componentClass')).toEqual(props.type);
+
+        props.type = "select";
+        wrapper = shallow(<Input {...props} />);
+        expect(wrapper.find(FormControl).prop('componentClass')).toEqual(props.type);
+
+        props.type = "number";
+        wrapper = shallow(<Input {...props} />);
+        const expected = {
+            paddingRight: "12px"
+        };
+        expect(wrapper.find(FormControl).prop('style')).toEqual(expected);;
     });
 
     it("renders two children: optional ControlLabel + FormControl components", () => {

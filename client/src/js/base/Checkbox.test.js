@@ -35,6 +35,25 @@ describe("<Checkbox />", () => {
         expect(wrapper.find('span').length).toEqual(1);
     });
 
+    it("applies given className and style attributes", () => {
+        props = {
+            className: "tester",
+            style: { paddingTop: "100px" },
+            disabled: true
+        };
+        wrapper = shallow(<Checkbox {...props} />);
+
+        const expected = {
+            cursor: "not-allowed",
+            ...props.style
+        };
+
+        expect(wrapper.find('span').hasClass(`pointer text-muted ${props.className}`)).toBe(true);
+        expect(wrapper.find('span').prop('style')).toEqual(expected);
+        expect(wrapper.find('span').prop('onClick')).toEqual(null);
+        expect(wrapper).toMatchSnapshot();
+    });
+
     describe("<CheckboxIcon /> subcomponent", () => {
 
         it("renders different class names depending on prop values (checked & partial)", () => {

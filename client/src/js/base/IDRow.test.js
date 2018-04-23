@@ -1,8 +1,23 @@
-import { IDRowComponent } from "./IDRow";
+import { IDRow, IDRowComponent } from "./IDRow";
 
 describe("<IDRow />", () => {
     let props;
     let wrapper;
+
+    it("renders connected component", () => {
+        const initialState = {
+            account: {
+                settings: {
+                    show_ids: true
+                }
+            }
+        };
+        const store = mockStore(initialState);
+
+        const container = shallow(<IDRow store={store} />);
+
+        expect(container).toMatchSnapshot();
+    });
 
     it("when [account.settings.show_ids=false], renders nothing (null)", () => {
         props = { id: "test_id", showIds: false };

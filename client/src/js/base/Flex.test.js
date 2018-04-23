@@ -88,13 +88,15 @@ describe("<Flex />", () => {
         it("applies given style and className props", () => {
             props = {
                 style: { paddingTop: "100px" },
-                className: "tester-class"
+                className: "tester-class",
+                pad: 30
             };
             wrapper = shallow(<FlexItem {...props} />);
 
             const expected = {
                 flex: "0 1 auto",
                 alignSelf: null,
+                marginLeft: "30px",
                 ...props.style
             };
 

@@ -19,6 +19,7 @@ exports[`<Flex /> <FlexItem /> applies given style and className props 1`] = `
     Object {
       "alignSelf": null,
       "flex": "0 1 auto",
+      "marginLeft": "30px",
       "paddingTop": "100px",
     }
   }

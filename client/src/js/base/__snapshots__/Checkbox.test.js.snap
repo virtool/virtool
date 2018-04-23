@@ -1,5 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<Checkbox /> applies given className and style attributes 1`] = `
+<span
+  className="pointer text-muted tester"
+  onClick={null}
+  style={
+    Object {
+      "cursor": "not-allowed",
+      "paddingTop": "100px",
+    }
+  }
+>
+  <CheckboxIcon
+    checked={false}
+    className="tester"
+    disabled={true}
+    partial={false}
+    pullRight={false}
+    style={
+      Object {
+        "paddingTop": "100px",
+      }
+    }
+  />
+   
+</span>
+`;
+
 exports[`<Checkbox /> renders correctly 1`] = `
 <span
   className="pointer"

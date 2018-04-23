@@ -86,7 +86,7 @@ describe("<ViewHeader />", () => {
         it("renders a <span> element", () => {
             props = {
                 page: 2,
-                count: 5,
+                count: 20,
                 totalCount: 25
             };
             wrapper = shallow(<PageHint {...props} />);
