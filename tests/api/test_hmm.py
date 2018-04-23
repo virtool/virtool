@@ -57,7 +57,7 @@ class TestFind:
         Check that a request with no URL parameters returns a list of HMM annotation documents.
 
         """
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         client.app["settings"] = {
             "data_path": str(tmpdir)
@@ -106,7 +106,7 @@ class TestGet:
         document.
 
         """
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         await client.db.hmm.insert_one(hmm_document)
 
@@ -125,7 +125,7 @@ class TestGet:
         document.
 
         """
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         await client.db.hmm.insert_one(hmm_document)
 

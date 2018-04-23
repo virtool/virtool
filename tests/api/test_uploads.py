@@ -5,14 +5,8 @@ import sys
 
 class TestUpload:
 
-    @pytest.mark.parametrize("path,file_type", [
-        ("/upload/kinds", "kinds"),
-        ("/upload/reads", "reads"),
-        ("/upload/hmm/profiles", "profiles"),
-        ("/upload/hmm/annotations", "annotations"),
-        ("/upload/host", "host")
-    ])
-    async def test(self, path, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
+    @pytest.mark.parametrize("file_type", ["kinds", "reads", "hmm", "subtraction"])
+    async def test(self, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"] = {
@@ -29,7 +23,7 @@ class TestUpload:
             "file": open(path, "rb")
         }
 
-        resp = await client.post_form("/upload/reads?name=Test.fq.gz", data=files)
+        resp = await client.post_form("/upload/{}?name=Test.fq.gz".format(file_type), data=files)
 
         assert resp.status == 201
 
@@ -37,7 +31,7 @@ class TestUpload:
 
         assert await resp.json() == {
             "name": "Test.fq.gz",
-            "type": "reads",
+            "type": file_type,
             "ready": False,
             "reserved": False,
             "uploaded_at": "2015-10-06T20:00:00Z",
@@ -52,7 +46,7 @@ class TestUpload:
             "update",
             {
                 "name": "Test.fq.gz",
-                "type": "reads",
+                "type": file_type,
                 "ready": False,
                 "reserved": False,
                 "uploaded_at": static_time,

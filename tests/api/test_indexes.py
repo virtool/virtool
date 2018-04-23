@@ -3,7 +3,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 
 async def test_find(spawn_client, static_time):
-    client = await spawn_client()
+    client = await spawn_client(authorize=True)
 
     await client.db.indexes.insert_many([
         {
@@ -83,7 +83,7 @@ async def test_find(spawn_client, static_time):
 
 @pytest.mark.parametrize("not_found", [False, True])
 async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
-    client = await spawn_client()
+    client = await spawn_client(authorize=True)
 
     await client.db.indexes.insert_one({
         "_id": "foobar",
@@ -343,7 +343,7 @@ class TestFindHistory:
 
     @pytest.mark.parametrize("identifier", ["foobar", 0])
     async def test(self, identifier, spawn_client):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         await client.db.indexes.insert_one({
             "_id": "foobar",
@@ -507,7 +507,7 @@ class TestFindHistory:
         assert await resp.json() == expected
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         resp = await client.get("/api/indexes/foobar/history")
 
