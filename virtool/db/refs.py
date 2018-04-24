@@ -273,7 +273,7 @@ async def create_original(db):
     return document
 
 
-async def import_file(db, dispatch, ref_id, data, user_id):
+async def import_file(db, dispatch, data, user_id):
     """
     Import a previously exported Virtool kind reference.
 
@@ -414,7 +414,6 @@ async def import_file(db, dispatch, ref_id, data, user_id):
             None,
             joined,
             description,
-            ref_id,
             user_id
         )
 
