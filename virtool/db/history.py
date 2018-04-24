@@ -32,7 +32,7 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, ref_id, user_id):
+async def add(db, method_name, old, new, description, user_id):
     """
     Add a change document to the history collection.
 
@@ -50,9 +50,6 @@ async def add(db, method_name, old, new, description, ref_id, user_id):
 
     :param description: a human readable description of the change
     :type description: str
-
-    :param ref_id: the ref the change is being made in
-    :type ref_id: str
 
     :param user_id: the id of the requesting user
     :type user_id: str
@@ -75,6 +72,11 @@ async def add(db, method_name, old, new, description, ref_id, user_id):
         kind_version = int(new["version"])
     except (TypeError, KeyError):
         kind_version = "removed"
+
+    try:
+        ref_id = old["ref"]["id"]
+    except (TypeError, KeyError):
+        ref_id = new["ref"]["id"]
 
     document = {
         "_id": ".".join([str(kind_id), str(kind_version)]),
@@ -110,6 +112,31 @@ async def add(db, method_name, old, new, description, ref_id, user_id):
     await db.history.insert_one(document)
 
     return document
+
+
+async def get_contributors(db, query):
+    """
+    Return an list of contributors and their contribution count for a specific set of history.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param query: a query to filter scanned history by
+    :type query: dict
+
+    :return: a list of contributors to the scanned history changes
+    :rtype: List[dict]
+
+    """
+    contributors = await db.history.aggregate([
+        {"$match": query},
+        {"$group": {
+            "_id": "$user.id",
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(None)
+
+    return [{"id": c["_id"], "count": c["count"]} for c in contributors]
 
 
 async def get_most_recent_change(db, kind_id):

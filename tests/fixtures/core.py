@@ -63,10 +63,10 @@ def test_random_alphanumeric(mocker):
 
 
 @pytest.fixture
-def static_time(monkeypatch):
+def static_time(mocker):
     time = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
 
-    monkeypatch.setattr("virtool.utils.timestamp", lambda: time)
+    mocker.patch("virtool.utils.timestamp", return_value=arrow.Arrow(2015, 10, 6, 20, 0, 0).naive)
 
     return time
 

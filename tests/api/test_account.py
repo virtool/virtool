@@ -86,6 +86,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
         assert await resp.json() == {
             "permissions": {
                 "cancel_job": False,
+                "create_ref": False,
                 "create_sample": False,
                 "modify_hmm": False,
                 "modify_subtraction": False,

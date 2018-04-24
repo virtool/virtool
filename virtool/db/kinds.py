@@ -60,8 +60,6 @@ async def get_new_isolate_id(db, excluded=None):
     """
     used_isolate_ids = await db.kinds.distinct("isolates.id")
 
-    print(used_isolate_ids)
-
     if excluded:
         used_isolate_ids += excluded
 

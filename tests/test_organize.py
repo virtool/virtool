@@ -142,6 +142,7 @@ async def test_organize_groups(test_motor):
         "_id": "foobar",
         "permissions": {
             "cancel_job": False,
+            "create_ref": False,
             "create_sample": True,
             "modify_hmm": False,
             "modify_subtraction": False,

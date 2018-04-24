@@ -166,6 +166,9 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
             "id": index_id,
             "version": index_version
         },
+        "ref": {
+            "id": ref_id
+        },
         "user": {
             "id": user_id,
         }
