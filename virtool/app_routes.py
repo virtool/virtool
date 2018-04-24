@@ -14,6 +14,7 @@ import virtool.api.hmm
 import virtool.api.indexes
 import virtool.api.jobs
 import virtool.api.kinds
+import virtool.api.refs
 import virtool.api.resources
 import virtool.api.root
 import virtool.api.samples
@@ -98,6 +99,7 @@ def setup_routes(app):
     app.router.add_routes(virtool.api.hmm.routes)
     app.router.add_routes(virtool.api.indexes.routes)
     app.router.add_routes(virtool.api.jobs.routes)
+    app.router.add_routes(virtool.api.refs.routes)
     app.router.add_routes(virtool.api.resources.routes)
     app.router.add_routes(virtool.api.root.routes)
     app.router.add_routes(virtool.api.samples.routes)
