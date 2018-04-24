@@ -102,6 +102,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
+@routes.get("/api/refs/{ref_id}/unbuilt")
 async def get_unbuilt_changes(req):
     """
     Get a JSON document describing the unbuilt changes that could be used to create a new index.
