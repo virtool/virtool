@@ -171,18 +171,18 @@ describe("<ProgressBar />", () => {
                 step: 4
             };
             wrapper = mount(<AutoProgressBar {...props} />);
-            let spyStop = sinon.spy(wrapper.instance(), "move");
+            let spyStop = sinon.spy(wrapper.instance(), "stop");
 
             // If fill < 80, set state to fill value
             wrapper.setState({ fill: 10 });
             wrapper.instance().move();
-            expect(spyStop.calledOnce).toBe(true);
+            expect(spyStop.called).toBe(false);
             expect(wrapper.state('fill')).toEqual(14);
 
             // If fill >= 90, call stop()
             wrapper.setState({ fill: 80 });
             wrapper.instance().move();
-            expect(spyStop.calledTwice).toBe(true);
+            expect(spyStop.calledOnce).toBe(true);
 
             stubMath.restore();
             spyStop.restore();

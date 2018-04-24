@@ -28,6 +28,7 @@ describe("<Help />", () => {
 
     it("renders even when title and pullRight props are missing", () => {
         props = { children: <div class="test_div" /> };
+        wrapper = shallow(<Help {...props} />);
 
         expect(wrapper).toMatchSnapshot();
     });
