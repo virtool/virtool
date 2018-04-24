@@ -18,7 +18,7 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
     assert await resp.json() == dict(
         data,
         id=test_random_alphanumeric.history[0],
-        created_at=static_time.iso,
+        created_at="2015-10-06T20:00:00Z",
         user={
             "id": "test"
         },

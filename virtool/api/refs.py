@@ -93,13 +93,6 @@ async def create(req):
             user_id=req["client"].user_id
         )
 
-        await db.refs.insert_one(document)
-
-
-
-
-
-
     await db.refs.insert_one(document)
 
     headers = {

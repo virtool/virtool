@@ -128,6 +128,9 @@ async def create(req):
         "lower_name": data["name"].lower(),
         "isolates": [],
         "version": 0,
+        "ref": {
+            "id": ref_id
+        },
         "schema": []
     })
 
