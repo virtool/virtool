@@ -1,5 +1,7 @@
 import pymongo
 
+import virtool.db.history
+
 PROJECTION = [
     "_id",
     "created_at",
@@ -83,24 +85,14 @@ async def get_contributors(db, index_id):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param index_id: the id of the reference to get contributors for
+    :param index_id: the id of the index to get contributors for
     :type index_id: str
 
     :return: a list of contributors to the index
     :rtype: List[dict]
 
     """
-    contributors = await db.history.aggregate([
-        {"$match": {
-            "index.id": index_id
-        }},
-        {"$group": {
-            "_id": "$user.id",
-            "count": {"$sum": 1}
-        }}
-    ]).to_list(None)
-
-    return [{"id": c["_id"], "count": c["count"]} for c in contributors]
+    return await virtool.db.history.get_contributors(db, {"index.id": index_id})
 
 
 async def get_current_id_and_version(db, ref_id):

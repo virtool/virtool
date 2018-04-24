@@ -114,6 +114,31 @@ async def add(db, method_name, old, new, description, user_id):
     return document
 
 
+async def get_contributors(db, query):
+    """
+    Return an list of contributors and their contribution count for a specific set of history.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param query: a query to filter scanned history by
+    :type query: dict
+
+    :return: a list of contributors to the scanned history changes
+    :rtype: List[dict]
+
+    """
+    contributors = await db.history.aggregate([
+        {"$match": query},
+        {"$group": {
+            "_id": "$user.id",
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(None)
+
+    return [{"id": c["_id"], "count": c["count"]} for c in contributors]
+
+
 async def get_most_recent_change(db, kind_id):
     """
     Get the most recent change for the kind identified by the passed ``kind_id``.
