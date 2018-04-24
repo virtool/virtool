@@ -5,6 +5,7 @@ import bcrypt
 #: A list of the permission strings used by Virtool.
 PERMISSIONS = [
     "cancel_job",
+    "create_ref",
     "create_sample",
     "modify_hmm",
     "modify_subtraction",
