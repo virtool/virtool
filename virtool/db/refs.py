@@ -10,6 +10,73 @@ import virtool.refs
 import virtool.utils
 
 
+async def get_contributors(db, ref_id):
+    """
+    Return an list of contributors and their contribution count for a specific ref.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the ref to get contributors for
+    :type ref_id: str
+
+    :return: a list of contributors to the ref
+    :rtype: Union[None, List[dict]]
+
+    """
+    return virtool.db.history.get_contributors(db, {"ref.id": ref_id})
+
+
+async def get_latest_build(db, ref_id):
+    """
+    Return the latest index build for the ref.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the ref to get the latest build for
+    :type ref_id: str
+
+    :return: a subset of fields for the latest build
+    :rtype: Union[None, dict]
+
+    """
+    last_build = await db.indexes.find_one({
+        "ref.id": ref_id,
+        "ready": True
+    }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
+
+    if last_build is None:
+        return None
+
+    return virtool.utils.base_processor(last_build)
+
+
+async def get_internal_control(db, kind_id):
+    """
+    Return a minimal dict describing the ref internal control given a `kind_id`.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param kind_id: the id of the kind to create a minimal dict for
+    :type kind_id: str
+
+    :return: a minimal dict describing the ref internal control
+    :rtype: Union[None, dict]
+
+    """
+    name = await virtool.db.utils.get_one_field(db.kinds, "name", kind_id)
+
+    if name is None:
+        return None
+
+    return {
+        "id": kind_id,
+        "name": await virtool.db.utils.get_one_field(db.kinds, "name", kind_id)
+    }
+
+
 async def check_import_abbreviation(db, kind_document, lower_name=None):
     """
     Check if the abbreviation for a kind document to be imported already exists in the database. If the abbreviation
