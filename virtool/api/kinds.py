@@ -10,13 +10,13 @@ from aiohttp import web
 from pymongo import ReturnDocument
 
 import virtool.db.history
-import virtool.db.refs
 import virtool.db.kinds
+import virtool.db.refs
+import virtool.db.utils
 import virtool.history
 import virtool.http.routes
-import virtool.refs
-import virtool.refs
 import virtool.kinds
+import virtool.refs
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
@@ -95,7 +95,7 @@ async def get(req):
     return json_response(complete)
 
 
-@routes.post("/api/kinds", schema={
+@routes.post("/api/refs/{ref_id}/kinds", schema={
     "name": {"type": "string", "required": True, "min": 1},
     "abbreviation": {"type": "string", "min": 1},
     "schema": SCHEMA_VALIDATOR
@@ -106,7 +106,10 @@ async def create(req):
     use in the collection. Any errors are sent back to the client.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
+
+    ref_id = req.match_info["ref_id"]
 
     # Abbreviation defaults to empty string if not provided.
     abbreviation = data.get("abbreviation", "")
@@ -291,7 +294,7 @@ async def edit(req):
     await req.app["dispatcher"].dispatch(
         "kinds",
         "update",
-        virtool.utils.base_processor({key: new[key] for key in virtool.kinds.LIST_PROJECTION})
+        virtool.utils.base_processor(virtool.db.utils.apply_projection(new, virtool.kinds.LIST_PROJECTION))
     )
 
     return json_response(await virtool.db.kinds.join_and_format(db, kind_id, joined=new, issues=issues))
