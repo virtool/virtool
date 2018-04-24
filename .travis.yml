@@ -110,4 +110,4 @@ matrix:
       - cd client
       - yarn install
       script:
-      - yarn test --runInBand --maxWorkers=4
+      - yarn test --maxWorkers=4
