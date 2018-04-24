@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 // Migration path for older version of bootstrap pagination
 import { Pagination as BSPagination } from "@react-bootstrap/pagination";
 
@@ -27,3 +28,10 @@ export const Pagination = ({ documentCount, onPage, page, pageCount }) => (
         </div>
     ) : null
 );
+
+Pagination.propTypes = {
+    documentCount: PropTypes.number,
+    onPage: PropTypes.func.isRequired,
+    page: PropTypes.number,
+    pageCount: PropTypes.number.isRequired
+};

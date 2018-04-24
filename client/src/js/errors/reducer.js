@@ -1,3 +1,8 @@
+/**
+ * Exports a reducer for dealing with various request errors.
+ *
+ * @module errors/reducer
+ */
 import { endsWith, replace } from "lodash-es";
 import { reportAPIError } from "../utils";
 import {
@@ -19,21 +24,50 @@ import {
     CREATE_GROUP
 } from "../actionTypes";
 
+/**
+ * Checks whether supplied action is of failed action type,
+ * and returns the action if it is, otherwise returns false.
+ *
+ * @func
+ * @param action {object}
+ * @returns {(object|boolean)}
+ */
 export const checkActionFailed = (action) => {
     const isFailed = endsWith(action.type, "_FAILED");
     return isFailed ? action : false;
 };
 
+/**
+ * Returns the error field name from the failed action type.
+ *
+ * @func
+ * @param action {object}
+ * @returns {object}
+ */
 export const getErrorName = (action) => (
     replace(action.type, "_FAILED", "_ERROR")
 );
 
+/**
+ * Clears error if a new request is made for the same category.
+ *
+ * @func
+ * @param state {object}
+ * @returns {object}
+ */
 export const resetErrorName = (action) => {
     if (endsWith(action.type, "_REQUESTED")) {
         return replace(action.type, "_REQUESTED", "_ERROR");
     }
 };
 
+/**
+ * A reducer for dealing with various request errors.
+ *
+ * @param state {object}
+ * @param action {object}
+ * @returns {object}
+ */
 export default function errorsReducer (state = null, action) {
 
     if (action.type === CLEAR_ERROR) {

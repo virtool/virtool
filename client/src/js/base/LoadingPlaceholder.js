@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { ClipLoader } from "halogenium";
 
 /**
@@ -17,3 +18,10 @@ export const LoadingPlaceholder = ({ color = "#3c8786", margin = "220px", messag
         <ClipLoader color={color} size={size} />
     </div>
 );
+
+LoadingPlaceholder.propTypes = {
+    color: PropTypes.string,
+    margin: PropTypes.string,
+    message: PropTypes.string,
+    size: PropTypes.string
+};

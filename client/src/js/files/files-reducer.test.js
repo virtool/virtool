@@ -1,4 +1,7 @@
-import reducer, { checkUploadsComplete } from "./reducer";
+import reducer, {
+    initialState as reducerInitialState,
+    checkUploadsComplete
+} from "./reducer";
 import {
     FIND_FILES,
     REMOVE_FILE,
@@ -10,16 +13,7 @@ import { reject } from "lodash-es";
 
 describe("Files Reducer", () => {
 
-    const initialState = {
-        documents: null,
-        fileType: null,
-        found_count: 0,
-        page: 0,
-        total_count: 0,
-        uploads: [],
-        uploadsComplete: true,
-        showUploadOverlay: false
-    };
+    const initialState = reducerInitialState;
     let state;
     let action;
     let result;

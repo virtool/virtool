@@ -1,4 +1,4 @@
-import reducer from "./reducer";
+import reducer, { initialState as reducerInitialState } from "./reducer";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT,
@@ -11,12 +11,7 @@ import {
 
 describe("Account Reducer", () => {
 
-    const initialState = {
-        ready: false,
-        oldPasswordError: false,
-        apiKeys: null,
-        newKey: null
-    };
+    const initialState = reducerInitialState;
     let state;
     let action;
     let result;

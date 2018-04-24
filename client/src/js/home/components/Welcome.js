@@ -37,7 +37,7 @@ class Welcome extends React.Component {
             content = (
                 <Panel>
                     <Panel.Body>
-                        <LoadingPlaceholder margin={0} />
+                        <LoadingPlaceholder margin="0" />
                     </Panel.Body>
                 </Panel>
             );

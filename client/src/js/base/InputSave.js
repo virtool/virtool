@@ -138,8 +138,7 @@ export class InputSave extends React.Component {
                             value={this.state.value}
                             disabled={this.props.disabled}
                             style={{marginBottom: "0"}}
-                        >
-                        </FormControl>
+                        />
                     </FlexItem>
                     <Button
                         type="submit"

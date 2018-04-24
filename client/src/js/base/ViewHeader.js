@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import CX from "classnames";
 import { Badge } from "react-bootstrap";
 import { Flex, FlexItem } from "./index";
@@ -7,14 +8,17 @@ import { Flex, FlexItem } from "./index";
  * A textual component that shows the current position in pagination (eg. Viewing 1 - 15 of 1419).
  *
  * @func
- * @param page {number} the current page
+ * @param page {number} the current page, must not be less than 1
  * @param count {number} the number of items shown
  * @param totalCount {number} the total number of items that can be paged through
  * @param perPage {number} the number of items shown per page
  * @param pullRight {boolean} pull the element to the right
  */
-const PageHint = ({ page, count, totalCount, perPage = 15, pullRight = true}) => {
-    const first = 1 + (page - 1) * perPage;
+export const PageHint = ({ page, count, totalCount, perPage = 15, pullRight = true}) => {
+
+    const currentPage = page < 1 ? 1 : page;
+
+    const first = 1 + (currentPage - 1) * perPage;
 
     const last = first + (count < perPage ? count - 1 : perPage - 1);
 
@@ -55,3 +59,11 @@ export const ViewHeader = ({ title, page, count, foundCount, totalCount }) => (
         </Flex>
     </h3>
 );
+
+ViewHeader.propTypes = {
+    title: PropTypes.string,
+    page: PropTypes.number.isRequired,
+    count: PropTypes.number.isRequired,
+    foundCount: PropTypes.number.isRequired,
+    totalCount: PropTypes.number
+};

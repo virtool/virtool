@@ -37,7 +37,6 @@
     "history": "^4.7.2",
     "html-webpack-plugin": "^3.1.0",
     "identicon.js": "^2.3.1",
-    "jest": "^22.4.3",
     "jsdoc": "^3.5.5",
     "less": "^3.0.1",
     "less-loader": "^4.0.5",
@@ -78,9 +77,11 @@
     "babel-jest": "^22.4.3",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
+    "enzyme-to-json": "^3.3.3",
     "jest": "^22.4.3",
     "react-test-renderer": "^16.2.0",
     "regenerator-runtime": "^0.11.1",
+    "redux-mock-store": "^1.5.1",
     "sinon": "^4.4.10",
     "webpack-cli": "^2.0.13"
   },
@@ -105,6 +106,9 @@
     "collectCoverageFrom": [
       "src/js/**/*.{js,jsx}"
     ],
-    "setupTestFrameworkScriptFile": "./src/tests/setupTests.js"
+    "setupTestFrameworkScriptFile": "./src/tests/setupTests.js",
+    "snapshotSerializers": [
+      "enzyme-to-json/serializer"
+    ]
   }
 }

@@ -1,13 +1,9 @@
-import reducer from "./reducer";
+import reducer, { initialState as reducerInitialState } from "./reducer";
 import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
 
 describe("HMM Reducer", () => {
 
-    const initialState = {
-        documents: null,
-        detail: null,
-        process: null
-    };
+    const initialState = reducerInitialState;
     let state;
     let action;
     let result;
