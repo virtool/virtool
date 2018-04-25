@@ -3,6 +3,7 @@ import virtool.db.refs
 import virtool.db.utils
 import virtool.kinds
 import virtool.http.routes
+import virtool.refs
 import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
 
@@ -20,7 +21,7 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.refs, db_query, req.query, sort="name", projection=virtool.refs.PROJECTION)
+    data = await paginate(db.refs, db_query, req.query, sort="name")
 
     return json_response(data)
 
@@ -56,7 +57,8 @@ async def get(req):
         "default": "genome"
     },
     "organism": {
-        "type": "string"
+        "type": "string",
+        "default": ""
     },
     "public": {
         "type": "boolean",
