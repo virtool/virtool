@@ -1,19 +1,24 @@
 import { LOCATION_CHANGE } from "react-router-redux";
 import { takeLatest, throttle } from "redux-saga/effects";
 
-import * as refsAPI from "./api";
+import * as referenceAPI from "./api";
 import { apiCall, apiFind } from "../sagaUtils";
-import { LIST_REFS, GET_REF } from "../actionTypes";
+import { CREATE_REFERENCE, GET_REFERENCE, LIST_REFERENCES } from "../actionTypes";
 
-export function* listRefs (action) {
-    yield apiFind("/viruses", refsAPI.list, action, LIST_REFS);
+export function* listReferences (action) {
+    yield apiFind("/refs", referenceAPI.list, action, LIST_REFERENCES);
 }
 
-export function* getRef (action) {
-    yield apiCall(refsAPI.get, action, GET_REF);
+export function* getReference (action) {
+    yield apiCall(referenceAPI.get, action, GET_REFERENCE);
+}
+
+export function* createReference (action) {
+    yield apiCall(referenceAPI.create, action, GET_REFERENCE);
 }
 
 export function* watchViruses () {
-    yield throttle(300, LOCATION_CHANGE, listRefs);
-    yield takeLatest(GET_REF.REQUESTED, getRef);
+    yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
+    yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
+    yield throttle(300, LOCATION_CHANGE, listReferences);
 }

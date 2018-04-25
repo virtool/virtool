@@ -1,12 +1,18 @@
 import { simpleActionCreator } from "../utils";
 import {
-    LIST_REFS,
-    GET_REF,
+    LIST_REFERENCES,
+    GET_REFERENCE, CREATE_REFERENCE,
 } from "../actionTypes";
 
-export const listRefs = simpleActionCreator(LIST_REFS);
+export const listReferences = simpleActionCreator(LIST_REFERENCES);
 
-export const getRef = (refId) => ({
-    type: GET_REF.REQUESTED,
-    refId
+export const getReference = (referenceId) => ({
+    type: GET_REFERENCE.REQUESTED,
+    referenceId
+});
+
+export const createReference = (name, description) => ({
+    type: CREATE_REFERENCE.REQUESTED,
+    name,
+    description
 });

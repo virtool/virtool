@@ -1,4 +1,4 @@
-import { LIST_REFS, GET_REF } from "../actionTypes";
+import { LIST_REFERENCES, GET_REFERENCE } from "../actionTypes";
 
 const initialState = {
     documents: null,
@@ -6,14 +6,14 @@ const initialState = {
     history: null
 };
 
-export default function refsReducer (state = initialState, action) {
+export default function referenceReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case LIST_REFS.SUCCEEDED:
+        case LIST_REFERENCES.SUCCEEDED:
             return {...state, ...action.data};
 
-        case GET_REF.SUCCEEDED:
+        case GET_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};
 
         default:

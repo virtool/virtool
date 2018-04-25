@@ -7,3 +7,11 @@ export const list = () => (
 export const get = ({ refId }) => (
     Request.get(`/api/refs/${refId}`)
 );
+
+export const create = ({ name, description }) => (
+    Request.post("/api/refs")
+        .send({
+            name,
+            description
+        })
+);
