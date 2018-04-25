@@ -171,7 +171,7 @@ describe("<ProgressBar />", () => {
                 step: 4
             };
             wrapper = mount(<AutoProgressBar {...props} />);
-            let spyStop = sinon.spy(wrapper.instance(), "stop");
+            const spyStop = sinon.spy(wrapper.instance(), "stop");
 
             // If fill < 80, set state to fill value
             wrapper.setState({ fill: 10 });
