@@ -49,9 +49,9 @@ const Bar = (props) => {
                             </NavItem>
                         </LinkContainer>
 
-                        <LinkContainer to="/viruses">
+                        <LinkContainer to="/refs">
                             <NavItem>
-                                Viruses
+                                References
                             </NavItem>
                         </LinkContainer>
 

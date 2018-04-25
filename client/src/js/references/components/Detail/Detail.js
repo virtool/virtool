@@ -1,13 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import { getRef } from "../../actions";
+import { getReference } from "../../actions";
 import { LoadingPlaceholder } from "../../../base";
 
-class RefDetail extends React.Component {
+class ReferenceDetail extends React.Component {
 
     componentDidMount () {
-        this.props.getRef(this.props.match.params.refId);
+        this.props.getReference(this.props.match.params.refId);
     }
 
     render = () => {
@@ -16,7 +16,7 @@ class RefDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        return <div>TesT</div>;
+        return <div>Test</div>;
     };
 }
 
@@ -26,10 +26,10 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    getVirus: (refId) => {
-        dispatch(getRef(refId));
+    getReference: (refId) => {
+        dispatch(getReference(refId));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RefDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceDetail);
