@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Indexes /> renders correctly 1`] = `
+<Switch>
+  <Route
+    component={[Function]}
+    exact={true}
+    path="/viruses/indexes"
+  />
+  <Route
+    component={[Function]}
+    path="/viruses/indexes/:indexVersion"
+  />
+</Switch>
+`;

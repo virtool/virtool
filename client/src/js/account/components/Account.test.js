@@ -8,8 +8,8 @@ describe("<Account />", () => {
         };
         const store = mockStore(initialState);
 
-        const container = shallow(<Account store={store} />).dive();
+        const wrapper = shallow(<Account store={store} />).dive();
 
-        expect(container).toMatchSnapshot();
+        expect(wrapper).toMatchSnapshot();
     });
 });

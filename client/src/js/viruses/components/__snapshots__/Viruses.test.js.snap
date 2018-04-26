@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Viruses /> renders correctly 1`] = `
+<div
+  className="container"
+>
+  <Switch>
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/viruses"
+    />
+    <Route
+      component={[Function]}
+      path="/viruses/create"
+    />
+    <Route
+      component={[Function]}
+      path="/viruses/indexes"
+    />
+    <Route
+      component={[Function]}
+      path="/viruses/:virusId"
+    />
+  </Switch>
+</div>
+`;
