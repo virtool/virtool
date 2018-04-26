@@ -94,6 +94,7 @@ async def init_dispatcher(app):
 
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
+    app["dispatch"] = app["dispatcher"].dispatch
 
 
 async def init_db(app):
