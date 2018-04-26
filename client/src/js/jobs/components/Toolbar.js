@@ -4,7 +4,6 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
 import { clearJobs } from "../actions";
@@ -50,10 +49,6 @@ const JobsToolbar = (props) => {
                     <FormControl value={props.term} onChange={(e) => props.onFind(e.target.value)} />
                 </InputGroup>
             </FormGroup>
-
-            <LinkContainer to="/jobs/resources">
-                <Button icon="meter" tip="Resources" />
-            </LinkContainer>
 
             {removalDropdown}
         </div>

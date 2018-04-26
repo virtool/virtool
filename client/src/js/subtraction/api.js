@@ -2,20 +2,20 @@ import Request from "superagent";
 
 
 export const find = () => (
-    Request.get(`/api/subtraction${window.location.search}`)
+    Request.get(`/api/subtractions${window.location.search}`)
 );
 
 export const listIds = () => (
-    Request.get("/api/subtraction")
+    Request.get("/api/subtractions")
         .query({ids: true})
 );
 
 export const get = ({ subtractionId }) => (
-    Request.get(`/api/subtraction/${subtractionId}`)
+    Request.get(`/api/subtractions/${subtractionId}`)
 );
 
 export const create = ({ subtractionId, fileId, nickname }) => (
-    Request.post("/api/subtraction")
+    Request.post("/api/subtractions")
         .send({
             subtraction_id: subtractionId,
             file_id: fileId,
@@ -24,10 +24,10 @@ export const create = ({ subtractionId, fileId, nickname }) => (
 );
 
 export const update = ({ subtractionId, nickname }) => (
-    Request.patch(`/api/subtraction/${subtractionId}`)
+    Request.patch(`/api/subtractions/${subtractionId}`)
         .send({ nickname })
 );
 
 export const remove = ({ subtractionId }) => (
-    Request.delete(`/api/subtraction/${subtractionId}`)
+    Request.delete(`/api/subtractions/${subtractionId}`)
 );

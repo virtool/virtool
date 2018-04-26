@@ -6,10 +6,11 @@ import { ConnectedRouter } from "react-router-redux";
 import { Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
+import Sidebar from "./nav/components/Sidebar";
 import Welcome from "./home/components/Welcome";
 import Jobs from "./jobs/components/Jobs";
 import Samples from "./samples/components/Samples";
-import Viruses from "./viruses/components/Viruses";
+import References from "./references/components/References";
 import HMM from "./hmm/components/HMM";
 import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
@@ -24,16 +25,17 @@ const Inner = (props) => {
                 <Helmet titleTemplate="Virtool - %s" defaultTitle="Virtool" />
 
                 <NavBar />
+                <Sidebar />
 
                 <Switch>
                     <Route path="/" component={Welcome} exact />
                     <Route path="/home" component={Welcome} />
                     <Route path="/jobs" component={Jobs} />
                     <Route path="/samples" component={Samples} />
-                    <Route path="/viruses" component={Viruses} />
+                    <Route path="/refs" component={References} />
                     <Route path="/hmm" component={HMM} />
                     <Route path="/subtraction" component={Subtraction} />
-                    <Route path="/settings" component={Settings} />
+                    <Route path="/administration" component={Settings} />
                     <Route path="/account" component={Account} />
                 </Switch>
 

@@ -14,6 +14,7 @@
 @import "./graphics.less";
 @import "./print.less";
 @import "./progress.less";
+@import "./notifications.less";
 @import "./upload.less";
 @import "./tabs.less";
 @import "./animation.less";
@@ -31,6 +32,17 @@
 
 // Bootstrap small-screen breakpoint variable
 @screen-sm: 992px;
+
+// Bootstrap container sizes 
+@container-sm: 88vw; 
+@container-md: 88vw; 
+@container-lg: 88vw; 
+
+// Bootstrap collapse menu button color 
+@navbar-default-toggle-hover-bg: #60af98;
+
+// Sidebar menu button hover color
+@nav-link-hover-bg: #c1e4db; 
 
 // Bootstrap border-radius variable
 @border-radius-base: 0;
@@ -75,9 +87,72 @@ td.sequence-cell > textarea {
   border: none;
 }
 
-.navbar {
-  box-shadow: 0px 2px 2px 0 #d5d5d5;
+.container {
+  position: absolute;
+  left: 110px;
+  right: 20px;
+  max-width: 100vw - 130px;
 }
+
+.navbar {
+  //box-shadow: 0px 2px 2px 0 #d5d5d5;
+}
+
+.navbar-fixed-top > .container {
+  left: 0;
+  right: 0;
+  width: 100vw;
+  padding: 0 35px;
+}
+
+.navbar-default .navbar-toggle { 
+  border-color: transparent; 
+} 
+ 
+.navbar-default .navbar-toggle .icon-bar { 
+  background-color: #edf7f6; 
+} 
+
+@media (max-width: @grid-float-breakpoint) { 
+  .navbar-collapse {
+    position: absolute;
+    right: 0;
+    margin-top: 0 !important;
+    background-color: #60af98; 
+    max-width: 150px;
+    min-width: 150px;
+  } 
+} 
+
+.sidebar {  
+  position: fixed; 
+  right: 0; 
+  left: 0; 
+  min-width: 95px; 
+  max-width: 5vw; 
+  min-height: 100%; 
+  max-height: 100%; 
+  border-right: 1px solid #3c87865d; 
+  background-color: #c1e4db50; 
+  z-index: 1000; 
+  margin: -@navbar-margin-bottom 0 0 0; 
+  padding: @navbar-margin-bottom 0 0 0; 
+} 
+ 
+.sidebar-item { 
+  max-width: 5vw; 
+  min-width: 96px; 
+  width: 100%; 
+  height: 100%; 
+  text-align: center; 
+  padding: 0 0; 
+  margin-left: -1px; 
+}
+
+.sidebar-item > a { 
+  color: #05486c; 
+  padding: 10px 0 !important; 
+} 
 
 .text-em {
   font-style: italic;

@@ -23,10 +23,6 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
             </InputGroup>
         </FormGroup>
 
-        <LinkContainer to="/samples/files">
-            <Button tip="Read Files" icon="folder-open" />
-        </LinkContainer>
-
         {canCreate ? (
             <LinkContainer to={{state: {create: true}}}>
                 <Button
