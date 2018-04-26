@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import aiofiles
+import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
 from aiohttp import web
@@ -278,6 +279,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         middlewares.append(virtool.app_auth.middleware)
 
     app = web.Application(loop=loop, middlewares=middlewares)
+
+    aiojobs.aiohttp.setup(app)
 
     app["version"] = force_version
     app["db_name"] = db_name
