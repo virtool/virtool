@@ -288,8 +288,6 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         else:
             app["settings"] = dict()
 
-
-
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
         app.on_startup.append(init_db)
@@ -354,6 +352,3 @@ async def find_server_version(loop, install_path="."):
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
         return "Unknown"
-
-
-

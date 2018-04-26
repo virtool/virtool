@@ -52,7 +52,7 @@ async def get_new_isolate_id(db, excluded=None):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param excluded: a list or set of strings that may not be returned.
-    :type excluded: list
+    :type excluded: Union[set, list]
 
     :return: a new unique isolate id
     :rtype: Coroutine[str]

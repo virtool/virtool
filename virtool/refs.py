@@ -1,8 +1,6 @@
 import gzip
 import json
 
-import virtool.kinds
-
 
 def get_owner_user(user_id):
     return {
