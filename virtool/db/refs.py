@@ -28,7 +28,7 @@ async def get_contributors(db, ref_id):
     :rtype: Union[None, List[dict]]
 
     """
-    return virtool.db.history.get_contributors(db, {"ref.id": ref_id})
+    return await virtool.db.history.get_contributors(db, {"ref.id": ref_id})
 
 
 async def get_latest_build(db, ref_id):

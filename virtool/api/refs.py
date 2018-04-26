@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import aiojobs.aiohttp
@@ -27,6 +28,17 @@ async def find(req):
 
     data = await paginate(db.refs, db_query, req.query, sort="name")
 
+    for d in data["documents"]:
+        contributors, internal_control, latest_build = await asyncio.gather(
+            virtool.db.refs.get_contributors(db, d["id"]),
+            virtool.db.refs.get_internal_control(db, d["id"]),
+            virtool.db.refs.get_latest_build(db, d["id"])
+        )
+
+        d["contributors"] = contributors
+        d["internal_control"] = internal_control
+        d["latest_build"] = latest_build
+
     return json_response(data)
 
 
@@ -38,10 +50,22 @@ async def get(req):
     """
     db = req.app["db"]
 
-    document = await db.refs.find_one(req.match_info["ref_id"])
+    ref_id = req.match_info["ref_id"]
+
+    document = await db.refs.find_one(ref_id)
 
     if not document:
         return not_found()
+
+    contributors, internal_control, latest_build = await asyncio.gather(
+        virtool.db.refs.get_contributors(db, ref_id),
+        virtool.db.refs.get_internal_control(db, ref_id),
+        virtool.db.refs.get_latest_build(db, ref_id)
+    )
+
+    document["contributors"] = contributors
+    document["internal_control"] = internal_control
+    document["latest_build"] = latest_build
 
     return json_response(document)
 
