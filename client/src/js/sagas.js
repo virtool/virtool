@@ -15,7 +15,7 @@ import { watchSettings } from "./settings/sagas";
 import { watchSubtraction } from "./subtraction/sagas";
 import { watchUpdates } from "./updates/sagas";
 import { watchUsers } from "./users/sagas";
-import { watchViruses } from "./viruses/sagas";
+import { watchViruses } from "./references/sagas";
 import { all } from "redux-saga/effects";
 
 /**

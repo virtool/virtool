@@ -4,6 +4,7 @@ import virtool.db.jobs
 import virtool.http.routes
 import virtool.jobs.job
 import virtool.jobs.utils
+import virtool.resources
 import virtool.utils
 from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate
 
@@ -130,3 +131,15 @@ async def clear(req):
     return json_response({
         "removed": removed
     })
+
+
+@routes.get("/api/jobs/resources")
+async def get_resources(req):
+    """
+    Get a object describing compute resource usage on the server.
+
+    """
+    resources = virtool.resources.get()
+    req.app["resources"] = resources
+
+    return json_response(resources)

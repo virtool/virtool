@@ -77,7 +77,8 @@ export default {
         }),
 
         new CleanPlugin(["dist"], {
-            verbose: true
+            verbose: true,
+            watch: true
         }),
 
         new BundleAnalyzerPlugin({
