@@ -1,8 +1,5 @@
-import json
-
-import aiofiles
 import pymongo
-from pymongo import InsertOne, ReturnDocument
+from pymongo import InsertOne
 
 import virtool.db.history
 import virtool.db.kinds

@@ -4,6 +4,7 @@ import os
 import aiojobs.aiohttp
 
 import virtool.db.history
+import virtool.db.kinds
 import virtool.db.processes
 import virtool.db.references
 import virtool.db.utils
@@ -80,24 +81,14 @@ async def find_kinds(req):
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
 
-    db_query = dict()
-
-    if term:
-        db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
-
-    if verified is not None:
-        db_query["verified"] = virtool.utils.to_bool(verified)
-
-    if names in [True, "true"]:
-        data = await db.kinds.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
-        data = [virtool.utils.base_processor(d) for d in data]
-    else:
-        data = await paginate(
-            db.kinds,
-            db_query,
-            req.query,
-            sort="name", projection=virtool.kinds.LIST_PROJECTION)
-        data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["kind"]).distinct("kind.name"))
+    data = await virtool.db.kinds.find(
+        db,
+        names,
+        term,
+        req.query,
+        verified,
+        ref_id
+    )
 
     return json_response(data)
 

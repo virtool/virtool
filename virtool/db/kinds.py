@@ -67,7 +67,7 @@ async def get_new_isolate_id(db, excluded=None):
     return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
 
 
-async def find_kinds(db, names, term, req_query, verified, ref_id=None):
+async def find(db, names, term, req_query, verified, ref_id=None):
 
     db_query = dict()
 
