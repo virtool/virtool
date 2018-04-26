@@ -100,7 +100,7 @@ matrix:
 
     - language: node_js
       node_js:
-      - 'stable'
+      - '6'
       cache:
         yarn: true
         directories:
