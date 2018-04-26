@@ -100,7 +100,7 @@ async def organize_kinds(db):
 
 
 async def organize_references(db):
-    if await db.kinds.count() and not await db.references.count():
+    if await db.kinds.count() and not await db.refs.count():
         await virtool.db.refs.create_original(db)
 
 
