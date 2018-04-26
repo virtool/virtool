@@ -351,12 +351,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, dispatch, process_id, 0.2, "validate_documents")
 
-    try:
-        kinds = import_data["kinds"]
-    except KeyError:
-        kinds = import_data["viruses"]
-    except TypeError:
-        kinds = import_data
+    kinds = import_data["data"]
 
     duplicates = virtool.refs.detect_duplicates(kinds)
 
