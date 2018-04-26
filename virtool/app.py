@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import aiofiles
+import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
 from aiohttp import web
@@ -43,12 +44,22 @@ async def init_executors(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-    app.loop.set_default_executor(executor)
-    app["executor"] = executor
+    thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    app.loop.set_default_executor(thread_executor)
 
-    executor = concurrent.futures.ProcessPoolExecutor()
-    app["process_executor"] = executor
+    async def run_in_thread(func, *args):
+        return await app.loop.run_in_executor(thread_executor, func, *args)
+
+    app["run_in_thread"] = run_in_thread
+    app["executor"] = thread_executor
+
+    process_executor = concurrent.futures.ProcessPoolExecutor()
+
+    async def run_in_process(func, *args):
+        return await app.loop.run_in_executor(process_executor, func, *args)
+
+    app["run_in_process"] = run_in_process
+    app["process_executor"] = process_executor
 
 
 async def init_resources(app):
@@ -83,6 +94,7 @@ async def init_dispatcher(app):
 
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
+    app["dispatch"] = app["dispatcher"].dispatch
 
 
 async def init_db(app):
@@ -269,6 +281,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     app = web.Application(loop=loop, middlewares=middlewares)
 
+    aiojobs.aiohttp.setup(app)
+
     app["version"] = force_version
     app["db_name"] = db_name
 
@@ -287,8 +301,6 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
                 app.on_startup.append(init_sentry)
         else:
             app["settings"] = dict()
-
-
 
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
@@ -354,6 +366,3 @@ async def find_server_version(loop, install_path="."):
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
         return "Unknown"
-
-
-

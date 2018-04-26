@@ -240,7 +240,7 @@ def split(merged):
     return kind, sequences
 
 
-def validate_kind(joined):
+def verify(joined):
     """
     Checks that the passed kind and sequences constitute valid Virtool records and can be included in a kind
     index. Error fields are:

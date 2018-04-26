@@ -1,12 +1,13 @@
 import pymongo
-from pymongo import InsertOne, ReturnDocument
+from pymongo import InsertOne
 
 import virtool.db.history
 import virtool.db.kinds
+import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
 import virtool.kinds
-import virtool.refs
+import virtool.references
 import virtool.utils
 
 
@@ -24,7 +25,7 @@ async def get_contributors(db, ref_id):
     :rtype: Union[None, List[dict]]
 
     """
-    return virtool.db.history.get_contributors(db, {"ref.id": ref_id})
+    return await virtool.db.history.get_contributors(db, {"ref.id": ref_id})
 
 
 async def get_latest_build(db, ref_id):
@@ -222,7 +223,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
         }
 
     if not users:
-        users = [virtool.refs.get_owner_user(user_id)]
+        users = [virtool.references.get_owner_user(user_id)]
 
     document = {
         "_id": ref_id,
@@ -273,136 +274,157 @@ async def create_original(db):
     return document
 
 
-async def import_file(db, dispatch, data, user_id):
+async def create_for_import(db, name, description, public, import_from, user_id):
     """
-    Import a previously exported Virtool kind reference.
+    Import a previously exported Virtool reference.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param dispatch: the dispatcher's dispatch function
-    :type dispatch: func
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
-    :param ref_id: the id of the ref to import data for
-    :type ref_id: str
+    :param name: the name for the new reference
+    :type name: str
 
-    :param data: the kind data to import
-    :type data: dict
+    :param description: a description for the new reference
+    :type description: str
 
-    :param user_id: the requesting ``user_id``
+    :param public: is the reference public on creation
+    :type public: bool
+
+    :param import_from: the uploaded file to import from
+    :type import_from: str
+
+    :param user_id: the id of the creating user
     :type user_id: str
 
+    :return: a reference document
+    :rtype: dict
+
     """
-    kinds = data["data"]
+    created_at = virtool.utils.timestamp()
 
-    await db.status.replace_one({"_id": "virus_import"}, {"_id": "virus_import"}, upsert=True)
+    document = await create_document(
+        db,
+        name,
+        None,
+        description,
+        None,
+        public,
+        created_at=created_at,
+        user_id=user_id
+    )
 
-    document = await db.status.find_one_and_update({"_id": "virus_import"}, {
+    file_document = await db.files.find_one(import_from, ["name", "created_at", "user"])
+
+    document["imported_from"] = virtool.utils.base_processor(file_document)
+
+    return document
+
+
+async def import_file(app, path, ref_id, created_at, process_id, user_id):
+    db = app["db"]
+    dispatch = app["dispatch"]
+
+    import_data = await app["run_in_thread"](virtool.references.load_import_file, path)
+
+    try:
+        data_type = import_data["data_type"]
+    except (TypeError, KeyError):
+        data_type = "genome"
+
+    try:
+        organism = import_data["organism"]
+    except (TypeError, KeyError):
+        organism = ""
+
+    await db.refs.update_one({"_id": ref_id}, {
         "$set": {
-            "version": data["version"],
-            "file_created_at": data["created_at"],
-            "errors": None,
-            "duplicates": None
+            "data_type": data_type,
+            "organism": organism
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
-    await dispatch("status", "update", virtool.utils.base_processor(document))
+    await virtool.db.processes.update(db, dispatch, process_id, 0.2, "validate_documents")
 
-    duplicates, errors = virtool.refs.validate_kinds(kinds)
+    kinds = import_data["data"]
 
-    if duplicates or errors:
-        document = await db.status.find_one_and_update({"_id": "virus_import"}, {
-            "$set": {
-                "errors": errors,
+    duplicates = virtool.references.detect_duplicates(kinds)
+
+    if duplicates:
+        errors = [
+            {
+                "id": "duplicates",
+                "message": "Duplicates found.",
                 "duplicates": duplicates
             }
-        }, return_document=ReturnDocument.AFTER)
+        ]
 
-        return await dispatch("status", "update", virtool.utils.base_processor(document))
+        await virtool.db.processes.update(db, dispatch, process_id, errors=errors)
 
-    isolate_counts = list()
-    sequence_counts = list()
+    await virtool.db.processes.update(db, dispatch, process_id, 0.4, "import_documents")
 
-    for kind in kinds:
-        isolates = kind["isolates"]
-        isolate_counts.append(len(isolates))
-
-        for isolate in isolates:
-            sequence_counts.append(len(isolate["sequences"]))
-
-    document = await db.status.find_one_and_update({"_id": "virus_import"}, {
-        "$set": {
-            "inserted": 0,
-            "totals": {
-                "kinds": len(kinds),
-                "isolates": sum(isolate_counts),
-                "sequences": sum(sequence_counts)
-            }
-        }
-    }, return_document=ReturnDocument.AFTER)
-
-    await dispatch("status", "update", virtool.utils.base_processor(document))
-
-    _kind_buffer = list()
-    _sequence_buffer = list()
+    used_kind_ids = set()
+    used_isolate_ids = set()
+    used_sequence_ids = set()
 
     for kind in kinds:
-        document, sequences = virtool.kinds.split(kind)
 
-        document.update({
-            "lower_name": document["name"].lower(),
+        issues = virtool.kinds.verify(kind)
+
+        kind_id = await virtool.db.utils.get_new_id(db.kinds, excluded=used_kind_ids)
+
+        used_kind_ids.add(kind_id)
+
+        kind.update({
+            "_id": kind_id,
+            "created_at": created_at,
+            "lower_name": kind["name"].lower(),
             "last_indexed_version": None,
-            "created_at": virtool.utils.timestamp(),
-            "verified": True,
-            "version": 0
+            "issues": issues,
+            "verified": issues is None,
+            "imported": True,
+            "version": 0,
+            "ref": {
+                "id": ref_id
+            },
+            "user": {
+                "id": user_id
+            }
         })
 
-        _kind_buffer.append(document)
+        for isolate in kind["isolates"]:
+            isolate_id = await virtool.db.kinds.get_new_isolate_id(db, excluded=used_isolate_ids)
 
-        for sequence in sequences:
-            _sequence_buffer.append(sequence)
+            isolate["id"] = isolate_id
 
-        if len(_kind_buffer) == 50:
-            await db.kinds.insert_many(_kind_buffer)
+            used_isolate_ids.add(isolate_id)
 
-            document = await db.status.find_one_and_update({"_id": "virus_import"}, {
-                "$inc": {
-                    "inserted": 50,
-                }
-            }, return_document=ReturnDocument.AFTER)
+            for sequence in isolate.pop("sequences"):
+                sequence_id = await virtool.db.utils.get_new_id(db.sequences, excluded=used_sequence_ids)
 
-            await dispatch("status", "update", virtool.utils.base_processor(document))
+                sequence.update({
+                    "_id": sequence_id,
+                    "ref_id": ref_id,
+                    "kind_id": kind_id,
+                    "isolate_id": isolate_id
+                })
 
-            _kind_buffer = list()
+                await db.sequences.insert_one(sequence)
 
-        if len(_sequence_buffer) == 50:
-            await db.sequences.insert_many(_sequence_buffer)
-            _sequence_buffer = list()
+        await db.kinds.insert_one(kind)
 
-    kind_buffer_length = len(_kind_buffer)
-
-    if kind_buffer_length:
-        await db.kinds.insert_many(_kind_buffer)
-
-        document = await db.status.find_one_and_update({"_id": "virus_import"}, {
-            "$inc": {
-                "inserted": kind_buffer_length,
-            }
-        }, return_document=ReturnDocument.AFTER)
-
-        await dispatch("status", "update", virtool.utils.base_processor(document))
-
-    if len(_sequence_buffer):
-        await db.sequences.insert_many(_sequence_buffer)
+    await virtool.db.processes.update(db, dispatch, process_id, 0.7, "create_history")
 
     for kind in kinds:
         # Join the kind document into a complete kind record. This will be used for recording history.
         joined = await virtool.db.kinds.join(db, kind["_id"])
 
         # Build a ``description`` field for the kind creation change document.
-        description = "Created {}".format(joined["name"])
+        description = "Imported {}".format(joined["name"])
 
-        abbreviation = document.get("abbreviation", None)
+        abbreviation = joined.get("abbreviation", None)
 
         # Add the abbreviation to the description if there is one.
         if abbreviation:
@@ -410,14 +432,14 @@ async def import_file(db, dispatch, data, user_id):
 
         await virtool.db.history.add(
             db,
-            "create",
+            "import",
             None,
             joined,
             description,
             user_id
         )
 
-    await dispatch("status", "update", virtool.utils.base_processor(document))
+    await virtool.db.processes.update(db, dispatch, process_id, 1)
 
 
 async def insert_from_import(db, kind_document, user_id):

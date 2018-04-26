@@ -11,12 +11,12 @@ from pymongo import ReturnDocument
 
 import virtool.db.history
 import virtool.db.kinds
-import virtool.db.refs
+import virtool.db.references
 import virtool.db.utils
 import virtool.history
 import virtool.http.routes
 import virtool.kinds
-import virtool.refs
+import virtool.references
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
@@ -59,20 +59,13 @@ async def find(req):
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
 
-    db_query = dict()
-
-    if term:
-        db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
-
-    if verified is not None:
-        db_query["verified"] = virtool.utils.to_bool(verified)
-
-    if names in [True, "true"]:
-        data = await db.kinds.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
-        data = [virtool.utils.base_processor(d) for d in data]
-    else:
-        data = await paginate(db.kinds, db_query, req.query, sort="name", projection=virtool.kinds.LIST_PROJECTION)
-        data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["kind"]).distinct("kind.name"))
+    data = await virtool.db.kinds.find(
+        db,
+        names,
+        term,
+        req.query,
+        verified
+    )
 
     return json_response(data)
 
@@ -580,7 +573,7 @@ async def edit_isolate(req):
             return json_response(isolate, status=200)
 
 
-@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+@routes.put("/api/kinds/{kind_id}/isolates/{isolate_id}/default", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
@@ -1034,7 +1027,7 @@ async def get_import(req):
 
     data = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.load_import_file,
+        virtool.references.load_import_file,
         file_path
     )
 
@@ -1052,7 +1045,7 @@ async def get_import(req):
 
     duplicates, errors = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.validate_kinds,
+        virtool.references.validate_kinds,
         data["data"]
     )
 
@@ -1085,7 +1078,7 @@ async def import_kinds(req):
 
     data = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.load_import_file,
+        virtool.references.load_import_file,
         file_path
     )
 
@@ -1094,7 +1087,7 @@ async def import_kinds(req):
     if not data_version:
         return bad_request("File is not compatible with this version of Virtool")
 
-    asyncio.ensure_future(virtool.db.refs.import_data(
+    asyncio.ensure_future(virtool.db.references.import_data(
         db,
         req.app["dispatcher"].dispatch,
         data,

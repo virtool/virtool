@@ -171,15 +171,15 @@ async def test_organize_references(has_references, has_kind, mocker, test_motor)
         })
 
     if has_references:
-        await test_motor.references.insert_one({
+        await test_motor.refs.insert_one({
             "_id": "baz"
         })
 
-    m = mocker.patch("virtool.db.refs.create_original", new=make_mocked_coro())
+    m = mocker.patch("virtool.db.references.create_original", new=make_mocked_coro())
 
     await virtool.organize.organize_references(test_motor)
 
-    document = await test_motor.references.find_one()
+    document = await test_motor.refs.find_one()
 
     if has_kind and not has_references:
         assert document is None
@@ -189,7 +189,7 @@ async def test_organize_references(has_references, has_kind, mocker, test_motor)
         assert not m.called
 
     if has_references:
-        assert await test_motor.references.find_one() == {
+        assert await test_motor.refs.find_one() == {
             "_id": "baz"
         }
 

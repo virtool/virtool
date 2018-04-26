@@ -1,8 +1,6 @@
 import gzip
 import json
 
-import virtool.kinds
-
 
 def get_owner_user(user_id):
     return {
@@ -14,19 +12,13 @@ def get_owner_user(user_id):
     }
 
 
-def validate_kinds(kinds):
+def detect_duplicates(kinds):
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
     duplicates = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
 
-    errors = dict()
-
     for joined in kinds:
-        # Check for problems local to the kind document.
-        errors[joined["name"].lower()] = virtool.kinds.validate_kind(joined)
-
-        # Check for problems in the list as a whole.
         for field in fields:
             value = joined[field]
 
@@ -65,12 +57,7 @@ def validate_kinds(kinds):
     else:
         duplicates = {key: list(duplicates[key]) for key in duplicates}
 
-    if any(errors.values()):
-        errors = {key: errors[key] for key in errors if errors[key]}
-    else:
-        errors = None
-
-    return duplicates, errors
+    return duplicates
 
 
 def load_import_file(path):
@@ -87,40 +74,3 @@ def load_import_file(path):
     with open(path, "rb") as handle:
         with gzip.open(handle, "rt") as gzip_file:
             return json.load(gzip_file)
-
-
-async def send_import_dispatches(dispatch, insertions, replacements, flush=False):
-    """
-    Dispatch all possible insertion and replacement messages for a running kinds reference import. Called many times
-    during an import process.
-
-    :param dispatch: the dispatch function
-    :type dispatch: func
-
-    :param insertions: a list of tuples describing insertions
-    :type insertions: list
-
-    :param replacements: a list of tuples describing replacements and their component removals and an insertions
-    :type replacements: list
-
-    :param flush: override the length check and flush all data to the dispatcher
-    :type flush: bool
-
-    """
-
-    if len(insertions) == 30 or (flush and insertions):
-        kinds_updates, history_updates = zip(*insertions)
-
-        await dispatch("kinds", "update", kinds_updates)
-        await dispatch("history", "update", history_updates)
-
-        del insertions[:]
-
-    if len(replacements) == 30 or (flush and replacements):
-        await dispatch("kinds", "remove", [replace[0][0] for replace in replacements])
-        await dispatch("history", "update", [replace[0][1] for replace in replacements])
-
-        await dispatch("kinds", "update", [replace[1][0] for replace in replacements])
-        await dispatch("history", "update", [replace[1][1] for replace in replacements])
-
-        del replacements[:]
