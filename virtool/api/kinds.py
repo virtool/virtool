@@ -580,7 +580,7 @@ async def edit_isolate(req):
             return json_response(isolate, status=200)
 
 
-@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+@routes.put("/api/kinds/{kind_id}/isolates/{isolate_id}/default", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
