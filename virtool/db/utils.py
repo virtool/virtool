@@ -42,15 +42,15 @@ async def get_new_id(collection, excluded=None):
     :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
 
     :param excluded: a list of ids to exclude from the search
-    :type excluded: Union[None, list]
+    :type excluded: Union[list, set]
 
     :return: an id unique to the collection
     :rtype: str
 
     """
-    excluded = excluded or list()
+    excluded = set(excluded or set())
 
-    excluded += await collection.distinct("_id")
+    excluded.update(await collection.distinct("_id"))
 
     return virtool.utils.random_alphanumeric(length=8, excluded=excluded)
 
