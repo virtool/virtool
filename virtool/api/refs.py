@@ -70,6 +70,38 @@ async def get(req):
     return json_response(document)
 
 
+@routes.get("/api/refs/{ref_id}/kinds")
+async def find_kinds(req):
+    db = req.app["db"]
+
+    ref_id = req.match_info["ref_id"]
+
+    term = req.query.get("find", None)
+    verified = req.query.get("verified", None)
+    names = req.query.get("names", False)
+
+    db_query = dict()
+
+    if term:
+        db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
+
+    if verified is not None:
+        db_query["verified"] = virtool.utils.to_bool(verified)
+
+    if names in [True, "true"]:
+        data = await db.kinds.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
+        data = [virtool.utils.base_processor(d) for d in data]
+    else:
+        data = await paginate(
+            db.kinds,
+            db_query,
+            req.query,
+            sort="name", projection=virtool.kinds.LIST_PROJECTION)
+        data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["kind"]).distinct("kind.name"))
+
+    return json_response(data)
+
+
 @routes.post("/api/refs", permission="create_ref", schema={
     "name": {
         "type": "string",
