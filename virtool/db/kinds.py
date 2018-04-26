@@ -163,7 +163,7 @@ async def verify(db, kind_id, joined=None):
     if not joined:
         raise virtool.errors.DatabaseError("Could not find kind '{}'".format(kind_id))
 
-    return virtool.kinds.validate_kind(joined)
+    return virtool.kinds.verify(joined)
 
 
 async def update_last_indexed_version(db, id_list, version):

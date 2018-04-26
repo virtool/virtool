@@ -11,7 +11,7 @@ class TestValidateKind:
         Test that a valid kind and sequence list results in return value of ``None``.
 
         """
-        result = virtool.kinds.validate_kind(test_merged_kind)
+        result = virtool.kinds.verify(test_merged_kind)
         assert result is None
 
     def test_empty_isolate(self, test_merged_kind):
@@ -21,7 +21,7 @@ class TestValidateKind:
         """
         test_merged_kind["isolates"][0]["sequences"] = list()
 
-        result = virtool.kinds.validate_kind(test_merged_kind)
+        result = virtool.kinds.verify(test_merged_kind)
 
         assert result == {
             "empty_isolate": ["cab8b360"],
@@ -37,7 +37,7 @@ class TestValidateKind:
         """
         test_merged_kind["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        result = virtool.kinds.validate_kind(test_merged_kind)
+        result = virtool.kinds.verify(test_merged_kind)
 
         assert result == {
             "empty_isolate": False,
@@ -61,7 +61,7 @@ class TestValidateKind:
         """
         test_merged_kind["isolates"] = []
 
-        result = virtool.kinds.validate_kind(test_merged_kind)
+        result = virtool.kinds.verify(test_merged_kind)
 
         assert result == {
             "empty_isolate": False,
@@ -82,7 +82,7 @@ class TestValidateKind:
             dict(test_sequence, _id="foobar_2")
         ]
 
-        result = virtool.kinds.validate_kind(test_merged_kind)
+        result = virtool.kinds.verify(test_merged_kind)
 
         assert result == {
             "empty_isolate": False,
