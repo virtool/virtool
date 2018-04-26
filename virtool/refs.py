@@ -14,19 +14,13 @@ def get_owner_user(user_id):
     }
 
 
-def validate_kinds(kinds):
+def detect_duplicates(kinds):
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
     duplicates = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
 
-    errors = dict()
-
     for joined in kinds:
-        # Check for problems local to the kind document.
-        errors[joined["name"].lower()] = virtool.kinds.validate_kind(joined)
-
-        # Check for problems in the list as a whole.
         for field in fields:
             value = joined[field]
 
@@ -65,12 +59,7 @@ def validate_kinds(kinds):
     else:
         duplicates = {key: list(duplicates[key]) for key in duplicates}
 
-    if any(errors.values()):
-        errors = {key: errors[key] for key in errors if errors[key]}
-    else:
-        errors = None
-
-    return duplicates, errors
+    return duplicates
 
 
 def load_import_file(path):
