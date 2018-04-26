@@ -9,7 +9,7 @@ routes = virtool.http.routes.Routes()
 async def find(req):
     db = req.app["db"]
 
-    documents = [virtool.utils.base_processor(d) async for d in await db.process.find()]
+    documents = [virtool.utils.base_processor(d) async for d in db.processes.find()]
 
     return json_response(documents)
 
