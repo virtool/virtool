@@ -5,7 +5,7 @@ import aiojobs.aiohttp
 
 import virtool.db.history
 import virtool.db.processes
-import virtool.db.refs
+import virtool.db.references
 import virtool.db.utils
 import virtool.http.routes
 import virtool.kinds
@@ -30,9 +30,9 @@ async def find(req):
 
     for d in data["documents"]:
         contributors, internal_control, latest_build = await asyncio.gather(
-            virtool.db.refs.get_contributors(db, d["id"]),
-            virtool.db.refs.get_internal_control(db, d["id"]),
-            virtool.db.refs.get_latest_build(db, d["id"])
+            virtool.db.references.get_contributors(db, d["id"]),
+            virtool.db.references.get_internal_control(db, d["id"]),
+            virtool.db.references.get_latest_build(db, d["id"])
         )
 
         d["contributors"] = contributors
@@ -58,9 +58,9 @@ async def get(req):
         return not_found()
 
     contributors, internal_control, latest_build = await asyncio.gather(
-        virtool.db.refs.get_contributors(db, ref_id),
-        virtool.db.refs.get_internal_control(db, ref_id),
-        virtool.db.refs.get_latest_build(db, ref_id)
+        virtool.db.references.get_contributors(db, ref_id),
+        virtool.db.references.get_internal_control(db, ref_id),
+        virtool.db.references.get_latest_build(db, ref_id)
     )
 
     document["contributors"] = contributors
@@ -138,7 +138,7 @@ async def create(req):
     import_from = data.get("import_from", None)
 
     if clone_from:
-        document = await virtool.db.refs.clone(
+        document = await virtool.db.references.clone(
             db,
             data["name"],
             clone_from,
@@ -153,7 +153,7 @@ async def create(req):
 
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
 
-        document = await virtool.db.refs.create_for_import(
+        document = await virtool.db.references.create_for_import(
             db,
             data["name"],
             data["description"],
@@ -168,7 +168,7 @@ async def create(req):
             "id": process["id"]
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.refs.import_file(
+        await aiojobs.aiohttp.spawn(req, virtool.db.references.import_file(
             req.app,
             path,
             document["_id"],
@@ -178,7 +178,7 @@ async def create(req):
         ))
 
     else:
-        document = await virtool.db.refs.create_document(
+        document = await virtool.db.references.create_document(
             db,
             data["name"],
             data["organism"],

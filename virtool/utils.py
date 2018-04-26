@@ -94,7 +94,7 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     """
     excluded = excluded or list()
 
-    characters = digits + ascii_letters if mixed_case else ascii_lowercase
+    characters = digits + (ascii_letters if mixed_case else ascii_lowercase)
 
     candidate = "".join([choice(characters) for _ in range(length)])
 

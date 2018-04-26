@@ -11,12 +11,12 @@ from pymongo import ReturnDocument
 
 import virtool.db.history
 import virtool.db.kinds
-import virtool.db.refs
+import virtool.db.references
 import virtool.db.utils
 import virtool.history
 import virtool.http.routes
 import virtool.kinds
-import virtool.refs
+import virtool.references
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
@@ -1034,7 +1034,7 @@ async def get_import(req):
 
     data = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.load_import_file,
+        virtool.references.load_import_file,
         file_path
     )
 
@@ -1052,7 +1052,7 @@ async def get_import(req):
 
     duplicates, errors = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.validate_kinds,
+        virtool.references.validate_kinds,
         data["data"]
     )
 
@@ -1085,7 +1085,7 @@ async def import_kinds(req):
 
     data = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.refs.load_import_file,
+        virtool.references.load_import_file,
         file_path
     )
 
@@ -1094,7 +1094,7 @@ async def import_kinds(req):
     if not data_version:
         return bad_request("File is not compatible with this version of Virtool")
 
-    asyncio.ensure_future(virtool.db.refs.import_data(
+    asyncio.ensure_future(virtool.db.references.import_data(
         db,
         req.app["dispatcher"].dispatch,
         data,

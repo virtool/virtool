@@ -10,7 +10,7 @@ import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
 import virtool.kinds
-import virtool.refs
+import virtool.references
 import virtool.utils
 
 
@@ -226,7 +226,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
         }
 
     if not users:
-        users = [virtool.refs.get_owner_user(user_id)]
+        users = [virtool.references.get_owner_user(user_id)]
 
     document = {
         "_id": ref_id,
@@ -330,7 +330,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
     dispatch = app["dispatch"]
 
-    import_data = await app["run_in_thread"](virtool.refs.load_import_file, path)
+    import_data = await app["run_in_thread"](virtool.references.load_import_file, path)
 
     try:
         data_type = import_data["data_type"]
@@ -353,7 +353,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     kinds = import_data["data"]
 
-    duplicates = virtool.refs.detect_duplicates(kinds)
+    duplicates = virtool.references.detect_duplicates(kinds)
 
     if duplicates:
         errors = [

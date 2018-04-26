@@ -2,6 +2,7 @@ import virtool.db.history
 import virtool.errors
 import virtool.utils
 import virtool.kinds
+from virtool.api.utils import compose_regex_query, paginate
 
 
 async def check_name_and_abbreviation(db, name=None, abbreviation=None):
@@ -64,6 +65,41 @@ async def get_new_isolate_id(db, excluded=None):
         used_isolate_ids += excluded
 
     return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
+
+
+async def find_kinds(db, names, term, req_query, verified, ref_id=None):
+
+    db_query = dict()
+
+    if term:
+        db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
+
+    if verified is not None:
+        db_query["verified"] = virtool.utils.to_bool(verified)
+
+    base_query = None
+
+    if ref_id is not None:
+        base_query = {
+            "ref.id": ref_id
+        }
+
+    if names is True or names == "true":
+        data = await db.kinds.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
+        return [virtool.utils.base_processor(d) for d in data]
+
+    data = await paginate(
+        db.kinds,
+        db_query,
+        req_query,
+        base_query=base_query,
+        sort="name",
+        projection=virtool.kinds.LIST_PROJECTION
+    )
+
+    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["kind"]).distinct("kind.name"))
+
+    return data
 
 
 async def join(db, kind_id, document=None):

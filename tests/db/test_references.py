@@ -6,7 +6,7 @@ import sys
 
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.db.refs
+import virtool.db.references
 
 TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
 
@@ -26,7 +26,7 @@ async def test_import(mocker, tmpdir, test_motor, test_dispatch, static_time):
 
     m = mocker.patch("virtool.db.processes.update", make_mocked_coro())
 
-    await virtool.db.refs.import_file(
+    await virtool.db.references.import_file(
         app,
         os.path.join(str(tmpdir), "import.json.gz"),
         "bar",

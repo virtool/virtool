@@ -1,7 +1,7 @@
 import pytest
 
-import virtool.db.refs
-import virtool.refs
+import virtool.db.references
+import virtool.references
 
 
 class TestDuplicates:
@@ -11,7 +11,7 @@ class TestDuplicates:
         Test that a valid virus list returns no duplicates or errors.
 
         """
-        assert virtool.refs.detect_duplicates(test_kind_list) is None
+        assert virtool.references.detect_duplicates(test_kind_list) is None
 
     def test_empty_abbreviations(self, test_kind_list):
         """
@@ -21,7 +21,7 @@ class TestDuplicates:
         test_kind_list[0]["abbreviation"] = ""
         test_kind_list[1]["abbreviation"] = ""
 
-        result = virtool.refs.detect_duplicates(test_kind_list)
+        result = virtool.references.detect_duplicates(test_kind_list)
 
         assert result is None
 
@@ -32,7 +32,7 @@ class TestDuplicates:
         if multiple:
             test_kind_list[3]["_id"] = "067jz213"
 
-        duplicates = virtool.refs.detect_duplicates(test_kind_list)
+        duplicates = virtool.references.detect_duplicates(test_kind_list)
 
         assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
 
@@ -55,7 +55,7 @@ class TestDuplicates:
         if multiple:
             test_kind_list[3]["abbreviation"] = "EXV"
 
-        duplicates = virtool.refs.detect_duplicates(test_kind_list)
+        duplicates = virtool.references.detect_duplicates(test_kind_list)
 
         for key in ["isolate_id", "name", "_id", "sequence_id"]:
             assert duplicates[key] == []
@@ -80,7 +80,7 @@ class TestDuplicates:
         if multiple:
             test_kind_list[3]["name"] = "Example virus"
 
-        duplicates = virtool.refs.detect_duplicates(test_kind_list)
+        duplicates = virtool.references.detect_duplicates(test_kind_list)
 
         assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
 
@@ -107,7 +107,7 @@ class TestDuplicates:
                 dict(test_kind_list[1]["isolates"][0]["sequences"][0])
             )
 
-        duplicates = virtool.refs.detect_duplicates(test_kind_list)
+        duplicates = virtool.references.detect_duplicates(test_kind_list)
 
         assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
 

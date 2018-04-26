@@ -1,6 +1,6 @@
-import virtool.db.refs
+import virtool.db.references
 import virtool.db.utils
-import virtool.refs
+import virtool.references
 import virtool.users
 import virtool.utils
 
@@ -101,7 +101,7 @@ async def organize_kinds(db):
 
 async def organize_references(db):
     if await db.kinds.count() and not await db.refs.count():
-        await virtool.db.refs.create_original(db)
+        await virtool.db.references.create_original(db)
 
 
 async def organize_sequences(db):
