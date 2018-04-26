@@ -1,8 +1,13 @@
+import os
+
+import aiojobs.aiohttp
+
 import virtool.db.history
+import virtool.db.processes
 import virtool.db.refs
 import virtool.db.utils
-import virtool.kinds
 import virtool.http.routes
+import virtool.kinds
 import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
 
@@ -20,7 +25,7 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.refs, db_query, req.query, sort="name", projection=virtool.refs.PROJECTION)
+    data = await paginate(db.refs, db_query, req.query, sort="name")
 
     return json_response(data)
 
@@ -55,6 +60,9 @@ async def get(req):
         "allowed": ["genome", "barcode"],
         "default": "genome"
     },
+    "import_from": {
+        "type": "string"
+    },
     "organism": {
         "type": "string"
     },
@@ -71,6 +79,7 @@ async def create(req):
     user_id = req["client"].user_id
 
     clone_from = data.get("clone_from", None)
+    import_from = data.get("import_from", None)
 
     if clone_from:
         document = await virtool.db.refs.clone(
@@ -81,6 +90,36 @@ async def create(req):
             data["public"],
             user_id
         )
+
+    elif import_from:
+        if not await db.files.count({"_id": import_from}):
+            return not_found("File not found")
+
+        path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
+
+        document = await virtool.db.refs.create_for_import(
+            db,
+            data["name"],
+            data["description"],
+            data["public"],
+            import_from,
+            user_id
+        )
+
+        process = await virtool.db.processes.register(db, req.app["dispatch"], "import_reference")
+
+        document["process"] = {
+            "id": process["id"]
+        }
+
+        await aiojobs.aiohttp.spawn(req, virtool.db.refs.import_file(
+            req.app,
+            path,
+            document["_id"],
+            document["created_at"],
+            process["id"],
+            user_id
+        ))
 
     else:
         document = await virtool.db.refs.create_document(
