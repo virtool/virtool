@@ -43,12 +43,22 @@ async def init_executors(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-    app.loop.set_default_executor(executor)
-    app["executor"] = executor
+    thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    app.loop.set_default_executor(thread_executor)
 
-    executor = concurrent.futures.ProcessPoolExecutor()
-    app["process_executor"] = executor
+    async def run_in_thread(func, *args):
+        return await app.loop.run_in_executor(thread_executor, func, *args)
+
+    app["run_in_thread"] = run_in_thread
+    app["executor"] = thread_executor
+
+    process_executor = concurrent.futures.ProcessPoolExecutor()
+
+    async def run_in_process(func, *args):
+        return await app.loop.run_in_executor(process_executor, func, *args)
+
+    app["run_in_process"] = run_in_process
+    app["process_executor"] = process_executor
 
 
 async def init_resources(app):
