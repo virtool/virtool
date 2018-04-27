@@ -2,7 +2,7 @@
 
 exports[`<Account /> renders correctly 1`] = `
 <div
-  className="container"
+  className="container-noside"
 >
   <h3
     className="view-header"
