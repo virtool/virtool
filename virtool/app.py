@@ -1,13 +1,14 @@
-import aiofiles
 import concurrent.futures
 import logging
 import os
+import ssl
+import subprocess
+import sys
+
+import aiofiles
+import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
-import ssl
-import sys
-import subprocess
-
 from aiohttp import web
 from motor import motor_asyncio
 
@@ -15,13 +16,13 @@ import virtool.app_auth
 import virtool.app_dispatcher
 import virtool.app_routes
 import virtool.app_settings
-import virtool.job_manager
-import virtool.job_resources
 import virtool.errors
-import virtool.error_pages
-import virtool.file_manager
+import virtool.files
+import virtool.http.errors
+import virtool.http.proxy
+import virtool.jobs.manager
 import virtool.organize
-import virtool.proxy
+import virtool.resources
 import virtool.sentry
 import virtool.setup
 import virtool.utils
@@ -34,7 +35,7 @@ async def init_version(app):
         app["version"] = await find_server_version(app.loop, sys.path[0])
 
 
-def init_executors(app):
+async def init_executors(app):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
     ``app`` object.
@@ -43,16 +44,26 @@ def init_executors(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-    app.loop.set_default_executor(executor)
-    app["executor"] = executor
+    thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    app.loop.set_default_executor(thread_executor)
 
-    executor = concurrent.futures.ProcessPoolExecutor()
-    app["process_executor"] = executor
+    async def run_in_thread(func, *args):
+        return await app.loop.run_in_executor(thread_executor, func, *args)
+
+    app["run_in_thread"] = run_in_thread
+    app["executor"] = thread_executor
+
+    process_executor = concurrent.futures.ProcessPoolExecutor()
+
+    async def run_in_process(func, *args):
+        return await app.loop.run_in_executor(process_executor, func, *args)
+
+    app["run_in_process"] = run_in_process
+    app["process_executor"] = process_executor
 
 
-def init_resources(app):
-    app["resources"] = virtool.job_resources.get()
+async def init_resources(app):
+    app["resources"] = virtool.resources.get()
 
 
 async def init_settings(app):
@@ -73,7 +84,7 @@ async def init_sentry(app):
         app["sentry"] = virtool.sentry.setup(app["version"])
 
 
-def init_dispatcher(app):
+async def init_dispatcher(app):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`~.Dispatcher` object and attaches it to
     the ``app`` object.
@@ -83,6 +94,7 @@ def init_dispatcher(app):
 
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
+    app["dispatch"] = app["dispatcher"].dispatch
 
 
 async def init_db(app):
@@ -116,52 +128,21 @@ async def init_check_db(app):
 
     db = app["db"]
 
-    logger.info("Checking viruses...")
-    await virtool.organize.organize_viruses(db, logger.info)
-
-    logger.info("Checking hmms...")
-    await virtool.organize.organize_hmms(db)
-
-    logger.info("Checking jobs...")
-    await virtool.organize.organize_jobs(db)
-
-    logger.info("Checking samples...")
-    await virtool.organize.organize_samples(db, app["settings"])
-
-    logger.info("Checking analyses...")
-    await virtool.organize.organize_analyses(db, logger.info)
-
-    logger.info("Checking indexes...")
-    await virtool.organize.organize_indexes(db)
-
-    logger.info("Checking subtraction...")
-    await virtool.organize.organize_subtraction(db, app["settings"])
-
-    logger.info("Checking groups...")
-    await virtool.organize.organize_groups(db)
-
-    logger.info("Checking users...")
-    await virtool.organize.organize_users(db)
-
-    logger.info("Checking status...")
-    await virtool.organize.organize_status(db)
-
-    logger.info("Checking files...")
-    await virtool.organize.organize_files(db)
+    logger.info("Checking database...")
+    await virtool.organize.organize(db, app["version"])
 
     logger.info("Creating database indexes...")
-
     await db.analyses.create_index("sample.id")
-    await db.history.create_index("virus.id")
+    await db.history.create_index("kind.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
     await db.indexes.create_index("version", unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
     await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("virus_id")
-    await db.viruses.create_index("name")
-    await db.viruses.create_index("abbreviation")
+    await db.sequences.create_index("kind_id")
+    await db.kinds.create_index("name")
+    await db.kinds.create_index("abbreviation")
 
 
 async def init_client_path(app):
@@ -187,7 +168,7 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["job_manager"] = virtool.job_manager.Manager(
+    app["job_manager"] = virtool.jobs.manager.Manager(
         app.loop,
         app["db"],
         app["settings"],
@@ -210,7 +191,7 @@ async def init_file_manager(app):
     files_path = os.path.join(app["settings"].get("data_path"), "files")
 
     if os.path.isdir(files_path):
-        app["file_manager"] = virtool.file_manager.Manager(
+        app["file_manager"] = virtool.files.Manager(
             app.loop,
             app["executor"],
             app["db"],
@@ -226,11 +207,11 @@ async def init_file_manager(app):
         app["file_manager"] = None
 
 
-def init_routes(app):
+async def init_routes(app):
     virtool.app_routes.setup_routes(app)
 
 
-def init_setup(app):
+async def init_setup(app):
     virtool.setup.setup_routes(app)
 
     app["setup"] = {
@@ -291,14 +272,16 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.proxy.middleware,
-        virtool.error_pages.middleware
+        virtool.http.proxy.middleware,
+        virtool.http.errors.middleware
     ]
 
     if skip_setup:
         middlewares.append(virtool.app_auth.middleware)
 
     app = web.Application(loop=loop, middlewares=middlewares)
+
+    aiojobs.aiohttp.setup(app)
 
     app["version"] = force_version
     app["db_name"] = db_name
@@ -318,8 +301,6 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
                 app.on_startup.append(init_sentry)
         else:
             app["settings"] = dict()
-
-
 
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
@@ -385,6 +366,3 @@ async def find_server_version(loop, install_path="."):
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
         return "Unknown"
-
-
-

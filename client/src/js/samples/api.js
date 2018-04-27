@@ -5,7 +5,7 @@ export const find = () => (
 );
 
 export const findReadyHosts = () => (
-    Request.get("/api/subtraction")
+    Request.get("/api/subtractions")
         .query({
             ready: true,
             is_host: true

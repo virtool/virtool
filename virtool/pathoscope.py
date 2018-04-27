@@ -1,9 +1,10 @@
-import collections
 import copy
 import csv
 import math
 import os
 import shutil
+
+import collections
 
 
 def rescale_samscore(u, nu, max_score, min_score):

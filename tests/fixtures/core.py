@@ -18,7 +18,7 @@ def test_files_path():
 
 
 @pytest.fixture
-def test_random_alphanumeric(monkeypatch):
+def test_random_alphanumeric(mocker):
     class RandomAlphanumericTester:
 
         def __init__(self):
@@ -59,18 +59,14 @@ def test_random_alphanumeric(monkeypatch):
         def next_choice(self):
             return self.choices[-1]
 
-    tester = RandomAlphanumericTester()
-
-    monkeypatch.setattr("virtool.utils.random_alphanumeric", tester)
-
-    return tester
+    return mocker.patch("virtool.utils.random_alphanumeric", new=RandomAlphanumericTester())
 
 
 @pytest.fixture
-def static_time(monkeypatch):
+def static_time(mocker):
     time = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
 
-    monkeypatch.setattr("virtool.utils.timestamp", lambda: time)
+    mocker.patch("virtool.utils.timestamp", return_value=arrow.Arrow(2015, 10, 6, 20, 0, 0).naive)
 
     return time
 
