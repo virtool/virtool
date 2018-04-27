@@ -2,7 +2,15 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 
-const CheckboxIcon = ({ checked, partial }) => {
+/**
+ * Application icon font.
+ *
+ * @param checked
+ * @param partial
+ * @returns {*}
+ * @constructor
+ */
+export const CheckboxIcon = ({ checked, partial }) => {
 
     let name;
 
@@ -22,7 +30,7 @@ const CheckboxIcon = ({ checked, partial }) => {
  * A simple checkbox component based on the application icon font.
  *
  * @param props
- * @returns {*}
+ * @returns {*} any type
  * @constructor
  */
 export const Checkbox = (props) => {
@@ -57,7 +65,6 @@ Checkbox.propTypes = {
     label: PropTypes.node,
     onClick: PropTypes.func,
     partial: PropTypes.bool,
-    pending: PropTypes.bool,
     pullRight: PropTypes.bool,
     style: PropTypes.object
 };

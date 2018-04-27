@@ -20,7 +20,7 @@ import subtractionReducer from "./subtraction/reducer";
 import filesReducer from "./files/reducer";
 import accountReducer from "./account/reducer";
 import settingsReducer from "./settings/reducer";
-import usersReducer from "./users/reducers";
+import usersReducer from "./users/reducer";
 import groupsReducer from "./groups/reducer";
 import updatesReducer from "./updates/reducer";
 import hmmsReducer from "./hmm/reducer";

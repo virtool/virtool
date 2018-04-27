@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HMMItem /> renders without error 1`] = `
+<LinkContainer
+  activeClassName="active"
+  exact={false}
+  replace={false}
+  strict={false}
+  to="/hmm/tester"
+>
+  <ListGroupItem
+    allowFocus={false}
+    className="spaced"
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={2}
+      >
+        <strong>
+          5
+        </strong>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={5}
+      >
+        string1
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={5}
+      >
+        <div
+          className="pull-right"
+        >
+          <span
+            key="0"
+          >
+            <Label
+              bsClass="label"
+              bsStyle="default"
+            >
+              Family1
+            </Label>
+             
+          </span>
+          <span
+            key="1"
+          >
+            <Label
+              bsClass="label"
+              bsStyle="default"
+            >
+              Family2
+            </Label>
+             
+          </span>
+          <span
+            key="2"
+          >
+            <Label
+              bsClass="label"
+              bsStyle="default"
+            >
+              Family3
+            </Label>
+             
+          </span>
+           
+          ...
+        </div>
+      </Col>
+    </Row>
+  </ListGroupItem>
+</LinkContainer>
+`;

@@ -1,6 +1,6 @@
 import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     detail: null,
     process: null

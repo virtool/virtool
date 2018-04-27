@@ -93,10 +93,10 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // HMMs
-export const FETCH_HMMS = "FETCH_HHMS";
+export const FETCH_HMMS = "FETCH_HMMS";
 export const FIND_HMMS = createRequestActionType("FIND_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
-export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
+export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
@@ -106,7 +106,6 @@ export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
 export const GET_INDEX_HISTORY = createRequestActionType("GET_INDEX_HISTORY");
-export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
@@ -159,11 +158,11 @@ export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
 export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
-export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSIONS");
+export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSION");
 export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 
 // Updates
-export const WS_UPDATE_STATUS = createRequestActionType("WS_UPDATE_STATUS");
+export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
 export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");

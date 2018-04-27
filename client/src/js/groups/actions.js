@@ -9,7 +9,7 @@ import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from ".
 export const listGroups = simpleActionCreator(LIST_GROUPS.REQUESTED);
 
 /**
- * Returns an action that triggers a API request to create a group with the given ``groupId`.
+ * Returns an action that triggers a API request to create a group with the given `groupId`.
  *
  * @func
  * @param groupId {string} the id for the new group
@@ -21,11 +21,12 @@ export const createGroup = (groupId) => ({
 });
 
 /**
+ * Returns action that can trigger an API request for modifying group permissions.
  *
- * @param groupId
- * @param permission
- * @param value
- * @returns {{type: string, groupId: *, permission: *, value: *}}
+ * @param groupId {string} the id for the specific group
+ * @param permission {string} the specific permission field
+ * @param value {boolean} is checked or not
+ * @returns {object}
  */
 export const setGroupPermission = (groupId, permission, value) => ({
     type: SET_GROUP_PERMISSION.REQUESTED,
@@ -34,6 +35,13 @@ export const setGroupPermission = (groupId, permission, value) => ({
     value
 });
 
+/**
+ * Returns an action that triggers a API request to remove a group with the given `groupId`.
+ *
+ * @func
+ * @param groupId {string} the id for the new group
+ * @returns {object}
+ */
 export const removeGroup = (groupId) => ({
     type: REMOVE_GROUP.REQUESTED,
     groupId

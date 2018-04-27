@@ -77,7 +77,6 @@ export const getAPIKeys = simpleActionCreator(GET_API_KEYS.REQUESTED);
  * @func
  * @param name {string} a name for the API key
  * @param permissions {object} permissions configuration object for the new API key
- * @param callback {function} a function to call when the request completes
  * @returns {object}
  */
 export const createAPIKey = (name, permissions) => ({

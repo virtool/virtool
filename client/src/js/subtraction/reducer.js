@@ -1,6 +1,6 @@
 import { FIND_SUBTRACTIONS, LIST_SUBTRACTION_IDS, GET_SUBTRACTION } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     detail: null,
     ids: null

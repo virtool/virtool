@@ -57,10 +57,10 @@ export const findFiles = (fileType, page) => ({
  * Returns an action that can trigger the upload of a file to the server.
  *
  * @func
- * @param localId
- * @param file
- * @param fileType
- * @param onProgress
+ * @param localId {string} the local id for the upload (NOT the fileId)
+ * @param file {object} file to be uploaded
+ * @param fileType {string} file type
+ * @param onProgress {function} callback function for uploadProgress API call
  * @returns {object}
  */
 export const upload = (localId, file, fileType, onProgress) => ({

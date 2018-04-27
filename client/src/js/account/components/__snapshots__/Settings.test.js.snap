@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Settings /> renders correctly 1`] = `
+<div>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      User Interface
+    </PanelHeading>
+    <PanelBody
+      bsClass="panel"
+      collapsible={false}
+    >
+      <ListGroup
+        bsClass="list-group"
+      >
+        <ListGroupItem
+          bsClass="list-group-item"
+          listItem={false}
+        >
+          <Flex
+            alignContent="stretch"
+            alignItems="stretch"
+            direction="row"
+            justifyContent="flex-start"
+            wrap="nowrap"
+          >
+            <FlexItem
+              alignSelf={null}
+              basis="auto"
+              grow={0}
+              shrink={1}
+            >
+              <Checkbox
+                checked={false}
+                onClick={[Function]}
+                partial={false}
+                pullRight={false}
+              />
+            </FlexItem>
+            <FlexItem
+              alignSelf={null}
+              basis="auto"
+              grow={0}
+              pad={10}
+              shrink={1}
+            >
+              <div>
+                Show Unique ID Fields
+              </div>
+              <small>
+                Show the unique database IDs for Virtool records where possible. This is not required for normal use, but is useful for debugging.
+              </small>
+            </FlexItem>
+          </Flex>
+        </ListGroupItem>
+      </ListGroup>
+    </PanelBody>
+  </Uncontrolled(Panel)>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      Quick Analyze
+    </PanelHeading>
+    <PanelBody
+      bsClass="panel"
+      collapsible={false}
+    >
+      <ListGroup
+        bsClass="list-group"
+      >
+        <ListGroupItem
+          bsClass="list-group-item"
+          listItem={false}
+        >
+          <Flex
+            alignContent="stretch"
+            alignItems="stretch"
+            direction="row"
+            justifyContent="flex-start"
+            wrap="nowrap"
+          >
+            <FlexItem
+              alignSelf={null}
+              basis="auto"
+              grow={0}
+              shrink={1}
+            >
+              <Checkbox
+                checked={false}
+                onClick={[Function]}
+                partial={false}
+                pullRight={false}
+              />
+            </FlexItem>
+            <FlexItem
+              alignSelf={null}
+              basis="auto"
+              grow={0}
+              pad={10}
+              shrink={1}
+            >
+              <div>
+                Skip Dialog
+              </div>
+              <small>
+                Allow samples to be analyzed with a single click of  
+                <Icon
+                  bsStyle="success"
+                  fixedWidth={false}
+                  name="bars"
+                  pending={false}
+                  pullRight={false}
+                />
+                 using a preconfigured algorithm. The algorithm selection dialog is not shown.
+              </small>
+              <div
+                style={
+                  Object {
+                    "marginTop": "7px",
+                  }
+                }
+              >
+                <AlgorithmSelect
+                  noLabel={true}
+                  onChange={[Function]}
+                />
+              </div>
+            </FlexItem>
+          </Flex>
+        </ListGroupItem>
+      </ListGroup>
+    </PanelBody>
+  </Uncontrolled(Panel)>
+</div>
+`;

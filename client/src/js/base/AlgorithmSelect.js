@@ -5,7 +5,7 @@ import { map } from "lodash-es";
 import { Input } from "./";
 import { getTaskDisplayName } from "../utils";
 
-const algorithms = [
+export const algorithms = [
     "pathoscope_bowtie",
     "nuvs"
 ];

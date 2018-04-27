@@ -14,7 +14,7 @@ const getInitialState = (email) => ({
 
 const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
 
-class Email extends React.Component {
+export class Email extends React.Component {
 
     constructor (props) {
         super(props);
