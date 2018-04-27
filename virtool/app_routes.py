@@ -73,15 +73,15 @@ async def index_handler(req):
 def setup_routes(app):
     index_paths = [
         "/",
+        r"/account{suffix:.*}",
+        r"/administration{suffix:.*}",
         r"/home{suffix:.*}",
-        r"/jobs{suffix:.*}",
-        r"/samples{suffix:.*}",
-        r"/kinds{suffix:.*}",
         r"/hmm{suffix:.*}",
+        r"/jobs{suffix:.*}",
+        r"/kinds{suffix:.*}",
         r"/refs{suffix:.*}",
-        r"/subtraction{suffix:.*}",
-        r"/settings{suffix:.*}",
-        r"/account{suffix:.*}"
+        r"/samples{suffix:.*}",
+        r"/subtraction{suffix:.*}"
     ]
 
     for path in index_paths:
