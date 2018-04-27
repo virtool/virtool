@@ -8,7 +8,7 @@ from aiohttp import web
 import virtool.app
 import virtool.app_settings
 import virtool.app_dispatcher
-import virtool.job_manager
+import virtool.jobs.manager
 
 
 @pytest.mark.parametrize("override", [True, False])
@@ -48,7 +48,7 @@ async def test_init_executors(loop):
     """
     app = web.Application(loop=loop)
 
-    virtool.app.init_executors(app)
+    await virtool.app.init_executors(app)
 
     assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
 
@@ -93,14 +93,14 @@ class TestInitSettings:
         assert app["settings"].stub.called
 
 
-def test_init_dispatcher(loop):
+async def test_init_dispatcher(loop):
     """
     Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
 
     """
     app = web.Application(loop=loop)
 
-    virtool.app.init_dispatcher(app)
+    await virtool.app.init_dispatcher(app)
 
     assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)
 
@@ -114,7 +114,7 @@ async def test_init_job_manager(mocker, loop):
 
     await virtool.app.init_job_manager(app)
 
-    assert isinstance(app["job_manager"], virtool.job_manager.Manager)
+    assert isinstance(app["job_manager"], virtool.jobs.manager.Manager)
 
     assert app["job_manager"].loop == loop
     assert app["job_manager"].db is None
