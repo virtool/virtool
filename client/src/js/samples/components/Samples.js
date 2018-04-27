@@ -29,7 +29,7 @@ const Samples = (props) => {
     if (props.settings === null) {
         return <LoadingPlaceholder />;
     }
-    
+
     return (
         <div className="container">
             <Switch>

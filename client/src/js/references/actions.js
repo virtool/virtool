@@ -1,7 +1,8 @@
 import { simpleActionCreator } from "../utils";
 import {
     LIST_REFERENCES,
-    GET_REFERENCE, CREATE_REFERENCE,
+    GET_REFERENCE,
+    CREATE_REFERENCE
 } from "../actionTypes";
 
 export const listReferences = simpleActionCreator(LIST_REFERENCES);

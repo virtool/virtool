@@ -25,7 +25,7 @@ import referencesReducer from "./references/reducer";
 import samplesReducer from "./samples/reducer";
 import settingsReducer from "./settings/reducer";
 import updatesReducer from "./updates/reducer";
-import usersReducer from "./users/reducers";
+import usersReducer from "./users/reducer";
 
 import rootSaga from "./sagas";
 

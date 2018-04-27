@@ -11,5 +11,5 @@ export const SidebarItem = (props) => (
             <div>{props.title}</div>
         </NavItem>
     </LinkContainer>
-    
+
 );
