@@ -25,7 +25,6 @@ const Inner = (props) => {
                 <Helmet titleTemplate="Virtool - %s" defaultTitle="Virtool" />
 
                 <NavBar />
-                <Sidebar />
 
                 <Switch>
                     <Route path="/" component={Welcome} exact />
@@ -38,6 +37,8 @@ const Inner = (props) => {
                     <Route path="/administration" component={Settings} />
                     <Route path="/account" component={Account} />
                 </Switch>
+
+                <Sidebar />
 
                 <UploadOverlay />
             </div>

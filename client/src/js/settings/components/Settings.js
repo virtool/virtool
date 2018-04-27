@@ -1,6 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
+import { Nav, NavItem } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
 
 import HTTP from "./Server/HTTP";
 import Proxy from "./Server/Proxy";
@@ -38,12 +40,27 @@ const Settings = ({ settings }) => {
     }
 
     return (
-        <div className="container">
+        <div className="container-noside">
             <h3 className="view-header">
                 <strong>
                     Administration
                 </strong>
             </h3>
+
+            <Nav bsStyle="tabs">
+                <LinkContainer to="/administration/server">
+                    <NavItem>Server</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/data">
+                    <NavItem>Data</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/users">
+                    <NavItem>Users</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/updates">
+                    <NavItem>Updates</NavItem>
+                </LinkContainer>
+            </Nav>
 
             {content}
         </div>

@@ -18,7 +18,7 @@ class Account extends React.Component {
     render () {
 
         return (
-            <div className="container">
+            <div className="container-noside">
                 <h3 className="view-header">
                     <strong>Account</strong>
                 </h3>

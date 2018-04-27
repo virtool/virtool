@@ -14,8 +14,6 @@ const isHomeActive = (location) => {
         return "Viruses";
     } else if (startsWith(location.pathname, "/subtraction")) {
         return "Subtraction";
-    } else if (startsWith(location.pathname, "/administration")) {
-        return "Administration";
     } else if (startsWith(location.pathname, "/hmm")) {
         return "HMM";
     }
@@ -57,16 +55,6 @@ const Sidebar = (props) => {
                     <SidebarItem title="Files" link="/subtraction/files" icon="folder-open" />
                 </Nav>
             );
-        case "Administration":
-            return props.permissions.modify_settings
-                ? (
-                    <Nav className="sidebar">
-                        <SidebarItem title="Server" link="/administration/server" icon="cloud" />
-                        <SidebarItem title="Data" link="/administration/data" icon="database" />
-                        <SidebarItem title="Users" link="/administration/users" icon="users" />
-                        <SidebarItem title="Updates" link="/administration/updates" icon="plus-square" />
-                    </Nav>
-                ) : <Nav className="sidebar" />;
         case "HMM":
             return (
                 <Nav className="sidebar">
