@@ -29,7 +29,7 @@ const Viruses = (props) => {
         <div className="container">
             <Switch>
                 <Route path="/refs" component={ReferenceList} exact />
-                <Route path="/viruses/settings" component={ReferenceSettings} />
+                <Route path="/refs/settings" component={ReferenceSettings} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </div>
