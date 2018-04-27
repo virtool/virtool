@@ -12,19 +12,21 @@ import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
 
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
-import jobsReducer from "./jobs/reducer";
-import samplesReducer from "./samples/reducer";
-import indexesReducer from "./indexes/reducer";
-import virusesReducer from "./viruses/reducer";
-import subtractionReducer from "./subtraction/reducer";
-import filesReducer from "./files/reducer";
+
 import accountReducer from "./account/reducer";
-import settingsReducer from "./settings/reducer";
-import usersReducer from "./users/reducer";
-import groupsReducer from "./groups/reducer";
-import updatesReducer from "./updates/reducer";
-import hmmsReducer from "./hmm/reducer";
 import errorsReducer from "./errors/reducer";
+import filesReducer from "./files/reducer";
+import groupsReducer from "./groups/reducer";
+import hmmsReducer from "./hmm/reducer";
+import indexesReducer from "./indexes/reducer";
+import jobsReducer from "./jobs/reducer";
+import subtractionReducer from "./subtraction/reducer";
+import referencesReducer from "./references/reducer";
+import samplesReducer from "./samples/reducer";
+import settingsReducer from "./settings/reducer";
+import updatesReducer from "./updates/reducer";
+import usersReducer from "./users/reducers";
+
 import rootSaga from "./sagas";
 
 export * from "../style/style.less";
@@ -57,21 +59,21 @@ const history = createHistory();
 
 const store = createStore(
     combineReducers({
-        app: appReducer,
-        jobs: jobsReducer,
-        samples: samplesReducer,
-        viruses: virusesReducer,
-        indexes: indexesReducer,
-        subtraction: subtractionReducer,
-        files: filesReducer,
-        settings: settingsReducer,
-        users: usersReducer,
-        groups: groupsReducer,
         account: accountReducer,
-        updates: updatesReducer,
-        hmms: hmmsReducer,
+        app: appReducer,
         errors: errorsReducer,
-        router: routerReducer
+        files: filesReducer,
+        groups: groupsReducer,
+        hmms: hmmsReducer,
+        indexes: indexesReducer,
+        jobs: jobsReducer,
+        references: referencesReducer,
+        router: routerReducer,
+        samples: samplesReducer,
+        settings: settingsReducer,
+        subtraction: subtractionReducer,
+        updates: updatesReducer,
+        users: usersReducer
     }),
     applyMiddleware(sagaMiddleware, routerMiddleware(history)),
 );

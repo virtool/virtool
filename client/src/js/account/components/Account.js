@@ -16,12 +16,12 @@ class Account extends React.Component {
     }
 
     render () {
+
         return (
             <div className="container">
                 <h3 className="view-header">
                     <strong>Account</strong>
                 </h3>
-
                 <Nav bsStyle="tabs">
                     <LinkContainer to="/account/general">
                         <NavItem>General</NavItem>

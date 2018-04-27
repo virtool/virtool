@@ -46,7 +46,7 @@ export default class PathoscopeEntry extends React.Component {
 
         const flexStyle = {height: "21px"};
 
-        const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
+        const piValue = this.props.showReads ? Math.round(this.props.reads) : toScientificNotation(this.props.pi);
 
         return (
             <div className={className} onClick={this.props.in ? null : this.toggleIn}>

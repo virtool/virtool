@@ -61,8 +61,11 @@ export class InputSave extends React.Component {
         } else if (!e.relatedTarget) {
             this.setState({value: this.props.initialValue});
         }
+
         // If click on focus element that does submit, keep value
-        this.props.onChange(e);
+        if (this.props.onChange) {
+            this.props.onChange(e);
+        }
     };
 
     /**
@@ -74,7 +77,10 @@ export class InputSave extends React.Component {
         if (!this.props.disabled) {
             this.setState({value: e.target.value});
         }
-        this.props.onChange(e);
+
+        if (this.props.onChange) {
+            this.props.onChange(e);
+        }
     };
 
     /**
@@ -97,7 +103,9 @@ export class InputSave extends React.Component {
             this.setState({pending: true}, () => {
                 this.props.onSave({
                     value: this.state.value,
-                    name: this.props.name
+                    name: this.props.name,
+                    min: this.props.min,
+                    max: this.props.max
                 });
 
                 this.blur();
@@ -115,17 +123,18 @@ export class InputSave extends React.Component {
     };
 
     render () {
-        const formStyle = this.props.noMargin ? "0px" : "15px";
+        const formMargin = this.props.noMargin ? "0" : "15px";
 
         const formClass = this.props.error ? "form-control-error" : "";
 
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
-                <Flex alignItems="stretch" style={{marginBottom: formStyle}}>
+                <Flex alignItems="stretch" style={{marginBottom: formMargin}}>
                     <FlexItem grow={1} shrink={1}>
                         <FormControl
                             className={formClass}
+                            name={this.props.name}
                             inputRef={(ref) => this.inputNode = ref}
                             type={this.props.type}
                             min={this.props.min}

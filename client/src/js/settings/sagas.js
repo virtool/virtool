@@ -1,8 +1,8 @@
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as settingsAPI from "./api";
-import * as virusesAPI from "../viruses/api";
-import { apiCall, setPending } from "../sagaUtils";
+import * as virusesAPI from "../references/api";
+import { apiCall, setPending, putGenericError } from "../sagaUtils";
 import {GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY} from "../actionTypes";
 
 export function* watchSettings () {
@@ -27,7 +27,7 @@ function* updateSettings (action) {
                 update: action.update
             });
         } catch (error) {
-            yield put({type: UPDATE_SETTINGS.FAILED, key: action.key});
+            yield putGenericError(UPDATE_SETTINGS, error);
         }
     }(action));
 }

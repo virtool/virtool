@@ -25,6 +25,16 @@ export default function settingsReducer (state = initialState, action) {
         case UPDATE_SETTINGS.SUCCEEDED:
             return {...state, data: {...state.data, ...action.update}, ...proxyTestClear};
 
+        case UPDATE_SETTINGS.FAILED:
+            return {
+                ...state,
+                data: {
+                    ...state.data,
+                    updateError: {status: action.status, message: action.message}
+                },
+                ...proxyTestClear
+            };
+
         case GET_CONTROL_READAHEAD.REQUESTED:
             return {...state, readaheadPending: true};
 

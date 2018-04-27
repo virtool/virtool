@@ -12,10 +12,10 @@
 import React from "react";
 import CX from "classnames";
 import { connect } from "react-redux";
-import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
+import { ButtonToolbar, Col, Panel, Row } from "react-bootstrap";
 import { find } from "lodash-es";
 import { editUser } from "../actions";
-import { InputError, Checkbox, Button, RelativeTime } from "../../base";
+import { Alert, Button, Checkbox, InputError, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     password: "",
