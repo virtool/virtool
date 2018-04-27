@@ -26,7 +26,7 @@ const Jobs = (props) => {
     if (props.settings === null) {
         return <LoadingPlaceholder />;
     }
-    
+
     return (
         <div className="container">
             <Switch>

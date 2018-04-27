@@ -1,0 +1,199 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<InputSave /> renders correctly 1`] = `
+<InputSave
+  autoComplete={false}
+  disabled={false}
+  error="test error"
+  initialValue={5}
+  label="Test Label"
+  max={10}
+  min={0}
+  name="test_inputsave"
+  noMargin={true}
+  onChange={[MockFunction]}
+  onInvalid={[MockFunction]}
+  onSave={[MockFunction]}
+  step={1}
+  type="number"
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <h5>
+      <strong>
+        Test Label
+      </strong>
+    </h5>
+    <Flex
+      alignContent="stretch"
+      alignItems="stretch"
+      direction="row"
+      justifyContent="flex-start"
+      style={
+        Object {
+          "marginBottom": "0",
+        }
+      }
+      wrap="nowrap"
+    >
+      <div
+        style={
+          Object {
+            "alignContent": "stretch",
+            "alignItems": "stretch",
+            "display": "flex",
+            "flexFlow": "row nowrap",
+            "justifyContent": "flex-start",
+            "marginBottom": "0",
+          }
+        }
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <div
+            style={
+              Object {
+                "alignSelf": null,
+                "flex": "1 1 auto",
+              }
+            }
+          >
+            <FormControl
+              autoComplete="off"
+              bsClass="form-control"
+              className="form-control-error"
+              componentClass="input"
+              disabled={false}
+              inputRef={[Function]}
+              max={10}
+              min={0}
+              name="test_inputsave"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onInvalid={[MockFunction]}
+              step={1}
+              style={
+                Object {
+                  "marginBottom": "0",
+                }
+              }
+              type="number"
+              value={5}
+            >
+              <input
+                autoComplete="off"
+                className="form-control-error form-control"
+                disabled={false}
+                max={10}
+                min={0}
+                name="test_inputsave"
+                onBlur={[Function]}
+                onChange={[Function]}
+                onInvalid={[MockFunction]}
+                step={1}
+                style={
+                  Object {
+                    "marginBottom": "0",
+                  }
+                }
+                type="number"
+                value={5}
+              />
+            </FormControl>
+          </div>
+        </FlexItem>
+        <Button
+          bsStyle="primary"
+          disabled={false}
+          icon="floppy"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          <button
+            className="btn btn-primary btn-with-icon"
+            disabled={false}
+            onFocus={[Function]}
+            type="submit"
+          >
+            <div>
+              <Icon
+                className="text-undefined"
+                fixedWidth={false}
+                name="floppy"
+                pending={false}
+                pullRight={false}
+              >
+                <i
+                  className="text-undefined i-floppy"
+                  onClick={null}
+                  style={Object {}}
+                />
+              </Icon>
+            </div>
+          </button>
+        </Button>
+      </div>
+    </Flex>
+  </form>
+</InputSave>
+`;
+
+exports[`<InputSave /> renders subcomponents: renders main <form> element 1`] = `
+<form
+  onSubmit={[Function]}
+>
+  <h5>
+    <strong>
+      Test Label
+    </strong>
+  </h5>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "15px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <FormControl
+        autoComplete="on"
+        bsClass="form-control"
+        className=""
+        componentClass="input"
+        inputRef={[Function]}
+        onBlur={[Function]}
+        onChange={[Function]}
+        style={
+          Object {
+            "marginBottom": "0",
+          }
+        }
+        value=""
+      />
+    </FlexItem>
+    <Button
+      bsStyle="primary"
+      icon="floppy"
+      pullRight={false}
+      tipPlacement="top"
+      type="submit"
+    />
+  </Flex>
+</form>
+`;

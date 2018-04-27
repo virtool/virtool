@@ -6,7 +6,7 @@ import {
     HIDE_INSTALL_MODAL
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     software: null,
     database: null,
     showInstallModal: false

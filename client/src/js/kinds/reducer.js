@@ -5,7 +5,6 @@ import {
     WS_UPDATE_STATUS,
     FIND_VIRUSES,
     GET_VIRUS,
-    CREATE_VIRUS,
     EDIT_VIRUS,
     REMOVE_VIRUS,
     ADD_ISOLATE,
@@ -30,7 +29,7 @@ import {
     GET_VIRUS_HISTORY
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     detail: null,
     detailHistory: null,
@@ -43,12 +42,10 @@ const initialState = {
     editSequence: false,
     removeSequence: false,
     activeIsolateId: null,
-    createError: "",
-    editError: "",
     importData: null
 };
 
-const hideVirusModal = state => ({
+export const hideVirusModal = state => ({
     ...state,
     edit: false,
     remove: false,
@@ -60,7 +57,7 @@ const hideVirusModal = state => ({
     removeSequence: false
 });
 
-const getActiveIsolate = (state) => {
+export const getActiveIsolate = (state) => {
     const isolates = state.detail.isolates;
 
     if (isolates.length) {
@@ -80,7 +77,7 @@ const getActiveIsolate = (state) => {
     };
 };
 
-const receiveVirus = (state, action) => {
+export const receiveVirus = (state, action) => {
     const detail = {
         ...action.data,
         isolates: map(action.data.isolates, isolate => ({...isolate, name: formatIsolateName(isolate)}))
@@ -106,22 +103,9 @@ export default function virusesReducer (state = initialState, action) {
         case FIND_VIRUSES.SUCCEEDED:
             return {...state, ...action.data};
 
-        case CREATE_VIRUS.REQUESTED:
-            return {...state, createError: null};
-
-        case CREATE_VIRUS.FAILED:
-            return {...state, createError: action.message};
-
         case GET_VIRUS.REQUESTED:
         case REMOVE_VIRUS.SUCCEEDED:
             return hideVirusModal({...state, detail: null, activeIsolateId: null});
-
-        case EDIT_VIRUS.FAILED:
-            if (action.status === 409) {
-                return {...state, editError: action.message};
-            }
-
-            return state;
 
         case GET_VIRUS.SUCCEEDED:
         case EDIT_VIRUS.SUCCEEDED:
@@ -155,7 +139,7 @@ export default function virusesReducer (state = initialState, action) {
             };
 
         case SHOW_EDIT_VIRUS:
-            return {...state, edit: true, editError: ""};
+            return {...state, edit: true};
 
         case SHOW_REMOVE_VIRUS:
             return {...state, remove: true};

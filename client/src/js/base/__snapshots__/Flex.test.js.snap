@@ -1,0 +1,94 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Flex /> <FlexItem /> applies given css props to component style 1`] = `
+<div
+  style={
+    Object {
+      "alignSelf": "baseline",
+      "flex": "1 1 3",
+      "marginLeft": "3px",
+    }
+  }
+/>
+`;
+
+exports[`<Flex /> <FlexItem /> applies given style and className props 1`] = `
+<div
+  className="tester-class"
+  style={
+    Object {
+      "alignSelf": null,
+      "flex": "0 1 auto",
+      "marginLeft": "30px",
+      "paddingTop": "100px",
+    }
+  }
+/>
+`;
+
+exports[`<Flex /> <FlexItem /> renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "alignSelf": null,
+      "flex": "0 1 auto",
+    }
+  }
+/>
+`;
+
+exports[`<Flex /> applies given css props to component style 1`] = `
+<div
+  style={
+    Object {
+      "alignContent": "space-between",
+      "alignItems": "stretch",
+      "display": "flex",
+      "flexFlow": "row-reverse wrap-reverse",
+      "justifyContent": "center",
+    }
+  }
+>
+  <div
+    id="tester2"
+  />
+</div>
+`;
+
+exports[`<Flex /> applies given style and className props 1`] = `
+<div
+  className="tester-class"
+  style={
+    Object {
+      "alignContent": "stretch",
+      "alignItems": "stretch",
+      "display": "flex",
+      "flexFlow": "row nowrap",
+      "justifyContent": "flex-start",
+      "marginTop": "100px",
+    }
+  }
+>
+  <div
+    id="tester3"
+  />
+</div>
+`;
+
+exports[`<Flex /> renders correctly 1`] = `
+<div
+  style={
+    Object {
+      "alignContent": "stretch",
+      "alignItems": "stretch",
+      "display": "flex",
+      "flexFlow": "row nowrap",
+      "justifyContent": "flex-start",
+    }
+  }
+>
+  <div
+    id="tester"
+  />
+</div>
+`;

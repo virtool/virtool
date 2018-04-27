@@ -16,7 +16,7 @@ const getInitialState = () => ({
     errorConfirmPassword: ""
 });
 
-class ChangePassword extends React.Component {
+export class ChangePassword extends React.Component {
 
     constructor (props) {
         super(props);
@@ -75,7 +75,7 @@ class ChangePassword extends React.Component {
         }
 
         if (!hasError) {
-            this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
+            this.props.onChangePassword(this.state.oldPassword, this.state.newPassword);
         }
     };
 

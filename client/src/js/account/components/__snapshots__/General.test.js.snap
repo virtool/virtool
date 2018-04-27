@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AccountGeneral /> renders correctly 1`] = `
+<div>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "15px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={1}
+    >
+      <Identicon
+        hash="randomhash"
+      />
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      <h5>
+        <strong>
+          testid
+        </strong>
+      </h5>
+      <div>
+        <Label
+          bsClass="label"
+          bsStyle="default"
+          key="test"
+          style={
+            Object {
+              "marginRight": "3px",
+            }
+          }
+        >
+          Test
+        </Label>
+      </div>
+    </FlexItem>
+  </Flex>
+  <Connect(Email) />
+  <Connect(ChangePassword) />
+</div>
+`;

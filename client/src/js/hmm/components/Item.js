@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
 import { Col, Label, Row } from "react-bootstrap";
@@ -33,3 +34,10 @@ export default function HMMItem ({ cluster, families, id, names }) {
         </LinkContainer>
     );
 }
+
+HMMItem.propTypes = {
+    cluster: PropTypes.number,
+    families: PropTypes.object,
+    id: PropTypes.string,
+    names: PropTypes.array
+};

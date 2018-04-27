@@ -8,7 +8,7 @@ import { connect } from "react-redux";
  * @param id
  * @param showIds
  */
-const IDRowComponent = ({ id, showIds }) => (
+export const IDRowComponent = ({ id, showIds }) => (
     showIds ? (
         <tr>
             <th>Unique ID</th>

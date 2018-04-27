@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Identiconjs from "identicon.js";
 
 /**
@@ -15,4 +16,9 @@ export const Identicon = ({ size = 64, hash }) => {
     });
 
     return <img width={size} height={size} src={`data:image/svg+xml;base64,${data}`} />;
+};
+
+Identicon.propTypes = {
+    size: PropTypes.number,
+    hash: PropTypes.string.isRequired
 };

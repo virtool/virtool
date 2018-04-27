@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Email /> renders correctly 1`] = `
+<Uncontrolled(Panel)
+  bsStyle="default"
+>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    Email
+  </PanelHeading>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <form
+      onSubmit={[Function]}
+    >
+      <InputError
+        error=""
+        label="Email address"
+        onBlur={[Function]}
+        onChange={[Function]}
+        value="test@virtool.ca"
+      />
+      <div
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
+      >
+        <Row
+          bsClass="row"
+          componentClass="div"
+        >
+          <Col
+            bsClass="col"
+            componentClass="div"
+            md={12}
+            xs={24}
+          >
+            <Button
+              bsStyle="primary"
+              icon="floppy"
+              pullRight={true}
+              tipPlacement="top"
+              type="submit"
+            >
+              Save
+            </Button>
+          </Col>
+        </Row>
+      </div>
+    </form>
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;

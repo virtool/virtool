@@ -1,0 +1,222 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Radio /> FlexItem subcomponent displays provided label 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-unchecked"
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  >
+    <span>
+       
+      tester
+    </span>
+  </FlexItem>
+</Flex>
+`;
+
+exports[`<Radio /> FlexItem subcomponent when no label provided, empty component (null) 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-unchecked"
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  />
+</Flex>
+`;
+
+exports[`<Radio /> Icon subcomponent if checked, [name='radio-checked'] 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-checked"
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  />
+</Flex>
+`;
+
+exports[`<Radio /> Icon subcomponent is clickable 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-checked"
+    onClick={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+        ],
+      }
+    }
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  />
+</Flex>
+`;
+
+exports[`<Radio /> Icon subcomponent otherwise [name='radio-unchecked'] 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-unchecked"
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  />
+</Flex>
+`;
+
+exports[`<Radio /> renders a Flex component containing an Icon and a FlexItem component 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-checked"
+    onClick={[MockFunction]}
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  >
+    <span>
+       
+      test label
+    </span>
+  </FlexItem>
+</Flex>
+`;
+
+exports[`<Radio /> renders correctly 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  style={
+    Object {
+      "marginBottom": "3px",
+    }
+  }
+  wrap="nowrap"
+>
+  <Icon
+    fixedWidth={false}
+    name="radio-unchecked"
+    pending={false}
+    pullRight={false}
+  />
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={5}
+    shrink={1}
+  />
+</Flex>
+`;
