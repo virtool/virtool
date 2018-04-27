@@ -285,11 +285,14 @@ async def save_and_reload(req):
 
     db_name = data["db_name"]
 
+    user_id = req.app["setup"]["first_user_id"]
+
     await connection[db_name].users.insert_one({
-        "_id": req.app["setup"]["first_user_id"],
+        "_id": user_id,
         # A list of group _ids the user is associated with.
         "administrator": True,
         "groups": list(),
+        "identicon": virtool.users.calculate_identicon(user_id),
         "settings": {
             "skip_quick_analyze_dialog": True,
             "show_ids": False,

@@ -377,6 +377,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     assert await connection.foobar.users.find_one() == {
         "_id": "fred",
+        "identicon": "d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5",
         "administrator": True,
         "groups": [],
         "invalidate_sessions": False,
