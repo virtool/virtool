@@ -61,7 +61,7 @@ matrix:
       before_script:
       - sleep 15
       script:
-      - pytest --loop uvloop --cov --cov-report xml
+      - pytest --aiohttp-loop uvloop --cov --cov-report xml
       - mkdir gh_build
       - mkdir gh_build/virtool
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
@@ -90,6 +90,12 @@ matrix:
           file: gh_build/virtool.tar.gz
           on:
             tags: true
+
+        - provider: releases
+          skip_cleanup: true
+          api_key:
+            secure: Otm5EqAcBp2i/KghWT/LZkLlpY1qHbYolCRk/Mwgqr0IQvy1ryM8IQot88/mntzKjVFbUIlJDVU8UmWgXac0cBCCT4rvzpRqMXEiWK+sl0Lqqg4tiOMS5gdQF5ywYVinT8e5Zl7O4g05zjU7mUMnSLRlTCNtcffdwOAqp9tfNJ4/FqlmHK+mhufmThQOdschbPLo7dFfSA7oioXesPWSA33lwG8PQWwQjmm55oMOqZiN38HG0wdZQgoH3QsVXLlTwqxAuyBfmOjrwkhTLhTfJ1EWwnlq1RF9uzxZF7J7bYR+IWm8Ws7z9n9kMX0F6/onnAS4D3QLue59jzfR7MJqyaDpyEONjjaP/8wC0afJ8vdc3X5SEdLz5S3/4X8d0llJLEZPL2i1PNfJzDIF7GDerF+0UARhtnHjMQFy5oV6UO6Pd3UuFaoaQUQff4Gw6ZYxVGEkbCUwYqMn4JaiDBrViUK2fzFQzWqiMnI3CrYYW19lcC4ppHLuTJz8YlpNwCsxpCU5YB14m6ra5ZPSJ+dqBLuF46KU+4uW+cXi+oAoS6t4Mb9Jz5Nhfgum965uFuOcsYaEilQSGzqRdIJFhBxyp+ow9Cnq0acmffm+W7jT+m0v2IvUlDkthAPSIBDLRrjOECTUXB7VorSusrK6J3hBcdkl6J58DfNi55N2px8KB7w=
+          file: gh_build/virtool.tar.gz
           draft: true
 
     - language: node_js
