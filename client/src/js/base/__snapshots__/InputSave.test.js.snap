@@ -32,7 +32,7 @@ exports[`<InputSave /> renders correctly 1`] = `
       justifyContent="flex-start"
       style={
         Object {
-          "marginBottom": "0px",
+          "marginBottom": "0",
         }
       }
       wrap="nowrap"
@@ -45,7 +45,7 @@ exports[`<InputSave /> renders correctly 1`] = `
             "display": "flex",
             "flexFlow": "row nowrap",
             "justifyContent": "flex-start",
-            "marginBottom": "0px",
+            "marginBottom": "0",
           }
         }
       >
@@ -72,6 +72,7 @@ exports[`<InputSave /> renders correctly 1`] = `
               inputRef={[Function]}
               max={10}
               min={0}
+              name="test_inputsave"
               onBlur={[Function]}
               onChange={[Function]}
               onInvalid={[MockFunction]}
@@ -90,6 +91,7 @@ exports[`<InputSave /> renders correctly 1`] = `
                 disabled={false}
                 max={10}
                 min={0}
+                name="test_inputsave"
                 onBlur={[Function]}
                 onChange={[Function]}
                 onInvalid={[MockFunction]}
