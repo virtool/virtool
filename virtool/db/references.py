@@ -1,3 +1,5 @@
+import asyncio
+
 import pymongo
 from pymongo import InsertOne
 
@@ -9,6 +11,36 @@ import virtool.errors
 import virtool.kinds
 import virtool.references
 import virtool.utils
+
+
+PROJECTION = [
+    "_id",
+    "created_at",
+    "data_type",
+    "name",
+    "organism",
+    "public",
+    "user",
+    "cloned_from",
+    "imported_from",
+    "remoted_from",
+    "process",
+    "latest_build"
+]
+
+
+async def get_computed(db, ref_id):
+    contributors, internal_control, latest_build = await asyncio.gather(
+        get_contributors(db, ref_id),
+        get_internal_control(db, ref_id),
+        get_latest_build(db, ref_id)
+    )
+
+    return {
+        "contributors": contributors,
+        "internal_control": internal_control,
+        "latest_build": latest_build
+    }
 
 
 async def get_contributors(db, ref_id):

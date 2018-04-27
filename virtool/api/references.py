@@ -28,18 +28,10 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.refs, db_query, req.query, sort="name")
+    data = await paginate(db.refs, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
 
     for d in data["documents"]:
-        contributors, internal_control, latest_build = await asyncio.gather(
-            virtool.db.references.get_contributors(db, d["id"]),
-            virtool.db.references.get_internal_control(db, d["id"]),
-            virtool.db.references.get_latest_build(db, d["id"])
-        )
-
-        d["contributors"] = contributors
-        d["internal_control"] = internal_control
-        d["latest_build"] = latest_build
+        d["latest_build"] = await virtool.db.references.get_latest_build(db, d["id"])
 
     return json_response(data)
 
@@ -59,17 +51,9 @@ async def get(req):
     if not document:
         return not_found()
 
-    contributors, internal_control, latest_build = await asyncio.gather(
-        virtool.db.references.get_contributors(db, ref_id),
-        virtool.db.references.get_internal_control(db, ref_id),
-        virtool.db.references.get_latest_build(db, ref_id)
-    )
+    document.update(await virtool.db.references.get_computed(db, ref_id))
 
-    document["contributors"] = contributors
-    document["internal_control"] = internal_control
-    document["latest_build"] = latest_build
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.get("/api/refs/{ref_id}/kinds")
@@ -225,6 +209,8 @@ async def create(req):
     headers = {
         "Location": "/api/refs/" + document["_id"]
     }
+
+    document.update(await virtool.db.references.get_computed(db, document["_id"]))
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
