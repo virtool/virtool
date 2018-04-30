@@ -401,8 +401,8 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     sub_dirs = [
         "files",
-        "reference/kinds",
-        "reference/subtraction",
+        "references",
+        "subtractions",
         "samples",
         "hmm",
         "logs/jobs"
@@ -414,9 +414,9 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     assert m_reload.called
 
     m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
-        'db_host': "localhost",
-        'db_port': 27017,
-        'db_name': "foobar",
-        'data_path': str(data),
-        'watch_path': str(watch)
+        "db_host": "localhost",
+        "db_port": 27017,
+        "db_name": "foobar",
+        "data_path": str(data),
+        "watch_path": str(watch)
     })
