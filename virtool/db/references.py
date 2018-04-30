@@ -1,3 +1,5 @@
+import asyncio
+
 import pymongo
 from pymongo import InsertOne
 
@@ -9,6 +11,36 @@ import virtool.errors
 import virtool.kinds
 import virtool.references
 import virtool.utils
+
+
+PROJECTION = [
+    "_id",
+    "created_at",
+    "data_type",
+    "name",
+    "organism",
+    "public",
+    "user",
+    "cloned_from",
+    "imported_from",
+    "remoted_from",
+    "process",
+    "latest_build"
+]
+
+
+async def get_computed(db, ref_id):
+    contributors, internal_control, latest_build = await asyncio.gather(
+        get_contributors(db, ref_id),
+        get_internal_control(db, ref_id),
+        get_latest_build(db, ref_id)
+    )
+
+    return {
+        "contributors": contributors,
+        "internal_control": internal_control,
+        "latest_build": latest_build
+    }
 
 
 async def get_contributors(db, ref_id):
@@ -245,7 +277,7 @@ async def create_original(db):
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
 
-    users = await db.users.find({}, ["_id", "administrator", "permissions"])
+    users = await db.users.find({}, ["_id", "administrator", "permissions"]).to_list(None)
 
     for user in users:
         permissions = user.pop("permissions")
@@ -440,58 +472,3 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         )
 
     await virtool.db.processes.update(db, dispatch, process_id, 1)
-
-
-async def insert_from_import(db, kind_document, user_id):
-    """
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param kind_document: the kind document to add
-    :type kind_document: dict
-
-    :param user_id: the requesting ``user_id``
-    :type user_id: str
-
-    """
-    # Modified is set to ``False`` so the user does not have to verify every single imported kind.
-    kind_document.update({
-        "version": 0,
-        "last_indexed_version": None,
-        "lower_name": kind_document["name"].lower(),
-        "imported": True,
-        "verified": False
-    })
-
-    # Perform the actual database insert operation, retaining the response.
-    await db.kinds.insert_one(kind_document)
-
-    issues = await virtool.db.kinds.verify(db, kind_document["_id"], kind_document)
-
-    if issues is None:
-        await db.kinds.update_one({"_id": kind_document["_id"]}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        kind_document["verified"] = True
-
-    to_dispatch = virtool.utils.base_processor({key: kind_document[key] for key in virtool.kinds.LIST_PROJECTION})
-
-    joined = await virtool.db.kinds.join(db, kind_document["_id"])
-
-    change = await virtool.db.history.add(
-        db,
-        "create",
-        None,
-        joined,
-        "Created {}".format(kind_document["name"]),
-        user_id
-    )
-
-    change_to_dispatch = {key: change[key] for key in virtool.db.history.LIST_PROJECTION}
-
-    change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
-
-    return to_dispatch, change_to_dispatch

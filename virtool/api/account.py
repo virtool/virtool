@@ -60,7 +60,7 @@ async def edit(req):
 
     v = Validator({
         "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"},
-        "old_password": {"type": "string", "minlength": minlength},
+        "old_password": {"type": "string"},
         "password": {"type": "string", "minlength": minlength, "dependencies": "old_password"}
     })
 
