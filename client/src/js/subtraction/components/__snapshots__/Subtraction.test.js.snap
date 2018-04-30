@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Subtraction /> renders a FileManager component with [filetype='subtraction'] 1`] = `
+<Connect(FileManager)
+  fileType="subtraction"
+/>
+`;
+
+exports[`<Subtraction /> renders correctly 1`] = `
+<div
+  className="container"
+>
+  <Switch>
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/subtraction"
+    />
+    <Route
+      component={[Function]}
+      path="/subtraction/files"
+    />
+    <Route
+      component={[Function]}
+      path="/subtraction/:subtractionId"
+    />
+  </Switch>
+</div>
+`;

@@ -5,7 +5,7 @@ import SubtractionList from "./List";
 import SubtractionDetail from "./Detail";
 import FileManager from "../../files/components/Manager";
 
-const SubtractionFileManager = () => (
+export const SubtractionFileManager = () => (
     <FileManager fileType="subtraction" />
 );
 
