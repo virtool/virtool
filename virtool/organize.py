@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import virtool.db.references
 import virtool.db.utils
 import virtool.references
@@ -25,7 +28,7 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
-async def organize(db, server_version):
+async def organize(db, settings, server_version):
     await organize_analyses(db)
     await organize_files(db)
     await organize_history(db)
@@ -33,6 +36,7 @@ async def organize(db, server_version):
     await organize_references(db)
     await organize_groups(db)
     await organize_kinds(db)
+    await organize_paths(db, settings)
     await organize_sequences(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
@@ -97,6 +101,36 @@ async def organize_kinds(db):
         await db.viruses.rename("kinds")
 
     await add_original_ref(db.kinds)
+
+
+async def organize_paths(db, settings):
+    data_path = settings["data_path"]
+
+    old_reference_path = os.path.join(data_path, "reference")
+
+    if os.path.exists(old_reference_path):
+        old_indexes_path = os.path.join(old_reference_path, "viruses")
+
+        if not os.path.exists(old_indexes_path):
+            old_indexes_path = os.path.join(old_reference_path, "kinds")
+
+        if not os.path.exists(old_indexes_path):
+            old_indexes_path = None
+
+        if old_indexes_path:
+            references_path = os.path.join(data_path, "references")
+
+            os.mkdir(references_path)
+
+            if await db.refs.count({"_id": "original"}):
+                os.rename(old_indexes_path, os.path.join(references_path, "original"))
+
+        old_subtractions_path = os.path.join(old_reference_path, "subtraction")
+
+        if os.path.exists(old_subtractions_path):
+            os.rename(old_subtractions_path, os.path.join(data_path, "subtractions"))
+
+        shutil.rmtree(old_reference_path)
 
 
 async def organize_references(db):
