@@ -2,10 +2,10 @@ import os
 
 import pymongo
 
-import virtool.jobs.job
-import virtool.utils
-import virtool.subtractions
 import virtool.db.subtractions
+import virtool.jobs.job
+import virtool.subtractions
+import virtool.utils
 
 
 class CreateSubtraction(virtool.jobs.job.Job):
@@ -90,7 +90,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
             "$set": {
                 "ready": True
             }
-        }, projection=PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
+        }, projection=virtool.db.subtractions.PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
 
         await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
 
