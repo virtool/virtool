@@ -7,6 +7,7 @@ build_exe_options = {
         "numpy"
     ],
     "bin_includes": [
+        "libcrypto.so.1.0.0",
         "libssl.so.1.0.0"
     ],
     "packages": [
