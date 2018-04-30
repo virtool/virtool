@@ -41,6 +41,7 @@ async def create_manifest(db, ref_id):
     return manifest
 
 
+        document.update(await get_modification_stats(db, document["id"]))
 async def get_active_index_ids(db, ref_id):
     active_indexes = set()
 
@@ -196,12 +197,14 @@ async def get_modification_stats(db, index_id):
     :rtype: Tuple[int, int]
 
     """
-    query = {"index.id": index_id}
+    query = {
+        "index.id": index_id
+    }
 
-    modified_kind_count = len(await db.history.distinct("kind.id", query))
-    change_count = await db.history.count(query)
-
-    return modified_kind_count, change_count
+    return {
+        "change_count": await db.history.count(query),
+        "modified_kind_count": len(await db.history.distinct("kind.id", query))
+    }
 
 
 async def get_next_version(db, ref_id):
