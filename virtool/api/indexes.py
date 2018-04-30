@@ -18,23 +18,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    data = await paginate(
-        db.indexes,
-        {},
-        req.query,
-        sort="version",
-        projection=virtool.db.indexes.PROJECTION,
-        reverse=True
-    )
-
-    for document in data["documents"]:
-        modified_kind_count, change_count = await virtool.db.indexes.get_modification_stats(db, document["id"])
-
-        document.update({
-            "modified_kind_count": modified_kind_count,
-            "change_count": change_count
-        })
-
+    data = await virtool.db.indexes.find(db, req.query)
 
     return json_response(data)
 
