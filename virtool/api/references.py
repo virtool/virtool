@@ -4,6 +4,7 @@ import os
 import aiojobs.aiohttp
 
 import virtool.db.history
+import virtool.db.indexes
 import virtool.db.kinds
 import virtool.db.processes
 import virtool.db.references
@@ -88,6 +89,28 @@ async def find_kinds(req):
         req.query,
         verified,
         ref_id
+    )
+
+    return json_response(data)
+
+
+@routes.get("/api/refs/{ref_id}/history")
+async def find_history(req):
+    db = req.app["db"]
+
+    ref_id = req.match_info["ref_id"]
+
+    if not await db.refs.count({"_id": ref_id}):
+        return not_found()
+
+    base_query = {
+        "ref.id": ref_id
+    }
+
+    data = await virtool.db.history.find(
+        db,
+        req.query,
+        base_query
     )
 
     return json_response(data)
