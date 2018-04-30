@@ -31,8 +31,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         #: The path to the directory the Bowtie2 index will be written to.
         self.index_path = os.path.join(
             self.settings.get("data_path"),
-            "reference",
-            "subtraction",
+            "subtractions",
             self.subtraction_id.lower().replace(" ", "_")
         )
 
