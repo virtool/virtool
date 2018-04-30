@@ -245,7 +245,7 @@ async def create_original(db):
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
 
-    users = await db.users.find({}, ["_id", "administrator", "permissions"])
+    users = await db.users.find({}, ["_id", "administrator", "permissions"]).to_list(None)
 
     for user in users:
         permissions = user.pop("permissions")
