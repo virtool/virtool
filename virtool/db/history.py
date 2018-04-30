@@ -7,6 +7,7 @@ import virtool.errors
 import virtool.kinds
 import virtool.utils
 import virtool.history
+from virtool.api.utils import paginate
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -112,6 +113,20 @@ async def add(db, method_name, old, new, description, user_id):
     await db.history.insert_one(document)
 
     return document
+
+
+async def find(db, req_query, base_query=None):
+    data = await paginate(
+        db.history,
+        {},
+        req_query,
+        base_query=base_query,
+        sort="created_at",
+        projection=LIST_PROJECTION,
+        reverse=True
+    )
+
+    return data
 
 
 async def get_contributors(db, query):
