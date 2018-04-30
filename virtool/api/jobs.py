@@ -80,7 +80,7 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.delete("/api/jobs/{job_id}/cancel", permission="cancel_job")
+@routes.delete("/api/jobs/{job_id}", permission="remove_job")
 async def remove(req):
     """
     Remove a job.
