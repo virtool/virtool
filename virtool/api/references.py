@@ -93,6 +93,24 @@ async def find_kinds(req):
     return json_response(data)
 
 
+@routes.get("/api/refs/{ref_id}/indexes")
+async def find_indexes(req):
+    db = req.app["db"]
+
+    ref_id = req.match_info["ref_id"]
+
+    if not await db.refs.count({"_id": ref_id}):
+        return not_found()
+
+    data = await virtool.db.indexes.find(
+        db,
+        req.query,
+        ref_id=ref_id
+    )
+
+    return json_response(data)
+
+
 @routes.post("/api/refs", permission="create_ref", schema={
     "name": {
         "type": "string",
