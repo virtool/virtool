@@ -311,10 +311,10 @@ async def save_and_reload(req):
         "invalidate_sessions": False
     })
 
-    subdirs = [
+    sub_dirs = [
         "files",
-        "reference/kinds",
-        "reference/subtraction",
+        "references",
+        "subtractions",
         "samples",
         "hmm",
         "logs/jobs"
@@ -328,7 +328,7 @@ async def save_and_reload(req):
         except FileExistsError:
             pass
 
-    for subdir in subdirs:
+    for subdir in sub_dirs:
         os.makedirs(os.path.join(data_path, subdir))
 
     settings_dict = {key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]}

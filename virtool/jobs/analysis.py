@@ -59,6 +59,8 @@ class Base(virtool.jobs.job.Job):
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
+        self.ref_id = self.task_args["ref_id"]
+
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
 
@@ -86,8 +88,8 @@ class Base(virtool.jobs.job.Job):
 
         self.index_path = os.path.join(
             self.data_path,
-            "reference",
-            "kinds",
+            "references",
+            self.ref_id,
             self.task_args["index_id"],
             "reference"
         )
@@ -139,8 +141,7 @@ class Base(virtool.jobs.job.Job):
 
         self.subtraction_path = os.path.join(
             self.data_path,
-            "reference",
-            "subtraction",
+            "subtractions",
             self.sample["subtraction"]["id"].lower().replace(" ", "_"),
             "reference"
         )
