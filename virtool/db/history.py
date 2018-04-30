@@ -23,8 +23,9 @@ LIST_PROJECTION = [
     "description",
     "method_name",
     "created_at",
-    "kind",
     "index",
+    "kind",
+    "ref",
     "user"
 ]
 

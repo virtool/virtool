@@ -97,6 +97,15 @@ async def create(req):
 
     await db.indexes.insert_one(document)
 
+    await db.history.update_many({"index.id": "unbuilt", "ref.id": ref_id}, {
+        "$set": {
+            "index": {
+                "id": index_id,
+                "version": index_version
+            }
+        }
+    })
+
     # A dict of task_args for the rebuild job.
     task_args = {
         "ref_id": ref_id,

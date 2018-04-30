@@ -136,7 +136,8 @@ async def find_indexes(req):
         "type": "string"
     },
     "organism": {
-        "type": "string"
+        "type": "string",
+        "default": ""
     },
     "public": {
         "type": "boolean",

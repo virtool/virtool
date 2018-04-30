@@ -31,9 +31,10 @@ class BuildIndex(virtool.jobs.job.Job):
         self.reference_path = os.path.join(
             self.settings["data_path"],
             "references",
-            self.ref_id,
-            self.index_id
+            self.ref_id
         )
+
+        self.index_path = os.path.join(self.reference_path, self.index_id)
 
     @virtool.jobs.job.stage_method
     async def mk_index_dir(self):
@@ -41,7 +42,12 @@ class BuildIndex(virtool.jobs.job.Job):
         Make dir for the new index at ``<data_path/references/<index_id>``.
 
         """
-        await self.run_in_executor(os.mkdir, self.reference_path)
+        try:
+            await self.run_in_executor(os.mkdir, self.reference_path)
+        except FileExistsError:
+            pass
+
+        await self.run_in_executor(os.mkdir, self.index_path)
 
     @virtool.jobs.job.stage_method
     async def write_fasta(self):
@@ -74,7 +80,7 @@ class BuildIndex(virtool.jobs.job.Job):
             except TypeError:
                 raise
 
-        fasta_path = os.path.join(self.reference_path, "ref.fa")
+        fasta_path = os.path.join(self.index_path, "ref.fa")
 
         await self.run_in_executor(write_fasta_dict_to_file, fasta_path, fasta_dict)
 
@@ -88,8 +94,8 @@ class BuildIndex(virtool.jobs.job.Job):
         command = (
             "bowtie2-build",
             "-f",
-            os.path.join(self.reference_path, "ref.fa"),
-            os.path.join(self.reference_path, "reference")
+            os.path.join(self.index_path, "ref.fa"),
+            os.path.join(self.index_path, "reference")
         )
 
         await self.run_subprocess(command)
@@ -164,7 +170,7 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        await self.run_in_executor(virtool.utils.rm, self.reference_path, True)
+        await self.run_in_executor(virtool.utils.rm, self.index_path, True)
 
 
 def remove_unused_index_files(base_path, retained):

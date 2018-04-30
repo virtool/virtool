@@ -46,6 +46,9 @@ async def test_find(spawn_client, test_changes):
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
+                },
+                "ref": {
+                    "id": "hxn167"
                 }
             },
             {
@@ -64,6 +67,9 @@ async def test_find(spawn_client, test_changes):
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
+                },
+                "ref": {
+                    "id": "hxn167"
                 }
             },
             {
@@ -82,6 +88,9 @@ async def test_find(spawn_client, test_changes):
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
+                },
+                "ref": {
+                    "id": "hxn167"
                 }
             }
         ], key=itemgetter("id"))
@@ -129,6 +138,9 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 1
+            },
+            "ref": {
+                "id": "hxn167"
             }
         }
 
