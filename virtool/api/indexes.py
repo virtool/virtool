@@ -35,10 +35,6 @@ async def find(req):
             "change_count": change_count
         })
 
-    data.update({
-        "unbuilt_change_count": len(await db.history.distinct("kind.id", {"index.id": "unbuilt"})),
-        "total_kind_count": await db.kinds.count()
-    })
 
     return json_response(data)
 
