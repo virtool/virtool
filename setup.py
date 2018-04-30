@@ -6,6 +6,9 @@ build_exe_options = {
     "excludes": [
         "numpy"
     ],
+    "bin_includes": [
+        "libssl.so.1.0.0"
+    ],
     "packages": [
         "_cffi_backend",
         "appdirs",

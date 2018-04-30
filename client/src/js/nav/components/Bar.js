@@ -8,7 +8,6 @@ import NotificationIcon from "./Icon";
 import { logout } from "../../account/actions";
 import { Icon, AutoProgressBar } from "../../base";
 
-
 const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
 const Bar = (props) => {
@@ -67,14 +66,6 @@ const Bar = (props) => {
                                 Subtraction
                             </NavItem>
                         </LinkContainer>
-
-                        {props.permissions.modify_settings ? (
-                            <LinkContainer to="/settings">
-                                <NavItem>
-                                    Settings
-                                </NavItem>
-                            </LinkContainer>
-                        ) : null}
                     </Nav>
 
                     <Nav pullRight>
@@ -97,6 +88,9 @@ const Bar = (props) => {
                         <NavDropdown id="account-dropdown" title={dropdownTitle}>
                             <LinkContainer to="/account" activeClassName="">
                                 <MenuItem>Account</MenuItem>
+                            </LinkContainer>
+                            <LinkContainer to="/administration">
+                                <MenuItem>Administration</MenuItem>
                             </LinkContainer>
                             <MenuItem href="https://gitreports.com/issue/virtool/virtool" target="_blank">
                                 Report Issue
