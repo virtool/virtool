@@ -286,7 +286,7 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
         await db.keys.update_one({"_id": document["_id"]}, {
             "$set": {
                 "groups": groups,
-                "permissions": {p: (document["permissions"].get(p, False) and permissions[p]) for p in permissions}
+                "permissions": virtool.users.limit_permissions(document["permissions"], permissions)
             }
         })
 

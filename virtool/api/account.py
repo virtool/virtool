@@ -158,7 +158,7 @@ async def get_api_key(req):
 
 @routes.post("/api/account/keys", schema={
     "name": {"type": "string", "required": True, "minlength": 1},
-    "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
+    "permissions": {"type": "dict", "default": {}, "validator": virtool.validators.is_permission_dict}
 })
 async def create_api_key(req):
     """
@@ -172,9 +172,11 @@ async def create_api_key(req):
 
     name = data["name"]
 
+    user = await db.users.find_one(user_id, ["administrator", "permissions"])
+
     permissions = {
         **{p: False for p in virtool.users.PERMISSIONS},
-        **data.get("permissions", {})
+        **data["permissions"]
     }
 
     raw, hashed = virtool.db.account.get_api_key()
@@ -184,7 +186,7 @@ async def create_api_key(req):
         "id": await virtool.db.account.get_alternate_id(db, name),
         "name": name,
         "groups": req["client"].groups,
-        "permissions": permissions,
+        "permissions": virtool.users.limit_permissions(permissions, user["permissions"]),
         "created_at": virtool.utils.timestamp(),
         "user": {
             "id": user_id
@@ -216,13 +218,26 @@ async def update_api_key(req):
 
     user_id = req["client"].user_id
 
-    permissions = await virtool.db.utils.get_one_field(db.keys, "permissions", {"id": key_id, "user.id": user_id})
+    update = dict()
 
-    if permissions is None:
-        return not_found()
+    user = await db.users.find_one(user_id, ["administrator", "permissions"])
 
-    permissions.update(data["permissions"])
+    permissions = data.get("permissions", None)
 
+    if permissions:
+        # The permissions currently assigned to the API key.
+        key_permissions = await virtool.db.utils.get_one_field(
+            db.keys,
+            "permissions",
+            {"id": key_id, "user.id": user_id}
+        )
+
+        if key_permissions is None:
+            return not_found()
+
+        key_permissions.update(permissions)
+
+        update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
     document = await db.keys.find_one_and_update({"id": key_id}, {
         "$set": {
             "permissions": permissions
