@@ -18,10 +18,11 @@ async def register(db, dispatch, process_type, file_size=0):
 
     document = {
         "_id": process_id,
-        "type": process_type,
+        "created_at": virtool.utils.timestamp(),
         "progress": 0,
         "step": virtool.processes.FIRST_STEPS[process_type],
-        "step_count": step_count
+        "step_count": step_count,
+        "type": process_type
     }
 
     await db.processes.insert_one(document)
