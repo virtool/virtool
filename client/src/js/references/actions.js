@@ -12,8 +12,11 @@ export const getReference = (referenceId) => ({
     referenceId
 });
 
-export const createReference = (name, description) => ({
+export const createReference = (name, description, dataType, organism, isPublic) => ({
     type: CREATE_REFERENCE.REQUESTED,
     name,
-    description
+    description,
+    dataType,
+    organism,
+    isPublic
 });

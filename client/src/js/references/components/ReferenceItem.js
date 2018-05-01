@@ -1,66 +1,79 @@
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
 import { FlexItem, RelativeTime, Button } from "../../base";
-import { Panel, Table, Col, Row, Badge } from "react-bootstrap";
+import { Panel, Table, Row, Badge } from "react-bootstrap";
 
-const ReferenceHeader = ({ name }) => (
+const ReferenceHeader = ({ name, createdAt, user }) => (
     <div style={{ marginLeft: "5px" }}>
         <Row>
-            <strong>{name}</strong><Badge style={{ margin: "5px" }}>1024</Badge>
+            <strong>{name}</strong><Badge style={{ margin: "5px" }}>count</Badge>
         </Row>
         <Row>
-            Created <RelativeTime time="2018-04-27T20:11:21.977000Z" /> by USER
+            Created <RelativeTime time={createdAt} /> by {user}
         </Row>
     </div>
 );
 
-const ReferenceMetadata = () => (
+const ReferenceMetadata = ({ dataType, latestBuild, organism, isPublic }) => (
     <Table bordered>
         <tbody>
             <tr>
                 <th>Unbuilt Changes</th>
-                <td>yes / no</td>
+                <td>{ latestBuild || "none" }</td>
             </tr>
             <tr>
                 <th>Datatype</th>
-                <td>datatype</td>
+                <td>{ dataType }</td>
             </tr>
             <tr>
                 <th>Organism</th>
-                <td>organism</td>
+                <td>{ organism || "unknown" }</td>
+            </tr>
+            <tr>
+                <th>Public</th>
+                <td>{`${isPublic}`}</td>
             </tr>
         </tbody>
     </Table>
 );
 
-const ReferenceFooter = () => (
+const ReferenceFooter = ({ id }) => (
     <div style={{ margin: "0 5px" }}>
         <Row>
             <Button>
                 View Kinds
             </Button>
-            <Button pullRight>
-                Manage
-            </Button>
+            <LinkContainer to={`/refs/${id}`} key={id} className="spaced">
+                <Button pullRight>
+                    Manage
+                </Button>
+            </LinkContainer>
         </Row>
     </div>
 );
 
-const ReferenceItem = ({ id, name }) => (
-    <FlexItem alignSelf="auto" grow={1} style={{ margin: "10px" }}>
-        <LinkContainer to={`/refs/${id}`} key={id} className="spaced">
-            <Panel>
-                <Panel.Heading>
-                    <ReferenceHeader name={name} />
-                </Panel.Heading>
-                <Panel.Body>
-                    <ReferenceMetadata />
-                </Panel.Body>
-                <Panel.Footer>
-                    <ReferenceFooter />
-                </Panel.Footer>
-            </Panel>
-        </LinkContainer>
+const ReferenceItem = (props) => (
+    <FlexItem
+        alignSelf="auto"
+        grow={0}
+        shrink={0}
+        basis="auto"
+        style={{ margin: "1rem 1rem 0 0", minWidth: "300px" }}
+    >
+        <Panel>
+            <Panel.Heading>
+                <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} />
+            </Panel.Heading>
+            <ReferenceMetadata
+                dataType={props.data_type}
+                build={props.latest_build}
+                organism={props.organism}
+                isPublic={props.public}
+            />
+            <Panel.Footer>
+                <ReferenceFooter id={props.id} />
+            </Panel.Footer>
+        </Panel>
     </FlexItem>
 );
 

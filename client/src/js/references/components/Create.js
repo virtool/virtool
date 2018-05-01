@@ -2,15 +2,21 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+import { map, upperFirst } from "lodash-es";
 
-import { createReference } from "../actions";
+import { createReference, listReferences } from "../actions";
 import { clearError } from "../../errors/actions";
-import { InputError, Button } from "../../base";
+import { InputError, Button, Checkbox } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
 const getInitialState = () => ({
     name: "",
-    description: ""
+    description: "",
+    dataType: "",
+    organism: "",
+    isPublic: false,
+    errorName: "",
+    errorDataField: ""
 });
 
 export class CreateReference extends React.Component {
@@ -23,8 +29,11 @@ export class CreateReference extends React.Component {
     handleChange = (e) => {
         const { name, value } = e.target;
 
+        const errorType = `error${upperFirst(e.target.name)}`;
+
         this.setState({
-            [name]: value
+            [name]: value,
+            [errorType]: ""
         });
     };
 
@@ -39,13 +48,43 @@ export class CreateReference extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (this.state.name.length) {
-            this.props.onSubmit(this.state.name, this.state.description);
+        if (!this.state.name.length) {
+            this.setState({ errorName: "Required Field" });
+        }
+
+        if (!this.state.dataType.length) {
+            this.setState({ errorDataType: "Required Field" });
+        }
+
+        if (this.state.name.length && this.state.dataType.length) {
+            this.props.onSubmit(
+                this.state.name,
+                this.state.description,
+                this.state.dataType,
+                this.state.organism,
+                this.state.isPublic
+            );
+            this.props.onHide(window.location);
         }
 
     };
 
+    toggleCheck = () => {
+        this.setState({ isPublic: !this.state.isPublic });
+    };
+
     render () {
+
+        const acceptedDataTypes = [
+            "",
+            "genome"
+        ];
+
+        const dataOptions = map(acceptedDataTypes, (type) =>
+            <option key={type} value={type}>
+                {type || "None"}
+            </option>
+        );
 
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
@@ -60,14 +99,49 @@ export class CreateReference extends React.Component {
                                 name="name"
                                 value={this.state.name}
                                 onChange={this.handleChange}
+                                error={this.state.errorName}
                             />
                         </Col>
                         <Col md={4}>
                             <InputError
+                                label="Data Type"
+                                name="dataType"
+                                type="select"
+                                value={this.state.dataType}
+                                onChange={this.handleChange}
+                                error={this.state.errorDataType}
+                            >
+                                {dataOptions}
+                            </InputError>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md={8}>
+                            <InputError
                                 label="Description"
+                                type="textarea"
                                 name="description"
                                 value={this.state.description}
                                 onChange={this.handleChange}
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <InputError
+                                label="Organism"
+                                name="organism"
+                                type="select"
+                                value={this.state.organism}
+                                onChange={this.handleChange}
+                            >
+                                {dataOptions}
+                            </InputError>
+                        </Col>
+                        <Col md={4}>
+                            <Checkbox
+                                label="Public"
+                                checked={this.state.isPublic}
+                                onClick={this.toggleCheck}
+                                pullRight
                             />
                         </Col>
                     </Row>
@@ -92,12 +166,13 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, abbreviation) => {
-        dispatch(createReference(name, abbreviation));
+    onSubmit: (name, description, dataType, organism, isPublic) => {
+        dispatch(createReference(name, description, dataType, organism, isPublic));
+        dispatch(listReferences());
     },
 
     onHide: ({ location }) => {
-        dispatch(push({...location, state: {createVirus: false}}));
+        dispatch(push({...location, state: {createReference: false}}));
     },
 
     onClearError: (error) => {

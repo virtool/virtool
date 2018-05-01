@@ -2,16 +2,20 @@ import Request from "superagent";
 
 export const list = () => (
     Request.get("/api/refs")
+        .query({ per_page: 100 })
 );
 
-export const get = ({ refId }) => (
-    Request.get(`/api/refs/${refId}`)
+export const get = ({ referenceId }) => (
+    Request.get(`/api/refs/${referenceId}`)
 );
 
-export const create = ({ name, description }) => (
+export const create = ({ name, description, dataType, organism, isPublic }) => (
     Request.post("/api/refs")
         .send({
             name,
-            description
+            description,
+            data_type: dataType,
+            organism,
+            public: isPublic
         })
 );

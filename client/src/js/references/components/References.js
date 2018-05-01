@@ -20,7 +20,7 @@ const ReferenceSettings = () => (
     </div>
 );
 
-const Viruses = (props) => {
+const References = (props) => {
     if (props.settings === null) {
         return <LoadingPlaceholder />;
     }
@@ -40,4 +40,4 @@ const mapStateToProps = (state) => ({
     settings: state.settings.data
 });
 
-export default connect(mapStateToProps)(Viruses);
+export default connect(mapStateToProps)(References);
