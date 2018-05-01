@@ -1,7 +1,6 @@
 import concurrent.futures
 import logging
 import os
-import ssl
 import subprocess
 import sys
 
@@ -322,26 +321,6 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         app.on_shutdown.append(on_shutdown)
 
     return app
-
-
-def configure_ssl(cert_path, key_path):
-    """
-    Return an SSL context given the paths to a certificate file and key file.
-
-    :param cert_path: the certificate path
-    :type cert_path: str
-
-    :param key_path: the key path
-    :type key_path: str
-
-    :return: an SSL context
-    :rtype: :class:`ssl.SSLContext`
-
-    """
-    ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_ctx.load_cert_chain(cert_path, keyfile=key_path)
-
-    return ssl_ctx
 
 
 async def find_server_version(loop, install_path="."):
