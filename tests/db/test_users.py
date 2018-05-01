@@ -254,9 +254,10 @@ async def test_validate_credentials(legacy, user_id, password, result, test_moto
     assert await virtool.db.users.validate_credentials(test_motor, user_id, password) is result
 
 
+@pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(elevate, missing, test_motor, all_permissions, no_permissions):
+async def test_update_sessions_and_keys(administrator, elevate, missing, test_motor, all_permissions, no_permissions):
     """
     Test that permissions assigned to keys and sessions are updated correctly.
 
@@ -276,6 +277,7 @@ async def test_update_sessions_and_keys(elevate, missing, test_motor, all_permis
 
     await test_motor.keys.insert_one({
         "_id": "foobar",
+        "administrator": False,
         "groups": ["peasants"],
         "permissions": permissions,
         "user": {
@@ -285,6 +287,7 @@ async def test_update_sessions_and_keys(elevate, missing, test_motor, all_permis
 
     await test_motor.sessions.insert_one({
         "_id": "foobar",
+        "administrator": False,
         "groups": ["peasants"],
         "permissions": permissions,
         "user": {
@@ -297,12 +300,14 @@ async def test_update_sessions_and_keys(elevate, missing, test_motor, all_permis
     await virtool.db.users.update_sessions_and_keys(
         test_motor,
         "bob",
+        administrator,
         ["peasants", "kings"],
         target_permissions
     )
 
     assert await test_motor.sessions.find_one() == {
         "_id": "foobar",
+        "administrator": administrator,
         "groups": ["peasants", "kings"],
         "permissions": target_permissions,
         "user": {
@@ -315,6 +320,7 @@ async def test_update_sessions_and_keys(elevate, missing, test_motor, all_permis
 
     assert await test_motor.keys.find_one() == {
         "_id": "foobar",
+        "administrator": administrator,
         "groups": ["peasants", "kings"],
         "permissions": permissions,
         "user": {

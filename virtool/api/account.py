@@ -69,17 +69,22 @@ async def edit(req):
 
     data = v.document
 
-    try:
-        update = await virtool.db.account.compose_password_update(
-            db,
-            user_id,
-            data["old_password"],
-            data["password"]
-        )
-    except ValueError as err:
-        if "Invalid credentials" in str(err):
-            return bad_request("Invalid credentials")
-        raise
+    password = data.get("password", None)
+
+    update = dict()
+
+    if password:
+        try:
+            update = await virtool.db.account.compose_password_update(
+                db,
+                user_id,
+                data["old_password"],
+                password
+            )
+        except ValueError as err:
+            if "Invalid credentials" in str(err):
+                return bad_request("Invalid credentials")
+            raise
 
     if "email" in data:
         update["email"] = data["email"]
@@ -110,8 +115,6 @@ async def update_settings(req):
     Update account settings.
 
     """
-    print(req)
-
     db = req.app["db"]
     data = req["data"]
 
@@ -219,6 +222,9 @@ async def update_api_key(req):
 
     key_id = req.match_info.get("key_id")
 
+    if not await db.keys.count({"id": key_id}):
+        return not_found()
+
     user_id = req["client"].user_id
 
     update = dict()
@@ -246,6 +252,8 @@ async def update_api_key(req):
         key_permissions.update(permissions)
 
         update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
+
+    print(update)
 
     document = await db.keys.find_one_and_update({"id": key_id}, {
         "$set": update

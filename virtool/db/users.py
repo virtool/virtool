@@ -216,7 +216,13 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
     }, return_document=pymongo.ReturnDocument.AFTER)
 
     if groups is not None:
-        await update_sessions_and_keys(db, user_id, groups, document["permissions"])
+        await update_sessions_and_keys(
+            db,
+            user_id,
+            document["administrator"],
+            groups,
+            document["permissions"]
+        )
 
     return document
 

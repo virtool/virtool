@@ -185,22 +185,9 @@ async def test_get_api_keys(spawn_client):
 
 class TestCreateAPIKey:
 
-    @pytest.mark.parametrize("req_permissions", [
-        None,
-        {
-            "create_sample": True
-        },
-        {
-            "modify_subtraction": True,
-        },
-        {
-            "cancel_job": True,
-            "create_sample": True,
-            "modify_hmm": True,
-            "remove_job": True,
-        }
-    ])
-    async def test(self, req_permissions, mocker, spawn_client, static_time, test_motor):
+    @pytest.mark.parametrize("has_perm", [True, False])
+    @pytest.mark.parametrize("req_perm", [True, False])
+    async def test(self, has_perm, req_perm, mocker, spawn_client, static_time, test_motor, no_permissions):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
@@ -209,12 +196,24 @@ class TestCreateAPIKey:
 
         client = await spawn_client(authorize=True)
 
+        if has_perm:
+            await test_motor.users.update_one({"_id": "test"}, {
+                "$set": {
+                    "permissions": {
+                        **no_permissions,
+                        "create_sample": True
+                    }
+                }
+            })
+
         body = {
             "name": "Foobar"
         }
 
-        if req_permissions:
-            body["permissions"] = req_permissions
+        if req_perm:
+            body["permissions"] = {
+                "create_sample": True
+            }
 
         resp = await client.post("/api/account/keys", body)
 
@@ -224,16 +223,14 @@ class TestCreateAPIKey:
             "_id": "hashed_key",
             "id": "foobar_0",
             "name": "Foobar",
+            "administrator": False,
             "created_at": static_time,
             "user": {
                 "id": "test"
             },
             "groups": [],
-            "permissions": {p: False for p in virtool.users.PERMISSIONS}
+            "permissions": {**no_permissions, "create_sample": has_perm and req_perm}
         }
-
-        if req_permissions:
-            expected["permissions"].update(req_permissions)
 
         assert await test_motor.keys.find_one() == expected
 
@@ -274,6 +271,7 @@ class TestCreateAPIKey:
             "_id": "hashed_key",
             "id": "foobar_1",
             "name": "Foobar",
+            "administrator": False,
             "created_at": static_time,
             "user": {
                 "id": "test"
@@ -297,13 +295,28 @@ class TestCreateAPIKey:
 
 class TestUpdateAPIKey:
 
-    async def test(self, spawn_client, static_time):
+    @pytest.mark.parametrize("req_admin", [True, False])
+    @pytest.mark.parametrize("has_admin", [True, False])
+    @pytest.mark.parametrize("has_perm", [True, False])
+    async def test(self, req_admin, has_admin, has_perm, spawn_client, static_time):
         client = await spawn_client(authorize=True)
+
+        user_update = {
+            "administrator": has_admin
+        }
+
+        if has_perm:
+            user_update["permissions.create_sample"] = True
+
+        await client.db.users.update_one({"_id": "test"}, {
+            "$set": user_update
+        })
 
         expected = {
             "_id": "foobar",
             "id": "foobar_0",
             "name": "Foobar",
+            "administrator": False,
             "created_at": static_time,
             "user": {
                 "id": "test"
@@ -315,12 +328,18 @@ class TestUpdateAPIKey:
         await client.db.keys.insert_one(expected)
 
         resp = await client.patch("/api/account/keys/foobar_0", {
-            "permissions": {"create_sample": True}
+            "administrator": req_admin,
+            "permissions": {
+                "create_sample": True
+            }
         })
 
         assert resp.status == 200
 
-        expected["permissions"]["create_sample"] = True
+        expected["administrator"] = has_admin and req_admin
+
+        if has_perm:
+            expected["permissions"]["create_sample"] = True
 
         assert await client.db.keys.find_one() == expected
 
