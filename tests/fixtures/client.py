@@ -50,6 +50,7 @@ class VTClient:
             await self.db.sessions.insert_one({
                 "_id": "foobar",
                 "ip": "127.0.0.1",
+                "administrator": administrator,
                 "user_agent": "Python/3.6 aiohttp/3.1.3",
                 "user": {
                     "id": "test"

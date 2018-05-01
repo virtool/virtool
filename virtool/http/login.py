@@ -42,6 +42,7 @@ async def login_handler(req):
 
         document = await req.app["db"].sessions.find_one_and_update({"_id": client.session_id}, {
             "$set": {
+                "administrator": user_document["administrator"],
                 "groups": user_document["groups"],
                 "permissions": user_document["permissions"],
                 "user": {

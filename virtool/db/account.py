@@ -25,9 +25,6 @@ async def compose_password_update(db, user_id, old_password, password):
     :rtype: dict
 
     """
-    if not password:
-        return dict()
-
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.db.users.validate_credentials(db, user_id, old_password or ""):
         raise ValueError("Invalid credentials")

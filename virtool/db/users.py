@@ -216,7 +216,13 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
     }, return_document=pymongo.ReturnDocument.AFTER)
 
     if groups is not None:
-        await update_sessions_and_keys(db, user_id, groups, document["permissions"])
+        await update_sessions_and_keys(
+            db,
+            user_id,
+            document["administrator"],
+            groups,
+            document["permissions"]
+        )
 
     return document
 
@@ -262,7 +268,7 @@ async def validate_credentials(db, user_id, password):
     return False
 
 
-async def update_sessions_and_keys(db, user_id, groups, permissions):
+async def update_sessions_and_keys(db, user_id, administrator, groups, permissions):
     """
 
     :param db: a database client
@@ -270,6 +276,9 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
 
     :param user_id: the id of the user to update keys and session for
     :type user_id: str
+
+    :param administrator: the administrator flag for the user
+    :type administrator: bool
 
     :param groups: an updated list of groups
     :type groups: list
@@ -285,13 +294,15 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
     async for document in db.keys.find(find_query, ["permissions"]):
         await db.keys.update_one({"_id": document["_id"]}, {
             "$set": {
+                "administrator": administrator,
                 "groups": groups,
-                "permissions": {p: (document["permissions"].get(p, False) and permissions[p]) for p in permissions}
+                "permissions": virtool.users.limit_permissions(document["permissions"], permissions)
             }
         })
 
     await db.sessions.update_many(find_query, {
         "$set": {
+            "administrator": administrator,
             "groups": groups,
             "permissions": permissions
         }

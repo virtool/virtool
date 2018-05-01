@@ -97,3 +97,20 @@ def hash_password(password):
 
     """
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
+
+
+def limit_permissions(permissions, limit_filter):
+    """
+    Make sure permission values in `permissions` do not exceed those in `limit_filter`. Returns a filtered set permissions
+
+    :param limit_filter: the limiting permissions that cannot be exceeded
+    :type limit_filter:
+
+    :param permissions: a permissions to filter
+    :type permissions: dict
+
+    :return: filtered permissions
+    :rtype: dict
+
+    """
+    return {p: (permissions.get(p, False) and limit_filter[p]) for p in permissions}
