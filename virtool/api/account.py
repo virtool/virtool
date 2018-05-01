@@ -158,6 +158,7 @@ async def get_api_key(req):
 
 @routes.post("/api/account/keys", schema={
     "name": {"type": "string", "required": True, "minlength": 1},
+    "administrator": {"type": "boolean", "default": False},
     "permissions": {"type": "dict", "default": {}, "validator": virtool.validators.is_permission_dict}
 })
 async def create_api_key(req):
@@ -185,6 +186,7 @@ async def create_api_key(req):
         "_id": hashed,
         "id": await virtool.db.account.get_alternate_id(db, name),
         "name": name,
+        "administrator": user["administrator"] and data["administrator"],
         "groups": req["client"].groups,
         "permissions": virtool.users.limit_permissions(permissions, user["permissions"]),
         "created_at": virtool.utils.timestamp(),
@@ -208,6 +210,7 @@ async def create_api_key(req):
 
 
 @routes.patch("/api/account/keys/{key_id}", schema={
+    "administrator": {"type": "boolean"},
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def update_api_key(req):
@@ -221,6 +224,11 @@ async def update_api_key(req):
     update = dict()
 
     user = await db.users.find_one(user_id, ["administrator", "permissions"])
+
+    administrator = data.get("administrator", None)
+
+    if administrator is not None:
+        update["administrator"] = administrator and user["administrator"]
 
     permissions = data.get("permissions", None)
 
@@ -238,10 +246,9 @@ async def update_api_key(req):
         key_permissions.update(permissions)
 
         update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
+
     document = await db.keys.find_one_and_update({"id": key_id}, {
-        "$set": {
-            "permissions": permissions
-        }
+        "$set": update
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
     return json_response(document)

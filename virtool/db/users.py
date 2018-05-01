@@ -262,7 +262,7 @@ async def validate_credentials(db, user_id, password):
     return False
 
 
-async def update_sessions_and_keys(db, user_id, groups, permissions):
+async def update_sessions_and_keys(db, user_id, administrator, groups, permissions):
     """
 
     :param db: a database client
@@ -270,6 +270,9 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
 
     :param user_id: the id of the user to update keys and session for
     :type user_id: str
+
+    :param administrator: the administrator flag for the user
+    :type administrator: bool
 
     :param groups: an updated list of groups
     :type groups: list
@@ -285,6 +288,7 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
     async for document in db.keys.find(find_query, ["permissions"]):
         await db.keys.update_one({"_id": document["_id"]}, {
             "$set": {
+                "administrator": administrator,
                 "groups": groups,
                 "permissions": virtool.users.limit_permissions(document["permissions"], permissions)
             }
@@ -292,6 +296,7 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
 
     await db.sessions.update_many(find_query, {
         "$set": {
+            "administrator": administrator,
             "groups": groups,
             "permissions": permissions
         }

@@ -17,6 +17,7 @@ class Client:
         self.ip = ip
         self.user_agent = user_agent
 
+        self.administrator = None
         self.authorized = False
         self.user_id = None
         self.groups = None
@@ -25,6 +26,7 @@ class Client:
         self.session_id = None
 
     def authorize(self, document, is_api):
+        self.administrator = document["administrator"]
         self.authorized = True
         self.user_id = document["user"]["id"]
         self.groups = document["groups"]
