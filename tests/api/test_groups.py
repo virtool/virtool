@@ -44,7 +44,7 @@ class TestCreate:
         Test that a group can be added to the database at ``POST /api/groups/:group_id``.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.post("/api/groups", data={
             "group_id": "test"
@@ -70,7 +70,7 @@ class TestCreate:
         ``group_id`` already exists.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         await client.db.groups.insert_one({
             "_id": "test",
@@ -84,7 +84,7 @@ class TestCreate:
         assert await resp_is.conflict(resp, "Group already exists")
 
     async def test_missing(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.post("/api/groups", data={
             "test": "test"
@@ -96,7 +96,7 @@ class TestCreate:
         })
 
     async def test_wrong_type(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.post("/api/groups", data={
             "group_id": 1
@@ -147,7 +147,7 @@ class TestUpdatePermissions:
         Test that a valid request results in permission changes.
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authorize=True, administrator=True)
 
         await client.db.groups.insert_one({
             "_id": "test",
@@ -177,7 +177,7 @@ class TestUpdatePermissions:
         Test that an invalid permission key results in a ``422`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         await client.db.groups.insert_one({
             "_id": "test",
@@ -197,7 +197,7 @@ class TestUpdatePermissions:
         Test that updating an non-existent group results in a ``404`` response.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.patch("/api/groups/test", data={
             "create_sample": True
@@ -213,7 +213,7 @@ class TestRemove:
         Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         await client.db.groups.insert_one({
             "_id": "test",
@@ -240,7 +240,7 @@ class TestRemove:
         Test that 404 is returned for non-existent group.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.delete("/api/groups/test")
 

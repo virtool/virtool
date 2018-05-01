@@ -9,7 +9,7 @@ async def test_find(spawn_client, create_user):
     Test that a ``GET /users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, permissions=["create_sample"])
+    client = await spawn_client(authorize=True, administrator=True, permissions=["create_sample"])
 
     user_ids = ["bob", "fred", "john"]
 
@@ -31,7 +31,10 @@ async def test_find(spawn_client, create_user):
 
     expected = [dict(base_dict, id=user_id) for user_id in user_ids + ["test"]]
 
-    expected[3]["permissions"] = dict(base_dict["permissions"], create_sample=True)
+    expected[3].update({
+        "administrator": True,
+        "permissions": dict(base_dict["permissions"], create_sample=True)
+    })
 
     assert sorted(await resp.json(), key=itemgetter("id")) == sorted(expected, key=itemgetter("id"))
 
@@ -42,7 +45,7 @@ async def test_get(not_found, spawn_client, create_user, resp_is, no_permissions
     Test that a ``GET /api/users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
     users = [create_user("bob")]
 
@@ -82,7 +85,7 @@ class TestCreate:
         - check password
 
         """
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authorize=True, administrator=True)
 
         client.app["settings"]["minimum_password_length"] = 8
 
@@ -126,7 +129,7 @@ class TestCreate:
         Test that invalid and missing input data result in a ``422`` response with detailed error data.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         client.app["settings"]["minimum_password_length"] = 8
 
@@ -151,7 +154,7 @@ class TestCreate:
         Test that an input ``user_id`` that already exists results in a ``400`` response with informative error message.
 
         """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         client.app["settings"]["minimum_password_length"] = 8
 
@@ -178,7 +181,7 @@ class TestCreate:
 @pytest.mark.parametrize("error", [None, "invalid_input", "user_dne", "group_dne", "not_group_member"])
 async def test_edit(data, error, spawn_client, resp_is, static_time, create_user, no_permissions):
 
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authorize=True, administrator=True)
 
     client.app["settings"]["minimum_password_length"] = 8
 
@@ -255,7 +258,7 @@ async def test_remove(exists, spawn_client, resp_is, create_user):
     Test that a group is removed from the user for a valid request.
 
     """
-    client = await spawn_client(authorize=True)
+    client = await spawn_client(authorize=True, administrator=True)
 
     if exists:
         await client.db.users.insert_one(create_user("bob"))
