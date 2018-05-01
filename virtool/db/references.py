@@ -240,7 +240,7 @@ async def clone_kinds(db, source_id, source_ref_name, ref_id, user_id):
 
 
 async def create_document(db, name, organism, description, data_type, public, created_at=None, ref_id=None,
-                 user_id=None, users=None):
+                          user_id=None, users=None):
 
     if await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
