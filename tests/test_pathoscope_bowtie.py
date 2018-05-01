@@ -47,7 +47,7 @@ def kind_resource():
 @pytest.fixture
 async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resource):
     # Add index files.
-    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "kinds", "index"))
+    shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
@@ -69,7 +69,8 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resourc
     task_args = {
         "sample_id": "foobar",
         "analysis_id": "baz",
-        "index_id": "index",
+        "ref_id": "original",
+        "index_id": "index3",
         "sequence_kind_map": sequence_kind_map,
         "kind_dict": kind_dict
     }
@@ -144,8 +145,7 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
 
     assert mock_job.subtraction_path == os.path.join(
         str(tmpdir),
-        "reference",
-        "subtraction",
+        "subtractions",
         "arabidopsis_thaliana",
         "reference"
     )
@@ -197,7 +197,7 @@ async def test_map_isolates(tmpdir, mock_job):
     ]
 
     sample_path = os.path.join(str(tmpdir), "samples", "foobar")
-    index_path = os.path.join(str(tmpdir), "reference", "kinds", "index")
+    index_path = os.path.join(str(tmpdir), "references", "original", "index3")
 
     for filename in os.listdir(index_path):
         shutil.copyfile(

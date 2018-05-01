@@ -28,15 +28,26 @@ class BuildIndex(virtool.jobs.job.Job):
         self.ref_id = self.task_args["ref_id"]
         self.index_id = self.task_args["index_id"]
 
-        self.reference_path = os.path.join(self.settings.get("data_path"), "reference", "kinds", self.index_id)
+        self.reference_path = os.path.join(
+            self.settings["data_path"],
+            "references",
+            self.ref_id
+        )
+
+        self.index_path = os.path.join(self.reference_path, self.index_id)
 
     @virtool.jobs.job.stage_method
     async def mk_index_dir(self):
         """
-        Make dir for the new index at ``<data_path/reference/kinds/<index_id>``.
+        Make dir for the new index at ``<data_path/references/<index_id>``.
 
         """
-        await self.run_in_executor(os.mkdir, self.reference_path)
+        try:
+            await self.run_in_executor(os.mkdir, self.reference_path)
+        except FileExistsError:
+            pass
+
+        await self.run_in_executor(os.mkdir, self.index_path)
 
     @virtool.jobs.job.stage_method
     async def write_fasta(self):
@@ -69,7 +80,7 @@ class BuildIndex(virtool.jobs.job.Job):
             except TypeError:
                 raise
 
-        fasta_path = os.path.join(self.reference_path, "ref.fa")
+        fasta_path = os.path.join(self.index_path, "ref.fa")
 
         await self.run_in_executor(write_fasta_dict_to_file, fasta_path, fasta_dict)
 
@@ -83,8 +94,8 @@ class BuildIndex(virtool.jobs.job.Job):
         command = (
             "bowtie2-build",
             "-f",
-            os.path.join(self.reference_path, "ref.fa"),
-            os.path.join(self.reference_path, "reference")
+            os.path.join(self.index_path, "ref.fa"),
+            os.path.join(self.index_path, "reference")
         )
 
         await self.run_subprocess(command)
@@ -94,11 +105,6 @@ class BuildIndex(virtool.jobs.job.Job):
         """
         Replaces the old index with the newly generated one.
 
-        First sets the index document field *set_ready* to `True` so the web interface will no longer show the index
-        as building. Then update the *last_indexed_version* field for all patch documents. Finally, invoke
-        :meth:`.job.Job.collection_operation` to call :meth:`.Collection.cleanup_index_files`. This removes any
-        indexes not referred to by active sample analyses.
-
         """
         # Tell the client the index is ready to be used and to no longer show it as building.
         await self.db.indexes.update_one({"_id": self.index_id}, {
@@ -107,9 +113,13 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db, self.ref)
+        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db, self.ref_id)
 
-        base_path = os.path.join(self.settings.get("data_path"), "reference", "kinds")
+        base_path = os.path.join(
+            self.settings["data_path"],
+            "references",
+            self.ref_id
+        )
 
         await self.run_in_executor(remove_unused_index_files, base_path, active_indexes)
 
@@ -120,18 +130,20 @@ class BuildIndex(virtool.jobs.job.Job):
         })
 
         # Find kinds with changes.
-        aggregation_cursor = self.db.kinds.aggregate([
+        pipeline = [
             {"$project": {
+                "ref": True,
                 "version": True,
                 "last_indexed_version": True,
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]}
             }},
             {"$match": {
+                "ref.id": self.ref_id,
                 "comp": {"$ne": 0}
             }}
-        ])
+        ]
 
-        async for agg in aggregation_cursor:
+        async for agg in self.db.kinds.aggregate(pipeline):
             await self.db.kinds.update_one({"_id": agg["_id"]}, {
                 "$set": {
                     "last_indexed_version": agg["version"]
@@ -158,7 +170,7 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        await self.run_in_executor(virtool.utils.rm, self.reference_path, True)
+        await self.run_in_executor(virtool.utils.rm, self.index_path, True)
 
 
 def remove_unused_index_files(base_path, retained):

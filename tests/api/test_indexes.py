@@ -75,9 +75,7 @@ async def test_find(spawn_client, static_time):
         "found_count": 2,
         "page": 1,
         "page_count": 1,
-        "per_page": 15,
-        "unbuilt_change_count": 0,
-        "total_kind_count": 0
+        "per_page": 15
     }
 
 

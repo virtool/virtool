@@ -1,0 +1,192 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<API /> renders correctly with 0 API keys 1`] = `
+<div>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "10px",
+        "marginTop": "-7px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={1}
+    >
+      <div
+        style={
+          Object {
+            "whiteSpace": "wrap",
+          }
+        }
+      >
+        <span>
+          Manage API keys for accessing the 
+        </span>
+        <a
+          href="https://docs.virtool.ca/web-api/authentication.html"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Virtool API
+        </a>
+        <span>
+          .
+        </span>
+      </div>
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      pad={7}
+      shrink={0}
+    >
+      <LinkContainer
+        activeClassName="active"
+        className="pull-right"
+        exact={false}
+        replace={false}
+        strict={false}
+        to={
+          Object {
+            "state": Object {
+              "createAPIKey": true,
+            },
+          }
+        }
+      >
+        <Button
+          bsStyle="primary"
+          icon="key"
+          pullRight={true}
+          tipPlacement="top"
+        >
+          Create
+        </Button>
+      </LinkContainer>
+    </FlexItem>
+  </Flex>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <NoneFound
+      noun="API keys"
+    />
+  </ListGroup>
+  <Connect(CreateAPIKey) />
+</div>
+`;
+
+exports[`<API /> renders correctly with existing API keys 1`] = `
+<div>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "10px",
+        "marginTop": "-7px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={1}
+    >
+      <div
+        style={
+          Object {
+            "whiteSpace": "wrap",
+          }
+        }
+      >
+        <span>
+          Manage API keys for accessing the 
+        </span>
+        <a
+          href="https://docs.virtool.ca/web-api/authentication.html"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Virtool API
+        </a>
+        <span>
+          .
+        </span>
+      </div>
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      pad={7}
+      shrink={0}
+    >
+      <LinkContainer
+        activeClassName="active"
+        className="pull-right"
+        exact={false}
+        replace={false}
+        strict={false}
+        to={
+          Object {
+            "state": Object {
+              "createAPIKey": true,
+            },
+          }
+        }
+      >
+        <Button
+          bsStyle="primary"
+          icon="key"
+          pullRight={true}
+          tipPlacement="top"
+        >
+          Create
+        </Button>
+      </LinkContainer>
+    </FlexItem>
+  </Flex>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <Connect(APIKey)
+      apiKey={
+        Object {
+          "id": "test1",
+        }
+      }
+      key="test1"
+    />
+    <Connect(APIKey)
+      apiKey={
+        Object {
+          "id": "test2",
+        }
+      }
+      key="test2"
+    />
+  </ListGroup>
+  <Connect(CreateAPIKey) />
+</div>
+`;
+
+exports[`<API /> renders correctly without API keys 1`] = `
+<LoadingPlaceholder
+  margin="150px"
+/>
+`;

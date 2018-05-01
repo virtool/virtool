@@ -1,6 +1,7 @@
 import pymongo
 
 import virtool.db.history
+from virtool.api.utils import paginate
 
 PROJECTION = [
     "_id",
@@ -39,6 +40,30 @@ async def create_manifest(db, ref_id):
         manifest[document["_id"]] = document["version"]
 
     return manifest
+
+
+async def find(db, req_query, ref_id=None):
+    base_query = None
+
+    if ref_id:
+        base_query = {
+            "ref.id": ref_id
+        }
+
+    data = await paginate(
+        db.indexes,
+        {},
+        req_query,
+        base_query=base_query,
+        projection=PROJECTION,
+        reverse=True,
+        sort="version"
+    )
+
+    for document in data["documents"]:
+        document.update(await get_modification_stats(db, document["id"]))
+
+    return data
 
 
 async def get_active_index_ids(db, ref_id):
@@ -196,12 +221,14 @@ async def get_modification_stats(db, index_id):
     :rtype: Tuple[int, int]
 
     """
-    query = {"index.id": index_id}
+    query = {
+        "index.id": index_id
+    }
 
-    modified_kind_count = len(await db.history.distinct("kind.id", query))
-    change_count = await db.history.count(query)
-
-    return modified_kind_count, change_count
+    return {
+        "change_count": await db.history.count(query),
+        "modified_kind_count": len(await db.history.distinct("kind.id", query))
+    }
 
 
 async def get_next_version(db, ref_id):

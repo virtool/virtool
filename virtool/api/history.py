@@ -17,14 +17,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    data = await paginate(
-        db.history,
-        {},
-        req.query,
-        sort="created_at",
-        projection=virtool.db.history.LIST_PROJECTION,
-        reverse=True
-    )
+    data = await virtool.db.history.find(db, req.query)
 
     return json_response(data)
 

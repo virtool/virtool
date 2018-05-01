@@ -285,11 +285,14 @@ async def save_and_reload(req):
 
     db_name = data["db_name"]
 
+    user_id = req.app["setup"]["first_user_id"]
+
     await connection[db_name].users.insert_one({
-        "_id": req.app["setup"]["first_user_id"],
+        "_id": user_id,
         # A list of group _ids the user is associated with.
         "administrator": True,
         "groups": list(),
+        "identicon": virtool.users.calculate_identicon(user_id),
         "settings": {
             "skip_quick_analyze_dialog": True,
             "show_ids": False,
@@ -308,10 +311,10 @@ async def save_and_reload(req):
         "invalidate_sessions": False
     })
 
-    subdirs = [
+    sub_dirs = [
         "files",
-        "reference/kinds",
-        "reference/subtraction",
+        "references",
+        "subtractions",
         "samples",
         "hmm",
         "logs/jobs"
@@ -325,7 +328,7 @@ async def save_and_reload(req):
         except FileExistsError:
             pass
 
-    for subdir in subdirs:
+    for subdir in sub_dirs:
         os.makedirs(os.path.join(data_path, subdir))
 
     settings_dict = {key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]}

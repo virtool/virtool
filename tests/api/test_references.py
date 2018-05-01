@@ -28,5 +28,8 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
             "modify": True,
             "modify_kind": True,
             "remove": True
-        }]
+        }],
+        contributors=[],
+        internal_control=None,
+        latest_build=None
     )

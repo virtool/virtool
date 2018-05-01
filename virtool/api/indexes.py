@@ -18,27 +18,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    data = await paginate(
-        db.indexes,
-        {},
-        req.query,
-        sort="version",
-        projection=virtool.db.indexes.PROJECTION,
-        reverse=True
-    )
-
-    for document in data["documents"]:
-        modified_kind_count, change_count = await virtool.db.indexes.get_modification_stats(db, document["id"])
-
-        document.update({
-            "modified_kind_count": modified_kind_count,
-            "change_count": change_count
-        })
-
-    data.update({
-        "unbuilt_change_count": len(await db.history.distinct("kind.id", {"index.id": "unbuilt"})),
-        "total_kind_count": await db.kinds.count()
-    })
+    data = await virtool.db.indexes.find(db, req.query)
 
     return json_response(data)
 
@@ -116,6 +96,15 @@ async def create(req):
     }
 
     await db.indexes.insert_one(document)
+
+    await db.history.update_many({"index.id": "unbuilt", "ref.id": ref_id}, {
+        "$set": {
+            "index": {
+                "id": index_id,
+                "version": index_version
+            }
+        }
+    })
 
     # A dict of task_args for the rebuild job.
     task_args = {

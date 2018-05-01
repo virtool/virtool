@@ -7,8 +7,9 @@ describe("<RelativeTime />", () => {
     let expected;
 
     it("renders correctly", () => {
+        const pastTime = `${Moment().subtract(60, 'day').toDate().toISOString()}`;
         let props = {
-            time: "2018-02-14T17:12:00.000000Z"
+            time: pastTime
         };
         wrapper = shallow(<RelativeTime {...props} />);
 
