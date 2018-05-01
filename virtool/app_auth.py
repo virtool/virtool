@@ -7,7 +7,7 @@ import virtool.users
 import virtool.utils
 from virtool.api.utils import bad_request
 
-AUTHORIZATION_PROJECTION = ["user", "groups", "permissions"]
+AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
 
 
 class Client:
