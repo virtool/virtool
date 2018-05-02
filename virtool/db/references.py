@@ -470,9 +470,11 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
                 sequence.update({
                     "_id": sequence_id,
-                    "ref_id": ref_id,
                     "kind_id": kind_id,
-                    "isolate_id": isolate_id
+                    "isolate_id": isolate_id,
+                    "ref": {
+                        "id": ref_id
+                    }
                 })
 
                 await db.sequences.insert_one(sequence)
