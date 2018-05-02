@@ -62,7 +62,7 @@ export const changePassword = ({ oldPassword, newPassword }) => (
     Request.patch("/api/account")
         .send({
             old_password: oldPassword,
-            new_password: newPassword
+            password: newPassword
         })
 );
 

@@ -40,7 +40,7 @@ describe("<Password />", () => {
             spyCWRP.resetHistory();
         });
 
-        it("if failed request error occurs and [error.status=400], set error as invalid old password", () => {
+        it("if failed request error occurs and oldPassword is longer than minimum length, set error as invalid old password", () => {
             props = {
                 lastPasswordChange: "2018-02-14T12:00:00.000000Z",
                 settings: {
@@ -49,6 +49,7 @@ describe("<Password />", () => {
                 error: null
             };
             wrapper = shallow(<Password {...props} />);
+            wrapper.setState({ oldPassword: "12345678" });
 
             expect(spyCWRP.called).toBe(false);
             expect(wrapper.state('errorOldPassword')).toEqual("");
@@ -59,18 +60,18 @@ describe("<Password />", () => {
                     minimum_password_length: 8
                 },
                 error: {
-                        status: 400,
-                        message: "test message"
+                        status: 422,
+                        message: "Invalid input"
                     }
             };
 
             wrapper.setProps(update);
 
             expect(spyCWRP.calledOnce).toBe(true);
-            expect(wrapper.state('errorOldPassword')).toEqual("test message"); 
+            expect(wrapper.state('errorOldPassword')).toEqual("Old password is invalid"); 
         });
 
-        it("if failed request error occurs and [error.status!=400], set error as invalid old password length", () => {
+        it("if failed request error occurs and oldPassword is too short, set error as invalid old password length", () => {
             props = {
                 lastPasswordChange: "2018-02-14T12:00:00.000000Z",
                 settings: {
@@ -79,6 +80,7 @@ describe("<Password />", () => {
                 error: null
             };
             wrapper = shallow(<Password {...props} />);
+            wrapper.setState({ oldPassword: "1234" });
 
             expect(spyCWRP.called).toBe(false);
             expect(wrapper.state('errorOldPassword')).toEqual("");
@@ -166,7 +168,8 @@ describe("<Password />", () => {
 
             const mockEvent = {
                 target: {
-                    name: "oldPassword"
+                    name: "oldPassword",
+                    value: "test"
                 }
             };
             wrapper.find(InputError).at(0).simulate('change', mockEvent);

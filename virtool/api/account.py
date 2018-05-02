@@ -69,17 +69,22 @@ async def edit(req):
 
     data = v.document
 
-    try:
-        update = await virtool.db.account.compose_password_update(
-            db,
-            user_id,
-            data["old_password"],
-            data["password"]
-        )
-    except ValueError as err:
-        if "Invalid credentials" in str(err):
-            return bad_request("Invalid credentials")
-        raise
+    password = data.get("password", None)
+
+    update = dict()
+
+    if password:
+        try:
+            update = await virtool.db.account.compose_password_update(
+                db,
+                user_id,
+                data["old_password"],
+                password
+            )
+        except ValueError as err:
+            if "Invalid credentials" in str(err):
+                return bad_request("Invalid credentials")
+            raise
 
     if "email" in data:
         update["email"] = data["email"]
@@ -110,8 +115,6 @@ async def update_settings(req):
     Update account settings.
 
     """
-    print(req)
-
     db = req.app["db"]
     data = req["data"]
 
@@ -158,7 +161,8 @@ async def get_api_key(req):
 
 @routes.post("/api/account/keys", schema={
     "name": {"type": "string", "required": True, "minlength": 1},
-    "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
+    "administrator": {"type": "boolean", "default": False},
+    "permissions": {"type": "dict", "default": {}, "validator": virtool.validators.is_permission_dict}
 })
 async def create_api_key(req):
     """
@@ -172,9 +176,11 @@ async def create_api_key(req):
 
     name = data["name"]
 
+    user = await db.users.find_one(user_id, ["administrator", "permissions"])
+
     permissions = {
         **{p: False for p in virtool.users.PERMISSIONS},
-        **data.get("permissions", {})
+        **data["permissions"]
     }
 
     raw, hashed = virtool.db.account.get_api_key()
@@ -183,8 +189,9 @@ async def create_api_key(req):
         "_id": hashed,
         "id": await virtool.db.account.get_alternate_id(db, name),
         "name": name,
+        "administrator": user["administrator"] and data["administrator"],
         "groups": req["client"].groups,
-        "permissions": permissions,
+        "permissions": virtool.users.limit_permissions(permissions, user["permissions"]),
         "created_at": virtool.utils.timestamp(),
         "user": {
             "id": user_id
@@ -206,6 +213,7 @@ async def create_api_key(req):
 
 
 @routes.patch("/api/account/keys/{key_id}", schema={
+    "administrator": {"type": "boolean"},
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def update_api_key(req):
@@ -214,19 +222,41 @@ async def update_api_key(req):
 
     key_id = req.match_info.get("key_id")
 
-    user_id = req["client"].user_id
-
-    permissions = await virtool.db.utils.get_one_field(db.keys, "permissions", {"id": key_id, "user.id": user_id})
-
-    if permissions is None:
+    if not await db.keys.count({"id": key_id}):
         return not_found()
 
-    permissions.update(data["permissions"])
+    user_id = req["client"].user_id
+
+    update = dict()
+
+    user = await db.users.find_one(user_id, ["administrator", "permissions"])
+
+    administrator = data.get("administrator", None)
+
+    if administrator is not None:
+        update["administrator"] = administrator and user["administrator"]
+
+    permissions = data.get("permissions", None)
+
+    if permissions:
+        # The permissions currently assigned to the API key.
+        key_permissions = await virtool.db.utils.get_one_field(
+            db.keys,
+            "permissions",
+            {"id": key_id, "user.id": user_id}
+        )
+
+        if key_permissions is None:
+            return not_found()
+
+        key_permissions.update(permissions)
+
+        update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
+
+    print(update)
 
     document = await db.keys.find_one_and_update({"id": key_id}, {
-        "$set": {
-            "permissions": permissions
-        }
+        "$set": update
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
     return json_response(document)

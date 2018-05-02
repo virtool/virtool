@@ -1,6 +1,5 @@
 import os
 import pytest
-import ssl
 import motor.motor_asyncio
 import concurrent.futures
 from aiohttp import web
@@ -120,13 +119,3 @@ async def test_init_job_manager(mocker, loop):
     assert app["job_manager"].db is None
     assert app["job_manager"].settings is None
     assert app["job_manager"].dispatch == app["dispatcher"].dispatch
-
-
-async def test_configure_ssl(test_files_path):
-
-    cert_path = os.path.join(test_files_path, "test.crt")
-    key_path = os.path.join(test_files_path, "test.key")
-
-    ctx = virtool.app.configure_ssl(cert_path, key_path)
-
-    assert isinstance(ctx, ssl.SSLContext)
