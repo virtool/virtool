@@ -9,6 +9,7 @@ import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
 import virtool.kinds
+import virtool.processes
 import virtool.references
 import virtool.utils
 
@@ -27,6 +28,37 @@ PROJECTION = [
     "process",
     "latest_build"
 ]
+
+
+async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
+    await virtool.db.processes.update(db, dispatch, process_id, 0, step="delete_indexes")
+
+    await db.indexes.delete_many({
+        "ref.id": ref_id
+    })
+
+    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_kinds")
+
+    kind_count = db.kinds.count({"ref.id": ref_id})
+
+    progress_tracker = virtool.processes.ProgressTracker(kind_count, factor=0.5, increment=0.03)
+
+    async for document in db.kinds.find({"ref.id": ref_id}):
+        await virtool.db.kinds.remove(
+            db,
+            dispatch,
+            document["_id"],
+            user_id,
+            document=document
+        )
+
+        progress = progress_tracker.add(1)
+
+        if progress < progress_tracker.last_reported:
+            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.5 + progress))
+            progress_tracker.reported()
+
+    await virtool.db.processes.update(db, dispatch, process_id, progress=1)
 
 
 async def get_computed(db, ref_id):
