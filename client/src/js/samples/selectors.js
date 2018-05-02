@@ -13,7 +13,7 @@ export const getCanModify = createSelector(
 
         return (
             sample.all_write ||
-            includes(account.groups, "administrator") ||
+            account.administrator ||
             sample.group_write && includes(account.groups, sample.group)
         );
     }

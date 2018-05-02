@@ -157,8 +157,6 @@ export const LIST_USERS = createRequestActionType("LIST_USERS");
 export const FILTER_USERS = "FILTER_USERS";
 export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
-export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
-export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
 
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

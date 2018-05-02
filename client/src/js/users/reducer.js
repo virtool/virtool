@@ -4,9 +4,7 @@ import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    EDIT_USER,
-    ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP
+    EDIT_USER
 } from "../actionTypes";
 
 export const initialState = {
@@ -43,10 +41,6 @@ const reducer = (state = initialState, action) => {
 
         case EDIT_USER.SUCCEEDED:
             return updateUser(state, action.data);
-
-        case ADD_USER_TO_GROUP.SUCCEEDED:
-        case REMOVE_USER_FROM_GROUP.SUCCEEDED:
-            return updateUser(state, {groups: action.data, id: action.id});
 
         case CREATE_USER.REQUESTED:
             return {...state, createPending: true};

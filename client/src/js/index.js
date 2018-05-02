@@ -6,7 +6,7 @@ import App from "./App";
 import WSConnection from "./websocket";
 import createHistory from "history/createBrowserHistory";
 import { getAccount } from "./account/actions";
-import { getSettings } from "./settings/actions";
+import { getSettings } from "./administration/actions";
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
@@ -23,7 +23,7 @@ import jobsReducer from "./jobs/reducer";
 import subtractionReducer from "./subtraction/reducer";
 import referencesReducer from "./references/reducer";
 import samplesReducer from "./samples/reducer";
-import settingsReducer from "./settings/reducer";
+import settingsReducer from "./administration/reducer";
 import updatesReducer from "./updates/reducer";
 import usersReducer from "./users/reducer";
 

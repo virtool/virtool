@@ -13,7 +13,7 @@ import Samples from "./samples/components/Samples";
 import References from "./references/components/References";
 import HMM from "./hmm/components/HMM";
 import Subtraction from "./subtraction/components/Subtraction";
-import Settings from "./settings/components/Settings";
+import Administration from "./administration/components/Settings";
 import Account from "./account/components/Account";
 import UploadOverlay from "./files/components/UploadOverlay";
 import { LoadingPlaceholder } from "./base";
@@ -34,7 +34,7 @@ const Inner = (props) => {
                     <Route path="/refs" component={References} />
                     <Route path="/hmm" component={HMM} />
                     <Route path="/subtraction" component={Subtraction} />
-                    <Route path="/administration" component={Settings} />
+                    <Route path="/administration" component={Administration} />
                     <Route path="/account" component={Account} />
                 </Switch>
 

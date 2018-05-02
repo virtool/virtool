@@ -6,8 +6,8 @@ import { findJobs } from "../actions";
 import JobsList from "./List";
 import JobDetail from "./Detail";
 import JobsResources from "./Resources";
-import Resources from "../../settings/components/Jobs/Resources";
-import Tasks from "../../settings/components/Jobs/Tasks";
+import Resources from "../../administration/components/Jobs/Resources";
+import Tasks from "../../administration/components/Jobs/Tasks";
 import { LoadingPlaceholder } from "../../base";
 
 const JobsSettings = () => (
