@@ -429,7 +429,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, dispatch, process_id, 0.4, "import_documents")
 
-    used_kind_ids = set()
+    used_kind_ids = set(await db.history.distinct("kind.id"))
     used_isolate_ids = set()
     used_sequence_ids = set()
 
