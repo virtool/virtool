@@ -40,7 +40,7 @@ describe("<Password />", () => {
             spyCWRP.resetHistory();
         });
 
-        it("if failed request error occurs and oldPassword is longer than minimum length, set error as invalid old password", () => {
+        it("if failed request error occurs and [error.status=400], set error as invalid old password", () => {
             props = {
                 lastPasswordChange: "2018-02-14T12:00:00.000000Z",
                 settings: {
@@ -49,7 +49,6 @@ describe("<Password />", () => {
                 error: null
             };
             wrapper = shallow(<Password {...props} />);
-            wrapper.setState({ oldPassword: "12345678" });
 
             expect(spyCWRP.called).toBe(false);
             expect(wrapper.state('errorOldPassword')).toEqual("");
@@ -60,18 +59,18 @@ describe("<Password />", () => {
                     minimum_password_length: 8
                 },
                 error: {
-                        status: 422,
-                        message: "Invalid input"
+                        status: 400, 
+                        message: "test message" 
                     }
             };
 
             wrapper.setProps(update);
 
             expect(spyCWRP.calledOnce).toBe(true);
-            expect(wrapper.state('errorOldPassword')).toEqual("Old password is invalid"); 
+            expect(wrapper.state('errorOldPassword')).toEqual("test message"); 
         });
 
-        it("if failed request error occurs and oldPassword is too short, set error as invalid old password length", () => {
+        it("if failed request error occurs and [error.status!=400], no error is set", () => {
             props = {
                 lastPasswordChange: "2018-02-14T12:00:00.000000Z",
                 settings: {
@@ -80,7 +79,6 @@ describe("<Password />", () => {
                 error: null
             };
             wrapper = shallow(<Password {...props} />);
-            wrapper.setState({ oldPassword: "1234" });
 
             expect(spyCWRP.called).toBe(false);
             expect(wrapper.state('errorOldPassword')).toEqual("");
@@ -99,8 +97,7 @@ describe("<Password />", () => {
             wrapper.setProps(update);
 
             expect(spyCWRP.calledOnce).toBe(true);
-            expect(wrapper.state('errorOldPassword'))
-                .toEqual(`Passwords must contain at least ${update.settings.minimum_password_length} characters`); 
+            expect(wrapper.state('errorOldPassword')).toEqual(""); 
         });
 
         it("if password change successful, clear form errors", () => {
@@ -168,8 +165,7 @@ describe("<Password />", () => {
 
             const mockEvent = {
                 target: {
-                    name: "oldPassword",
-                    value: "test"
+                    name: "oldPassword"
                 }
             };
             wrapper.find(InputError).at(0).simulate('change', mockEvent);
@@ -256,6 +252,19 @@ describe("<Password />", () => {
             expect(wrapper.state('errorConfirmPassword')).toEqual(expected);
         });
 
+        it("sets state.errorOldPassword if old password is too short", () => {
+            spySubmit.resetHistory();
+            wrapper.setState({ oldPassword: "2short" });
+            mockEvent = {
+                preventDefault: jest.fn()
+            };
+            wrapper.find('form').simulate('submit', mockEvent);
+            expected = `Passwords must contain at least ${props.settings.minimum_password_length} characters`;
+
+            expect(spySubmit.calledOnce).toBe(true);
+            expect(wrapper.state('errorOldPassword')).toEqual(expected);
+        });
+
         it("if there are no errors set, call change password dispatch action", () => {
             const spyChangePassword = sinon.spy(actions, "changePassword");
 
@@ -277,7 +286,7 @@ describe("<Password />", () => {
             wrapper.instance().forceUpdate();
 
             const newState = {
-                oldPassword: "test",
+                oldPassword: "theoldtestpassword",
                 newPassword: "testtesttest",
                 confirmPassword: "testtesttest"
             };
