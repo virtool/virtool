@@ -59,10 +59,10 @@ export const updateSettings = ({ update }) => (
  * @returns {promise}
  */
 export const changePassword = ({ oldPassword, newPassword }) => (
-    Request.put("/api/account/password")
+    Request.patch("/api/account")
         .send({
             old_password: oldPassword,
-            new_password: newPassword
+            password: newPassword
         })
 );
 

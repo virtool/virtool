@@ -78,6 +78,7 @@ export default function errorsReducer (state = null, action) {
     const failedAction = checkActionFailed(action);
 
     if (failedAction) {
+
         const errorName = getErrorName(action);
 
         const errorPayload = { status: failedAction.status, message: failedAction.message };

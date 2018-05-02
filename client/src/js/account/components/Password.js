@@ -25,15 +25,9 @@ export class ChangePassword extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (!this.props.error && nextProps.error) {
-            const minLength = nextProps.settings.minimum_password_length;
-
             if (nextProps.error.status === 400) {
                 this.setState({
                     errorOldPassword: nextProps.error.message
-                });
-            } else {
-                this.setState({
-                    errorOldPassword: `Passwords must contain at least ${minLength} characters`
                 });
             }
         }
@@ -62,6 +56,11 @@ export class ChangePassword extends React.Component {
         if (!this.state.oldPassword.length) {
             hasError = true;
             this.setState({ errorOldPassword: "Please provide your old password" });
+        }
+
+        if (0 < this.state.oldPassword.length && this.state.oldPassword.length < minLength) {
+            hasError = true;
+            this.setState({ errorOldPassword: `Passwords must contain at least ${minLength} characters` });
         }
 
         if (this.state.newPassword.length < minLength) {
