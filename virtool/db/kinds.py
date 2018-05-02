@@ -187,6 +187,43 @@ async def join_and_format(db, kind_id, joined=None, issues=False):
     return joined
 
 
+async def remove(db, dispatch, kind_id, user_id):
+
+    # Join the kind.
+    joined = await join(db, kind_id)
+
+    if not joined:
+        return None
+
+    # Remove all sequences associated with the kind.
+    await db.sequences.delete_many({"kind_id": kind_id})
+
+    # Remove the kind document itself.
+    await db.kinds.delete_one({"_id": kind_id})
+
+    description = "Removed {}".format(joined["name"])
+
+    if joined["abbreviation"]:
+        description += " ({})".format(joined["abbreviation"])
+
+    await virtool.db.history.add(
+        db,
+        "remove",
+        joined,
+        None,
+        description,
+        user_id
+    )
+
+    await dispatch(
+        "kinds",
+        "remove",
+        [kind_id]
+    )
+
+    return True
+
+
 async def verify(db, kind_id, joined=None):
     """
     Verifies that the associated kind is ready to be included in an index rebuild. Returns verification errors if

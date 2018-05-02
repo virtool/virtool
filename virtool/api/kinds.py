@@ -303,37 +303,15 @@ async def remove(req):
 
     kind_id = req.match_info["kind_id"]
 
-    # Join the kind.
-    joined = await virtool.db.kinds.join(db, kind_id)
-
-    if not joined:
-        return not_found()
-
-    # Remove all sequences associated with the kind.
-    await db.sequences.delete_many({"kind_id": kind_id})
-
-    # Remove the kind document itself.
-    await db.kinds.delete_one({"_id": kind_id})
-
-    description = "Removed {}".format(joined["name"])
-
-    if joined["abbreviation"]:
-        description += " ({})".format(joined["abbreviation"])
-
-    await virtool.db.history.add(
+    removed = await virtool.db.kinds.remove(
         db,
-        "remove",
-        joined,
-        None,
-        description,
+        req.app["dispatcher"].dispatch,
+        kind_id,
         req["client"].user_id
     )
 
-    await req.app["dispatcher"].dispatch(
-        "kinds",
-        "remove",
-        [kind_id]
-    )
+    if removed is None:
+        return not_found()
 
     return web.Response(status=204)
 
