@@ -275,12 +275,10 @@ async def remove(req):
 
     process = await virtool.db.processes.register(db, dispatch, "delete_reference")
 
-    process = virtool.utils.base_processor(process)
-
     await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
         db,
         dispatch,
-        process_id,
+        process["id"],
         ref_id,
         user_id
     ))
