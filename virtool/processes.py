@@ -1,4 +1,5 @@
 STEP_COUNTS = {
+    "delete_reference": 2,
     "import_reference": 0,
     "setup_remote_reference": 0,
     "update_remote_reference": 0,
@@ -7,6 +8,7 @@ STEP_COUNTS = {
 }
 
 FIRST_STEPS = {
+    "delete_reference": "delete_indexes",
     "import_reference": "load_file",
     "setup_remote_reference": "",
     "update_remote_reference": "",
