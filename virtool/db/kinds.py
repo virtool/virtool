@@ -187,10 +187,10 @@ async def join_and_format(db, kind_id, joined=None, issues=False):
     return joined
 
 
-async def remove(db, dispatch, kind_id, user_id):
+async def remove(db, dispatch, kind_id, user_id, document=None):
 
     # Join the kind.
-    joined = await join(db, kind_id)
+    joined = await join(db, kind_id, document=document)
 
     if not joined:
         return None
