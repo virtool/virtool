@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 
@@ -6,6 +7,8 @@ import virtool.db.utils
 import virtool.references
 import virtool.users
 import virtool.utils
+
+logger = logging.getLogger(__name__)
 
 REF_QUERY = {
     "ref": {
@@ -36,12 +39,13 @@ async def organize(db, settings, server_version):
     await organize_references(db)
     await organize_groups(db)
     await organize_kinds(db)
-    await organize_paths(db, settings)
     await organize_sequences(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_users(db)
     await organize_references(db)
+
+    await organize_paths(db, settings)
 
 
 async def organize_analyses(db):
@@ -49,11 +53,15 @@ async def organize_analyses(db):
     Delete any analyses with the ``ready`` field set to ``False``.
 
     """
+    logger.info(" • analyses")
+
     await delete_unready(db.analyses)
     await add_original_ref(db.analyses)
 
 
 async def organize_files(db):
+    logger.info(" • files")
+
     await db.files.update_many({}, {
         "$set": {
             "reserved": False
@@ -62,6 +70,8 @@ async def organize_files(db):
 
 
 async def organize_groups(db):
+    logger.info(" • groups")
+
     await db.groups.delete_one({"_id": "administrator"})
 
     async for group in db.groups.find():
@@ -73,6 +83,8 @@ async def organize_groups(db):
 
 
 async def organize_history(db):
+    logger.info(" • history")
+
     document_ids = await db.history.distinct("_id", {"ref": {"$exists": False}})
 
     document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
@@ -90,10 +102,14 @@ async def organize_history(db):
 
 
 async def organize_indexes(db):
+    logger.info(" • indexes")
+
     await add_original_ref(db.indexes)
 
 
 async def organize_kinds(db):
+    logger.info(" • kinds")
+
     if "kinds" in await db.collection_names():
         return
 
@@ -104,6 +120,8 @@ async def organize_kinds(db):
 
 
 async def organize_paths(db, settings):
+    logger.info("Checking paths...")
+
     data_path = settings["data_path"]
 
     old_reference_path = os.path.join(data_path, "reference")
@@ -134,11 +152,15 @@ async def organize_paths(db, settings):
 
 
 async def organize_references(db):
+    logger.info(" • references")
+
     if await db.kinds.count() and not await db.refs.count():
         await virtool.db.references.create_original(db)
 
 
 async def organize_sequences(db):
+    logger.info(" • sequences")
+
     async for document in db.sequences.find(REF_QUERY):
         document.update({
             "_id": await virtool.db.utils.get_new_id(db.sequences),
@@ -154,6 +176,8 @@ async def organize_sequences(db):
 
 
 async def organize_status(db, server_version):
+    logger.info(" • status")
+
     await db.status.update_one({"_id": "software_update"}, {
         "$set": {
             "process": None
@@ -168,10 +192,14 @@ async def organize_status(db, server_version):
 
 
 async def organize_subtraction(db):
+    logger.info(" • subtraction")
+
     await delete_unready(db.subtraction)
 
 
 async def organize_users(db):
+    logger.info(" • users")
+
     async for document in db.users.find({"groups": "administrator"}):
         await db.users.update_one({"_id": document["_id"]}, {
             "$set": {
