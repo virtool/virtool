@@ -48,4 +48,4 @@ class ProgressTracker:
 
     @property
     def progress(self):
-        return round(self.count / self.total, 2)
+        return round(self.count / self.total * self.factor, 2)
