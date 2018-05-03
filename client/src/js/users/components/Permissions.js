@@ -21,7 +21,7 @@ const UserPermissions = ({ permissions }) => {
         acc.push(
             <Col key={permission} xs={12} md={3}>
                 <ListGroupItem bsStyle={value ? "success" : "danger"} style={{marginRight: "3px"}}>
-                    <code>{permission}</code> <Icon name={value ? "checkmark" : "close"} pullRight />
+                    <code>{permission}</code> <Icon name={value ? "check" : "close"} pullRight />
                 </ListGroupItem>
             </Col>
         );

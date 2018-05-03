@@ -2,7 +2,7 @@
 
 exports[`<Icon /> renders correctly 1`] = `
 <i
-  className="i-i-test"
+  className="fas fa-i-test"
   onClick={null}
   style={Object {}}
 />

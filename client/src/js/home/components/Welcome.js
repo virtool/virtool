@@ -28,7 +28,7 @@ class Welcome extends React.Component {
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <Icon name="vtlogo" /> Website
+                            <Icon name="globe" /> Website
                         </a>
                     </Panel.Body>
                 </Panel>

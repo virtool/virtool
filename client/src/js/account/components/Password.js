@@ -122,7 +122,7 @@ export class ChangePassword extends React.Component {
                                     Last changed <RelativeTime time={this.props.lastPasswordChange} />
                                 </Col>
                                 <Col xs={12} md={6}>
-                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
+                                    <Button type="submit" bsStyle="primary" icon="save" pullRight>
                                         Change
                                     </Button>
                                 </Col>

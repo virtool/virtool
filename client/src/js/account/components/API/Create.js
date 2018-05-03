@@ -115,7 +115,7 @@ export class CreateAPIKey extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <Button type="submit" icon="floppy" bsStyle="primary">
+                        <Button type="submit" icon="save" bsStyle="primary">
                             Save
                         </Button>
                     </Modal.Footer>

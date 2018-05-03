@@ -2,22 +2,12 @@ import React from "react";
 import { map } from "lodash-es";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
-import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
-import {
-    Alert,
-    Button,
-    Flex,
-    FlexItem,
-    Icon,
-    ListGroupItem,
-    LoadingPlaceholder,
-    NoneFound,
-    ViewHeader
-} from "../../base";
+import SubtractionItem from "./Item";
+import { Alert, Button, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { createFindURL, getFindTerm } from "../../utils";
 
 const SubtractionList = (props) => {
@@ -26,42 +16,15 @@ const SubtractionList = (props) => {
         return <LoadingPlaceholder />;
     }
 
-    let hostComponents = map(props.documents, document => {
+    let subtractionComponents = map(props.documents, document =>
+        <SubtractionItem
+            key={document.id}
+            {...document}
+        />
+    );
 
-        let icon;
-
-        if (document.ready) {
-            icon = <Icon name="checkmark" bsStyle="success" />;
-        } else {
-            icon = <ClipLoader size="14px" color="#3c8786" />;
-        }
-
-        return (
-            <LinkContainer key={document.id} className="spaced" to={`/subtraction/${document.id}`}>
-                <ListGroupItem>
-                    <Row>
-                        <Col xs={8} md={4}>
-                            <strong>{document.id}</strong>
-                        </Col>
-                        <Col xsHidden smHidden md={3} className="text-muted">
-                            {document.description}
-                        </Col>
-                        <Col xs={4} md={5}>
-                            <Flex alignItems="center" className="pull-right">
-                                {icon}
-                                <FlexItem pad>
-                                    <strong>{document.ready ? "Ready" : "Importing"}</strong>
-                                </FlexItem>
-                            </Flex>
-                        </Col>
-                    </Row>
-                </ListGroupItem>
-            </LinkContainer>
-        );
-    });
-
-    if (!hostComponents.length) {
-        hostComponents = <NoneFound noun="subtractions" noListGroup />;
+    if (!subtractionComponents.length) {
+        subtractionComponents = <NoneFound noun="subtractions" noListGroup />;
     }
 
     let alert;
@@ -98,20 +61,20 @@ const SubtractionList = (props) => {
                             type="text"
                             value={props.term}
                             onChange={props.onFind}
-                            placeholder="Host name"
+                            placeholder="Name"
                         />
                     </InputGroup>
                 </FormGroup>
 
                 {props.canModify ? (
                     <LinkContainer to={{state: {createSubtraction: true}}}>
-                        <Button bsStyle="primary" icon="new-entry" tip="Create" />
+                        <Button bsStyle="primary" icon="plus-square" tip="Create" />
                     </LinkContainer>
                 ) : null}
             </div>
 
             <div className="list-group">
-                {hostComponents}
+                {subtractionComponents}
             </div>
 
             <CreateSubtraction />

@@ -58,7 +58,7 @@ export class JobEntry extends React.Component {
             icon = (
                 <Icon
                     bsStyle="danger"
-                    name="remove"
+                    name="trash"
                     onClick={this.handleRemove}
                     pullRight
                 />

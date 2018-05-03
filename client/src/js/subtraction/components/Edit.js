@@ -71,7 +71,7 @@ class EditSubtraction extends React.Component {
                     <Button
                         type="submit"
                         bsStyle="primary"
-                        icon="floppy"
+                        icon="save"
                         onClick={this.handleSubmit}
                         pullRight
                     >

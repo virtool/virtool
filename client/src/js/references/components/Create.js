@@ -153,7 +153,7 @@ export class CreateReference extends React.Component {
 
                 <Modal.Footer>
                     <ButtonToolbar className="pull-right">
-                        <Button icon="floppy" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
+                        <Button icon="save" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
                             Save
                         </Button>
                     </ButtonToolbar>

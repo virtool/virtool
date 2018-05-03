@@ -14,7 +14,7 @@ const getInitialState = () => ({
 const SourceTypeItem = ({ onRemove, sourceType, restrictSourceTypes }) => (
     <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
         <span className="text-capitalize">{sourceType}</span>
-        {restrictSourceTypes ? <Icon name="remove" onClick={() => onRemove(sourceType)} pullRight /> : null}
+        {restrictSourceTypes ? <Icon name="trash" onClick={() => onRemove(sourceType)} pullRight /> : null}
     </ListGroupItem>
 );
 

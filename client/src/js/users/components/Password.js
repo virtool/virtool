@@ -149,7 +149,7 @@ class Password extends React.Component {
                                     </Button>
 
                                     <Button
-                                        icon="floppy"
+                                        icon="save"
                                         type="submit"
                                         bsStyle="primary"
                                     >

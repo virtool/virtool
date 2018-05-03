@@ -67,7 +67,7 @@ class SubtractionDetail extends React.Component {
 
                 removeIcon = (
                     <Icon
-                        name="remove"
+                        name="trash"
                         bsStyle="danger"
                         onClick={this.props.onShowRemove}
                         style={{paddingLeft: "5px"}}

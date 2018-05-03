@@ -42,7 +42,7 @@ const Releases = ({ onShowModal, releases }) => {
                     <Flex alignItems="center" style={{marginBottom: "15px"}}>
                         <FlexItem grow={1} shrink={0}>
                             <strong className="text-warning">
-                                <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
+                                <Icon name="arrow-alt-circle-up" /> Update{releases.length === 1 ? "" : "s"} Available
                             </strong>
                         </FlexItem>
                         <FlexItem grow={0} shrink={0} pad={15}>

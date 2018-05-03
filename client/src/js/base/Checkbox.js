@@ -10,20 +10,9 @@ import PropTypes from "prop-types";
  * @returns {*}
  * @constructor
  */
-export const CheckboxIcon = ({ checked, partial }) => {
-
-    let name;
-
-    if (checked) {
-        name = "checked";
-    } else if (partial) {
-        name = "partial";
-    } else {
-        name = "unchecked";
-    }
-
-    return <i className={`i-checkbox-${name}`} />;
-};
+export const CheckboxIcon = ({ checked }) => (
+    <i className={`far fa-lg fa-${checked ? "check-square" : "square"}`} />
+);
 
 
 /**

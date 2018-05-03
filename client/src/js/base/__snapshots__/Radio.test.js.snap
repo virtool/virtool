@@ -14,9 +14,9 @@ exports[`<Radio /> FlexItem subcomponent displays provided label 1`] = `
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-unchecked"
-    pending={false}
+    name="circle"
     pullRight={false}
   />
   <FlexItem
@@ -48,9 +48,9 @@ exports[`<Radio /> FlexItem subcomponent when no label provided, empty component
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-unchecked"
-    pending={false}
+    name="circle"
     pullRight={false}
   />
   <FlexItem
@@ -63,7 +63,7 @@ exports[`<Radio /> FlexItem subcomponent when no label provided, empty component
 </Flex>
 `;
 
-exports[`<Radio /> Icon subcomponent if checked, [name='radio-checked'] 1`] = `
+exports[`<Radio /> Icon subcomponent if checked, [name='dot-circle'] 1`] = `
 <Flex
   alignContent="stretch"
   alignItems="center"
@@ -77,9 +77,9 @@ exports[`<Radio /> Icon subcomponent if checked, [name='radio-checked'] 1`] = `
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-checked"
-    pending={false}
+    name="dot-circle"
     pullRight={false}
   />
   <FlexItem
@@ -106,8 +106,9 @@ exports[`<Radio /> Icon subcomponent is clickable 1`] = `
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-checked"
+    name="dot-circle"
     onClick={
       [MockFunction] {
         "calls": Array [
@@ -115,7 +116,6 @@ exports[`<Radio /> Icon subcomponent is clickable 1`] = `
         ],
       }
     }
-    pending={false}
     pullRight={false}
   />
   <FlexItem
@@ -128,7 +128,7 @@ exports[`<Radio /> Icon subcomponent is clickable 1`] = `
 </Flex>
 `;
 
-exports[`<Radio /> Icon subcomponent otherwise [name='radio-unchecked'] 1`] = `
+exports[`<Radio /> Icon subcomponent otherwise [name='circle'] 1`] = `
 <Flex
   alignContent="stretch"
   alignItems="center"
@@ -142,9 +142,9 @@ exports[`<Radio /> Icon subcomponent otherwise [name='radio-unchecked'] 1`] = `
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-unchecked"
-    pending={false}
+    name="circle"
     pullRight={false}
   />
   <FlexItem
@@ -171,10 +171,10 @@ exports[`<Radio /> renders a Flex component containing an Icon and a FlexItem co
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-checked"
+    name="dot-circle"
     onClick={[MockFunction]}
-    pending={false}
     pullRight={false}
   />
   <FlexItem
@@ -206,9 +206,9 @@ exports[`<Radio /> renders correctly 1`] = `
   wrap="nowrap"
 >
   <Icon
+    faStyle="fas"
     fixedWidth={false}
-    name="radio-unchecked"
-    pending={false}
+    name="circle"
     pullRight={false}
   />
   <FlexItem

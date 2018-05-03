@@ -71,7 +71,7 @@ export class InputSave extends React.Component {
     /**
      * Handle the data from a change in the input element. Updates state to reflect what is being typed by the user.
      *
-     * @param event {event} - the change event from the FormControl
+     * @param e {event} - the change event from the FormControl
      */
     handleChange = (e) => {
         if (!this.props.disabled) {
@@ -153,7 +153,7 @@ export class InputSave extends React.Component {
                         type="submit"
                         bsStyle="primary"
                         disabled={this.props.disabled}
-                        icon="floppy"
+                        icon="save"
                         ref={(button) => this.buttonNode = button}
                     />
                 </Flex>

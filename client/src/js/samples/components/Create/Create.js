@@ -205,7 +205,7 @@ class CreateSample extends React.Component {
                                             onClick={this.autofill}
                                             disabled={!this.state.selected.length}
                                         >
-                                            <Icon name="wand" />
+                                            <Icon name="magic" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>
@@ -274,7 +274,7 @@ class CreateSample extends React.Component {
 
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary">
-                            <Icon name="floppy" /> Save
+                            <Icon name="save" /> Save
                         </Button>
                     </Modal.Footer>
                 </form>

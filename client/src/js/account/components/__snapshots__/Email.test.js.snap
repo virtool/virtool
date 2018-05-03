@@ -43,7 +43,7 @@ exports[`<Email /> renders correctly 1`] = `
           >
             <Button
               bsStyle="primary"
-              icon="floppy"
+              icon="save"
               pullRight={true}
               tipPlacement="top"
               type="submit"

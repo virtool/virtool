@@ -55,8 +55,8 @@ const AccountSettings = (props) => {
                                     <div>Skip Dialog</div>
                                     <small>
                                         Allow samples to be analyzed with a single click of
-                                        &nbsp;<Icon bsStyle="success" name="bars" /> using a preconfigured algorithm.
-                                        The algorithm selection dialog is not shown.
+                                        &nbsp;<Icon bsStyle="success" name="chart-area" /> using a preconfigured
+                                        algorithm. The algorithm selection dialog is not shown.
                                     </small>
 
                                     <div style={{marginTop: "7px"}}>

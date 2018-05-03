@@ -24,7 +24,7 @@ export const Help = (props) => {
     return (
         <OverlayTrigger trigger="click" placement="top" overlay={popover} rootClose>
             <span className={className}>
-                <Icon name="question" />
+                <Icon name="question-circle" />
             </span>
         </OverlayTrigger>
     );

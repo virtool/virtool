@@ -28,14 +28,14 @@ class SampleDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <LoadingPlaceholder margin={130} />;
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         if (this.props.detail.imported === "ip") {
             return (
                 <LoadingPlaceholder
                     message="Sample is still being imported."
-                    margin={220}
+                    margin="220px"
                 />
             );
         }
@@ -64,7 +64,7 @@ class SampleDetail extends React.Component {
                 <small style={{paddingLeft: "5px"}}>
                     <Icon
                         bsStyle="danger"
-                        name="remove"
+                        name="trash"
                         tip="Remove Sample"
                         onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />

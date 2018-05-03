@@ -46,7 +46,7 @@ const ReferenceFooter = ({ id }) => (
                 View Kinds
             </Button>
             <LinkContainer to={`/refs/${id}`} key={id} className="spaced">
-                <Button pullRight>
+                <Button icon="edit" pullRight>
                     Manage
                 </Button>
             </LinkContainer>

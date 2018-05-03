@@ -26,8 +26,8 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
         {canCreate ? (
             <LinkContainer to={{state: {create: true}}}>
                 <Button
-                    tip="Create Sample"
-                    icon="new-entry"
+                    tip="Create"
+                    icon="plus-square"
                     bsStyle="primary"
                 />
             </LinkContainer>

@@ -64,14 +64,14 @@ export class APIKey extends React.Component {
                             <ButtonToolbar className="pull-right">
                                 <Button
                                     bsStyle="danger"
-                                    icon="remove"
+                                    icon="trash"
                                     onClick={() => this.props.onRemove(this.props.apiKey.id)}
                                 >
                                     Remove
                                 </Button>
                                 <Button
                                     bsStyle="primary"
-                                    icon="floppy"
+                                    icon="save"
                                     onClick={() => this.props.onUpdate(this.props.apiKey.id, this.state.permissions)}
                                     disabled={!this.state.changed}
                                 >

@@ -22,7 +22,7 @@ describe("<Help />", () => {
     it("renders a question mark icon", () => {
         wrapper = mount(<Help {...props} />);
 
-        expect(wrapper.find('i').hasClass("i-question")).toBe(true);
+        expect(wrapper.find('i').hasClass("fa-question-circle")).toBe(true);
         expect(wrapper.find('i')).toMatchSnapshot();
     });
 

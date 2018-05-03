@@ -75,7 +75,7 @@ export default class Release extends React.Component {
                             </Col>
                             <Col xs={3}>
                                 <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                                    <i className="i-github" /> GitHub
+                                    <i className="fab fa-github" /> GitHub
                                 </Button>
                             </Col>
                         </Row>

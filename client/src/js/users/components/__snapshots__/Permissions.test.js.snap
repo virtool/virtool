@@ -31,9 +31,9 @@ exports[`<UserPermissions /> renders correctly 1`] = `
           </code>
            
           <Icon
+            faStyle="fas"
             fixedWidth={false}
-            name="checkmark"
-            pending={false}
+            name="check"
             pullRight={true}
           />
         </ListGroupItem>
@@ -59,9 +59,9 @@ exports[`<UserPermissions /> renders correctly 1`] = `
           </code>
            
           <Icon
+            faStyle="fas"
             fixedWidth={false}
             name="close"
-            pending={false}
             pullRight={true}
           />
         </ListGroupItem>

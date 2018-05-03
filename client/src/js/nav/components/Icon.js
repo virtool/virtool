@@ -1,7 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Overlay } from "react-bootstrap";
-import Notifications from "./Notifications";
 import { getSoftwareUpdates } from "../../updates/actions";
 
 import { Icon } from "../../base";
@@ -43,6 +41,7 @@ class NotificationIcon extends React.Component {
         const iconStyle = availableUpdates ? "icon-pulse" : "icon";
 
         if (this.props.isAdmin) {
+
             return (
                 <div>
                     <div ref={node => this.target = node} onClick={this.state.show ? null : this.handleToggle}>
@@ -53,13 +52,10 @@ class NotificationIcon extends React.Component {
                             tipPlacement="left"
                         />
                     </div>
-
-                    <Overlay show={this.state.show} placement="bottom" target={this.target}>
-                        <Notifications onClick={this.handleToggle} />
-                    </Overlay>
                 </div>
             );
         }
+
 
         return <div />;
     }
