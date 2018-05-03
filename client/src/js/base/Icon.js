@@ -14,7 +14,8 @@ export const Icon = (props) => {
         props.onClick(e);
     }
 
-    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, `text-${props.bsStyle}`, {
+    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, {
+        [`text-${props.bsStyle}`]: props.bsStyle,
         "pull-right": props.pullRight,
         "fixed-width": props.fixedWidth,
         "hoverable pointer": props.onClick

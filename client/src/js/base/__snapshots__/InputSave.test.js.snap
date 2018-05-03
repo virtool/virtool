@@ -124,13 +124,13 @@ exports[`<InputSave /> renders correctly 1`] = `
             <div>
               <Icon
                 className="text-undefined"
+                faStyle="fas"
                 fixedWidth={false}
                 name="save"
-                pending={false}
                 pullRight={false}
               >
                 <i
-                  className="text-undefined i-save"
+                  className="text-undefined fas fa-save"
                   onClick={null}
                   style={Object {}}
                 />

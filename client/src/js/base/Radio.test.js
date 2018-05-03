@@ -45,23 +45,23 @@ describe("<Radio />", () => {
             expect(wrapper).toMatchSnapshot();
         });
 
-        it("if checked, [name='radio-checked']", () => {
+        it("if checked, [name='dot-circle']", () => {
             props = {
                 checked: true
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("radio-checked");
+            expect(wrapper.find(Icon).prop('name')).toEqual("dot-circle");
             expect(wrapper).toMatchSnapshot();
         });
 
-        it("otherwise [name='radio-unchecked']", () => {
+        it("otherwise [name='circle']", () => {
             props = {
                 checked: false
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("radio-unchecked");
+            expect(wrapper.find(Icon).prop('name')).toEqual("circle");
             expect(wrapper).toMatchSnapshot();
         })
 

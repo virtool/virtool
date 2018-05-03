@@ -56,18 +56,12 @@ describe("<Checkbox />", () => {
 
     describe("<CheckboxIcon /> subcomponent", () => {
 
-        it("renders different class names depending on prop values (checked & partial)", () => {
-            wrapper = shallow(<CheckboxIcon checked={true} partial={true} />);
-            expect(wrapper.find('i').prop('className')).toEqual("i-checkbox-checked");
+        it("renders different class names depending on checked prop", () => {
+            wrapper = shallow(<CheckboxIcon checked={true} />);
+            expect(wrapper.find('i').prop('className')).toEqual("far fa-lg fa-check-square");
 
-            wrapper = shallow(<CheckboxIcon checked={true} partial={false} />);
-            expect(wrapper.find('i').prop('className')).toEqual("i-checkbox-checked");
-
-            wrapper = shallow(<CheckboxIcon checked={false} partial={true} />);
-            expect(wrapper.find('i').prop('className')).toEqual("i-checkbox-partial");
-
-            wrapper = shallow(<CheckboxIcon checked={false} partial={false} />);
-            expect(wrapper.find('i').prop('className')).toEqual("i-checkbox-unchecked");
+            wrapper = shallow(<CheckboxIcon checked={false} />);
+            expect(wrapper.find('i').prop('className')).toEqual("far fa-lg fa-square");
         });
 
     });

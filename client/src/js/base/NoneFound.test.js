@@ -11,7 +11,7 @@ describe("<NoneFound />", () => {
         wrapper = shallow(<NoneFound noun={noun} />);
 
         expect(wrapper.find(Icon).exists()).toBe(true);
-        expect(wrapper.find(Icon).prop('name')).toEqual("info");
+        expect(wrapper.find(Icon).prop('name')).toEqual("info-circle");
         expect(wrapper).toMatchSnapshot();
     });
 

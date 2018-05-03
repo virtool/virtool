@@ -57,9 +57,9 @@ exports[`<Button /> renders optional icon 1`] = `
   <div>
     <Icon
       className="text-danger"
+      faStyle="fas"
       fixedWidth={false}
       name="folder"
-      pending={false}
       pullRight={false}
     />
   </div>

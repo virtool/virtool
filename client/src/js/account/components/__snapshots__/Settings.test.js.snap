@@ -111,9 +111,9 @@ exports[`<Settings /> renders correctly 1`] = `
                 Allow samples to be analyzed with a single click of  
                 <Icon
                   bsStyle="success"
+                  faStyle="fas"
                   fixedWidth={false}
-                  name="bars"
-                  pending={false}
+                  name="chart-area"
                   pullRight={false}
                 />
                  using a preconfigured algorithm. The algorithm selection dialog is not shown.

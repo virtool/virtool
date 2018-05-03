@@ -23,20 +23,9 @@ describe("<Icon />", () => {
         expect(wrapper.find('i').prop('style')).toEqual({ marginLeft: "3px" });
     });
 
-    it("adds spinner css class when [props.pending=true]", () => {
-        props = {
-            name: "i-test",
-            pending: true
-        };
-        wrapper = shallow(<Icon {...props} />);
-
-        expect(wrapper.find('i').hasClass("i-spinner spinning")).toBe(true);
-    });
-
     it("add bsStyle class when bsStyle prop is given and [prop.pending=false]", () => {
         props = {
             name: "i-test",
-            pending: false,
             bsStyle: "danger"
         };
         wrapper = shallow(<Icon {...props} />);
@@ -67,7 +56,7 @@ describe("<Icon />", () => {
                 tip: "test tip",
                 tipPlacement: "right"
             };
-    
+
             wrapper = shallow(<Icon {...props} />);
             expect(wrapper.find(OverlayTrigger).prop('placement')).toEqual(props.tipPlacement);
         });
