@@ -22,6 +22,7 @@ PROJECTION = [
     "organism",
     "public",
     "user",
+    "internal_control",
     "cloned_from",
     "imported_from",
     "remoted_from",
@@ -61,10 +62,10 @@ async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, dispatch, process_id, progress=1)
 
 
-async def get_computed(db, ref_id):
+async def get_computed(db, ref_id, internal_control_id):
     contributors, internal_control, latest_build = await asyncio.gather(
         get_contributors(db, ref_id),
-        get_internal_control(db, ref_id),
+        get_internal_control(db, internal_control_id),
         get_latest_build(db, ref_id)
     )
 
@@ -117,28 +118,31 @@ async def get_latest_build(db, ref_id):
     return virtool.utils.base_processor(last_build)
 
 
-async def get_internal_control(db, kind_id):
+async def get_internal_control(db, internal_control_id):
     """
     Return a minimal dict describing the ref internal control given a `kind_id`.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param kind_id: the id of the kind to create a minimal dict for
-    :type kind_id: str
+    :param internal_control_id: the id of the kind to create a minimal dict for
+    :type internal_control_id: str
 
     :return: a minimal dict describing the ref internal control
     :rtype: Union[None, dict]
 
     """
-    name = await virtool.db.utils.get_one_field(db.kinds, "name", kind_id)
+    if internal_control_id is None:
+        return None
+
+    name = await virtool.db.utils.get_one_field(db.kinds, "name", internal_control_id)
 
     if name is None:
         return None
 
     return {
-        "id": kind_id,
-        "name": await virtool.db.utils.get_one_field(db.kinds, "name", kind_id)
+        "id": internal_control_id,
+        "name": await virtool.db.utils.get_one_field(db.kinds, "name", internal_control_id)
     }
 
 

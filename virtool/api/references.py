@@ -50,7 +50,12 @@ async def get(req):
     if not document:
         return not_found()
 
-    document.update(await virtool.db.references.get_computed(db, ref_id))
+    try:
+        internal_control_id = document["internal_control"]["id"]
+    except KeyError:
+        internal_control_id = None
+
+    document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -228,7 +233,7 @@ async def create(req):
         "Location": "/api/refs/" + document["_id"]
     }
 
-    document.update(await virtool.db.references.get_computed(db, document["_id"]))
+    document.update(await virtool.db.references.get_computed(db, document["_id"], None))
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
