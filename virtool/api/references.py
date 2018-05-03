@@ -1,4 +1,5 @@
 import os
+import pymongo
 
 import aiojobs.aiohttp
 
@@ -50,7 +51,12 @@ async def get(req):
     if not document:
         return not_found()
 
-    document.update(await virtool.db.references.get_computed(db, ref_id))
+    try:
+        internal_control_id = document["internal_control"]["id"]
+    except KeyError:
+        internal_control_id = None
+
+    document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -228,9 +234,63 @@ async def create(req):
         "Location": "/api/refs/" + document["_id"]
     }
 
-    document.update(await virtool.db.references.get_computed(db, document["_id"]))
+    document.update(await virtool.db.references.get_computed(db, document["_id"], None))
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+
+
+@routes.patch("/api/refs/{ref_id}", schema={
+    "name": {
+        "type": "string"
+    },
+    "description": {
+        "type": "string"
+    },
+    "data_type": {
+        "type": "string",
+        "allowed": ["genome", "barcode"]
+    },
+    "organism": {
+        "type": "string"
+    },
+    "public": {
+        "type": "boolean"
+    },
+    "internal_control": {
+        "type": "string"
+    }
+
+})
+async def edit(req):
+    db = req.app["db"]
+    data = req["data"]
+
+    ref_id = req.match_info["ref_id"]
+
+    if not await db.refs.count({"_id": ref_id}):
+        return not_found()
+
+    update = data
+
+    internal_control_id = data.get("internal_control", None)
+
+    if internal_control_id:
+        if not await db.kinds.find_one({"_id": internal_control_id, "ref.id": ref_id}):
+            return not_found("Internal control not found")
+
+        update["internal_control"] = {
+            "id": update["internal_control"]
+        }
+
+    document = await db.refs.find_one_and_update({"_id": ref_id}, {
+        "$set": update
+    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.references.PROJECTION)
+
+    document["internal_control"] = await virtool.db.references.get_internal_control(db, internal_control_id)
+
+    document = virtool.utils.base_processor(document)
+
+    return json_response(document)
 
 
 @routes.get("/api/refs/{ref_id}/unbuilt")
