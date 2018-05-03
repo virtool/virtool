@@ -16,14 +16,14 @@ const ReferenceHeader = ({ name, createdAt, user }) => (
     </div>
 );
 
-const ReferenceMetadata = ({ dataType, latestBuild, organism, isPublic }) => (
+const ReferenceMetadata = ({ dataType, organism, isPublic }) => (
     <Table bordered>
         <tbody>
             <tr>
                 <th>Data Type</th>
                 <td className="text-capitalize">
                     { dataType }
-                    </td>
+                </td>
             </tr>
             <tr>
                 <th>Organism</th>
