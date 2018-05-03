@@ -27,38 +27,38 @@ const Sidebar = (props) => {
         case "Jobs":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/jobs" icon="menu" />
-                    <SidebarItem title="Resources" link="/jobs/resources" icon="meter" />
-                    <SidebarItem title="Settings" link="/jobs/settings" icon="cog" />
+                    <SidebarItem title="Browse" link="/jobs" icon="th-list" />
+                    <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
+                    <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" />
                 </Nav>
             );
         case "Samples":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/samples" icon="menu" />
+                    <SidebarItem title="Browse" link="/samples" icon="th-list" />
                     <SidebarItem title="Files" link="/samples/files" icon="folder-open" />
-                    <SidebarItem title="Settings" link="/samples/settings" icon="cog" />
+                    <SidebarItem title="Settings" link="/samples/settings" icon="cogs" />
                 </Nav>
             );
         case "References":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/refs" icon="menu" />
-                    <SidebarItem title="Indexes" link="/refs/indexes" icon="filing" />
-                    <SidebarItem title="Settings" link="/refs/settings" icon="cog" />
+                    <SidebarItem title="Manage" link="/refs" icon="th-list" />
+                    <SidebarItem title="Indexes" link="/refs/indexes" icon="tags" />
+                    <SidebarItem title="Settings" link="/refs/settings" icon="cogs" />
                 </Nav>
             );
         case "Subtraction":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/subtraction" icon="menu" />
+                    <SidebarItem title="Browse" link="/subtraction" icon="th-list" />
                     <SidebarItem title="Files" link="/subtraction/files" icon="folder-open" />
                 </Nav>
             );
         case "HMM":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/hmm" icon="menu" />
+                    <SidebarItem title="Browse" link="/hmm" icon="th-list" />
                 </Nav>
             );
         default:
