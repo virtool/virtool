@@ -61,7 +61,7 @@ const SubtractionList = (props) => {
                             type="text"
                             value={props.term}
                             onChange={props.onFind}
-                            placeholder="Host name"
+                            placeholder="Name"
                         />
                     </InputGroup>
                 </FormGroup>
