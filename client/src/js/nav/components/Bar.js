@@ -81,7 +81,7 @@ const Bar = (props) => {
                             <Icon name="github" />
                         </NavItem>
 
-                        <NavItem target="_blank" href="https://docs.virtool.ca" rel="noopener noreferrer">
+                        <NavItem target="_blank" href="https://www.virtool.ca/docs/manual" rel="noopener noreferrer">
                             <Icon name="book" />
                         </NavItem>
 
