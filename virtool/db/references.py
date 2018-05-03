@@ -9,6 +9,7 @@ import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
 import virtool.kinds
+import virtool.processes
 import virtool.references
 import virtool.utils
 
@@ -27,6 +28,37 @@ PROJECTION = [
     "process",
     "latest_build"
 ]
+
+
+async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
+    await virtool.db.processes.update(db, dispatch, process_id, 0, step="delete_indexes")
+
+    await db.indexes.delete_many({
+        "ref.id": ref_id
+    })
+
+    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_kinds")
+
+    kind_count = db.kinds.count({"ref.id": ref_id})
+
+    progress_tracker = virtool.processes.ProgressTracker(kind_count, factor=0.5, increment=0.03)
+
+    async for document in db.kinds.find({"ref.id": ref_id}):
+        await virtool.db.kinds.remove(
+            db,
+            dispatch,
+            document["_id"],
+            user_id,
+            document=document
+        )
+
+        progress = progress_tracker.add(1)
+
+        if progress - progress_tracker.last_reported > 0.03:
+            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.5 + progress))
+            progress_tracker.reported()
+
+    await virtool.db.processes.update(db, dispatch, process_id, progress=1)
 
 
 async def get_computed(db, ref_id):
@@ -378,7 +410,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         }
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.2, "validate_documents")
+    await virtool.db.processes.update(db, dispatch, process_id, 0.1, "validate_documents")
 
     kinds = import_data["data"]
 
@@ -395,9 +427,11 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
         await virtool.db.processes.update(db, dispatch, process_id, errors=errors)
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.4, "import_documents")
+    await virtool.db.processes.update(db, dispatch, process_id, 0.2, "import_documents")
 
-    used_kind_ids = set()
+    progress_tracker = virtool.processes.ProgressTracker(len(kinds), factor=0.4)
+
+    used_kind_ids = set(await db.history.distinct("kind.id"))
     used_isolate_ids = set()
     used_sequence_ids = set()
 
@@ -438,16 +472,25 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
                 sequence.update({
                     "_id": sequence_id,
-                    "ref_id": ref_id,
                     "kind_id": kind_id,
-                    "isolate_id": isolate_id
+                    "isolate_id": isolate_id,
+                    "ref": {
+                        "id": ref_id
+                    }
                 })
 
                 await db.sequences.insert_one(sequence)
 
         await db.kinds.insert_one(kind)
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.7, "create_history")
+        progress = progress_tracker.add(1)
+
+        if progress - progress_tracker.last_reported >= 0.05:
+            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.2 + progress))
+
+    await virtool.db.processes.update(db, dispatch, process_id, 0.6, "create_history")
+
+    progress_tracker = virtool.processes.ProgressTracker(len(kinds), factor=0.4)
 
     for kind in kinds:
         # Join the kind document into a complete kind record. This will be used for recording history.
@@ -470,5 +513,10 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             description,
             user_id
         )
+
+        progress = progress_tracker.add(1)
+
+        if progress - progress_tracker.last_reported >= 0.05:
+            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.6 + progress))
 
     await virtool.db.processes.update(db, dispatch, process_id, 1)

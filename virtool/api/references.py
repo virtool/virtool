@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import aiojobs.aiohttp
@@ -132,8 +131,26 @@ async def find_indexes(req):
         "allowed": ["genome", "barcode"],
         "default": "genome"
     },
+    "clone_from": {
+        "type": "string",
+        "excludes": [
+            "import_from",
+            "remote_from"
+        ]
+    },
     "import_from": {
-        "type": "string"
+        "type": "string",
+        "excludes": [
+            "clone_from",
+            "remote_from"
+        ]
+    },
+    "remote_from": {
+        "type": "string",
+        "excludes": [
+            "clone_from",
+            "import_from"
+        ]
     },
     "organism": {
         "type": "string",
@@ -234,3 +251,42 @@ async def get_unbuilt_changes(req):
     return json_response({
         "history": [virtool.utils.base_processor(c) for c in history]
     })
+
+
+@routes.delete("/api/refs/{ref_id}")
+async def remove(req):
+    """
+    Remove a reference and its kinds, history, and indexes.
+
+    """
+    db = req.app["db"]
+    dispatch = req.app["dispatch"]
+
+    ref_id = req.match_info["ref_id"]
+
+    user_id = req["client"].user_id
+
+    delete_result = await db.refs.delete_one({
+        "_id": ref_id
+    })
+
+    if not delete_result.deleted_count:
+        return not_found()
+
+    process = await virtool.db.processes.register(db, dispatch, "delete_reference")
+
+    await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
+        db,
+        dispatch,
+        process["id"],
+        ref_id,
+        user_id
+    ))
+
+    headers = {
+        "Content-Location": "/api/processes/" + process["id"]
+    }
+
+    return json_response(process, 202, headers)
+
+

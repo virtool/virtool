@@ -34,10 +34,3 @@ async def test_import(mocker, tmpdir, test_motor, test_dispatch, static_time):
         "foo",
         "bob"
     )
-
-    m.assert_has_calls([
-        mocker.call(test_motor, test_dispatch, "foo", 0.2, "validate_documents"),
-        mocker.call(test_motor, test_dispatch, "foo", 0.4, "import_documents"),
-        mocker.call(test_motor, test_dispatch, "foo", 0.7, "create_history"),
-        mocker.call(test_motor, test_dispatch, "foo", 1)
-    ])
