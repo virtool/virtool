@@ -9,25 +9,27 @@ const ReferenceHeader = ({ name, createdAt, user }) => (
             <strong>{name}</strong><Badge style={{ margin: "5px" }}>count</Badge>
         </Row>
         <Row>
-            Created <RelativeTime time={createdAt} /> by {user}
+            <small>
+                Created <RelativeTime time={createdAt} /> by {user}
+            </small>
         </Row>
     </div>
 );
 
-const ReferenceMetadata = ({ dataType, latestBuild, organism, isPublic }) => (
+const ReferenceMetadata = ({ dataType, organism, isPublic }) => (
     <Table bordered>
         <tbody>
             <tr>
-                <th>Unbuilt Changes</th>
-                <td>{ latestBuild || "none" }</td>
-            </tr>
-            <tr>
-                <th>Datatype</th>
-                <td>{ dataType }</td>
+                <th>Data Type</th>
+                <td className="text-capitalize">
+                    { dataType }
+                </td>
             </tr>
             <tr>
                 <th>Organism</th>
-                <td>{ organism || "unknown" }</td>
+                <td className="text-capitalize">
+                    { organism || "unknown" }
+                </td>
             </tr>
             <tr>
                 <th>Public</th>

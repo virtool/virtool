@@ -81,7 +81,7 @@ export class CreateReference extends React.Component {
         ];
 
         const dataOptions = map(acceptedDataTypes, (type) =>
-            <option key={type} value={type}>
+            <option key={type} value={type} className="text-capitalize">
                 {type || "None"}
             </option>
         );
@@ -93,7 +93,7 @@ export class CreateReference extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                     <Row>
-                        <Col md={8}>
+                        <Col xs={12}>
                             <InputError
                                 label="Name"
                                 name="name"
@@ -102,7 +102,20 @@ export class CreateReference extends React.Component {
                                 error={this.state.errorName}
                             />
                         </Col>
-                        <Col md={4}>
+                    </Row>
+                    <Row>
+                        <Col xs={12}>
+                            <InputError
+                                label="Description"
+                                type="textarea"
+                                name="description"
+                                value={this.state.description}
+                                onChange={this.handleChange}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col xs={12} md={6}>
                             <InputError
                                 label="Data Type"
                                 name="dataType"
@@ -114,18 +127,7 @@ export class CreateReference extends React.Component {
                                 {dataOptions}
                             </InputError>
                         </Col>
-                    </Row>
-                    <Row>
-                        <Col md={8}>
-                            <InputError
-                                label="Description"
-                                type="textarea"
-                                name="description"
-                                value={this.state.description}
-                                onChange={this.handleChange}
-                            />
-                        </Col>
-                        <Col md={4}>
+                        <Col xs={12} md={6}>
                             <InputError
                                 label="Organism"
                                 name="organism"
@@ -136,12 +138,13 @@ export class CreateReference extends React.Component {
                                 {dataOptions}
                             </InputError>
                         </Col>
-                        <Col md={4}>
+                    </Row>
+                    <Row>
+                        <Col xs={12}>
                             <Checkbox
                                 label="Public"
                                 checked={this.state.isPublic}
                                 onClick={this.toggleCheck}
-                                pullRight
                             />
                         </Col>
                     </Row>
