@@ -11,7 +11,7 @@ import virtool.db.utils
 import virtool.http.routes
 import virtool.kinds
 import virtool.utils
-from virtool.api.utils import compose_regex_query, json_response, no_content, not_found, paginate
+from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
