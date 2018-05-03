@@ -14,11 +14,12 @@ export function* getReference (action) {
 }
 
 export function* createReference (action) {
-    yield apiCall(referenceAPI.create, action, GET_REFERENCE);
+    yield apiCall(referenceAPI.create, action, CREATE_REFERENCE);
 }
 
-export function* watchViruses () {
+export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
+    yield takeLatest(LIST_REFERENCES.REQUESTED, listReferences);
     yield throttle(300, LOCATION_CHANGE, listReferences);
 }

@@ -10,8 +10,8 @@ const isHomeActive = (location) => {
         return "Jobs";
     } else if (startsWith(location.pathname, "/samples")) {
         return "Samples";
-    } else if (startsWith(location.pathname, "/viruses")) {
-        return "Viruses";
+    } else if (startsWith(location.pathname, "/refs")) {
+        return "References";
     } else if (startsWith(location.pathname, "/subtraction")) {
         return "Subtraction";
     } else if (startsWith(location.pathname, "/hmm")) {
@@ -40,12 +40,12 @@ const Sidebar = (props) => {
                     <SidebarItem title="Settings" link="/samples/settings" icon="cog" />
                 </Nav>
             );
-        case "Viruses":
+        case "References":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="List" link="/viruses" icon="menu" />
-                    <SidebarItem title="Indexes" link="/viruses/indexes" icon="filing" />
-                    <SidebarItem title="Settings" link="/viruses/settings" icon="cog" />
+                    <SidebarItem title="List" link="/refs" icon="menu" />
+                    <SidebarItem title="Indexes" link="/refs/indexes" icon="filing" />
+                    <SidebarItem title="Settings" link="/refs/settings" icon="cog" />
                 </Nav>
             );
         case "Subtraction":

@@ -1,21 +1,21 @@
 import React from "react";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
-import { push } from "react-router-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { ListGroup } from "react-bootstrap";
 
 import CreateReference from "./Create";
-import { ListGroupItem, Pagination, ViewHeader } from "../../base";
-import { createFindURL } from "../../utils";
+import { ViewHeader, Flex, NoneFound } from "../../base";
+import ReferenceItem from "./ReferenceItem";
+import ReferenceToolbar from "./Toolbar";
 
-const ReferenceItem = ({ id, name }) => (
-    <LinkContainer to={`/refs/${id}`} key={id} className="spaced">
-        <ListGroupItem>
-            {name}
-        </ListGroupItem>
-    </LinkContainer>
+const ReferenceContainer = ({ references }) => (
+    <Flex
+        direction="row"
+        wrap="wrap"
+        alignItems="stretch"
+        style={{minHeight: "min-content", marginRight: "-15px"}}
+    >
+        {references}
+    </Flex>
 );
 
 const ReferenceList = (props) => {
@@ -24,34 +24,29 @@ const ReferenceList = (props) => {
         return <div />;
     }
 
-    const referenceComponents = map(props.documents, document =>
-        <ReferenceItem key={document.id} {...document} />
-    );
+    let referenceComponents;
+
+    if (props.documents.length) {
+        referenceComponents = map(props.documents, document =>
+            <ReferenceItem key={document.id} {...document} />
+        );
+    } else {
+        referenceComponents = <NoneFound noun="references" noListGroup />;
+    }
 
     return (
         <div>
             <ViewHeader
                 title="References"
                 page={props.page}
-                count={2}
+                count={props.documents.length}
                 foundCount={props.found_count}
                 totalCount={props.total_count}
             />
 
-            <Link to={{state: {createReference: true}}}>
-                Create
-            </Link>
+            <ReferenceToolbar />
 
-            <ListGroup>
-                {referenceComponents}
-            </ListGroup>
-
-            <Pagination
-                documentCount={2}
-                onPage={props.onPage}
-                page={props.page}
-                pageCount={props.page_count}
-            />
+            <ReferenceContainer references={referenceComponents} />
 
             <CreateReference />
         </div>
@@ -63,13 +58,4 @@ const mapStateToProps = state => ({
     account: state.account
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onPage: (page) => {
-        const url = createFindURL({ page });
-        dispatch(push(url.pathname + url.search));
-    }
-
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ReferenceList);
+export default connect(mapStateToProps, null)(ReferenceList);

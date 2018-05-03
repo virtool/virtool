@@ -20,7 +20,7 @@ const ReferenceSettings = () => (
     </div>
 );
 
-const Viruses = (props) => {
+const References = (props) => {
     if (props.settings === null) {
         return <LoadingPlaceholder />;
     }
@@ -29,7 +29,7 @@ const Viruses = (props) => {
         <div className="container">
             <Switch>
                 <Route path="/refs" component={ReferenceList} exact />
-                <Route path="/viruses/settings" component={ReferenceSettings} />
+                <Route path="/refs/settings" component={ReferenceSettings} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </div>
@@ -40,4 +40,4 @@ const mapStateToProps = (state) => ({
     settings: state.settings.data
 });
 
-export default connect(mapStateToProps)(Viruses);
+export default connect(mapStateToProps)(References);
