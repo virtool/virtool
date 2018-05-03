@@ -184,3 +184,7 @@ export const toScientificNotation = (number) => {
 
     return Numeral(number).format("0.000");
 };
+
+export const checkAdminOrPermission = (isAdmin, permissions, permission) => (
+    isAdmin || permissions[permission]
+);

@@ -8,7 +8,7 @@ import { push } from "react-router-redux";
 import File from "./File";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
 import { Alert, Button, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
-import { createRandomString } from "../../utils";
+import { createRandomString, checkAdminOrPermission } from "../../utils";
 
 class FileManager extends React.Component {
 
@@ -50,7 +50,7 @@ class FileManager extends React.Component {
 
         let toolbar;
 
-        if (this.props.canUpload) {
+        if (checkAdminOrPermission(this.props.isAdmin, this.props.permissions, "upload_file")) {
             toolbar = (
                 <div className="toolbar">
                     <Dropzone
@@ -111,7 +111,8 @@ const mapStateToProps = (state) => {
         page,
         page_count,
         total_count,
-        canUpload: state.account.permissions.upload_file
+        permissions: state.account.permissions,
+        isAdmin: state.account.administrator
     };
 };
 

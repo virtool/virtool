@@ -8,8 +8,7 @@ import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP, EDIT_USER
+    EDIT_USER
 } from "../actionTypes";
 
 /**
@@ -58,32 +57,4 @@ export const editUser = (userId, update) => ({
     type: EDIT_USER.REQUESTED,
     userId,
     update
-});
-
-/**
- * Returns action that can trigger an API call for adding a user to a group.
- *
- * @func
- * @param userId {string} unique user id
- * @param groupId {string} unique group id
- * @returns {object}
- */
-export const addUserToGroup = (userId, groupId) => ({
-    type: ADD_USER_TO_GROUP.REQUESTED,
-    userId,
-    groupId
-});
-
-/**
- * Returns action that can trigger an API call for removing a user from a group.
- *
- * @func
- * @param userId {string} unique user id
- * @param groupId {string} unique group id
- * @returns {object}
- */
-export const removeUserFromGroup = (userId, groupId) => ({
-    type: REMOVE_USER_FROM_GROUP.REQUESTED,
-    userId,
-    groupId
 });

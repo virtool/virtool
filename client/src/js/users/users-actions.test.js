@@ -59,30 +59,4 @@ describe("Users Action Creators:", () => {
         expect(result).toEqual(expected);
     });
 
-    it("addUserToGroup: returns action to add user to a group", () => {
-        const userId = "testid";
-        const groupId = "groupid";
-        const result = addUserToGroup(userId, groupId);
-        const expected = {
-            type: "ADD_USER_TO_GROUP_REQUESTED",
-            userId,
-            groupId
-        };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("removeUserFromGroup: returns action to remove user from group", () => {
-        const userId = "testid";
-        const groupId = "groupId";
-        const result = removeUserFromGroup(userId, groupId);
-        const expected = {
-            type: "REMOVE_USER_FROM_GROUP_REQUESTED",
-            userId,
-            groupId
-        };
-
-        expect(result).toEqual(expected);
-    });
-
 });

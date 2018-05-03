@@ -45,7 +45,7 @@ class Groups extends React.Component {
     componentWillMount () {
         if (this.props.groups === null) {
             this.props.onList();
-        } else {
+        } else if (this.props.groups.length) {
             this.setState({
                 activeId: this.props.groups[0].id
             });
@@ -53,6 +53,12 @@ class Groups extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
+
+        // If there are no groups, skip update
+        if (!nextProps.groups.length) {
+            return;
+        }
+
         const state = {};
 
         // What to do if the active group was removed OR the active group id in state if onList response is incoming.
@@ -60,7 +66,7 @@ class Groups extends React.Component {
             state.activeId = nextProps.groups[0].id;
         }
 
-        if (this.props.groups !== null && nextProps.groups.length > this.props.groups.length) {
+        if (nextProps.groups.length > this.props.groups.length) {
             state.activeId = difference(nextProps.groups, this.props.groups)[0].id;
             state.createGroupId = "";
         }
@@ -124,18 +130,35 @@ class Groups extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const groupComponents = map(sortBy(this.props.groups, "id"), group =>
-            <Group key={group.id} {...group} active={this.state.activeId === group.id} onSelect={this.handleSelect} />
-        );
+        let groupComponents = [];
+
+        if (this.props.groups.length) {
+            groupComponents = map(sortBy(this.props.groups, "id"), group =>
+                <Group
+                    key={group.id}
+                    {...group}
+                    active={this.state.activeId === group.id}
+                    onSelect={this.handleSelect}
+                />
+            );
+        }
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
-        const members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+        let members = [];
 
-        let memberComponents = map(members, member =>
-            <Label key={member.id} style={{marginRight: "5px"}}>
-                {member.id}
-            </Label>
-        );
+        if (activeGroup) {
+            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+        }
+
+        let memberComponents = [];
+
+        if (members.length) {
+            memberComponents = map(members, member =>
+                <Label key={member.id} style={{marginRight: "5px"}}>
+                    {member.id}
+                </Label>
+            );
+        }
 
         if (!memberComponents.length) {
             memberComponents = (
@@ -155,21 +178,23 @@ class Groups extends React.Component {
             error = "Group names may not contain spaces";
         }
 
-        const permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
-            const readOnly = activeGroup.id === "administrator";
+        let permissionComponents = [];
 
-            result.push(
-                <ListGroupItem
-                    key={key}
-                    onClick={readOnly ? null : () => this.props.onSetPermission(activeGroup.id, key, !value)}
-                    disabled={readOnly}
-                >
-                    <code>{key}</code> <Icon name={`checkbox-${value ? "checked" : "unchecked"}`} pullRight />
-                </ListGroupItem>
-            );
+        if (activeGroup) {
+            permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
 
-            return result;
-        }, []);
+                result.push(
+                    <ListGroupItem
+                        key={key}
+                        onClick={() => this.props.onSetPermission(activeGroup.id, key, !value)}
+                    >
+                        <code>{key}</code> <Icon name={`checkbox-${value ? "checked" : "unchecked"}`} pullRight />
+                    </ListGroupItem>
+                );
+
+                return result;
+            }, []);
+        }
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -220,7 +245,6 @@ class Groups extends React.Component {
                             <Button
                                 icon="remove"
                                 bsStyle="danger"
-                                disabled={activeGroup.id === "administrator"}
                                 onClick={() => this.props.onRemove(activeGroup.id)}
                                 block
                             >

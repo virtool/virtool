@@ -21,13 +21,3 @@ export const edit = ({ userId, update }) => (
     Request.patch(`/api/users/${userId}`)
         .send(update)
 );
-
-export const addUserToGroup = ({ userId, groupId }) => (
-    Request.post(`/api/users/${userId}/groups`, {
-        group_id: groupId
-    })
-);
-
-export const removeUserFromGroup = ({ userId, groupId }) => (
-    Request.delete(`/api/users/${userId}/groups/${groupId}`)
-);

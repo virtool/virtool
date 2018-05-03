@@ -85,8 +85,8 @@ export class ManageUsers extends React.Component {
                     </Col>
                     <Col xs={12}>
                         <Switch>
-                            <Route path="/settings/users" component={UsersList} exact />
-                            <Route path="/settings/users/:activeId" component={UsersList} />
+                            <Route path="/administration/users" component={UsersList} exact />
+                            <Route path="/administration/users/:activeId" component={UsersList} />
                         </Switch>
                     </Col>
                 </Row>

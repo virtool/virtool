@@ -122,52 +122,6 @@ describe("Users Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle ADD_USER_TO_GROUP_SUCCEEDED", () => {
-        state = {
-            list: [
-                { id: "admin", groups: [] },
-                { id: "user", groups: [] }
-            ]
-        };
-        action = {
-            type: "ADD_USER_TO_GROUP_SUCCEEDED",
-            id: "user",
-            data: [ "test_group" ]
-        };
-        result = reducer(state, action);
-        expected = {
-            list: [
-                { id: "admin", groups: [] },
-                { id: "user", groups: [ "test_group" ] }
-            ]
-        };
-
-        expect(result).toEqual(expected);
-    });
-    
-    it("should handle REMOVE_USER_FROM_GROUP_SUCCEEDED", () => {
-        state = {
-            list: [
-                { id: "admin", groups: [] },
-                { id: "user", groups: [ "test_group" ] }
-            ]
-        };
-        action = {
-            type: "REMOVE_USER_FROM_GROUP_SUCCEEDED",
-            id: "user",
-            data: []
-        };
-        result = reducer(state, action);
-        expected = {
-            list: [
-                { id: "admin", groups: [] },
-                { id: "user", groups: [] }
-            ]
-        };
-
-        expect(result).toEqual(expected);
-    });
-
     it("should handle CREATE_USER_REQUESTED", () => {
         state = {};
         action = {
