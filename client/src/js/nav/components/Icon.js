@@ -1,7 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Overlay } from "react-bootstrap";
-import Notifications from "./Notifications";
 import { getSoftwareUpdates } from "../../updates/actions";
 
 import { Icon } from "../../base";
@@ -41,7 +39,7 @@ class NotificationIcon extends React.Component {
         const availableUpdates = this.props.updates ? this.props.updates.releases.length : null;
 
         const iconStyle = availableUpdates ? "icon-pulse" : "icon";
-        
+
         if (this.props.isAdmin) {
 
             return (
@@ -57,7 +55,7 @@ class NotificationIcon extends React.Component {
                 </div>
             );
         }
-          
+
 
         return <div />;
     }
