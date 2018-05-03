@@ -28,14 +28,14 @@ class SampleDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <LoadingPlaceholder margin={130} />;
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         if (this.props.detail.imported === "ip") {
             return (
                 <LoadingPlaceholder
                     message="Sample is still being imported."
-                    margin={220}
+                    margin="220px"
                 />
             );
         }
