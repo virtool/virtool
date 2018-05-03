@@ -16,8 +16,6 @@ export const Icon = (props) => {
 
     const className = CX(
         props.className,
-        props.pending ? "i-spinner spinning" : (`i-${props.name}`),
-        props.bsStyle && !props.pending ? `text-${props.bsStyle}` : false,
         {
             "pull-right": props.pullRight,
             "fixed-width": props.fixedWidth,
@@ -52,7 +50,6 @@ Icon.propTypes = {
     tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
     onClick: PropTypes.func,
-    pending: PropTypes.bool,
     bsStyle: PropTypes.string,
     className: PropTypes.string,
     pullRight: PropTypes.bool,
