@@ -64,7 +64,7 @@ class SampleDetail extends React.Component {
                 <small style={{paddingLeft: "5px"}}>
                     <Icon
                         bsStyle="danger"
-                        name="remove"
+                        name="trash"
                         tip="Remove Sample"
                         onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />

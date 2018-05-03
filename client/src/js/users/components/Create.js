@@ -144,7 +144,7 @@ export class CreateUser extends React.PureComponent {
                     <Modal.Footer>
                         <ButtonToolbar className="pull-right">
                             <Button bsStyle="primary" type="submit">
-                                <Icon name="floppy" /> Save
+                                <Icon name="save" /> Save
                             </Button>
                         </ButtonToolbar>
                     </Modal.Footer>

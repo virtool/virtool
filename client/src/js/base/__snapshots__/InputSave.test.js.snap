@@ -110,7 +110,7 @@ exports[`<InputSave /> renders correctly 1`] = `
         <Button
           bsStyle="primary"
           disabled={false}
-          icon="floppy"
+          icon="save"
           pullRight={false}
           tipPlacement="top"
           type="submit"
@@ -125,12 +125,12 @@ exports[`<InputSave /> renders correctly 1`] = `
               <Icon
                 className="text-undefined"
                 fixedWidth={false}
-                name="floppy"
+                name="save"
                 pending={false}
                 pullRight={false}
               >
                 <i
-                  className="text-undefined i-floppy"
+                  className="text-undefined i-save"
                   onClick={null}
                   style={Object {}}
                 />
@@ -189,7 +189,7 @@ exports[`<InputSave /> renders subcomponents: renders main <form> element 1`] = 
     </FlexItem>
     <Button
       bsStyle="primary"
-      icon="floppy"
+      icon="save"
       pullRight={false}
       tipPlacement="top"
       type="submit"

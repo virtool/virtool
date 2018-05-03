@@ -68,7 +68,7 @@ const SubtractionList = (props) => {
 
                 {props.canModify ? (
                     <LinkContainer to={{state: {createSubtraction: true}}}>
-                        <Button bsStyle="primary" icon="new-entry" tip="Create" />
+                        <Button bsStyle="primary" icon="plus-square" tip="Create" />
                     </LinkContainer>
                 ) : null}
             </div>

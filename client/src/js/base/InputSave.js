@@ -153,7 +153,7 @@ export class InputSave extends React.Component {
                         type="submit"
                         bsStyle="primary"
                         disabled={this.props.disabled}
-                        icon="floppy"
+                        icon="save"
                         ref={(button) => this.buttonNode = button}
                     />
                 </Flex>

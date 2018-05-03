@@ -21,7 +21,7 @@ export const AnalysisItem = (props) => {
         if (props.canModify) {
             end = (
                 <Icon
-                    name="remove"
+                    name="trash"
                     bsStyle="danger"
                     onClick={props.onRemove}
                     style={{fontSize: "17px"}}

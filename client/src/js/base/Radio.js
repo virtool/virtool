@@ -11,7 +11,7 @@ import { Flex, FlexItem, Icon } from "./index";
  */
 export const Radio = ({ checked, label, onClick }) => (
     <Flex alignItems="center" style={{marginBottom: "3px"}}>
-        <Icon onClick={onClick} name={`radio-${checked ? "checked" : "unchecked"}`} />
+        <Icon onClick={onClick} name={checked ? "dot-circle" : "circle"} />
         <FlexItem pad={5}>
             {label ? <span> {label}</span> : null}
         </FlexItem>

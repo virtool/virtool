@@ -14,7 +14,7 @@ export const Icon = (props) => {
         props.onClick(e);
     }
 
-    const className = CX(props.className, `fas fa-${props.name}`, `text-${props.bsStyle}`, {
+    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, `text-${props.bsStyle}`, {
         "pull-right": props.pullRight,
         "fixed-width": props.fixedWidth,
         "hoverable pointer": props.onClick
@@ -46,6 +46,7 @@ Icon.propTypes = {
     name: PropTypes.string.isRequired,
     tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    faStyle: PropTypes.string,
     onClick: PropTypes.func,
     bsStyle: PropTypes.string,
     className: PropTypes.string,
@@ -56,7 +57,7 @@ Icon.propTypes = {
 };
 
 Icon.defaultProps = {
-    pending: false,
+    faStyle: "fas",
     pullRight: false,
     fixedWidth: false
 };

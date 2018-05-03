@@ -78,7 +78,7 @@ const Bar = (props) => {
                             href="https://github.com/virtool/virtool"
                             rel="noopener noreferrer"
                         >
-                            <Icon name="github" />
+                            <Icon name="github" faStyle="fab" />
                         </NavItem>
 
                         <NavItem target="_blank" href="https://www.virtool.ca/docs/manual" rel="noopener noreferrer">

@@ -24,8 +24,8 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
 const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
     <Flex>
         <SampleEntryLabel icon="filing" label="Import" ready={imported || true} />&nbsp;
-        <SampleEntryLabel icon="bars" label="Pathoscope" ready={pathoscope} />&nbsp;
-        <SampleEntryLabel icon="bars" label="NuVs" ready={nuvs} />
+        <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />&nbsp;
+        <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
     </Flex>
 );
 
@@ -81,7 +81,7 @@ class SampleEntry extends React.Component {
 
                             <Col md={1} xsHidden smHidden>
                                 <Icon
-                                    name="bars"
+                                    name="chart-area"
                                     tip="Quick Analyze"
                                     tipPlacement="left"
                                     bsStyle="success"

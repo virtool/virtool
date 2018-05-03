@@ -79,7 +79,7 @@ export class Email extends React.Component {
                         <div style={{marginTop: "20px"}}>
                             <Row>
                                 <Col xs={24} md={12}>
-                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
+                                    <Button type="submit" bsStyle="primary" icon="save" pullRight>
                                         Save
                                     </Button>
                                 </Col>

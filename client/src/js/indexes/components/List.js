@@ -60,11 +60,11 @@ class IndexesList extends React.Component {
                 }
 
                 alert = (
-                    <Alert bsStyle="warning" icon="notification">
+                    <Alert bsStyle="warning">
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <Flex alignItems="center">
-                                    <Icon name="notification" />
+                                    <Icon name="exclamation-circle" />
                                     <FlexItem pad={10}>
                                         The virus reference database has changed and the index must be rebuilt before
                                         the new information will be included in future analyses.

@@ -41,8 +41,9 @@ class NotificationIcon extends React.Component {
         const availableUpdates = this.props.updates ? this.props.updates.releases.length : null;
 
         const iconStyle = availableUpdates ? "icon-pulse" : "icon";
-
+        
         if (this.props.isAdmin) {
+
             return (
                 <div>
                     <div ref={node => this.target = node} onClick={this.state.show ? null : this.handleToggle}>
@@ -53,13 +54,10 @@ class NotificationIcon extends React.Component {
                             tipPlacement="left"
                         />
                     </div>
-
-                    <Overlay show={this.state.show} placement="bottom" target={this.target}>
-                        <Notifications onClick={this.handleToggle} />
-                    </Overlay>
                 </div>
             );
         }
+          
 
         return <div />;
     }

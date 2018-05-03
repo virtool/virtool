@@ -86,7 +86,7 @@ class JobDetail extends React.Component {
 
                         <Icon
                             bsStyle="danger"
-                            name="remove"
+                            name="trash"
                             style={{fontSize: "18px"}}
                             onClick={this.handleClick}
                         />
