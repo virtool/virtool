@@ -14,14 +14,11 @@ export const Icon = (props) => {
         props.onClick(e);
     }
 
-    const className = CX(
-        props.className,
-        {
-            "pull-right": props.pullRight,
-            "fixed-width": props.fixedWidth,
-            "hoverable pointer": props.onClick
-        }
-    );
+    const className = CX(props.className, `fas fa-${props.name}`, `text-${props.bsStyle}`, {
+        "pull-right": props.pullRight,
+        "fixed-width": props.fixedWidth,
+        "hoverable pointer": props.onClick
+    });
 
     const style = {...(props.pad ? {marginLeft: "3px"} : {}), ...props.style};
 
