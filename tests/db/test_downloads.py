@@ -38,8 +38,8 @@ def test_format_fasta_filename(parts, filename):
         assert virtool.db.downloads.format_fasta_filename(*parts) == filename
 
 
-async def test_generate_sequence_fasta(test_motor, test_kind, test_sequence):
-    await test_motor.kinds.insert(test_kind)
+async def test_generate_sequence_fasta(test_motor, test_otu, test_sequence):
+    await test_motor.otus.insert(test_otu)
     await test_motor.sequences.insert_one(test_sequence)
 
     expected = (
@@ -50,8 +50,8 @@ async def test_generate_sequence_fasta(test_motor, test_kind, test_sequence):
     assert await virtool.db.downloads.generate_sequence_fasta(test_motor, test_sequence["_id"]) == expected
 
 
-async def test_generate_isolate_fasta(test_motor, test_kind, test_sequence):
-    await test_motor.kinds.insert(test_kind)
+async def test_generate_isolate_fasta(test_motor, test_otu, test_sequence):
+    await test_motor.otus.insert(test_otu)
 
     await test_motor.sequences.insert_many([
         test_sequence,
@@ -66,15 +66,15 @@ async def test_generate_isolate_fasta(test_motor, test_kind, test_sequence):
 
     assert await virtool.db.downloads.generate_isolate_fasta(
         test_motor,
-        test_kind["_id"],
-        test_kind["isolates"][0]["id"]
+        test_otu["_id"],
+        test_otu["isolates"][0]["id"]
     ) == expected
 
 
-async def test_generate_virus_fasta(test_motor, test_kind, test_sequence):
-    await test_motor.kinds.insert(
-        dict(test_kind, isolates=[
-            *test_kind["isolates"],
+async def test_generate_virus_fasta(test_motor, test_otu, test_sequence):
+    await test_motor.otus.insert(
+        dict(test_otu, isolates=[
+            *test_otu["isolates"],
             {
                 "id": "baz",
                 "source_type": "isolate",
@@ -94,4 +94,4 @@ async def test_generate_virus_fasta(test_motor, test_kind, test_sequence):
         ">Prunus virus F|Isolate A|AX12345|12\nATAGAGGAGTTA"
     )
 
-    assert await virtool.db.downloads.generate_kind_fasta(test_motor, test_kind["_id"]) == expected
+    assert await virtool.db.downloads.generate_otu_fasta(test_motor, test_otu["_id"]) == expected

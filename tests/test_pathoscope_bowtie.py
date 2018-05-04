@@ -24,28 +24,28 @@ TO_SUBTRACTION_PATH = os.path.join(TEST_FILES_PATH, "to_subtraction.json")
 
 
 @pytest.fixture("session")
-def kind_resource():
+def otu_resource():
     map_dict = dict()
-    kinds = dict()
+    otus = dict()
 
     with open(VTA_PATH, "r") as handle:
         for line in handle:
             ref_id = line.split(",")[1]
 
-            kind_id = "kind_{}".format(ref_id)
+            otu_id = "otu_{}".format(ref_id)
 
-            map_dict[ref_id] = kind_id
+            map_dict[ref_id] = otu_id
 
-            kinds[kind_id] = {
-                "kind": kind_id,
+            otus[otu_id] = {
+                "otu": otu_id,
                 "version": 2
             }
 
-    return map_dict, kinds
+    return map_dict, otus
 
 
 @pytest.fixture
-async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resource):
+async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, otu_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
@@ -64,15 +64,15 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, kind_resourc
         "data_path": str(tmpdir)
     }
 
-    sequence_kind_map, kind_dict = kind_resource
+    sequence_otu_map, otu_dict = otu_resource
 
     task_args = {
         "sample_id": "foobar",
         "analysis_id": "baz",
         "ref_id": "original",
         "index_id": "index3",
-        "sequence_kind_map": sequence_kind_map,
-        "kind_dict": kind_dict
+        "sequence_otu_map": sequence_otu_map,
+        "otu_dict": otu_dict
     }
 
     job = virtool.jobs.analysis.PathoscopeBowtie(
@@ -159,16 +159,16 @@ async def test_mk_analysis_dir(mock_job):
     assert os.path.isdir(mock_job.analysis_path)
 
 
-async def test_map_kinds(tmpdir, mock_job):
+async def test_map_otus(tmpdir, mock_job):
     os.makedirs(mock_job.analysis_path)
 
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
-    await mock_job.map_kinds()
+    await mock_job.map_otus()
 
-    assert mock_job.intermediate["to_kinds"] == {
+    assert mock_job.intermediate["to_otus"] == {
         "NC_013110",
         "NC_017938",
         "NC_006057",
@@ -254,7 +254,7 @@ async def test_pathoscope(mock_job):
     with open(DIAGNOSIS_PATH, "r") as handle:
         report_dict = json.load(handle)
 
-    mock_job.sequence_kind_map = {
+    mock_job.sequence_otu_map = {
         "NC_016509": "foobar",
         "NC_001948": "foobar",
         "13TF149_Reovirus_TF1_Seg06": "reo",
@@ -282,7 +282,7 @@ async def test_pathoscope(mock_job):
         "NC_007448": "foobar"
     }
 
-    mock_job.kind_dict = {
+    mock_job.otu_dict = {
         "foobar": {
             "name": "Foobar",
             "version": 10

@@ -2,11 +2,11 @@ import os
 
 import virtool.db.history
 import virtool.db.indexes
-import virtool.db.kinds
+import virtool.db.otus
 import virtool.errors
 import virtool.history
 import virtool.jobs.job
-import virtool.kinds
+import virtool.otus
 import virtool.utils
 
 
@@ -60,15 +60,15 @@ class BuildIndex(virtool.jobs.job.Job):
         fasta_dict = dict()
 
         for patch_id, patch_version in self.task_args["manifest"].items():
-            document = await self.db.kinds.find_one(patch_id)
+            document = await self.db.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = await virtool.db.kinds.join(self.db, patch_id)
+                joined = await virtool.db.otus.join(self.db, patch_id)
             else:
                 _, joined, _ = await virtool.db.history.patch_to_version(self.db, patch_id, patch_version)
 
             # Extract the list of sequences from the joined patched patch.
-            sequences = virtool.kinds.extract_default_sequences(joined)
+            sequences = virtool.otus.extract_default_sequences(joined)
 
             defaults = list()
 
@@ -129,7 +129,7 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        # Find kinds with changes.
+        # Find otus with changes.
         pipeline = [
             {"$project": {
                 "ref": True,
@@ -143,8 +143,8 @@ class BuildIndex(virtool.jobs.job.Job):
             }}
         ]
 
-        async for agg in self.db.kinds.aggregate(pipeline):
-            await self.db.kinds.update_one({"_id": agg["_id"]}, {
+        async for agg in self.db.otus.aggregate(pipeline):
+            await self.db.otus.update_one({"_id": agg["_id"]}, {
                 "$set": {
                     "last_indexed_version": agg["version"]
                 }
@@ -160,7 +160,7 @@ class BuildIndex(virtool.jobs.job.Job):
         # Remove the index document from the database.
         await self.db.indexes.delete_one({"_id": self.index_id})
 
-        # Set all the kinds included in the build to "unbuilt" again.
+        # Set all the otus included in the build to "unbuilt" again.
         await self.db.history.update_many({"index.id": self.index_id}, {
             "$set": {
                 "index": {

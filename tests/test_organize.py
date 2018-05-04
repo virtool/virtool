@@ -162,11 +162,11 @@ async def test_organize_indexes(mocker):
     m_add_original_ref.assert_called_with(m_db.indexes)
 
 
-@pytest.mark.parametrize("has_kind", [True, False])
+@pytest.mark.parametrize("has_otu", [True, False])
 @pytest.mark.parametrize("has_references", [True, False])
-async def test_organize_references(has_references, has_kind, mocker, test_motor):
-    if has_kind:
-        await test_motor.kinds.insert_one({
+async def test_organize_references(has_references, has_otu, mocker, test_motor):
+    if has_otu:
+        await test_motor.otus.insert_one({
             "_id": "foobar"
         })
 
@@ -181,7 +181,7 @@ async def test_organize_references(has_references, has_kind, mocker, test_motor)
 
     document = await test_motor.refs.find_one()
 
-    if has_kind and not has_references:
+    if has_otu and not has_references:
         assert document is None
         m.assert_called_with(test_motor,)
 
@@ -229,28 +229,35 @@ async def test_organize_sequences(test_motor, test_random_alphanumeric):
     ]
 
 
-async def test_organize_kinds(test_motor):
-    await test_motor.viruses.insert_many([
-        {
-            "_id": 1
-        },
-        {
-            "_id": 2
-        }
-    ])
+@pytest.mark.parametrize("collection_name", [None, "viruses", "kinds"])
+async def test_organize_otus(collection_name, test_motor):
+    if collection_name is not None:
+        await test_motor[collection_name].insert_many([
+            {
+                "_id": 1
+            },
+            {
+                "_id": 2
+            }
+        ])
 
-    await virtool.organize.organize_kinds(test_motor)
+    await virtool.organize.organize_otus(test_motor)
 
-    assert await test_motor.kinds.find().to_list(None) == [
-        {
-            "_id": 1,
-            "ref": ORIGINAL_REF
-        },
-        {
-            "_id": 2,
-            "ref": ORIGINAL_REF
-        }
-    ]
+    results = await test_motor.otus.find().to_list(None)
+
+    if collection_name:
+        assert results == [
+            {
+                "_id": 1,
+                "ref": ORIGINAL_REF
+            },
+            {
+                "_id": 2,
+                "ref": ORIGINAL_REF
+            }
+        ]
+    else:
+        assert results == []
 
     assert "viruses" not in await test_motor.collection_names()
 

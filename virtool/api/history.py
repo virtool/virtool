@@ -2,7 +2,7 @@ import virtool.db.history
 import virtool.errors
 import virtool.history
 import virtool.http.routes
-import virtool.kinds
+import virtool.otus
 import virtool.utils
 from virtool.api.utils import conflict, json_response, no_content, not_found, paginate
 

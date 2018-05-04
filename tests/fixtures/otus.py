@@ -10,7 +10,7 @@ TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
 @pytest.fixture("session")
 def import_data_file():
-    with gzip.open(os.path.join(TEST_FILES_PATH, "kinds.json.gz"), "rt") as f:
+    with gzip.open(os.path.join(TEST_FILES_PATH, "otus.json.gz"), "rt") as f:
         data = json.load(f)
 
     return data
@@ -22,7 +22,7 @@ def import_data(import_data_file):
 
 
 @pytest.fixture
-def test_kind():
+def test_otu():
     return {
         "version": 0,
         "abbreviation": "PVF",
@@ -63,7 +63,7 @@ def test_sequence():
         "_id": "KX269872",
         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
         "host": "sweet cherry",
-        "kind_id": "6116cba1",
+        "otu_id": "6116cba1",
         "isolate_id": "cab8b360",
         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
         "segment": None
@@ -71,7 +71,7 @@ def test_sequence():
 
 
 @pytest.fixture
-def test_merged_kind():
+def test_merged_otu():
     return {
         "version": 0,
         "abbreviation": "PVF",
@@ -83,7 +83,7 @@ def test_merged_kind():
                 "sequences": [
                     {
                         "_id": "KX269872",
-                        "kind_id": "6116cba1",
+                        "otu_id": "6116cba1",
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
@@ -125,32 +125,32 @@ def import_json(import_json_from_file):
 
 
 @pytest.fixture
-def test_kind_list(test_merged_kind):
-    first_kind = test_merged_kind
-    second_kind, third_kind, fourth_kind = (copy.deepcopy(test_merged_kind) for _ in range(3))
+def test_otu_list(test_merged_otu):
+    first_otu = test_merged_otu
+    second_otu, third_otu, fourth_otu = (copy.deepcopy(test_merged_otu) for _ in range(3))
 
-    second_kind.update({
+    second_otu.update({
         "_id": "067jz0t3",
         "abbreviation": "TST",
         "name": "Test Virus"
     })
 
-    third_kind.update({
+    third_otu.update({
         "_id": "067jz213",
         "abbreviation": "EXV",
         "name": "Example Virus"
     })
 
-    fourth_kind.update({
+    fourth_otu.update({
         "_id": "067jz1kj",
         "abbreviation": "FKV",
         "name": "Fake Virus"
     })
 
-    for prefix, kind in [("second", second_kind), ("third", third_kind), ("fourth", fourth_kind)]:
-        for i, isolate in enumerate(kind["isolates"]):
+    for prefix, otu in [("second", second_otu), ("third", third_otu), ("fourth", fourth_otu)]:
+        for i, isolate in enumerate(otu["isolates"]):
             isolate["id"] = "{}_{}".format(prefix, i)
             isolate["sequences"][0]["isolate_id"] = isolate["id"]
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
-    return [first_kind, second_kind, third_kind, fourth_kind]
+    return [first_otu, second_otu, third_otu, fourth_otu]

@@ -132,16 +132,16 @@ async def init_check_db(app):
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")
-    await db.history.create_index("kind.id")
+    await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
     await db.indexes.create_index("version", unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
     await db.samples.create_index([("created_at", pymongo.DESCENDING)])
-    await db.sequences.create_index("kind_id")
-    await db.kinds.create_index("name")
-    await db.kinds.create_index("abbreviation")
+    await db.sequences.create_index("otu_id")
+    await db.otus.create_index("name")
+    await db.otus.create_index("abbreviation")
 
 
 async def init_client_path(app):

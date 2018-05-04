@@ -5,12 +5,12 @@ import virtool.errors
 import virtool.jobs.build_index
 
 
-async def test_create_manifest(test_motor, test_kind):
-    await test_motor.kinds.insert_many([
-        test_kind,
-        dict(test_kind, _id="foo", version=5),
-        dict(test_kind, _id="baz", version=3, ref={"id": "123"}),
-        dict(test_kind, _id="bar", version=11)
+async def test_create_manifest(test_motor, test_otu):
+    await test_motor.otus.insert_many([
+        test_otu,
+        dict(test_otu, _id="foo", version=5),
+        dict(test_otu, _id="baz", version=3, ref={"id": "123"}),
+        dict(test_otu, _id="bar", version=11)
     ])
 
     assert await virtool.db.indexes.create_manifest(test_motor, "hxn167") == {

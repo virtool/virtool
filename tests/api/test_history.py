@@ -1,8 +1,8 @@
 import pytest
 from operator import itemgetter
 
-import virtool.db.kinds
-import virtool.kinds
+import virtool.db.otus
+import virtool.otus
 import virtool.history
 
 
@@ -42,7 +42,7 @@ async def test_find(spawn_client, test_changes):
                 "user": {
                     "id": "test"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -63,7 +63,7 @@ async def test_find(spawn_client, test_changes):
                 "user": {
                     "id": "test"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -84,7 +84,7 @@ async def test_find(spawn_client, test_changes):
                 "user": {
                     "id": "test"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -134,7 +134,7 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
             "user": {
                 "id": "test"
             },
-            "kind": {
+            "otu": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 1
@@ -166,7 +166,7 @@ async def test_remove(not_found, remove, create_mock_history, spawn_client, resp
     else:
         assert resp.status == 204
 
-        assert await virtool.db.kinds.join(client.db, "6116cba1") == {
+        assert await virtool.db.otus.join(client.db, "6116cba1") == {
             "_id": "6116cba1",
             "abbreviation": "TST",
             "imported": True,
@@ -183,7 +183,7 @@ async def test_remove(not_found, remove, create_mock_history, spawn_client, resp
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "kind_id": "6116cba1",
+                            "otu_id": "6116cba1",
                             "segment": None
                          }
                     ],

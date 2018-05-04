@@ -5,7 +5,7 @@ import sys
 
 class TestUpload:
 
-    @pytest.mark.parametrize("file_type", ["kinds", "reads", "hmm", "subtraction"])
+    @pytest.mark.parametrize("file_type", ["otus", "reads", "hmm", "subtraction"])
     async def test(self, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 

@@ -3,13 +3,13 @@ import virtool.utils
 import virtool.history
 
 
-def test_calculate_diff(test_kind_edit):
+def test_calculate_diff(test_otu_edit):
     """
     Test that a diff is correctly calculated. Should work since the tested function is a very light wrapper for the
     dict differ function.
 
     """
-    old, new = test_kind_edit
+    old, new = test_otu_edit
 
     diff = virtool.history.calculate_diff(old, new)
 
