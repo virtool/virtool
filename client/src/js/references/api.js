@@ -19,3 +19,7 @@ export const create = ({ name, description, dataType, organism, isPublic }) => (
             public: isPublic
         })
 );
+
+export const remove = ({ refId }) => (
+    Request.delete(`/api/refs/${refId}`)
+);

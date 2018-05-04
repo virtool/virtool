@@ -1,9 +1,14 @@
-import { LOCATION_CHANGE } from "react-router-redux";
-import { takeLatest, throttle, put } from "redux-saga/effects";
+import { LOCATION_CHANGE, push } from "react-router-redux";
+import { takeLatest, throttle, put, takeEvery } from "redux-saga/effects";
 
 import * as referenceAPI from "./api";
-import { apiCall, apiFind } from "../sagaUtils";
-import { CREATE_REFERENCE, GET_REFERENCE, LIST_REFERENCES } from "../actionTypes";
+import { apiCall, apiFind, setPending } from "../sagaUtils";
+import {
+    CREATE_REFERENCE,
+    GET_REFERENCE,
+    LIST_REFERENCES,
+    REMOVE_REFERENCE
+} from "../actionTypes";
 
 export function* listReferences (action) {
     yield apiFind("/refs", referenceAPI.list, action, LIST_REFERENCES);
@@ -18,8 +23,14 @@ export function* createReference (action) {
     yield put({type: LIST_REFERENCES.REQUESTED});
 }
 
+export function* removeReference (action) {
+    yield setPending(apiCall(referenceAPI.remove, action, REMOVE_REFERENCE));
+    yield put(push("/refs"));
+}
+
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
     yield throttle(300, LOCATION_CHANGE, listReferences);
+    yield takeEvery(REMOVE_REFERENCE.REQUESTED, removeReference);
 }
