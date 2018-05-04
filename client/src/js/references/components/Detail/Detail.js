@@ -1,39 +1,18 @@
 import React from "react";
-import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
-import { map, sortBy } from "lodash-es";
-import { Table, Row, Badge, ListGroup } from "react-bootstrap";
-
-import RemoveReference from "./RemoveReference";
+import { Switch, Route, Redirect } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
+import { Nav, NavItem } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon, Flex, FlexItem, RelativeTime, ListGroupItem } from "../../../base";
+import { LoadingPlaceholder } from "../../../base";
 
-const ContributorTable = ({ contributors }) => {
+import ReferenceManage from "./Manage";
+import ReferenceOTU from "./OTU";
+import ReferenceIndex from "./Index";
 
-    const sorted = sortBy(contributors, ["id", "count"]);
-
-    let components;
-    
-    if (contributors.length) {
-        components = map(sorted, entry =>
-            <ListGroupItem key={entry.id}>
-                {entry.id} <Badge>{entry.count}</Badge>
-            </ListGroupItem>
-        );
-    } else {
-        components = (
-            <ListGroupItem>
-                None <Badge>0</Badge>
-            </ListGroupItem>
-        );
-    }
-
-    return (
-        <ListGroup style={{maxHeight: 210, overflowY: "auto"}}>
-            {components}
-        </ListGroup>
-    );
-};
+const ReferenceSettings = () => (
+    <div>Settings</div>
+);
 
 class ReferenceDetail extends React.Component {
 
@@ -47,99 +26,35 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const {
-            contributors,
-            created_at,
-            data_type,
-            description,
-            id,
-            internal_control,
-            latest_build,
-            name,
-            organism,
-            user
-        } = this.props.detail;
-
-        const editIcon = (
-            <span>
-                <small key="edit-icon" style={{paddingLeft: "5px"}}>
-                    <Icon
-                        bsStyle="warning"
-                        name="pencil"
-
-                        onClick={this.props.showEdit}
-                    />
-                </small>
-            </span>
-        );
+        const { name, id } = this.props.detail;
 
         return (
             <div>
-                <Helmet>
-                    <title>{name}</title>
-                </Helmet>
-
-                <h3 style={{marginBottom: "20px"}}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <strong>
-                                {name}
-                            </strong>
-                        </FlexItem>
-
-                        {editIcon}
-                    </Flex>
+                <h3 className="view-header">
+                    <strong>{name}</strong>
                 </h3>
+                <Nav bsStyle="tabs">
+                    <LinkContainer to={`/refs/${id}/manage`}>
+                        <NavItem>Manage</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/refs/${id}/otu`}>
+                        <NavItem>OTU</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/refs/${id}/indexes`}>
+                        <NavItem>Indexes</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/refs/${id}/settings`}>
+                        <NavItem>Settings</NavItem>
+                    </LinkContainer>
+                </Nav>
 
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className="col-xs-4">Name</th>
-                            <td className="col-xs-8">{name}</td>
-                        </tr>
-                        <tr>
-                            <th>ID</th>
-                            <td>{id}</td>
-                        </tr>
-                        <tr>
-                            <th>Description</th>
-                            <td>{description}</td>
-                        </tr>
-                        <tr>
-                            <th>Data Type</th>
-                            <td>{data_type}</td>
-                        </tr>
-                        <tr>
-                            <th>Organism</th>
-                            <td>{organism}</td>
-                        </tr>
-                        <tr>
-                            <th>Created</th>
-                            <td><RelativeTime time={created_at} /> by {user.id}</td>
-                        </tr>
-                        <tr>
-                            <th>Latest Build</th>
-                            <td>{latest_build}</td>
-                        </tr>
-                        <tr>
-                            <th>Internal Control</th>
-                            <td>{internal_control}</td>
-                        </tr>
-                        <tr>
-                            <th>Public</th>
-                            <td>{`${this.props.detail.public}`}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-
-                <Row>
-                    <h5>
-                        <strong>Contributors</strong>
-                    </h5>
-                    <ContributorTable contributors={contributors} />
-                </Row>
-
-                <RemoveReference id={id} />
+                <Switch>
+                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                    <Route path="/refs/:refId/otu" component={ReferenceOTU} />
+                    <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
+                    <Route path="/refs/:refId/settings" component={ReferenceSettings} />
+                </Switch>
             </div>
         );
     };
@@ -157,4 +72,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ReferenceDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceDetail)
