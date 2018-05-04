@@ -1,0 +1,170 @@
+import React from "react";
+import { capitalize } from "lodash-es";
+import { connect } from "react-redux";
+import { Label, Panel, Table } from "react-bootstrap";
+
+import EditIsolate from "./EditIsolate";
+import IsolateSequences from "./Sequences";
+import RemoveIsolate from "./RemoveIsolate";
+import { Icon, IDRow } from "../../../base";
+import { followDownload } from "../../../utils";
+import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
+
+const IsolateTable = ({ id, isDefault, isolateName, sourceName, sourceType }) => (
+    <Table bordered>
+        <tbody>
+            <tr>
+                <th className="col-md-3">Name</th>
+                <td className="col-md-9">{isolateName}</td>
+            </tr>
+            <tr>
+                <th>Source Type</th>
+                <td>{capitalize(sourceType)}</td>
+            </tr>
+            <tr>
+                <th>Source Name</th>
+                <td>{sourceName}</td>
+            </tr>
+            <tr>
+                <th>Default</th>
+                <td>
+                    <Label bsStyle={isDefault ? "success" : "default"}>
+                        {isDefault ? "Yes" : "No"}
+                    </Label>
+                </td>
+            </tr>
+            <IDRow id={id} />
+        </tbody>
+    </Table>
+);
+
+export class IsolateDetail extends React.Component {
+
+    handleDownload = () => {
+        followDownload(`/download/viruses/${this.props.virusId}/isolates/${this.props.activeIsolate.id}`);
+    };
+
+    handleSetDefaultIsolate = () => {
+        this.props.setIsolateAsDefault(this.props.virusId, this.props.activeIsolate.id);
+    };
+
+    render () {
+        const isolate = this.props.activeIsolate;
+
+        const defaultIsolateLabel = (
+            <Label bsStyle="info" style={{visibility: this.props.default ? "visible" : "hidden"}}>
+                <Icon name="star" /> Default Isolate
+            </Label>
+        );
+
+        let modifyIcons;
+
+        if (this.props.canModify) {
+            modifyIcons = (
+                <span>
+                    <Icon
+                        name="pencil"
+                        bsStyle="warning"
+                        tip="Edit Name"
+                        onClick={this.props.showEditIsolate}
+                        style={{paddingLeft: "7px"}}
+                    />
+
+                    {isolate.default ? null : (
+                        <Icon
+                            name="star"
+                            bsStyle="success"
+                            tip="Set as Default"
+                            onClick={this.handleSetDefaultIsolate}
+                            style={{paddingLeft: "3px"}}
+                        />
+                    )}
+
+                    <Icon
+                        name="remove"
+                        bsStyle="danger"
+                        tip="Remove Isolate"
+                        onClick={this.props.showRemoveIsolate}
+                        style={{paddingLeft: "3px"}}
+                    />
+                </span>
+            );
+        }
+
+        return (
+            <div>
+                <EditIsolate
+                    virusId={this.props.virusId}
+                    isolateId={isolate.id}
+                    sourceType={isolate.source_type}
+                    sourceName={isolate.source_name}
+                />
+
+                <RemoveIsolate
+                    virusId={this.props.virusId}
+                    isolateId={isolate.id}
+                    isolateName={isolate.name}
+                    nextIsolateId={this.props.isolates.length ? this.props.isolates[0].id : null}
+                />
+
+                <Panel>
+                    <Panel.Body>
+                        <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                            <strong style={{flex: "1 0 auto"}}>{isolate.name}</strong>
+
+                            {defaultIsolateLabel}
+                            {modifyIcons}
+
+                            <Icon
+                                name="download"
+                                tip="Download FASTA"
+                                style={{paddingLeft: "3px"}}
+                                onClick={this.handleDownload}
+                            />
+                        </h5>
+
+                        <IsolateTable
+                            id={isolate.id}
+                            isDefault={isolate.default}
+                            isolateName={isolate.name}
+                            sourceName={isolate.sourceName}
+                            sourceType={isolate.sourceType}
+                        />
+
+                        <IsolateSequences />
+                    </Panel.Body>
+                </Panel>
+            </div>
+        );
+    }
+}
+
+const mapStateToProps = state => ({
+    isolates: state.viruses.detail.isolates,
+    virusId: state.viruses.detail.id,
+    activeIsolate: state.viruses.activeIsolate,
+    activeIsolateId: state.viruses.activeIsolateId,
+    activeSequenceId: state.viruses.activeSequenceId,
+    editing: state.viruses.editingIsolate,
+    allowedSourceTypes: state.settings.data.allowed_source_types,
+    restrictSourceTypes: state.settings.data.restrict_source_types,
+    canModify: state.account.permissions.modify_virus
+});
+
+const mapDispatchToProps = (dispatch) => ({
+
+    setIsolateAsDefault: (virusId, isolateId) => {
+        dispatch(setIsolateAsDefault(virusId, isolateId));
+    },
+
+    showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
+        dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
+    },
+
+    showRemoveIsolate: () => {
+        dispatch(showRemoveIsolate());
+    }
+
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateDetail);
