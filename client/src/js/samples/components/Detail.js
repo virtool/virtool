@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import { includes } from "lodash-es";
 import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -74,6 +75,9 @@ class SampleDetail extends React.Component {
 
         return (
             <div>
+                <Helmet>
+                    <title>{`${detail.name} - Samples`}</title>
+                </Helmet>
                 <h3 style={{marginBottom: "20px"}}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>

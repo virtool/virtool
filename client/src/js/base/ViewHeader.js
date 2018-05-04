@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import Helmet from "react-helmet";
 import CX from "classnames";
 import { Badge } from "react-bootstrap";
 import { Flex, FlexItem } from "./index";
@@ -45,6 +46,9 @@ export const PageHint = ({ page, count, totalCount, perPage = 15, pullRight = tr
  */
 export const ViewHeader = ({ title, page, count, foundCount, totalCount }) => (
     <h3 className="view-header">
+        <Helmet>
+            <title>{title}</title>
+        </Helmet>
         <Flex alignItems="flex-end">
             <FlexItem grow={0} shrink={0}>
                 <strong>{title}</strong> <Badge>{totalCount}</Badge>

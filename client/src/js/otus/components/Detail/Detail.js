@@ -67,7 +67,7 @@ class VirusDetail extends React.Component {
         return (
             <div>
                 <Helmet>
-                    <title>{name}</title>
+                    <title>{`${name} - OTU`}</title>
                 </Helmet>
 
                 <h3 style={{marginBottom: "20px"}}>

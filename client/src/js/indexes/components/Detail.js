@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -25,6 +26,9 @@ class IndexDetail extends React.Component {
 
         return (
             <div>
+                <Helmet>
+                    <title>{`Virus Index ${indexVersion} - Indexes`}</title>
+                </Helmet>
                 <h3 className="view-header">
                     <strong>Virus Index {indexVersion}</strong>
                 </h3>
