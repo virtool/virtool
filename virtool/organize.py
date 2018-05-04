@@ -38,7 +38,7 @@ async def organize(db, settings, server_version):
     await organize_indexes(db)
     await organize_references(db)
     await organize_groups(db)
-    await organize_kinds(db)
+    await organize_otus(db)
     await organize_sequences(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
@@ -107,16 +107,19 @@ async def organize_indexes(db):
     await add_original_ref(db.indexes)
 
 
-async def organize_kinds(db):
-    logger.info(" • kinds")
+async def organize_otus(db):
+    logger.info(" • otus")
 
-    if "kinds" in await db.collection_names():
+    if "otus" in await db.collection_names():
         return
 
     if "viruses" in await db.collection_names():
-        await db.viruses.rename("kinds")
+        await db.viruses.rename("otus")
 
-    await add_original_ref(db.kinds)
+    if "kinds" in await db.collection_names():
+        await db.kinds.rename("otus")
+
+    await add_original_ref(db.otus)
 
 
 async def organize_paths(db, settings):
@@ -130,7 +133,7 @@ async def organize_paths(db, settings):
         old_indexes_path = os.path.join(old_reference_path, "viruses")
 
         if not os.path.exists(old_indexes_path):
-            old_indexes_path = os.path.join(old_reference_path, "kinds")
+            old_indexes_path = os.path.join(old_reference_path, "otus")
 
         if not os.path.exists(old_indexes_path):
             old_indexes_path = None
@@ -154,7 +157,7 @@ async def organize_paths(db, settings):
 async def organize_references(db):
     logger.info(" • references")
 
-    if await db.kinds.count() and not await db.refs.count():
+    if await db.otus.count() and not await db.refs.count():
         await virtool.db.references.create_original(db)
 
 
