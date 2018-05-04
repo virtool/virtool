@@ -47,17 +47,18 @@ def protect(route_decorator, admin, permission, public, schema):
                     "message": "Requires authorization"
                 }, status=401)
 
-            if admin and not req["client"].administrator:
-                return json_response({
-                    "id": "not_permitted",
-                    "message": "Requires administrative privilege"
-                }, status=403)
+            if not req["client"].administrator:
+                if admin:
+                    return json_response({
+                        "id": "not_permitted",
+                        "message": "Requires administrative privilege"
+                    }, status=403)
 
-            if permission and not req["client"].permissions[permission]:
-                return json_response({
-                    "id": "not_permitted",
-                    "message": "Not permitted"
-                }, status=403)
+                if permission and not req["client"].permissions[permission]:
+                    return json_response({
+                        "id": "not_permitted",
+                        "message": "Not permitted"
+                    }, status=403)
 
             content_type = req.headers.get("Content-type", "")
 
