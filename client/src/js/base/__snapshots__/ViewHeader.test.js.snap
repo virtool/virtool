@@ -40,6 +40,12 @@ exports[`<ViewHeader /> renders correctly 1`] = `
 <h3
   className="view-header"
 >
+  <HelmetWrapper
+    defer={true}
+    encodeSpecialCharacters={true}
+  >
+    <title />
+  </HelmetWrapper>
   <Flex
     alignContent="stretch"
     alignItems="flex-end"
