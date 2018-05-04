@@ -70,7 +70,7 @@ async def get(req):
 
 @routes.patch("/api/groups/{group_id}", admin=True, schema={
     "permissions": {
-        "type": dict,
+        "type": "dict",
         "default": {},
         "validator": virtool.validators.is_permission_dict
     }
