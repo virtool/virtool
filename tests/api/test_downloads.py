@@ -1,8 +1,8 @@
 import pytest
 
 
-@pytest.mark.parametrize("get", ["kind", "isolate", "sequence"])
-@pytest.mark.parametrize("missing", [None, "kind", "isolate", "sequence"])
+@pytest.mark.parametrize("get", ["otu", "isolate", "sequence"])
+@pytest.mark.parametrize("missing", [None, "otu", "isolate", "sequence"])
 async def test_all(get, missing, spawn_client):
     client = await spawn_client(authorize=True)
 
@@ -19,8 +19,8 @@ async def test_all(get, missing, spawn_client):
             "source_name": "Foo"
         })
 
-    if missing != "kind":
-        await client.db.kinds.insert_one({
+    if missing != "otu":
+        await client.db.otus.insert_one({
             "_id": "foobar",
             "name": "Foobar virus",
             "isolates": isolates
@@ -28,7 +28,7 @@ async def test_all(get, missing, spawn_client):
 
     sequences = [{
         "_id": "test_1",
-        "kind_id": "foobar",
+        "otu_id": "foobar",
         "isolate_id": "baz",
         "sequence": "ATAGGGACATA"
     }]
@@ -36,14 +36,14 @@ async def test_all(get, missing, spawn_client):
     if missing != "sequence":
         sequences.append({
             "_id": "test_2",
-            "kind_id": "foobar",
+            "otu_id": "foobar",
             "isolate_id": "foo",
             "sequence": "ATAGGGACATA"
         })
 
     await client.db.sequences.insert_many(sequences)
 
-    url = "/download/kinds/foobar"
+    url = "/download/otus/foobar"
 
     if get == "isolate":
         url += "/isolates/foo"
@@ -53,8 +53,8 @@ async def test_all(get, missing, spawn_client):
 
     resp = await client.get(url)
 
-    get_isolate_error = get == "isolate" and missing == "kind"
-    get_sequence_error = get == "sequence" and missing in ["kind", "isolate"]
+    get_isolate_error = get == "isolate" and missing == "otu"
+    get_sequence_error = get == "sequence" and missing in ["otu", "isolate"]
 
     if get == missing or get_isolate_error or get_sequence_error:
         assert resp.status == 404

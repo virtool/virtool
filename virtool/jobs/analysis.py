@@ -24,7 +24,7 @@ import virtool.jobs.build_index
 import virtool.jobs.job
 import virtool.pathoscope
 import virtool.samples
-import virtool.kinds
+import virtool.otus
 import virtool.utils
 
 LIST_PROJECTION = [
@@ -185,32 +185,32 @@ class Pathoscope(Base):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.sequence_kind_map = {item[0]: item[1] for item in self.task_args["sequence_kind_map"]}
+        self.sequence_otu_map = {item[0]: item[1] for item in self.task_args["sequence_otu_map"]}
 
-        self.kind_dict = self.task_args["kind_dict"]
+        self.otu_dict = self.task_args["otu_dict"]
 
     @virtool.jobs.job.stage_method
     async def generate_isolate_fasta(self):
         """
-        Identifies kind hits from the initial default kind mapping.
+        Identifies otu hits from the initial default otu mapping.
 
         """
         fasta_path = os.path.join(self.analysis_path, "isolate_index.fa")
 
-        sequence_ids = list(self.intermediate["to_kinds"])
+        sequence_ids = list(self.intermediate["to_otus"])
 
         ref_lengths = dict()
 
         # Get the database documents for the sequences
         async with aiofiles.open(fasta_path, "w") as handle:
-            # Iterate through each kind id referenced by the hit sequence ids.
-            for kind_id in await self.db.sequences.distinct("kind_id", {"_id": {"$in": sequence_ids}}):
-                # Write all of the sequences for each kind to a FASTA file.
-                async for document in self.db.sequences.find({"kind_id": kind_id}, ["sequence"]):
+            # Iterate through each otu id referenced by the hit sequence ids.
+            for otu_id in await self.db.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
+                # Write all of the sequences for each otu to a FASTA file.
+                async for document in self.db.sequences.find({"otu_id": otu_id}, ["sequence"]):
                     await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
                     ref_lengths[document["_id"]] = len(document["sequence"])
 
-        del self.intermediate["to_kinds"]
+        del self.intermediate["to_otus"]
 
         self.intermediate["ref_lengths"] = ref_lengths
 
@@ -283,17 +283,17 @@ class Pathoscope(Base):
         }
 
         for ref_id, hit in report.items():
-            # Get the kind info for the sequence id.
-            kind = self.kind_dict[self.sequence_kind_map[ref_id]]
+            # Get the otu info for the sequence id.
+            otu = self.otu_dict[self.sequence_otu_map[ref_id]]
 
-            # Raise exception if kind is ``False`` (meaning the kind had no ``last_indexed_version`` field).
-            if not kind:
+            # Raise exception if otu is ``False`` (meaning the otu had no ``last_indexed_version`` field).
+            if not otu:
                 raise ValueError("Document has no last_indexed_version field.")
 
             hit["id"] = ref_id
 
-            # Attach "kind" (id, version) to the hit.
-            hit["kind"] = kind
+            # Attach "otu" (id, version) to the hit.
+            hit["otu"] = otu
 
             # Get the coverage for the sequence.
             hit_coverage = self.intermediate["coverage"][ref_id]
@@ -316,7 +316,7 @@ class Pathoscope(Base):
         and viral genome coverage maps.
 
         Once the import is complete, :meth:`cleanup_index_files` is called to remove
-        any kind indexes that may become unused when this analysis completes.
+        any otu indexes that may become unused when this analysis completes.
 
         """
         await self.db.analyses.update_one({"_id": self.analysis_id}, {
@@ -345,7 +345,7 @@ class PathoscopeBowtie(Pathoscope):
         self._stage_list = [
             self.check_db,
             self.mk_analysis_dir,
-            self.map_kinds,
+            self.map_otus,
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
@@ -357,9 +357,9 @@ class PathoscopeBowtie(Pathoscope):
         ]
 
     @virtool.jobs.job.stage_method
-    async def map_kinds(self):
+    async def map_otus(self):
         """
-        Using ``bowtie2``, maps reads to the main kind reference. This mapping is used to identify candidate kinds.
+        Using ``bowtie2``, maps reads to the main otu reference. This mapping is used to identify candidate otus.
 
         """
         command = [
@@ -374,7 +374,7 @@ class PathoscopeBowtie(Pathoscope):
             "-U", ",".join(self.read_paths)
         ]
 
-        to_kinds = set()
+        to_otus = set()
 
         async def stdout_handler(line):
             line = line.decode()
@@ -397,11 +397,11 @@ class PathoscopeBowtie(Pathoscope):
             if virtool.pathoscope.find_sam_align_score(fields) < 0.01:
                 return
 
-            to_kinds.add(ref_id)
+            to_otus.add(ref_id)
 
         await self.run_subprocess(command, stdout_handler=stdout_handler)
 
-        self.intermediate["to_kinds"] = to_kinds
+        self.intermediate["to_otus"] = to_otus
 
     @virtool.jobs.job.stage_method
     async def build_isolate_index(self):
@@ -522,7 +522,7 @@ class NuVs(Base):
     A job class for NuVs, a custom workflow used for identifying potential viral sequences from sample libraries. The
     workflow consists of the following steps:
 
-    1. Eliminate known viral reads by mapping the sample reads to the Virtool kind reference using ``bowtie2`` saving
+    1. Eliminate known viral reads by mapping the sample reads to the Virtool otu reference using ``bowtie2`` saving
        unaligned reads.
     2. Eliminate known host reads by mapping the reads remaining from the previous stage to the sample's subtraction
        host using ``bowtie2`` and saving the unaligned reads.
@@ -535,7 +535,7 @@ class NuVs(Base):
         super().__init__(*args, **kwargs)
 
         self._stage_list += [
-            self.map_kinds,
+            self.map_otus,
             self.map_subtraction,
             self.reunite_pairs,
             self.assemble,
@@ -548,10 +548,10 @@ class NuVs(Base):
         self.temp_dir = None
 
     @virtool.jobs.job.stage_method
-    async def map_kinds(self):
+    async def map_otus(self):
         """
-        Maps reads to the main kind reference using ``bowtie2``. Bowtie2 is set to use the search parameter
-        ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_kinds.fq``.
+        Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
+        ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
 
         """
         command = [
@@ -560,7 +560,7 @@ class NuVs(Base):
             "-k", str(1),
             "--very-fast-local",
             "-x", self.index_path,
-            "--un", os.path.join(self.analysis_path, "unmapped_kinds.fq"),
+            "--un", os.path.join(self.analysis_path, "unmapped_otus.fq"),
             "-U", ",".join(self.read_paths)
         ]
 
@@ -569,7 +569,7 @@ class NuVs(Base):
     @virtool.jobs.job.stage_method
     async def map_subtraction(self):
         """
-        Maps unaligned reads from :meth:`.map_kinds` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
+        Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
         ``unmapped_host.fq``.
 
@@ -581,7 +581,7 @@ class NuVs(Base):
             "-p", str(self.proc),
             "-x", shlex.quote(self.subtraction_path),
             "--un", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
-            "-U", os.path.join(self.analysis_path, "unmapped_kinds.fq"),
+            "-U", os.path.join(self.analysis_path, "unmapped_otus.fq"),
         ]
 
         await self.run_subprocess(command)
@@ -774,7 +774,7 @@ class NuVs(Base):
         """
         Save the results to the analysis document and set the ``ready`` field to ``True``.
 
-        After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any kinds
+        After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any otus
         indexes that are no longer being used by an active analysis job.
 
         """

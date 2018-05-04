@@ -45,7 +45,7 @@ async def test_find(spawn_client, static_time):
                 "has_files": True,
                 "id": "bar",
                 "change_count": 0,
-                "modified_kind_count": 0,
+                "modified_otu_count": 0,
                 "job": {
                     "id": "sj82la"
                 },
@@ -60,7 +60,7 @@ async def test_find(spawn_client, static_time):
                 "has_files": True,
                 "id": "foo",
                 "change_count": 0,
-                "modified_kind_count": 0,
+                "modified_otu_count": 0,
                 "job": {
                     "id": "abh675"
                 },
@@ -108,7 +108,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
         }
     ]
 
-    kinds = [
+    otus = [
         {
             "id": "kjs8sa99",
             "name": "Foo",
@@ -122,7 +122,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
     ]
 
     m_get_contributors = mocker.patch("virtool.db.indexes.get_contributors", new=make_mocked_coro(contributors))
-    m_get_kinds = mocker.patch("virtool.db.indexes.get_kinds", new=make_mocked_coro(kinds))
+    m_get_otus = mocker.patch("virtool.db.indexes.get_otus", new=make_mocked_coro(otus))
 
     index_id = "baz" if not_found else "foobar"
 
@@ -133,7 +133,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
 
     else:
         m_get_contributors.assert_called_with(client.db, index_id)
-        m_get_kinds.assert_called_with(client.db, index_id)
+        m_get_otus.assert_called_with(client.db, index_id)
 
         assert resp.status == 200
 
@@ -143,7 +143,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
             "id": "foobar",
             "version": 0,
             "change_count": 4,
-            "kinds": [
+            "otus": [
                 {
                     "id": "kjs8sa99",
                     "name": "Foo",
@@ -270,7 +270,7 @@ class TestCreate:
             })
 
         if error == "unverified":
-            await client.db.kinds.insert_one({
+            await client.db.otus.insert_one({
                 "verified": False,
                 "ref": {
                     "id": "foo"
@@ -283,7 +283,7 @@ class TestCreate:
             assert await resp_is.conflict(resp, "Index build already in progress")
 
         elif error == "unverified":
-            assert await resp_is.conflict(resp, "There are unverified kinds")
+            assert await resp_is.conflict(resp, "There are unverified otus")
 
         else:
             assert await resp_is.conflict(resp, "There are no unbuilt changes")
@@ -326,7 +326,7 @@ class TestCreate:
                 "index_id": expected_id,
                 "index_version": 1,
                 "user_id": "test",
-                "kind_manifest": {}
+                "otu_manifest": {}
             },
             "test"
         )
@@ -351,7 +351,7 @@ class TestFindHistory:
         await client.db.history.insert_many([
             {
                 "_id": "zxbbvngc.0",
-                "kind": {
+                "otu": {
                     "version": 0,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -366,7 +366,7 @@ class TestFindHistory:
             },
             {
                 "_id": "zxbbvngc.1",
-                "kind": {
+                "otu": {
                     "version": 1,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -382,7 +382,7 @@ class TestFindHistory:
             },
             {
                 "_id": "zxbbvngc.2",
-                "kind": {
+                "otu": {
                     "version": 2,
                     "name": "Test",
                     "id": "zxbbvngc"
@@ -398,7 +398,7 @@ class TestFindHistory:
             },
             {
                 "_id": "kjs8sa99.3",
-                "kind": {
+                "otu": {
                     "version": 3,
                     "name": "Foo",
                     "id": "kjs8sa99"
@@ -448,7 +448,7 @@ class TestFindHistory:
                     "user": {
                         "id": "fred"
                     },
-                    "kind": {
+                    "otu": {
                         "id": "kjs8sa99",
                         "name": "Foo",
                         "version": 3
@@ -463,7 +463,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "kind": {
+                    "otu": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 2
@@ -478,7 +478,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "kind": {
+                    "otu": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 1
@@ -493,7 +493,7 @@ class TestFindHistory:
                     "user": {
                         "id": "igboyes"
                     },
-                    "kind": {
+                    "otu": {
                         "id": "zxbbvngc",
                         "name": "Test",
                         "version": 0

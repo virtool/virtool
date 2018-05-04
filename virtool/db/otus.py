@@ -1,34 +1,34 @@
 import virtool.db.history
 import virtool.errors
 import virtool.utils
-import virtool.kinds
+import virtool.otus
 from virtool.api.utils import compose_regex_query, paginate
 
 
 async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     """
-    Check is a kind name and abbreviation are already in use in the database. Returns a message if the ``name`` or
+    Check is a otu name and abbreviation are already in use in the database. Returns a message if the ``name`` or
     ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param name: a kind name
+    :param name: a otu name
     :type name: str
 
-    :param abbreviation: a kind abbreviation
+    :param abbreviation: a otu abbreviation
     :type abbreviation: str
 
     """
     name_count = 0
 
     if name:
-        name_count = await db.kinds.count({"lower_name": name.lower()})
+        name_count = await db.otus.count({"lower_name": name.lower()})
 
     abbr_count = 0
 
     if abbreviation:
-        abbr_count = await db.kinds.find({"abbreviation": abbreviation}).count()
+        abbr_count = await db.otus.find({"abbreviation": abbreviation}).count()
 
     unique_name = not name or not name_count
     unique_abbreviation = not abbreviation or not abbr_count
@@ -59,7 +59,7 @@ async def get_new_isolate_id(db, excluded=None):
     :rtype: Coroutine[str]
 
     """
-    used_isolate_ids = await db.kinds.distinct("isolates.id")
+    used_isolate_ids = await db.otus.distinct("isolates.id")
 
     if excluded:
         used_isolate_ids += excluded
@@ -85,76 +85,76 @@ async def find(db, names, term, req_query, verified, ref_id=None):
         }
 
     if names is True or names == "true":
-        data = await db.kinds.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
+        data = await db.otus.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
         return [virtool.utils.base_processor(d) for d in data]
 
     data = await paginate(
-        db.kinds,
+        db.otus,
         db_query,
         req_query,
         base_query=base_query,
         sort="name",
-        projection=virtool.kinds.LIST_PROJECTION
+        projection=virtool.otus.LIST_PROJECTION
     )
 
-    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["kind"]).distinct("kind.name"))
+    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["otu"]).distinct("otu.name"))
 
     return data
 
 
-async def join(db, kind_id, document=None):
+async def join(db, otu_id, document=None):
     """
-    Join the kind associated with the supplied ``kind_id`` with its sequences. If a kind entry is also passed,
-    the database will not be queried for the kind based on its id.
+    Join the otu associated with the supplied ``otu_id`` with its sequences. If a otu entry is also passed,
+    the database will not be queried for the otu based on its id.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param kind_id: the id of the kind to join.
-    :type kind_id: str
+    :param otu_id: the id of the otu to join.
+    :type otu_id: str
 
-    :param document: use this kind document as a basis for the join instead finding it using the kind id.
+    :param document: use this otu document as a basis for the join instead finding it using the otu id.
     :type document: dict
 
-    :return: the joined kind document
+    :return: the joined otu document
     :rtype: Coroutine[dict]
 
     """
-    # Get the kind entry if a ``document`` parameter was not passed.
-    document = document or await db.kinds.find_one(kind_id)
+    # Get the otu entry if a ``document`` parameter was not passed.
+    document = document or await db.otus.find_one(otu_id)
 
     if document is None:
         return None
 
     # Get the sequence entries associated with the isolate ids.
-    sequences = await db.sequences.find({"kind_id": kind_id}).to_list(None) or list()
+    sequences = await db.sequences.find({"otu_id": otu_id}).to_list(None) or list()
 
-    # Merge the sequence entries into the kind entry.
-    return virtool.kinds.merge_kind(document, sequences)
+    # Merge the sequence entries into the otu entry.
+    return virtool.otus.merge_otu(document, sequences)
 
 
-async def join_and_format(db, kind_id, joined=None, issues=False):
+async def join_and_format(db, otu_id, joined=None, issues=False):
     """
-    Join the kind identified by the passed ``kind_id`` or use the ``joined`` kind document if available. Then,
-    format the joined kind into a format that can be directly returned to API clients.
+    Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
+    format the joined otu into a format that can be directly returned to API clients.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param kind_id: the id of the kind to join
-    :type kind_id: str
+    :param otu_id: the id of the otu to join
+    :type otu_id: str
 
     :param joined:
     :type joined: Union[dict, NoneType]
 
-    :param issues: an object describing issues in the kind
+    :param issues: an object describing issues in the otu
     :type issues: Union[dict, NoneType, bool]
 
-    :return: a joined and formatted kind
+    :return: a joined and formatted otu
     :rtype: Coroutine[dict]
 
     """
-    joined = joined or await join(db, kind_id)
+    joined = joined or await join(db, otu_id)
 
     if not joined:
         return None
@@ -166,12 +166,12 @@ async def join_and_format(db, kind_id, joined=None, issues=False):
     for isolate in joined["isolates"]:
 
         for sequence in isolate["sequences"]:
-            del sequence["kind_id"]
+            del sequence["otu_id"]
             del sequence["isolate_id"]
 
             sequence["id"] = sequence.pop("_id")
 
-    most_recent_change = await virtool.db.history.get_most_recent_change(db, kind_id)
+    most_recent_change = await virtool.db.history.get_most_recent_change(db, otu_id)
 
     if most_recent_change:
         most_recent_change["change_id"] = most_recent_change.pop("_id")
@@ -182,24 +182,24 @@ async def join_and_format(db, kind_id, joined=None, issues=False):
     })
 
     if issues is False:
-        joined["issues"] = await verify(db, kind_id)
+        joined["issues"] = await verify(db, otu_id)
 
     return joined
 
 
-async def remove(db, dispatch, kind_id, user_id, document=None):
+async def remove(db, dispatch, otu_id, user_id, document=None):
 
-    # Join the kind.
-    joined = await join(db, kind_id, document=document)
+    # Join the otu.
+    joined = await join(db, otu_id, document=document)
 
     if not joined:
         return None
 
-    # Remove all sequences associated with the kind.
-    await db.sequences.delete_many({"kind_id": kind_id})
+    # Remove all sequences associated with the otu.
+    await db.sequences.delete_many({"otu_id": otu_id})
 
-    # Remove the kind document itself.
-    await db.kinds.delete_one({"_id": kind_id})
+    # Remove the otu document itself.
+    await db.otus.delete_one({"_id": otu_id})
 
     description = "Removed {}".format(joined["name"])
 
@@ -216,48 +216,48 @@ async def remove(db, dispatch, kind_id, user_id, document=None):
     )
 
     await dispatch(
-        "kinds",
+        "otus",
         "remove",
-        [kind_id]
+        [otu_id]
     )
 
     return True
 
 
-async def verify(db, kind_id, joined=None):
+async def verify(db, otu_id, joined=None):
     """
-    Verifies that the associated kind is ready to be included in an index rebuild. Returns verification errors if
+    Verifies that the associated otu is ready to be included in an index rebuild. Returns verification errors if
     necessary.
 
     """
-    # Get the kind document of interest.
-    joined = joined or await join(db, kind_id)
+    # Get the otu document of interest.
+    joined = joined or await join(db, otu_id)
 
     if not joined:
-        raise virtool.errors.DatabaseError("Could not find kind '{}'".format(kind_id))
+        raise virtool.errors.DatabaseError("Could not find otu '{}'".format(otu_id))
 
-    return virtool.kinds.verify(joined)
+    return virtool.otus.verify(joined)
 
 
 async def update_last_indexed_version(db, id_list, version):
     """
     Called from a index rebuild job. Updates the last indexed version and _version fields
-    of all kind involved in the rebuild when the build completes.
+    of all otu involved in the rebuild when the build completes.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param id_list: a list the ``kind_id`` of each kind to update
+    :param id_list: a list the ``otu_id`` of each otu to update
     :type id_list: list
 
-    :param version: the value to set for the kind ``version`` and ``last_indexed_version`` fields
+    :param version: the value to set for the otu ``version`` and ``last_indexed_version`` fields
     :type: int
 
     :return: the Pymongo update result
     :rtype: :class:`~pymongo.results.UpdateResult`
 
     """
-    result = await db.kinds.update_many({"_id": {"$in": id_list}}, {
+    result = await db.otus.update_many({"_id": {"$in": id_list}}, {
         "$set": {
             "last_indexed_version": version,
             "version": version

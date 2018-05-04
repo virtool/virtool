@@ -1,5 +1,5 @@
 """
-Functions for working with kind documents.
+Functions for working with otu documents.
 
 """
 import logging
@@ -23,7 +23,7 @@ SEQUENCE_PROJECTION = [
     "_id",
     "definition",
     "host",
-    "kind_id",
+    "otu_id",
     "isolate_id",
     "sequence",
     "segment"
@@ -57,27 +57,27 @@ def check_source_type(settings, source_type):
 
 async def dispatch_version_only(req, new):
     """
-    Dispatch a kind update. Should be called when the document itself is not being modified.
+    Dispatch a otu update. Should be called when the document itself is not being modified.
 
     :param req: the request object
 
-    :param new: the kind document
+    :param new: the otu document
     :type new: Coroutine[dict]
 
     """
     await req.app["dispatcher"].dispatch(
-        "kinds",
+        "otus",
         "update",
         virtool.utils.base_processor({key: new[key] for key in LIST_PROJECTION})
     )
 
 
-def extract_default_isolate(kind, isolate_processor=None):
+def extract_default_isolate(otu, isolate_processor=None):
     """
-    Returns the default isolate dict for the given kind document.
+    Returns the default isolate dict for the given otu document.
 
-    :param kind: a kind document.
-    :type kind: dict
+    :param otu: a otu document.
+    :type otu: dict
 
     :param isolate_processor: a function to process the default isolate into a desired format.
     :type: func
@@ -86,8 +86,8 @@ def extract_default_isolate(kind, isolate_processor=None):
     :rtype: dict
 
     """
-    # Get the kind isolates with the default flag set to True. This list should only contain one item.
-    default_isolates = [isolate for isolate in kind["isolates"] if isolate["default"] is True]
+    # Get the otu isolates with the default flag set to True. This list should only contain one item.
+    default_isolates = [isolate for isolate in otu["isolates"] if isolate["default"] is True]
 
     if len(default_isolates) > 1:
         raise ValueError("More than one default isolate found")
@@ -105,9 +105,9 @@ def extract_default_isolate(kind, isolate_processor=None):
 
 def extract_default_sequences(joined):
     """
-    Return a list of sequences from the default isolate of the passed joined kind document.
+    Return a list of sequences from the default isolate of the passed joined otu document.
 
-    :param joined: the joined kind document.
+    :param joined: the joined otu document.
     :type joined: dict
 
     :return: a list of sequences associated with the default isolate.
@@ -119,41 +119,41 @@ def extract_default_sequences(joined):
             return isolate["sequences"]
 
 
-def extract_isolate_ids(kind):
+def extract_isolate_ids(otu):
     """
-    Get the isolate ids from a kind document.
+    Get the isolate ids from a otu document.
 
-    :param kind: a kind document.
+    :param otu: a otu document.
     :return: a list of isolate ids.
 
     """
-    return [isolate["id"] for isolate in kind["isolates"]]
+    return [isolate["id"] for isolate in otu["isolates"]]
 
 
-def extract_sequence_ids(kind):
+def extract_sequence_ids(otu):
     """
-    Extract all sequence ids from a merged kind.
+    Extract all sequence ids from a merged otu.
 
-    :param kind: the merged kind
-    :type kind: dict
+    :param otu: the merged otu
+    :type otu: dict
 
-    :return: the sequence ids belonging to ``kind``
+    :return: the sequence ids belonging to ``otu``
     :rtype: list
 
     """
     sequence_ids = list()
 
-    isolates = kind["isolates"]
+    isolates = otu["isolates"]
 
     if not isolates:
-        raise ValueError("Empty isolates list in merged kind")
+        raise ValueError("Empty isolates list in merged otu")
 
     for isolate in isolates:
         if "sequences" not in isolate:
-            raise KeyError("Isolate in merged kind missing sequences field")
+            raise KeyError("Isolate in merged otu missing sequences field")
 
         if not isolate["sequences"]:
-            raise ValueError("Empty sequences list in merged kind")
+            raise ValueError("Empty sequences list in merged otu")
 
         sequence_ids += [sequence["_id"] for sequence in isolate["sequences"]]
 
@@ -194,22 +194,22 @@ def format_isolate_name(isolate):
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
 
 
-def merge_kind(kind, sequences):
+def merge_otu(otu, sequences):
     """
-    Merge the given sequences in the given kind document. The kind will gain a ``sequences`` field containing a
+    Merge the given sequences in the given otu document. The otu will gain a ``sequences`` field containing a
     list of its associated sequence documents.
 
-    :param kind: a kind document.
-    :type kind: dict
+    :param otu: a otu document.
+    :type otu: dict
 
-    :param sequences: the sequence documents to merge into the kind.
+    :param sequences: the sequence documents to merge into the otu.
     :type sequences: list
 
-    :return: the merged kind.
+    :return: the merged otu.
     :rtype: dict
 
     """
-    merged = deepcopy(kind)
+    merged = deepcopy(otu)
 
     for isolate in merged["isolates"]:
         isolate_id = isolate.get("id", None) or isolate.get("isolate_id", None)
@@ -220,36 +220,36 @@ def merge_kind(kind, sequences):
 
 def split(merged):
     """
-    Split a merged kind document into a list of sequence documents associated with the kind and a regular kind
+    Split a merged otu document into a list of sequence documents associated with the otu and a regular otu
     document containing no sequence sub-documents.
 
-    :param merged: the merged kind to split
+    :param merged: the merged otu to split
     :type merged: dict
 
-    :return: a tuple containing the new kind document and a list of sequence documents
+    :return: a tuple containing the new otu document and a list of sequence documents
     :type: tuple
 
     """
     sequences = list()
 
-    kind = deepcopy(merged)
+    otu = deepcopy(merged)
 
-    for isolate in kind["isolates"]:
+    for isolate in otu["isolates"]:
         sequences += isolate.pop("sequences")
 
-    return kind, sequences
+    return otu, sequences
 
 
 def verify(joined):
     """
-    Checks that the passed kind and sequences constitute valid Virtool records and can be included in a kind
+    Checks that the passed otu and sequences constitute valid Virtool records and can be included in a otu
     index. Error fields are:
-    * emtpy_kind - kind has no isolates associated with it.
+    * emtpy_otu - otu has no isolates associated with it.
     * empty_isolate - isolates that have no sequences associated with them.
     * empty_sequence - sequences that have a zero length sequence field.
-    * isolate_inconsistency - kind has isolates containing different numbers of sequences.
+    * isolate_inconsistency - otu has isolates containing different numbers of sequences.
 
-    :param joined: a joined kind
+    :param joined: a joined otu
     :type joined: dict
 
     :return: return any errors or False if there are no errors.
@@ -257,7 +257,7 @@ def verify(joined):
 
     """
     errors = {
-        "empty_kind": len(joined["isolates"]) == 0,
+        "empty_otu": len(joined["isolates"]) == 0,
         "empty_isolate": list(),
         "empty_sequence": list(),
         "isolate_inconsistency": False
@@ -280,13 +280,13 @@ def verify(joined):
         errors["empty_sequence"] += filter(lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences)
 
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
-    # error if the kind is not also emtpy (empty_kind error).
+    # error if the otu is not also emtpy (empty_otu error).
     errors["isolate_inconsistency"] = (
         len(set(isolate_sequence_counts)) != 1 and not
-        (errors["empty_kind"] or errors["empty_isolate"])
+        (errors["empty_otu"] or errors["empty_isolate"])
     )
 
-    # If there is an error in the kind, return the errors object. Otherwise return False.
+    # If there is an error in the otu, return the errors object. Otherwise return False.
     has_errors = False
 
     for key, value in errors.items():

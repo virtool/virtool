@@ -5,12 +5,12 @@ import aiojobs.aiohttp
 
 import virtool.db.history
 import virtool.db.indexes
-import virtool.db.kinds
+import virtool.db.otus
 import virtool.db.processes
 import virtool.db.references
 import virtool.db.utils
 import virtool.http.routes
-import virtool.kinds
+import virtool.otus
 import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
 
@@ -61,8 +61,8 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.get("/api/refs/{ref_id}/kinds")
-async def find_kinds(req):
+@routes.get("/api/refs/{ref_id}/otus")
+async def find_otus(req):
     db = req.app["db"]
 
     ref_id = req.match_info["ref_id"]
@@ -71,7 +71,7 @@ async def find_kinds(req):
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
 
-    data = await virtool.db.kinds.find(
+    data = await virtool.db.otus.find(
         db,
         names,
         term,
@@ -275,7 +275,7 @@ async def edit(req):
     internal_control_id = data.get("internal_control", None)
 
     if internal_control_id:
-        if not await db.kinds.find_one({"_id": internal_control_id, "ref.id": ref_id}):
+        if not await db.otus.find_one({"_id": internal_control_id, "ref.id": ref_id}):
             return not_found("Internal control not found")
 
         update["internal_control"] = {
@@ -316,7 +316,7 @@ async def get_unbuilt_changes(req):
 @routes.delete("/api/refs/{ref_id}")
 async def remove(req):
     """
-    Remove a reference and its kinds, history, and indexes.
+    Remove a reference and its otus, history, and indexes.
 
     """
     db = req.app["db"]

@@ -65,51 +65,51 @@ async def format_pathoscope(db, document):
 
     for hit in document["diagnosis"]:
 
-        kind_id = hit["kind"]["id"]
-        version = hit["kind"]["version"]
+        otu_id = hit["otu"]["id"]
+        version = hit["otu"]["version"]
 
-        kind = formatted.get(kind_id, None)
+        otu = formatted.get(otu_id, None)
 
-        if kind is None:
-            # Get the kind entry (patched to correct version).
-            _, kind_document, _ = await virtool.db.history.patch_to_version(
+        if otu is None:
+            # Get the otu entry (patched to correct version).
+            _, otu_document, _ = await virtool.db.history.patch_to_version(
                 db,
-                kind_id,
+                otu_id,
                 version
             )
 
             max_ref_length = 0
 
-            for isolate in kind_document["isolates"]:
+            for isolate in otu_document["isolates"]:
                 max_ref_length = max(max_ref_length, max([len(s["sequence"]) for s in isolate["sequences"]]))
 
-            kind = {
-                "id": kind_id,
-                "name": kind_document["name"],
-                "version": kind_document["version"],
-                "abbreviation": kind_document["abbreviation"],
-                "isolates": kind_document["isolates"],
+            otu = {
+                "id": otu_id,
+                "name": otu_document["name"],
+                "version": otu_document["version"],
+                "abbreviation": otu_document["abbreviation"],
+                "isolates": otu_document["isolates"],
                 "length": max_ref_length
             }
 
-            formatted[kind_id] = kind
+            formatted[otu_id] = otu
 
-        for isolate in kind["isolates"]:
+        for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
                 if sequence["_id"] == hit["id"]:
                     sequence.update(hit)
                     sequence["length"] = len(sequence["sequence"])
 
-                    del sequence["kind"]
-                    del sequence["kind_id"]
+                    del sequence["otu"]
+                    del sequence["otu_id"]
                     del sequence["isolate_id"]
 
-    document["diagnosis"] = [formatted[kind_id] for kind_id in formatted]
+    document["diagnosis"] = [formatted[otu_id] for otu_id in formatted]
 
-    for kind in document["diagnosis"]:
-        for isolate in list(kind["isolates"]):
+    for otu in document["diagnosis"]:
+        for isolate in list(otu["isolates"]):
             if not any((key in sequence for sequence in isolate["sequences"]) for key in ("pi", "final")):
-                kind["isolates"].remove(isolate)
+                otu["isolates"].remove(isolate)
                 continue
 
             for sequence in isolate["sequences"]:
@@ -142,7 +142,7 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
     permissions on the sample document and assigns it a creator username based on the requesting connection.
 
     """
-    # Get the current id and version of the kind index currently being used for analysis.
+    # Get the current id and version of the otu index currently being used for analysis.
     index_id, index_version = await virtool.db.indexes.get_current_id_and_version(db, ref_id)
 
     sample = await db.samples.find_one(sample_id, ["name"])
@@ -183,36 +183,36 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
     }
 
     if "pathoscope" in algorithm:
-        sequence_kind_map = dict()
-        kind_dict = dict()
+        sequence_otu_map = dict()
+        otu_dict = dict()
 
-        async for sequence_document in db.sequences.find({}, ["kind_id", "isolate_id"]):
-            kind_id = sequence_document["kind_id"]
+        async for sequence_document in db.sequences.find({}, ["otu_id", "isolate_id"]):
+            otu_id = sequence_document["otu_id"]
 
-            kind = kind_dict.get(kind_id, None)
+            otu = otu_dict.get(otu_id, None)
 
-            if kind is None:
-                kind = await db.kinds.find_one(kind_id, ["last_indexed_version"])
+            if otu is None:
+                otu = await db.otus.find_one(otu_id, ["last_indexed_version"])
 
                 try:
-                    last_index_version = kind["last_indexed_version"]
+                    last_index_version = otu["last_indexed_version"]
 
-                    kind_dict[kind["_id"]] = {
-                        "id": kind["_id"],
+                    otu_dict[otu["_id"]] = {
+                        "id": otu["_id"],
                         "version": last_index_version
                     }
 
-                    sequence_kind_map[sequence_document["_id"]] = kind_id
+                    sequence_otu_map[sequence_document["_id"]] = otu_id
                 except KeyError:
-                    kind_dict[kind["id"]] = False
+                    otu_dict[otu["id"]] = False
 
-            sequence_kind_map[sequence_document["_id"]] = kind_id
+            sequence_otu_map[sequence_document["_id"]] = otu_id
 
-        sequence_kind_map = [item for item in sequence_kind_map.items()]
+        sequence_otu_map = [item for item in sequence_otu_map.items()]
 
         task_args.update({
-            "kind_dict": kind_dict,
-            "sequence_kind_map": sequence_kind_map
+            "otu_dict": otu_dict,
+            "sequence_otu_map": sequence_otu_map
         })
 
     await db.analyses.insert_one(document)

@@ -10,12 +10,12 @@ from aiohttp import web
 from pymongo import ReturnDocument
 
 import virtool.db.history
-import virtool.db.kinds
+import virtool.db.otus
 import virtool.db.references
 import virtool.db.utils
 import virtool.history
 import virtool.http.routes
-import virtool.kinds
+import virtool.otus
 import virtool.references
 import virtool.utils
 import virtool.validators
@@ -47,10 +47,10 @@ SCHEMA_VALIDATOR = {
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/api/kinds")
+@routes.get("/api/otus")
 async def find(req):
     """
-    Find kinds.
+    Find otus.
 
     """
     db = req.app["db"]
@@ -59,7 +59,7 @@ async def find(req):
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
 
-    data = await virtool.db.kinds.find(
+    data = await virtool.db.otus.find(
         db,
         names,
         term,
@@ -70,17 +70,17 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/kinds/{kind_id}")
+@routes.get("/api/otus/{otu_id}")
 async def get(req):
     """
-    Get a complete kind document. Joins the kind document with its associated sequence documents.
+    Get a complete otu document. Joins the otu document with its associated sequence documents.
 
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    complete = await virtool.db.kinds.join_and_format(db, kind_id)
+    complete = await virtool.db.otus.join_and_format(db, otu_id)
 
     if not complete:
         return not_found()
@@ -88,14 +88,14 @@ async def get(req):
     return json_response(complete)
 
 
-@routes.post("/api/refs/{ref_id}/kinds", schema={
+@routes.post("/api/refs/{ref_id}/otus", schema={
     "name": {"type": "string", "required": True, "min": 1},
     "abbreviation": {"type": "string", "min": 1},
     "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
     """
-    Add a new kind to the collection. Checks to make sure the supplied kind name and abbreviation are not already in
+    Add a new otu to the collection. Checks to make sure the supplied otu name and abbreviation are not already in
     use in the collection. Any errors are sent back to the client.
 
     """
@@ -108,16 +108,16 @@ async def create(req):
     abbreviation = data.get("abbreviation", "")
 
     # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
-    message = await virtool.db.kinds.check_name_and_abbreviation(db, data["name"], abbreviation)
+    message = await virtool.db.otus.check_name_and_abbreviation(db, data["name"], abbreviation)
 
     if message:
         return conflict(message)
 
-    kind_id = await virtool.db.utils.get_new_id(db.kinds)
+    otu_id = await virtool.db.utils.get_new_id(db.otus)
 
-    # Start building a kind document.
+    # Start building a otu document.
     data.update({
-        "_id": kind_id,
+        "_id": otu_id,
         "abbreviation": abbreviation,
         "last_indexed_version": None,
         "verified": False,
@@ -130,13 +130,13 @@ async def create(req):
         "schema": []
     })
 
-    # Insert the kind document.
-    await db.kinds.insert_one(data)
+    # Insert the otu document.
+    await db.otus.insert_one(data)
 
-    # Join the kind document into a complete kind record. This will be used for recording history.
-    joined = await virtool.db.kinds.join(db, kind_id, data)
+    # Join the otu document into a complete otu record. This will be used for recording history.
+    joined = await virtool.db.otus.join(db, otu_id, data)
 
-    # Build a ``description`` field for the kind creation change document.
+    # Build a ``description`` field for the otu creation change document.
     description = "Created {}".format(data["name"])
 
     # Add the abbreviation to the description if there is one.
@@ -152,38 +152,38 @@ async def create(req):
         req["client"].user_id
     )
 
-    complete = await virtool.db.kinds.join_and_format(db, kind_id, joined=joined)
+    complete = await virtool.db.otus.join_and_format(db, otu_id, joined=joined)
 
     await req.app["dispatcher"].dispatch(
-        "kinds",
+        "otus",
         "update",
-        virtool.utils.base_processor({key: joined[key] for key in virtool.kinds.LIST_PROJECTION})
+        virtool.utils.base_processor({key: joined[key] for key in virtool.otus.LIST_PROJECTION})
     )
 
     headers = {
-        "Location": "/api/kinds/" + kind_id
+        "Location": "/api/otus/" + otu_id
     }
 
     return json_response(complete, status=201, headers=headers)
 
 
-@routes.patch("/api/kinds/{kind_id}", schema={
+@routes.patch("/api/otus/{otu_id}", schema={
     "name": {"type": "string"},
     "abbreviation": {"type": "string"},
     "schema": SCHEMA_VALIDATOR
 })
 async def edit(req):
     """
-    Edit an existing new kind. Checks to make sure the supplied kind name and abbreviation are not already in use in
+    Edit an existing new otu. Checks to make sure the supplied otu name and abbreviation are not already in use in
     the collection.
 
     """
     db, data = req.app["db"], req["data"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    # Get existing complete kind record, at the same time ensuring it exists. Send a ``404`` if not.
-    old = await virtool.db.kinds.join(db, kind_id)
+    # Get existing complete otu record, at the same time ensuring it exists. Send a ``404`` if not.
+    old = await virtool.db.otus.join(db, otu_id)
 
     if not old:
         return not_found()
@@ -203,38 +203,38 @@ async def edit(req):
     if schema_change == old.get("schema", None):
         schema_change = None
 
-    # Sent back ``200`` with the existing kind record if no change will be made.
+    # Sent back ``200`` with the existing otu record if no change will be made.
     if name_change is None and abbreviation_change is None and schema_change is None:
-        return json_response(await virtool.db.kinds.join_and_format(db, kind_id))
+        return json_response(await virtool.db.otus.join_and_format(db, otu_id))
 
     # Make sure new name and/or abbreviation are not already in use.
-    message = await virtool.db.kinds.check_name_and_abbreviation(db, name_change, abbreviation_change)
+    message = await virtool.db.otus.check_name_and_abbreviation(db, name_change, abbreviation_change)
 
     if message:
         return json_response({"message": message}, status=409)
 
-    # Update the ``modified`` and ``verified`` fields in the kind document now, because we are definitely going to
-    # modify the kind.
+    # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
+    # modify the otu.
     data["verified"] = False
 
-    # If the name is changing, update the ``lower_name`` field in the kind document.
+    # If the name is changing, update the ``lower_name`` field in the otu document.
     if name_change:
         data["lower_name"] = data["name"].lower()
 
     # Update the database collection.
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": data,
         "$inc": {
             "version": 1
         }
     }, return_document=ReturnDocument.AFTER)
 
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, new)
+    issues = await virtool.db.otus.verify(db, otu_id, new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -285,28 +285,28 @@ async def edit(req):
     )
 
     await req.app["dispatcher"].dispatch(
-        "kinds",
+        "otus",
         "update",
-        virtool.utils.base_processor(virtool.db.utils.apply_projection(new, virtool.kinds.LIST_PROJECTION))
+        virtool.utils.base_processor(virtool.db.utils.apply_projection(new, virtool.otus.LIST_PROJECTION))
     )
 
-    return json_response(await virtool.db.kinds.join_and_format(db, kind_id, joined=new, issues=issues))
+    return json_response(await virtool.db.otus.join_and_format(db, otu_id, joined=new, issues=issues))
 
 
-@routes.delete("/api/kinds/{kind_id}")
+@routes.delete("/api/otus/{otu_id}")
 async def remove(req):
     """
-    Remove a kind document and its associated sequence documents.
+    Remove a otu document and its associated sequence documents.
 
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    removed = await virtool.db.kinds.remove(
+    removed = await virtool.db.otus.remove(
         db,
         req.app["dispatcher"].dispatch,
-        kind_id,
+        otu_id,
         req["client"].user_id
     )
 
@@ -316,17 +316,17 @@ async def remove(req):
     return web.Response(status=204)
 
 
-@routes.get("/api/kinds/{kind_id}/isolates")
+@routes.get("/api/otus/{otu_id}/isolates")
 async def list_isolates(req):
     """
-    Return a list of isolate records for a given kind.
+    Return a list of isolate records for a given otu.
 
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    document = await virtool.db.kinds.join_and_format(db, kind_id)
+    document = await virtool.db.otus.join_and_format(db, otu_id)
 
     if not document:
         return not_found()
@@ -334,7 +334,7 @@ async def list_isolates(req):
     return json_response(document["isolates"])
 
 
-@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}")
+@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}")
 async def get_isolate(req):
     """
     Get a complete specific isolate sub-document, including its sequences.
@@ -342,40 +342,40 @@ async def get_isolate(req):
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id}, ["isolates"])
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["isolates"])
 
     if not document:
         return not_found()
 
-    isolate = dict(virtool.kinds.find_isolate(document["isolates"], isolate_id), sequences=[])
+    isolate = dict(virtool.otus.find_isolate(document["isolates"], isolate_id), sequences=[])
 
-    async for sequence in db.sequences.find({"isolate_id": isolate_id}, {"kind_id": False, "isolate_id": False}):
+    async for sequence in db.sequences.find({"isolate_id": isolate_id}, {"otu_id": False, "isolate_id": False}):
         sequence["id"] = sequence.pop("_id")
         isolate["sequences"].append(sequence)
 
     return json_response(isolate)
 
 
-@routes.post("/api/kinds/{kind_id}/isolates", schema={
+@routes.post("/api/otus/{otu_id}/isolates", schema={
     "source_type": {"type": "string", "default": ""},
     "source_name": {"type": "string", "default": ""},
     "default": {"type": "boolean", "default": False}
 })
 async def add_isolate(req):
     """
-    Add a new isolate to a kind.
+    Add a new isolate to a otu.
 
     """
     db = req.app["db"]
     settings = req.app["settings"]
     data = req["data"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    document = await db.kinds.find_one(kind_id)
+    document = await db.otus.find_one(otu_id)
 
     if not document:
         return not_found()
@@ -386,16 +386,16 @@ async def add_isolate(req):
     will_be_default = not isolates or data["default"]
 
     # Get the complete, joined entry before the update.
-    old = await virtool.db.kinds.join(db, kind_id, document)
+    old = await virtool.db.otus.join(db, otu_id, document)
 
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not virtool.kinds.check_source_type(settings, data["source_type"]):
+    if not virtool.otus.check_source_type(settings, data["source_type"]):
         return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
-    isolate_id = await virtool.db.kinds.get_new_isolate_id(db)
+    isolate_id = await virtool.db.otus.get_new_isolate_id(db)
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     if isolates and data["default"]:
@@ -415,7 +415,7 @@ async def add_isolate(req):
     isolates.append(data)
 
     # Push the new isolate to the database.
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "isolates": isolates,
             "verified": False
@@ -426,12 +426,12 @@ async def add_isolate(req):
     }, return_document=ReturnDocument.AFTER)
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, joined=new)
+    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -439,7 +439,7 @@ async def add_isolate(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.kinds.format_isolate_name(data)
+    isolate_name = virtool.otus.format_isolate_name(data)
 
     description = "Added {}".format(isolate_name)
 
@@ -455,16 +455,16 @@ async def add_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
     headers = {
-        "Location": "/api/kinds/{}/isolates/{}".format(kind_id, isolate_id)
+        "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
     }
 
     return json_response(dict(data, sequences=[]), status=201, headers=headers)
 
 
-@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
@@ -477,17 +477,17 @@ async def edit_isolate(req):
     settings = req.app["settings"]
     data = req["data"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
 
     isolates = deepcopy(document["isolates"])
 
-    isolate = virtool.kinds.find_isolate(isolates, isolate_id)
+    isolate = virtool.otus.find_isolate(isolates, isolate_id)
 
     if not isolate:
         return not_found()
@@ -499,14 +499,14 @@ async def edit_isolate(req):
         if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
             return conflict("Not an allowed source type")
 
-    old_isolate_name = virtool.kinds.format_isolate_name(isolate)
+    old_isolate_name = virtool.otus.format_isolate_name(isolate)
 
     isolate.update(data)
 
-    old = await virtool.db.kinds.join(db, kind_id)
+    old = await virtool.db.otus.join(db, otu_id)
 
     # Replace the isolates list with the update one.
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "isolates": isolates,
             "verified": False
@@ -517,12 +517,12 @@ async def edit_isolate(req):
     }, return_document=ReturnDocument.AFTER)
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, joined=new)
+    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -530,7 +530,7 @@ async def edit_isolate(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.kinds.format_isolate_name(isolate)
+    isolate_name = virtool.otus.format_isolate_name(isolate)
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.db.history.add(
@@ -542,16 +542,16 @@ async def edit_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
-    complete = await virtool.db.kinds.join_and_format(db, kind_id, joined=new)
+    complete = await virtool.db.otus.join_and_format(db, otu_id, joined=new)
 
     for isolate in complete["isolates"]:
         if isolate["id"] == isolate_id:
             return json_response(isolate, status=200)
 
 
-@routes.put("/api/kinds/{kind_id}/isolates/{isolate_id}/default", schema={
+@routes.put("/api/otus/{otu_id}/isolates/{isolate_id}/default", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
@@ -562,17 +562,17 @@ async def set_as_default(req):
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
 
     isolates = deepcopy(document["isolates"])
 
-    isolate = virtool.kinds.find_isolate(isolates, isolate_id)
+    isolate = virtool.otus.find_isolate(isolates, isolate_id)
 
     if not isolate:
         return not_found()
@@ -584,15 +584,15 @@ async def set_as_default(req):
     isolate["default"] = True
 
     if isolates == document["isolates"]:
-        complete = await virtool.db.kinds.join_and_format(db, kind_id)
+        complete = await virtool.db.otus.join_and_format(db, otu_id)
         for isolate in complete["isolates"]:
             if isolate["id"] == isolate_id:
                 return json_response(isolate)
 
-    old = await virtool.db.kinds.join(db, kind_id)
+    old = await virtool.db.otus.join(db, otu_id)
 
     # Replace the isolates list with the updated one.
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "isolates": isolates,
             "verified": False
@@ -603,12 +603,12 @@ async def set_as_default(req):
     }, return_document=ReturnDocument.AFTER)
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, joined=new)
+    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -616,7 +616,7 @@ async def set_as_default(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.kinds.format_isolate_name(isolate)
+    isolate_name = virtool.otus.format_isolate_name(isolate)
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.db.history.add(
@@ -628,29 +628,29 @@ async def set_as_default(req):
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
-    complete = await virtool.db.kinds.join_and_format(db, kind_id, new)
+    complete = await virtool.db.otus.join_and_format(db, otu_id, new)
 
     for isolate in complete["isolates"]:
         if isolate["id"] == isolate_id:
             return json_response(isolate)
 
 
-@routes.delete("/api/kinds/{kind_id}/isolates/{isolate_id}", schema={
+@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
     "source_type": {"type": "string"},
     "source_name": {"type": "string"}
 })
 async def remove_isolate(req):
     """
-    Remove an isolate and its sequences from a kind.
+    Remove an isolate and its sequences from a otu.
 
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    document = await db.kinds.find_one(kind_id)
+    document = await db.otus.find_one(otu_id)
 
     if not document:
         return not_found()
@@ -660,12 +660,12 @@ async def remove_isolate(req):
     isolate_id = req.match_info["isolate_id"]
 
     # Get any isolates that have the isolate id to be removed (only one should match!).
-    isolate_to_remove = virtool.kinds.find_isolate(isolates, isolate_id)
+    isolate_to_remove = virtool.otus.find_isolate(isolates, isolate_id)
 
     if not isolate_to_remove:
         return not_found()
 
-    # Remove the isolate from the kind' isolate list.
+    # Remove the isolate from the otu' isolate list.
     isolates.remove(isolate_to_remove)
 
     new_default = None
@@ -675,9 +675,9 @@ async def remove_isolate(req):
         new_default = isolates[0]
         new_default["default"] = True
 
-    old = await virtool.db.kinds.join(db, kind_id, document)
+    old = await virtool.db.otus.join(db, otu_id, document)
 
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "isolates": isolates,
             "verified": False
@@ -687,12 +687,12 @@ async def remove_isolate(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, joined=new)
+    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -703,10 +703,10 @@ async def remove_isolate(req):
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"isolate_id": isolate_id})
 
-    description = "Removed {}".format(virtool.kinds.format_isolate_name(isolate_to_remove))
+    description = "Removed {}".format(virtool.otus.format_isolate_name(isolate_to_remove))
 
     if isolate_to_remove["default"] and new_default:
-        description += " and set {} as default".format(virtool.kinds.format_isolate_name(new_default))
+        description += " and set {} as default".format(virtool.otus.format_isolate_name(new_default))
 
     await virtool.db.history.add(
         db,
@@ -717,24 +717,24 @@ async def remove_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
     return no_content()
 
 
-@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences")
+@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences")
 async def list_sequences(req):
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    if not await db.kinds.find({"_id": kind_id}, {"isolates.id": isolate_id}).count():
+    if not await db.otus.find({"_id": otu_id}, {"isolates.id": isolate_id}).count():
         return not_found()
 
-    projection = list(virtool.kinds.SEQUENCE_PROJECTION)
+    projection = list(virtool.otus.SEQUENCE_PROJECTION)
 
-    projection.remove("kind_id")
+    projection.remove("otu_id")
     projection.remove("isolate_id")
 
     documents = await db.sequences.find({"isolate_id": isolate_id}, projection).to_list(None)
@@ -742,7 +742,7 @@ async def list_sequences(req):
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
-@routes.get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def get_sequence(req):
     """
     Get a single sequence document by its ``accession`.
@@ -752,7 +752,7 @@ async def get_sequence(req):
 
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(sequence_id, virtool.kinds.SEQUENCE_PROJECTION)
+    document = await db.sequences.find_one(sequence_id, virtool.otus.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -760,7 +760,7 @@ async def get_sequence(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences", schema={
+@routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences", schema={
     "id": {"type": "string", "minlength": 1, "required": True},
     "definition": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
@@ -775,13 +775,13 @@ async def create_sequence(req):
     db, data = req.app["db"], req["data"]
 
     # Extract variables from URL path.
-    kind_id, isolate_id = (req.match_info[key] for key in ["kind_id", "isolate_id"])
+    otu_id, isolate_id = (req.match_info[key] for key in ["otu_id", "isolate_id"])
 
-    # Get the subject kind document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id})
+    # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("kind or isolate not found")
+        return not_found("otu or isolate not found")
 
     segment = data.get("segment", None)
 
@@ -791,20 +791,20 @@ async def create_sequence(req):
     # Update POST data to make sequence document.
     data.update({
         "_id": data.pop("id"),
-        "kind_id": kind_id,
+        "otu_id": otu_id,
         "isolate_id": isolate_id,
         "host": data.get("host", ""),
         "segment": segment
     })
 
-    old = await virtool.db.kinds.join(db, kind_id, document)
+    old = await virtool.db.otus.join(db, otu_id, document)
 
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
         return conflict("Sequence id already exists")
 
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "verified": False
         },
@@ -813,12 +813,12 @@ async def create_sequence(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.kinds.verify(db, kind_id, joined=new)
+    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -826,27 +826,27 @@ async def create_sequence(req):
 
         new["verified"] = True
 
-    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 
     await virtool.db.history.add(
         db,
         "create_sequence",
         old,
         new,
-        "Created new sequence {} in {}".format(data["_id"], virtool.kinds.format_isolate_name(isolate)),
+        "Created new sequence {} in {}".format(data["_id"], virtool.otus.format_isolate_name(isolate)),
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
     headers = {
-        "Location": "/api/kinds/{}/isolates/{}/sequences/{}".format(kind_id, isolate_id, data["_id"])
+        "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, data["_id"])
     }
 
     return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
 
 
-@routes.patch("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
+@routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
     "host": {"type": "string"},
     "definition": {"type": "string"},
     "segment": {"type": "string"},
@@ -859,14 +859,14 @@ async def edit_sequence(req):
     if not len(data):
         return bad_request("Empty Input")
 
-    kind_id, isolate_id, sequence_id = (req.match_info[key] for key in ["kind_id", "isolate_id", "sequence_id"])
+    otu_id, isolate_id, sequence_id = (req.match_info[key] for key in ["otu_id", "isolate_id", "sequence_id"])
 
-    document = await db.kinds.find_one({"_id": kind_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
 
-    old = await virtool.db.kinds.join(db, kind_id, document)
+    old = await virtool.db.otus.join(db, otu_id, document)
 
     segment = data.get("segment", None)
 
@@ -880,7 +880,7 @@ async def edit_sequence(req):
     if not updated_sequence:
         return not_found()
 
-    document = await db.kinds.find_one_and_update({"_id": kind_id}, {
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "verified": False
         },
@@ -889,10 +889,10 @@ async def edit_sequence(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    new = await virtool.db.kinds.join(db, kind_id, document)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
-    if await virtool.db.kinds.verify(db, kind_id, joined=new) is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+    if await virtool.db.otus.verify(db, otu_id, joined=new) is None:
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -900,23 +900,23 @@ async def edit_sequence(req):
 
         new["verified"] = True
 
-    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 
     await virtool.db.history.add(
         db,
         "edit_sequence",
         old,
         new,
-        "Edited sequence {} in {}".format(sequence_id, virtool.kinds.format_isolate_name(isolate)),
+        "Edited sequence {} in {}".format(sequence_id, virtool.otus.format_isolate_name(isolate)),
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
     return json_response(virtool.utils.base_processor(updated_sequence))
 
 
-@routes.delete("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}")
+@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
 async def remove_sequence(req):
     """
     Remove a sequence from an isolate.
@@ -924,23 +924,23 @@ async def remove_sequence(req):
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
     if not await db.sequences.count({"_id": sequence_id}):
         return not_found()
 
-    old = await virtool.db.kinds.join(db, kind_id)
+    old = await virtool.db.otus.join(db, otu_id)
 
     if not old:
         return not_found()
 
-    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 
     await db.sequences.delete_one({"_id": sequence_id})
 
-    await db.kinds.update_one({"_id": kind_id}, {
+    await db.otus.update_one({"_id": otu_id}, {
         "$set": {
             "verified": False
         },
@@ -949,10 +949,10 @@ async def remove_sequence(req):
         }
     })
 
-    new = await virtool.db.kinds.join(db, kind_id)
+    new = await virtool.db.otus.join(db, otu_id)
 
-    if await virtool.db.kinds.verify(db, kind_id, joined=new) is None:
-        await db.kinds.update_one({"_id": kind_id}, {
+    if await virtool.db.otus.verify(db, otu_id, joined=new) is None:
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
@@ -960,7 +960,7 @@ async def remove_sequence(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.kinds.format_isolate_name(isolate)
+    isolate_name = virtool.otus.format_isolate_name(isolate)
 
     await virtool.db.history.add(
         db,
@@ -971,21 +971,21 @@ async def remove_sequence(req):
         req["client"].user_id
     )
 
-    await virtool.kinds.dispatch_version_only(req, new)
+    await virtool.otus.dispatch_version_only(req, new)
 
     return no_content()
 
 
-@routes.get("/api/kinds/{kind_id}/history")
+@routes.get("/api/otus/{otu_id}/history")
 async def list_history(req):
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
-    if not await db.kinds.find({"_id": kind_id}).count():
+    if not await db.otus.find({"_id": otu_id}).count():
         return not_found()
 
-    documents = await db.history.find({"kind.id": kind_id}).to_list(None)
+    documents = await db.history.find({"otu.id": otu_id}).to_list(None)
 
     return json_response(documents)
 
@@ -997,8 +997,8 @@ async def get_import(req):
 
     file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
-    if await db.kinds.count() or await db.indexes.count() or await db.history.count():
-        return conflict("Can only import kinds into a virgin instance")
+    if await db.otus.count() or await db.indexes.count() or await db.history.count():
+        return conflict("Can only import otus into a virgin instance")
 
     if not os.path.isfile(file_path):
         return not_found("File not found")
@@ -1012,10 +1012,10 @@ async def get_import(req):
     isolate_counts = list()
     sequence_counts = list()
 
-    kinds = data["data"]
+    otus = data["data"]
 
-    for kind in kinds:
-        isolates = kind["isolates"]
+    for otu in otus:
+        isolates = otu["isolates"]
         isolate_counts.append(len(isolates))
 
         for isolate in isolates:
@@ -1023,14 +1023,14 @@ async def get_import(req):
 
     duplicates, errors = await req.app.loop.run_in_executor(
         req.app["executor"],
-        virtool.references.validate_kinds,
+        virtool.references.validate_otus,
         data["data"]
     )
 
     return json_response({
         "file_id": file_id,
         "totals": {
-            "kinds": len(kinds),
+            "otus": len(otus),
             "isolates": sum(isolate_counts),
             "sequences": sum(sequence_counts),
         },
@@ -1041,15 +1041,15 @@ async def get_import(req):
     })
 
 
-async def import_kinds(req):
+async def import_otus(req):
     db, data = await unpack_request(req)
 
     file_id = data["file_id"]
 
     file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
-    if await db.kinds.count() or await db.indexes.count() or await db.history.count():
-        return conflict("Can only import kinds into a virgin instance")
+    if await db.otus.count() or await db.indexes.count() or await db.history.count():
+        return conflict("Can only import otus into a virgin instance")
 
     if not os.path.isfile(file_path):
         return not_found("File not found")
@@ -1072,22 +1072,22 @@ async def import_kinds(req):
         req["client"].user_id
     ), loop=req.app.loop)
 
-    return json_response({}, status=201, headers={"Location": "/api/kinds"})
+    return json_response({}, status=201, headers={"Location": "/api/otus"})
 
 
 async def export(req):
     """
-    Export all kinds and sequences as a gzipped JSON string. Made available as a downloadable file named
-    ``kinds.json.gz``.
+    Export all otus and sequences as a gzipped JSON string. Made available as a downloadable file named
+    ``otus.json.gz``.
 
     """
     db = req.app["db"]
 
-    # A list of joined kinds.
-    kind_list = list()
+    # A list of joined otus.
+    otu_list = list()
 
-    async for document in db.kinds.find({"last_indexed_version": {"$ne": None}}):
-        # If the kind has been changed since the last index rebuild, patch it to its last indexed version.
+    async for document in db.otus.find({"last_indexed_version": {"$ne": None}}):
+        # If the otu has been changed since the last index rebuild, patch it to its last indexed version.
         if document["version"] != document["last_indexed_version"]:
             _, joined, _ = await virtool.db.history.patch_to_version(
                 db,
@@ -1095,18 +1095,18 @@ async def export(req):
                 document["last_indexed_version"]
             )
         else:
-            joined = await virtool.db.kinds.join(db, document["_id"], document)
+            joined = await virtool.db.otus.join(db, document["_id"], document)
 
-        kind_list.append(joined)
+        otu_list.append(joined)
 
-    # Convert the list of kinds to a JSON-formatted string.
-    json_string = json.dumps(kind_list)
+    # Convert the list of otus to a JSON-formatted string.
+    json_string = json.dumps(otu_list)
 
     # Compress the JSON string with gzip.
     body = await req.app.loop.run_in_executor(req.app["process_executor"], gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": "attachment; filename='kinds.json.gz'"},
+        headers={"Content-Disposition": "attachment; filename='otus.json.gz'"},
         content_type="application/gzip",
         body=body
     )

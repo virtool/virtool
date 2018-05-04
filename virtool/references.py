@@ -7,18 +7,18 @@ def get_owner_user(user_id):
         "id": user_id,
         "build": True,
         "modify": True,
-        "modify_kind": True,
+        "modify_otu": True,
         "remove": True
     }
 
 
-def detect_duplicates(kinds):
+def detect_duplicates(otus):
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
     duplicates = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
 
-    for joined in kinds:
+    for joined in otus:
         for field in fields:
             value = joined[field]
 
@@ -62,12 +62,12 @@ def detect_duplicates(kinds):
 
 def load_import_file(path):
     """
-    Load a list of merged kinds documents from a file handle associated with a Virtool ``kinds.json.gz`` file.
+    Load a list of merged otus documents from a file handle associated with a Virtool ``otus.json.gz`` file.
 
-    :param path: the path to the kinds.json.gz file
+    :param path: the path to the otus.json.gz file
     :type path: str
 
-    :return: the kinds data to import
+    :return: the otus data to import
     :rtype: dict
 
     """

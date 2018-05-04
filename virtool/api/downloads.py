@@ -8,13 +8,13 @@ import virtool.bio
 import virtool.db.downloads
 import virtool.errors
 import virtool.http.routes
-import virtool.kinds
+import virtool.otus
 from virtool.api.utils import not_found
 
 routes = virtool.http.routes.Routes()
 
 
-@routes.get("/download/kinds/{kind_id}/isolates/{isolate_id}")
+@routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
 async def download_isolate(req):
     """
     Download a FASTA file containing the sequences for a single Virtool isolate.
@@ -22,16 +22,16 @@ async def download_isolate(req):
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
     try:
-        filename, fasta = await virtool.db.downloads.generate_isolate_fasta(db, kind_id, isolate_id)
+        filename, fasta = await virtool.db.downloads.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
         print(str(err))
 
-        if "Kind does not exist" in str(err):
-            return not_found("Kind does not exist")
+        if "OTU does not exist" in str(err):
+            return not_found("OTU does not exist")
 
         if "Isolate does not exist" in str(err):
             return not_found("Isolate does not exist")
@@ -43,24 +43,24 @@ async def download_isolate(req):
     })
 
 
-@routes.get("/download/kinds/{kind_id}")
-async def download_kind(req):
+@routes.get("/download/otus/{otu_id}")
+async def download_otu(req):
     """
-    Download a FASTA file containing the sequences for all isolates in a single Virtool kind.
+    Download a FASTA file containing the sequences for all isolates in a single Virtool otu.
 
     """
     db = req.app["db"]
 
-    kind_id = req.match_info["kind_id"]
+    otu_id = req.match_info["otu_id"]
 
     try:
-        filename, fasta = await virtool.db.downloads.generate_kind_fasta(db, kind_id)
+        filename, fasta = await virtool.db.downloads.generate_otu_fasta(db, otu_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
             return not_found("Sequence does not exist")
 
-        if "Kind does not exist" in str(err):
-            return not_found("Kind does not exist")
+        if "OTU does not exist" in str(err):
+            return not_found("OTU does not exist")
 
         raise
 
@@ -91,8 +91,8 @@ async def download_sequence(req):
         if "Isolate does not exist" in str(err):
             return not_found("Isolate does not exist")
 
-        if "Kind does not exist" in str(err):
-            return not_found("Kind does not exist")
+        if "OTU does not exist" in str(err):
+            return not_found("OTU does not exist")
 
         raise
 

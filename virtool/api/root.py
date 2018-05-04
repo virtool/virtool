@@ -32,9 +32,9 @@ async def get(req):
                 "doc": "https://docs.virtool.ca/web-api/analyses.html"
             },
 
-            "kinds": {
-                "url": "/api/kinds",
-                "doc": "https://docs.virtool.ca/web-api/kinds.html"
+            "otus": {
+                "url": "/api/otus",
+                "doc": "https://docs.virtool.ca/web-api/otus.html"
             }
         }
     })

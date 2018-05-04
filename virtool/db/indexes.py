@@ -8,7 +8,7 @@ PROJECTION = [
     "created_at",
     "has_files",
     "job",
-    "kind_count",
+    "otu_count",
     "modification_count",
     "modified_count",
     "user",
@@ -20,7 +20,7 @@ PROJECTION = [
 
 async def create_manifest(db, ref_id):
     """
-    Generate a dict of kind document version numbers keyed by the document id. This is used to make sure only changes
+    Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes
     made at the time the index rebuild was started are included in the build.
 
     :param db: the application database client
@@ -30,13 +30,13 @@ async def create_manifest(db, ref_id):
     :type ref_id: str
 
 
-    :return: a manifest of kind ids and versions
+    :return: a manifest of otu ids and versions
     :rtype: dict
 
     """
     manifest = dict()
 
-    async for document in db.kinds.find({"ref.id": ref_id}, ["version"]):
+    async for document in db.otus.find({"ref.id": ref_id}, ["version"]):
         manifest[document["_id"]] = document["version"]
 
     return manifest
@@ -169,31 +169,31 @@ async def get_index(db, index_id_or_version, projection=None):
         return await db.indexes.find_one(index_id_or_version, projection=projection)
 
 
-async def get_kinds(db, index_id):
+async def get_otus(db, index_id):
     """
-    Return a list of kinds and number of changes for a specific index.
+    Return a list of otus and number of changes for a specific index.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param index_id: the id of the index to get kinds for
+    :param index_id: the id of the index to get otus for
     :type index_id: str
 
-    :return: a list of kinds modified in the index
+    :return: a list of otus modified in the index
     :rtype: List[dict]
 
     """
-    kinds = await db.history.aggregate([
+    otus = await db.history.aggregate([
         {"$match": {
             "index.id": index_id
         }},
         {"$sort": {
-            "kind.id": 1,
-            "kind.version": -1
+            "otu.id": 1,
+            "otu.version": -1
         }},
         {"$group": {
-            "_id": "$kind.id",
-            "name": {"$first": "$kind.name"},
+            "_id": "$otu.id",
+            "name": {"$first": "$otu.name"},
             "count": {"$sum": 1}
         }},
         {"$match": {
@@ -204,12 +204,12 @@ async def get_kinds(db, index_id):
         }}
     ]).to_list(None)
 
-    return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in kinds]
+    return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in otus]
 
 
 async def get_modification_stats(db, index_id):
     """
-    Get the number of modified kinds and the number of changes made for a specific index.
+    Get the number of modified otus and the number of changes made for a specific index.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -217,7 +217,7 @@ async def get_modification_stats(db, index_id):
     :param index_id: the id of the index to return counts for
     :type index_id: str
 
-    :return: the modified kind count and change count
+    :return: the modified otu count and change count
     :rtype: Tuple[int, int]
 
     """
@@ -227,7 +227,7 @@ async def get_modification_stats(db, index_id):
 
     return {
         "change_count": await db.history.count(query),
-        "modified_kind_count": len(await db.history.distinct("kind.id", query))
+        "modified_otu_count": len(await db.history.distinct("otu.id", query))
     }
 
 

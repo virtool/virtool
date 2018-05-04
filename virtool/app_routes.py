@@ -13,7 +13,7 @@ import virtool.api.history
 import virtool.api.hmm
 import virtool.api.indexes
 import virtool.api.jobs
-import virtool.api.kinds
+import virtool.api.otus
 import virtool.api.processes
 import virtool.api.references
 import virtool.api.root
@@ -78,7 +78,7 @@ def setup_routes(app):
         r"/home{suffix:.*}",
         r"/hmm{suffix:.*}",
         r"/jobs{suffix:.*}",
-        r"/kinds{suffix:.*}",
+        r"/otus{suffix:.*}",
         r"/refs{suffix:.*}",
         r"/samples{suffix:.*}",
         r"/subtraction{suffix:.*}"
@@ -100,7 +100,7 @@ def setup_routes(app):
     app.router.add_routes(virtool.api.hmm.routes)
     app.router.add_routes(virtool.api.indexes.routes)
     app.router.add_routes(virtool.api.jobs.routes)
-    app.router.add_routes(virtool.api.kinds.routes)
+    app.router.add_routes(virtool.api.otus.routes)
     app.router.add_routes(virtool.api.processes.routes)
     app.router.add_routes(virtool.api.references.routes)
     app.router.add_routes(virtool.api.root.routes)

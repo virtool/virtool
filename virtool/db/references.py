@@ -4,11 +4,11 @@ import pymongo
 from pymongo import InsertOne
 
 import virtool.db.history
-import virtool.db.kinds
+import virtool.db.otus
 import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
-import virtool.kinds
+import virtool.otus
 import virtool.processes
 import virtool.references
 import virtool.utils
@@ -38,14 +38,14 @@ async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
         "ref.id": ref_id
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_kinds")
+    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_otus")
 
-    kind_count = db.kinds.count({"ref.id": ref_id})
+    otu_count = db.otus.count({"ref.id": ref_id})
 
-    progress_tracker = virtool.processes.ProgressTracker(kind_count, factor=0.5, increment=0.03)
+    progress_tracker = virtool.processes.ProgressTracker(otu_count, factor=0.5, increment=0.03)
 
-    async for document in db.kinds.find({"ref.id": ref_id}):
-        await virtool.db.kinds.remove(
+    async for document in db.otus.find({"ref.id": ref_id}):
+        await virtool.db.otus.remove(
             db,
             dispatch,
             document["_id"],
@@ -120,12 +120,12 @@ async def get_latest_build(db, ref_id):
 
 async def get_internal_control(db, internal_control_id):
     """
-    Return a minimal dict describing the ref internal control given a `kind_id`.
+    Return a minimal dict describing the ref internal control given a `otu_id`.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param internal_control_id: the id of the kind to create a minimal dict for
+    :param internal_control_id: the id of the otu to create a minimal dict for
     :type internal_control_id: str
 
     :return: a minimal dict describing the ref internal control
@@ -135,49 +135,49 @@ async def get_internal_control(db, internal_control_id):
     if internal_control_id is None:
         return None
 
-    name = await virtool.db.utils.get_one_field(db.kinds, "name", internal_control_id)
+    name = await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
 
     if name is None:
         return None
 
     return {
         "id": internal_control_id,
-        "name": await virtool.db.utils.get_one_field(db.kinds, "name", internal_control_id)
+        "name": await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
     }
 
 
-async def check_import_abbreviation(db, kind_document, lower_name=None):
+async def check_import_abbreviation(db, otu_document, lower_name=None):
     """
-    Check if the abbreviation for a kind document to be imported already exists in the database. If the abbreviation
-    exists, set the ``abbreviation`` field in the kind document to an empty string and return warning text to
+    Check if the abbreviation for a otu document to be imported already exists in the database. If the abbreviation
+    exists, set the ``abbreviation`` field in the otu document to an empty string and return warning text to
     send to the client.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param kind_document: the kind document that is being imported
-    :type kind_document: dict
+    :param otu_document: the otu document that is being imported
+    :type otu_document: dict
 
-    :param lower_name: the name of the kind coerced to lowercase
+    :param lower_name: the name of the otu coerced to lowercase
     :type lower_name: str
 
     """
-    lower_name = lower_name or kind_document["name"].lower()
+    lower_name = lower_name or otu_document["name"].lower()
 
     # Check if abbreviation exists already.
-    kind_with_abbreviation = None
+    otu_with_abbreviation = None
 
     # Don't count empty strings as duplicate abbreviations!
-    if kind_document["abbreviation"]:
-        kind_with_abbreviation = await db.kinds.find_one({"abbreviation": kind_document["abbreviation"]})
+    if otu_document["abbreviation"]:
+        otu_with_abbreviation = await db.otus.find_one({"abbreviation": otu_document["abbreviation"]})
 
-    if kind_with_abbreviation and kind_with_abbreviation["lower_name"] != lower_name:
-        # Remove the imported kind's abbreviation because it is already assigned to an existing kind.
-        kind_document["abbreviation"] = ""
+    if otu_with_abbreviation and otu_with_abbreviation["lower_name"] != lower_name:
+        # Remove the imported otu's abbreviation because it is already assigned to an existing otu.
+        otu_document["abbreviation"] = ""
 
         # Record a message for the user.
         return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-            kind_with_abbreviation["abbreviation"], kind_with_abbreviation["name"], kind_document["name"]
+            otu_with_abbreviation["abbreviation"], otu_with_abbreviation["name"], otu_document["name"]
         )
 
     return None
@@ -202,7 +202,7 @@ async def clone(db, name, clone_from, description, public, user_id):
         "id": clone_from
     }
 
-    await clone_kinds(
+    await clone_otus(
         db,
         clone_from,
         source["name"],
@@ -213,30 +213,30 @@ async def clone(db, name, clone_from, description, public, user_id):
     return document
 
 
-async def clone_kinds(db, source_id, source_ref_name, ref_id, user_id):
-    kind_requests = list()
+async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
+    otu_requests = list()
     sequence_requests = list()
 
-    excluded_kind_ids = list()
+    excluded_otu_ids = list()
     excluded_isolate_ids = list()
     excluded_sequence_ids = list()
 
-    async for kind in db.kinds.find({"ref.id": source_id}):
+    async for otu in db.otus.find({"ref.id": source_id}):
 
-        new_kind_id = await virtool.db.utils.get_new_id(db.kinds, excluded=excluded_kind_ids)
+        new_otu_id = await virtool.db.utils.get_new_id(db.otus, excluded=excluded_otu_ids)
 
         sequences = list()
 
-        for isolate in kind["isolates"]:
+        for isolate in otu["isolates"]:
 
-            new_isolate_id = await virtool.db.kinds.get_new_isolate_id(db, excluded_isolate_ids)
+            new_isolate_id = await virtool.db.otus.get_new_isolate_id(db, excluded_isolate_ids)
 
-            async for sequence in await db.sequences.find({"kind_id": kind["_id"], "isolate_id": isolate["id"]}):
+            async for sequence in await db.sequences.find({"otu_id": otu["_id"], "isolate_id": isolate["id"]}):
                 new_sequence_id = await virtool.db.utils.get_new_id(db.sequences, excluded=excluded_sequence_ids)
 
                 sequence.update({
                     "_id": new_sequence_id,
-                    "kind_id": new_kind_id,
+                    "otu_id": new_otu_id,
                     "isolate_id": new_isolate_id
                 })
 
@@ -248,17 +248,17 @@ async def clone_kinds(db, source_id, source_ref_name, ref_id, user_id):
 
             excluded_isolate_ids.append(new_isolate_id)
 
-        kind.update({
-            "_id": new_kind_id,
+        otu.update({
+            "_id": new_otu_id,
             "created_at": virtool.utils.timestamp(),
             "ref": {
                 "id": ref_id
             }
         })
 
-        kind_requests.append(InsertOne(kind))
+        otu_requests.append(InsertOne(otu))
 
-        excluded_kind_ids.append(new_kind_id)
+        excluded_otu_ids.append(new_otu_id)
 
         sequence_requests += [InsertOne(s) for s in sequences]
 
@@ -266,12 +266,12 @@ async def clone_kinds(db, source_id, source_ref_name, ref_id, user_id):
             db,
             "clone",
             None,
-            virtool.kinds.merge_kind(kind, sequences),
+            virtool.otus.merge_otu(otu, sequences),
             "Clone from {} ({})".format(source_ref_name, source_id),
             user_id
         )
 
-    await db.kinds.bulk_write(kind_requests)
+    await db.otus.bulk_write(otu_requests)
     await db.sequences.bulk_write(sequence_requests)
 
 
@@ -281,7 +281,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
     if await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.db.utils.get_new_id(db.kinds)
+    ref_id = ref_id or await virtool.db.utils.get_new_id(db.otus)
 
     user = None
 
@@ -322,7 +322,7 @@ async def create_original(db):
             "id": user.pop("_id"),
             "build_index": permissions.get("modify_virus", False),
             "modify": user["administrator"],
-            "modify_kind": permissions.get("modify_virus", False)
+            "modify_otu": permissions.get("modify_virus", False)
         })
 
     document = await create_document(
@@ -416,9 +416,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, dispatch, process_id, 0.1, "validate_documents")
 
-    kinds = import_data["data"]
+    otus = import_data["data"]
 
-    duplicates = virtool.references.detect_duplicates(kinds)
+    duplicates = virtool.references.detect_duplicates(otus)
 
     if duplicates:
         errors = [
@@ -433,24 +433,24 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, dispatch, process_id, 0.2, "import_documents")
 
-    progress_tracker = virtool.processes.ProgressTracker(len(kinds), factor=0.4)
+    progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
-    used_kind_ids = set(await db.history.distinct("kind.id"))
+    used_otu_ids = set(await db.history.distinct("otu.id"))
     used_isolate_ids = set()
     used_sequence_ids = set()
 
-    for kind in kinds:
+    for otu in otus:
 
-        issues = virtool.kinds.verify(kind)
+        issues = virtool.otus.verify(otu)
 
-        kind_id = await virtool.db.utils.get_new_id(db.kinds, excluded=used_kind_ids)
+        otu_id = await virtool.db.utils.get_new_id(db.otus, excluded=used_otu_ids)
 
-        used_kind_ids.add(kind_id)
+        used_otu_ids.add(otu_id)
 
-        kind.update({
-            "_id": kind_id,
+        otu.update({
+            "_id": otu_id,
             "created_at": created_at,
-            "lower_name": kind["name"].lower(),
+            "lower_name": otu["name"].lower(),
             "last_indexed_version": None,
             "issues": issues,
             "verified": issues is None,
@@ -464,8 +464,8 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             }
         })
 
-        for isolate in kind["isolates"]:
-            isolate_id = await virtool.db.kinds.get_new_isolate_id(db, excluded=used_isolate_ids)
+        for isolate in otu["isolates"]:
+            isolate_id = await virtool.db.otus.get_new_isolate_id(db, excluded=used_isolate_ids)
 
             isolate["id"] = isolate_id
 
@@ -476,7 +476,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
                 sequence.update({
                     "_id": sequence_id,
-                    "kind_id": kind_id,
+                    "otu_id": otu_id,
                     "isolate_id": isolate_id,
                     "ref": {
                         "id": ref_id
@@ -485,7 +485,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
                 await db.sequences.insert_one(sequence)
 
-        await db.kinds.insert_one(kind)
+        await db.otus.insert_one(otu)
 
         progress = progress_tracker.add(1)
 
@@ -494,13 +494,13 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, dispatch, process_id, 0.6, "create_history")
 
-    progress_tracker = virtool.processes.ProgressTracker(len(kinds), factor=0.4)
+    progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
-    for kind in kinds:
-        # Join the kind document into a complete kind record. This will be used for recording history.
-        joined = await virtool.db.kinds.join(db, kind["_id"])
+    for otu in otus:
+        # Join the otu document into a complete otu record. This will be used for recording history.
+        joined = await virtool.db.otus.join(db, otu["_id"])
 
-        # Build a ``description`` field for the kind creation change document.
+        # Build a ``description`` field for the otu creation change document.
         description = "Imported {}".format(joined["name"])
 
         abbreviation = joined.get("abbreviation", None)

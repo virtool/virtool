@@ -40,9 +40,9 @@ async def get(req):
 
     document["contributors"] = await virtool.db.indexes.get_contributors(db, document["id"])
 
-    document["kinds"] = await virtool.db.indexes.get_kinds(db, document["id"])
+    document["otus"] = await virtool.db.indexes.get_otus(db, document["id"])
 
-    document["change_count"] = sum(v["change_count"] for v in document["kinds"])
+    document["change_count"] = sum(v["change_count"] for v in document["otus"])
 
     return json_response(document)
 
@@ -50,8 +50,8 @@ async def get(req):
 @routes.post("/api/refs/{ref_id}/indexes")
 async def create(req):
     """
-    Starts a job to rebuild the kinds Bowtie2 index on disk. Does a check to make sure there are no unverified
-    kinds in the collection and updates kind history to show the version and id of the new index.
+    Starts a job to rebuild the otus Bowtie2 index on disk. Does a check to make sure there are no unverified
+    otus in the collection and updates otu history to show the version and id of the new index.
 
     """
     db = req.app["db"]
@@ -61,8 +61,8 @@ async def create(req):
     if await db.indexes.count({"ref.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.kinds.count({"ref.id": ref_id, "verified": False}):
-        return conflict("There are unverified kinds")
+    if await db.otus.count({"ref.id": ref_id, "verified": False}):
+        return conflict("There are unverified otus")
 
     if not await db.history.count({"ref.id": ref_id, "index.id": "unbuilt"}):
         return conflict("There are no unbuilt changes")
@@ -145,13 +145,13 @@ async def find_history(req):
     }
 
     if term:
-        db_query.update(compose_regex_query(term, ["kind.name", "user.id"]))
+        db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
 
     data = await paginate(
         db.history,
         db_query,
         req.query,
-        sort=[("kind.name", 1), ("kind.version", -1)],
+        sort=[("otu.name", 1), ("otu.version", -1)],
         projection=virtool.db.history.LIST_PROJECTION,
         reverse=True
     )

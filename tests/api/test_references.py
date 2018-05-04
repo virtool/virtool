@@ -26,7 +26,7 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
             "build": True,
             "id": "test",
             "modify": True,
-            "modify_kind": True,
+            "modify_otu": True,
             "remove": True
         }],
         contributors=[],

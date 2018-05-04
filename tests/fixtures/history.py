@@ -24,7 +24,7 @@ def test_change(static_time):
         "user": {
             "id": "test"
         },
-        "kind": {
+        "otu": {
             "id": "6116cba1",
             "name": "Prunus virus F",
             "version": 1
@@ -42,9 +42,9 @@ def test_changes(test_change):
 
 
 @pytest.fixture
-def test_kind_edit():
+def test_otu_edit():
     """
-    An :class:`tuple` containing old and new kind documents for testing history diffing.
+    An :class:`tuple` containing old and new otu documents for testing history diffing.
 
     """
     return (
@@ -143,7 +143,7 @@ def create_mock_history(test_motor):
                                     "host": "sweet cherry",
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "kind_id": "6116cba1",
+                                    "otu_id": "6116cba1",
                                     "segment": None
                                 }
                             ]
@@ -170,7 +170,7 @@ def create_mock_history(test_motor):
                 "ref": {
                     "id": "hxn167"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 0
@@ -195,7 +195,7 @@ def create_mock_history(test_motor):
                 "ref": {
                     "id": "hxn167"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -220,7 +220,7 @@ def create_mock_history(test_motor):
                 "ref": {
                     "id": "hxn167"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 2
@@ -242,7 +242,7 @@ def create_mock_history(test_motor):
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "kind_id": "6116cba1",
+                            "otu_id": "6116cba1",
                             "segment": None
                         }],
                         "source_name": "8816-v2",
@@ -259,7 +259,7 @@ def create_mock_history(test_motor):
                 "ref": {
                     "id": "hxn167"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": 3
@@ -267,7 +267,7 @@ def create_mock_history(test_motor):
             }
         ]
 
-        kind = None
+        otu = None
 
         if remove:
             documents.append({
@@ -300,14 +300,14 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "kind": {
+                "otu": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": "removed"
                 }
             })
         else:
-            kind = {
+            otu = {
                 "_id": "6116cba1",
                 "abbreviation": "TST",
                 "imported": True,
@@ -323,10 +323,10 @@ def create_mock_history(test_motor):
                 "schema": [],
             }
 
-            await test_motor.kinds.insert_one(kind)
+            await test_motor.otus.insert_one(otu)
 
         await test_motor.history.insert_many(documents)
 
-        return kind
+        return otu
 
     return func
