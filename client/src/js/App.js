@@ -22,7 +22,7 @@ const Inner = (props) => {
     if (props.ready) {
         return (
             <div>
-                <Helmet titleTemplate="Virtool - %s" defaultTitle="Virtool" />
+                <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
 
                 <NavBar />
 

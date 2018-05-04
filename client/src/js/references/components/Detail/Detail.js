@@ -1,5 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
+import Helmet from "react-helmet";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
@@ -30,6 +31,9 @@ class ReferenceDetail extends React.Component {
 
         return (
             <div>
+                <Helmet>
+                    <title>{`${name} - References`}</title>
+                </Helmet>
                 <h3 className="view-header">
                     <strong>{name}</strong>
                 </h3>
