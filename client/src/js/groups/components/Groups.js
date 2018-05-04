@@ -7,7 +7,7 @@ import { push } from "react-router-redux";
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
 import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
-import {routerLocationHasState} from "../../utils";
+import { routerLocationHasState } from "../../utils";
 
 class Group extends React.Component {
 
@@ -188,7 +188,7 @@ class Groups extends React.Component {
                         key={key}
                         onClick={() => this.props.onSetPermission(activeGroup.id, key, !value)}
                     >
-                        <code>{key}</code> <Icon name={`checkbox-${value ? "checked" : "unchecked"}`} pullRight />
+                        <code>{key}</code> <Icon faStyle="far" name={value ? "check-square" : "square"} pullRight />
                     </ListGroupItem>
                 );
 
@@ -228,11 +228,9 @@ class Groups extends React.Component {
                         <Col md={7}>
                             <Panel>
                                 <Panel.Heading>Permissions</Panel.Heading>
-                                <Panel.Body>
-                                    <ListGroup style={{marginBottom: "10px"}}>
-                                        {permissionComponents}
-                                    </ListGroup>
-                                </Panel.Body>
+                                <ListGroup>
+                                    {permissionComponents}
+                                </ListGroup>
                             </Panel>
 
                             <Panel>

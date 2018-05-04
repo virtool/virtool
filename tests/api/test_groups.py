@@ -155,7 +155,9 @@ class TestUpdatePermissions:
         })
 
         resp = await client.patch("/api/groups/test", data={
-            "create_sample": True
+            "permissions": {
+                "create_sample": True
+            }
         })
 
         assert resp.status == 200
@@ -185,11 +187,13 @@ class TestUpdatePermissions:
         })
 
         resp = await client.patch("/api/groups/test", data={
-            "foo_bar": True
+            "permissions": {
+                "foo_bar": True
+            }
         })
 
         assert await resp_is.invalid_input(resp, {
-            "foo_bar": ["unknown field"]
+            "permissions": ["Keys must be valid permissions"]
         })
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -200,7 +204,9 @@ class TestUpdatePermissions:
         client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
 
         resp = await client.patch("/api/groups/test", data={
-            "create_sample": True
+            "permissions": {
+                "create_sample": True
+            }
         })
 
         assert await resp_is.not_found(resp)

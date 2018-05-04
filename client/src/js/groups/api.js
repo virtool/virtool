@@ -9,13 +9,14 @@ export const create = ({ groupId }) => (
         .send({group_id: groupId})
 );
 
-export const setPermission = ({ groupId, permission, value }) => {
-    const update = {};
-    update[permission] = value;
-
-    return Request.patch(`/api/groups/${groupId}`)
-        .send(update);
-};
+export const setPermission = ({ groupId, permission, value }) => (
+    Request.patch(`/api/groups/${groupId}`)
+        .send({
+            permissions: {
+                [permission]: value
+            }
+        })
+);
 
 export const remove = ({ groupId }) => (
     Request.delete(`/api/groups/${groupId}`)

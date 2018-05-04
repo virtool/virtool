@@ -6,6 +6,7 @@ import virtool.db.users
 import virtool.http.routes
 import virtool.users
 import virtool.utils
+import virtool.validators
 from virtool.api.utils import conflict, json_response, not_found, no_content
 
 routes = virtool.http.routes.Routes()
@@ -68,14 +69,19 @@ async def get(req):
 
 
 @routes.patch("/api/groups/{group_id}", admin=True, schema={
-    key: {"type": "boolean"} for key in virtool.users.PERMISSIONS
+    "permissions": {
+        "type": "dict",
+        "default": {},
+        "validator": virtool.validators.is_permission_dict
+    }
 })
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     group_id = req.match_info["group_id"]
 
@@ -84,7 +90,7 @@ async def update_permissions(req):
     if not old_document:
         return not_found()
 
-    old_document["permissions"].update(data)
+    old_document["permissions"].update(data["permissions"])
 
     # Get the current permissions dict for the passed group id.
     document = await db.groups.find_one_and_update({"_id": group_id}, {
