@@ -1,11 +1,39 @@
 import React from "react";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
-import { Table } from "react-bootstrap";
+import { map, sortBy } from "lodash-es";
+import { Table, Row, Badge, ListGroup } from "react-bootstrap";
 
 import RemoveReference from "./RemoveReference";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon, Flex, FlexItem, RelativeTime } from "../../../base";
+import { LoadingPlaceholder, Icon, Flex, FlexItem, RelativeTime, ListGroupItem } from "../../../base";
+
+const ContributorTable = ({ contributors }) => {
+
+    const sorted = sortBy(contributors, ["id", "count"]);
+
+    let components;
+    
+    if (contributors.length) {
+        components = map(sorted, entry =>
+            <ListGroupItem key={entry.id}>
+                {entry.id} <Badge>{entry.count}</Badge>
+            </ListGroupItem>
+        );
+    } else {
+        components = (
+            <ListGroupItem>
+                None <Badge>0</Badge>
+            </ListGroupItem>
+        );
+    }
+
+    return (
+        <ListGroup style={{maxHeight: 210, overflowY: "auto"}}>
+            {components}
+        </ListGroup>
+    );
+};
 
 class ReferenceDetail extends React.Component {
 
@@ -101,12 +129,15 @@ class ReferenceDetail extends React.Component {
                             <th>Public</th>
                             <td>{`${this.props.detail.public}`}</td>
                         </tr>
-                        <tr>
-                            <th>Contributors</th>
-                            <td>{contributors.id || "none"}</td>
-                        </tr>
                     </tbody>
                 </Table>
+
+                <Row>
+                    <h5>
+                        <strong>Contributors</strong>
+                    </h5>
+                    <ContributorTable contributors={contributors} />
+                </Row>
 
                 <RemoveReference id={id} />
             </div>
