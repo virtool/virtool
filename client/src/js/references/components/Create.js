@@ -171,7 +171,6 @@ const mapDispatchToProps = dispatch => ({
 
     onSubmit: (name, description, dataType, organism, isPublic) => {
         dispatch(createReference(name, description, dataType, organism, isPublic));
-        //dispatch(listReferences());
     },
 
     onHide: ({ location }) => {
