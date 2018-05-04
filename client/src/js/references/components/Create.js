@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 import { map, upperFirst } from "lodash-es";
 
-import { createReference, listReferences } from "../actions";
+import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { InputError, Button, Checkbox } from "../../base";
 import { routerLocationHasState } from "../../utils";
@@ -171,7 +171,6 @@ const mapDispatchToProps = dispatch => ({
 
     onSubmit: (name, description, dataType, organism, isPublic) => {
         dispatch(createReference(name, description, dataType, organism, isPublic));
-        dispatch(listReferences());
     },
 
     onHide: ({ location }) => {

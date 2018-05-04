@@ -1,5 +1,5 @@
 import { LOCATION_CHANGE } from "react-router-redux";
-import { takeLatest, throttle } from "redux-saga/effects";
+import { takeLatest, throttle, put } from "redux-saga/effects";
 
 import * as referenceAPI from "./api";
 import { apiCall, apiFind } from "../sagaUtils";
@@ -15,11 +15,11 @@ export function* getReference (action) {
 
 export function* createReference (action) {
     yield apiCall(referenceAPI.create, action, CREATE_REFERENCE);
+    yield put({type: LIST_REFERENCES.REQUESTED});
 }
 
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
-    yield takeLatest(LIST_REFERENCES.REQUESTED, listReferences);
     yield throttle(300, LOCATION_CHANGE, listReferences);
 }
