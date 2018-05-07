@@ -19,7 +19,7 @@ class RemoveOTU extends React.Component {
                     Remove OTU
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to remove <strong>{this.props.OTUName}</strong>?
+                    Are you sure you want to remove <strong>{this.props.otuName}</strong>?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button
@@ -39,7 +39,7 @@ RemoveOTU.propTypes = {
     history: PropTypes.object,
     show: PropTypes.bool,
     otuId: PropTypes.string,
-    OTUName: PropTypes.string,
+    otuName: PropTypes.string,
     onHide: PropTypes.func,
     onConfirm: PropTypes.func
 };

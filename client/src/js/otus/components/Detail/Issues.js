@@ -18,7 +18,7 @@ const OTUIssues = (props) => {
     const errors = [];
 
     // The OTU has no isolates associated with it.
-    if (props.issues.empty_OTU) {
+    if (props.issues.empty.otu) {
         errors.push(
             <li key="emptyOTU">
                 There are no isolates associated with this OTU

@@ -136,7 +136,7 @@ class OTUImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "otuImport"),
+    show: routerLocationHasState(state, "importOTUs"),
     importData: state.otus.importData
 });
 
@@ -151,7 +151,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {importotus: false}}));
+        dispatch(push({...window.location, state: {importOTUs: false}}));
     }
 
 });

@@ -32,7 +32,7 @@ export const PageHint = ({ page, count, totalCount, perPage = 15, pullRight = tr
 };
 
 /**
- * A reusable header shown at the top of views that browse through paged items. For example, the state.otu browser
+ * A reusable header shown at the top of views that browse through paged items. For example, the OTU browser
  * contains a ``<ViewHeader />`` component with the title 'OTUs', a badge showing the total OTU count and a
  * <PageHint /> sub-component showing the position in pagination.
  *

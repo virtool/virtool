@@ -106,9 +106,9 @@ export function* removeSequence (action) {
 export function* revert (action) {
     try {
         yield otusAPI.revert(action);
-        const OTUResponse = yield otusAPI.get(action);
+        const otuResponse = yield otusAPI.get(action);
         const historyResponse = yield otusAPI.getHistory(action);
-        yield put({type: REVERT.SUCCEEDED, data: OTUResponse.body, history: historyResponse.body});
+        yield put({type: REVERT.SUCCEEDED, data: otuResponse.body, history: historyResponse.body});
     } catch (error) {
         yield put({type: REVERT.FAILED, error});
     }

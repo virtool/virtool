@@ -60,7 +60,7 @@ const getMethodIcon = (change) => {
 export class Change extends React.Component {
 
     handleRevert = () => {
-        this.props.revert(this.props.OTU.id, this.props.OTU.version);
+        this.props.revert(this.props.otu.id, this.props.otu.version);
     };
 
     render () {
@@ -82,7 +82,7 @@ export class Change extends React.Component {
             <ListGroupItem>
                 <Row>
                     <Col md={1}>
-                        <Label>{this.props.OTU.version}</Label>
+                        <Label>{this.props.otu.version}</Label>
                     </Col>
                     <Col md={6}>
                         <Flex alignItems="center">
@@ -108,7 +108,7 @@ export class HistoryList extends React.Component {
 
     render () {
 
-        const changes = reverse(sortBy(this.props.history, "OTU.version"));
+        const changes = reverse(sortBy(this.props.history, "otu.version"));
 
         const changeComponents = map(changes, (change, index) =>
             <Change

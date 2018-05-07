@@ -136,7 +136,7 @@ class OTUImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "OTUImport"),
+    show: routerLocationHasState(state, "importOTUs"),
     importData: state.otus.importData
 });
 

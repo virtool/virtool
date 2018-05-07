@@ -52,7 +52,7 @@ const OTUsList = (props) => {
         OTUComponents = (
             <ListGroupItem key="noOTUs" className="text-center">
                 <span>
-                    <Icon name="info" /> No OTUs found. <Link to={{state: {OTUImport: true}}}>Import</Link> or
+                    <Icon name="info" /> No OTUs found. <Link to={{state: {importOTUs: true}}}>Import</Link> or
                 </span>
                 <span> <Link to={{state: {createOTU: true}}}>Create</Link> some</span>
             </ListGroupItem>

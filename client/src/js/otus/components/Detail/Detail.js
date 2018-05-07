@@ -120,7 +120,7 @@ class OTUDetail extends React.Component {
                 </Nav>
 
                 <EditOTU otuId={otuId} name={name} abbreviation={abbreviation} />
-                <RemoveOTU otuId={otuId} OTUName={name} history={this.props.history} />
+                <RemoveOTU otuId={otuId} otuName={name} history={this.props.history} />
 
                 <Switch>
                     <Redirect from="/otus/:otuId" to={`/otus/${otuId}/otu`} exact />
