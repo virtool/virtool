@@ -29,7 +29,7 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
 
     for key, value in [("names", names), ("verified", verified)]:
         if value is not None:
-            params[key] = "true" if value else "false"
+            params[key] = str(value)
 
     resp = await client.get("/api/otus", params=params)
 
@@ -52,7 +52,7 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
     Test that a valid request returns a complete otu document.
 
     """
-    client = await spawn_client(author)
+    client = await spawn_client(authorize=True)
 
     if exists:
         await client.db.otus.insert_one(test_otu)
@@ -91,10 +91,12 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
                     ]
                 }
             ],
-            "issues": None
+            "issues": None,
+            "ref": {
+                "id": "hxn167"
+            }
         }
     else:
-        print(await resp.json())
         assert await resp_is.not_found(resp)
 
 
