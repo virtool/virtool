@@ -13,7 +13,7 @@ export default class IndexEntry extends React.PureComponent {
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
         modification_count: PropTypes.number,
-        modified_OTU_count: PropTypes.number
+        modified_otu_count: PropTypes.number
     };
 
     render () {
@@ -53,14 +53,14 @@ export default class IndexEntry extends React.PureComponent {
             if (this.props.modification_count > 0) {
                 changeDescription = (
                     <span>
-                        {this.props.modification_count} changes made in {this.props.modified_OTU_count} OTUs
+                        {this.props.modification_count} changes made in {this.props.modified_otu_count} OTUs
                     </span>
                 );
             }
         }
 
         return (
-            <LinkContainer to={`/OTUs/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/otus/indexes/${this.props.version}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>
