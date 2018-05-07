@@ -23,7 +23,7 @@ class IndexesList extends React.Component {
 
         let content;
 
-        if (this.props.total_virus_count) {
+        if (this.props.total_otu_count) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -44,7 +44,7 @@ class IndexesList extends React.Component {
 
             let alert;
 
-            if (this.props.modified_virus_count) {
+            if (this.props.modified_otu_count) {
                 let button;
 
                 if (this.props.canRebuild) {
@@ -66,7 +66,7 @@ class IndexesList extends React.Component {
                                 <Flex alignItems="center">
                                     <Icon name="exclamation-circle" />
                                     <FlexItem pad={10}>
-                                        The virus reference database has changed and the index must be rebuilt before
+                                        The OTU reference database has changed and the index must be rebuilt before
                                         the new information will be included in future analyses.
                                     </FlexItem>
                                 </Flex>
@@ -91,7 +91,7 @@ class IndexesList extends React.Component {
         } else {
             content = (
                 <Alert bsStyle="warning" icon="warning">
-                    At least one virus must be added to the database before an index can be built.
+                    At least one OTU must be added to the database before an index can be built.
                 </Alert>
             );
         }
@@ -99,7 +99,7 @@ class IndexesList extends React.Component {
         return (
             <div>
                 <ViewHeader
-                    title="Virus Indexes"
+                    title="OTU Indexes"
                     page={this.props.page}
                     count={this.props.documents.length}
                     foundCount={this.props.found_count}

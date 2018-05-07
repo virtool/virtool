@@ -11,11 +11,11 @@ export default function RebuildHistory ({ unbuilt, error }) {
     if (unbuilt === null) {
         content = <LoadingPlaceholder margin="22px" />;
     } else {
-        const historyComponents = map(sortBy(unbuilt.history, "virus.name"), change =>
+        const historyComponents = map(sortBy(unbuilt.history, "otu.name"), change =>
             <ListGroupItem key={change.id}>
                 <Row>
                     <Col md={5}>
-                        <strong>{change.virus.name}</strong>
+                        <strong>{change.otu.name}</strong>
                     </Col>
                     <Col md={7}>
                         {change.description || "No Description"}

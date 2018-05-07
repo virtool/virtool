@@ -65,16 +65,16 @@ export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
 
-// Virus
-export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";
-export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
-export const FETCH_VIRUSES = "FETCH_VIRUSES";
-export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
-export const GET_VIRUS = createRequestActionType("GET_VIRUS");
-export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
-export const EDIT_VIRUS = createRequestActionType("EDIT_VIRUS");
-export const REMOVE_VIRUS = createRequestActionType("REMOVE_VIRUS");
-export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
+// OTU
+export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
+export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
+export const FETCH_OTUS = "FETCH_OTUS";
+export const FIND_OTUS = createRequestActionType("FIND_OTUS");
+export const GET_OTU = createRequestActionType("GET_OTU");
+export const CREATE_OTU = createRequestActionType("CREATE_OTU");
+export const EDIT_OTU = createRequestActionType("EDIT_OTU");
+export const REMOVE_OTU = createRequestActionType("REMOVE_OTU");
+export const GET_OTU_HISTORY = createRequestActionType("GET_OTU_HISTORY");
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
 export const SET_ISOLATE_AS_DEFAULT = createRequestActionType("SET_ISOLATE_AS_DEFAULT");
@@ -87,15 +87,15 @@ export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
 export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
 export const SELECT_ISOLATE = "SELECT_ISOLATE";
 export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
-export const SHOW_EDIT_VIRUS = "SHOW_EDIT_VIRUS";
-export const SHOW_REMOVE_VIRUS = "SHOW_REMOVE_VIRUS";
+export const SHOW_EDIT_OTU = "SHOW_EDIT_OTU";
+export const SHOW_REMOVE_OTU = "SHOW_REMOVE_OTU";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
 export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";
 export const SHOW_REMOVE_ISOLATE = "SHOW_REMOVE_ISOLATE";
 export const SHOW_ADD_SEQUENCE = "SHOW_ADD_SEQUENCE";
 export const SHOW_EDIT_SEQUENCE = "SHOW_EDIT_SEQUENCE";
 export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
-export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
+export const HIDE_OTU_MODAL = "HIDE_OTU_MODAL";
 
 // HMMs
 export const FETCH_HMMS = "FETCH_HMMS";

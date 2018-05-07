@@ -13,7 +13,7 @@ export default class IndexEntry extends React.PureComponent {
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
         modification_count: PropTypes.number,
-        modified_virus_count: PropTypes.number
+        modified_otu_count: PropTypes.number
     };
 
     render () {
@@ -48,19 +48,19 @@ export default class IndexEntry extends React.PureComponent {
             // because the rebuild button is not shown if no changes have been made.
             changeDescription = "No changes";
 
-            // This should always test true in practice. Shows the number of changes and the number of viruses
+            // This should always test true in practice. Shows the number of changes and the number of OTUs
             // affected.
             if (this.props.modification_count > 0) {
                 changeDescription = (
                     <span>
-                        {this.props.modification_count} changes made in {this.props.modified_virus_count} viruses
+                        {this.props.modification_count} changes made in {this.props.modified_otu_count} OTUs
                     </span>
                 );
             }
         }
 
         return (
-            <LinkContainer to={`/viruses/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/otus/indexes/${this.props.version}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>

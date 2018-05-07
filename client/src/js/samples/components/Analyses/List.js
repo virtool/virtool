@@ -70,8 +70,8 @@ class AnalysesList extends React.Component {
         if (this.props.modifiedCount) {
             alertMessage = (
                 <div>
-                    <span>Note: The virus database has changed. </span>
-                    <Link to="/viruses/indexes">Rebuild the index</Link>
+                    <span>Note: The OTU database has changed. </span>
+                    <Link to="/otus/indexes">Rebuild the index</Link>
                     <span> to use the latest changes.</span>
                 </div>
             );
@@ -84,7 +84,7 @@ class AnalysesList extends React.Component {
                 alertMessage = (
                     <div>
                         <span>
-                            A virus database index build is in progress.
+                            A OTU database index build is in progress.
                         </span>
                     </div>
                 );
@@ -94,8 +94,8 @@ class AnalysesList extends React.Component {
         } else {
             alertMessage = (
                 <div>
-                    <span>A virus database is not found. </span>
-                    <Link to="/viruses/indexes">Add a database</Link>
+                    <span>A OTU database is not found. </span>
+                    <Link to="/otus/indexes">Add a database</Link>
                     <span> to use in analyses.</span>
                 </div>
             );
@@ -161,7 +161,7 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    modifiedCount: state.indexes.modified_virus_count,
+    modifiedCount: state.indexes.modified_otu_count,
     indexArray: state.indexes.documents,
     hmms: state.hmms,
     canModify: getCanModify(state)

@@ -14,7 +14,7 @@ import { find, map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
-import { editSequence, hideVirusModal } from "../../actions";
+import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, InputError } from "../../../base";
 import SequenceField from "./SequenceField";
@@ -87,7 +87,7 @@ class EditSequence extends React.Component {
         e.preventDefault();
 
         this.props.onSave(
-            this.props.virusId,
+            this.props.otuId,
             this.props.isolateId,
             this.props.sequenceId,
             this.state.definition,
@@ -201,21 +201,21 @@ class EditSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.viruses.detail,
-    isolate: state.viruses.activeIsolate,
-    sequenceId: state.viruses.editSequence,
-    virusId: state.viruses.detail.id,
+    detail: state.otus.detail,
+    isolate: state.otus.activeIsolate,
+    sequenceId: state.otus.editSequence,
+    otuId: state.otus.detail.id,
     error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(editSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
     onClearError: (error) => {

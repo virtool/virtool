@@ -5,7 +5,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
+const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -23,7 +23,7 @@ const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
             </div>
         </div>
 
-        <LinkContainer to="/viruses/indexes">
+        <LinkContainer to="/otus/indexes">
             <Button
                 icon="filing"
                 tip="Indexes"
@@ -32,14 +32,14 @@ const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
 
         <Button
             tip="Filter Unverified"
-            onClick={() => onFilter("/viruses?verified=false")}
+            onClick={() => onFilter("/otus?verified=false")}
             active={search === "?verified=false"}
         >
             <Icon name="filter" />
         </Button>
 
         {canModify ? (
-            <LinkContainer to={{...window.location, state: {createVirus: true}}} replace>
+            <LinkContainer to={{...window.location, state: {createOTU: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
@@ -49,7 +49,7 @@ const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
 );
 
 const mapStateToProps = (state) => ({
-    canModify: state.account.permissions.modify_virus,
+    canModify: state.account.permissions.modify_OTU,
     term: getFindTerm(),
     search: state.router.location.search
 });
@@ -64,7 +64,7 @@ const mapDispatchToProps = (dispatch) => ({
     onFilter: (url) => {
         const currentUrl = window.location.pathname + window.location.search;
         if (currentUrl === url) {
-            dispatch(push("/viruses"));
+            dispatch(push("/otus"));
         } else {
             dispatch(push(url));
         }
@@ -72,4 +72,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(VirusToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUToolbar);
