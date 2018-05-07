@@ -29,7 +29,7 @@ class IndexChanges extends React.Component {
             <ListGroupItem key={change.id} className="spaced">
                 <Row>
                     <Col xs={12} md={6}>
-                        <strong>{change.virus.name}</strong>
+                        <strong>{change.OTU.name}</strong>
                     </Col>
                     <Col xs={12} md={6}>
                         {change.description}

@@ -26,26 +26,26 @@ class IndexDetail extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>Virus Index {indexVersion}</strong>
+                    <strong>OTU Index {indexVersion}</strong>
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/viruses/indexes/${indexVersion}/general`}>
+                    <LinkContainer to={`/OTUs/indexes/${indexVersion}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/viruses/indexes/${indexVersion}/changes`}>
+                    <LinkContainer to={`/OTUs/indexes/${indexVersion}/changes`}>
                         <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
                     <Redirect
-                        from="/viruses/indexes/:indexVersion"
-                        to={`/viruses/indexes/${indexVersion}/general`}
+                        from="/OTUs/indexes/:indexVersion"
+                        to={`/OTUs/indexes/${indexVersion}/general`}
                         exact
                     />
-                    <Route path="/viruses/indexes/:indexVersion/general" component={IndexGeneral} />
-                    <Route path="/viruses/indexes/:indexVersion/changes" component={IndexChanges} />
+                    <Route path="/OTUs/indexes/:indexVersion/general" component={IndexGeneral} />
+                    <Route path="/OTUs/indexes/:indexVersion/changes" component={IndexChanges} />
                 </Switch>
             </div>
         );

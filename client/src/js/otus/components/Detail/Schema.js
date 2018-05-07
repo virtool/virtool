@@ -7,7 +7,7 @@ import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
-import { editVirus } from "../../actions";
+import { editOTU } from "../../actions";
 import { Button, NoneFound } from "../../../base";
 
 const getInitialState = (props) => ({
@@ -51,7 +51,7 @@ class Schema extends React.Component {
             this.setState({segArray: newArray});
 
             this.props.onSave(
-                this.props.virusId,
+                this.props.OTUId,
                 this.props.detail.name,
                 this.props.detail.abbreviation,
                 newArray
@@ -72,7 +72,7 @@ class Schema extends React.Component {
         });
 
         this.props.onSave(
-            this.props.virusId,
+            this.props.OTUId,
             this.props.detail.name,
             this.props.detail.abbreviation,
             newArray
@@ -176,14 +176,14 @@ class Schema extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    schema: state.viruses.detail.schema,
-    detail: state.viruses.detail,
-    virusId: state.viruses.detail.id
+    schema: state.OTUs.detail.schema,
+    detail: state.OTUs.detail,
+    OTUId: state.OTUs.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    onSave: (virusId, name, abbreviation, schema) => {
-        dispatch(editVirus(virusId, name, abbreviation, schema));
+    onSave: (OTUId, name, abbreviation, schema) => {
+        dispatch(editOTU(OTUId, name, abbreviation, schema));
     }
 });
 

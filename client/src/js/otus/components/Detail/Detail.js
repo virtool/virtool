@@ -7,35 +7,35 @@ import { Label, Nav, NavItem } from "react-bootstrap";
 
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
-import EditVirus from "./EditVirus";
+import EditOTU from "./EditOTU";
 import General from "./General";
 import History from "./History";
-import RemoveVirus from "./RemoveVirus";
+import RemoveOTU from "./RemoveOTU";
 import Schema from "./Schema";
-import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
+import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 
-const VirusSection = ({ match }) => (
+const OTUSection = ({ match }) => (
     <div>
         <General />
         <IsolateEditor />
-        <AddIsolate virusId={match.params.virusId} />
+        <AddIsolate OTUId={match.params.OTUId} />
     </div>
 );
 
-class VirusDetail extends React.Component {
+class OTUDetail extends React.Component {
 
     componentDidMount () {
-        this.props.getVirus(this.props.match.params.virusId);
+        this.props.getOTU(this.props.match.params.OTUId);
     }
 
     render = () => {
 
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.virusId) {
+        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.OTUId) {
             return <LoadingPlaceholder />;
         }
 
-        const virusId = this.props.detail.id;
+        const OTUId = this.props.detail.id;
 
         const { name, abbreviation } = this.props.detail;
 
@@ -99,19 +99,19 @@ class VirusDetail extends React.Component {
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/viruses/${virusId}/virus`}>
+                    <LinkContainer to={`/OTUs/${OTUId}/OTU`}>
                         <NavItem>
-                            Virus
+                            OTU
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/viruses/${virusId}/schema`}>
+                    <LinkContainer to={`/OTUs/${OTUId}/schema`}>
                         <NavItem>
                             Schema
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/viruses/${virusId}/history`}>
+                    <LinkContainer to={`/OTUs/${OTUId}/history`}>
                         <NavItem>
                             History
                         </NavItem>
@@ -119,14 +119,14 @@ class VirusDetail extends React.Component {
 
                 </Nav>
 
-                <EditVirus virusId={virusId} name={name} abbreviation={abbreviation} />
-                <RemoveVirus virusId={virusId} virusName={name} history={this.props.history} />
+                <EditOTU OTUId={OTUId} name={name} abbreviation={abbreviation} />
+                <RemoveOTU OTUId={OTUId} OTUName={name} history={this.props.history} />
 
                 <Switch>
-                    <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
-                    <Route path="/viruses/:virusId/virus" component={VirusSection} />
-                    <Route path="/viruses/:virusId/history" component={History} />
-                    <Route path="/viruses/:virusId/schema" component={Schema} />
+                    <Redirect from="/OTUs/:OTUId" to={`/OTUs/${OTUId}/OTU`} exact />
+                    <Route path="/OTUs/:OTUId/OTU" component={OTUSection} />
+                    <Route path="/OTUs/:OTUId/history" component={History} />
+                    <Route path="/OTUs/:OTUId/schema" component={Schema} />
                 </Switch>
             </div>
         );
@@ -134,24 +134,24 @@ class VirusDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.viruses.detail,
-    canModify: state.account.permissions.modify_virus
+    detail: state.OTUs.detail,
+    canModify: state.account.permissions.modify_OTU
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    getVirus: (virusId) => {
-        dispatch(getVirus(virusId));
+    getOTU: (OTUId) => {
+        dispatch(getOTU(OTUId));
     },
 
     showEdit: () => {
-        dispatch(showEditVirus());
+        dispatch(showEditOTU());
     },
 
     showRemove: () => {
-        dispatch(showRemoveVirus());
+        dispatch(showRemoveOTU());
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(VirusDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUDetail);

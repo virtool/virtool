@@ -57,7 +57,7 @@ class RebuildIndex extends React.Component {
                     <span className="input-error-message">{this.state.error}</span>
                     <br />
                     <span className="input-error-message">
-                        Please modify the unverified viruses before rebuilding the index
+                        Please modify the unverified OTUs before rebuilding the index
                     </span>
                 </div>
             )

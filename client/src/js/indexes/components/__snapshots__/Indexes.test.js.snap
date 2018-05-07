@@ -5,11 +5,11 @@ exports[`<Indexes /> renders correctly 1`] = `
   <Route
     component={[Function]}
     exact={true}
-    path="/viruses/indexes"
+    path="/OTUs/indexes"
   />
   <Route
     component={[Function]}
-    path="/viruses/indexes/:indexVersion"
+    path="/OTUs/indexes/:indexVersion"
   />
 </Switch>
 `;

@@ -6,8 +6,8 @@ import IndexDetail from "./Detail";
 
 const Indexes = () => (
     <Switch>
-        <Route path="/viruses/indexes" component={IndexesList} exact />
-        <Route path="/viruses/indexes/:indexVersion" component={IndexDetail} />
+        <Route path="/OTUs/indexes" component={IndexesList} exact />
+        <Route path="/OTUs/indexes/:indexVersion" component={IndexDetail} />
     </Switch>
 );
 

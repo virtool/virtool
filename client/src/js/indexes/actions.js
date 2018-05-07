@@ -2,7 +2,7 @@ import { simpleActionCreator } from "../utils";
 import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 
 /**
- * Returns action that can trigger an API call for getting available virus indexes.
+ * Returns action that can trigger an API call for getting available OTU indexes.
  *
  * @func
  * @returns {object}
@@ -10,7 +10,7 @@ import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY }
 export const findIndexes = simpleActionCreator(FIND_INDEXES.REQUESTED);
 
 /**
- * Returns action that can trigger an API call for getting specific virus index.
+ * Returns action that can trigger an API call for getting specific OTU index.
  *
  * @func
  * @param indexVersion {string} the version number of the index.
@@ -30,7 +30,7 @@ export const getIndex = (indexVersion) => ({
 export const getUnbuilt = simpleActionCreator(GET_UNBUILT.REQUESTED);
 
 /**
- * Returns action that can trigger an API call for creating a new virus index.
+ * Returns action that can trigger an API call for creating a new OTU index.
  *
  * @func
  * @returns {object}

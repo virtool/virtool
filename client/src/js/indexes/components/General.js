@@ -18,9 +18,9 @@ const PanelBadgeHeader = ({ title, count }) => (
     </Flex>
 );
 
-const IndexVirusEntry = ({ changeCount, id, name}) => (
+const IndexOTUEntry = ({ changeCount, id, name}) => (
     <ListGroupItem>
-        <Link to={`/viruses/${id}`}>
+        <Link to={`/OTUs/${id}`}>
             {name}
         </Link>
         <Badge>
@@ -37,12 +37,12 @@ const IndexGeneral = ({ detail }) => {
         </ListGroupItem>
     );
 
-    const viruses = map(detail.viruses, virus =>
-        <IndexVirusEntry
-            key={virus.id}
-            name={virus.name}
-            id={virus.id}
-            changeCount={virus.change_count}
+    const OTUs = map(detail.OTUs, OTU =>
+        <IndexOTUEntry
+            key={OTU.id}
+            name={OTU.name}
+            id={OTU.id}
+            changeCount={OTU.change_count}
         />
     );
 
@@ -82,11 +82,11 @@ const IndexGeneral = ({ detail }) => {
 
             <Panel>
                 <Panel.Heading>
-                    <PanelBadgeHeader title="Viruses" count={viruses.length} />
+                    <PanelBadgeHeader title="OTUs" count={OTUs.length} />
                 </Panel.Heading>
                 <Panel.Body>
                     <ListGroup>
-                        {viruses}
+                        {OTUs}
                     </ListGroup>
                 </Panel.Body>
             </Panel>

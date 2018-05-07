@@ -80,13 +80,13 @@ class IsolateSequences extends React.Component {
                 <AddSequence schema={this.state.schema} />
 
                 <EditSequence
-                    virusId={this.props.virusId}
+                    OTUId={this.props.OTUId}
                     isolateId={this.props.activeIsolateId}
                     schema={this.state.schema}
                 />
 
                 <RemoveSequence
-                    virusId={this.props.virusId}
+                    OTUId={this.props.OTUId}
                     isolateId={this.props.activeIsolateId}
                     isolateName={this.props.isolateName}
                     schema={this.state.schema}
@@ -100,11 +100,11 @@ const mapStateToProps = (state) => {
     let sequences = null;
     let activeIsolate = null;
 
-    const activeIsolateId = state.viruses.activeIsolateId;
-    const schema = state.viruses.detail.schema;
+    const activeIsolateId = state.OTUs.activeIsolateId;
+    const schema = state.OTUs.detail.schema;
 
-    if (state.viruses.detail.isolates.length) {
-        activeIsolate = find(state.viruses.detail.isolates, {id: activeIsolateId});
+    if (state.OTUs.detail.isolates.length) {
+        activeIsolate = find(state.OTUs.detail.isolates, {id: activeIsolateId});
         sequences = activeIsolate.sequences;
     }
 
@@ -112,13 +112,13 @@ const mapStateToProps = (state) => {
         activeIsolateId,
         sequences,
         schema,
-        virusId: state.viruses.detail.id,
-        canModify: state.account.permissions.modify_virus,
-        editing: state.viruses.editSequence,
+        OTUId: state.OTUs.detail.id,
+        canModify: state.account.permissions.modify_OTU,
+        editing: state.OTUs.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        showAddSequence: state.viruses.showAddSequence,
-        showEditSequence: state.viruses.showEditSequence,
-        showRemoveSequence: state.viruses.showRemoveSequence
+        showAddSequence: state.OTUs.showAddSequence,
+        showEditSequence: state.OTUs.showEditSequence,
+        showRemoveSequence: state.OTUs.showRemoveSequence
     };
 };
 

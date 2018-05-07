@@ -82,7 +82,7 @@ AddSegment.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-    schema: state.viruses.detail.schema
+    schema: state.OTUs.detail.schema
 });
 
 export default connect(mapStateToProps)(AddSegment);

@@ -7,13 +7,13 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Row, Col, ListGroup } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader } from "../../base";
-import VirusToolbar from "./Toolbar";
-import CreateVirus from "./Create";
-import VirusImport from "./Import";
+import OTUToolbar from "./Toolbar";
+import CreateOTU from "./Create";
+import OTUImport from "./Import";
 import { createFindURL } from "../../utils";
 
-const VirusItem = ({ abbreviation, id, name, modified, verified }) => (
-    <LinkContainer to={`/viruses/${id}`} key={id} className="spaced">
+const OTUItem = ({ abbreviation, id, name, modified, verified }) => (
+    <LinkContainer to={`/OTUs/${id}`} key={id} className="spaced">
         <ListGroupItem bsStyle={verified ? null : "warning"}>
             <Row>
                 <Col xs={11} md={7}>
@@ -30,31 +30,31 @@ const VirusItem = ({ abbreviation, id, name, modified, verified }) => (
                         {modified ? <Icon bsStyle="warning" name="flag" /> : null}
                     </span>
                 </Col>
-                {verified ? null : <Icon name="tag" pullRight tip="This virus is unverified" />}
+                {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
             </Row>
         </ListGroupItem>
     </LinkContainer>
 );
 
-const VirusesList = (props) => {
+const OTUsList = (props) => {
 
-    let virusComponents;
+    let OTUComponents;
 
     if (props.documents === null) {
         return <div />;
     }
 
-    const virusCount = props.documents.length;
+    const OTUCount = props.documents.length;
 
-    if (virusCount) {
-        virusComponents = map(props.documents, document => <VirusItem key={document.id} {...document} />);
+    if (OTUCount) {
+        OTUComponents = map(props.documents, document => <OTUItem key={document.id} {...document} />);
     } else {
-        virusComponents = (
-            <ListGroupItem key="noViruses" className="text-center">
+        OTUComponents = (
+            <ListGroupItem key="noOTUs" className="text-center">
                 <span>
-                    <Icon name="info" /> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or
+                    <Icon name="info" /> No OTUs found. <Link to={{state: {OTUImport: true}}}>Import</Link> or
                 </span>
-                <span> <Link to={{state: {createVirus: true}}}>Create</Link> some</span>
+                <span> <Link to={{state: {createOTU: true}}}>Create</Link> some</span>
             </ListGroupItem>
         );
     }
@@ -67,8 +67,8 @@ const VirusesList = (props) => {
                 <Flex alignItems="center">
                     <Icon name="info" />
                     <FlexItem pad={5}>
-                        <span>The virus database has changed. </span>
-                        <Link to="/viruses/indexes">Rebuild the index</Link>
+                        <span>The OTU database has changed. </span>
+                        <Link to="/OTUs/indexes">Rebuild the index</Link>
                         <span> to use the changes in further analyses.</span>
                     </FlexItem>
                 </Flex>
@@ -79,37 +79,37 @@ const VirusesList = (props) => {
     return (
         <div>
             <ViewHeader
-                title="Viruses"
+                title="OTUs"
                 page={props.page}
-                count={virusCount}
+                count={OTUCount}
                 foundCount={props.found_count}
                 totalCount={props.total_count}
             />
 
             {alert}
 
-            <VirusToolbar />
+            <OTUToolbar />
 
             <ListGroup>
-                {virusComponents}
+                {OTUComponents}
             </ListGroup>
 
             <Pagination
-                documentCount={virusCount}
+                documentCount={OTUCount}
                 onPage={props.onPage}
                 page={props.page}
                 pageCount={props.page_count}
             />
 
-            <CreateVirus {...props} />
+            <CreateOTU {...props} />
 
-            <VirusImport />
+            <OTUImport />
         </div>
     );
 };
 
 const mapStateToProps = state => ({
-    ...state.viruses,
+    ...state.OTUs,
     account: state.account
 });
 
@@ -121,8 +121,8 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onHide: () => {
-        dispatch(push({state: {createVirus: false}}));
+        dispatch(push({state: {createOTU: false}}));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(VirusesList);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUsList);

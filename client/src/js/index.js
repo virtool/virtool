@@ -20,6 +20,7 @@ import groupsReducer from "./groups/reducer";
 import hmmsReducer from "./hmm/reducer";
 import indexesReducer from "./indexes/reducer";
 import jobsReducer from "./jobs/reducer";
+import OTUsReducer from "./otus/reducer";
 import subtractionReducer from "./subtraction/reducer";
 import referencesReducer from "./references/reducer";
 import samplesReducer from "./samples/reducer";
@@ -67,6 +68,7 @@ const store = createStore(
         hmms: hmmsReducer,
         indexes: indexesReducer,
         jobs: jobsReducer,
+        OTUs: OTUsReducer,
         references: referencesReducer,
         router: routerReducer,
         samples: samplesReducer,

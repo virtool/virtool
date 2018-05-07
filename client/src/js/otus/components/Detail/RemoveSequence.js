@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { removeSequence, hideVirusModal } from "../../actions";
+import { removeSequence, hideOTUModal } from "../../actions";
 import { Button } from "../../../base";
 
 class RemoveSequence extends React.Component {
 
     handleConfirm = () => {
-        this.props.onConfirm(this.props.virusId, this.props.isolateId, this.props.sequenceId, this.props.onSuccess);
+        this.props.onConfirm(this.props.OTUId, this.props.isolateId, this.props.sequenceId, this.props.onSuccess);
     };
 
     render () {
@@ -37,7 +37,7 @@ class RemoveSequence extends React.Component {
 }
 
 RemoveSequence.propTypes = {
-    virusId: PropTypes.string,
+    OTUId: PropTypes.string,
     isolateId: PropTypes.string,
     isolateName: PropTypes.string,
     sequenceId: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
@@ -47,17 +47,17 @@ RemoveSequence.propTypes = {
 };
 
 const mapStateToProps = state => ({
-    sequenceId: state.viruses.removeSequence
+    sequenceId: state.OTUs.removeSequence
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onConfirm: (virusId, isolateId, onSuccess) => {
-        dispatch(removeSequence(virusId, isolateId, onSuccess));
+    onConfirm: (OTUId, isolateId, onSuccess) => {
+        dispatch(removeSequence(OTUId, isolateId, onSuccess));
     }
 
 });

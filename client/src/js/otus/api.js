@@ -1,19 +1,19 @@
 import Request from "superagent";
 
 export const find = () => (
-    Request.get(`/api/viruses${window.location.search}`)
+    Request.get(`/api/OTUs${window.location.search}`)
 );
 
 export const listNames = () => (
-    Request.get("/api/viruses?names=true")
+    Request.get("/api/OTUs?names=true")
 );
 
-export const get = ({ virusId }) => (
-    Request.get(`/api/viruses/${virusId}`)
+export const get = ({ OTUId }) => (
+    Request.get(`/api/OTUs/${OTUId}`)
 );
 
-export const getHistory = ({ virusId }) => (
-    Request.get(`/api/viruses/${virusId}/history`)
+export const getHistory = ({ OTUId }) => (
+    Request.get(`/api/OTUs/${OTUId}/history`)
 );
 
 export const getGenbank = (accession) => (
@@ -21,15 +21,15 @@ export const getGenbank = (accession) => (
 );
 
 export const create = ({ name, abbreviation }) => (
-    Request.post("/api/viruses")
+    Request.post("/api/OTUs")
         .send({
             name,
             abbreviation
         })
 );
 
-export const edit = ({ virusId, name, abbreviation, schema }) => (
-    Request.patch(`/api/viruses/${virusId}`)
+export const edit = ({ OTUId, name, abbreviation, schema }) => (
+    Request.patch(`/api/OTUs/${OTUId}`)
         .send({
             name,
             abbreviation,
@@ -37,36 +37,36 @@ export const edit = ({ virusId, name, abbreviation, schema }) => (
         })
 );
 
-export const remove = ({ virusId }) => (
-    Request.delete(`/api/viruses/${virusId}`)
+export const remove = ({ OTUId }) => (
+    Request.delete(`/api/OTUs/${OTUId}`)
 );
 
-export const addIsolate = ({ virusId, sourceType, sourceName }) => (
-    Request.post(`/api/viruses/${virusId}/isolates`)
+export const addIsolate = ({ OTUId, sourceType, sourceName }) => (
+    Request.post(`/api/OTUs/${OTUId}/isolates`)
         .send({
             source_type: sourceType,
             source_name: sourceName
         })
 );
 
-export const editIsolate = ({ virusId, isolateId, sourceType, sourceName }) => (
-    Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}`)
+export const editIsolate = ({ OTUId, isolateId, sourceType, sourceName }) => (
+    Request.patch(`/api/OTUs/${OTUId}/isolates/${isolateId}`)
         .send({
             source_type: sourceType,
             source_name: sourceName
         })
 );
 
-export const setIsolateAsDefault = ({ virusId, isolateId }) => (
-    Request.put(`/api/viruses/${virusId}/isolates/${isolateId}/default`)
+export const setIsolateAsDefault = ({ OTUId, isolateId }) => (
+    Request.put(`/api/OTUs/${OTUId}/isolates/${isolateId}/default`)
 );
 
-export const removeIsolate = ({ virusId, isolateId }) => (
-    Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`)
+export const removeIsolate = ({ OTUId, isolateId }) => (
+    Request.delete(`/api/OTUs/${OTUId}/isolates/${isolateId}`)
 );
 
-export const addSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence, segment }) => (
-    Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences`)
+export const addSequence = ({ OTUId, isolateId, sequenceId, definition, host, sequence, segment }) => (
+    Request.post(`/api/OTUs/${OTUId}/isolates/${isolateId}/sequences`)
         .send({
             id: sequenceId,
             definition,
@@ -76,8 +76,8 @@ export const addSequence = ({ virusId, isolateId, sequenceId, definition, host, 
         })
 );
 
-export const editSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence, segment }) => (
-    Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+export const editSequence = ({ OTUId, isolateId, sequenceId, definition, host, sequence, segment }) => (
+    Request.patch(`/api/OTUs/${OTUId}/isolates/${isolateId}/sequences/${sequenceId}`)
         .send({
             definition,
             host,
@@ -86,20 +86,20 @@ export const editSequence = ({ virusId, isolateId, sequenceId, definition, host,
         })
 );
 
-export const removeSequence = ({ virusId, isolateId, sequenceId }) => (
-    Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+export const removeSequence = ({ OTUId, isolateId, sequenceId }) => (
+    Request.delete(`/api/OTUs/${OTUId}/isolates/${isolateId}/sequences/${sequenceId}`)
 );
 
-export const revert = ({ virusId, version }) => (
-    Request.delete(`/api/history/${virusId}.${version}`)
+export const revert = ({ OTUId, version }) => (
+    Request.delete(`/api/history/${OTUId}.${version}`)
 );
 
 export const getImport = ({ fileId }) => (
-    Request.get("/api/viruses/import")
+    Request.get("/api/OTUs/import")
         .query({file_id: fileId})
 );
 
 export const commitImport = ({ fileId }) => (
-    Request.post("/api/viruses/import")
+    Request.post("/api/OTUs/import")
         .send({file_id: fileId})
 );

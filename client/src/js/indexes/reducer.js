@@ -10,7 +10,7 @@ import {
 export const initialState = {
     documents: null,
     modified_count: 0,
-    total_virus_count: 0,
+    total_OTU_count: 0,
     detail: null,
     history: null,
     unbuilt: null,
