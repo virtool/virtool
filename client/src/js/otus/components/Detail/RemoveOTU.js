@@ -3,23 +3,23 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { removeVirus, hideVirusModal } from "../../actions";
+import { removeOTU, hideOTUModal } from "../../actions";
 import { Button } from "../../../base";
 
-class RemoveVirus extends React.Component {
+class RemoveOTU extends React.Component {
 
     handleConfirm = () => {
-        this.props.onConfirm(this.props.virusId, this.props.history);
+        this.props.onConfirm(this.props.OTUId, this.props.history);
     }
 
     render () {
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} dialogClassName="modal-danger">
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Remove Virus
+                    Remove OTU
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to remove <strong>{this.props.virusName}</strong>?
+                    Are you sure you want to remove <strong>{this.props.OTUName}</strong>?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button
@@ -35,29 +35,29 @@ class RemoveVirus extends React.Component {
     }
 }
 
-RemoveVirus.propTypes = {
+RemoveOTU.propTypes = {
     history: PropTypes.object,
     show: PropTypes.bool,
-    virusId: PropTypes.string,
-    virusName: PropTypes.string,
+    OTUId: PropTypes.string,
+    OTUName: PropTypes.string,
     onHide: PropTypes.func,
     onConfirm: PropTypes.func
 };
 
 const mapStateToProps = state => ({
-    show: state.viruses.remove
+    show: state.OTUs.remove
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onConfirm: (virusId, history) => {
-        dispatch(removeVirus(virusId, history));
+    onConfirm: (OTUId, history) => {
+        dispatch(removeOTU(OTUId, history));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RemoveVirus);
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveOTU);

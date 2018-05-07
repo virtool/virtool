@@ -6,7 +6,7 @@ import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 import { get, upperFirst } from "lodash-es";
 
 import { InputError, Button } from "../../base";
-import { createVirus } from "../actions";
+import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
 
 const getInitialState = () => ({
@@ -16,7 +16,7 @@ const getInitialState = () => ({
     errorAbbreviation: ""
 });
 
-class CreateVirus extends React.Component {
+class CreateOTU extends React.Component {
 
     constructor (props) {
         super(props);
@@ -48,7 +48,7 @@ class CreateVirus extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_VIRUS_ERROR");
+            this.props.onClearError("CREATE_OTU_ERROR");
         }
     };
 
@@ -60,7 +60,7 @@ class CreateVirus extends React.Component {
         this.setState(getInitialState());
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_VIRUS_ERROR");
+            this.props.onClearError("CREATE_OTU_ERROR");
         }
     };
 
@@ -84,7 +84,7 @@ class CreateVirus extends React.Component {
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create Virus
+                    Create OTU
                 </Modal.Header>
                 <Modal.Body>
                     <Row>
@@ -123,19 +123,19 @@ class CreateVirus extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: !!state.router.location.state && state.router.location.state.createVirus,
-    error: get(state, "errors.CREATE_VIRUS_ERROR.message", ""),
-    pending: state.viruses.createPending
+    show: !!state.router.location.state && state.router.location.state.createOTU,
+    error: get(state, "errors.CREATE_OTU_ERROR.message", ""),
+    pending: state.OTUs.createPending
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onSubmit: (name, abbreviation) => {
-        dispatch(createVirus(name, abbreviation));
+        dispatch(createOTU(name, abbreviation));
     },
 
     onHide: ({ location }) => {
-        dispatch(push({...location, state: {createVirus: false}}));
+        dispatch(push({...location, state: {createOTU: false}}));
     },
 
     onClearError: (error) => {
@@ -144,4 +144,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateVirus));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateOTU));

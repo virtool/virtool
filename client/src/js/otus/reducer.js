@@ -3,10 +3,10 @@ import { find, map } from "lodash-es";
 import { formatIsolateName } from "../utils";
 import {
     WS_UPDATE_STATUS,
-    FIND_VIRUSES,
-    GET_VIRUS,
-    EDIT_VIRUS,
-    REMOVE_VIRUS,
+    FIND_OTUs,
+    GET_OTU,
+    EDIT_OTU,
+    REMOVE_OTU,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     SET_ISOLATE_AS_DEFAULT,
@@ -17,16 +17,16 @@ import {
     REVERT,
     UPLOAD_IMPORT,
     SELECT_ISOLATE,
-    SHOW_EDIT_VIRUS,
-    SHOW_REMOVE_VIRUS,
+    SHOW_EDIT_OTU,
+    SHOW_REMOVE_OTU,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
     SHOW_ADD_SEQUENCE,
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
-    HIDE_VIRUS_MODAL,
-    GET_VIRUS_HISTORY
+    HIDE_OTU_MODAL,
+    GET_OTU_HISTORY
 } from "../actionTypes";
 
 export const initialState = {
@@ -45,7 +45,7 @@ export const initialState = {
     importData: null
 };
 
-export const hideVirusModal = state => ({
+export const hideOTUModal = state => ({
     ...state,
     edit: false,
     remove: false,
@@ -77,7 +77,7 @@ export const getActiveIsolate = (state) => {
     };
 };
 
-export const receiveVirus = (state, action) => {
+export const receiveOTU = (state, action) => {
     const detail = {
         ...action.data,
         isolates: map(action.data.isolates, isolate => ({...isolate, name: formatIsolateName(isolate)}))
@@ -86,29 +86,29 @@ export const receiveVirus = (state, action) => {
     return getActiveIsolate({...state, detail});
 };
 
-export default function virusesReducer (state = initialState, action) {
+export default function OTUsReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case WS_UPDATE_STATUS:
-            if (action.data.id === "virus_import") {
+            if (action.data.id === "OTU_import") {
                 return {...state, importData: {...state.importData, ...action.data, inProgress: true}};
             }
 
             return state;
 
-        case FIND_VIRUSES.REQUESTED:
+        case FIND_OTUs.REQUESTED:
             return {...state, ...action.terms};
 
-        case FIND_VIRUSES.SUCCEEDED:
+        case FIND_OTUs.SUCCEEDED:
             return {...state, ...action.data};
 
-        case GET_VIRUS.REQUESTED:
-        case REMOVE_VIRUS.SUCCEEDED:
-            return hideVirusModal({...state, detail: null, activeIsolateId: null});
+        case GET_OTU.REQUESTED:
+        case REMOVE_OTU.SUCCEEDED:
+            return hideOTUModal({...state, detail: null, activeIsolateId: null});
 
-        case GET_VIRUS.SUCCEEDED:
-        case EDIT_VIRUS.SUCCEEDED:
+        case GET_OTU.SUCCEEDED:
+        case EDIT_OTU.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
         case ADD_SEQUENCE.SUCCEEDED:
         case EDIT_SEQUENCE.SUCCEEDED:
@@ -116,17 +116,17 @@ export default function virusesReducer (state = initialState, action) {
         case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
         case REMOVE_ISOLATE.SUCCEEDED: {
-            return hideVirusModal(receiveVirus(state, action));
+            return hideOTUModal(receiveOTU(state, action));
         }
 
-        case GET_VIRUS_HISTORY.REQUESTED:
+        case GET_OTU_HISTORY.REQUESTED:
             return {...state, detailHistory: null};
 
-        case GET_VIRUS_HISTORY.SUCCEEDED:
+        case GET_OTU_HISTORY.SUCCEEDED:
             return {...state, detailHistory: action.data};
 
         case REVERT.SUCCEEDED:
-            return {...receiveVirus(state, action), detailHistory: action.history};
+            return {...receiveOTU(state, action), detailHistory: action.history};
 
         case UPLOAD_IMPORT.SUCCEEDED:
             return {...state, importData: {...action.data, inProgress: false}};
@@ -138,10 +138,10 @@ export default function virusesReducer (state = initialState, action) {
                 activeIsolateId: action.isolateId
             };
 
-        case SHOW_EDIT_VIRUS:
+        case SHOW_EDIT_OTU:
             return {...state, edit: true};
 
-        case SHOW_REMOVE_VIRUS:
+        case SHOW_REMOVE_OTU:
             return {...state, remove: true};
 
         case SHOW_ADD_ISOLATE:
@@ -162,8 +162,8 @@ export default function virusesReducer (state = initialState, action) {
         case SHOW_REMOVE_SEQUENCE:
             return {...state, removeSequence: action.sequenceId};
 
-        case HIDE_VIRUS_MODAL:
-            return hideVirusModal(state);
+        case HIDE_OTU_MODAL:
+            return hideOTUModal(state);
 
         default:
             return state;

@@ -73,7 +73,7 @@ export default class NuVsExpansion extends React.Component {
         );
 
         return (
-            <ListGroupItem className="pathoscope-virus-detail spaced">
+            <ListGroupItem className="pathoscope-OTU-detail spaced">
                 <div className="nuvs-layout">
                     <div className="nuvs-item nuvs-sequence">
                         <div ref={this.handleSetContainerNode} />

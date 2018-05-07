@@ -8,7 +8,7 @@ import { getReference } from "../../actions";
 import { LoadingPlaceholder } from "../../../base";
 
 import ReferenceManage from "./Manage";
-import ReferenceOTU from "./OTU";
+import ReferenceOTUList from "../../../otus/components/List";
 import ReferenceIndex from "./Index";
 
 const ReferenceSettings = () => (
@@ -41,7 +41,7 @@ class ReferenceDetail extends React.Component {
                     <LinkContainer to={`/refs/${id}/manage`}>
                         <NavItem>Manage</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/otu`}>
+                    <LinkContainer to={`/refs/${id}/otus`}>
                         <NavItem>OTU</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/indexes`}>
@@ -55,7 +55,7 @@ class ReferenceDetail extends React.Component {
                 <Switch>
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                    <Route path="/refs/:refId/otu" component={ReferenceOTU} />
+                    <Route path="/refs/:refId/otus" component={ReferenceOTUList} />
                     <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
                     <Route path="/refs/:refId/settings" component={ReferenceSettings} />
                 </Switch>

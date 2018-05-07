@@ -12,7 +12,7 @@ import { groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
-import { getVirusHistory, revert } from "../../actions";
+import { getOTUHistory, revert } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base";
 
 
@@ -60,7 +60,7 @@ const getMethodIcon = (change) => {
 export class Change extends React.Component {
 
     handleRevert = () => {
-        this.props.revert(this.props.virus.id, this.props.virus.version);
+        this.props.revert(this.props.OTU.id, this.props.OTU.version);
     };
 
     render () {
@@ -82,7 +82,7 @@ export class Change extends React.Component {
             <ListGroupItem>
                 <Row>
                     <Col md={1}>
-                        <Label>{this.props.virus.version}</Label>
+                        <Label>{this.props.OTU.version}</Label>
                     </Col>
                     <Col md={6}>
                         <Flex alignItems="center">
@@ -108,7 +108,7 @@ export class HistoryList extends React.Component {
 
     render () {
 
-        const changes = reverse(sortBy(this.props.history, "virus.version"));
+        const changes = reverse(sortBy(this.props.history, "OTU.version"));
 
         const changeComponents = map(changes, (change, index) =>
             <Change
@@ -135,10 +135,10 @@ HistoryList.propTypes = {
     canModify: PropTypes.bool
 };
 
-class VirusHistory extends React.Component {
+class OTUHistory extends React.Component {
 
     componentDidMount () {
-        this.props.getHistory(this.props.virusId);
+        this.props.getHistory(this.props.OTUId);
     }
 
     render () {
@@ -188,21 +188,21 @@ class VirusHistory extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    virusId: state.viruses.detail.id,
-    history: state.viruses.detailHistory,
-    canModify: state.account.permissions.modify_virus
+    OTUId: state.OTUs.detail.id,
+    history: state.OTUs.detailHistory,
+    canModify: state.account.permissions.modify_OTU
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    getHistory: (virusId) => {
-        dispatch(getVirusHistory(virusId));
+    getHistory: (OTUId) => {
+        dispatch(getOTUHistory(OTUId));
     },
 
-    revert: (virusId, version) => {
-        dispatch(revert(virusId, version));
+    revert: (OTUId, version) => {
+        dispatch(revert(OTUId, version));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(VirusHistory);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUHistory);

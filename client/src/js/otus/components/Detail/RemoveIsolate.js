@@ -1,13 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import { removeIsolate, hideVirusModal } from "../../actions";
+import { removeIsolate, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
 export class RemoveIsolate extends React.Component {
 
     handleConfirm = () => {
-        this.props.onConfirm(this.props.virusId, this.props.isolateId, this.props.nextIsolateId);
+        this.props.onConfirm(this.props.OTUId, this.props.isolateId, this.props.nextIsolateId);
     };
 
     render () {
@@ -24,17 +24,17 @@ export class RemoveIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.viruses.removeIsolate
+    show: state.OTUs.removeIsolate
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onConfirm: (virusId, isolateId, nextIsolateId) => {
-        dispatch(removeIsolate(virusId, isolateId, nextIsolateId));
+    onConfirm: (OTUId, isolateId, nextIsolateId) => {
+        dispatch(removeIsolate(OTUId, isolateId, nextIsolateId));
     }
 
 });

@@ -9,8 +9,8 @@ import {
     CLEAR_ERROR,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
-    CREATE_VIRUS,
-    EDIT_VIRUS,
+    CREATE_OTU,
+    EDIT_OTU,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     ADD_SEQUENCE,
@@ -87,8 +87,8 @@ export default function errorsReducer (state = null, action) {
 
             case CREATE_SAMPLE.FAILED:
             case UPDATE_SAMPLE.FAILED:
-            case CREATE_VIRUS.FAILED:
-            case EDIT_VIRUS.FAILED:
+            case CREATE_OTU.FAILED:
+            case EDIT_OTU.FAILED:
             case ADD_ISOLATE.FAILED:
             case EDIT_ISOLATE.FAILED:
             case ADD_SEQUENCE.FAILED:

@@ -41,11 +41,11 @@ const IsolateTable = ({ id, isDefault, isolateName, sourceName, sourceType }) =>
 export class IsolateDetail extends React.Component {
 
     handleDownload = () => {
-        followDownload(`/download/viruses/${this.props.virusId}/isolates/${this.props.activeIsolate.id}`);
+        followDownload(`/download/OTUs/${this.props.OTUId}/isolates/${this.props.activeIsolate.id}`);
     };
 
     handleSetDefaultIsolate = () => {
-        this.props.setIsolateAsDefault(this.props.virusId, this.props.activeIsolate.id);
+        this.props.setIsolateAsDefault(this.props.OTUId, this.props.activeIsolate.id);
     };
 
     render () {
@@ -94,14 +94,14 @@ export class IsolateDetail extends React.Component {
         return (
             <div>
                 <EditIsolate
-                    virusId={this.props.virusId}
+                    OTUId={this.props.OTUId}
                     isolateId={isolate.id}
                     sourceType={isolate.source_type}
                     sourceName={isolate.source_name}
                 />
 
                 <RemoveIsolate
-                    virusId={this.props.virusId}
+                    OTUId={this.props.OTUId}
                     isolateId={isolate.id}
                     isolateName={isolate.name}
                     nextIsolateId={this.props.isolates.length ? this.props.isolates[0].id : null}
@@ -140,25 +140,25 @@ export class IsolateDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    isolates: state.viruses.detail.isolates,
-    virusId: state.viruses.detail.id,
-    activeIsolate: state.viruses.activeIsolate,
-    activeIsolateId: state.viruses.activeIsolateId,
-    activeSequenceId: state.viruses.activeSequenceId,
-    editing: state.viruses.editingIsolate,
+    isolates: state.OTUs.detail.isolates,
+    OTUId: state.OTUs.detail.id,
+    activeIsolate: state.OTUs.activeIsolate,
+    activeIsolateId: state.OTUs.activeIsolateId,
+    activeSequenceId: state.OTUs.activeSequenceId,
+    editing: state.OTUs.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: state.account.permissions.modify_virus
+    canModify: state.account.permissions.modify_OTU
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    setIsolateAsDefault: (virusId, isolateId) => {
-        dispatch(setIsolateAsDefault(virusId, isolateId));
+    setIsolateAsDefault: (OTUId, isolateId) => {
+        dispatch(setIsolateAsDefault(OTUId, isolateId));
     },
 
-    showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
-        dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
+    showEditIsolate: (OTUId, isolateId, sourceType, sourceName) => {
+        dispatch(showEditIsolate(OTUId, isolateId, sourceType, sourceName));
     },
 
     showRemoveIsolate: () => {

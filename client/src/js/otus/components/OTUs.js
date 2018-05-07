@@ -7,7 +7,7 @@ export default function OTUs () {
     return (
         <div className="container">
             <Switch>
-                <Route path="/refs/:refId/kinds" component={KindsList} exact/>
+                <Route path="/refs/:refId/OTUs" component={OTUsList} exact/>
             </Switch>
         </div>
     );
