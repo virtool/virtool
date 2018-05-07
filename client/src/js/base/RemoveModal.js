@@ -8,7 +8,7 @@ import { Button } from "./Button";
  * A modal that requests confirmation from the user for deleting a document or other sensitive information.
  *
  * @func
- * @param name {string} the display name for the item to be removed (eg. BaminiOTU)
+ * @param name {string} the display name for the item to be removed (eg. Baminivirus)
  * @param noun {string} the type of document being removed (eg. OTU)
  * @param show {boolean} toggle visibility of the modal
  * @param onConfirm {function} a function to call on confirmation
