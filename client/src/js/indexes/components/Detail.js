@@ -30,22 +30,22 @@ class IndexDetail extends React.Component {
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/OTUs/indexes/${indexVersion}/general`}>
+                    <LinkContainer to={`/otus/indexes/${indexVersion}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/OTUs/indexes/${indexVersion}/changes`}>
+                    <LinkContainer to={`/otus/indexes/${indexVersion}/changes`}>
                         <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
                     <Redirect
-                        from="/OTUs/indexes/:indexVersion"
-                        to={`/OTUs/indexes/${indexVersion}/general`}
+                        from="/otus/indexes/:indexVersion"
+                        to={`/otus/indexes/${indexVersion}/general`}
                         exact
                     />
-                    <Route path="/OTUs/indexes/:indexVersion/general" component={IndexGeneral} />
-                    <Route path="/OTUs/indexes/:indexVersion/changes" component={IndexChanges} />
+                    <Route path="/otus/indexes/:indexVersion/general" component={IndexGeneral} />
+                    <Route path="/otus/indexes/:indexVersion/changes" component={IndexChanges} />
                 </Switch>
             </div>
         );
