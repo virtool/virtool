@@ -71,7 +71,7 @@ class AnalysesList extends React.Component {
             alertMessage = (
                 <div>
                     <span>Note: The OTU database has changed. </span>
-                    <Link to="/OTUs/indexes">Rebuild the index</Link>
+                    <Link to="/otus/indexes">Rebuild the index</Link>
                     <span> to use the latest changes.</span>
                 </div>
             );
@@ -95,7 +95,7 @@ class AnalysesList extends React.Component {
             alertMessage = (
                 <div>
                     <span>A OTU database is not found. </span>
-                    <Link to="/OTUs/indexes">Add a database</Link>
+                    <Link to="/otus/indexes">Add a database</Link>
                     <span> to use in analyses.</span>
                 </div>
             );
@@ -161,7 +161,7 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    modifiedCount: state.indexes.modified_OTU_count,
+    modifiedCount: state.indexes.modified_otu_count,
     indexArray: state.indexes.documents,
     hmms: state.hmms,
     canModify: getCanModify(state)

@@ -1,6 +1,6 @@
 import { simpleActionCreator } from "../utils";
 import {
-    FETCH_OTUs,
+    FETCH_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
     CREATE_OTU,
@@ -34,30 +34,30 @@ import {
  * @func
  * @returns {object}
  */
-export const fetchOTUs = simpleActionCreator(FETCH_OTUs);
+export const fetchOTUs = simpleActionCreator(FETCH_OTUS);
 
 /**
  * Returns action that can trigger an API call for retrieving a specific OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTU = (OTUId) => ({
+export const getOTU = (otuId) => ({
     type: GET_OTU.REQUESTED,
-    OTUId
+    otuId
 });
 
 /**
- * Returns action that can trigger an API call for getting a OTU' history.
+ * Returns action that can trigger an API call for getting a OTU's history.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTUHistory = (OTUId) => ({
+export const getOTUHistory = (otuId) => ({
     type: GET_OTU_HISTORY.REQUESTED,
-    OTUId
+    otuId
 });
 
 /**
@@ -78,15 +78,15 @@ export const createOTU = (name, abbreviation) => ({
  * Returns action that can trigger an API call for modifying a OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param name {string} unique OTU name
  * @param abbreviation {string} unique abbreviation of OTU name
  * @param schema {array} array of sequences in custom order
  * @returns {object}
  */
-export const editOTU = (OTUId, name, abbreviation, schema) => ({
+export const editOTU = (otuId, name, abbreviation, schema) => ({
     type: EDIT_OTU.REQUESTED,
-    OTUId,
+    otuId,
     name,
     abbreviation,
     schema
@@ -96,13 +96,13 @@ export const editOTU = (OTUId, name, abbreviation, schema) => ({
  * Returns action that can trigger an API call for removing a OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param history {object} list of all changes made to the OTU
  * @returns {object}
  */
-export const removeOTU = (OTUId, history) => ({
+export const removeOTU = (otuId, history) => ({
     type: REMOVE_OTU.REQUESTED,
-    OTUId,
+    otuId,
     history
 });
 
@@ -110,14 +110,14 @@ export const removeOTU = (OTUId, history) => ({
  * Returns action that can trigger an API call for adding an isolate to a OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param sourceType {string} category of isolate source types
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const addIsolate = (OTUId, sourceType, sourceName) => ({
+export const addIsolate = (otuId, sourceType, sourceName) => ({
     type: ADD_ISOLATE.REQUESTED,
-    OTUId,
+    otuId,
     sourceType,
     sourceName
 });
@@ -126,13 +126,13 @@ export const addIsolate = (OTUId, sourceType, sourceName) => ({
  * Returns action that can trigger an API call for modifying which isolate is made default.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @returns {object}
  */
-export const setIsolateAsDefault = (OTUId, isolateId) => ({
+export const setIsolateAsDefault = (otuId, isolateId) => ({
     type: SET_ISOLATE_AS_DEFAULT.REQUESTED,
-    OTUId,
+    otuId,
     isolateId
 });
 
@@ -140,15 +140,15 @@ export const setIsolateAsDefault = (OTUId, isolateId) => ({
  * Returns action that can trigger an API call for modifying an isolate.
  *
  * @func
- * @param OTUIs {string} unique OTU id
+ * @param otuID {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sourceType {string} category of isolate source types
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const editIsolate = (OTUId, isolateId, sourceType, sourceName) => ({
+export const editIsolate = (otuId, isolateId, sourceType, sourceName) => ({
     type: EDIT_ISOLATE.REQUESTED,
-    OTUId,
+    otuId,
     isolateId,
     sourceType,
     sourceName
@@ -158,15 +158,15 @@ export const editIsolate = (OTUId, isolateId, sourceType, sourceName) => ({
  * Returns action that can trigger an API call for removing an isolate from a OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param nextIsolateId {string} if removed isolate was default,
  * first in resulting list (i.e. the next isolate) becomes default
  * @returns {object}
  */
-export const removeIsolate = (OTUId, isolateId, nextIsolateId) => ({
+export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
     type: REMOVE_ISOLATE.REQUESTED,
-    OTUId,
+    otuId,
     isolateId,
     nextIsolateId
 });
@@ -175,7 +175,7 @@ export const removeIsolate = (OTUId, isolateId, nextIsolateId) => ({
  * Returns action that can trigger an API call for adding a sequence to an isolate.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sequenceId {string} unique sequence id
  * @param definition {string} descriptive definition of the sequence
@@ -184,9 +184,9 @@ export const removeIsolate = (OTUId, isolateId, nextIsolateId) => ({
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const addSequence = (OTUId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: ADD_SEQUENCE.REQUESTED,
-    OTUId,
+    otuId,
     isolateId,
     sequenceId,
     definition,
@@ -199,7 +199,7 @@ export const addSequence = (OTUId, isolateId, sequenceId, definition, host, sequ
  * Returns action that can trigger an API call for modifying a sequence.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sequenceId {string} unique sequence id
  * @param definition {string} descriptive definition of the sequence
@@ -208,9 +208,9 @@ export const addSequence = (OTUId, isolateId, sequenceId, definition, host, sequ
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const editSequence = (OTUId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const editSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
-    OTUId,
+    otuId,
     isolateId,
     sequenceId,
     definition,
@@ -223,14 +223,14 @@ export const editSequence = (OTUId, isolateId, sequenceId, definition, host, seq
  * Returns action that can trigger an API call for removing a sequence from an isolate.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sequenceId {string} unique sequence id
  * @returns {object}
  */
-export const removeSequence = (OTUId, isolateId, sequenceId) => ({
+export const removeSequence = (otuId, isolateId, sequenceId) => ({
     type: REMOVE_SEQUENCE.REQUESTED,
-    OTUId,
+    otuId,
     isolateId,
     sequenceId
 });
@@ -239,13 +239,13 @@ export const removeSequence = (OTUId, isolateId, sequenceId) => ({
  * Returns action that can trigger an API call for deleting unbuilt changes of a OTU.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param version {string} OTU index version
  * @returns {object}
  */
-export const revert = (OTUId, version) => ({
+export const revert = (otuId, version) => ({
     type: REVERT.REQUESTED,
-    OTUId,
+    otuId,
     version
 });
 
@@ -315,15 +315,15 @@ export const showAddIsolate = simpleActionCreator(SHOW_ADD_ISOLATE);
  * Returns action for displaying the edit isolate modal.
  *
  * @func
- * @param OTUId {string} unique OTU id
+ * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sourceType {string} category of isolate source types
  * @param sourceName {string} the name for the isolate source
  * @returns {object}
  */
-export const showEditIsolate = (OTUId, isolateId, sourceType, sourceName) => ({
+export const showEditIsolate = (otuId, isolateId, sourceType, sourceName) => ({
     type: SHOW_EDIT_ISOLATE,
-    OTUId,
+    otuId,
     isolateId,
     sourceType,
     sourceName

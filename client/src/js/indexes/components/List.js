@@ -23,7 +23,7 @@ class IndexesList extends React.Component {
 
         let content;
 
-        if (this.props.total_OTU_count) {
+        if (this.props.total_otu_count) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -44,7 +44,7 @@ class IndexesList extends React.Component {
 
             let alert;
 
-            if (this.props.modified_OTU_count) {
+            if (this.props.modified_otu_count) {
                 let button;
 
                 if (this.props.canRebuild) {

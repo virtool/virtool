@@ -20,7 +20,7 @@ const PanelBadgeHeader = ({ title, count }) => (
 
 const IndexOTUEntry = ({ changeCount, id, name}) => (
     <ListGroupItem>
-        <Link to={`/OTUs/${id}`}>
+        <Link to={`/otus/${id}`}>
             {name}
         </Link>
         <Badge>
@@ -37,12 +37,12 @@ const IndexGeneral = ({ detail }) => {
         </ListGroupItem>
     );
 
-    const OTUs = map(detail.OTUs, OTU =>
+    const otus = map(detail.otus, otu =>
         <IndexOTUEntry
-            key={OTU.id}
-            name={OTU.name}
-            id={OTU.id}
-            changeCount={OTU.change_count}
+            key={otu.id}
+            name={otu.name}
+            id={otu.id}
+            changeCount={otu.change_count}
         />
     );
 
@@ -82,11 +82,11 @@ const IndexGeneral = ({ detail }) => {
 
             <Panel>
                 <Panel.Heading>
-                    <PanelBadgeHeader title="OTUs" count={OTUs.length} />
+                    <PanelBadgeHeader title="OTUs" count={otus.length} />
                 </Panel.Heading>
                 <Panel.Body>
                     <ListGroup>
-                        {OTUs}
+                        {otus}
                     </ListGroup>
                 </Panel.Body>
             </Panel>

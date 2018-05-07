@@ -32,9 +32,9 @@ export default class PathoscopeController extends React.Component {
         });
     };
 
-    toggleIn = (OTUId) => {
+    toggleIn = (otuId) => {
         this.setState({
-            expanded: xor(this.state.expanded, [OTUId])
+            expanded: xor(this.state.expanded, [otuId])
         });
     };
 
@@ -83,18 +83,18 @@ export default class PathoscopeController extends React.Component {
         if (this.state.filterOTUs) {
             const totalReadsMapped = sum(map(data, "reads"));
 
-            data = filter(data, OTU => (
-                (OTU.pi * totalReadsMapped >= OTU.length * 0.8 / this.props.maxReadLength) &&
-                (!re || (re.test(OTU.abbreviation) || re.test(OTU.name)))
+            data = filter(data, otu => (
+                (otu.pi * totalReadsMapped >= otu.length * 0.8 / this.props.maxReadLength) &&
+                (!re || (re.test(otu.abbreviation) || re.test(otu.name)))
             ));
         } else {
-            data = filter(data, (OTU) => !re || (re.test(OTU.abbreviation) || re.test(OTU.name)));
+            data = filter(data, (otu) => !re || (re.test(otu.abbreviation) || re.test(otu.name)));
         }
 
         if (this.state.filterIsolates) {
-            data = map(data, OTU => ({
-                ...OTU,
-                isolates: filter(OTU.isolates, isolate => (isolate.pi >= 0.03 * OTU.pi))
+            data = map(data, otu => ({
+                ...otu,
+                isolates: filter(otu.isolates, isolate => (isolate.pi >= 0.03 * otu.pi))
             }));
         }
 

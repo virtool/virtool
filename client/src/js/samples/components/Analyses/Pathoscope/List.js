@@ -22,9 +22,9 @@ export default class PathoscopeList extends React.Component {
         data: PropTypes.arrayOf(PropTypes.object).isRequired
     };
 
-    setScroll = (OTUId, scrollLeft) => {
+    setScroll = (otuId, scrollLeft) => {
         forIn(this.itemRefs, (ref, key) => {
-            if (split(key, "-")[0] === OTUId) {
+            if (split(key, "-")[0] === otuId) {
                 ref.scrollTo(scrollLeft);
             }
         });
@@ -70,7 +70,7 @@ export default class PathoscopeList extends React.Component {
                             <PathoscopeIsolate
                                 ref={(node) => this.itemRefs[key] = node}
                                 key={key}
-                                OTUId={item.id}
+                                otuId={item.id}
                                 maxDepth={item.maxDepth}
                                 maxGenomeLength={item.maxGenomeLength}
                                 {...isolate}
@@ -81,7 +81,7 @@ export default class PathoscopeList extends React.Component {
                     });
 
                     return components.concat(
-                        <div key={index} className="list-group-item pathoscope-OTU-detail spaced">
+                        <div key={index} className="list-group-item pathoscope-otu-detail spaced">
                             {isolateComponents}
                         </div>
                     );

@@ -40,7 +40,7 @@ const TaskArgs = (props) => {
                         <tr>
                             <th>Index Version</th>
                             <td>
-                                <Link to={`/OTUs/indexes/${props.taskArgs.index_version}`}>
+                                <Link to={`/otus/indexes/${props.taskArgs.index_version}`}>
                                     <span>{props.taskArgs.index_version}</span>
                                 </Link>
                             </td>
