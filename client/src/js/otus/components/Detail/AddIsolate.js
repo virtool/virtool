@@ -14,7 +14,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { addIsolate, hideVirusModal } from "../../actions";
+import { addIsolate, hideOTUModal } from "../../actions";
 import { Button } from "../../../base";
 import IsolateForm from "./IsolateForm";
 
@@ -31,7 +31,7 @@ class AddIsolate extends React.Component {
     }
 
     static propTypes = {
-        virusId: PropTypes.string,
+        otuId: PropTypes.string,
         allowedSourceTypes: PropTypes.array,
         restrictSourceTypes: PropTypes.bool,
         show: PropTypes.bool,
@@ -44,7 +44,7 @@ class AddIsolate extends React.Component {
     };
 
     handleSubmit = () => {
-        this.props.onSave(this.props.virusId, this.state.sourceType, this.state.sourceName);
+        this.props.onSave(this.props.otuId, this.state.sourceType, this.state.sourceName);
     };
 
     render () {
@@ -74,7 +74,7 @@ class AddIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.viruses.addIsolate,
+    show: state.otus.addIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types
 });
@@ -82,11 +82,11 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onSave: (virusId, sourceType, sourceName) => {
-        dispatch(addIsolate(virusId, sourceType, sourceName));
+    onSave: (otuId, sourceType, sourceName) => {
+        dispatch(addIsolate(otuId, sourceType, sourceName));
     }
 
 });

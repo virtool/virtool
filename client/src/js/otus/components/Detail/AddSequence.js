@@ -15,7 +15,7 @@ import { ClipLoader } from "halogenium";
 import { map, get, upperFirst } from "lodash-es";
 
 import SequenceField from "./SequenceField";
-import { addSequence, hideVirusModal } from "../../actions";
+import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
@@ -116,7 +116,7 @@ class AddSequence extends React.Component {
         if (this.state.id) {
             this.setState({show: false});
             this.props.onSave(
-                this.props.virusId,
+                this.props.otuId,
                 this.props.isolateId,
                 this.state.id,
                 this.state.definition,
@@ -239,20 +239,20 @@ class AddSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.viruses.addSequence,
-    virusId: state.viruses.detail.id,
-    isolateId: state.viruses.activeIsolateId,
+    show: state.otus.addSequence,
+    otuId: state.otus.detail.id,
+    isolateId: state.otus.activeIsolateId,
     error: get(state, "errors.ADD_SEQUENCE_ERROR", "")
 });
 
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
     onClearError: (error) => {

@@ -12,7 +12,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { editIsolate, hideVirusModal } from "../../actions";
+import { editIsolate, hideOTUModal } from "../../actions";
 import { Button } from "../../../base";
 import IsolateForm from "./IsolateForm";
 
@@ -38,7 +38,7 @@ class EditIsolate extends React.Component {
 
     handleSubmit = () => {
         this.props.onSave(
-            this.props.virusId,
+            this.props.otuId,
             this.props.isolateId,
             this.state.sourceType,
             this.state.sourceName
@@ -72,7 +72,7 @@ class EditIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.viruses.editIsolate,
+    show: state.otus.editIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types
 });
@@ -80,11 +80,11 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onSave: (virusId, isolateId, sourceType, sourceName) => {
-        dispatch(editIsolate(virusId, isolateId, sourceType, sourceName));
+    onSave: (otuId, isolateId, sourceType, sourceName) => {
+        dispatch(editIsolate(otuId, isolateId, sourceType, sourceName));
     }
 
 });

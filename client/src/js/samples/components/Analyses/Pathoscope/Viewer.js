@@ -19,10 +19,10 @@ const PathoscopeViewer = (props) => {
 
         const mappedReadCount = props.read_count;
 
-        const data = map(props.diagnosis, baseVirus => {
-            // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
+        const data = map(props.diagnosis, baseOTU => {
+            // Go through each isolate associated with the OTU, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
-            let isolates = map(baseVirus.isolates, isolate => {
+            let isolates = map(baseOTU.isolates, isolate => {
                 // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
                 let name = formatIsolateName(isolate);
 
@@ -65,7 +65,7 @@ const PathoscopeViewer = (props) => {
             const pi = sumBy(isolates, "pi");
 
             return {
-                ...baseVirus,
+                ...baseOTU,
                 pi,
                 coverage,
                 isolates,
@@ -81,7 +81,7 @@ const PathoscopeViewer = (props) => {
 
     return (
         <Alert bsStyle="info" className="text-center" icon="notification">
-            No virus sequences found in sample
+            No OTU sequences found in sample
         </Alert>
     );
 

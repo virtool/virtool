@@ -19,8 +19,8 @@ class SegmentForm extends React.Component {
 
     componentWillReceiveProps (nextProps) {
 
-        if (nextProps.errors && nextProps.errors.EDIT_VIRUS_ERROR) {
-            return this.setState({ error: nextProps.errors.EDIT_VIRUS_ERROR.message });
+        if (nextProps.errors && nextProps.errors.EDIT_OTU_ERROR) {
+            return this.setState({ error: nextProps.errors.EDIT_OTU_ERROR.message });
         }
 
         let error = "";

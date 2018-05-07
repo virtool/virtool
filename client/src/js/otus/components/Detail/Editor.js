@@ -103,10 +103,10 @@ const IsolateEditor = (props) => {
 };
 
 const mapStateToProps = state => ({
-    virusId: state.viruses.detail.id,
-    isolates: state.viruses.detail.isolates,
-    activeIsolateId: state.viruses.activeIsolateId,
-    canModify: state.account.permissions.modify_virus
+    otuId: state.otus.detail.id,
+    isolates: state.otus.detail.isolates,
+    activeIsolateId: state.otus.activeIsolateId,
+    canModify: state.account.permissions.modify_OTU
 });
 
 const mapDispatchToProps = dispatch => ({

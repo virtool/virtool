@@ -38,7 +38,7 @@ class InternalControl extends React.Component {
                     <Col xs={12} mdPush={6} md={6}>
                         <Panel>
                             <Panel.Body>
-                                Set a virus that is spiked into samples to be used as a positive control.
+                                Set a OTU that is spiked into samples to be used as a positive control.
                                 Viral abundances in a sample can be calculated as proportions relative to the control.
                             </Panel.Body>
                         </Panel>

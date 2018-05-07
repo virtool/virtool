@@ -13,7 +13,7 @@ const getInitialState = () => ({
     uploadProgress: 0
 });
 
-class VirusImport extends React.Component {
+class OTUImport extends React.Component {
 
     constructor (props) {
         super(props);
@@ -48,7 +48,7 @@ class VirusImport extends React.Component {
             body = (
                 <div>
                     <Dropzone className="dropzone" onDrop={this.handleDrop}>
-                        <span>Drag or click here to upload a <strong>viruses.json.gz</strong> file.</span>
+                        <span>Drag or click here to upload a <strong>otus.json.gz</strong> file.</span>
                     </Dropzone>
 
                     <p className="text-center small">
@@ -68,9 +68,9 @@ class VirusImport extends React.Component {
                     progress = (
                         <Panel>
                             <Panel.Body>
-                                <ProgressBar now={data.inserted || 0 / data.totals.viruses * 100} />
+                                <ProgressBar now={data.inserted || 0 / data.totals.otus * 100} />
                                 <p className="text-center text-muted">
-                                    <small>Inserted {data.inserted} of {data.totals.viruses}</small>
+                                    <small>Inserted {data.inserted} of {data.totals.otus}</small>
                                 </p>
                             </Panel.Body>
                         </Panel>
@@ -92,8 +92,8 @@ class VirusImport extends React.Component {
                                     <td>{data.version || "None"}</td>
                                 </tr>
                                 <tr>
-                                    <th>Viruses</th>
-                                    <td>{data.totals.viruses}</td>
+                                    <th>OTUs</th>
+                                    <td>{data.totals.otus}</td>
                                 </tr>
                                 <tr>
                                     <th>Isolates</th>
@@ -121,7 +121,7 @@ class VirusImport extends React.Component {
         return (
             <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Import Viruses
+                    Import OTUs
                 </Modal.Header>
 
                 <Modal.Body>
@@ -136,8 +136,8 @@ class VirusImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "virusImport"),
-    importData: state.viruses.importData
+    show: routerLocationHasState(state, "importOTUs"),
+    importData: state.otus.importData
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -151,11 +151,11 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {importViruses: false}}));
+        dispatch(push({...window.location, state: {importOTUs: false}}));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(VirusImport);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUImport);
 
 

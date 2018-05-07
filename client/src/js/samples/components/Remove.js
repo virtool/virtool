@@ -6,7 +6,7 @@ import { RemoveModal } from "../../base";
 
 const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
     <RemoveModal
-        noun="Virus"
+        noun="OTU"
         name={name}
         show={show}
         onConfirm={() => onConfirm(id)}

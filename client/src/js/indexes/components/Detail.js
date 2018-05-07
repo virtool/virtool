@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -25,27 +26,30 @@ class IndexDetail extends React.Component {
 
         return (
             <div>
+                <Helmet>
+                    <title>{`Virus Index ${indexVersion} - Indexes`}</title>
+                </Helmet>
                 <h3 className="view-header">
-                    <strong>Virus Index {indexVersion}</strong>
+                    <strong>OTU Index {indexVersion}</strong>
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/viruses/indexes/${indexVersion}/general`}>
+                    <LinkContainer to={`/otus/indexes/${indexVersion}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/viruses/indexes/${indexVersion}/changes`}>
+                    <LinkContainer to={`/otus/indexes/${indexVersion}/changes`}>
                         <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
                     <Redirect
-                        from="/viruses/indexes/:indexVersion"
-                        to={`/viruses/indexes/${indexVersion}/general`}
+                        from="/otus/indexes/:indexVersion"
+                        to={`/otus/indexes/${indexVersion}/general`}
                         exact
                     />
-                    <Route path="/viruses/indexes/:indexVersion/general" component={IndexGeneral} />
-                    <Route path="/viruses/indexes/:indexVersion/changes" component={IndexChanges} />
+                    <Route path="/otus/indexes/:indexVersion/general" component={IndexGeneral} />
+                    <Route path="/otus/indexes/:indexVersion/changes" component={IndexChanges} />
                 </Switch>
             </div>
         );

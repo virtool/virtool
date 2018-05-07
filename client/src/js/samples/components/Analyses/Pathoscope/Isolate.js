@@ -9,7 +9,7 @@ import { toScientificNotation } from "../../../../utils";
 export default class PathoscopeIsolate extends React.Component {
 
     static propTypes = {
-        virusId: PropTypes.string,
+        otuId: PropTypes.string,
         name: PropTypes.string,
         pi: PropTypes.number,
         best: PropTypes.number,
@@ -34,7 +34,7 @@ export default class PathoscopeIsolate extends React.Component {
     };
 
     handleScroll = (e) => {
-        this.props.setScroll(this.props.virusId, e.target.scrollLeft);
+        this.props.setScroll(this.props.otuId, e.target.scrollLeft);
     };
 
     render () {

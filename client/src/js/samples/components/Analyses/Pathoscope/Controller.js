@@ -13,7 +13,7 @@ export default class PathoscopeController extends React.Component {
         this.state = {
             expanded: [],
             filterIsolates: true,
-            filterViruses: true,
+            filterOTUs: true,
             findTerm: "",
             showReads: false,
             sortDescending: true,
@@ -32,9 +32,9 @@ export default class PathoscopeController extends React.Component {
         });
     };
 
-    toggleIn = (virusId) => {
+    toggleIn = (otuId) => {
         this.setState({
-            expanded: xor(this.state.expanded, [virusId])
+            expanded: xor(this.state.expanded, [otuId])
         });
     };
 
@@ -58,18 +58,18 @@ export default class PathoscopeController extends React.Component {
 
     filter = (eventKey) => {
 
-        if (eventKey === "viruses") {
-            return this.setState({filterViruses: !this.state.filterViruses});
+        if (eventKey === "OTUs") {
+            return this.setState({filterOTUs: !this.state.filterOTUs});
         }
 
         if (eventKey === "isolates") {
             return this.setState({filterIsolates: !this.state.filterIsolates});
         }
 
-        const filterValue = !(this.state.filterViruses && this.state.filterIsolates);
+        const filterValue = !(this.state.filterOTUs && this.state.filterIsolates);
 
         return this.setState({
-            filterViruses: filterValue,
+            filterOTUs: filterValue,
             filterIsolates: filterValue
         });
     };
@@ -80,21 +80,21 @@ export default class PathoscopeController extends React.Component {
 
         const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i") : null;
 
-        if (this.state.filterViruses) {
+        if (this.state.filterOTUs) {
             const totalReadsMapped = sum(map(data, "reads"));
 
-            data = filter(data, virus => (
-                (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
-                (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
+            data = filter(data, otu => (
+                (otu.pi * totalReadsMapped >= otu.length * 0.8 / this.props.maxReadLength) &&
+                (!re || (re.test(otu.abbreviation) || re.test(otu.name)))
             ));
         } else {
-            data = filter(data, (virus) => !re || (re.test(virus.abbreviation) || re.test(virus.name)));
+            data = filter(data, (otu) => !re || (re.test(otu.abbreviation) || re.test(otu.name)));
         }
 
         if (this.state.filterIsolates) {
-            data = map(data, virus => ({
-                ...virus,
-                isolates: filter(virus.isolates, isolate => (isolate.pi >= 0.03 * virus.pi))
+            data = map(data, otu => ({
+                ...otu,
+                isolates: filter(otu.isolates, isolate => (isolate.pi >= 0.03 * otu.pi))
             }));
         }
 
@@ -166,19 +166,19 @@ export default class PathoscopeController extends React.Component {
                                 <Button
                                     title="Filter"
                                     onClick={this.filter}
-                                    active={this.state.filterViruses || this.state.filterIsolates}
+                                    active={this.state.filterOTUs || this.state.filterIsolates}
                                 >
                                     <Icon name="filter" />
                                 </Button>
                                 <Dropdown.Toggle />
                                 <Dropdown.Menu onSelect={this.filter}>
-                                    <MenuItem eventKey="viruses">
+                                    <MenuItem eventKey="OTUs">
                                         <Flex>
                                             <FlexItem>
-                                                <Checkbox checked={this.state.filterViruses} />
+                                                <Checkbox checked={this.state.filterOTUs} />
                                             </FlexItem>
                                             <FlexItem pad={5}>
-                                                Viruses
+                                                OTUs
                                             </FlexItem>
                                         </Flex>
                                     </MenuItem>

@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import Numeral from "numeral";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
@@ -87,6 +88,9 @@ class SubtractionDetail extends React.Component {
 
             return (
                 <div>
+                    <Helmet>
+                        <title>{`${data.id} - Subtraction`}</title>
+                    </Helmet>
                     <h3 className="view-header">
                         <Flex alignItems="flex-end">
                             <FlexItem grow={0} shrink={0}>

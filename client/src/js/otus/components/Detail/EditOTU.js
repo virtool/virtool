@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 import { get, upperFirst } from "lodash-es";
 
-import { editVirus, hideVirusModal } from "../../actions";
+import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, InputError } from "../../../base";
 
@@ -14,7 +14,7 @@ const getInitialState = ({ name = "", abbreviation = "" }) => ({
     errorAbbreviation: ""
 });
 
-class EditVirus extends React.Component {
+class EditOTU extends React.Component {
 
     constructor (props) {
         super(props);
@@ -46,7 +46,7 @@ class EditVirus extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("EDIT_VIRUS_ERROR");
+            this.props.onClearError("EDIT_OTU_ERROR");
         }
     };
 
@@ -57,7 +57,7 @@ class EditVirus extends React.Component {
     handleHide = () => {
         this.props.onHide(this.props);
         if (this.props.error) {
-            this.props.onClearError("EDIT_VIRUS_ERROR");
+            this.props.onClearError("EDIT_OTU_ERROR");
         }
     };
 
@@ -71,7 +71,7 @@ class EditVirus extends React.Component {
         }
 
         if (!this.state.error) {
-            this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
+            this.props.onSave(this.props.otuId, this.state.name, this.state.abbreviation);
         }
     };
 
@@ -80,7 +80,7 @@ class EditVirus extends React.Component {
         return (
             <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleHide}>
                 <Modal.Header onHide={this.handleHide} closeButton>
-                    Edit Virus
+                    Edit OTU
                 </Modal.Header>
                 <form onSubmit={this.handleSave}>
                     <Modal.Body>
@@ -117,18 +117,18 @@ class EditVirus extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    show: state.viruses.edit,
-    error: get(state, "errors.EDIT_VIRUS_ERROR.message", "")
+    show: state.otus.edit,
+    error: get(state, "errors.EDIT_OTU_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
-        dispatch(hideVirusModal());
+        dispatch(hideOTUModal());
     },
 
-    onSave: (virusId, name, abbreviation) => {
-        dispatch(editVirus(virusId, name, abbreviation));
+    onSave: (otuId, name, abbreviation) => {
+        dispatch(editOTU(otuId, name, abbreviation));
     },
 
     onClearError: (error) => {
@@ -137,4 +137,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditVirus);
+export default connect(mapStateToProps, mapDispatchToProps)(EditOTU);

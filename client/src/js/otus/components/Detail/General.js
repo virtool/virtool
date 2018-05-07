@@ -6,7 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports VirusGeneral
+ * @exports OTUGeneral
  */
 
 import React from "react";
@@ -16,7 +16,7 @@ import { IDRow } from "../../../base";
 
 import Issues from "./Issues";
 
-const VirusGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
+const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
     <div>
         {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
@@ -41,7 +41,7 @@ const VirusGeneral = ({ abbreviation, id, issues, isolates, name, version }) => 
 );
 
 const mapStateToProps = state => ({
-    ...state.viruses.detail
+    ...state.otus.detail
 });
 
-export default connect(mapStateToProps)(VirusGeneral);
+export default connect(mapStateToProps)(OTUGeneral);

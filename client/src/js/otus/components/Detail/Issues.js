@@ -13,20 +13,20 @@ import { find, map } from "lodash-es";
 import { Alert } from "react-bootstrap";
 import { formatIsolateName } from "../../../utils";
 
-const VirusIssues = (props) => {
+const OTUIssues = (props) => {
 
     const errors = [];
 
-    // The virus has no isolates associated with it.
-    if (props.issues.empty_virus) {
+    // The OTU has no isolates associated with it.
+    if (props.issues.empty.otu) {
         errors.push(
-            <li key="emptyVirus">
-                There are no isolates associated with this virus
+            <li key="emptyOTU">
+                There are no isolates associated with this OTU
             </li>
         );
     }
 
-    // The virus has an inconsistent number of sequences between isolates.
+    // The OTU has an inconsistent number of sequences between isolates.
     if (props.issues.isolate_inconsistency) {
         errors.push(
             <li key="isolateInconsistency">
@@ -85,7 +85,7 @@ const VirusIssues = (props) => {
         <Alert bsStyle={props.issues ? "danger" : "warning"} className="clearfix">
             <h5>
                 <strong>
-                    There are some issues that must be resolved before this virus can be included in the next index
+                    There are some issues that must be resolved before this OTU can be included in the next index
                     build
                 </strong>
             </h5>
@@ -96,9 +96,9 @@ const VirusIssues = (props) => {
 
 };
 
-VirusIssues.propTypes = {
+OTUIssues.propTypes = {
     issues: PropTypes.object,
     isolates: PropTypes.arrayOf(PropTypes.object)
 };
 
-export default VirusIssues;
+export default OTUIssues;

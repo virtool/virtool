@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import { map, sortBy } from "lodash-es";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -55,6 +56,9 @@ class HMMDetail extends React.Component {
 
         return (
             <div>
+                <Helmet>
+                    <title>{`${this.props.detail.names[0]} - HMMs`}</title>
+                </Helmet>
                 <h3 className="view-header">
                     <strong>{this.props.detail.names[0]}</strong>
                 </h3>

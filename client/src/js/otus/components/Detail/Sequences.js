@@ -80,13 +80,13 @@ class IsolateSequences extends React.Component {
                 <AddSequence schema={this.state.schema} />
 
                 <EditSequence
-                    virusId={this.props.virusId}
+                    otuId={this.props.otuId}
                     isolateId={this.props.activeIsolateId}
                     schema={this.state.schema}
                 />
 
                 <RemoveSequence
-                    virusId={this.props.virusId}
+                    otuId={this.props.otuId}
                     isolateId={this.props.activeIsolateId}
                     isolateName={this.props.isolateName}
                     schema={this.state.schema}
@@ -100,11 +100,11 @@ const mapStateToProps = (state) => {
     let sequences = null;
     let activeIsolate = null;
 
-    const activeIsolateId = state.viruses.activeIsolateId;
-    const schema = state.viruses.detail.schema;
+    const activeIsolateId = state.otus.activeIsolateId;
+    const schema = state.otus.detail.schema;
 
-    if (state.viruses.detail.isolates.length) {
-        activeIsolate = find(state.viruses.detail.isolates, {id: activeIsolateId});
+    if (state.otus.detail.isolates.length) {
+        activeIsolate = find(state.otus.detail.isolates, {id: activeIsolateId});
         sequences = activeIsolate.sequences;
     }
 
@@ -112,13 +112,13 @@ const mapStateToProps = (state) => {
         activeIsolateId,
         sequences,
         schema,
-        virusId: state.viruses.detail.id,
-        canModify: state.account.permissions.modify_virus,
-        editing: state.viruses.editSequence,
+        otuId: state.otus.detail.id,
+        canModify: state.account.permissions.modify_OTU,
+        editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        showAddSequence: state.viruses.showAddSequence,
-        showEditSequence: state.viruses.showEditSequence,
-        showRemoveSequence: state.viruses.showRemoveSequence
+        showAddSequence: state.otus.showAddSequence,
+        showEditSequence: state.otus.showEditSequence,
+        showRemoveSequence: state.otus.showRemoveSequence
     };
 };
 

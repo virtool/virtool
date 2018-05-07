@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import Moment from "moment";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
@@ -67,14 +68,19 @@ class JobDetail extends React.Component {
             progressStyle = "danger";
         }
 
+        const taskName = getTaskDisplayName(detail.task);
+
         return (
             <div>
+                <Helmet>
+                    <title>{`${taskName} - Jobs`}</title>
+                </Helmet>
                 <h3 style={{marginBottom: "20px"}}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <Flex alignItems="center">
                                 <strong>
-                                    {getTaskDisplayName(detail.task)}
+                                    {taskName}
                                 </strong>
                                 <FlexItem grow={1} pad={7}>
                                     <small className={`text-strong text-capitalize text-${progressStyle}`}>
