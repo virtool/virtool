@@ -41,11 +41,11 @@ const IsolateTable = ({ id, isDefault, isolateName, sourceName, sourceType }) =>
 export class IsolateDetail extends React.Component {
 
     handleDownload = () => {
-        followDownload(`/download/OTUs/${this.props.OTUId}/isolates/${this.props.activeIsolate.id}`);
+        followDownload(`/download/otus/${this.props.otuId}/isolates/${this.props.activeIsolate.id}`);
     };
 
     handleSetDefaultIsolate = () => {
-        this.props.setIsolateAsDefault(this.props.OTUId, this.props.activeIsolate.id);
+        this.props.setIsolateAsDefault(this.props.otuId, this.props.activeIsolate.id);
     };
 
     render () {
@@ -94,14 +94,14 @@ export class IsolateDetail extends React.Component {
         return (
             <div>
                 <EditIsolate
-                    OTUId={this.props.OTUId}
+                    otuId={this.props.otuId}
                     isolateId={isolate.id}
                     sourceType={isolate.source_type}
                     sourceName={isolate.source_name}
                 />
 
                 <RemoveIsolate
-                    OTUId={this.props.OTUId}
+                    otuId={this.props.otuId}
                     isolateId={isolate.id}
                     isolateName={isolate.name}
                     nextIsolateId={this.props.isolates.length ? this.props.isolates[0].id : null}
@@ -140,12 +140,12 @@ export class IsolateDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    isolates: state.OTUs.detail.isolates,
-    OTUId: state.OTUs.detail.id,
-    activeIsolate: state.OTUs.activeIsolate,
-    activeIsolateId: state.OTUs.activeIsolateId,
-    activeSequenceId: state.OTUs.activeSequenceId,
-    editing: state.OTUs.editingIsolate,
+    isolates: state.otus.detail.isolates,
+    otuId: state.otus.detail.id,
+    activeIsolate: state.otus.activeIsolate,
+    activeIsolateId: state.otus.activeIsolateId,
+    activeSequenceId: state.otus.activeSequenceId,
+    editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
     canModify: state.account.permissions.modify_OTU
@@ -153,12 +153,12 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    setIsolateAsDefault: (OTUId, isolateId) => {
-        dispatch(setIsolateAsDefault(OTUId, isolateId));
+    setIsolateAsDefault: (otuId, isolateId) => {
+        dispatch(setIsolateAsDefault(otuId, isolateId));
     },
 
-    showEditIsolate: (OTUId, isolateId, sourceType, sourceName) => {
-        dispatch(showEditIsolate(OTUId, isolateId, sourceType, sourceName));
+    showEditIsolate: (otuId, isolateId, sourceType, sourceName) => {
+        dispatch(showEditIsolate(otuId, isolateId, sourceType, sourceName));
     },
 
     showRemoveIsolate: () => {

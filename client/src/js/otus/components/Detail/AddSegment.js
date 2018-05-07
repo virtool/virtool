@@ -82,7 +82,7 @@ AddSegment.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-    schema: state.OTUs.detail.schema
+    schema: state.otus.detail.schema
 });
 
 export default connect(mapStateToProps)(AddSegment);

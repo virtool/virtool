@@ -19,23 +19,23 @@ const OTUSection = ({ match }) => (
     <div>
         <General />
         <IsolateEditor />
-        <AddIsolate OTUId={match.params.OTUId} />
+        <AddIsolate otuId={match.params.otuId} />
     </div>
 );
 
 class OTUDetail extends React.Component {
 
     componentDidMount () {
-        this.props.getOTU(this.props.match.params.OTUId);
+        this.props.getOTU(this.props.match.params.otuId);
     }
 
     render = () => {
 
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.OTUId) {
+        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.otuId) {
             return <LoadingPlaceholder />;
         }
 
-        const OTUId = this.props.detail.id;
+        const otuId = this.props.detail.id;
 
         const { name, abbreviation } = this.props.detail;
 
@@ -99,19 +99,19 @@ class OTUDetail extends React.Component {
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/OTUs/${OTUId}/OTU`}>
+                    <LinkContainer to={`/otus/${otuId}/otu`}>
                         <NavItem>
                             OTU
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/OTUs/${OTUId}/schema`}>
+                    <LinkContainer to={`/otus/${otuId}/schema`}>
                         <NavItem>
                             Schema
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/OTUs/${OTUId}/history`}>
+                    <LinkContainer to={`/otus/${otuId}/history`}>
                         <NavItem>
                             History
                         </NavItem>
@@ -119,14 +119,14 @@ class OTUDetail extends React.Component {
 
                 </Nav>
 
-                <EditOTU OTUId={OTUId} name={name} abbreviation={abbreviation} />
-                <RemoveOTU OTUId={OTUId} OTUName={name} history={this.props.history} />
+                <EditOTU otuId={otuId} name={name} abbreviation={abbreviation} />
+                <RemoveOTU otuId={otuId} OTUName={name} history={this.props.history} />
 
                 <Switch>
-                    <Redirect from="/OTUs/:OTUId" to={`/OTUs/${OTUId}/OTU`} exact />
-                    <Route path="/OTUs/:OTUId/OTU" component={OTUSection} />
-                    <Route path="/OTUs/:OTUId/history" component={History} />
-                    <Route path="/OTUs/:OTUId/schema" component={Schema} />
+                    <Redirect from="/otus/:otuId" to={`/otus/${otuId}/otu`} exact />
+                    <Route path="/otus/:otuId/otu" component={OTUSection} />
+                    <Route path="/otus/:otuId/history" component={History} />
+                    <Route path="/otus/:otuId/schema" component={Schema} />
                 </Switch>
             </div>
         );
@@ -134,14 +134,14 @@ class OTUDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.OTUs.detail,
-    canModify: state.account.permissions.modify_OTU
+    detail: state.otus.detail,
+    canModify: state.account.permissions.modify_otu
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    getOTU: (OTUId) => {
-        dispatch(getOTU(OTUId));
+    getOTU: (otuId) => {
+        dispatch(getOTU(otuId));
     },
 
     showEdit: () => {

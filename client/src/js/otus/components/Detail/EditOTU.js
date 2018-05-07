@@ -71,7 +71,7 @@ class EditOTU extends React.Component {
         }
 
         if (!this.state.error) {
-            this.props.onSave(this.props.OTUId, this.state.name, this.state.abbreviation);
+            this.props.onSave(this.props.otuId, this.state.name, this.state.abbreviation);
         }
     };
 
@@ -117,7 +117,7 @@ class EditOTU extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    show: state.OTUs.edit,
+    show: state.otus.edit,
     error: get(state, "errors.EDIT_OTU_ERROR.message", "")
 });
 
@@ -127,8 +127,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(hideOTUModal());
     },
 
-    onSave: (OTUId, name, abbreviation) => {
-        dispatch(editOTU(OTUId, name, abbreviation));
+    onSave: (otuId, name, abbreviation) => {
+        dispatch(editOTU(otuId, name, abbreviation));
     },
 
     onClearError: (error) => {

@@ -38,7 +38,7 @@ class EditIsolate extends React.Component {
 
     handleSubmit = () => {
         this.props.onSave(
-            this.props.OTUId,
+            this.props.otuId,
             this.props.isolateId,
             this.state.sourceType,
             this.state.sourceName
@@ -72,7 +72,7 @@ class EditIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.OTUs.editIsolate,
+    show: state.otus.editIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types
 });
@@ -83,8 +83,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideOTUModal());
     },
 
-    onSave: (OTUId, isolateId, sourceType, sourceName) => {
-        dispatch(editIsolate(OTUId, isolateId, sourceType, sourceName));
+    onSave: (otuId, isolateId, sourceType, sourceName) => {
+        dispatch(editIsolate(otuId, isolateId, sourceType, sourceName));
     }
 
 });

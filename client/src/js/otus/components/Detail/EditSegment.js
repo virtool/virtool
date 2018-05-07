@@ -99,7 +99,7 @@ EditSegment.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-    schema: state.OTUs.detail.schema
+    schema: state.otus.detail.schema
 });
 
 export default connect(mapStateToProps)(EditSegment);

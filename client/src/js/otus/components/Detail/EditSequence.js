@@ -87,7 +87,7 @@ class EditSequence extends React.Component {
         e.preventDefault();
 
         this.props.onSave(
-            this.props.OTUId,
+            this.props.otuId,
             this.props.isolateId,
             this.props.sequenceId,
             this.state.definition,
@@ -201,10 +201,10 @@ class EditSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.OTUs.detail,
-    isolate: state.OTUs.activeIsolate,
-    sequenceId: state.OTUs.editSequence,
-    OTUId: state.OTUs.detail.id,
+    detail: state.otus.detail,
+    isolate: state.otus.activeIsolate,
+    sequenceId: state.otus.editSequence,
+    otuId: state.otus.detail.id,
     error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
 });
 
@@ -214,8 +214,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideOTUModal());
     },
 
-    onSave: (OTUId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(editSequence(OTUId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(editSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
     onClearError: (error) => {

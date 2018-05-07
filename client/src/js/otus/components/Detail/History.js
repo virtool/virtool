@@ -138,7 +138,7 @@ HistoryList.propTypes = {
 class OTUHistory extends React.Component {
 
     componentDidMount () {
-        this.props.getHistory(this.props.OTUId);
+        this.props.getHistory(this.props.otuId);
     }
 
     render () {
@@ -188,19 +188,19 @@ class OTUHistory extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    OTUId: state.OTUs.detail.id,
-    history: state.OTUs.detailHistory,
+    otuId: state.otus.detail.id,
+    history: state.otus.detailHistory,
     canModify: state.account.permissions.modify_OTU
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    getHistory: (OTUId) => {
-        dispatch(getOTUHistory(OTUId));
+    getHistory: (otuId) => {
+        dispatch(getOTUHistory(otuId));
     },
 
-    revert: (OTUId, version) => {
-        dispatch(revert(OTUId, version));
+    revert: (otuId, version) => {
+        dispatch(revert(otuId, version));
     }
 
 });

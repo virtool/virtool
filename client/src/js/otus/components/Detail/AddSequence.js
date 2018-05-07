@@ -116,7 +116,7 @@ class AddSequence extends React.Component {
         if (this.state.id) {
             this.setState({show: false});
             this.props.onSave(
-                this.props.OTUId,
+                this.props.otuId,
                 this.props.isolateId,
                 this.state.id,
                 this.state.definition,
@@ -239,9 +239,9 @@ class AddSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.OTUs.addSequence,
-    OTUId: state.OTUs.detail.id,
-    isolateId: state.OTUs.activeIsolateId,
+    show: state.otus.addSequence,
+    otuId: state.otus.detail.id,
+    isolateId: state.otus.activeIsolateId,
     error: get(state, "errors.ADD_SEQUENCE_ERROR", "")
 });
 
@@ -251,8 +251,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideOTUModal());
     },
 
-    onSave: (OTUId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(addSequence(OTUId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
     onClearError: (error) => {

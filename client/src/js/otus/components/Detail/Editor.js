@@ -103,9 +103,9 @@ const IsolateEditor = (props) => {
 };
 
 const mapStateToProps = state => ({
-    OTUId: state.OTUs.detail.id,
-    isolates: state.OTUs.detail.isolates,
-    activeIsolateId: state.OTUs.activeIsolateId,
+    otuId: state.otus.detail.id,
+    isolates: state.otus.detail.isolates,
+    activeIsolateId: state.otus.activeIsolateId,
     canModify: state.account.permissions.modify_OTU
 });
 

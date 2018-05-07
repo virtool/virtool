@@ -41,7 +41,7 @@ const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
 );
 
 const mapStateToProps = state => ({
-    ...state.OTUs.detail
+    ...state.otus.detail
 });
 
 export default connect(mapStateToProps)(OTUGeneral);

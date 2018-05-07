@@ -9,7 +9,7 @@ import { Button } from "../../../base";
 class RemoveOTU extends React.Component {
 
     handleConfirm = () => {
-        this.props.onConfirm(this.props.OTUId, this.props.history);
+        this.props.onConfirm(this.props.otuId, this.props.history);
     }
 
     render () {
@@ -38,14 +38,14 @@ class RemoveOTU extends React.Component {
 RemoveOTU.propTypes = {
     history: PropTypes.object,
     show: PropTypes.bool,
-    OTUId: PropTypes.string,
+    otuId: PropTypes.string,
     OTUName: PropTypes.string,
     onHide: PropTypes.func,
     onConfirm: PropTypes.func
 };
 
 const mapStateToProps = state => ({
-    show: state.OTUs.remove
+    show: state.otus.remove
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -54,8 +54,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideOTUModal());
     },
 
-    onConfirm: (OTUId, history) => {
-        dispatch(removeOTU(OTUId, history));
+    onConfirm: (otuId, history) => {
+        dispatch(removeOTU(otuId, history));
     }
 
 });

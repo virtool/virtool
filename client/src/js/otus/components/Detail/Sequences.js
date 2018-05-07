@@ -80,13 +80,13 @@ class IsolateSequences extends React.Component {
                 <AddSequence schema={this.state.schema} />
 
                 <EditSequence
-                    OTUId={this.props.OTUId}
+                    otuId={this.props.otuId}
                     isolateId={this.props.activeIsolateId}
                     schema={this.state.schema}
                 />
 
                 <RemoveSequence
-                    OTUId={this.props.OTUId}
+                    otuId={this.props.otuId}
                     isolateId={this.props.activeIsolateId}
                     isolateName={this.props.isolateName}
                     schema={this.state.schema}
@@ -100,11 +100,11 @@ const mapStateToProps = (state) => {
     let sequences = null;
     let activeIsolate = null;
 
-    const activeIsolateId = state.OTUs.activeIsolateId;
-    const schema = state.OTUs.detail.schema;
+    const activeIsolateId = state.otus.activeIsolateId;
+    const schema = state.otus.detail.schema;
 
-    if (state.OTUs.detail.isolates.length) {
-        activeIsolate = find(state.OTUs.detail.isolates, {id: activeIsolateId});
+    if (state.otus.detail.isolates.length) {
+        activeIsolate = find(state.otus.detail.isolates, {id: activeIsolateId});
         sequences = activeIsolate.sequences;
     }
 
@@ -112,13 +112,13 @@ const mapStateToProps = (state) => {
         activeIsolateId,
         sequences,
         schema,
-        OTUId: state.OTUs.detail.id,
+        otuId: state.otus.detail.id,
         canModify: state.account.permissions.modify_OTU,
-        editing: state.OTUs.editSequence,
+        editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        showAddSequence: state.OTUs.showAddSequence,
-        showEditSequence: state.OTUs.showEditSequence,
-        showRemoveSequence: state.OTUs.showRemoveSequence
+        showAddSequence: state.otus.showAddSequence,
+        showEditSequence: state.otus.showEditSequence,
+        showRemoveSequence: state.otus.showRemoveSequence
     };
 };
 

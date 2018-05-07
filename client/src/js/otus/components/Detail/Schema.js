@@ -51,7 +51,7 @@ class Schema extends React.Component {
             this.setState({segArray: newArray});
 
             this.props.onSave(
-                this.props.OTUId,
+                this.props.otuId,
                 this.props.detail.name,
                 this.props.detail.abbreviation,
                 newArray
@@ -72,7 +72,7 @@ class Schema extends React.Component {
         });
 
         this.props.onSave(
-            this.props.OTUId,
+            this.props.otuId,
             this.props.detail.name,
             this.props.detail.abbreviation,
             newArray
@@ -176,14 +176,14 @@ class Schema extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    schema: state.OTUs.detail.schema,
-    detail: state.OTUs.detail,
-    OTUId: state.OTUs.detail.id
+    schema: state.otus.detail.schema,
+    detail: state.otus.detail,
+    otuId: state.otus.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    onSave: (OTUId, name, abbreviation, schema) => {
-        dispatch(editOTU(OTUId, name, abbreviation, schema));
+    onSave: (otuId, name, abbreviation, schema) => {
+        dispatch(editOTU(otuId, name, abbreviation, schema));
     }
 });
 

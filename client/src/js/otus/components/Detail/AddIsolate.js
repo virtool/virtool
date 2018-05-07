@@ -31,7 +31,7 @@ class AddIsolate extends React.Component {
     }
 
     static propTypes = {
-        OTUId: PropTypes.string,
+        otuId: PropTypes.string,
         allowedSourceTypes: PropTypes.array,
         restrictSourceTypes: PropTypes.bool,
         show: PropTypes.bool,
@@ -44,7 +44,7 @@ class AddIsolate extends React.Component {
     };
 
     handleSubmit = () => {
-        this.props.onSave(this.props.OTUId, this.state.sourceType, this.state.sourceName);
+        this.props.onSave(this.props.otuId, this.state.sourceType, this.state.sourceName);
     };
 
     render () {
@@ -85,8 +85,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideOTUModal());
     },
 
-    onSave: (OTUId, sourceType, sourceName) => {
-        dispatch(addIsolate(OTUId, sourceType, sourceName));
+    onSave: (otuId, sourceType, sourceName) => {
+        dispatch(addIsolate(otuId, sourceType, sourceName));
     }
 
 });
