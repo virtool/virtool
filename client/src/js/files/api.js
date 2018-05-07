@@ -41,9 +41,11 @@ export const remove = ({ fileId }) => (
  * @param onProgress {function} a callback to call with ``ProgressEvent``s when they are fired
  * @returns {promise}
  */
-export const upload = ({ file, fileType, onProgress }) => (
+export const upload = (file, fileType, onProgress, onSuccess, onFailure) => (
     Request.post(`/upload/${fileType}`)
         .query({name: file.name})
         .attach("file", file)
         .on("progress", onProgress)
+        .then(onSuccess)
+        .catch(onFailure)
 );

@@ -1,15 +1,23 @@
 import React from "react";
-import PropTypes from "prop-types";
-import Dropzone from "react-dropzone";
-import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
+import { Modal, ButtonToolbar } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-
-import { uploadImport, commitImport } from "../actions";
-import { Button, RelativeTime } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { forEach, upperFirst } from "lodash-es";
+import ReferenceForm from "./Form";
+import { Button, UploadBar } from "../../base";
+import { routerLocationHasState, createRandomString } from "../../utils";
+import { upload } from "../../files/actions";
+import { createReference } from "../actions";
+import { clearError } from "../../errors/actions";
 
 const getInitialState = () => ({
+    name: "",
+    description: "",
+    dataType: "",
+    organism: "",
+    isPublic: false,
+    errorName: "",
+    errorDataField: "",
     uploadProgress: 0
 });
 
@@ -20,16 +28,19 @@ class OTUImport extends React.Component {
         this.state = getInitialState();
     }
 
-    static propTypes = {
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        importData: PropTypes.object,
-        onDrop: PropTypes.func,
-        onCommit: PropTypes.func
+    handleChange = (e) => {
+        const { name, value } = e.target;
+
+        const errorType = `error${upperFirst(e.target.name)}`;
+
+        this.setState({
+            [name]: value,
+            [errorType]: ""
+        });
     };
 
-    handleCommit = () => {
-        this.props.onCommit(this.props.importData.file_id);
+    handleHide = () => {
+        this.props.onHide(this.props);
     };
 
     handleDrop = (files) => {
@@ -40,95 +51,59 @@ class OTUImport extends React.Component {
         this.setState({uploadProgress: e.percent});
     };
 
-    render () {
-        let body;
-        let footer;
+    handleModalExited = () => {
+        this.setState(getInitialState());
+    };
 
-        if (this.props.importData === null) {
-            body = (
-                <div>
-                    <Dropzone className="dropzone" onDrop={this.handleDrop}>
-                        <span>Drag or click here to upload a <strong>otus.json.gz</strong> file.</span>
-                    </Dropzone>
+    handleSubmit = (e) => {
+        e.preventDefault();
 
-                    <p className="text-center small">
-                        {this.state.uploadProgress}
-                    </p>
-                </div>
-            );
-        } else {
-            const data = this.props.importData;
-
-            if (data.duplicates || data.errors) {
-                body = <strong>The import file is invalid.</strong>;
-            } else {
-                let progress;
-
-                if (data.inProgress) {
-                    progress = (
-                        <Panel>
-                            <Panel.Body>
-                                <ProgressBar now={data.inserted || 0 / data.totals.otus * 100} />
-                                <p className="text-center text-muted">
-                                    <small>Inserted {data.inserted} of {data.totals.otus}</small>
-                                </p>
-                            </Panel.Body>
-                        </Panel>
-                    );
-                }
-
-                body = (
-                    <div>
-                        {progress}
-
-                        <Table bordered>
-                            <tbody>
-                                <tr>
-                                    <th>Created</th>
-                                    <td><RelativeTime time={data.file_created_at} /></td>
-                                </tr>
-                                <tr>
-                                    <th>Version</th>
-                                    <td>{data.version || "None"}</td>
-                                </tr>
-                                <tr>
-                                    <th>OTUs</th>
-                                    <td>{data.totals.otus}</td>
-                                </tr>
-                                <tr>
-                                    <th>Isolates</th>
-                                    <td>{data.totals.isolates}</td>
-                                </tr>
-                                <tr>
-                                    <th>Sequences</th>
-                                    <td>{data.totals.sequences}</td>
-                                </tr>
-                            </tbody>
-                        </Table>
-                    </div>
-                );
-
-                footer = (
-                    <Modal.Footer>
-                        <Button bsStyle="primary" icon="checkmark" onClick={this.handleCommit} pullRight>
-                            Import
-                        </Button>
-                    </Modal.Footer>
-                );
-            }
+        if (!this.state.name.length) {
+            this.setState({ errorName: "Required Field" });
         }
 
+        if (!this.state.dataType.length) {
+            this.setState({ errorDataType: "Required Field" });
+        }
+
+        if (this.state.name.length && this.state.dataType.length) {
+            this.props.onSubmit(
+                this.state.name,
+                this.state.description,
+                this.state.dataType,
+                this.state.organism,
+                this.state.isPublic
+            );
+            this.props.onHide(window.location);
+        }
+
+    };
+
+    toggleCheck = () => {
+        this.setState({ isPublic: !this.state.isPublic });
+    };
+
+    render () {
+
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Import OTUs
                 </Modal.Header>
 
                 <Modal.Body>
-                    {body}
+                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+
+                    <UploadBar onDrop={this.handleDrop} style={{ marginTop: "20px" }} />
                 </Modal.Body>
 
-                {footer}
+                <Modal.Footer>
+                    <ButtonToolbar className="pull-right">
+                        <Button icon="save" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
+                            Save
+                        </Button>
+                    </ButtonToolbar>
+                </Modal.Footer>
             </Modal>
         );
     }
@@ -136,22 +111,29 @@ class OTUImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "importOTUs"),
+    show: routerLocationHasState(state, "importReference"),
     importData: state.otus.importData
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    onCommit: (fileId) => {
-        dispatch(commitImport(fileId));
+    onSubmit: (name, description, dataType, organism, isPublic) => {
+        dispatch(createReference(name, description, dataType, organism, isPublic));
     },
 
-    onDrop: (file, onProgress) => {
-        dispatch(uploadImport(file, onProgress));
+    onDrop: (fileType, acceptedFiles) => {
+        forEach(acceptedFiles, file => {
+            const localId = createRandomString();
+            dispatch(upload(localId, file, fileType));
+        });
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {importOTUs: false}}));
+        dispatch(push({...window.location, state: {importReference: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

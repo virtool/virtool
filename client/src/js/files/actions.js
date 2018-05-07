@@ -63,12 +63,11 @@ export const findFiles = (fileType, page) => ({
  * @param onProgress {function} callback function for uploadProgress API call
  * @returns {object}
  */
-export const upload = (localId, file, fileType, onProgress) => ({
+export const upload = (localId, file, fileType) => ({
     type: UPLOAD.REQUESTED,
     localId,
     file,
-    fileType,
-    onProgress
+    fileType
 });
 
 /**

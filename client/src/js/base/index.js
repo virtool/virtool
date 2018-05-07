@@ -20,6 +20,7 @@ import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveModal } from "./RemoveModal";
 import { Tooltip } from "./Tooltip";
+import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export {
@@ -47,5 +48,6 @@ export {
     RelativeTime,
     RemoveModal,
     Tooltip,
+    UploadBar,
     ViewHeader
 };

@@ -1,13 +1,13 @@
 import React from "react";
-import Dropzone from "react-dropzone";
+// import Dropzone from "react-dropzone";
 import { capitalize, filter, forEach, map } from "lodash-es";
 import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import File from "./File";
-import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Alert, Button, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { findFiles, removeFile, upload } from "../actions";
+import { Alert, LoadingPlaceholder, NoneFound, Pagination, ViewHeader, UploadBar } from "../../base";
 import { createRandomString, checkAdminOrPermission } from "../../utils";
 
 class FileManager extends React.Component {
@@ -50,21 +50,9 @@ class FileManager extends React.Component {
 
         let toolbar;
 
-        if (checkAdminOrPermission(this.props.isAdmin, this.props.permissions, "upload_file")) {
+        if (this.props.canUpload) {
             toolbar = (
-                <div className="toolbar">
-                    <Dropzone
-                        ref={(node) => this.dropzone = node}
-                        onDrop={this.handleDrop}
-                        className="dropzone"
-                        activeClassName="dropzone-active"
-                        disableClick
-                    >
-                        Drag file here to upload
-                    </Dropzone>
-
-                    <Button icon="folder-open" onClick={() => this.dropzone.open()} />
-                </div>
+                <UploadBar onDrop={this.handleDrop} />
             );
         } else {
             toolbar = (
@@ -111,8 +99,7 @@ const mapStateToProps = (state) => {
         page,
         page_count,
         total_count,
-        permissions: state.account.permissions,
-        isAdmin: state.account.administrator
+        canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file")
     };
 };
 
@@ -121,7 +108,7 @@ const mapDispatchToProps = (dispatch) => ({
     onDrop: (fileType, acceptedFiles) => {
         forEach(acceptedFiles, file => {
             const localId = createRandomString();
-            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
+            dispatch(upload(localId, file, fileType));
         });
     },
 
