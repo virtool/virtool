@@ -48,7 +48,7 @@ class OTUImport extends React.Component {
             body = (
                 <div>
                     <Dropzone className="dropzone" onDrop={this.handleDrop}>
-                        <span>Drag or click here to upload a <strong>OTUs.json.gz</strong> file.</span>
+                        <span>Drag or click here to upload a <strong>otus.json.gz</strong> file.</span>
                     </Dropzone>
 
                     <p className="text-center small">
@@ -68,9 +68,9 @@ class OTUImport extends React.Component {
                     progress = (
                         <Panel>
                             <Panel.Body>
-                                <ProgressBar now={data.inserted || 0 / data.totals.OTUs * 100} />
+                                <ProgressBar now={data.inserted || 0 / data.totals.otus * 100} />
                                 <p className="text-center text-muted">
-                                    <small>Inserted {data.inserted} of {data.totals.OTUs}</small>
+                                    <small>Inserted {data.inserted} of {data.totals.otus}</small>
                                 </p>
                             </Panel.Body>
                         </Panel>
@@ -93,7 +93,7 @@ class OTUImport extends React.Component {
                                 </tr>
                                 <tr>
                                     <th>OTUs</th>
-                                    <td>{data.totals.OTUs}</td>
+                                    <td>{data.totals.otus}</td>
                                 </tr>
                                 <tr>
                                     <th>Isolates</th>
@@ -137,7 +137,7 @@ class OTUImport extends React.Component {
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "OTUImport"),
-    importData: state.OTUs.importData
+    importData: state.otus.importData
 });
 
 const mapDispatchToProps = dispatch => ({

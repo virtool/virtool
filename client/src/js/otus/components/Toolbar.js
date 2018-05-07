@@ -23,7 +23,7 @@ const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
             </div>
         </div>
 
-        <LinkContainer to="/OTUs/indexes">
+        <LinkContainer to="/otus/indexes">
             <Button
                 icon="filing"
                 tip="Indexes"
@@ -32,7 +32,7 @@ const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
 
         <Button
             tip="Filter Unverified"
-            onClick={() => onFilter("/OTUs?verified=false")}
+            onClick={() => onFilter("/otus?verified=false")}
             active={search === "?verified=false"}
         >
             <Icon name="filter" />
@@ -64,7 +64,7 @@ const mapDispatchToProps = (dispatch) => ({
     onFilter: (url) => {
         const currentUrl = window.location.pathname + window.location.search;
         if (currentUrl === url) {
-            dispatch(push("/OTUs"));
+            dispatch(push("/otus"));
         } else {
             dispatch(push(url));
         }

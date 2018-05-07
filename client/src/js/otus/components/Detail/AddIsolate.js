@@ -74,7 +74,7 @@ class AddIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.OTUs.addIsolate,
+    show: state.otus.addIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types
 });

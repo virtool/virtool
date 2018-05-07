@@ -13,7 +13,7 @@ import OTUImport from "./Import";
 import { createFindURL } from "../../utils";
 
 const OTUItem = ({ abbreviation, id, name, modified, verified }) => (
-    <LinkContainer to={`/OTUs/${id}`} key={id} className="spaced">
+    <LinkContainer to={`/otus/${id}`} key={id} className="spaced">
         <ListGroupItem bsStyle={verified ? null : "warning"}>
             <Row>
                 <Col xs={11} md={7}>
@@ -68,7 +68,7 @@ const OTUsList = (props) => {
                     <Icon name="info" />
                     <FlexItem pad={5}>
                         <span>The OTU database has changed. </span>
-                        <Link to="/OTUs/indexes">Rebuild the index</Link>
+                        <Link to="/otus/indexes">Rebuild the index</Link>
                         <span> to use the changes in further analyses.</span>
                     </FlexItem>
                 </Flex>
@@ -109,7 +109,7 @@ const OTUsList = (props) => {
 };
 
 const mapStateToProps = state => ({
-    ...state.OTUs,
+    ...state.otus,
     account: state.account
 });
 

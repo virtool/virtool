@@ -125,7 +125,7 @@ class CreateOTU extends React.Component {
 const mapStateToProps = state => ({
     show: !!state.router.location.state && state.router.location.state.createOTU,
     error: get(state, "errors.CREATE_OTU_ERROR.message", ""),
-    pending: state.OTUs.createPending
+    pending: state.otus.createPending
 });
 
 const mapDispatchToProps = dispatch => ({

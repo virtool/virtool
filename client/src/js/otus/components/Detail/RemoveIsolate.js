@@ -24,7 +24,7 @@ export class RemoveIsolate extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.OTUs.removeIsolate
+    show: state.otus.removeIsolate
 });
 
 const mapDispatchToProps = dispatch => ({
