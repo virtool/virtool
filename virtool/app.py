@@ -19,6 +19,7 @@ import virtool.errors
 import virtool.files
 import virtool.http.errors
 import virtool.http.proxy
+import virtool.http.query
 import virtool.jobs.manager
 import virtool.organize
 import virtool.resources
@@ -272,7 +273,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     """
     middlewares = [
         virtool.http.proxy.middleware,
-        virtool.http.errors.middleware
+        virtool.http.errors.middleware,
+        virtool.http.query.middleware
     ]
 
     if skip_setup:
