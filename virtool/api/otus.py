@@ -88,8 +88,8 @@ async def get(req):
 
 
 @routes.post("/api/refs/{ref_id}/otus", schema={
-    "name": {"type": "string", "required": True, "min": 1},
-    "abbreviation": {"type": "string", "min": 1},
+    "name": {"type": "string", "required": True, "minlength": 1},
+    "abbreviation": {"type": "string", "default": ""},
     "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
@@ -103,46 +103,17 @@ async def create(req):
 
     ref_id = req.match_info["ref_id"]
 
-    # Abbreviation defaults to empty string if not provided.
-    abbreviation = data.get("abbreviation", "")
-
     # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, data["name"], abbreviation)
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
 
     if message:
         return conflict(message)
 
-    otu_id = await virtool.db.utils.get_new_id(db.otus)
+    joined = await virtool.db.otus.create(db, ref_id, data["name"], data["abbreviation"])
 
-    # Start building a otu document.
-    data.update({
-        "_id": otu_id,
-        "abbreviation": abbreviation,
-        "last_indexed_version": None,
-        "verified": False,
-        "lower_name": data["name"].lower(),
-        "isolates": [],
-        "version": 0,
-        "ref": {
-            "id": ref_id
-        },
-        "schema": []
-    })
+    description = virtool.history.compose_create_description(joined)
 
-    # Insert the otu document.
-    await db.otus.insert_one(data)
-
-    # Join the otu document into a complete otu record. This will be used for recording history.
-    joined = await virtool.db.otus.join(db, otu_id, data)
-
-    # Build a ``description`` field for the otu creation change document.
-    description = "Created {}".format(data["name"])
-
-    # Add the abbreviation to the description if there is one.
-    if abbreviation:
-        description += " ({})".format(abbreviation)
-
-    await virtool.db.history.add(
+    change = await virtool.db.history.add(
         db,
         "create",
         None,
@@ -151,23 +122,17 @@ async def create(req):
         req["client"].user_id
     )
 
-    complete = await virtool.db.otus.join_and_format(db, otu_id, joined=joined)
-
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor({key: joined[key] for key in virtool.otus.LIST_PROJECTION})
-    )
+    formatted = virtool.otus.format_otu(joined, most_recent_change=change)
 
     headers = {
-        "Location": "/api/otus/" + otu_id
+        "Location": "/api/otus/" + formatted["id"]
     }
 
-    return json_response(complete, status=201, headers=headers)
+    return json_response(formatted, status=201, headers=headers)
 
 
 @routes.patch("/api/otus/{otu_id}", schema={
-    "name": {"type": "string"},
+    "name": {"type": "string", "minlength": 1},
     "abbreviation": {"type": "string"},
     "schema": SCHEMA_VALIDATOR
 })

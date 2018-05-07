@@ -177,6 +177,45 @@ def find_isolate(isolates, isolate_id):
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
+def format_otu(joined, issues=False, most_recent_change=None):
+    """
+    Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
+    format the joined otu into a format that can be directly returned to API clients.
+
+    :param joined:
+    :type joined: Union[dict, NoneType]
+
+    :param issues: an object describing issues in the otu
+    :type issues: Union[dict, NoneType, bool]
+
+    :param most_recent_change: a change document for the most recent change made to OTU
+    :type most_recent_change: dict
+
+    :return: a joined and formatted otu
+    :rtype: dict
+
+    """
+    formatted = virtool.utils.base_processor(joined)
+
+    del formatted["lower_name"]
+
+    for isolate in formatted["isolates"]:
+
+        for sequence in isolate["sequences"]:
+            del sequence["otu_id"]
+            del sequence["isolate_id"]
+
+            sequence["id"] = sequence.pop("_id")
+
+    if most_recent_change:
+        formatted["most_recent_change"] = virtool.utils.base_processor(most_recent_change)
+
+    if issues is False:
+        formatted["issues"] = verify(joined)
+
+    return formatted
+
+
 def format_isolate_name(isolate):
     """
     Take a complete or partial isolate ``dict`` and return a readable isolate name.

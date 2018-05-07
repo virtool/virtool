@@ -102,96 +102,68 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
 
 class TestCreate:
 
-    @pytest.mark.parametrize("data,description", [
-        (
-            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
-            "Created Tobacco mosaic virus (TMV)"
-        ),
-        (
-            {"name": "Tobacco mosaic virus"},
-            "Created Tobacco mosaic virus"
-        )
-    ])
-    async def test(self, data, description, monkeypatch, spawn_client, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
+    async def test(self, abbreviation, mocker, spawn_client, test_merged_otu):
         """
         Test that a valid request results in the creation of a otu document and a ``201`` response.
 
         """
         client = await spawn_client(authorize=True)
 
-        async def get_fake_id(*args):
-            return "test"
+        # Pass ref exists check.
+        mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(True))
 
-        monkeypatch.setattr("virtool.utils.get_new_id", get_fake_id)
+        # Pass name and abbreviation check.
+        m_check_name_and_abbreviation = mocker.patch(
+            "virtool.db.otus.check_name_and_abbreviation",
+            make_mocked_coro(False)
+        )
 
-        resp = await client.post("/api/otus", data)
+        m_add_history = mocker.patch("virtool.db.history.add", make_mocked_coro({"_id": "change.1"}))
+
+        #
+        m_compose = mocker.patch("virtool.history.compose_create_description", return_value="Test description")
+
+        mocker.patch("virtool.db.otus.create", make_mocked_coro(test_merged_otu))
+
+        data = {
+            "name": "Tobacco mosaic virus"
+        }
+
+        if abbreviation is not None:
+            data["abbreviation"] = abbreviation
+
+        resp = await client.post("/api/refs/foo/otus", data)
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/" + "test"
+        assert resp.headers["Location"] == "/api/otus/" + test_merged_otu["_id"]
 
-        expected_abbreviation = data.get("abbreviation", "") or ""
+        # Abbreviation defaults to empty string for OTU creation.
+        m_check_name_and_abbreviation.assert_called_with(
+            client.db,
+            "foo",
+            "Tobacco mosaic virus",
+            abbreviation or ""
+        )
 
-        assert await resp.json() == {
-            "abbreviation": expected_abbreviation,
-            "isolates": [],
-            "last_indexed_version": None,
-            "verified": False,
-            "most_recent_change": None,
-            "name": "Tobacco mosaic virus",
-            "version": 0,
-            "id": "test",
-            "schema": [],
-            "issues": {
-                "empty_otu": True,
-                "empty_isolate": False,
-                "empty_sequence": False,
-                "isolate_inconsistency": False
-            }
+        m_compose.assert_called_with(test_merged_otu)
 
-        }
+        test_merged_otu["abbreviation"] = "PVF"
 
-        assert await client.db.otus.find_one() == {
-            "_id": "test",
-            "lower_name": "tobacco mosaic virus",
-            "name": "Tobacco mosaic virus",
-            "isolates": [],
-            "last_indexed_version": None,
-            "verified": False,
-            "abbreviation": expected_abbreviation,
-            "version": 0,
-            "schema": [],
-        }
-
-        assert test_add_history.call_args[0][1:] == (
+        m_add_history.assert_called_with(
+            client.db,
             "create",
             None,
-            {
-                "isolates": [],
-                "name": "Tobacco mosaic virus",
-                "abbreviation": expected_abbreviation,
-                "lower_name": "tobacco mosaic virus",
-                "_id": "test",
-                "schema": [],
-                "version": 0,
-                "verified": False,
-                "last_indexed_version": None
-            },
-            description,
+            test_merged_otu,
+            "Test description",
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "abbreviation": expected_abbreviation,
-                "verified": False,
-                "version": 0,
-                "name": "Tobacco mosaic virus",
-                "id": "test",
-            }
-        )
+        import pprint
+        pprint.pprint(await resp.json())
+
+        assert 0
 
     async def test_invalid_input(self, spawn_client, resp_is):
         """
