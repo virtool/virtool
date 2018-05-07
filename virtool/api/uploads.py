@@ -8,7 +8,7 @@ import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found
 
 FILE_TYPES = [
-    "otus",
+    "reference",
     "reads",
     "hmm",
     "subtraction"
