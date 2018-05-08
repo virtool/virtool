@@ -1,4 +1,8 @@
-import { LIST_REFERENCES, GET_REFERENCE } from "../actionTypes";
+import {
+    LIST_REFERENCES,
+    GET_REFERENCE,
+    REMOVE_REFERENCE
+} from "../actionTypes";
 
 const initialState = {
     documents: null,
@@ -15,6 +19,9 @@ export default function referenceReducer (state = initialState, action) {
 
         case GET_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};
+
+        case REMOVE_REFERENCE.SUCCEEDED:
+            return {...state, detail: null};
 
         default:
             return state;

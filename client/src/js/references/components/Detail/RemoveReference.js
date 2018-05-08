@@ -1,10 +1,27 @@
 import React from "react";
-import { Button } from "../../../base";
+import { connect } from "react-redux";
+import { Button, Alert } from "../../../base";
+import { removeReference } from "../../actions";
 
-const RemoveReference = ({ id }) => (
-    <Button bsStyle="danger" onClick={() => console.log("remove", id)} pullRight>
-        Delete
-    </Button>
+const RemoveReference = ({ id, onConfirm }) => (
+    <Alert bsStyle="danger">
+        <div style={{ textAlign: "right" }}>
+            <span style={{ float: "left", marginTop: "7px" }}>
+                Click the Delete button to permanently remove this reference.
+            </span>
+            <Button bsStyle="danger" onClick={() => onConfirm(id)}>
+                Delete
+            </Button>
+        </div>
+    </Alert>
 );
 
-export default RemoveReference;
+const mapDispatchToProps = (dispatch) => ({
+
+    onConfirm: (refId) => {
+        dispatch(removeReference(refId));
+    }
+
+});
+
+export default connect(null, mapDispatchToProps)(RemoveReference);
