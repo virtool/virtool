@@ -1,6 +1,7 @@
 import virtool.db.history
 import virtool.db.utils
 import virtool.errors
+import virtool.history
 import virtool.utils
 import virtool.otus
 from virtool.api.utils import compose_regex_query, paginate
@@ -234,6 +235,21 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
     )
 
     return True
+
+
+async def update_verification(db, joined):
+    issues = virtool.otus.verify(joined)
+
+    if issues is None:
+        await db.otus.update_one({"_id": joined["_id"]}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        joined["verified"] = True
+
+    return issues
 
 
 async def verify(db, otu_id, joined=None):

@@ -1,7 +1,3 @@
-import asyncio
-import gzip
-import json
-import os
 from copy import deepcopy
 
 import pymongo
@@ -138,11 +134,12 @@ async def create(req):
 })
 async def edit(req):
     """
-    Edit an existing new otu. Checks to make sure the supplied otu name and abbreviation are not already in use in
+    Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are not already in use in
     the collection.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     otu_id = req.match_info["otu_id"]
 
@@ -152,27 +149,16 @@ async def edit(req):
     if not old:
         return not_found()
 
-    name_change = data.get("name", None)
-    abbreviation_change = data.get("abbreviation", None)
-    schema_change = data.get("schema", None)
+    ref_id = old["ref"]["id"]
 
-    if name_change == old["name"]:
-        name_change = None
+    name, abbreviation, schema = virtool.otus.evaluate_changes(data, old)
 
-    old_abbreviation = old.get("abbreviation", "")
-
-    if abbreviation_change == old_abbreviation:
-        abbreviation_change = None
-
-    if schema_change == old.get("schema", None):
-        schema_change = None
-
-    # Sent back ``200`` with the existing otu record if no change will be made.
-    if name_change is None and abbreviation_change is None and schema_change is None:
+    # Send ``200`` with the existing otu record if no change will be made.
+    if name is None and abbreviation is None and schema is None:
         return json_response(await virtool.db.otus.join_and_format(db, otu_id))
 
-    # Make sure new name and/or abbreviation are not already in use.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, name_change, abbreviation_change)
+    # Make sure new name or abbreviation are not already in use.
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
         return json_response({"message": message}, status=409)
@@ -182,8 +168,8 @@ async def edit(req):
     data["verified"] = False
 
     # If the name is changing, update the ``lower_name`` field in the otu document.
-    if name_change:
-        data["lower_name"] = data["name"].lower()
+    if name:
+        data["lower_name"] = name.lower()
 
     # Update the database collection.
     document = await db.otus.find_one_and_update({"_id": otu_id}, {
@@ -195,49 +181,9 @@ async def edit(req):
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.otus.verify(db, otu_id, new)
+    issues = await virtool.db.otus.update_verification(db, new)
 
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
-
-    description = None
-
-    if name_change is not None:
-        description = "Changed name to {}".format(new["name"])
-
-        if abbreviation_change is not None:
-            # Abbreviation is being removed.
-            if abbreviation_change == "" and old_abbreviation:
-                description += " and removed abbreviation {}".format(old["abbreviation"])
-            # Abbreviation is being added where one didn't exist before
-            elif abbreviation_change and not old_abbreviation:
-                description += " and added abbreviation {}".format(new["abbreviation"])
-            # Abbreviation is being changed from one value to another.
-            else:
-                description += " and abbreviation to {}".format(new["abbreviation"])
-
-    elif abbreviation_change is not None:
-        # Abbreviation is being removed.
-        if abbreviation_change == "" and old["abbreviation"]:
-            description = "Removed abbreviation {}".format(old_abbreviation)
-        # Abbreviation is being added where one didn't exist before
-        elif abbreviation_change and not old.get("abbreviation", ""):
-            description = "Added abbreviation {}".format(new["abbreviation"])
-        # Abbreviation is being changed from one value to another.
-        else:
-            description = "Changed abbreviation to {}".format(new["abbreviation"])
-
-    if schema_change is not None:
-        if description is None:
-            description = "Modified schema"
-        else:
-            description += " and modified schema"
+    description = virtool.history.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
 
     await virtool.db.history.add(
         db,
@@ -260,7 +206,7 @@ async def edit(req):
 @routes.delete("/api/otus/{otu_id}")
 async def remove(req):
     """
-    Remove a otu document and its associated sequence documents.
+    Remove an OTU document and its associated sequence documents.
 
     """
     db = req.app["db"]
@@ -334,8 +280,8 @@ async def add_isolate(req):
 
     """
     db = req.app["db"]
-    settings = req.app["settings"]
     data = req["data"]
+    settings = req.app["settings"]
 
     otu_id = req.match_info["otu_id"]
 
