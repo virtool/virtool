@@ -187,7 +187,7 @@ class TestCreateAPIKey:
 
     @pytest.mark.parametrize("has_perm", [True, False])
     @pytest.mark.parametrize("req_perm", [True, False])
-    async def test(self, has_perm, req_perm, mocker, spawn_client, static_time, test_motor, no_permissions):
+    async def test(self, has_perm, req_perm, mocker, spawn_client, static_time, no_permissions):
         """
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
@@ -197,7 +197,7 @@ class TestCreateAPIKey:
         client = await spawn_client(authorize=True)
 
         if has_perm:
-            await test_motor.users.update_one({"_id": "test"}, {
+            await client.db.users.update_one({"_id": "test"}, {
                 "$set": {
                     "permissions": {
                         **no_permissions,
@@ -232,7 +232,7 @@ class TestCreateAPIKey:
             "permissions": {**no_permissions, "create_sample": has_perm and req_perm}
         }
 
-        assert await test_motor.keys.find_one() == expected
+        assert await client.db.keys.find_one() == expected
 
         expected.update({
             "key": "raw_key",

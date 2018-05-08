@@ -221,7 +221,7 @@ class TestGet:
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, mocker, spawn_client, test_motor, static_time,
+    async def test(self, group_setting, mocker, spawn_client, static_time,
                    test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
@@ -309,11 +309,11 @@ class TestCreate:
             "created_at": static_time
         })
 
-        assert await test_motor.samples.find_one() == expected
+        assert await client.db.samples.find_one() == expected
 
         # Check call to file.reserve.
         assert m_reserve.call_args[0] == (
-            test_motor,
+            client.db,
             ["test.fq"]
         )
 
