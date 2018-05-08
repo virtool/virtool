@@ -7,6 +7,7 @@ import WSConnection from "./websocket";
 import createHistory from "history/createBrowserHistory";
 import { getAccount } from "./account/actions";
 import { getSettings } from "./administration/actions";
+import { listProcesses } from "./processes/actions";
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
@@ -21,8 +22,9 @@ import hmmsReducer from "./hmm/reducer";
 import indexesReducer from "./indexes/reducer";
 import jobsReducer from "./jobs/reducer";
 import otusReducer from "./otus/reducer";
-import subtractionReducer from "./subtraction/reducer";
+import processesReducer from "./processes/reducer";
 import referencesReducer from "./references/reducer";
+import subtractionReducer from "./subtraction/reducer";
 import samplesReducer from "./samples/reducer";
 import settingsReducer from "./administration/reducer";
 import updatesReducer from "./updates/reducer";
@@ -69,6 +71,7 @@ const store = createStore(
         indexes: indexesReducer,
         jobs: jobsReducer,
         otus: otusReducer,
+        processes: processesReducer,
         references: referencesReducer,
         router: routerReducer,
         samples: samplesReducer,
@@ -89,6 +92,7 @@ window.ws.establishConnection();
 
 window.store.dispatch(getAccount());
 window.store.dispatch(getSettings());
+window.store.dispatch(listProcesses());
 
 window.addEventListener("beforeunload", () => {
     if (!window.store.getState().files.uploadsComplete) {
