@@ -1,8 +1,6 @@
 import os
 import shutil
 
-import pymongo
-
 import virtool.db.files
 import virtool.jobs.job
 import virtool.samples

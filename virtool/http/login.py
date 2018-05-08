@@ -2,7 +2,6 @@ import os
 import random
 import sys
 
-import pymongo
 from aiohttp import web
 from mako.template import Template
 
@@ -49,7 +48,7 @@ async def login_handler(req):
                     "id": user_id
                 }
             }
-        }, return_document=pymongo.ReturnDocument.AFTER)
+        })
 
         client.authorize(document, False)
 

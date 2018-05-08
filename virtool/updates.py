@@ -7,7 +7,6 @@ import sys
 import tempfile
 
 import aiohttp
-import pymongo
 import semver
 
 import virtool.app

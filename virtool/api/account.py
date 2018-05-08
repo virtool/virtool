@@ -1,5 +1,4 @@
 from cerberus import Validator
-from pymongo import ReturnDocument
 
 import virtool.db.account
 import virtool.db.users
@@ -91,7 +90,7 @@ async def edit(req):
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": update
-    }, return_document=ReturnDocument.AFTER, projection=virtool.db.users.ACCOUNT_PROJECTION)
+    }, projection=virtool.db.users.ACCOUNT_PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -253,11 +252,9 @@ async def update_api_key(req):
 
         update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
 
-    print(update)
-
     document = await db.keys.find_one_and_update({"id": key_id}, {
         "$set": update
-    }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
+    }, projection={"_id": False, "user": False})
 
     return json_response(document)
 

@@ -1,10 +1,47 @@
 import os
 
-import pymongo
-
 import virtool.errors
 import virtool.utils
 import virtool.samples
+
+LIST_PROJECTION = [
+    "_id",
+    "name",
+    "host",
+    "isolate",
+    "created_at",
+    "user",
+    "imported",
+    "archived",
+    "pathoscope",
+    "nuvs"
+]
+
+PROJECTION = [
+    "_id",
+    "name",
+    "created_at",
+    "user",
+    "imported",
+    "archived",
+    "pathoscope",
+    "nuvs",
+    "group",
+    "group_read",
+    "group_write",
+    "all_read",
+    "all_write"
+]
+
+RIGHTS_PROJECTION = {
+    "_id": False,
+    "group": True,
+    "group_read": True,
+    "group_write": True,
+    "all_read": True,
+    "all_write": True,
+    "user": True
+}
 
 
 async def check_name(db, settings, name, sample_id=None):
@@ -26,7 +63,7 @@ async def check_name(db, settings, name, sample_id=None):
 
 
 async def check_rights(db, sample_id, client, write=True):
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, RIGHTS_PROJECTION)
 
     if not sample_rights:
         raise virtool.errors.DatabaseError("Sample does not exist")
@@ -75,7 +112,7 @@ async def recalculate_algorithm_tags(db, sample_id):
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": update
-    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.samples.LIST_PROJECTION)
+    }, projection=LIST_PROJECTION)
 
     return document
 

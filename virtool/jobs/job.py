@@ -5,7 +5,6 @@ import sys
 import traceback
 
 import aiofiles
-import pymongo
 
 import virtool.db.jobs
 import virtool.errors

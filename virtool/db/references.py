@@ -13,7 +13,6 @@ import virtool.processes
 import virtool.references
 import virtool.utils
 
-
 PROJECTION = [
     "_id",
     "created_at",

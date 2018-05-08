@@ -126,7 +126,7 @@ class Manager:
             mem
         )
 
-        document = await self.db.jobs.find_one(job_id, virtool.db.jobs.LIST_PROJECTION)
+        document = await self.db.jobs.find_one(job_id, virtool.db.jobs.PROJECTION)
 
         return virtool.utils.base_processor(document)
 

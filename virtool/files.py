@@ -4,7 +4,6 @@ import os
 import shutil
 
 import aionotify
-import pymongo
 
 import virtool.db.files
 import virtool.utils
@@ -163,7 +162,7 @@ class Manager:
                 "size": file_entry["size"],
                 "ready": True
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.files.PROJECTION)
+        }, projection=virtool.db.files.PROJECTION)
 
         if not document:
             await self.loop.run_in_executor(

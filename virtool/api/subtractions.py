@@ -1,8 +1,5 @@
 import shutil
 
-import pymongo
-import pymongo.errors
-
 import virtool.db.subtractions
 import virtool.db.utils
 import virtool.http.routes
@@ -148,7 +145,7 @@ async def edit(req):
         "$set": {
             "nickname": data["nickname"]
         }
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     if document is None:
         return not_found()

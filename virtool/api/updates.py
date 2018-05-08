@@ -1,7 +1,5 @@
 import asyncio
 
-import pymongo
-
 import virtool.app
 import virtool.http.routes
 import virtool.updates
@@ -25,7 +23,7 @@ async def get(req):
             "releases": releases,
             "current_version": req.app["version"]
         }
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -55,7 +53,7 @@ async def upgrade(req):
                 "current_version": req.app["version"],
                 "releases": await virtool.updates.get_releases(db, req.app["settings"], channel, req.app["version"])
             }
-        }, return_document=pymongo.ReturnDocument)
+        })
 
     releases = document.get("releases", list())
 
@@ -75,7 +73,7 @@ async def upgrade(req):
                 "error": False
             }
         }
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     download_url = latest_release["download_url"]
 

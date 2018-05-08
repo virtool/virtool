@@ -6,7 +6,6 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 
 import arrow
-import pymongo
 
 
 def base_processor(document):
@@ -192,6 +191,6 @@ async def update_status_process(db, _id, progress, step=None, error=None):
 
     document = await db.status.find_one_and_update({"_id": _id}, {
         "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     return base_processor(document)

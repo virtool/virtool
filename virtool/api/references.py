@@ -1,5 +1,4 @@
 import os
-import pymongo
 
 import aiojobs.aiohttp
 
@@ -284,7 +283,7 @@ async def edit(req):
 
     document = await db.refs.find_one_and_update({"_id": ref_id}, {
         "$set": update
-    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.references.PROJECTION)
+    }, projection=virtool.db.references.PROJECTION)
 
     document["internal_control"] = await virtool.db.references.get_internal_control(db, internal_control_id)
 

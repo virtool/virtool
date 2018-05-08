@@ -30,7 +30,7 @@ async def find(req):
         db_query,
         req.query,
         sort="cluster",
-        projection=virtool.hmm.PROJECTION,
+        projection=virtool.db.hmm.PROJECTION,
         base_query={"hidden": False}
     )
 

@@ -9,7 +9,6 @@ import aiojobs.aiohttp
 import pymongo
 import pymongo.errors
 from aiohttp import web
-from motor import motor_asyncio
 
 import virtool.app_auth
 import virtool.app_dispatcher

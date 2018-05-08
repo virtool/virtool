@@ -7,6 +7,7 @@ import asyncio
 import virtool.analyses
 import virtool.bio
 import virtool.db.analyses
+import virtool.db.samples
 import virtool.errors
 import virtool.http.routes
 import virtool.jobs.analysis
@@ -54,7 +55,7 @@ async def remove(req):
     if not document:
         return not_found()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.samples.PROJECTION)
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
 
     if not sample:
         return not_found("Sample not found")

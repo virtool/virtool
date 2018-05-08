@@ -1,5 +1,3 @@
-import pymongo
-
 import virtool.db.groups
 import virtool.db.utils
 import virtool.errors
@@ -213,7 +211,7 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": update
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     if groups is not None:
         await update_sessions_and_keys(

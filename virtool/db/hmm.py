@@ -1,3 +1,12 @@
+PROJECTION = [
+    "_id",
+    "cluster",
+    "names",
+    "count",
+    "families"
+]
+
+
 async def find_and_ensure_install(db, reset=False):
     """
     Return the HMM install status document or create one if none exists.

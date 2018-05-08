@@ -27,17 +27,6 @@ import virtool.samples
 import virtool.otus
 import virtool.utils
 
-LIST_PROJECTION = [
-    "_id",
-    "algorithm",
-    "created_at",
-    "ready",
-    "job",
-    "index",
-    "user",
-    "sample"
-]
-
 
 class Base(virtool.jobs.job.Job):
     """

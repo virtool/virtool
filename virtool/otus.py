@@ -11,24 +11,6 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-LIST_PROJECTION = [
-    "_id",
-    "name",
-    "abbreviation",
-    "version",
-    "verified"
-]
-
-SEQUENCE_PROJECTION = [
-    "_id",
-    "definition",
-    "host",
-    "otu_id",
-    "isolate_id",
-    "sequence",
-    "segment"
-]
-
 
 def check_source_type(settings, source_type):
     """

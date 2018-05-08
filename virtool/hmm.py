@@ -10,14 +10,6 @@ import virtool.github
 import virtool.updates
 import virtool.utils
 
-PROJECTION = [
-    "_id",
-    "cluster",
-    "names",
-    "count",
-    "families"
-]
-
 LATEST_RELEASE_URL = "https://api.github.com/repos/virtool/virtool-hmm/releases/latest"
 
 

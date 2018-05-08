@@ -9,7 +9,7 @@ OR_FAILED = [
     {"status.state": "cancelled"}
 ]
 
-LIST_PROJECTION = [
+PROJECTION = [
     "_id",
     "task",
     "status",

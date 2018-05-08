@@ -1,5 +1,3 @@
-import pymongo
-
 import virtool.db.utils
 import virtool.processes
 import virtool.utils
@@ -55,7 +53,7 @@ async def update(db, process_id, progress=None, step=None, file_step=None, file_
 
     document = await db.processes.find_one_and_update({"_id": process_id}, {
         "$set": update_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     return virtool.utils.base_processor(document)
 

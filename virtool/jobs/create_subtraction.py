@@ -1,7 +1,5 @@
 import os
 
-import pymongo
-
 import virtool.db.subtractions
 import virtool.jobs.job
 import virtool.subtractions

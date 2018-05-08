@@ -1,5 +1,3 @@
-import pymongo
-
 import virtool.db.users
 import virtool.groups
 import virtool.utils
@@ -47,7 +45,6 @@ async def update_member_users(db, group_id, remove=False):
         document = await db.users.find_one_and_update(
             {"_id": user["_id"]},
             update_dict,
-            return_document=pymongo.ReturnDocument.AFTER,
             projection=["groups", "permissions"]
         )
 
