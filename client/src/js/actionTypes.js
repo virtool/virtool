@@ -64,6 +64,8 @@ export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
+export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
+export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
 
 // OTU
 export const WS_UPDATE_OTU = "WS_UPDATE_OTU";

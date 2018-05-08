@@ -6,6 +6,10 @@ export class UploadBar extends React.Component {
 
     render () {
 
+        const message = this.props.message.length
+            ? this.props.message
+            : "Drag file here to upload";
+
         return (
             <div className="toolbar" style={this.props.style}>
                 <Dropzone
@@ -15,11 +19,11 @@ export class UploadBar extends React.Component {
                     activeClassName="dropzone-active"
                     disableClick
                 >
-                    Drag file here to upload
+                    { message }
                 </Dropzone>
-        
+
                 <Button icon="folder-open" onClick={() => this.dropzone.open()} />
             </div>
-        ); 
+        );
     }
 }

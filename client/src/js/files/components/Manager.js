@@ -1,5 +1,4 @@
 import React from "react";
-// import Dropzone from "react-dropzone";
 import { capitalize, filter, forEach, map } from "lodash-es";
 import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";

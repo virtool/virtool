@@ -34,7 +34,6 @@ export function* removeFile (action) {
 }
 
 export function* upload (action) {
-    console.log(action);
 
     const { file, fileType, localId } = action;
 

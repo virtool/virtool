@@ -2,12 +2,12 @@ import React from "react";
 import { Modal, ButtonToolbar } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { forEach, upperFirst } from "lodash-es";
+import { upperFirst, find, noop } from "lodash-es";
 import ReferenceForm from "./Form";
-import { Button, UploadBar } from "../../base";
+import { Button, UploadBar, ProgressBar } from "../../base";
 import { routerLocationHasState, createRandomString } from "../../utils";
 import { upload } from "../../files/actions";
-import { createReference } from "../actions";
+import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
 
 const getInitialState = () => ({
@@ -17,9 +17,19 @@ const getInitialState = () => ({
     organism: "",
     isPublic: false,
     errorName: "",
-    errorDataField: "",
+    errorDataType: "",
+    errorFileNumber: "",
+    localId: "",
+    file: null,
     uploadProgress: 0
 });
+
+const lockModal = (progress) => {
+    if (progress === 0 || progress === 100) {
+        return false;
+    }
+    return true;
+};
 
 class OTUImport extends React.Component {
 
@@ -43,8 +53,19 @@ class OTUImport extends React.Component {
         this.props.onHide(this.props);
     };
 
-    handleDrop = (files) => {
-        this.props.onDrop(files[0], this.handleProgress);
+    handleDrop = (file) => {
+
+        if (file.length > 1) {
+            return this.setState({
+                errorFileNumber: "Only one file can be uploaded"
+            });
+        }
+
+        this.setState({ errorFileNumber: "" });
+
+        const localId = createRandomString();
+        this.setState({ localId });
+        this.props.onDrop("reference", file[0], localId);
     };
 
     handleProgress = (e) => {
@@ -72,7 +93,8 @@ class OTUImport extends React.Component {
                 this.state.description,
                 this.state.dataType,
                 this.state.organism,
-                this.state.isPublic
+                this.state.isPublic,
+                this.props.importId
             );
             this.props.onHide(window.location);
         }
@@ -85,21 +107,48 @@ class OTUImport extends React.Component {
 
     render () {
 
+        let progress;
+        let uploadedFile;
+        let message = "";
+
+        if (this.state.localId.length) {
+            uploadedFile = find(this.props.uploads, { localId: this.state.localId });
+            progress = uploadedFile.progress;
+        }
+
+        if (progress !== 0 && progress < 100) {
+            message = `File upload in progress: ${uploadedFile.name}`;
+        } else if (progress === 100) {
+            message = `Upload complete: ${uploadedFile.name}`;
+        }
+
+        const lock = lockModal(progress);
+
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal
+                show={this.props.show}
+                onHide={lock ? noop : this.props.onHide}
+                onExited={lock ? noop : this.handleModalExited}
+            >
+                <Modal.Header onHide={lock ? noop : this.props.onHide} closeButton>
                     Import OTUs
                 </Modal.Header>
 
                 <Modal.Body>
                     <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
-
-                    <UploadBar onDrop={this.handleDrop} style={{ marginTop: "20px" }} />
+                    <UploadBar onDrop={this.handleDrop} style={{ marginTop: "20px" }} message={message} />
+                    <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
                 </Modal.Body>
 
                 <Modal.Footer>
                     <ButtonToolbar className="pull-right">
-                        <Button icon="save" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
+                        <Button
+                            icon="save"
+                            type="submit"
+                            bsStyle="primary"
+                            onClick={this.handleSubmit}
+                            disabled={progress !== 100}
+                        >
                             Save
                         </Button>
                     </ButtonToolbar>
@@ -112,20 +161,19 @@ class OTUImport extends React.Component {
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "importReference"),
-    importData: state.otus.importData
+    uploads: state.files.uploads,
+    importId: state.references.importData ? state.references.importData.id : null
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, description, dataType, organism, isPublic) => {
-        dispatch(createReference(name, description, dataType, organism, isPublic));
+    onSubmit: (name, description, dataType, organism, isPublic, fileId) => {
+        console.log(name, description, dataType, organism, isPublic, fileId);
+        dispatch(importReference(name, description, dataType, organism, isPublic, fileId));
     },
 
-    onDrop: (fileType, acceptedFiles) => {
-        forEach(acceptedFiles, file => {
-            const localId = createRandomString();
-            dispatch(upload(localId, file, fileType));
-        });
+    onDrop: (fileType, file, localId) => {
+        dispatch(upload(localId, file, fileType));
     },
 
     onHide: () => {

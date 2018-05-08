@@ -1,7 +1,7 @@
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
-import { map, sortBy } from "lodash-es";
+import { sortBy, reduce } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
@@ -28,6 +28,7 @@ class UploadOverlay extends React.Component {
     componentWillReceiveProps (nextProps) {
         if (nextProps.uploadsComplete !== this.props.uploadsComplete && nextProps.uploadsComplete) {
             window.removeEventListener("beforeunload", this.handlePageLeave);
+            this.props.onClose();
         } else if (nextProps.uploadsComplete !== this.props.uploadsComplete && !nextProps.uploadsComplete) {
             window.addEventListener("beforeunload", this.handlePageLeave);
         }
@@ -42,11 +43,15 @@ class UploadOverlay extends React.Component {
     render () {
 
         const classNames = CX("upload-overlay", {hidden: !this.props.showUploadOverlay});
-        const uploadComponents = map(sortBy(this.props.uploads, "progress").reverse(), upload =>
-            upload.progress === 100 ? <div key={upload.localId} /> : <UploadItem key={upload.localId} {...upload} />
-        );
 
-        const content = this.props.uploadsComplete ? null : (
+        const uploadComponents = reduce(sortBy(this.props.uploads, "progress").reverse(), (result, upload) => {
+            if (upload.fileType !== "reference" && upload.progress !== 100) {
+                result.push(<UploadItem key={upload.localId} {...upload} />);
+            }
+            return result;
+        }, []);
+
+        const content = (this.props.uploadsComplete || !uploadComponents.length) ? null : (
             <div className={classNames}>
                 <div className="upload-overlay-content">
                     <h5>

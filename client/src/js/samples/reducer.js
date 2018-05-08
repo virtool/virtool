@@ -11,7 +11,8 @@ import {
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS, GET_ANALYSIS_PROGRESS
+    REMOVE_ANALYSIS,
+    GET_ANALYSIS_PROGRESS
 } from "../actionTypes";
 
 export const initialState = {

@@ -68,12 +68,19 @@ export default class ReferenceForm extends React.Component {
                     </Col>
                 </Row>
                 <Row>
-                    <Col xs={12}>
+                    <Col xs={6}>
                         <Checkbox
                             label="Public"
                             checked={this.props.state.isPublic}
                             onClick={this.props.toggle}
                         />
+                    </Col>
+                    <Col xs={6}>
+                        <div className="input-form-error">
+                            <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
+                                {this.props.state.errorFileNumber}
+                            </span>
+                        </div>
                     </Col>
                 </Row>
             </div>

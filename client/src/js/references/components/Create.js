@@ -16,7 +16,7 @@ const getInitialState = () => ({
     organism: "",
     isPublic: false,
     errorName: "",
-    errorDataField: ""
+    errorDataType: ""
 });
 
 export class CreateReference extends React.Component {
