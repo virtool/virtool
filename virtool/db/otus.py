@@ -1,17 +1,22 @@
 import virtool.db.history
+import virtool.db.utils
 import virtool.errors
+import virtool.history
 import virtool.utils
 import virtool.otus
 from virtool.api.utils import compose_regex_query, paginate
 
 
-async def check_name_and_abbreviation(db, name=None, abbreviation=None):
+async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
     """
-    Check is a otu name and abbreviation are already in use in the database. Returns a message if the ``name`` or
-    ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
+    Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
+    if the ``name`` or ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the reference to check in
+    :type ref_id: str
 
     :param name: a otu name
     :type name: str
@@ -23,12 +28,18 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     name_count = 0
 
     if name:
-        name_count = await db.otus.count({"lower_name": name.lower()})
+        name_count = await db.otus.count({
+            "lower_name": name.lower(),
+            "ref.id": ref_id
+        })
 
     abbr_count = 0
 
     if abbreviation:
-        abbr_count = await db.otus.find({"abbreviation": abbreviation}).count()
+        abbr_count = await db.otus.count({
+            "abbreviation": abbreviation,
+            "ref.id": ref_id
+        })
 
     unique_name = not name or not name_count
     unique_abbreviation = not abbreviation or not abbr_count
@@ -43,6 +54,31 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
         return "Abbreviation already exists"
 
     return False
+
+
+async def create(db, ref_id, name, abbreviation):
+    otu_id = await virtool.db.utils.get_new_id(db.otus)
+
+    # Start building a otu document.
+    document = {
+        "_id": otu_id,
+        "name": name,
+        "abbreviation": abbreviation,
+        "last_indexed_version": None,
+        "verified": False,
+        "lower_name": name.lower(),
+        "isolates": [],
+        "version": 0,
+        "ref": {
+            "id": ref_id
+        },
+        "schema": []
+    }
+
+    # Insert the otu document.
+    await db.otus.insert_one(document)
+
+    return document
 
 
 async def get_new_isolate_id(db, excluded=None):
@@ -159,32 +195,12 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
     if not joined:
         return None
 
-    joined = virtool.utils.base_processor(joined)
-
-    del joined["lower_name"]
-
-    for isolate in joined["isolates"]:
-
-        for sequence in isolate["sequences"]:
-            del sequence["otu_id"]
-            del sequence["isolate_id"]
-
-            sequence["id"] = sequence.pop("_id")
-
     most_recent_change = await virtool.db.history.get_most_recent_change(db, otu_id)
 
-    if most_recent_change:
-        most_recent_change["change_id"] = most_recent_change.pop("_id")
-
-    joined.update({
-        "most_recent_change": most_recent_change,
-        "issues": issues
-    })
-
     if issues is False:
-        joined["issues"] = await verify(db, otu_id)
+        issues = await verify(db, otu_id)
 
-    return joined
+    return virtool.otus.format_otu(joined, issues, most_recent_change)
 
 
 async def remove(db, dispatch, otu_id, user_id, document=None):
@@ -201,10 +217,7 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
     # Remove the otu document itself.
     await db.otus.delete_one({"_id": otu_id})
 
-    description = "Removed {}".format(joined["name"])
-
-    if joined["abbreviation"]:
-        description += " ({})".format(joined["abbreviation"])
+    description = virtool.history.compose_remove_description(joined)
 
     await virtool.db.history.add(
         db,
@@ -222,6 +235,21 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
     )
 
     return True
+
+
+async def update_verification(db, joined):
+    issues = virtool.otus.verify(joined)
+
+    if issues is None:
+        await db.otus.update_one({"_id": joined["_id"]}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        joined["verified"] = True
+
+    return issues
 
 
 async def verify(db, otu_id, joined=None):

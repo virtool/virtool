@@ -2,10 +2,15 @@
 Provides request handlers for file downloads.
 
 """
+import gzip
+import json
+
 from aiohttp import web
 
 import virtool.bio
 import virtool.db.downloads
+import virtool.db.history
+import virtool.db.otus
 import virtool.errors
 import virtool.http.routes
 import virtool.otus
@@ -70,6 +75,46 @@ async def download_otu(req):
     return web.Response(text=fasta, headers={
         "Content-Disposition": "attachment; filename='{}'".format(filename)
     })
+
+
+@routes.get("/download/refs/{ref_id}")
+async def download_reference(req):
+    """
+    Export all otus and sequences for a given reference as a gzipped JSON string. Made available as a downloadable file
+    named ``referebce.json.gz``.
+
+    """
+    db = req.app["db"]
+
+    # A list of joined otus.
+    otu_list = list()
+
+    async for document in db.otus.find({"last_indexed_version": {"$ne": None}}):
+        # If the otu has been changed since the last index rebuild, patch it to its last indexed version.
+        if document["version"] != document["last_indexed_version"]:
+            _, joined, _ = await virtool.db.history.patch_to_version(
+                db,
+                document["_id"],
+                document["last_indexed_version"]
+            )
+        else:
+            joined = await virtool.db.otus.join(db, document["_id"], document)
+
+        otu_list.append(joined)
+
+    # Convert the list of otus to a JSON-formatted string.
+    json_string = json.dumps(otu_list)
+
+    # Compress the JSON string with gzip.
+    body = await req.app.loop.run_in_executor(req.app["process_executor"], gzip.compress,
+                                              bytes(json_string, "utf-8"))
+
+    return web.Response(
+        headers={"Content-Disposition": "attachment; filename='otus.json.gz'"},
+        content_type="application/gzip",
+        body=body
+    )
+
 
 
 @routes.get("/download/sequences/{sequence_id}")
