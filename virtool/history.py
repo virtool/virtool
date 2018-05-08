@@ -27,3 +27,37 @@ def compose_create_description(document):
         return "{} ({})".format(description, document["abbreviation"])
 
     return description
+
+
+def compose_edit_description(name, abbreviation, old_abbreviation, schema):
+    description = None
+
+    if name:
+        description = "Changed name to {}".format(name)
+
+    if abbreviation is not None:
+        # Abbreviation is being removed.
+        if abbreviation == "" and old_abbreviation:
+            abbreviation_phrase = "removed abbreviation {}".format(old_abbreviation)
+
+        # Abbreviation is being added where one didn't exist before
+        elif abbreviation and not old_abbreviation:
+            abbreviation_phrase = "added abbreviation {}".format(abbreviation)
+
+        # Abbreviation is being changed from one value to another.
+        else:
+            abbreviation_phrase = "changed abbreviation to {}".format(abbreviation)
+
+        if description:
+            description = "{} and {}".format(description, abbreviation_phrase)
+        else:
+            description = abbreviation_phrase[:1].upper() + abbreviation_phrase[1:]
+
+    if schema is not None:
+        if description:
+            description += " and modified schema"
+        else:
+            description = "Modified schema"
+
+    return description
+
