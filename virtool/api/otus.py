@@ -1,7 +1,3 @@
-import asyncio
-import gzip
-import json
-import os
 from copy import deepcopy
 
 import pymongo
@@ -19,8 +15,7 @@ import virtool.otus
 import virtool.references
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
-    paginate, unpack_request
+from virtool.api.utils import bad_request, conflict, json_response, no_content, not_found
 
 SCHEMA_VALIDATOR = {
     "type": "list",
@@ -55,15 +50,15 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
-    verified = req.query.get("verified", None)
-    names = req.query.get("names", False)
+    term = req["query"].get("find", None)
+    verified = req["query"].get("verified", None)
+    names = req["query"].get("names", False)
 
     data = await virtool.db.otus.find(
         db,
         names,
         term,
-        req.query,
+        req["query"],
         verified
     )
 
@@ -89,8 +84,8 @@ async def get(req):
 
 
 @routes.post("/api/refs/{ref_id}/otus", schema={
-    "name": {"type": "string", "required": True, "min": 1},
-    "abbreviation": {"type": "string", "min": 1},
+    "name": {"type": "string", "required": True, "minlength": 1},
+    "abbreviation": {"type": "string", "default": ""},
     "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
@@ -104,46 +99,17 @@ async def create(req):
 
     ref_id = req.match_info["ref_id"]
 
-    # Abbreviation defaults to empty string if not provided.
-    abbreviation = data.get("abbreviation", "")
-
     # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, data["name"], abbreviation)
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
 
     if message:
         return conflict(message)
 
-    otu_id = await virtool.db.utils.get_new_id(db.otus)
+    joined = await virtool.db.otus.create(db, ref_id, data["name"], data["abbreviation"])
 
-    # Start building a otu document.
-    data.update({
-        "_id": otu_id,
-        "abbreviation": abbreviation,
-        "last_indexed_version": None,
-        "verified": False,
-        "lower_name": data["name"].lower(),
-        "isolates": [],
-        "version": 0,
-        "ref": {
-            "id": ref_id
-        },
-        "schema": []
-    })
+    description = virtool.history.compose_create_description(joined)
 
-    # Insert the otu document.
-    await db.otus.insert_one(data)
-
-    # Join the otu document into a complete otu record. This will be used for recording history.
-    joined = await virtool.db.otus.join(db, otu_id, data)
-
-    # Build a ``description`` field for the otu creation change document.
-    description = "Created {}".format(data["name"])
-
-    # Add the abbreviation to the description if there is one.
-    if abbreviation:
-        description += " ({})".format(abbreviation)
-
-    await virtool.db.history.add(
+    change = await virtool.db.history.add(
         db,
         "create",
         None,
@@ -152,33 +118,28 @@ async def create(req):
         req["client"].user_id
     )
 
-    complete = await virtool.db.otus.join_and_format(db, otu_id, joined=joined)
-
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor({key: joined[key] for key in virtool.otus.LIST_PROJECTION})
-    )
+    formatted = virtool.otus.format_otu(joined, most_recent_change=change)
 
     headers = {
-        "Location": "/api/otus/" + otu_id
+        "Location": "/api/otus/" + formatted["id"]
     }
 
-    return json_response(complete, status=201, headers=headers)
+    return json_response(formatted, status=201, headers=headers)
 
 
 @routes.patch("/api/otus/{otu_id}", schema={
-    "name": {"type": "string"},
+    "name": {"type": "string", "minlength": 1},
     "abbreviation": {"type": "string"},
     "schema": SCHEMA_VALIDATOR
 })
 async def edit(req):
     """
-    Edit an existing new otu. Checks to make sure the supplied otu name and abbreviation are not already in use in
+    Edit an existing OTU. Checks to make sure the supplied OTU name and abbreviation are not already in use in
     the collection.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     otu_id = req.match_info["otu_id"]
 
@@ -188,27 +149,16 @@ async def edit(req):
     if not old:
         return not_found()
 
-    name_change = data.get("name", None)
-    abbreviation_change = data.get("abbreviation", None)
-    schema_change = data.get("schema", None)
+    ref_id = old["ref"]["id"]
 
-    if name_change == old["name"]:
-        name_change = None
+    name, abbreviation, schema = virtool.otus.evaluate_changes(data, old)
 
-    old_abbreviation = old.get("abbreviation", "")
-
-    if abbreviation_change == old_abbreviation:
-        abbreviation_change = None
-
-    if schema_change == old.get("schema", None):
-        schema_change = None
-
-    # Sent back ``200`` with the existing otu record if no change will be made.
-    if name_change is None and abbreviation_change is None and schema_change is None:
+    # Send ``200`` with the existing otu record if no change will be made.
+    if name is None and abbreviation is None and schema is None:
         return json_response(await virtool.db.otus.join_and_format(db, otu_id))
 
-    # Make sure new name and/or abbreviation are not already in use.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, name_change, abbreviation_change)
+    # Make sure new name or abbreviation are not already in use.
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
         return json_response({"message": message}, status=409)
@@ -218,8 +168,8 @@ async def edit(req):
     data["verified"] = False
 
     # If the name is changing, update the ``lower_name`` field in the otu document.
-    if name_change:
-        data["lower_name"] = data["name"].lower()
+    if name:
+        data["lower_name"] = name.lower()
 
     # Update the database collection.
     document = await db.otus.find_one_and_update({"_id": otu_id}, {
@@ -231,49 +181,9 @@ async def edit(req):
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.otus.verify(db, otu_id, new)
+    issues = await virtool.db.otus.update_verification(db, new)
 
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
-
-    description = None
-
-    if name_change is not None:
-        description = "Changed name to {}".format(new["name"])
-
-        if abbreviation_change is not None:
-            # Abbreviation is being removed.
-            if abbreviation_change == "" and old_abbreviation:
-                description += " and removed abbreviation {}".format(old["abbreviation"])
-            # Abbreviation is being added where one didn't exist before
-            elif abbreviation_change and not old_abbreviation:
-                description += " and added abbreviation {}".format(new["abbreviation"])
-            # Abbreviation is being changed from one value to another.
-            else:
-                description += " and abbreviation to {}".format(new["abbreviation"])
-
-    elif abbreviation_change is not None:
-        # Abbreviation is being removed.
-        if abbreviation_change == "" and old["abbreviation"]:
-            description = "Removed abbreviation {}".format(old_abbreviation)
-        # Abbreviation is being added where one didn't exist before
-        elif abbreviation_change and not old.get("abbreviation", ""):
-            description = "Added abbreviation {}".format(new["abbreviation"])
-        # Abbreviation is being changed from one value to another.
-        else:
-            description = "Changed abbreviation to {}".format(new["abbreviation"])
-
-    if schema_change is not None:
-        if description is None:
-            description = "Modified schema"
-        else:
-            description += " and modified schema"
+    description = virtool.history.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
 
     await virtool.db.history.add(
         db,
@@ -296,7 +206,7 @@ async def edit(req):
 @routes.delete("/api/otus/{otu_id}")
 async def remove(req):
     """
-    Remove a otu document and its associated sequence documents.
+    Remove an OTU document and its associated sequence documents.
 
     """
     db = req.app["db"]
@@ -370,8 +280,8 @@ async def add_isolate(req):
 
     """
     db = req.app["db"]
-    settings = req.app["settings"]
     data = req["data"]
+    settings = req.app["settings"]
 
     otu_id = req.match_info["otu_id"]
 
@@ -989,124 +899,3 @@ async def list_history(req):
 
     return json_response(documents)
 
-
-async def get_import(req):
-    db = req.app["db"]
-
-    file_id = req.query["file_id"]
-
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
-
-    if await db.otus.count() or await db.indexes.count() or await db.history.count():
-        return conflict("Can only import otus into a virgin instance")
-
-    if not os.path.isfile(file_path):
-        return not_found("File not found")
-
-    data = await req.app.loop.run_in_executor(
-        req.app["executor"],
-        virtool.references.load_import_file,
-        file_path
-    )
-
-    isolate_counts = list()
-    sequence_counts = list()
-
-    otus = data["data"]
-
-    for otu in otus:
-        isolates = otu["isolates"]
-        isolate_counts.append(len(isolates))
-
-        for isolate in isolates:
-            sequence_counts.append(len(isolate["sequences"]))
-
-    duplicates, errors = await req.app.loop.run_in_executor(
-        req.app["executor"],
-        virtool.references.validate_otus,
-        data["data"]
-    )
-
-    return json_response({
-        "file_id": file_id,
-        "totals": {
-            "otus": len(otus),
-            "isolates": sum(isolate_counts),
-            "sequences": sum(sequence_counts),
-        },
-        "duplicates": duplicates,
-        "version": data["version"],
-        "file_created_at": data["created_at"],
-        "errors": errors
-    })
-
-
-async def import_otus(req):
-    db, data = await unpack_request(req)
-
-    file_id = data["file_id"]
-
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
-
-    if await db.otus.count() or await db.indexes.count() or await db.history.count():
-        return conflict("Can only import otus into a virgin instance")
-
-    if not os.path.isfile(file_path):
-        return not_found("File not found")
-
-    data = await req.app.loop.run_in_executor(
-        req.app["executor"],
-        virtool.references.load_import_file,
-        file_path
-    )
-
-    data_version = data.get("version", None)
-
-    if not data_version:
-        return bad_request("File is not compatible with this version of Virtool")
-
-    asyncio.ensure_future(virtool.db.references.import_data(
-        db,
-        req.app["dispatcher"].dispatch,
-        data,
-        req["client"].user_id
-    ), loop=req.app.loop)
-
-    return json_response({}, status=201, headers={"Location": "/api/otus"})
-
-
-async def export(req):
-    """
-    Export all otus and sequences as a gzipped JSON string. Made available as a downloadable file named
-    ``otus.json.gz``.
-
-    """
-    db = req.app["db"]
-
-    # A list of joined otus.
-    otu_list = list()
-
-    async for document in db.otus.find({"last_indexed_version": {"$ne": None}}):
-        # If the otu has been changed since the last index rebuild, patch it to its last indexed version.
-        if document["version"] != document["last_indexed_version"]:
-            _, joined, _ = await virtool.db.history.patch_to_version(
-                db,
-                document["_id"],
-                document["last_indexed_version"]
-            )
-        else:
-            joined = await virtool.db.otus.join(db, document["_id"], document)
-
-        otu_list.append(joined)
-
-    # Convert the list of otus to a JSON-formatted string.
-    json_string = json.dumps(otu_list)
-
-    # Compress the JSON string with gzip.
-    body = await req.app.loop.run_in_executor(req.app["process_executor"], gzip.compress, bytes(json_string, "utf-8"))
-
-    return web.Response(
-        headers={"Content-Disposition": "attachment; filename='otus.json.gz'"},
-        content_type="application/gzip",
-        body=body
-    )

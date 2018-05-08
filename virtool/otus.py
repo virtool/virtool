@@ -72,6 +72,25 @@ async def dispatch_version_only(req, new):
     )
 
 
+def evaluate_changes(data, document):
+    name = data.get("name", None)
+    abbreviation = data.get("abbreviation", None)
+    schema = data.get("schema", None)
+
+    if name == document["name"]:
+        name = None
+
+    old_abbreviation = document.get("abbreviation", "")
+
+    if abbreviation == old_abbreviation:
+        abbreviation = None
+
+    if schema == document.get("schema", None):
+        schema = None
+
+    return name, abbreviation, schema
+
+
 def extract_default_isolate(otu, isolate_processor=None):
     """
     Returns the default isolate dict for the given otu document.
@@ -175,6 +194,49 @@ def find_isolate(isolates, isolate_id):
 
     """
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
+
+
+def format_otu(joined, issues=False, most_recent_change=None):
+    """
+    Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
+    format the joined otu into a format that can be directly returned to API clients.
+
+    :param joined:
+    :type joined: Union[dict, NoneType]
+
+    :param issues: an object describing issues in the otu
+    :type issues: Union[dict, NoneType, bool]
+
+    :param most_recent_change: a change document for the most recent change made to OTU
+    :type most_recent_change: dict
+
+    :return: a joined and formatted otu
+    :rtype: dict
+
+    """
+    formatted = virtool.utils.base_processor(joined)
+
+    del formatted["lower_name"]
+
+    for isolate in formatted["isolates"]:
+
+        for sequence in isolate["sequences"]:
+            del sequence["otu_id"]
+            del sequence["isolate_id"]
+
+            sequence["id"] = sequence.pop("_id")
+
+    formatted["most_recent_change"] = None
+
+    if most_recent_change:
+        formatted["most_recent_change"] = virtool.utils.base_processor(most_recent_change)
+
+    formatted["issues"] = None
+
+    if issues is False:
+        formatted["issues"] = verify(joined)
+
+    return formatted
 
 
 def format_isolate_name(isolate):
