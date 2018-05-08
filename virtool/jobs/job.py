@@ -14,14 +14,13 @@ import virtool.utils
 
 class Job:
 
-    def __init__(self, loop, executor, db, settings, dispatch, capture_exception, job_id, task_name, task_args, proc,
+    def __init__(self, loop, executor, db, settings, capture_exception, job_id, task_name, task_args, proc,
                  mem):
 
         self.loop = loop
         self.executor = executor
         self.db = db
         self.settings = settings
-        self.dispatch = dispatch
         self.capture_exception = capture_exception
         self.id = job_id
         self.task_name = task_name
@@ -157,7 +156,7 @@ class Job:
             stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
             self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
 
-        document = await self.db.jobs.find_one_and_update({"_id": self.id}, {
+        await self.db.jobs.update_one({"_id": self.id}, {
             "$push": {
                 "status": {
                     "state": self._state,
@@ -167,9 +166,7 @@ class Job:
                     "timestamp": virtool.utils.timestamp()
                 }
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.jobs.LIST_PROJECTION)
-
-        await self.dispatch("jobs", "update", virtool.db.jobs.processor(document))
+        })
 
     async def add_log(self, line, indent=0):
         timestamp = virtool.utils.timestamp().isoformat()

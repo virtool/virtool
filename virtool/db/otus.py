@@ -203,7 +203,7 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
     return virtool.otus.format_otu(joined, issues, most_recent_change)
 
 
-async def remove(db, dispatch, otu_id, user_id, document=None):
+async def remove(db, otu_id, user_id, document=None):
 
     # Join the otu.
     joined = await join(db, otu_id, document=document)
@@ -226,12 +226,6 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
         None,
         description,
         user_id
-    )
-
-    await dispatch(
-        "otus",
-        "remove",
-        [otu_id]
     )
 
     return True

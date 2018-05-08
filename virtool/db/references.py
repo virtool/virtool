@@ -31,14 +31,14 @@ PROJECTION = [
 ]
 
 
-async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
-    await virtool.db.processes.update(db, dispatch, process_id, 0, step="delete_indexes")
+async def cleanup_removed(db, process_id, ref_id, user_id):
+    await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
 
     await db.indexes.delete_many({
         "ref.id": ref_id
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_otus")
+    await virtool.db.processes.update(db, process_id, 0.5, step="delete_otus")
 
     otu_count = db.otus.count({"ref.id": ref_id})
 
@@ -47,7 +47,6 @@ async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
     async for document in db.otus.find({"ref.id": ref_id}):
         await virtool.db.otus.remove(
             db,
-            dispatch,
             document["_id"],
             user_id,
             document=document
@@ -56,10 +55,10 @@ async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported > 0.03:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.5 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.5 + progress))
             progress_tracker.reported()
 
-    await virtool.db.processes.update(db, dispatch, process_id, progress=1)
+    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def get_computed(db, ref_id, internal_control_id):
@@ -393,7 +392,6 @@ async def create_for_import(db, name, description, public, import_from, user_id)
 
 async def import_file(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
-    dispatch = app["dispatch"]
 
     import_data = await app["run_in_thread"](virtool.references.load_import_file, path)
 
@@ -414,7 +412,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         }
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.1, "validate_documents")
+    await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
 
     otus = import_data["data"]
 
@@ -429,9 +427,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             }
         ]
 
-        await virtool.db.processes.update(db, dispatch, process_id, errors=errors)
+        await virtool.db.processes.update(db, process_id, errors=errors)
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.2, "import_documents")
+    await virtool.db.processes.update(db, process_id, 0.2, "import_documents")
 
     progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
@@ -490,9 +488,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.2 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.2 + progress))
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.6, "create_history")
+    await virtool.db.processes.update(db, process_id, 0.6, "create_history")
 
     progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
@@ -521,6 +519,6 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.6 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
 
-    await virtool.db.processes.update(db, dispatch, process_id, 1)
+    await virtool.db.processes.update(db, process_id, 1)

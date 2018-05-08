@@ -118,4 +118,3 @@ async def test_init_job_manager(mocker, loop):
     assert app["job_manager"].loop == loop
     assert app["job_manager"].db is None
     assert app["job_manager"].settings is None
-    assert app["job_manager"].dispatch == app["dispatcher"].dispatch

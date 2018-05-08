@@ -118,78 +118,66 @@ def format_software_release(release):
     return formatted
 
 
-async def install(app, db, settings, dispatch, loop, download_url, size):
+async def install(app, db, settings, loop, download_url, size):
     """
     Installs the update described by the passed release document.
 
     """
     with get_temp_dir() as tempdir:
         # Start download release step, reporting this to the DB.
-        await update_software_process(db, dispatch, 0, "download")
+        await update_software_process(db, 0, "download")
 
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
 
         async def handler(progress):
-            await update_software_process(db, dispatch, progress)
+            await update_software_process(db, progress)
 
         try:
             await virtool.github.download_asset(settings, download_url, size, compressed_path, progress_handler=handler)
         except virtool.errors.GitHubError:
-            document = await db.status.find_one_and_update({"_id": "software_update"}, {
+            return await db.status.update_one({"_id": "software_update"}, {
                 "$set": {
                     "process.error": "Could not find GitHub repository"
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER)
-
-            await dispatch("status", "update", virtool.utils.base_processor(document))
-
-            return
+            })
         except FileNotFoundError:
-            document = await db.status.find_one_and_update({"_id": "software_update"}, {
+            return await db.status.find_one_and_update({"_id": "software_update"}, {
                 "$set": {
                     "process.error": "Could not write to release download location"
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER)
-
-            await dispatch("status", "update", virtool.utils.base_processor(document))
-
-            return
+            })
 
         # Start decompression step, reporting this to the DB.
-        await update_software_process(db, dispatch, 0, "decompress")
+        await update_software_process(db, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
         await loop.run_in_executor(None, virtool.github.decompress_asset_file, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
-        await update_software_process(db, dispatch, 0, "check_tree")
+        await update_software_process(db, 0, "check_tree")
 
         # Check that the file structure matches our expectations.
         decompressed_path = os.path.join(str(tempdir), "virtool")
 
         good_tree = await loop.run_in_executor(None, check_tree, decompressed_path)
 
-        document = await db.status.find_one_and_update({"_id": "software_update"}, {
+        await db.status.update_one({"_id": "software_update"}, {
             "$set": {
                 "process.good_tree": good_tree
             }
-        }, return_document=pymongo.ReturnDocument.AFTER)
-
-        await dispatch("status", "update", virtool.utils.base_processor(document))
+        })
 
         # Copy the update files to the install directory.
-        await update_software_process(db, dispatch, 0, "copy_files")
+        await update_software_process(db, 0, "copy_files")
 
         await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
-        document = await db.status.find_one_and_update({"_id": "software_update"}, {
+        await db.status.update_one({"_id": "software_update"}, {
             "$set": {
                 "process.complete": True
             }
-        }, return_document=pymongo.ReturnDocument.AFTER)
-
-        await dispatch("status", "update", virtool.utils.base_processor(document))
+        })
 
         await asyncio.sleep(1.5, loop=loop)
 
@@ -200,16 +188,13 @@ def get_temp_dir():
     return tempfile.TemporaryDirectory()
 
 
-async def update_software_process(db, dispatch, progress, step=None):
+async def update_software_process(db, progress, step=None):
     """
     Update the process field in the software update document. Used to keep track of the current progress of the update
     process.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param dispatch: a reference to the dispatcher's dispatch method
-    :type dispatch: func
 
     :param progress: the numeric progress number for the step
     :type progress: Union(int, float)
@@ -218,7 +203,7 @@ async def update_software_process(db, dispatch, progress, step=None):
     :type step: str
 
     """
-    return await virtool.utils.update_status_process(db, dispatch, "software_update", progress, step)
+    return await virtool.utils.update_status_process(db, "software_update", progress, step)
 
 
 def check_tree(path):

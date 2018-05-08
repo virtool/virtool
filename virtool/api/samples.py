@@ -169,7 +169,7 @@ async def create(req):
 
     await db.samples.insert_one(document)
 
-    await virtool.db.files.reserve(db, req.app["dispatcher"].dispatch, data["files"])
+    await virtool.db.files.reserve(db, data["files"])
 
     task_args = {
         "sample_id": sample_id,
@@ -214,8 +214,6 @@ async def edit(req):
     }, return_document=ReturnDocument.AFTER, projection=virtool.samples.LIST_PROJECTION)
 
     processed = virtool.utils.base_processor(document)
-
-    await req.app["dispatcher"].dispatch("sample", "update", processed)
 
     return json_response(processed)
 

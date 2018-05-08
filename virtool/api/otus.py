@@ -194,12 +194,6 @@ async def edit(req):
         req["client"].user_id
     )
 
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor(virtool.db.utils.apply_projection(new, virtool.otus.LIST_PROJECTION))
-    )
-
     return json_response(await virtool.db.otus.join_and_format(db, otu_id, joined=new, issues=issues))
 
 
@@ -215,7 +209,6 @@ async def remove(req):
 
     removed = await virtool.db.otus.remove(
         db,
-        req.app["dispatcher"].dispatch,
         otu_id,
         req["client"].user_id
     )
@@ -365,8 +358,6 @@ async def add_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     headers = {
         "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
     }
@@ -452,8 +443,6 @@ async def edit_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     complete = await virtool.db.otus.join_and_format(db, otu_id, joined=new)
 
     for isolate in complete["isolates"]:
@@ -537,8 +526,6 @@ async def set_as_default(req):
         "Set {} as default".format(isolate_name),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     complete = await virtool.db.otus.join_and_format(db, otu_id, new)
 
@@ -626,8 +613,6 @@ async def remove_isolate(req):
         description,
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     return no_content()
 
@@ -747,8 +732,6 @@ async def create_sequence(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     headers = {
         "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, data["_id"])
     }
@@ -821,8 +804,6 @@ async def edit_sequence(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     return json_response(virtool.utils.base_processor(updated_sequence))
 
 
@@ -880,8 +861,6 @@ async def remove_sequence(req):
         "Removed sequence {} from {}".format(sequence_id, isolate_name),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     return no_content()
 

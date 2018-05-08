@@ -54,8 +54,8 @@ async def get_referenced_hmm_ids(db):
     return list(set(a["_id"] for a in agg))
 
 
-async def update_process(db, dispatch, progress, step=None, error=None):
-    return await virtool.utils.update_status_process(db, dispatch, "hmm_install", progress, step)
+async def update_process(db, progress, step=None, error=None):
+    return await virtool.utils.update_status_process(db, "hmm_install", progress, step)
 
 
 async def get_asset(settings, server_version, username, token):
@@ -88,7 +88,7 @@ async def get_asset(settings, server_version, username, token):
     return assets
 
 
-async def install_official(loop, db, settings, dispatch, server_version, username=None, token=None):
+async def install_official(loop, db, settings, server_version, username=None, token=None):
     """
     Runs a background Task that:
 
@@ -114,9 +114,6 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
     :param settings: the application settings object
     :type settings: :class:`virtool.app_settings.Settings`
 
-    :param dispatch: the application dispatch method
-    :type dispatch: func
-
     :param server_version: the current server version
     :type server_version: str
 
@@ -127,7 +124,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
     :type  token: str
 
     """
-    await update_process(db, dispatch, 0, step="check_github")
+    await update_process(db, 0, step="check_github")
 
     assets = await get_asset(settings, server_version, username, token)
 
@@ -137,34 +134,34 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
         }
     })
 
-    await update_process(db, dispatch, 0.5)
+    await update_process(db, 0.5)
 
     if len(assets) == 0:
         # Stop the install process if one of the annotation or profile assets are not found.
-        return await update_process(db, dispatch, 1.0, error="Missing HMM asset file")
+        return await update_process(db, 1.0, error="Missing HMM asset file")
 
     async def handler(progress):
-        await update_process(db, dispatch, progress)
+        await update_process(db, progress)
 
     with tempfile.TemporaryDirectory() as temp_path:
         target_path = os.path.join(temp_path, "vthmm.tar.gz")
 
         url, size = assets[0]
 
-        await update_process(db, dispatch, 0, step="download")
+        await update_process(db, 0, step="download")
         await virtool.github.download_asset(settings, url, size, target_path, progress_handler=handler)
 
-        await update_process(db, dispatch, 0, step="decompress")
+        await update_process(db, 0, step="decompress")
 
         await loop.run_in_executor(None, virtool.github.decompress_asset_file, target_path, temp_path)
 
-        await update_process(db, dispatch, 0, step="install_profiles")
+        await update_process(db, 0, step="install_profiles")
 
         decompressed_path = os.path.join(temp_path, "hmm")
         install_path = os.path.join(settings.get("data_path"), "hmm", "profiles.hmm")
         await loop.run_in_executor(None, shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
-        await update_process(db, dispatch, 0, step="import_annotations")
+        await update_process(db, 0, step="import_annotations")
 
         async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
             annotations = json.loads(await f.read())
@@ -177,7 +174,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
             }
         })
 
-        await update_process(db, dispatch, 1.0)
+        await update_process(db, 1.0)
 
 
 async def insert_annotations(db, annotations, progress_handler=None):

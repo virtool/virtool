@@ -5,7 +5,7 @@ import virtool.processes
 import virtool.utils
 
 
-async def register(db, dispatch, process_type, file_size=0):
+async def register(db, process_type, file_size=0):
 
     step_count = virtool.processes.STEP_COUNTS[process_type]
 
@@ -27,14 +27,10 @@ async def register(db, dispatch, process_type, file_size=0):
 
     await db.processes.insert_one(document)
 
-    document = virtool.utils.base_processor(document)
-
-    await dispatch("processes", "update", document)
-
-    return document
+    return virtool.utils.base_processor(document)
 
 
-async def update(db, dispatch, process_id, progress=None, step=None, file_step=None, file_progress=None, file_size=None,
+async def update(db, process_id, progress=None, step=None, file_step=None, file_progress=None, file_size=None,
                  errors=None):
 
     update_dict = dict()
@@ -61,14 +57,8 @@ async def update(db, dispatch, process_id, progress=None, step=None, file_step=N
         "$set": update_dict
     }, return_document=pymongo.ReturnDocument.AFTER)
 
-    document = virtool.utils.base_processor(document)
-
-    await dispatch("processes", "update", document)
-
-    return document
+    return virtool.utils.base_processor(document)
 
 
-async def remove(db, dispatch, process_id):
+async def remove(db, process_id):
     await db.processes.delete_one({"_id": process_id})
-
-    await dispatch("processes", "remove", [process_id])

@@ -78,7 +78,6 @@ async def install(req):
         req.app.loop,
         db,
         req.app["settings"],
-        req.app["dispatcher"].dispatch,
         req.app["version"]
     ), loop=req.app.loop)
 

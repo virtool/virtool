@@ -3,10 +3,6 @@ import os
 import pytest
 import shutil
 import sys
-import types
-from aiohttp.test_utils import make_mocked_coro
-
-import virtool.app_dispatcher
 
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
@@ -69,32 +65,6 @@ def static_time(mocker):
     mocker.patch("virtool.utils.timestamp", return_value=arrow.Arrow(2015, 10, 6, 20, 0, 0).naive)
 
     return time
-
-
-@pytest.fixture
-def test_dispatch(loop, mocker, monkeypatch):
-
-    m = mocker.Mock(spec=virtool.app_dispatcher.Dispatcher(loop))
-
-    setattr(m, "close", make_mocked_coro())
-
-    m.connections = list()
-
-    m.dispatch_stub = mocker.stub(name="dispatch")
-
-    async def dispatch(self, *args, **kwargs):
-        self.dispatch_stub(*args, **kwargs)
-
-    dispatch.stub = m.dispatch_stub
-
-    m.dispatch = types.MethodType(dispatch, m)
-
-    mock_class = mocker.Mock()
-    mock_class.return_value = m
-
-    monkeypatch.setattr("virtool.app_dispatcher.Dispatcher", mock_class)
-
-    return m.dispatch
 
 
 @pytest.fixture

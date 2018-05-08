@@ -63,11 +63,11 @@ async def test_update_process(step, mocker):
     m = mocker.patch("virtool.utils.update_status_process", new=make_mocked_coro())
 
     if step is False:
-        await virtool.hmm.update_process("db", "dispatch", 0.65)
+        await virtool.hmm.update_process("db", 0.65)
     else:
-        await virtool.hmm.update_process("db", "dispatch", 0.65, step=step)
+        await virtool.hmm.update_process("db", 0.65, step=step)
 
-    assert m.call_args[0] == ("db", "dispatch", "hmm_install", 0.65, step or None)
+    assert m.call_args[0] == ("db", "hmm_install", 0.65, step or None)
 
 
 async def test_get_assets(mocker):
@@ -99,7 +99,7 @@ async def test_get_assets(mocker):
     )]
 
 
-async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch):
+async def test_install_official(loop, mocker, tmpdir, test_motor):
     tmpdir.mkdir("hmm")
 
     settings = {
@@ -128,7 +128,6 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
         loop,
         test_motor,
         settings,
-        test_dispatch,
         "v1.9.2-beta.2"
     )
 

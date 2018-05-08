@@ -94,7 +94,6 @@ async def init_dispatcher(app):
 
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
-    app["dispatch"] = app["dispatcher"].dispatch
 
 
 async def init_db(app):
@@ -172,7 +171,6 @@ async def init_job_manager(app):
         app.loop,
         app["db"],
         app["settings"],
-        app["dispatcher"].dispatch,
         capture_exception
     )
 
@@ -195,7 +193,6 @@ async def init_file_manager(app):
             app.loop,
             app["executor"],
             app["db"],
-            app["dispatcher"].dispatch,
             files_path,
             app["settings"].get("watch_path"),
             clean_interval=20

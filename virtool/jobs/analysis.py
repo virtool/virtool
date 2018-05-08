@@ -156,23 +156,18 @@ class Base(virtool.jobs.job.Job):
 
     async def cleanup(self):
         """
-        Remove the analysis document and the analysis files. Dispatch the removal op.
-
-        Recalculate the algorithm tags for the sample document and dispatch the new processed document.
+        Remove the analysis document and the analysis files. Dispatch the removal op. Recalculate and update the
+        algorithm tags for the sample document.
 
         """
         await self.db.analyses.delete_one({"_id": self.analysis_id})
-
-        await self.dispatch("analyses", "remove", [self.analysis_id])
 
         try:
             await self.loop.run_in_executor(None, shutil.rmtree, self.analysis_path)
         except FileNotFoundError:
             pass
 
-        document = await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
-
-        await self.dispatch("samples", "update", document)
+        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
 
 
 class Pathoscope(Base):
@@ -323,9 +318,7 @@ class Pathoscope(Base):
             "$set": self.results
         })
 
-        document = await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
-
-        await self.dispatch("samples", "update", document)
+        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
 
     @virtool.jobs.job.stage_method
     async def cleanup_indexes(self):
@@ -797,9 +790,8 @@ class NuVs(Base):
                 }
             })
 
-        document = await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
+        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
 
-        await self.dispatch("samples", "update", document)
 
     async def cleanup(self):
         try:

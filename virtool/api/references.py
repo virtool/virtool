@@ -202,7 +202,7 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.db.processes.register(db, req.app["dispatch"], "import_reference")
+        process = await virtool.db.processes.register(db, "import_reference")
 
         document["process"] = {
             "id": process["id"]
@@ -320,7 +320,6 @@ async def remove(req):
 
     """
     db = req.app["db"]
-    dispatch = req.app["dispatch"]
 
     ref_id = req.match_info["ref_id"]
 
@@ -333,11 +332,10 @@ async def remove(req):
     if not delete_result.deleted_count:
         return not_found()
 
-    process = await virtool.db.processes.register(db, dispatch, "delete_reference")
+    process = await virtool.db.processes.register(db, "delete_reference")
 
     await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
         db,
-        dispatch,
         process["id"],
         ref_id,
         user_id

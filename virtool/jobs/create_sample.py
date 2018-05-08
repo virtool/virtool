@@ -256,29 +256,26 @@ class CreateSample(virtool.jobs.job.Job):
 
                     fastqc["sequences"][quality] += int(line[1].split(".")[0])
 
-        document = await self.db.samples.find_one_and_update({"_id": self.sample_id}, {
+        await self.db.samples.update_one({"_id": self.sample_id}, {
             "$set": {
                 "quality": fastqc,
                 "imported": False
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.samples.LIST_PROJECTION)
+        })
 
-        await self.dispatch("samples", "update", virtool.utils.base_processor(document))
 
     @virtool.jobs.job.stage_method
     async def clean_watch(self):
         """ Remove the original read files from the files directory """
         for file_id in self.files:
-            await virtool.db.files.remove(self.loop, self.db, self.settings, self.dispatch, file_id)
+            await virtool.db.files.remove(self.loop, self.db, self.settings, file_id)
 
     async def cleanup(self):
-        await virtool.db.files.release_reservations(self.db, self.dispatch, self.task_args["files"])
+        await virtool.db.files.release_reservations(self.db, self.task_args["files"])
 
         try:
             await self.loop.run_in_executor(None, shutil.rmtree, self.sample_path)
         except FileNotFoundError:
             pass
 
-        # Remove the sample document and dispatch the operation.
         await self.db.samples.delete_one({"_id": self.sample_id})
-        await self.dispatch("remove", "samples", [self.sample_id])

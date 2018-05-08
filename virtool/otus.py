@@ -55,23 +55,6 @@ def check_source_type(settings, source_type):
     return True
 
 
-async def dispatch_version_only(req, new):
-    """
-    Dispatch a otu update. Should be called when the document itself is not being modified.
-
-    :param req: the request object
-
-    :param new: the otu document
-    :type new: Coroutine[dict]
-
-    """
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor({key: new[key] for key in LIST_PROJECTION})
-    )
-
-
 def evaluate_changes(data, document):
     name = data.get("name", None)
     abbreviation = data.get("abbreviation", None)

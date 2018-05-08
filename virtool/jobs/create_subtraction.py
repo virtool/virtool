@@ -58,14 +58,12 @@ class CreateSubtraction(virtool.jobs.job.Job):
         """
         gc, count = await self.run_in_executor(virtool.subtractions.calculate_fasta_gc, self.fasta_path)
 
-        document = await self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+        await self.db.subtraction.update_one({"_id": self.subtraction_id}, {
             "$set": {
                 "gc": gc,
                 "count": count
             }
-        }, projection=virtool.db.subtractions.PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
-
-        await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+        })
 
     async def bowtie_build(self):
         """
@@ -83,16 +81,14 @@ class CreateSubtraction(virtool.jobs.job.Job):
 
     async def update_db(self):
         """
-        Set the ``ready`` on the subtraction document ``True`` and dispatch the change.
+        Set the ``ready`` on the subtraction document ``True``.
 
         """
-        document = await self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+        await self.db.subtraction.update_one({"_id": self.subtraction_id}, {
             "$set": {
                 "ready": True
             }
-        }, projection=virtool.db.subtractions.PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
-
-        await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+        })
 
     async def cleanup(self):
         """
@@ -108,5 +104,3 @@ class CreateSubtraction(virtool.jobs.job.Job):
 
         # Remove the associated subtraction document.
         await self.db.subtraction.delete_one({"_id": self.subtraction_id})
-
-        await self.dispatch("subtraction", "remove", self.subtraction_id)

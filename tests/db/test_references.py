@@ -11,14 +11,13 @@ import virtool.db.references
 TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
 
 
-async def test_import(mocker, tmpdir, test_motor, test_dispatch, static_time):
+async def test_import(mocker, tmpdir, test_motor, static_time):
 
     with gzip.open(TEST_IMPORT_FILE_PATH, "rt") as f:
         data = json.load(f)
 
     app = {
         "db": test_motor,
-        "dispatch": test_dispatch,
         "run_in_thread": make_mocked_coro(return_value=data)
     }
 

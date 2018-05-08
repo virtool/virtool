@@ -33,7 +33,6 @@ async def get(req):
 @routes.post("/api/updates/software", admin=True)
 async def upgrade(req):
     db = req.app["db"]
-    dispatch = req.app["dispatcher"].dispatch
 
     channel = req.app["settings"].get("software_channel")
 
@@ -58,8 +57,6 @@ async def upgrade(req):
             }
         }, return_document=pymongo.ReturnDocument)
 
-        await dispatch("status", "update", virtool.utils.base_processor(document))
-
     releases = document.get("releases", list())
 
     try:
@@ -80,15 +77,12 @@ async def upgrade(req):
         }
     }, return_document=pymongo.ReturnDocument.AFTER)
 
-    await dispatch("status", "update", virtool.utils.base_processor(document))
-
     download_url = latest_release["download_url"]
 
     await asyncio.ensure_future(virtool.updates.install(
         req.app,
         db,
         req.app["settings"],
-        dispatch,
         req.app.loop,
         download_url,
         latest_release["size"]

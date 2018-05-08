@@ -8,13 +8,13 @@ import virtool.files
 
 
 @pytest.fixture
-def test_manager_instance(loop, test_motor, test_dispatch, tmpdir):
+def test_manager_instance(loop, test_motor, tmpdir):
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
     executor = concurrent.futures.ThreadPoolExecutor()
 
-    manager = virtool.files.Manager(loop, executor, test_motor, test_dispatch, files_path, watch_path)
+    manager = virtool.files.Manager(loop, executor, test_motor, files_path, watch_path)
 
     return manager
 
