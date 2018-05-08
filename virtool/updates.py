@@ -141,7 +141,7 @@ async def install(app, db, settings, loop, download_url, size):
                 }
             })
         except FileNotFoundError:
-            return await db.status.find_one_and_update({"_id": "software_update"}, {
+            return await db.status.update_one({"_id": "software_update"}, {
                 "$set": {
                     "process.error": "Could not write to release download location"
                 }

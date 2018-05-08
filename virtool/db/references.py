@@ -39,7 +39,7 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.5, step="delete_otus")
 
-    otu_count = db.otus.count({"ref.id": ref_id})
+    otu_count = await db.otus.count({"ref.id": ref_id})
 
     progress_tracker = virtool.processes.ProgressTracker(otu_count, factor=0.5, increment=0.03)
 
@@ -276,7 +276,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
 async def create_document(db, name, organism, description, data_type, public, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
-    if await db.references.count({"_id": ref_id}):
+    if await db.refs.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
     ref_id = ref_id or await virtool.db.utils.get_new_id(db.otus)
