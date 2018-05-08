@@ -18,7 +18,7 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, tes
     """
     await test_motor.otus.insert_one(test_otu)
 
-    result = await virtool.db.otus.check_name_and_abbreviation(test_motor, name, abbreviation)
+    result = await virtool.db.otus.check_name_and_abbreviation(test_motor, "hxn167", name, abbreviation)
 
     assert result == return_value
 
