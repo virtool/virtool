@@ -66,6 +66,11 @@ export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
 export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
 
+// Processes
+export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
+export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
+export const GET_PROCESS = createRequestActionType("GET_PROCESS");
+
 // OTU
 export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
 export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
