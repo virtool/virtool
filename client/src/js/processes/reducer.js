@@ -6,20 +6,29 @@ import {
 } from "../actionTypes";
 
 export const initialState = {
-    documents: null,
+    documents: [],
     detail: null
 };
-export const updateProcess = (state, action) => ({
-    ...state,
-    documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
-});
+export const updateProcess = (state, action) => {
+    if (!state.documents.length) {
+        return {
+            ...state,
+            documents: [{...action.data}]
+        };
+    }
+
+    return {
+        ...state,
+        documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
+    };
+};
 
 export default function referenceReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case WS_UPDATE_PROCESS:
-            return state.documents === null ? state : updateProcess(state, action);
+            return updateProcess(state, action);
 
         case LIST_PROCESSES.SUCCEEDED:
             return {...state, ...action.data};

@@ -21,7 +21,7 @@ export function* getReference (action) {
 
 export function* createReference (action) {
     yield apiCall(referenceAPI.create, action, CREATE_REFERENCE);
-    yield put(push({state: {createReference: false, importReference: false}}));
+    yield put(push({state: {createReference: false}}));
 }
 
 export function* removeReference (action) {
@@ -31,6 +31,7 @@ export function* removeReference (action) {
 
 export function* importReference (action) {
     yield setPending(apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE));
+    yield put(push({state: {importReference: false}}));
 }
 
 export function* watchReferences () {

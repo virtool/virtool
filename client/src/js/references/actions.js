@@ -23,8 +23,13 @@ export const createReference = (name, description, dataType, organism, isPublic)
     isPublic
 });
 
-export const importReference = (refId, fileId) => ({
+export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
     type: IMPORT_REFERENCE.REQUESTED,
+    name,
+    description,
+    dataType,
+    organism,
+    isPublic,
     fileId
 });
 

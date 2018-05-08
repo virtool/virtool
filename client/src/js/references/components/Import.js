@@ -168,7 +168,6 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
 
     onSubmit: (name, description, dataType, organism, isPublic, fileId) => {
-        console.log(name, description, dataType, organism, isPublic, fileId);
         dispatch(importReference(name, description, dataType, organism, isPublic, fileId));
     },
 
