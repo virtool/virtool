@@ -218,10 +218,7 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
     # Remove the otu document itself.
     await db.otus.delete_one({"_id": otu_id})
 
-    description = "Removed {}".format(joined["name"])
-
-    if joined["abbreviation"]:
-        description += " ({})".format(joined["abbreviation"])
+    description = virtool.history.compose_remove_description(joined)
 
     await virtool.db.history.add(
         db,

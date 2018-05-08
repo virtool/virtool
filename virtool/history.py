@@ -61,3 +61,13 @@ def compose_edit_description(name, abbreviation, old_abbreviation, schema):
 
     return description
 
+
+def compose_remove_description(document):
+    description = "Removed {}".format(document["name"])
+
+    abbreviation = document.get("abbreviation", None)
+
+    if abbreviation:
+        description += " ({})".format(abbreviation)
+
+    return description
