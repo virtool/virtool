@@ -68,7 +68,7 @@ def protect(route_decorator, admin, permission, public, schema):
                 except (json.decoder.JSONDecodeError, UnicodeDecodeError):
                     data = None
 
-                if data and schema:
+                if schema and data is not None:
                     v = Validator(schema)
 
                     if not v.validate(data):
