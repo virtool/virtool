@@ -72,6 +72,25 @@ async def dispatch_version_only(req, new):
     )
 
 
+def evaluate_changes(data, document):
+    name = data.get("name", None)
+    abbreviation = data.get("abbreviation", None)
+    schema = data.get("schema", None)
+
+    if name == document["name"]:
+        name = None
+
+    old_abbreviation = document.get("abbreviation", "")
+
+    if abbreviation == old_abbreviation:
+        abbreviation = None
+
+    if schema == document.get("schema", None):
+        schema = None
+
+    return name, abbreviation, schema
+
+
 def extract_default_isolate(otu, isolate_processor=None):
     """
     Returns the default isolate dict for the given otu document.
