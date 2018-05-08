@@ -180,8 +180,6 @@ async def insert_annotations(db, annotations, progress_handler=None):
         }
     })
 
-    existing_ids = set(await db.hmm.distinct("_id"))
-
     count = 0
     total_count = len(annotations)
 
@@ -189,14 +187,7 @@ async def insert_annotations(db, annotations, progress_handler=None):
         chunk = annotations[i:i + 30]
 
         for annotation in chunk:
-            _id = virtool.utils.random_alphanumeric(8, excluded=existing_ids)
-            existing_ids.add(_id)
-            annotation.update({
-                "_id": _id,
-                "hidden": False
-            })
-
-        await db.hmm.insert_many(chunk)
+            await db.hmm.insert_one(dict(annotation, hidden=False))
 
         if progress_handler:
             count += len(chunk)
