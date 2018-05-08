@@ -194,8 +194,6 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
     if not joined:
         return None
 
-    joined = virtool.utils.base_processor(joined)
-
     most_recent_change = await virtool.db.history.get_most_recent_change(db, otu_id)
 
     if issues is False:
