@@ -11,10 +11,9 @@ import {
 import { push } from "react-router-redux";
 
 import ReadSelector from "./ReadSelector";
-import { findReadyHosts, createSample } from "../../actions";
+import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, LoadingPlaceholder } from "../../../base";
-import { findFiles } from "../../../files/actions";
 import { routerLocationHasState } from "../../../utils";
 
 const getReadyHosts = (props) => (
@@ -290,7 +289,7 @@ const mapStateToProps = (state) => {
         show,
         groups: state.account.groups,
         readyHosts: state.samples.readyHosts,
-        readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
+        readyReads: filter(state.samples.readFiles, {reserved: false}),
         forceGroupChoice: state.settings.sample_group === "force_choice",
         error: get(state, "errors.CREATE_SAMPLE_ERROR.message", "")
     };
@@ -303,7 +302,7 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onFindFiles: () => {
-        dispatch(findFiles("reads", 1));
+        dispatch(findReadFiles());
     },
 
     onCreate: ({ name, isolate, host, locale, subtraction, files }) => {
