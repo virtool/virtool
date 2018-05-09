@@ -66,6 +66,10 @@ SCHEMA = {
     "db_name": {"type": "string", "default": "virtool"},
     "db_host": {"type": "string", "default": "localhost"},
     "db_port": get_default_integer(27017),
+    "db_username": {"type": "string", "default": ""},
+    "db_password": {"type": "string", "default": ""},
+    "db_string": {"type": "string", "default": ""},
+    "db_ssl": {"type": "string"},
 
     # HTTP Server
     "server_host": {"type": "string", "default": "localhost"},

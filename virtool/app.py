@@ -94,21 +94,28 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
+    settings = app["settings"]
 
-    db_host = app["settings"].get("db_host", "localhost")
-    db_port = app["settings"].get("db_port", 27017)
+    app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
-    client = motor_asyncio.AsyncIOMotorClient(db_host, db_port, serverSelectionTimeoutMS=6000, io_loop=app.loop)
+    db_host = settings["db_host"]
+    db_port = settings["db_port"]
+    db_username = settings["db_username"]
+    db_password = settings["db_password"]
 
-    try:
-        await client.database_names()
-    except pymongo.errors.ServerSelectionTimeoutError:
-        raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
-        )
+    client = motor_asyncio.AsyncIOMotorClient(
+        db_host,
+        db_port,
+        serverSelectionTimeoutMS=6000,
+        io_loop=app.loop,
+        connect=True
+    )
 
-    app["db"] = client[app["db_name"]]
+    db = client[app["db_name"]]
+
+    await db.authenticate(db_username, db_password)
+
+    app["db"] = db
 
 
 async def init_check_db(app):
