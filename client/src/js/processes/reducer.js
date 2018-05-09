@@ -9,7 +9,7 @@ export const initialState = {
     documents: [],
     detail: null
 };
-export const updateProcess = (state, action) => {
+export const updateProcesses = (state, action) => {
     if (!state.documents.length) {
         return {
             ...state,
@@ -19,7 +19,9 @@ export const updateProcess = (state, action) => {
 
     return {
         ...state,
-        documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
+        documents: map(state.documents, doc => doc.id === action.data.id
+            ? {...doc, ...action.data}
+            : doc)
     };
 };
 
@@ -28,10 +30,10 @@ export default function referenceReducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_UPDATE_PROCESS:
-            return updateProcess(state, action);
+            return updateProcesses(state, action);
 
         case LIST_PROCESSES.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, documents: [...action.data]};
 
         case GET_PROCESS.REQUESTED:
             return {...state, detail: null};

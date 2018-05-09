@@ -1,3 +1,4 @@
+import { simpleActionCreator } from "../utils";
 import {
     WS_UPDATE_PROCESS,
     LIST_PROCESSES,
@@ -9,9 +10,7 @@ export const wsUpdateProcess = (data) => ({
     data
 });
 
-export const listProcesses = () => ({
-    type: LIST_PROCESSES
-});
+export const listProcesses = simpleActionCreator(LIST_PROCESSES.REQUESTED);
 
 export const getProcess = (processId) => ({
     type: GET_PROCESS,
