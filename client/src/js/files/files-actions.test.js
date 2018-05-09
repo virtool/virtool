@@ -58,14 +58,12 @@ describe("Files Action Creators", () => {
         const localId = "randomstring";
         const file = {};
         const fileType = "reads";
-        const onProgress = function () {};
-        const result = upload(localId, file, fileType, onProgress);
+        const result = upload(localId, file, fileType);
         const expected = {
             type: "UPLOAD_REQUESTED",
             localId,
             file,
-            fileType,
-            onProgress
+            fileType
         };
 
         expect(result).toEqual(expected);
