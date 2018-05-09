@@ -25,10 +25,11 @@ const getInitialState = () => ({
 });
 
 const lockModal = (progress) => {
-    if (progress === 0 || progress === 100) {
-        return false;
+    if (progress > 0 && progress < 100) {
+        return true;
     }
-    return true;
+
+    return false;
 };
 
 class OTUImport extends React.Component {
