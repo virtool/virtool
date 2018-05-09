@@ -1469,8 +1469,8 @@ class TestListSequences:
     async def test(self, spawn_client, test_otu, test_sequence):
         client = await spawn_client(authorize=True)
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
 
@@ -1505,8 +1505,8 @@ class TestGetSequence:
     async def test(self, spawn_client, test_otu, test_sequence):
         client = await spawn_client(authorize=True)
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
@@ -1618,8 +1618,8 @@ class TestCreateSequence:
     async def test_exists(self, spawn_client, test_otu, test_sequence, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", {
             "id": "KX269872",
@@ -1679,8 +1679,8 @@ class TestEditSequence:
     async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         data = {
             "host": "Grapevine",
@@ -1780,8 +1780,8 @@ class TestEditSequence:
     async def test_not_found(self, foobar, spawn_client, test_otu, test_sequence, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         url = "/api/otus/{}/isolates/{}/sequences/{}".format(
             "foobar" if foobar == "otu_id" else "6116cba1",

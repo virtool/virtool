@@ -10,37 +10,6 @@ import virtool.app_dispatcher
 import virtool.jobs.manager
 
 
-@pytest.mark.parametrize("override", [True, False])
-async def test_init_db(override, loop, tmpdir, test_db_name):
-    """
-    Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
-    """
-    app = web.Application(loop=loop)
-
-    tmpdir.mkdir("samples")
-
-    app["settings"] = {
-        "db_name": test_db_name,
-        "data_path": str(tmpdir)
-    }
-
-    expected_db_name = test_db_name
-
-    if override:
-        expected_db_name = "test"
-        app["db_name"] = "test"
-
-    await virtool.app.init_db(app)
-
-    assert app["db_name"] == expected_db_name
-    assert app["db"].name == expected_db_name
-    assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
-
-    client = motor.motor_asyncio.AsyncIOMotorClient()
-
-    await client.drop_database(expected_db_name)
-
-
 async def test_init_executors(loop):
     """
     Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.

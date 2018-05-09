@@ -58,6 +58,7 @@ class Collection:
         self.drop_indexes = self._collection.drop_indexes
         self.find_one = self._collection.find_one
         self.find = self._collection.find
+        self.insert_many = self._collection.insert_many
         self.rename = self._collection.rename
 
     async def delete_many(self, query, silent=False):
@@ -88,6 +89,9 @@ class Collection:
             return_document=pymongo.ReturnDocument.AFTER
         )
 
+        if document is None:
+            return None
+
         if not silent and not self.silent:
             await self.dispatch(self.name, "update", self.processor(document))
 
@@ -97,6 +101,8 @@ class Collection:
         return document
 
     async def insert_one(self, document, silent=False):
+        print(document)
+
         generate_id = "_id" not in document
 
         if generate_id:
@@ -113,6 +119,18 @@ class Collection:
 
         if not silent and not self.silent:
             await self.dispatch(self.name, "insert", self.processor(document))
+
+        return document
+
+    async def replace_one(self, query, replacement, upsert=False):
+        document = await self._collection.find_one_and_replace(
+            query,
+            replacement,
+            upsert=upsert
+        )
+
+        if not self.silent:
+            await self.dispatch(self.name, "update", self.processor(replacement))
 
         return document
 

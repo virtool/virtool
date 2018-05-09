@@ -74,7 +74,7 @@ async def install(req):
 
     document = await virtool.db.hmm.find_and_ensure_install(req.app["db"], reset=True)
 
-    asyncio.ensure_future(virtool.hmm.install_official(
+    asyncio.ensure_future(virtool.db.hmm.install_official(
         req.app.loop,
         db,
         req.app["settings"],

@@ -27,6 +27,9 @@ def apply_projection(document, projection):
     if projection == {"_id": False}:
         return {key: document[key] for key in document if key != "_id"}
 
+    if all(value is False for value in projection.values()):
+        return {key: document[key] for key in document if key not in projection}
+
     if "_id" not in projection:
         projection["_id"] = True
 

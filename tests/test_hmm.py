@@ -8,6 +8,7 @@ import sys
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_coro
 
+import virtool.db.hmm
 import virtool.hmm
 
 TEST_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files")
@@ -56,18 +57,6 @@ def mock_gh_server(monkeypatch, loop, test_server):
     monkeypatch.setattr("virtool.hmm.LATEST_RELEASE_URL", "http://{}:{}/latest".format(server.host, server.port))
 
     return server
-
-
-@pytest.mark.parametrize("step", [False, None, "decompress_profiles"])
-async def test_update_process(step, mocker):
-    m = mocker.patch("virtool.utils.update_status_process", new=make_mocked_coro())
-
-    if step is False:
-        await virtool.hmm.update_process("db", 0.65)
-    else:
-        await virtool.hmm.update_process("db", 0.65, step=step)
-
-    assert m.call_args[0] == ("db", "hmm_install", 0.65, step or None)
 
 
 async def test_get_assets(mocker):
@@ -121,10 +110,10 @@ async def test_install_official(loop, mocker, tmpdir, test_motor):
     m_update_process = make_mocked_coro()
 
     mocker.patch("virtool.hmm.get_asset", new=m_get_assets)
-    mocker.patch("virtool.hmm.update_process", new=m_update_process)
+    mocker.patch("virtool.db.processes.update", new=m_update_process)
     mocker.patch("virtool.github.download_asset", new=download_asset)
 
-    await virtool.hmm.install_official(
+    await virtool.db.hmm.install_official(
         loop,
         test_motor,
         settings,
@@ -138,11 +127,9 @@ async def test_insert_annotations(test_motor, test_random_alphanumeric):
     with gzip.open(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), "rt") as f:
         annotations = json.load(f)
 
-    await virtool.hmm.insert_annotations(test_motor, annotations)
+    await virtool.db.hmm.insert_annotations(test_motor, annotations)
 
-    expected_ids = {"9pfsom1b", "g5cpjjvk", "kfvw9vd2", "u3cuwaoq", "v4xryery", "xjqvxigh", "yglirxr7"}
-
-    assert set(await test_motor.hmm.distinct("_id")) == expected_ids
+    assert set(await test_motor.hmm.distinct("_id")) == set(test_random_alphanumeric.history)
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
