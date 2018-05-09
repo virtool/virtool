@@ -126,11 +126,12 @@ export default class ReadSelector extends React.PureComponent {
                             </FormGroup>
                         </div>
 
-                        <div className="panel panel-default">
-                            <div className="list-group">
+                        <div style={{maxHeight: "400px", overflowY: "auto"}}>
+                            <div className="list-group" style={{border: "none", marginBottom: 0}}>
                                 {fileComponents}
                             </div>
                         </div>
+
                         {errorMessage}
                     </Panel.Body>
                 </Panel>

@@ -43,6 +43,7 @@ export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
 export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
+export const FIND_READ_FILES = createRequestActionType("FIND_READ_FILES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const REFRESH_SAMPLE = createRequestActionType("REFRESH_SAMPLE");

@@ -7,6 +7,7 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     FIND_ANALYSES,
+    FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_ANALYSIS,
     ANALYZE,
@@ -20,6 +21,7 @@ export const initialState = {
     detail: null,
     analyses: null,
     analysisDetail: null,
+    readFiles: null,
     getAnalysisProgress: 0,
     showEdit: false,
     showRemove: false,
@@ -53,6 +55,9 @@ export default function samplesReducer (state = initialState, action) {
 
         case FIND_SAMPLES.SUCCEEDED:
             return {...state, ...action.data};
+
+        case FIND_READ_FILES.SUCCEEDED:
+            return {...state, readFiles: action.data.documents};
 
         case FIND_READY_HOSTS.SUCCEEDED:
             return {...state, readyHosts: action.data.documents};

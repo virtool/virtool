@@ -4,6 +4,7 @@ import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as samplesAPI from "./api";
+import * as filesAPI from "../files/api";
 import { getAnalysisProgress } from "./actions";
 import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
@@ -11,6 +12,7 @@ import {
     WS_REMOVE_SAMPLE,
     WS_UPDATE_ANALYSIS,
     FIND_SAMPLES,
+    FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
     REFRESH_SAMPLE,
@@ -31,6 +33,7 @@ export function* watchSamples () {
     yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
+    yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
@@ -54,6 +57,14 @@ export function* wsUpdateAnalysis (action) {
 
 export function* findSamples (action) {
     yield apiFind("/samples", samplesAPI.find, action, FIND_SAMPLES);
+}
+
+export function* findReadFiles () {
+    yield apiCall(filesAPI.find, {
+        fileType: "reads",
+        page: 1,
+        perPage: 500
+    }, FIND_READ_FILES);
 }
 
 export function* findReadyHosts () {
