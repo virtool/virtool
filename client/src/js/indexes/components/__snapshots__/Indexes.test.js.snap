@@ -5,11 +5,11 @@ exports[`<Indexes /> renders correctly 1`] = `
   <Route
     component={[Function]}
     exact={true}
-    path="/otus/indexes"
+    path="/refs/:refId/indexes"
   />
   <Route
     component={[Function]}
-    path="/otus/indexes/:indexVersion"
+    path="/refs/:refId/indexes/:indexVersion"
   />
 </Switch>
 `;
