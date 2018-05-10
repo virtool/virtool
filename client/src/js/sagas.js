@@ -10,6 +10,7 @@ import { watchGroups } from "./groups/sagas";
 import { watchHmms } from "./hmm/sagas";
 import { watchIndexes } from "./indexes/sagas";
 import { watchJobs } from "./jobs/sagas";
+import { watchOTUs } from "./otus/sagas";
 import { watchProcesses } from "./processes/sagas";
 import { watchSamples } from "./samples/sagas";
 import { watchSettings } from "./settings/sagas";
@@ -32,6 +33,7 @@ function* rootSaga () {
         watchHmms(),
         watchIndexes(),
         watchJobs(),
+        watchOTUs(),
         watchProcesses(),
         watchSamples(),
         watchSettings(),

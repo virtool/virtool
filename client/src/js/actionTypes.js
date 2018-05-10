@@ -75,7 +75,7 @@ export const GET_PROCESS = createRequestActionType("GET_PROCESS");
 // OTU
 export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
 export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
-export const FETCH_OTUS = "FETCH_OTUS";
+export const FETCH_OTUS = createRequestActionType("FETCH_OTUS");
 export const FIND_OTUS = createRequestActionType("FIND_OTUS");
 export const GET_OTU = createRequestActionType("GET_OTU");
 export const CREATE_OTU = createRequestActionType("CREATE_OTU");

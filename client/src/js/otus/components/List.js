@@ -68,7 +68,7 @@ const OTUsList = (props) => {
                     <Icon name="info" />
                     <FlexItem pad={5}>
                         <span>The OTU database has changed. </span>
-                        <Link to="/otus/indexes">Rebuild the index</Link>
+                        <Link to={`/refs/${props.refId}/indexes`}>Rebuild the index</Link>
                         <span> to use the changes in further analyses.</span>
                     </FlexItem>
                 </Flex>
@@ -108,9 +108,11 @@ const OTUsList = (props) => {
     );
 };
 
+
 const mapStateToProps = state => ({
     ...state.otus,
-    account: state.account
+    account: state.account,
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({

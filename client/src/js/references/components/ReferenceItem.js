@@ -41,7 +41,7 @@ const ReferenceItem = (props) => {
 
     let progress = 0;
 
-    if (props.processes.length) {
+    if (props.process && props.processes.length) {
         progress = find(props.processes, ["id", props.process.id]).progress;
         progress *= 100;
     }
@@ -56,7 +56,12 @@ const ReferenceItem = (props) => {
 
             <ReferenceMetadata {...props} />
             <ListGroup>
-                <ProgressBar bsStyle={progress === 100 ? "success" : "warning"} now={progress} style={barStyle} affixed />
+                <ProgressBar
+                    bsStyle={progress === 100 ? "success" : "warning"}
+                    now={progress}
+                    style={barStyle}
+                    affixed
+                />
             </ListGroup>
         </Panel>
     );
