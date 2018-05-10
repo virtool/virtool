@@ -7,7 +7,8 @@ import {
     CREATE_REFERENCE,
     GET_REFERENCE,
     LIST_REFERENCES,
-    REMOVE_REFERENCE
+    REMOVE_REFERENCE,
+    EDIT_REFERENCE
 } from "../actionTypes";
 
 export function* listReferences (action) {
@@ -23,6 +24,14 @@ export function* createReference (action) {
     yield put({type: LIST_REFERENCES.REQUESTED});
 }
 
+export function* editReference (action) {
+    yield apiCall(referenceAPI.edit, action, EDIT_REFERENCE);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.referenceId
+    });
+}
+
 export function* removeReference (action) {
     yield setPending(apiCall(referenceAPI.remove, action, REMOVE_REFERENCE));
     yield put(push("/refs"));
@@ -30,6 +39,7 @@ export function* removeReference (action) {
 
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
+    yield takeEvery(EDIT_REFERENCE.REQUESTED, editReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
     yield throttle(300, LOCATION_CHANGE, listReferences);
     yield takeEvery(REMOVE_REFERENCE.REQUESTED, removeReference);

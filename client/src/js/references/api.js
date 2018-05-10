@@ -20,6 +20,11 @@ export const create = ({ name, description, dataType, organism, isPublic }) => (
         })
 );
 
+export const edit = ({ referenceId, update }) => (
+    Request.patch(`/api/refs/${referenceId}`)
+        .send(update)
+);
+
 export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );

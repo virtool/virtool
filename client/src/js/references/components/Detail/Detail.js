@@ -2,23 +2,22 @@ import React from "react";
 import { connect } from "react-redux";
 import Helmet from "react-helmet";
 import { Switch, Route, Redirect } from "react-router-dom";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder } from "../../../base";
+import { LoadingPlaceholder, Icon } from "../../../base";
 
+import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceOTUList from "../../../otus/components/List";
 import ReferenceIndex from "./Index";
-
-const ReferenceSettings = () => (
-    <div>Settings</div>
-);
+import ReferenceSettings from "./Settings";
 
 class ReferenceDetail extends React.Component {
 
     componentDidMount () {
-        this.props.getReference(this.props.match.params.refId);
+        this.props.onGetReference(this.props.match.params.refId);
     }
 
     render = () => {
@@ -36,6 +35,12 @@ class ReferenceDetail extends React.Component {
                 </Helmet>
                 <h3 className="view-header">
                     <strong>{name}</strong>
+                    <Icon
+                        bsStyle="warning"
+                        name="pencil-alt"
+                        onClick={this.props.onEdit}
+                        pullRight
+                    />
                 </h3>
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
@@ -59,6 +64,8 @@ class ReferenceDetail extends React.Component {
                     <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
                     <Route path="/refs/:refId/settings" component={ReferenceSettings} />
                 </Switch>
+
+                <EditReference />
             </div>
         );
     };
@@ -70,8 +77,12 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    getReference: (refId) => {
+    onGetReference: (refId) => {
         dispatch(getReference(refId));
+    },
+
+    onEdit: () => {
+        dispatch(push({...window.location, state: {editReference: true}}));
     }
 
 });
