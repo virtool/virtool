@@ -1,4 +1,5 @@
 import React from "react";
+import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Switch, Redirect, Route } from "react-router-dom";
@@ -19,6 +20,9 @@ class Account extends React.Component {
 
         return (
             <div className="container-noside">
+                <Helmet>
+                    <title>Account</title>
+                </Helmet>
                 <h3 className="view-header">
                     <strong>Account</strong>
                 </h3>
