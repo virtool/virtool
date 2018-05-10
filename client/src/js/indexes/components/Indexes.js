@@ -6,8 +6,8 @@ import IndexDetail from "./Detail";
 
 const Indexes = () => (
     <Switch>
-        <Route path="/otus/indexes" component={IndexesList} exact />
-        <Route path="/otus/indexes/:indexVersion" component={IndexDetail} />
+        <Route path="/refs/:refId/indexes" component={IndexesList} exact />
+        <Route path="/refs/:refId/indexes/:indexVersion" component={IndexDetail} />
     </Switch>
 );
 
