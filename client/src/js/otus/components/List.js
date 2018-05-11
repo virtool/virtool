@@ -1,12 +1,12 @@
 import React from "react";
-import { map } from "lodash-es";
+import { map, find } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Row, Col, ListGroup } from "react-bootstrap";
+import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import OTUImport from "./Import";
@@ -76,6 +76,16 @@ const OTUsList = (props) => {
         );
     }
 
+    if (find(props.processes, { id: props.process.id }).progress < 1) {
+        return (
+            <Panel>
+                <Panel.Body>
+                    <LoadingPlaceholder message="Import in progress" margin="1.2rem" />
+                </Panel.Body>
+            </Panel>
+        );
+    }
+
     return (
         <div>
             <ViewHeader
@@ -112,7 +122,9 @@ const OTUsList = (props) => {
 const mapStateToProps = state => ({
     ...state.otus,
     account: state.account,
-    refId: state.references.detail.id
+    refId: state.references.detail.id,
+    process: state.references.detail.process,
+    processes: state.processes.documents
 });
 
 const mapDispatchToProps = (dispatch) => ({
