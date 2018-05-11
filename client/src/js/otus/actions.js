@@ -1,6 +1,5 @@
 import { simpleActionCreator } from "../utils";
 import {
-    FETCH_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
     CREATE_OTU,
@@ -27,14 +26,6 @@ import {
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL
 } from "../actionTypes";
-
-/**
- * Returns action for retrieving all available OTUs.
- *
- * @func
- * @returns {object}
- */
-export const fetchOTUs = simpleActionCreator(FETCH_OTUS);
 
 /**
  * Returns action that can trigger an API call for retrieving a specific OTU.
