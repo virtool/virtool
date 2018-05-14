@@ -1,7 +1,7 @@
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as settingsAPI from "./api";
-import * as otusAPI from "../references/api";
+import * as otusAPI from "../otus/api";
 import { apiCall, setPending, putGenericError } from "../sagaUtils";
 import {GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY} from "../actionTypes";
 

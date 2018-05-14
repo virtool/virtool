@@ -8,9 +8,10 @@ export const listNames = () => (
     Request.get("/api/otus?names=true")
 );
 
-export const get = ({ otuId }) => (
-    Request.get(`/api/otus/${otuId}`)
-);
+export const get = ({ otuId }) => {
+    console.log(window.location);
+    return Request.get(`/api/otus/${otuId}`)
+};
 
 export const getHistory = ({ otuId }) => (
     Request.get(`/api/otus/${otuId}/history`)

@@ -6,7 +6,6 @@ import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
 import { LoadingPlaceholder } from "../../base";
 import SourceTypes from "../../settings/components/General/SourceTypes";
-import InternalControl from "../../settings/components/General/InternalControl";
 
 const ReferenceSettings = () => (
     <div>
@@ -16,7 +15,6 @@ const ReferenceSettings = () => (
             </strong>
         </h3>
         <SourceTypes />
-        <InternalControl />
     </div>
 );
 

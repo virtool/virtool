@@ -87,7 +87,7 @@ class ReferenceManage extends React.Component {
                         </tr>
                         <tr>
                             <th>Internal Control</th>
-                            <td>{internal_control}</td>
+                            <td>{internal_control ? internal_control.name : null}</td>
                         </tr>
                         <tr>
                             <th>Public</th>

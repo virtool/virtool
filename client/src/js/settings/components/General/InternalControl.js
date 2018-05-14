@@ -2,18 +2,15 @@ import React from "react";
 import { connect } from "react-redux";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem, Checkbox } from "../../../base";
+import { Flex, FlexItem } from "../../../base";
 import { updateSetting, getControlReadahead } from "../../actions";
+import { editReference } from "../../../references/actions";
 
 class InternalControl extends React.Component {
 
     render () {
 
-        const useInternalControl = this.props.settings.use_internal_control;
-
-        const internalControlId = this.props.settings.internal_control_id;
-
-        const selected = internalControlId.id ? [internalControlId] : [];
+        const selected = this.props.internalControlId ? [this.props.internalControlId] : [];
 
         return (
             <div>
@@ -23,13 +20,6 @@ class InternalControl extends React.Component {
                             <FlexItem grow={1} >
                                 <strong>Internal Control</strong>
                             </FlexItem>
-                            <FlexItem grow={0} shrink={0}>
-                                <Checkbox
-                                    label="Enable"
-                                    checked={useInternalControl}
-                                    onClick={() => this.props.onToggle(!useInternalControl)}
-                                />
-                            </FlexItem>
                         </Flex>
                     </Col>
                     <Col smHidden md={6} />
@@ -38,7 +28,7 @@ class InternalControl extends React.Component {
                     <Col xs={12} mdPush={6} md={6}>
                         <Panel>
                             <Panel.Body>
-                                Set a OTU that is spiked into samples to be used as a positive control.
+                                Set an OTU that is spiked into samples to be used as a positive control.
                                 Viral abundances in a sample can be calculated as proportions relative to the control.
                             </Panel.Body>
                         </Panel>
@@ -51,10 +41,11 @@ class InternalControl extends React.Component {
                                     allowNew={false}
                                     isLoading={this.props.readaheadPending}
                                     onSearch={this.props.onGetReadahead}
-                                    onChange={this.props.onUpdate}
+                                    onChange={this.props.onUpdate.bind(this, this.props.refId)}
                                     selected={selected}
                                     options={this.props.readahead || []}
                                     renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
+                                    refId={this.props.refId}
                                 />
                             </Panel.Body>
                         </Panel>
@@ -68,7 +59,9 @@ class InternalControl extends React.Component {
 const mapStateToProps = (state) => ({
     settings: state.settings.data,
     readahead: state.settings.readahead,
-    readaheadPending: state.settings.readaheadPending
+    readaheadPending: state.settings.readaheadPending,
+    internalControlId: state.references.detail.internal_control ? state.references.detail.internal_control : null,
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -77,8 +70,9 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(getControlReadahead(term));
     },
 
-    onUpdate: (selected) => {
-        dispatch(updateSetting("internal_control_id", selected.length ? selected[0].id : ""));
+    onUpdate: (refId, selected) => {
+        const update = { internal_control: selected.length ? selected[0].id : ""};
+        dispatch(editReference(refId, update));
     },
 
     onToggle: (value) => {

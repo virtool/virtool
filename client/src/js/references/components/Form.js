@@ -18,6 +18,31 @@ export default class ReferenceForm extends React.Component {
             </option>
         );
 
+        let extraComponent;
+
+        if (this.props.state.errorFileNumber != null) {
+            extraComponent = (
+                <Col xs={6}>
+                    <div className="input-form-error">
+                        <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
+                            {this.props.state.errorFileNumber}
+                        </span>
+                    </div>
+                </Col>
+            );
+        } else if (this.props.state.internalControl != null) {
+            extraComponent = (
+                <Col xs={12} md={6}>
+                    <InputError
+                        label="Internal Control"
+                        name="internalControl"
+                        value={this.props.state.internalControl}
+                        onChange={this.props.onChange}
+                    />
+                </Col>
+            );
+        }
+
         return (
             <div>
                 <Row>
@@ -75,13 +100,7 @@ export default class ReferenceForm extends React.Component {
                             onClick={this.props.toggle}
                         />
                     </Col>
-                    <Col xs={6}>
-                        <div className="input-form-error">
-                            <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
-                                {this.props.state.errorFileNumber}
-                            </span>
-                        </div>
-                    </Col>
+                    {extraComponent}
                 </Row>
             </div>
         );
