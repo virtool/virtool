@@ -3,6 +3,7 @@ import {
     LIST_REFERENCES,
     GET_REFERENCE,
     CREATE_REFERENCE,
+    EDIT_REFERENCE,
     REMOVE_REFERENCE,
     IMPORT_REFERENCE
 } from "../actionTypes";
@@ -21,6 +22,12 @@ export const createReference = (name, description, dataType, organism, isPublic)
     dataType,
     organism,
     isPublic
+});
+
+export const editReference = (referenceId, update) => ({
+    type: EDIT_REFERENCE.REQUESTED,
+    referenceId,
+    update
 });
 
 export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
