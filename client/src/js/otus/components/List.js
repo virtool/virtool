@@ -76,7 +76,9 @@ const OTUsList = (props) => {
         );
     }
 
-    if (find(props.processes, { id: props.process.id }).progress < 1) {
+    const importProgress = props.process ? find(props.processes, { id: props.process.id }).progress : 1;
+
+    if (importProgress < 1) {
         return (
             <Panel>
                 <Panel.Body>
@@ -89,11 +91,9 @@ const OTUsList = (props) => {
     return (
         <div>
             <ViewHeader
-                title="OTUs"
                 page={props.page}
                 count={OTUCount}
                 foundCount={props.found_count}
-                totalCount={props.total_count}
             />
 
             {alert}

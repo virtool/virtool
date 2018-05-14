@@ -4,8 +4,8 @@ export const find = () => (
     Request.get(`/api${window.location.pathname}${window.location.search}`)
 );
 
-export const listNames = () => (
-    Request.get("/api/otus?names=true")
+export const listNames = ({ refId }) => (
+    Request.get(`/api/refs/${refId}/otus?names=true`)
 );
 
 export const get = ({ otuId }) => (

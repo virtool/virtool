@@ -24,10 +24,12 @@ describe("Settings Action Creators:", () => {
     });
 
     it("getControlReadahead: returns action to get search term matches", () => {
+        const refId = "abcdEF6"
         const term = "searchterm";
-        const result = getControlReadahead(term);
+        const result = getControlReadahead(refId, term);
         const expected = {
             type: "GET_CONTROL_READAHEAD_REQUESTED",
+            refId,
             term
         };
 

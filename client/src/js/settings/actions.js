@@ -21,8 +21,9 @@ export const getSettings = simpleActionCreator(GET_SETTINGS.REQUESTED);
  * @param term {string} user input search term
  * @returns {object}
  */
-export const getControlReadahead = (term) => ({
+export const getControlReadahead = (refId, term) => ({
     type: GET_CONTROL_READAHEAD.REQUESTED,
+    refId,
     term
 });
 

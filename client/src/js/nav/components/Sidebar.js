@@ -44,7 +44,6 @@ const Sidebar = (props) => {
             return (
                 <Nav className="sidebar">
                     <SidebarItem title="Browse" link="/refs" icon="th-list" />
-                    <SidebarItem title="Indexes" link="/refs/indexes" icon="tags" />
                     <SidebarItem title="Settings" link="/refs/settings" icon="cogs" />
                 </Nav>
             );
