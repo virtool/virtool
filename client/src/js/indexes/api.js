@@ -1,7 +1,7 @@
 import Request from "superagent";
 
 export const find = () => (
-    Request.get("/api/indexes")
+    Request.get(`/api${window.location.pathname}`)
 );
 
 export const get = ({ indexVersion }) => (

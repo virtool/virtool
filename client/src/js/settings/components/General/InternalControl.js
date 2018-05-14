@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
 import { Flex, FlexItem } from "../../../base";
-import { updateSetting, getControlReadahead } from "../../actions";
+import { getControlReadahead } from "../../actions";
 import { editReference } from "../../../references/actions";
 
 class InternalControl extends React.Component {
@@ -40,7 +40,7 @@ class InternalControl extends React.Component {
                                     labelKey="name"
                                     allowNew={false}
                                     isLoading={this.props.readaheadPending}
-                                    onSearch={this.props.onGetReadahead}
+                                    onSearch={this.props.onGetReadahead.bind(this, this.props.refId)}
                                     onChange={this.props.onUpdate.bind(this, this.props.refId)}
                                     selected={selected}
                                     options={this.props.readahead || []}
@@ -66,17 +66,13 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGetReadahead: (term) => {
-        dispatch(getControlReadahead(term));
+    onGetReadahead: (refId, term) => {
+        dispatch(getControlReadahead(refId, term));
     },
 
     onUpdate: (refId, selected) => {
         const update = { internal_control: selected.length ? selected[0].id : ""};
         dispatch(editReference(refId, update));
-    },
-
-    onToggle: (value) => {
-        dispatch(updateSetting("use_internal_control", value));
     }
 
 });

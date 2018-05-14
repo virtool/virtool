@@ -21,6 +21,8 @@ class IndexesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
+        console.log(this.props);
+
         let content;
 
         if (this.props.total_otu_count) {
@@ -45,19 +47,15 @@ class IndexesList extends React.Component {
             let alert;
 
             if (this.props.modified_otu_count) {
-                let button;
-
-                if (this.props.canRebuild) {
-                    button = (
-                        <FlexItem pad={20}>
-                            <LinkContainer to={{state: {rebuild: true}}}>
-                                <Button bsStyle="warning" icon="hammer" pullRight>
-                                    Rebuild
-                                </Button>
-                            </LinkContainer>
-                        </FlexItem>
-                    );
-                }
+                const button = (
+                    <FlexItem pad={20}>
+                        <LinkContainer to={{state: {rebuild: true}}}>
+                            <Button bsStyle="warning" icon="hammer" pullRight>
+                                Rebuild
+                            </Button>
+                        </LinkContainer>
+                    </FlexItem>
+                );
 
                 alert = (
                     <Alert bsStyle="warning">
@@ -99,11 +97,9 @@ class IndexesList extends React.Component {
         return (
             <div>
                 <ViewHeader
-                    title="OTU Indexes"
                     page={this.props.page}
                     count={this.props.documents.length}
                     foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
                 />
 
                 {content}
@@ -113,8 +109,7 @@ class IndexesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    ...state.indexes,
-    canRebuild: state.account.permissions.rebuild_index
+    ...state.indexes
 });
 
 const mapDispatchToProps = (dispatch) => ({
