@@ -1,19 +1,19 @@
 import Request from "superagent";
 
 export const find = () => (
-    Request.get(`/api/otu${window.location.search}`)
+    Request.get(`/api${window.location.pathname}${window.location.search}`)
 );
 
 export const listNames = () => (
-    Request.get("/api/otu?names=true")
+    Request.get("/api/otus?names=true")
 );
 
 export const get = ({ otuId }) => (
-    Request.get(`/api/otu/${otuId}`)
+    Request.get(`/api/otus/${otuId}`)
 );
 
 export const getHistory = ({ otuId }) => (
-    Request.get(`/api/otu/${otuId}/history`)
+    Request.get(`/api/otus/${otuId}/history`)
 );
 
 export const getGenbank = (accession) => (
@@ -21,7 +21,7 @@ export const getGenbank = (accession) => (
 );
 
 export const create = ({ name, abbreviation }) => (
-    Request.post("/api/otu")
+    Request.post("/api/otus")
         .send({
             name,
             abbreviation
@@ -29,7 +29,7 @@ export const create = ({ name, abbreviation }) => (
 );
 
 export const edit = ({ otuId, name, abbreviation, schema }) => (
-    Request.patch(`/api/otu/${otuId}`)
+    Request.patch(`/api/otus/${otuId}`)
         .send({
             name,
             abbreviation,
@@ -38,11 +38,11 @@ export const edit = ({ otuId, name, abbreviation, schema }) => (
 );
 
 export const remove = ({ otuId }) => (
-    Request.delete(`/api/otu/${otuId}`)
+    Request.delete(`/api/otus/${otuId}`)
 );
 
 export const addIsolate = ({ otuId, sourceType, sourceName }) => (
-    Request.post(`/api/otu/${otuId}/isolates`)
+    Request.post(`/api/otus/${otuId}/isolates`)
         .send({
             source_type: sourceType,
             source_name: sourceName
@@ -50,7 +50,7 @@ export const addIsolate = ({ otuId, sourceType, sourceName }) => (
 );
 
 export const editIsolate = ({ otuId, isolateId, sourceType, sourceName }) => (
-    Request.patch(`/api/otu/${otuId}/isolates/${isolateId}`)
+    Request.patch(`/api/otus/${otuId}/isolates/${isolateId}`)
         .send({
             source_type: sourceType,
             source_name: sourceName
@@ -58,15 +58,15 @@ export const editIsolate = ({ otuId, isolateId, sourceType, sourceName }) => (
 );
 
 export const setIsolateAsDefault = ({ otuId, isolateId }) => (
-    Request.put(`/api/otu/${otuId}/isolates/${isolateId}/default`)
+    Request.put(`/api/otus/${otuId}/isolates/${isolateId}/default`)
 );
 
 export const removeIsolate = ({ otuId, isolateId }) => (
-    Request.delete(`/api/otu/${otuId}/isolates/${isolateId}`)
+    Request.delete(`/api/otus/${otuId}/isolates/${isolateId}`)
 );
 
 export const addSequence = ({ otuId, isolateId, sequenceId, definition, host, sequence, segment }) => (
-    Request.post(`/api/otu/${otuId}/isolates/${isolateId}/sequences`)
+    Request.post(`/api/otus/${otuId}/isolates/${isolateId}/sequences`)
         .send({
             id: sequenceId,
             definition,
@@ -77,7 +77,7 @@ export const addSequence = ({ otuId, isolateId, sequenceId, definition, host, se
 );
 
 export const editSequence = ({ otuId, isolateId, sequenceId, definition, host, sequence, segment }) => (
-    Request.patch(`/api/otu/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
+    Request.patch(`/api/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
         .send({
             definition,
             host,
@@ -87,7 +87,7 @@ export const editSequence = ({ otuId, isolateId, sequenceId, definition, host, s
 );
 
 export const removeSequence = ({ otuId, isolateId, sequenceId }) => (
-    Request.delete(`/api/otu/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
+    Request.delete(`/api/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
 );
 
 export const revert = ({ otuId, version }) => (
@@ -95,11 +95,11 @@ export const revert = ({ otuId, version }) => (
 );
 
 export const getImport = ({ fileId }) => (
-    Request.get("/api/otu/import")
+    Request.get("/api/otus/import")
         .query({file_id: fileId})
 );
 
 export const commitImport = ({ fileId }) => (
-    Request.post("/api/otu/import")
+    Request.post("/api/otus/import")
         .send({file_id: fileId})
 );

@@ -69,8 +69,9 @@ export default function fileReducer (state = initialState, action) {
 
         case UPLOAD.REQUESTED: {
             const { name, size, type } = action.file;
+            const fileType = action.fileType;
             const newState = {...state,
-                uploads: state.uploads.concat([{localId: action.localId, progress: 0, name, size, type}]),
+                uploads: state.uploads.concat([{localId: action.localId, progress: 0, name, size, type, fileType}]),
                 showUploadOverlay: true
             };
 

@@ -3,7 +3,8 @@ import {
     LIST_REFERENCES,
     GET_REFERENCE,
     CREATE_REFERENCE,
-    REMOVE_REFERENCE
+    REMOVE_REFERENCE,
+    IMPORT_REFERENCE
 } from "../actionTypes";
 
 export const listReferences = simpleActionCreator(LIST_REFERENCES);
@@ -20,6 +21,16 @@ export const createReference = (name, description, dataType, organism, isPublic)
     dataType,
     organism,
     isPublic
+});
+
+export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
+    type: IMPORT_REFERENCE.REQUESTED,
+    name,
+    description,
+    dataType,
+    organism,
+    isPublic,
+    fileId
 });
 
 export const removeReference = (refId) => ({

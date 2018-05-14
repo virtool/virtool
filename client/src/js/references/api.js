@@ -20,6 +20,18 @@ export const create = ({ name, description, dataType, organism, isPublic }) => (
         })
 );
 
+export const importReference = ({ name, description, dataType, organism, isPublic, fileId }) => (
+    Request.post("/api/refs")
+        .send({
+            name,
+            description,
+            data_type: dataType,
+            organism,
+            public: isPublic,
+            import_from: fileId
+        })
+);
+
 export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );

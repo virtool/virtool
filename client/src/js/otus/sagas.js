@@ -36,12 +36,12 @@ export function* updateAndGetOTU (apiMethod, action, actionType) {
     })(action));
 }
 
-export function* fetchOTUs () {
-    yield apiCall(otusAPI.find, {}, FIND_OTUS);
+export function* fetchOTUs (action) {
+    yield apiCall(otusAPI.find, action, FETCH_OTUS);
 }
 
 export function* findOTUs (action) {
-    yield apiFind("/otus", otusAPI.find, action, FIND_OTUS);
+    yield apiFind("/refs/:refid/otus", otusAPI.find, action, FIND_OTUS);
 }
 
 export function* getOTU (action) {
@@ -134,7 +134,7 @@ export function* commitImport (action) {
 
 export function* watchOTUs () {
     yield throttle(300, LOCATION_CHANGE, findOTUs);
-    yield takeLatest(FETCH_OTUS, fetchOTUs);
+    yield takeLatest(FETCH_OTUS.REQUESTED, fetchOTUs);
     yield takeLatest(GET_OTU.REQUESTED, getOTU);
     yield takeLatest(GET_OTU_HISTORY.REQUESTED, getOTUHistory);
     yield takeEvery(CREATE_OTU.REQUESTED, createOTU);

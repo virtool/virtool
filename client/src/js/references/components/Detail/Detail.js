@@ -9,7 +9,7 @@ import { LoadingPlaceholder } from "../../../base";
 
 import ReferenceManage from "./Manage";
 import ReferenceOTUList from "../../../otus/components/List";
-import ReferenceIndex from "./Index";
+import ReferenceIndex from "../../../indexes/components/Indexes";
 
 const ReferenceSettings = () => (
     <div>Settings</div>

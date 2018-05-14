@@ -1,12 +1,12 @@
 import React from "react";
-import { map } from "lodash-es";
+import { map, find } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Row, Col, ListGroup } from "react-bootstrap";
+import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import OTUImport from "./Import";
@@ -68,11 +68,21 @@ const OTUsList = (props) => {
                     <Icon name="info" />
                     <FlexItem pad={5}>
                         <span>The OTU database has changed. </span>
-                        <Link to="/otus/indexes">Rebuild the index</Link>
+                        <Link to={`/refs/${props.refId}/indexes`}>Rebuild the index</Link>
                         <span> to use the changes in further analyses.</span>
                     </FlexItem>
                 </Flex>
             </Alert>
+        );
+    }
+
+    if (find(props.processes, { id: props.process.id }).progress < 1) {
+        return (
+            <Panel>
+                <Panel.Body>
+                    <LoadingPlaceholder message="Import in progress" margin="1.2rem" />
+                </Panel.Body>
+            </Panel>
         );
     }
 
@@ -108,9 +118,13 @@ const OTUsList = (props) => {
     );
 };
 
+
 const mapStateToProps = state => ({
     ...state.otus,
-    account: state.account
+    account: state.account,
+    refId: state.references.detail.id,
+    process: state.references.detail.process,
+    processes: state.processes.documents
 });
 
 const mapDispatchToProps = (dispatch) => ({
