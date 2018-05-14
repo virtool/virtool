@@ -8,7 +8,7 @@ import {
     GET_REFERENCE,
     LIST_REFERENCES,
     REMOVE_REFERENCE,
-    EDIT_REFERENCE
+    EDIT_REFERENCE,
     IMPORT_REFERENCE
 } from "../actionTypes";
 

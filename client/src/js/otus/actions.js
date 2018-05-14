@@ -45,6 +45,7 @@ export const findOTUs = (refId) => ({
     refId
 });
 
+/**
  * Returns action that can trigger an API call for retrieving a specific OTU.
  *
  * @func

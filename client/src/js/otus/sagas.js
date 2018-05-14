@@ -5,6 +5,7 @@ import * as filesAPI from "../files/api";
 import * as otusAPI from "./api";
 import {apiCall, apiFind, putGenericError, setPending} from "../sagaUtils";
 import {
+    FETCH_OTUS,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,

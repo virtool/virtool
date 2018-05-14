@@ -4,7 +4,7 @@ import {
     GET_REFERENCE,
     CREATE_REFERENCE,
     EDIT_REFERENCE,
-    REMOVE_REFERENCE
+    REMOVE_REFERENCE,
     IMPORT_REFERENCE
 } from "../actionTypes";
 
@@ -28,6 +28,7 @@ export const editReference = (referenceId, update) => ({
     type: EDIT_REFERENCE.REQUESTED,
     referenceId,
     update
+});
 
 export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
     type: IMPORT_REFERENCE.REQUESTED,

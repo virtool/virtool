@@ -14,10 +14,6 @@ import ReferenceOTUList from "../../../otus/components/List";
 import ReferenceSettings from "./Settings";
 import ReferenceIndex from "../../../indexes/components/Indexes";
 
-const ReferenceSettings = () => (
-    <div>Settings</div>
-);
-
 class ReferenceDetail extends React.Component {
 
     componentDidMount () {
