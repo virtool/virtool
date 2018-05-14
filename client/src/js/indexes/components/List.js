@@ -21,8 +21,6 @@ class IndexesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        console.log(this.props);
-
         let content;
 
         if (this.props.total_otu_count) {
