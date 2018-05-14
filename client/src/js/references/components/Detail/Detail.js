@@ -11,8 +11,12 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceOTUList from "../../../otus/components/List";
-import ReferenceIndex from "./Index";
 import ReferenceSettings from "./Settings";
+import ReferenceIndex from "../../../indexes/components/Indexes";
+
+const ReferenceSettings = () => (
+    <div>Settings</div>
+);
 
 class ReferenceDetail extends React.Component {
 

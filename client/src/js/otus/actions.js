@@ -1,5 +1,7 @@
 import { simpleActionCreator } from "../utils";
 import {
+    FETCH_OTUS,
+    FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
     CREATE_OTU,
@@ -28,6 +30,21 @@ import {
 } from "../actionTypes";
 
 /**
+ * Returns action for retrieving all available OTUs.
+ *
+ * @func
+ * @returns {object}
+ */
+export const fetchOTUs = (refId) => ({
+    type: FETCH_OTUS.REQUESTED,
+    refId
+});
+
+export const findOTUs = (refId) => ({
+    type: FIND_OTUS.REQUESTED,
+    refId
+});
+
  * Returns action that can trigger an API call for retrieving a specific OTU.
  *
  * @func

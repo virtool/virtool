@@ -9,6 +9,7 @@ import {
     LIST_REFERENCES,
     REMOVE_REFERENCE,
     EDIT_REFERENCE
+    IMPORT_REFERENCE
 } from "../actionTypes";
 
 export function* listReferences (action) {
@@ -21,7 +22,7 @@ export function* getReference (action) {
 
 export function* createReference (action) {
     yield apiCall(referenceAPI.create, action, CREATE_REFERENCE);
-    yield put({type: LIST_REFERENCES.REQUESTED});
+    yield put(push({state: {createReference: false}}));
 }
 
 export function* editReference (action) {
@@ -37,10 +38,16 @@ export function* removeReference (action) {
     yield put(push("/refs"));
 }
 
+export function* importReference (action) {
+    yield setPending(apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE));
+    yield put(push({state: {importReference: false}}));
+}
+
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeEvery(EDIT_REFERENCE.REQUESTED, editReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
     yield throttle(300, LOCATION_CHANGE, listReferences);
     yield takeEvery(REMOVE_REFERENCE.REQUESTED, removeReference);
+    yield takeLatest(IMPORT_REFERENCE.REQUESTED, importReference);
 }
