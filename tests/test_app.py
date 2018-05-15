@@ -22,6 +22,9 @@ async def test_init_db(override, loop, tmpdir, test_db_name):
 
     app["settings"] = {
         "db_name": test_db_name,
+        "db_host": "localhost",
+        "db_port": 27017,
+        "db_use_auth": False,
         "data_path": str(tmpdir)
     }
 

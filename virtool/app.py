@@ -10,6 +10,7 @@ import subprocess
 
 from aiohttp import web
 from motor import motor_asyncio
+from urllib.parse import quote_plus
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -94,21 +95,49 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
+    settings = app["settings"]
 
-    db_host = app["settings"].get("db_host", "localhost")
-    db_port = app["settings"].get("db_port", 27017)
+    app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
-    client = motor_asyncio.AsyncIOMotorClient(db_host, db_port, serverSelectionTimeoutMS=6000, io_loop=app.loop)
+    db_host = settings.get("db_host", "localhost")
+    db_port = settings.get("db_port", 27017)
+    db_use_auth = settings.get("db_use_auth", False)
 
-    try:
-        await client.database_names()
-    except pymongo.errors.ServerSelectionTimeoutError:
-        raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
+    if db_use_auth:
+        db_username = quote_plus(settings["db_username"])
+        db_password = quote_plus(settings["db_password"])
+
+        string = "mongodb://{}:{}@{}:{}/{}".format(db_username, db_password, db_host, db_port, app["db_name"])
+
+        if settings["db_use_ssl"]:
+            string += "?ssl=true"
+
+        client = motor_asyncio.AsyncIOMotorClient(
+            string,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
         )
 
-    app["db"] = client[app["db_name"]]
+    else:
+        client = motor_asyncio.AsyncIOMotorClient(
+            db_host,
+            db_port,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
+        )
+
+    db = client[app["db_name"]]
+
+    try:
+        await db.list_collection_names()
+    except pymongo.errors.OperationFailure as err:
+        if "Authentication failed" in str(err):
+            logger.critical("MongoDB authentication failed")
+            sys.exit(1)
+
+        raise
+
+    app["db"] = db
 
 
 async def init_check_db(app):
@@ -234,27 +263,14 @@ def init_setup(app):
     virtool.setup.setup_routes(app)
 
     app["setup"] = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
-
-        "first_user_id": None,
-        "first_user_password": None,
-
-        "data_path": None,
-        "watch_path": None,
-
+        **virtool.setup.DB_VALUES,
+        **virtool.setup.FIRST_USER_VALUES,
+        "data_path": "",
+        "watch_path": "",
         "errors": {
-            "db_exists_error": False,
-            "db_connection_error": False,
-            "db_name_error": False,
-            "password_confirmation_error": False,
-            "data_not_empty_error": False,
-            "data_not_found_error": False,
-            "data_permission_error": False,
-            "watch_not_empty_error": False,
-            "watch_not_found_error": False,
-            "watch_permission_error": False
+            **virtool.setup.DATA_ERRORS,
+            **virtool.setup.DB_ERRORS,
+            **virtool.setup.WATCH_ERRORS
         }
     }
 
