@@ -94,12 +94,6 @@ window.store.dispatch(getAccount());
 window.store.dispatch(getSettings());
 window.store.dispatch(listProcesses());
 
-window.addEventListener("beforeunload", () => {
-    if (!window.store.getState().files.uploadsComplete) {
-        return "hello world";
-    }
-});
-
 ReactDOM.render(
     <App store={store} history={history} />,
     document.getElementById("app-container")
