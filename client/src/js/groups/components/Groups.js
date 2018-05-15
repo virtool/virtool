@@ -42,7 +42,7 @@ class Groups extends React.Component {
         };
     }
 
-    componentWillMount () {
+    componentDidMount () {
         if (this.props.groups === null) {
             this.props.onList();
         } else if (this.props.groups.length) {

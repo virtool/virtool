@@ -20,7 +20,7 @@ class NotificationIcon extends React.Component {
         });
     };
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 
