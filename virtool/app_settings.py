@@ -68,8 +68,8 @@ SCHEMA = {
     "db_port": get_default_integer(27017),
     "db_username": {"type": "string", "default": ""},
     "db_password": {"type": "string", "default": ""},
-    "db_string": {"type": "string", "default": ""},
-    "db_ssl": {"type": "string"},
+    "db_use_auth": get_default_boolean(False),
+    "db_use_ssl": get_default_boolean(True),
 
     # HTTP Server
     "server_host": {"type": "string", "default": "localhost"},

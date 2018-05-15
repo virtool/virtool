@@ -10,6 +10,7 @@ import subprocess
 
 from aiohttp import web
 from motor import motor_asyncio
+from urllib.parse import quote_plus
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -100,20 +101,40 @@ async def init_db(app):
 
     db_host = settings["db_host"]
     db_port = settings["db_port"]
-    db_username = settings["db_username"]
-    db_password = settings["db_password"]
 
-    client = motor_asyncio.AsyncIOMotorClient(
-        db_host,
-        db_port,
-        serverSelectionTimeoutMS=6000,
-        io_loop=app.loop,
-        connect=True
-    )
+    if app["settings"]["db_use_auth"]:
+        db_username = quote_plus(settings["db_username"])
+        db_password = quote_plus(settings["db_password"])
+
+        string = "mongodb://{}:{}@{}:{}/{}".format(db_username, db_password, db_host, db_port, app["db_name"])
+
+        if settings["db_use_ssl"]:
+            string += "?ssl=true"
+
+        client = motor_asyncio.AsyncIOMotorClient(
+            string,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
+        )
+
+    else:
+        client = motor_asyncio.AsyncIOMotorClient(
+            db_host,
+            db_port,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
+        )
 
     db = client[app["db_name"]]
 
-    await db.authenticate(db_username, db_password)
+    try:
+        await db.list_collection_names()
+    except pymongo.errors.OperationFailure as err:
+        if "Authentication failed" in str(err):
+            logger.critical("MongoDB authentication failed")
+            sys.exit(1)
+
+        raise
 
     app["db"] = db
 
