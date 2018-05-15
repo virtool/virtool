@@ -99,10 +99,11 @@ async def init_db(app):
 
     app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
-    db_host = settings["db_host"]
-    db_port = settings["db_port"]
+    db_host = settings.get("db_host", "localhost")
+    db_port = settings.get("db_port", 27017)
+    db_use_auth = settings.get("db_use_auth", False)
 
-    if app["settings"]["db_use_auth"]:
+    if db_use_auth:
         db_username = quote_plus(settings["db_username"])
         db_password = quote_plus(settings["db_password"])
 
@@ -264,10 +265,8 @@ def init_setup(app):
     app["setup"] = {
         **virtool.setup.DB_VALUES,
         **virtool.setup.FIRST_USER_VALUES,
-
-        "data_path": None,
-        "watch_path": None,
-
+        "data_path": "",
+        "watch_path": "",
         "errors": {
             **virtool.setup.DATA_ERRORS,
             **virtool.setup.DB_ERRORS,

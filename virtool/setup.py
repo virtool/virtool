@@ -24,7 +24,9 @@ DATA_ERRORS = {
 DB_ERRORS = {
     "db_auth_error": False,
     "db_connection_error": False,
+    "db_host_error": False,
     "db_name_error": False,
+    "db_port_error": False,
     "db_not_empty_error": False
 }
 
@@ -132,8 +134,8 @@ async def setup_db(req):
     if "." in db_name:
         return report_error(req, "db_name_error")
 
-    db_username = data["db_username"] or None
-    db_password = data["db_password"] or None
+    db_username = data["db_username"] or ""
+    db_password = data["db_password"] or ""
     use_auth = bool(db_username or db_password)
     use_ssl = bool(data.get("db_use_ssl", False))
 
@@ -159,7 +161,7 @@ async def setup_db(req):
                 serverSelectionTimeoutMS=1500,
                 io_loop=req.app.loop
             )
-        except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
+        except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
             return report_error(req, "db_connection_error")
 
     else:
@@ -170,9 +172,10 @@ async def setup_db(req):
                 io_loop=req.app.loop,
                 host=db_host,
                 port=db_port,
-                serverSelectionTimeoutMS=1500
+                serverSelectionTimeoutMS=1500,
+                connect=True
             )
-        except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
+        except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
             return report_error(req, "db_connection_error")
 
     db = client[db_name]
@@ -184,6 +187,8 @@ async def setup_db(req):
             return report_error(req, "db_auth_error")
 
         raise
+    except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
+        return report_error(req, "db_connection_error")
 
     for collection_name in collection_names:
         if await db[collection_name].count():
@@ -235,7 +240,7 @@ async def setup_data(req):
 
     data_path = v.document["data_path"]
 
-    req.app["setup"]["data_path"] = None
+    req.app["setup"]["data_path"] = ""
 
     req.app["setup"]["errors"].update(DATA_ERRORS)
 
@@ -280,7 +285,7 @@ async def setup_watch(req):
 
     watch_path = v.document["watch_path"]
 
-    req.app["setup"]["watch_path"] = None
+    req.app["setup"]["watch_path"] = ""
     req.app["setup"]["errors"].update(WATCH_ERRORS)
 
     joined_path = str(watch_path)
@@ -315,21 +320,14 @@ async def setup_watch(req):
 
 async def clear(req):
     req.app["setup"] = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
-
-        "first_user_id": None,
-        "first_user_password": None,
-
-        "data_path": None,
-        "watch_path": None,
-
+        **DB_VALUES,
+        **FIRST_USER_VALUES,
+        "data_path": "",
+        "watch_path": "",
         "errors": {
             **DB_ERRORS,
             **DATA_ERRORS,
-
-
+            **WATCH_ERRORS
         }
     }
 
