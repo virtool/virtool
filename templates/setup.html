@@ -48,7 +48,7 @@
 
         <ul class="nav navbar-nav navbar-right">
             <li>
-                <a target="_blank" href="https://docs.virtool.ca/setup.html">
+                <a target="_blank" href="https://www.virtool.ca/docs/manual/gs_setup/">
                     <i class="i-question"></i>
                 </a>
             </li>
@@ -89,6 +89,29 @@
                     <input type="text" class="form-control" name="db_name" id="db_name" placeholder="virtool" value='${setup["db_name"] or ""}'>
                 </div>
 
+                <div class="form-group">
+                    <label for="db_username">Username</label>
+                    <input type="text" class="form-control" name="db_username" id="db_username" value='${setup["db_username"] or ""}'>
+                </div>
+
+                <div class="form-group">
+                    <label for="db_password">Password</label>
+                    <input type="password" class="form-control" name="db_password" id="db_password" value='${setup["db_password"] or ""}'>
+                </div>
+
+                <div class="checkbox">
+                    <label for="db_use_ssl">
+                        <input id="db_use_ssl" name="db_use_ssl" type="checkbox"> Use SSL
+                    </label>
+                </div>
+
+                %if setup["errors"]["db_auth_error"]:
+                <div class="alert alert-danger">
+                    <i class="i-warning"></i>
+                    <strong> Authentication failed.</strong>
+                </div>
+                %endif
+
                 %if setup["errors"]["db_connection_error"]:
                 <div class="alert alert-danger">
                     <i class="i-warning"></i>
@@ -96,10 +119,10 @@
                 </div>
                 %endif
 
-                %if setup["errors"]["db_exists_error"]:
+                %if setup["errors"]["db_not_empty_error"]:
                 <div class="alert alert-danger">
                     <i class="i-warning"></i>
-                    <strong> The provided database name is already assigned to an existing database.</strong>
+                    <strong> The specified database is not empty.</strong>
                 </div>
                 %endif
 
@@ -144,18 +167,6 @@
                     <label for="password">Password</label>
                     <input type="password" class="form-control" name="password" id="password" value='${setup["first_user_password"] or ""}'>
                 </div>
-
-                <div class="form-group">
-                    <label for="password_confirm">Confirm Password</label>
-                    <input type="password" class="form-control" name="password_confirm" id="password_confirm" value='${setup["first_user_password"] or ""}'>
-                </div>
-
-                %if setup["errors"]["password_confirmation_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> The passwords did not match.</strong>
-                    </div>
-                %endif
 
                 <div class="setup-footer">
                     <button type="submit" class="btn btn-primary pull-right">

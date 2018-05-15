@@ -262,27 +262,16 @@ def init_setup(app):
     virtool.setup.setup_routes(app)
 
     app["setup"] = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
-
-        "first_user_id": None,
-        "first_user_password": None,
+        **virtool.setup.DB_VALUES,
+        **virtool.setup.FIRST_USER_VALUES,
 
         "data_path": None,
         "watch_path": None,
 
         "errors": {
-            "db_exists_error": False,
-            "db_connection_error": False,
-            "db_name_error": False,
-            "password_confirmation_error": False,
-            "data_not_empty_error": False,
-            "data_not_found_error": False,
-            "data_permission_error": False,
-            "watch_not_empty_error": False,
-            "watch_not_found_error": False,
-            "watch_permission_error": False
+            **virtool.setup.DATA_ERRORS,
+            **virtool.setup.DB_ERRORS,
+            **virtool.setup.WATCH_ERRORS
         }
     }
 
