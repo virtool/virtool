@@ -1,9 +1,10 @@
-import { simpleActionCreator } from "../utils";
+import {simpleActionCreator} from "../utils";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
+    FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
     CREATE_SAMPLE,
@@ -38,6 +39,8 @@ export const wsRemoveAnalysis = (removed) => ({
     type: WS_REMOVE_ANALYSIS,
     removed
 });
+
+export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);
 
 export const findReadyHosts = simpleActionCreator(FIND_READY_HOSTS.REQUESTED);
 
