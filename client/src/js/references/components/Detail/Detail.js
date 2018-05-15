@@ -10,7 +10,7 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
-import ReferenceOTUList from "../../../otus/components/List";
+import ReferenceOTUs from "../../../otus/components/OTUs";
 import ReferenceIndex from "../../../indexes/components/Indexes";
 import SourceTypes from "../../../settings/components/General/SourceTypes";
 import InternalControl from "../../../settings/components/General/InternalControl";
@@ -68,7 +68,7 @@ class ReferenceDetail extends React.Component {
                 <Switch>
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                    <Route path="/refs/:refId/otus" component={ReferenceOTUList} />
+                    <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
                     <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
                     <Route path="/refs/:refId/settings" component={ReferenceSettings} />
                 </Switch>

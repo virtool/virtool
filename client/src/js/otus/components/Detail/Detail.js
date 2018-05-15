@@ -36,6 +36,7 @@ class OTUDetail extends React.Component {
         }
 
         const otuId = this.props.detail.id;
+        const refId = this.props.refId;
 
         const { name, abbreviation } = this.props.detail;
 
@@ -99,19 +100,19 @@ class OTUDetail extends React.Component {
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/otus/${otuId}/otu`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/otu`}>
                         <NavItem>
                             OTU
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/otus/${otuId}/schema`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/schema`}>
                         <NavItem>
                             Schema
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/otus/${otuId}/history`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/history`}>
                         <NavItem>
                             History
                         </NavItem>
@@ -123,10 +124,10 @@ class OTUDetail extends React.Component {
                 <RemoveOTU otuId={otuId} otuName={name} history={this.props.history} />
 
                 <Switch>
-                    <Redirect from="/otus/:otuId" to={`/otus/${otuId}/otu`} exact />
-                    <Route path="/otus/:otuId/otu" component={OTUSection} />
-                    <Route path="/otus/:otuId/history" component={History} />
-                    <Route path="/otus/:otuId/schema" component={Schema} />
+                    <Redirect from="/refs/:refId/otus/:otuId" to={`/refs/${refId}/otus/${otuId}/otu`} exact />
+                    <Route path="/refs/:refId/otus/:otuId/otu" component={OTUSection} />
+                    <Route path="/refs/:refId/otus/:otuId/history" component={History} />
+                    <Route path="/refs/:refId/otus/:otuId/schema" component={Schema} />
                 </Switch>
             </div>
         );
@@ -135,7 +136,8 @@ class OTUDetail extends React.Component {
 
 const mapStateToProps = state => ({
     detail: state.otus.detail,
-    canModify: state.account.permissions.modify_otu
+    canModify: state.account.permissions.modify_otu,
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = dispatch => ({

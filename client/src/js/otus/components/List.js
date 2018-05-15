@@ -12,8 +12,8 @@ import CreateOTU from "./Create";
 import OTUImport from "./Import";
 import { createFindURL } from "../../utils";
 
-const OTUItem = ({ abbreviation, id, name, modified, verified }) => (
-    <LinkContainer to={`/otus/${id}`} key={id} className="spaced">
+const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
+    <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
         <ListGroupItem bsStyle={verified ? null : "warning"}>
             <Row>
                 <Col xs={11} md={7}>
@@ -47,7 +47,9 @@ const OTUsList = (props) => {
     const OTUCount = props.documents.length;
 
     if (OTUCount) {
-        OTUComponents = map(props.documents, document => <OTUItem key={document.id} {...document} />);
+        OTUComponents = map(props.documents, document =>
+            <OTUItem key={document.id} refId={props.refId} {...document} />
+        );
     } else {
         OTUComponents = (
             <ListGroupItem key="noOTUs" className="text-center">
