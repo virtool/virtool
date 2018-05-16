@@ -27,7 +27,7 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.refs, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
+    data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
 
     for d in data["documents"]:
         d["latest_build"] = await virtool.db.references.get_latest_build(db, d["id"])
@@ -45,7 +45,7 @@ async def get(req):
 
     ref_id = req.match_info["ref_id"]
 
-    document = await db.refs.find_one(ref_id)
+    document = await db.references.find_one(ref_id)
 
     if not document:
         return not_found()
@@ -88,11 +88,11 @@ async def find_history(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.refs.count({"_id": ref_id}):
+    if not await db.references.count({"_id": ref_id}):
         return not_found()
 
     base_query = {
-        "ref.id": ref_id
+        "reference.id": ref_id
     }
 
     data = await virtool.db.history.find(
@@ -110,7 +110,7 @@ async def find_indexes(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.refs.count({"_id": ref_id}):
+    if not await db.references.count({"_id": ref_id}):
         return not_found()
 
     data = await virtool.db.indexes.find(
@@ -230,7 +230,7 @@ async def create(req):
             user_id=req["client"].user_id
         )
 
-    await db.refs.insert_one(document)
+    await db.references.insert_one(document)
 
     headers = {
         "Location": "/api/refs/" + document["_id"]
@@ -274,7 +274,7 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.refs.count({"_id": ref_id}):
+    if not await db.references.count({"_id": ref_id}):
         return not_found()
 
     update = data
@@ -282,14 +282,14 @@ async def edit(req):
     internal_control_id = data.get("internal_control", None)
 
     if internal_control_id:
-        if not await db.otus.find_one({"_id": internal_control_id, "ref.id": ref_id}):
+        if not await db.otus.find_one({"_id": internal_control_id, "reference.id": ref_id}):
             return not_found("Internal control not found")
 
         update["internal_control"] = {
             "id": update["internal_control"]
         }
 
-    document = await db.refs.find_one_and_update({"_id": ref_id}, {
+    document = await db.references.find_one_and_update({"_id": ref_id}, {
         "$set": update
     }, projection=virtool.db.references.PROJECTION)
 
@@ -311,7 +311,7 @@ async def get_unbuilt_changes(req):
     ref_id = req.match_info["ref_id"]
 
     history = await db.history.find({
-        "ref.id": ref_id,
+        "reference.id": ref_id,
         "index.id": "unbuilt"
     }, virtool.db.history.LIST_PROJECTION).to_list(None)
 
@@ -332,7 +332,7 @@ async def remove(req):
 
     user_id = req["client"].user_id
 
-    delete_result = await db.refs.delete_one({
+    delete_result = await db.references.delete_one({
         "_id": ref_id
     })
 

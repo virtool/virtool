@@ -181,7 +181,7 @@ class DB:
         await self.bind_collection("kinds", silent=True)
         await self.bind_collection("otus", projection=virtool.db.otus.PROJECTION)
         await self.bind_collection("processes")
-        await self.bind_collection("refs", projection=virtool.db.references.PROJECTION)
+        await self.bind_collection("references", projection=virtool.db.references.PROJECTION)
         await self.bind_collection("samples", projection=virtool.db.samples.LIST_PROJECTION)
         await self.bind_collection("sequences")
         await self.bind_collection("sessions", silent=True)

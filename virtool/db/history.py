@@ -25,7 +25,7 @@ LIST_PROJECTION = [
     "created_at",
     "index",
     "otu",
-    "ref",
+    "reference",
     "user"
 ]
 
@@ -76,9 +76,9 @@ async def add(db, method_name, old, new, description, user_id):
         otu_version = "removed"
 
     try:
-        ref_id = old["ref"]["id"]
+        ref_id = old["reference"]["id"]
     except (TypeError, KeyError):
-        ref_id = new["ref"]["id"]
+        ref_id = new["reference"]["id"]
 
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
@@ -90,7 +90,7 @@ async def add(db, method_name, old, new, description, user_id):
             "name": otu_name,
             "version": otu_version
         },
-        "ref": {
+        "reference": {
             "id": ref_id
         },
         "index": {

@@ -10,17 +10,17 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-REF_QUERY = {
-    "ref": {
+REFERENCE_QUERY = {
+    "reference": {
         "$exists": False
     }
 }
 
 
-async def add_original_ref(collection):
-    await collection.update_many(REF_QUERY, {
+async def add_original_reference(collection):
+    await collection.update_many(REFERENCE_QUERY, {
         "$set": {
-            "ref": {
+            "reference": {
                 "id": "original"
             }
         }
@@ -55,7 +55,7 @@ async def organize_analyses(db):
     logger.info(" • analyses")
 
     await delete_unready(db.analyses)
-    await add_original_ref(db.analyses)
+    await add_original_reference(db.analyses)
 
 
 async def organize_files(db):
@@ -84,16 +84,16 @@ async def organize_groups(db):
 async def organize_history(db):
     logger.info(" • history")
 
-    document_ids = await db.history.distinct("_id", {"ref": {"$exists": False}})
+    document_ids = await db.history.distinct("_id", {"reference": {"$exists": False}})
 
     document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
 
     await db.history.update_many({"_id": {"$in": document_ids}}, {
         "$set": {
-            "diff.ref": {
+            "diff.reference": {
                 "id": "original"
             },
-            "ref": {
+            "reference": {
                 "id": "original"
             }
         }
@@ -103,7 +103,7 @@ async def organize_history(db):
 async def organize_indexes(db):
     logger.info(" • indexes")
 
-    await add_original_ref(db.indexes)
+    await add_original_reference(db.indexes)
 
 
 async def organize_otus(db):
@@ -118,7 +118,7 @@ async def organize_otus(db):
     if "kinds" in await db.collection_names():
         await db.kinds.rename("otus")
 
-    await add_original_ref(db.otus)
+    await add_original_reference(db.otus)
 
 
 async def organize_paths(db, settings):
@@ -142,7 +142,7 @@ async def organize_paths(db, settings):
 
             os.mkdir(references_path)
 
-            if await db.refs.count({"_id": "original"}):
+            if await db.references.count({"_id": "original"}):
                 os.rename(old_indexes_path, os.path.join(references_path, "original"))
 
         old_subtractions_path = os.path.join(old_reference_path, "subtraction")
@@ -156,25 +156,25 @@ async def organize_paths(db, settings):
 async def organize_references(db, settings):
     logger.info(" • references")
 
-    if await db.otus.count() and not await db.refs.count():
+    if await db.otus.count() and not await db.references.count():
         await virtool.db.references.create_original(db, settings)
 
 
 async def organize_sequences(db):
     logger.info(" • sequences")
 
-    async for document in db.sequences.find(REF_QUERY):
+    async for document in db.sequences.find(REFERENCE_QUERY):
         document.update({
             "_id": await virtool.db.utils.get_new_id(db.sequences),
             "accession": document["_id"],
-            "ref": {
+            "reference": {
                 "id": "original"
             }
         })
 
         await db.sequences.insert_one(document)
 
-    await db.sequences.delete_many(REF_QUERY)
+    await db.sequences.delete_many(REFERENCE_QUERY)
 
 
 async def organize_status(db, server_version):

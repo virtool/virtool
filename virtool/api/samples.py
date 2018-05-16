@@ -338,7 +338,7 @@ async def analyze(req):
 
         raise
 
-    if not await db.indexes.count({"ref.id": ref_id, "ready": True}):
+    if not await db.indexes.count({"reference.id": ref_id, "ready": True}):
         return not_found("Ready index not found")
 
     # Generate a unique _id for the analysis entry

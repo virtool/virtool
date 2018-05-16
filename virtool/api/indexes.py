@@ -58,13 +58,13 @@ async def create(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if await db.indexes.count({"ref.id": ref_id, "ready": False}):
+    if await db.indexes.count({"reference.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.otus.count({"ref.id": ref_id, "verified": False}):
+    if await db.otus.count({"reference.id": ref_id, "verified": False}):
         return conflict("There are unverified otus")
 
-    if not await db.history.count({"ref.id": ref_id, "index.id": "unbuilt"}):
+    if not await db.history.count({"reference.id": ref_id, "index.id": "unbuilt"}):
         return conflict("There are no unbuilt changes")
 
     index_id = await virtool.db.utils.get_new_id(db.indexes)
@@ -87,7 +87,7 @@ async def create(req):
         "job": {
             "id": job_id
         },
-        "ref": {
+        "reference": {
             "id": ref_id
         },
         "user": {
@@ -97,7 +97,7 @@ async def create(req):
 
     await db.indexes.insert_one(document)
 
-    await db.history.update_many({"index.id": "unbuilt", "ref.id": ref_id}, {
+    await db.history.update_many({"index.id": "unbuilt", "reference.id": ref_id}, {
         "$set": {
             "index": {
                 "id": index_id,

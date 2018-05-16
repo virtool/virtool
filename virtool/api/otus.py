@@ -147,7 +147,7 @@ async def edit(req):
     if not old:
         return not_found()
 
-    ref_id = old["ref"]["id"]
+    ref_id = old["reference"]["id"]
 
     name, abbreviation, schema = virtool.otus.evaluate_changes(data, old)
 
@@ -292,7 +292,7 @@ async def add_isolate(req):
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not await virtool.db.references.check_source_type(db, document["ref"]["id"], data["source_type"]):
+    if not await virtool.db.references.check_source_type(db, document["reference"]["id"], data["source_type"]):
         return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
