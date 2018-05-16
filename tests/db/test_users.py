@@ -132,7 +132,7 @@ async def test_create(exists, force_reset, mocker, test_motor, bob):
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("administrator", [True, False])
-async def test_edit(exists, administrator, mocker, test_motor, all_permissions, bob, static_time):
+async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bob, static_time):
     """
     Test editing an existing user.
 
@@ -183,10 +183,10 @@ async def test_edit(exists, administrator, mocker, test_motor, all_permissions, 
     )
 
     if exists:
-        await test_motor.users.insert_one(bob)
+        await test_dbi.users.insert_one(bob)
 
     coroutine = virtool.db.users.edit(
-        test_motor,
+        test_dbi,
         "bob",
         administrator,
         True,
@@ -205,7 +205,7 @@ async def test_edit(exists, administrator, mocker, test_motor, all_permissions, 
 
     document = await coroutine
 
-    assert document == await test_motor.users.find_one("bob") == {
+    assert document == await test_dbi.users.find_one("bob") == {
         **bob,
         **administrator_update,
         **force_reset_update,
@@ -216,11 +216,11 @@ async def test_edit(exists, administrator, mocker, test_motor, all_permissions, 
 
     m_compose_force_reset_update.assert_called_with(True)
 
-    m_compose_groups_update.assert_called_with(test_motor, ["peasants", "kings"])
+    m_compose_groups_update.assert_called_with(test_dbi, ["peasants", "kings"])
 
     m_compose_password_update.assert_called_with("hello_world")
 
-    m_compose_primary_group_update.assert_called_with(test_motor, "bob", "peasants")
+    m_compose_primary_group_update.assert_called_with(test_dbi, "bob", "peasants")
 
 
 @pytest.mark.parametrize("user_id,password,result", [

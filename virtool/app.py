@@ -106,9 +106,9 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    host = app["settings"]["db_host"]
-    port = app["settings"]["db_port"]
-    name = app["settings"]["db_name"]
+    host = app["settings"].get("db_host", "localhost")
+    port = app["settings"].get("db_port", 27017)
+    name = app["db_name"] or app["settings"]["db_name"]
 
     client = motor_asyncio.AsyncIOMotorClient(
         host,
