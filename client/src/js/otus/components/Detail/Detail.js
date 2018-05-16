@@ -40,30 +40,25 @@ class OTUDetail extends React.Component {
 
         const { name, abbreviation } = this.props.detail;
 
-        let iconButtons = [];
+        const iconButtons = (
+            <span>
+                <small key="edit-icon" style={{paddingLeft: "5px"}}>
+                    <Icon
+                        bsStyle="warning"
+                        name="pencil-alt"
+                        onClick={this.props.showEdit}
+                    />
+                </small>
 
-        if (this.props.canModify) {
-            iconButtons = (
-                <span>
-                    <small key="edit-icon" style={{paddingLeft: "5px"}}>
-                        <Icon
-                            bsStyle="warning"
-                            name="pencil"
-
-                            onClick={this.props.showEdit}
-                        />
-                    </small>
-
-                    <small key="remove-icon" style={{paddingLeft: "5px"}}>
-                        <Icon
-                            bsStyle="danger"
-                            name="remove"
-                            onClick={this.props.showRemove}
-                        />
-                    </small>
-                </span>
-            );
-        }
+                <small key="remove-icon" style={{paddingLeft: "5px"}}>
+                    <Icon
+                        bsStyle="danger"
+                        name="trash"
+                        onClick={this.props.showRemove}
+                    />
+                </small>
+            </span>
+        );
 
         return (
             <div>

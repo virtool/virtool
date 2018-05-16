@@ -15,8 +15,8 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
-    UPLOAD_IMPORT,
-    COMMIT_IMPORT,
+    //UPLOAD_IMPORT,
+    //COMMIT_IMPORT,
     SELECT_ISOLATE,
     SHOW_EDIT_OTU,
     SHOW_REMOVE_OTU,
@@ -64,8 +64,9 @@ export const getOTU = (otuId) => ({
  * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTUHistory = (otuId) => ({
+export const getOTUHistory = (refId, otuId) => ({
     type: GET_OTU_HISTORY.REQUESTED,
+    refId,
     otuId
 });
 
@@ -77,8 +78,9 @@ export const getOTUHistory = (otuId) => ({
  * @param abbreviation {string} unique abbreviation for OTU name
  * @returns {object}
  */
-export const createOTU = (name, abbreviation) => ({
+export const createOTU = (refId, name, abbreviation) => ({
     type: CREATE_OTU.REQUESTED,
+    refId,
     name,
     abbreviation
 });
@@ -93,8 +95,9 @@ export const createOTU = (name, abbreviation) => ({
  * @param schema {array} array of sequences in custom order
  * @returns {object}
  */
-export const editOTU = (otuId, name, abbreviation, schema) => ({
+export const editOTU = (refId, otuId, name, abbreviation, schema) => ({
     type: EDIT_OTU.REQUESTED,
+    refId,
     otuId,
     name,
     abbreviation,
@@ -109,8 +112,9 @@ export const editOTU = (otuId, name, abbreviation, schema) => ({
  * @param history {object} list of all changes made to the OTU
  * @returns {object}
  */
-export const removeOTU = (otuId, history) => ({
+export const removeOTU = (refId, otuId, history) => ({
     type: REMOVE_OTU.REQUESTED,
+    refId,
     otuId,
     history
 });
@@ -124,8 +128,9 @@ export const removeOTU = (otuId, history) => ({
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const addIsolate = (otuId, sourceType, sourceName) => ({
+export const addIsolate = (refId, otuId, sourceType, sourceName) => ({
     type: ADD_ISOLATE.REQUESTED,
+    refId,
     otuId,
     sourceType,
     sourceName
@@ -139,8 +144,9 @@ export const addIsolate = (otuId, sourceType, sourceName) => ({
  * @param isolateId {string} unique isolate id
  * @returns {object}
  */
-export const setIsolateAsDefault = (otuId, isolateId) => ({
+export const setIsolateAsDefault = (refId, otuId, isolateId) => ({
     type: SET_ISOLATE_AS_DEFAULT.REQUESTED,
+    refId,
     otuId,
     isolateId
 });
@@ -155,8 +161,9 @@ export const setIsolateAsDefault = (otuId, isolateId) => ({
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const editIsolate = (otuId, isolateId, sourceType, sourceName) => ({
+export const editIsolate = (refId, otuId, isolateId, sourceType, sourceName) => ({
     type: EDIT_ISOLATE.REQUESTED,
+    refId,
     otuId,
     isolateId,
     sourceType,
@@ -173,8 +180,9 @@ export const editIsolate = (otuId, isolateId, sourceType, sourceName) => ({
  * first in resulting list (i.e. the next isolate) becomes default
  * @returns {object}
  */
-export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
+export const removeIsolate = (refId, otuId, isolateId, nextIsolateId) => ({
     type: REMOVE_ISOLATE.REQUESTED,
+    refId,
     otuId,
     isolateId,
     nextIsolateId
@@ -193,8 +201,9 @@ export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const addSequence = (refId, otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: ADD_SEQUENCE.REQUESTED,
+    refId,
     otuId,
     isolateId,
     sequenceId,
@@ -217,8 +226,9 @@ export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequ
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const editSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const editSequence = (refId, otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
+    refId,
     otuId,
     isolateId,
     sequenceId,
@@ -237,8 +247,9 @@ export const editSequence = (otuId, isolateId, sequenceId, definition, host, seq
  * @param sequenceId {string} unique sequence id
  * @returns {object}
  */
-export const removeSequence = (otuId, isolateId, sequenceId) => ({
+export const removeSequence = (refId, otuId, isolateId, sequenceId) => ({
     type: REMOVE_SEQUENCE.REQUESTED,
+    refId,
     otuId,
     isolateId,
     sequenceId
@@ -252,8 +263,9 @@ export const removeSequence = (otuId, isolateId, sequenceId) => ({
  * @param version {string} OTU index version
  * @returns {object}
  */
-export const revert = (otuId, version) => ({
+export const revert = (refId, otuId, version) => ({
     type: REVERT.REQUESTED,
+    refId,
     otuId,
     version
 });
@@ -265,24 +277,25 @@ export const revert = (otuId, version) => ({
  * @param file {object} OTU database file
  * @param onProgress {function} function that sets the component's progress state with a numerical value
  * @returns {object}
- */
+ *
 export const uploadImport = (file, onProgress) => ({
     type: UPLOAD_IMPORT.REQUESTED,
     file,
     onProgress
 });
 
-/**
+ **
  * Returns action that can trigger an API call for committing a OTU database import.
  *
  * @func
  * @param fileId {string} unique OTU database file id
  * @returns {object}
- */
+ *
 export const commitImport = (fileId) => ({
     type: COMMIT_IMPORT.REQUESTED,
     fileId
 });
+*/
 
 /**
  * Returns action for selecting an isolate to view.

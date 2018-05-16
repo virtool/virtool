@@ -59,7 +59,7 @@ class CreateOTU extends React.Component {
     };
 
     handleModalExited = () => {
-        this.setState(getInitialState());
+        this.setState(getInitialState(this.props));
 
         if (this.props.error) {
             this.props.onClearError("CREATE_OTU_ERROR");
@@ -76,7 +76,7 @@ class CreateOTU extends React.Component {
         }
 
         if (!this.state.errorName || !this.state.errorAbbreviation) {
-            this.props.onSubmit(this.state.name, this.state.abbreviation);
+            this.props.onSubmit(this.props.refId, this.state.name, this.state.abbreviation);
         }
 
     };
@@ -127,7 +127,8 @@ class CreateOTU extends React.Component {
 const mapStateToProps = state => ({
     show: !!state.router.location.state && state.router.location.state.createOTU,
     error: get(state, "errors.CREATE_OTU_ERROR.message", ""),
-    pending: state.otus.createPending
+    pending: state.otus.createPending,
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = dispatch => ({

@@ -28,7 +28,7 @@ class EditIsolate extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps (nextProps) {
         return getInitialState(nextProps);
     }
 
