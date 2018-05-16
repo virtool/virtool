@@ -19,22 +19,6 @@ describe("<Email />", () => {
         expect(wrapper.dive()).toMatchSnapshot();
     });
 
-    it("componentWillReceiveProps sets state with specific error (after failed request)", () => {
-        const spyCWRP = sinon.spy(Email.prototype, "componentWillReceiveProps");
-        wrapper = shallow(<Email />);
-
-        expect(spyCWRP.calledOnce).toBe(false);
-
-        wrapper.setProps({ error: "Invalid input" });
-        expect(spyCWRP.calledOnce).toBe(true);
-        expect(wrapper.state('error')).toEqual("Please provide a valid email address");
-
-        wrapper.setProps({ error: "test error" });
-        expect(spyCWRP.calledTwice).toBe(true);
-
-        spyCWRP.restore();
-    });
-
     describe("dispatch actions", () => {
         let spyUpdateAccount;
         let spyClearError;
