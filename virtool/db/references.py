@@ -213,12 +213,13 @@ async def check_import_abbreviation(db, otu_document, lower_name=None):
     return None
 
 
-async def clone(db, name, clone_from, description, public, user_id):
+async def clone(db, settings, name, clone_from, description, public, user_id):
 
     source = await db.refs.find_one(clone_from)
 
     document = await create_document(
         db,
+        settings,
         name,
         source["organism"],
         description,
@@ -305,7 +306,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
     await db.sequences.bulk_write(sequence_requests)
 
 
-async def create_document(db, name, organism, description, data_type, public, created_at=None, ref_id=None,
+async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
     if await db.refs.count({"_id": ref_id}):
@@ -331,6 +332,8 @@ async def create_document(db, name, organism, description, data_type, public, cr
         "name": name,
         "organism": organism,
         "public": public,
+        "restrict_source_types": False,
+        "source_types": settings["default_source_types"],
         "users": users,
         "user": user
     }
@@ -338,7 +341,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
     return document
 
 
-async def create_original(db):
+async def create_original(db, settings):
     # The `created_at` value should be the `created_at` value for the earliest history document.
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
@@ -357,6 +360,7 @@ async def create_original(db):
 
     document = await create_document(
         db,
+        settings,
         "Original",
         "virus",
         "Created from existing viruses after upgrade to Virtool v3",
@@ -372,7 +376,7 @@ async def create_original(db):
     return document
 
 
-async def create_for_import(db, name, description, public, import_from, user_id):
+async def create_for_import(db, settings, name, description, public, import_from, user_id):
     """
     Import a previously exported Virtool reference.
 
@@ -405,6 +409,7 @@ async def create_for_import(db, name, description, public, import_from, user_id)
 
     document = await create_document(
         db,
+        settings,
         name,
         None,
         description,
