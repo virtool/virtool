@@ -101,8 +101,6 @@ class Collection:
         return document
 
     async def insert_one(self, document, silent=False):
-        print(document)
-
         generate_id = "_id" not in document
 
         if generate_id:

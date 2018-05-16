@@ -225,7 +225,6 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         })
 
     elif error == "user_dne":
-        print(await resp.json())
         assert await resp_is.not_found(resp, "User does not exist")
 
     else:

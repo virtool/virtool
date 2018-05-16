@@ -694,9 +694,6 @@ class TestAnalyze:
 
             assert await resp.json() == test_analysis
 
-            import pprint
-            pprint.pprint(m_new.call_args)
-
             m_new.assert_called_with(
                 client.db,
                 client.app["job_manager"],
