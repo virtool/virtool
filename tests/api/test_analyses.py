@@ -143,8 +143,6 @@ async def test_blast(error, mocker, spawn_client, static_time):
         ]
     })
 
-    mocker.patch("virtool.db.analyses.format_analysis", new=m_format_analysis)
-
     # Do a bunch of mocking in virtool.bio module.
     m_initialize_ncbi_blast = make_mocked_coro(return_value=("FOOBAR1337", 23))
     mocker.patch("virtool.bio.initialize_ncbi_blast", new=m_initialize_ncbi_blast)
@@ -218,12 +216,6 @@ async def test_blast(error, mocker, spawn_client, static_time):
 
         expected_format_arg = deepcopy(analysis_document)
         expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at=static_time)
-
-        assert m_format_analysis.call_args[0] == (
-            client.db,
-            client.app["settings"],
-            expected_format_arg
-        )
 
         assert stub.call_args[0] == (
             client.db,
