@@ -170,6 +170,7 @@ async def find_indexes(req):
 async def create(req):
     db = req.app["db"]
     data = req["data"]
+    settings = req.app["settings"]
 
     user_id = req["client"].user_id
 
@@ -179,6 +180,7 @@ async def create(req):
     if clone_from:
         document = await virtool.db.references.clone(
             db,
+            settings,
             data["name"],
             clone_from,
             data["description"],
@@ -219,6 +221,7 @@ async def create(req):
     else:
         document = await virtool.db.references.create_document(
             db,
+            settings,
             data["name"],
             data["organism"],
             data["description"],

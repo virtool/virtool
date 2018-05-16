@@ -174,13 +174,20 @@ async def test_organize_references(has_references, has_otu, mocker, test_motor):
 
     m = mocker.patch("virtool.db.references.create_original", new=make_mocked_coro())
 
-    await virtool.organize.organize_references(test_motor)
+    settings = {
+        "default_source_types": [
+            "culture",
+            "strain"
+        ]
+    }
+
+    await virtool.organize.organize_references(test_motor, settings)
 
     document = await test_motor.refs.find_one()
 
     if has_otu and not has_references:
         assert document is None
-        m.assert_called_with(test_motor,)
+        m.assert_called_with(test_motor, settings)
 
     else:
         assert not m.called

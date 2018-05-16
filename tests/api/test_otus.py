@@ -122,7 +122,6 @@ class TestCreate:
 
         m_add_history = mocker.patch("virtool.db.history.add", make_mocked_coro({"_id": "change.1"}))
 
-        #
         m_compose = mocker.patch("virtool.history.compose_create_description", return_value="Test description")
 
         m_create = mocker.patch("virtool.db.otus.create", make_mocked_coro(test_merged_otu))
@@ -723,9 +722,6 @@ class TestAddIsolate:
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
-
         await client.db.otus.insert_one(test_otu)
 
         data = {
@@ -735,6 +731,7 @@ class TestAddIsolate:
         }
 
         mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -780,15 +777,12 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_not_default(self, monkeypatch, spawn_client, test_otu, test_add_history):
+    async def test_not_default(self, mocker, spawn_client, test_otu, test_add_history):
         """
         Test that a non-default isolate can be properly added
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.otus.insert_one(test_otu)
 
@@ -798,7 +792,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -844,16 +839,13 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_first(self, monkeypatch, spawn_client, test_otu, test_add_history):
+    async def test_first(self, mocker, spawn_client, test_otu, test_add_history):
         """
         Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
         in the POST input.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         test_otu["isolates"] = []
 
@@ -865,7 +857,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -900,15 +893,12 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_force_case(self, monkeypatch, spawn_client, test_otu):
+    async def test_force_case(self, mocker, spawn_client, test_otu):
         """
         Test that the ``source_type`` value is forced to lower case.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.otus.insert_one(test_otu)
 
@@ -918,7 +908,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -962,6 +953,7 @@ class TestAddIsolate:
         await client.db.otus.insert_one(test_otu)
 
         mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", {})
 

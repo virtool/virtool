@@ -30,6 +30,38 @@ PROJECTION = [
 ]
 
 
+async def check_source_type(db, ref_id, source_type):
+    """
+    Check if the provided `source_type` is valid based on the current reference source type configuration.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the ref to get contributors for
+    :type ref_id: str
+
+    :param source_type: the source type to check
+    :type source_type: str
+
+    :return: source type is valid
+    :rtype: bool
+
+    """
+    document = await db.refs.find_one(ref_id, ["restrict_source_types", "source_types"])
+
+    restrict_source_types = document.get("restrict_source_types", False)
+    source_types = document.get("source_types", list())
+
+    # Return `False` when source_types are restricted and source_type is not allowed.
+    if source_type and restrict_source_types:
+        return source_type in source_types
+
+    # Return `True` when:
+    # - source_type is empty string (unknown)
+    # - source_types are not restricted
+    # - source_type is an allowed source_type
+    return True
+
 async def cleanup_removed(db, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
 
@@ -181,12 +213,13 @@ async def check_import_abbreviation(db, otu_document, lower_name=None):
     return None
 
 
-async def clone(db, name, clone_from, description, public, user_id):
+async def clone(db, settings, name, clone_from, description, public, user_id):
 
     source = await db.refs.find_one(clone_from)
 
     document = await create_document(
         db,
+        settings,
         name,
         source["organism"],
         description,
@@ -273,7 +306,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
     await db.sequences.bulk_write(sequence_requests)
 
 
-async def create_document(db, name, organism, description, data_type, public, created_at=None, ref_id=None,
+async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
     if await db.refs.count({"_id": ref_id}):
@@ -299,6 +332,8 @@ async def create_document(db, name, organism, description, data_type, public, cr
         "name": name,
         "organism": organism,
         "public": public,
+        "restrict_source_types": False,
+        "source_types": settings["default_source_types"],
         "users": users,
         "user": user
     }
@@ -306,7 +341,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
     return document
 
 
-async def create_original(db):
+async def create_original(db, settings):
     # The `created_at` value should be the `created_at` value for the earliest history document.
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
@@ -325,6 +360,7 @@ async def create_original(db):
 
     document = await create_document(
         db,
+        settings,
         "Original",
         "virus",
         "Created from existing viruses after upgrade to Virtool v3",
@@ -340,7 +376,7 @@ async def create_original(db):
     return document
 
 
-async def create_for_import(db, name, description, public, import_from, user_id):
+async def create_for_import(db, settings, name, description, public, import_from, user_id):
     """
     Import a previously exported Virtool reference.
 
@@ -373,6 +409,7 @@ async def create_for_import(db, name, description, public, import_from, user_id)
 
     document = await create_document(
         db,
+        settings,
         name,
         None,
         description,

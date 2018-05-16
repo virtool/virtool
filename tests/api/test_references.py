@@ -1,6 +1,15 @@
 async def test_create(spawn_client, test_random_alphanumeric, static_time):
     client = await spawn_client(authorize=True, permissions=["create_ref"])
 
+    default_source_type = [
+        "strain",
+        "isolate"
+    ]
+
+    client.app["settings"] = {
+        "default_source_types": default_source_type
+    }
+
     data = {
         "name": "Test Viruses",
         "description": "A bunch of viruses used for testing",
@@ -31,5 +40,7 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
         }],
         contributors=[],
         internal_control=None,
+        restrict_source_types=False,
+        source_types=default_source_type,
         latest_build=None
     )
