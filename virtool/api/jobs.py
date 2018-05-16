@@ -133,7 +133,7 @@ async def clear(req):
     })
 
 
-@routes.get("/api/jobs/resources")
+@routes.get("/api/resources")
 async def get_resources(req):
     """
     Get a object describing compute resource usage on the server.
