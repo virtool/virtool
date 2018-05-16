@@ -11,7 +11,7 @@ import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../
 
 export class APIKeys extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 

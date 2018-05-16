@@ -21,10 +21,11 @@ export class Email extends React.Component {
         this.state = getInitialState(this.props.email);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error === "Invalid input") {
-            this.setState({ error: "Please provide a valid email address" });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.error === "Invalid input" && !prevState.error.length) {
+            return { error: "Please provide a valid email address" };
         }
+        return null;
     }
 
     handleChange = (e) => {
