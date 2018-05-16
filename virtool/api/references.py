@@ -52,7 +52,7 @@ async def get(req):
 
     try:
         internal_control_id = document["internal_control"]["id"]
-    except KeyError:
+    except (KeyError, TypeError):
         internal_control_id = None
 
     document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
