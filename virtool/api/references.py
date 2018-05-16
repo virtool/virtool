@@ -196,6 +196,7 @@ async def create(req):
 
         document = await virtool.db.references.create_for_import(
             db,
+            settings,
             data["name"],
             data["description"],
             data["public"],
