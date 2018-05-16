@@ -36,14 +36,13 @@ async def organize(db, settings, server_version):
     await organize_files(db)
     await organize_history(db)
     await organize_indexes(db)
-    await organize_references(db)
+    await organize_references(db, settings)
     await organize_groups(db)
     await organize_otus(db)
     await organize_sequences(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_users(db)
-    await organize_references(db)
 
     await organize_paths(db, settings)
 
@@ -154,11 +153,11 @@ async def organize_paths(db, settings):
         shutil.rmtree(old_reference_path)
 
 
-async def organize_references(db):
+async def organize_references(db, settings):
     logger.info(" • references")
 
     if await db.otus.count() and not await db.refs.count():
-        await virtool.db.references.create_original(db)
+        await virtool.db.references.create_original(db, settings)
 
 
 async def organize_sequences(db):
