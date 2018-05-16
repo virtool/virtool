@@ -30,7 +30,8 @@ const getInitialState = (props) => ({
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: ""
+    errorFile: "",
+    readyHosts: props.readyHosts
 });
 
 const SampleUserGroup = ({ group, groups, onChange }) => {
@@ -57,16 +58,16 @@ class CreateSample extends React.Component {
         this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.readyHosts !== this.props.readyHosts) {
-            return this.setState({subtraction: getReadyHosts(nextProps)});
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.readyHosts !== prevState.readyHosts) {
+            return { subtraction: getReadyHosts(nextProps) };
         }
 
-        if (!this.props.error && nextProps.error) {
-            this.setState({
-                errorName: nextProps.error
-            });
+        if (!prevState.errorName && nextProps.error) {
+            return { errorName: nextProps.error };
         }
+
+        return null;
     }
 
     modalEnter = () => {

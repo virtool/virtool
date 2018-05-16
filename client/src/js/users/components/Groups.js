@@ -8,9 +8,9 @@ import { editUser, listUsers } from "../actions";
 
 class UserGroup extends React.Component {
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.toggled !== this.props.toggled) {
-            this.props.onListUsers();
+    componentDidUpdate (prevProps) {
+        if (this.props.toggled !== prevProps.toggled) {
+            prevProps.onListUsers();
         }
     }
 

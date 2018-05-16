@@ -258,8 +258,13 @@ async def create(req):
     },
     "internal_control": {
         "type": "string"
+    },
+    "source_types": {
+        "type": "list",
+        "schema": {
+            "type": "string"
+        }
     }
-
 })
 async def edit(req):
     db = req.app["db"]

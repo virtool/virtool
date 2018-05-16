@@ -17,10 +17,11 @@ class RebuildIndex extends React.Component {
         this.state = { error: "" };
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
-            this.setState({ error: nextProps.error });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
+            return { error: nextProps.error };
         }
+        return null;
     }
 
     modalEntered = () => {

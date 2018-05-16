@@ -34,11 +34,10 @@ export default class ReadSelector extends React.PureComponent {
         onSelect: PropTypes.func
     };
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.files !== this.props.files) {
-            this.props.onSelect(intersection(this.props.selected, map(nextProps.files, "id")));
+    componentDidUpdate (prevProps) {
+        if (this.props.files !== prevProps.files) {
+            prevProps.onSelect(intersection(prevProps.selected, map(this.props.files, "id")));
         }
-
     }
 
     onSelect = (selectedId) => {

@@ -41,7 +41,7 @@ class AnalysesList extends React.Component {
         };
     }
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onFindIndexes();
         this.props.onFetchHMMs();
     }

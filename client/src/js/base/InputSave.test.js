@@ -30,50 +30,6 @@ describe("<InputSave />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call componentWillReceiveProps on prop change and update state", () => {
-        const spy = jest.spyOn(InputSave.prototype, "componentWillReceiveProps");
-        
-        props = {
-            onSave: jest.fn(),
-            initialValue: "initial_value"
-        };
-        wrapper = shallow(<InputSave {...props} />);
-
-        expect(spy).not.toHaveBeenCalled();
-        expect(wrapper.state('value')).toEqual(props.initialValue);
-
-        const update = { initialValue: "new_value" };
-        wrapper.setProps(update);
-        
-        expect(spy).toHaveBeenCalled();
-        expect(wrapper.state('value')).toEqual(update.initialValue);
-
-        spy.mockReset();
-        spy.mockRestore();
-    });
-
-    it("should call componentWillReceiveProps and not update if initialValue props have not changed", () => {
-        const spy = jest.spyOn(InputSave.prototype, "componentWillReceiveProps");
-        
-        props = {
-            onSave: jest.fn(),
-            initialValue: "initial_value"
-        };
-        wrapper = shallow(<InputSave {...props} />);
-
-        expect(spy).not.toHaveBeenCalled();
-        expect(wrapper.state('value')).toEqual(props.initialValue);
-
-        const update = { initialValue: props.initialValue };
-        wrapper.setProps(update);
-        
-        expect(spy).toHaveBeenCalled();
-        expect(wrapper.state('value')).toEqual(props.initialValue);
-
-        spy.mockReset();
-        spy.mockRestore();
-    });
-
     describe("renders subcomponents:", () => {
 
         beforeEach(() => {

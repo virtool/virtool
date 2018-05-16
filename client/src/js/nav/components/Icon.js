@@ -20,11 +20,9 @@ class NotificationIcon extends React.Component {
         });
     };
 
-    componentWillMount () {
-        this.props.onGet();
-    }
-
     componentDidMount () {
+        this.props.onGet();
+
         this.interval = window.setInterval(() => {
             this.props.onGet();
         }, 300000);

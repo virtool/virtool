@@ -55,7 +55,7 @@ class ReferenceDetail extends React.Component {
                         <NavItem>Manage</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/otus`}>
-                        <NavItem>OTU</NavItem>
+                        <NavItem>OTUs</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/indexes`}>
                         <NavItem>Indexes</NavItem>
