@@ -260,7 +260,10 @@ async def create(req):
         "type": "string"
     },
     "source_types": {
-        "type": "list"
+        "type": "list",
+        "schema": {
+            "type": "string"
+        }
     }
 })
 async def edit(req):
