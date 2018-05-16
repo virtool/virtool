@@ -7,11 +7,12 @@ import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, InputError } from "../../../base";
 
-const getInitialState = ({ name = "", abbreviation = "" }) => ({
+const getInitialState = ({ name = "", abbreviation = "", error }) => ({
     name,
     abbreviation,
     errorName: "",
-    errorAbbreviation: ""
+    errorAbbreviation: "",
+    error
 });
 
 class EditOTU extends React.Component {
@@ -21,19 +22,21 @@ class EditOTU extends React.Component {
         this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
             if (nextProps.error === "Name already exists") {
-                this.setState({ errorName: nextProps.error });
+                return { errorName: nextProps.error };
             } else if (nextProps.error === "Abbreviation already exists") {
-                this.setState({ errorAbbreviation: nextProps.error });
+                return { errorAbbreviation: nextProps.error };
             } else {
-                this.setState({
+                return {
                     errorName: "Name already exists",
-                    errorAbbreviation: "Abbreviation already exists"
-                });
+                    errorAbbrevation: "Abbreviation already exists"
+                };
             }
         }
+
+        return null;
     }
 
     handleChange = (e) => {

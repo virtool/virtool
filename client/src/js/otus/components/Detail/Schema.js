@@ -105,23 +105,20 @@ class Schema extends React.Component {
             segments = map(segArray, (segment, index) =>
                 <Draggable key={segment.name} draggableId={segment.name} index={index}>
                     {(provided, snapshot) => (
-                        <div>
-                            <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                style={getItemStyle(
-                                    snapshot.isDragging,
-                                    provided.draggableProps.style
-                                )}
-                            >
-                                <Segment
-                                    seg={segment}
-                                    index={index}
-                                    onClick={this.handleSegment}
-                                />
-                            </div>
-                            {provided.placeholder}
+                        <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={getItemStyle(
+                                snapshot.isDragging,
+                                provided.draggableProps.style
+                            )}
+                        >
+                            <Segment
+                                seg={segment}
+                                index={index}
+                                onClick={this.handleSegment}
+                            />
                         </div>
                     )}
                 </Draggable>

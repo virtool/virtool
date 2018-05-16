@@ -20,7 +20,7 @@ import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
-const getInitialState = () => ({
+const getInitialState = (props) => ({
     id: "",
     definition: "",
     host: "",
@@ -30,35 +30,37 @@ const getInitialState = () => ({
     errorId: "",
     errorSegment: "",
     errorDefinition: "",
-    errorSequence: ""
+    errorSequence: "",
+    error: props.error
 });
 
 class AddSequence extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {show: false, ...getInitialState()};
+        this.state = {show: false, ...getInitialState(this.props)};
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.props.error && nextProps.error) {
             let error = "";
 
             if (nextProps.error.status === 422) {
                 error = "Minimum length is 1";
 
-                this.setState({
-                    errorId: this.state.id ? "" : error,
-                    errorDefinition: this.state.definition ? "" : error,
-                    errorSequence: this.state.sequence ? "" : error
-
-                });
+                return {
+                    errorId: prevState.id ? "" : error,
+                    errorDefinition: prevState.definition ? "" : error,
+                    errorSequence: prevState.sequence ? "" : error
+                };
             } else if (nextProps.error.status === 404) {
-                this.setState({ errorSegment: nextProps.error.message });
+                return { errorSegment: nextProps.error.message };
             } else {
-                this.setState({ errorId: nextProps.error.message });
+                return { errorId: nextProps.error.message };
             }
         }
+
+        return null;
     }
 
     handleAutofill = () => {

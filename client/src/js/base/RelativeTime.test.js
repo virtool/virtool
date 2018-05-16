@@ -51,12 +51,10 @@ describe("<RelativeTime />", () => {
     });
 
     describe("when receiving new time prop:", () => {
-        let spyCWRP;
         let spySCU;
         let spyCDU;
 
         beforeAll(() => {
-            spyCWRP = sinon.spy(RelativeTime.prototype, "componentWillReceiveProps");
             spySCU = sinon.spy(RelativeTime.prototype, "shouldComponentUpdate");
             spyCDU = sinon.spy(RelativeTime.prototype, "componentDidUpdate");
 
@@ -67,15 +65,8 @@ describe("<RelativeTime />", () => {
         });
 
         afterAll(() => {
-            spyCWRP.restore();
             spySCU.restore();
             spyCDU.restore();
-        });
-
-        it("should always call componentWillReceiveProps and set state with new time prop", () => {
-            wrapper.setProps(props);
-            expect(spyCWRP.calledOnce).toBe(true);
-            expect(wrapper.state('time')).toEqual(props.time);
         });
 
         it("should then decide to re-render via shouldComponentUpdate if there is a difference in state or props", () => {

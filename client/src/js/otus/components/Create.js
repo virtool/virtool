@@ -9,33 +9,35 @@ import { InputError, Button } from "../../base";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
 
-const getInitialState = () => ({
+const getInitialState = (props) => ({
     name: "",
     abbreviation: "",
     errorName: "",
-    errorAbbreviation: ""
+    errorAbbreviation: "",
+    error: props.error
 });
 
 class CreateOTU extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = getInitialState(this.props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
             if (nextProps.error === "Name already exists") {
-                this.setState({ errorName: nextProps.error });
+                return { errorName: nextProps.error };
             } else if (nextProps.error === "Abbreviation already exists") {
-                this.setState({ errorAbbreviation: nextProps.error });
-            } else {
-                this.setState({
-                    errorName: "Name already exists",
-                    errorAbbreviation: "Abbreviation already exists"
-                });
+                return { errorAbbreviation: nextProps.error };
             }
+            return {
+                errorName: "Name already exists",
+                errorAbbreviation: "Abbrevation already exists"
+            };
         }
+
+        return null;
     }
 
     handleChange = (e) => {

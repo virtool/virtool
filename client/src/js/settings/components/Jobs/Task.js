@@ -21,10 +21,10 @@ class Task extends React.Component {
         this.state = getInitialState();
     }
 
-    componentWillReceiveProps (nextProps) {
-        const { proc, mem, inst } = this.props;
+    componentDidUpdate (prevProps) {
+        const { proc, mem, inst } = prevProps;
 
-        if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
+        if (proc === this.props.proc && mem === this.props.mem && inst === this.props.inst) {
             this.handleClearError();
         }
     }

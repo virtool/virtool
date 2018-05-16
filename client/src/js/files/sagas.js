@@ -43,7 +43,7 @@ export function* upload (action) {
         const { progress = 0, response, err } = yield take(channel);
 
         if (err) {
-            return yield put(putGenericError(UPLOAD, err));
+            return yield putGenericError(UPLOAD, err);
         }
 
         if (response) {

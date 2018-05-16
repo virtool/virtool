@@ -72,7 +72,7 @@ const Releases = ({ onShowModal, releases }) => {
 
 class SoftwareUpdateViewer extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 

@@ -6,7 +6,7 @@ export class UploadBar extends React.Component {
 
     render () {
 
-        const message = this.props.message.length
+        const message = (this.props.message && this.props.message.length)
             ? this.props.message
             : "Drag file here to upload";
 

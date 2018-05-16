@@ -17,21 +17,20 @@ class SegmentForm extends React.Component {
         };
     }
 
-    componentWillReceiveProps (nextProps) {
-
+    static getDerivedStateFromProps (nextProps, prevState) {
         if (nextProps.errors && nextProps.errors.EDIT_OTU_ERROR) {
-            return this.setState({ error: nextProps.errors.EDIT_OTU_ERROR.message });
+            return { error: nextProps.errors.EDIT_OTU_ERROR.message };
         }
 
         let error = "";
         error = nextProps.newEntry.showError ? "Required Field" : "";
         error = nextProps.newEntry.nameTaken ? "Segment names must be unique. This name is currently in use." : error;
 
-        this.setState({
+        return {
             isChecked: nextProps.newEntry.required,
             showError: nextProps.newEntry.showError,
             error
-        });
+        };
     }
 
     changeSegName = (e) => {

@@ -12,7 +12,7 @@ import APIKeys from "./API/API";
 
 class Account extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 

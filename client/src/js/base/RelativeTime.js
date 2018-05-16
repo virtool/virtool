@@ -25,8 +25,8 @@ export class RelativeTime extends React.Component {
         this.interval = window.setInterval(this.update, 8000);
     }
 
-    componentWillReceiveProps (nextProps) {
-        this.setState({time: nextProps.time});
+    static getDerivedStateFromProps (nextProps) {
+        return { time: nextProps.time };
     }
 
     shouldComponentUpdate (nextProps, nextState) {

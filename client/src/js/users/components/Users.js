@@ -32,7 +32,7 @@ export class ManageUsers extends React.Component {
         };
     }
 
-    componentWillMount () {
+    componentDidMount () {
         if (this.props.users === null) {
             this.props.onListUsers();
         }

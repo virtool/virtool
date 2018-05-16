@@ -3,9 +3,21 @@ import os
 import pytest
 import shutil
 import sys
+import types
+import multidict
+from aiohttp.test_utils import make_mocked_coro
 
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
+
+
+@pytest.fixture(scope="session")
+def md_proxy():
+    def func(data_dict=None):
+        md = multidict.MultiDict(data_dict or dict())
+        return multidict.MultiDictProxy(md)
+
+    return func
 
 
 @pytest.fixture

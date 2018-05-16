@@ -63,41 +63,6 @@ describe("<ProgressBar />", () => {
         spy.restore();
     });
 
-    it("adds custom eventListener when props.now changes in componentWillReceiveProps", () => {
-        const spyCWRP = sinon.spy(ProgressBar.prototype, "componentWillReceiveProps");
-
-        let props = {
-            now: 10
-        };
-        wrapper = mount(<ProgressBar {...props} />);
-
-        const spyAddListener = sinon.spy(wrapper.find('div').at(1).instance(), "addEventListener");
-
-        expect(spyCWRP.called).toBe(false);
-        expect(spyAddListener.called).toBe(false);
-
-        // Event listener is not added if there is no difference in this and next props
-        let update = {
-            now: 10
-        };
-        wrapper.setProps(update);
-
-        expect(spyCWRP.calledOnce).toBe(true);
-        expect(spyAddListener.calledOnce).toBe(false);
-
-        // Event listener is added if there is a difference between this and next props
-        update = {
-            now: 30
-        };
-        wrapper.setProps(update);
-
-        expect(spyCWRP.calledTwice).toBe(true);
-        expect(spyAddListener.calledOnce).toBe(true);
-
-        spyAddListener.restore();
-        spyCWRP.restore();
-    });
-
     it("removes custom eventListener in componentWillUnmount", () => {
         const spyCWU = sinon.spy(ProgressBar.prototype, "componentWillUnmount");
         wrapper = mount(<ProgressBar />);
@@ -186,43 +151,6 @@ describe("<ProgressBar />", () => {
 
             stubMath.restore();
             spyStop.restore();
-        });
-
-        describe("componentWillReceiveProps", () => {
-            let spyCWRP;
-            let update;
-    
-            beforeAll(() => {
-                spyCWRP = sinon.spy(AutoProgressBar.prototype, "componentWillReceiveProps");
-            });
-    
-            afterAll(() => {
-                spyCWRP.restore();
-            });
-
-            it("should set [state.fill=100] when changing from active to inactive", () => {
-                props = { active: true };
-                wrapper = shallow(<AutoProgressBar {...props} />);
-
-                expect(spyCWRP.called).toBe(false);
-                expect(wrapper.state('fill')).toEqual(0);
-                update = { active: false };
-                wrapper.setProps(update);
-                expect(wrapper.state('fill')).toEqual(100);
-            });
-    
-            it("should set [state.fill=10] when changing from inactive to active", () => {
-                spyCWRP.resetHistory();
-                props = { active: false };
-                wrapper = shallow(<AutoProgressBar {...props} />);
-
-                expect(spyCWRP.called).toBe(false);
-                expect(wrapper.state('fill')).toEqual(0);
-                update = { active: true };
-                wrapper.setProps(update);
-                expect(wrapper.state('fill')).toEqual(10);
-            });
-
         });
 
     });
