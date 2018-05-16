@@ -292,7 +292,7 @@ async def add_isolate(req):
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not virtool.db.references.check_source_type(db, settings, document["ref"]["id"], data["source_type"]):
+    if not await virtool.db.references.check_source_type(db, document["ref"]["id"], data["source_type"]):
         return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
