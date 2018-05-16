@@ -11,7 +11,7 @@ def test_indexes():
             "created_at": arrow.get("2017-12-12T23:14:25.188Z").datetime,
             "ready": True,
             "has_files": False,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "user": {
@@ -27,7 +27,7 @@ def test_indexes():
             "created_at": arrow.get("2018-01-10T18:21:23.971Z").naive,
             "ready": True,
             "has_files": False,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "user": {
@@ -43,7 +43,7 @@ def test_indexes():
             "created_at": arrow.get("2018-02-27T21:50:37.573Z").naive,
             "ready": True,
             "has_files": False,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "user": {
@@ -59,7 +59,7 @@ def test_indexes():
             "created_at": arrow.get("2018-02-27T21:54:02.735Z").naive,
             "ready": True,
             "has_files": True,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "user": {

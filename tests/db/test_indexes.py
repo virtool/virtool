@@ -9,7 +9,7 @@ async def test_create_manifest(test_motor, test_otu):
     await test_motor.otus.insert_many([
         test_otu,
         dict(test_otu, _id="foo", version=5),
-        dict(test_otu, _id="baz", version=3, ref={"id": "123"}),
+        dict(test_otu, _id="baz", version=3, reference={"id": "123"}),
         dict(test_otu, _id="bar", version=11)
     ])
 
@@ -78,16 +78,16 @@ async def test_tag_unbuilt_changes(test_motor, create_mock_history):
         await test_motor.history.insert({
             **document,
             "_id": "foo_" + document["_id"],
-            "ref": {
+            "reference": {
                 "id": "foobar"
             }
         })
 
     assert await test_motor.history.count({"index.id": "unbuilt"}) == 8
-    assert await test_motor.history.count({"ref.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await test_motor.history.count({"ref.id": "hxn167", "index.id": "unbuilt"}) == 4
+    assert await test_motor.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await test_motor.history.count({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
 
     await virtool.db.indexes.tag_unbuilt_changes(test_motor, "hxn167", "foo", 5)
 
-    assert await test_motor.history.count({"ref.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await test_motor.history.count({"ref.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
+    assert await test_motor.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await test_motor.history.count({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4

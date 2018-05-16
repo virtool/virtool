@@ -648,7 +648,7 @@ class TestAnalyze:
                 "id": "baz"
             },
             "algorithm": "pathoscope_bowtie",
-            "ref": {
+            "reference": {
                 "id": "foo"
             },
             "sample": {
@@ -674,7 +674,7 @@ class TestAnalyze:
         if error != "no_index":
             await client.db.indexes.insert_one({
                 "_id": "test",
-                "ref": {
+                "reference": {
                     "id": "foo"
                 },
                 "ready": error != "no_ready_index"

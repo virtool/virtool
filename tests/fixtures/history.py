@@ -18,7 +18,7 @@ def test_change(static_time):
             "id": "unbuilt",
             "version": "unbuilt"
         },
-        "ref": {
+        "reference": {
             "id": "hxn167"
         },
         "user": {
@@ -71,7 +71,7 @@ def test_otu_edit():
                     "source_type": "isolate"
                 }
             ],
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "last_indexed_version": 0,
@@ -103,7 +103,7 @@ def test_otu_edit():
                     "source_type": "isolate"
                 }
             ],
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "last_indexed_version": 0,
@@ -149,7 +149,7 @@ def create_mock_history(test_motor):
                             ]
                         }
                     ],
-                    "ref": {
+                    "reference": {
                         "id": "hxn167"
                     },
                     "schema": [],
@@ -167,7 +167,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "otu": {
@@ -192,7 +192,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "otu": {
@@ -217,7 +217,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "otu": {
@@ -256,7 +256,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "otu": {
@@ -283,7 +283,7 @@ def create_mock_history(test_motor):
                     "lower_name": "prunus virus f",
                     "verified": False,
                     "name": "Test Virus",
-                    "ref": {
+                    "reference": {
                         "id": "hxn167"
                     },
                     "version": 3,
@@ -293,7 +293,7 @@ def create_mock_history(test_motor):
                     "id": "unbuilt",
                     "version": "unbuilt"
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "method_name": "remove",
@@ -316,7 +316,7 @@ def create_mock_history(test_motor):
                 "lower_name": "prunus virus f",
                 "verified": False,
                 "name": "Test Virus",
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 },
                 "version": 3,
