@@ -1,6 +1,5 @@
 import pymongo
 import pymongo.errors
-import pymongo.errors
 
 import virtool.db.analyses
 import virtool.db.files

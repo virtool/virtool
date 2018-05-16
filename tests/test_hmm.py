@@ -1,6 +1,5 @@
 import gzip
 import json
-import operator
 import os
 import pytest
 import shutil

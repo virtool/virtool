@@ -105,8 +105,6 @@ async def blast(req):
 
     blast_data, document = await virtool.db.analyses.update_nuvs_blast(db, settings, analysis_id, sequence_index, rid)
 
-    formatted = await virtool.db.analyses.format_analysis(db, settings, document)
-
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
     asyncio.ensure_future(virtool.bio.wait_for_blast_result(

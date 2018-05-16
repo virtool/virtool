@@ -1,6 +1,3 @@
-import os
-import pytest
-import motor.motor_asyncio
 import concurrent.futures
 from aiohttp import web
 
