@@ -51,7 +51,7 @@ def test_format_software_release():
 
 
 @pytest.mark.parametrize("download_release_error", [None, virtool.errors.GitHubError, FileNotFoundError])
-async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker, test_motor, test_dispatch):
+async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker, test_motor):
     # This the replacement for the TemporaryDirectory that would normally be used by install().
     temp_dir = None
 
@@ -100,7 +100,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         make_mocked_coro()
     ])
 
-    await virtool.updates.install(app, test_motor, {"proxy_enable": False}, test_dispatch, loop, "foobar", 1234)
+    await virtool.updates.install(app, test_motor, {"proxy_enable": False}, loop, "foobar", 1234)
 
     if not download_release_error:
         assert set(os.listdir(install_path)) == {"run", "client", "VERSION", "install.sh"}
@@ -133,7 +133,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
 
 @pytest.mark.parametrize("step", ["download_release", "check_tree"])
 @pytest.mark.parametrize("progress", [0.1, 0.3])
-async def test_update_software_process(progress, step, test_motor, test_dispatch):
+async def test_update_software_process(progress, step, test_motor):
     await test_motor.status.insert_one({
         "_id": "software_update",
         "process": {
@@ -143,7 +143,7 @@ async def test_update_software_process(progress, step, test_motor, test_dispatch
         }
     })
 
-    await virtool.updates.update_software_process(test_motor, test_dispatch, progress, step=step)
+    await virtool.updates.update_software_process(test_motor, progress, step=step)
 
     assert await test_motor.status.find_one("software_update") == {
         "_id": "software_update",

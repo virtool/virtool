@@ -262,8 +262,8 @@ async def revert(db, change_id):
         patched_otu, sequences = virtool.otus.split(patched)
 
         # Add the reverted sequences to the collection.
-        if len(sequences):
-            await db.sequences.insert_many(sequences)
+        for sequence in sequences:
+            await db.sequences.insert_one(sequence)
 
         # Replace the existing otu with the patched one. If it doesn't exist, insert it.
         await db.otus.replace_one({"_id": otu_id}, patched_otu, upsert=True)

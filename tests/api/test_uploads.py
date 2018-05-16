@@ -6,7 +6,7 @@ import sys
 class TestUpload:
 
     @pytest.mark.parametrize("file_type", ["reference", "reads", "hmm", "subtraction"])
-    async def test(self, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
+    async def test(self, file_type, tmpdir, spawn_client, static_time, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"] = {
@@ -40,22 +40,6 @@ class TestUpload:
                 "id": "test"
             }
         }
-
-        assert test_dispatch.stub.call_args[0] == (
-            "files",
-            "update",
-            {
-                "name": "Test.fq.gz",
-                "type": file_type,
-                "ready": False,
-                "reserved": False,
-                "uploaded_at": static_time,
-                "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
-                "user": {
-                    "id": "test"
-                }
-            }
-        )
 
     async def test_invalid_query(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])

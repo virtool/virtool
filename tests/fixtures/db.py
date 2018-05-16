@@ -1,6 +1,9 @@
 import pytest
 import pymongo
 import motor.motor_asyncio
+from aiohttp.test_utils import make_mocked_coro
+
+import virtool.db.iface
 
 
 class MockDeleteResult:
@@ -30,6 +33,13 @@ def test_motor(test_db, test_db_name, loop):
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
     loop.run_until_complete(client.drop_database(test_db_name))
+
+
+@pytest.fixture
+def test_dbi(test_motor, loop):
+    i = virtool.db.iface.DB(test_motor, make_mocked_coro(), loop)
+    loop.run_until_complete(i.connect())
+    return i
 
 
 @pytest.fixture

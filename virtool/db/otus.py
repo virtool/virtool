@@ -6,6 +6,24 @@ import virtool.utils
 import virtool.otus
 from virtool.api.utils import compose_regex_query, paginate
 
+PROJECTION = [
+    "_id",
+    "name",
+    "abbreviation",
+    "version",
+    "verified"
+]
+
+SEQUENCE_PROJECTION = [
+    "_id",
+    "definition",
+    "host",
+    "otu_id",
+    "isolate_id",
+    "sequence",
+    "segment"
+]
+
 
 async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
     """
@@ -130,7 +148,7 @@ async def find(db, names, term, req_query, verified, ref_id=None):
         req_query,
         base_query=base_query,
         sort="name",
-        projection=virtool.otus.LIST_PROJECTION
+        projection=PROJECTION
     )
 
     data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["otu"]).distinct("otu.name"))
@@ -203,7 +221,7 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
     return virtool.otus.format_otu(joined, issues, most_recent_change)
 
 
-async def remove(db, dispatch, otu_id, user_id, document=None):
+async def remove(db, otu_id, user_id, document=None):
 
     # Join the otu.
     joined = await join(db, otu_id, document=document)
@@ -226,12 +244,6 @@ async def remove(db, dispatch, otu_id, user_id, document=None):
         None,
         description,
         user_id
-    )
-
-    await dispatch(
-        "otus",
-        "remove",
-        [otu_id]
     )
 
     return True
@@ -293,4 +305,3 @@ async def update_last_indexed_version(db, id_list, version):
     })
 
     return result
-

@@ -11,7 +11,7 @@ import virtool.utils
 
 class Manager:
 
-    def __init__(self, loop, db, settings, dispatch, capture_exception):
+    def __init__(self, loop, db, settings, capture_exception):
         #: The application IO loop
         self.loop = loop
 
@@ -20,9 +20,6 @@ class Manager:
 
         #: The settings object
         self.settings = settings
-
-        #: A reference to the dispatcher's dispatch method.
-        self.dispatch = dispatch
 
         #: A reference to Sentry client's `captureException` method.
         self.capture_exception = capture_exception
@@ -121,7 +118,6 @@ class Manager:
             self.executor,
             self.db,
             self.settings,
-            self.dispatch,
             self.capture_exception,
             job_id,
             task_name,
@@ -130,9 +126,7 @@ class Manager:
             mem
         )
 
-        document = await self.db.jobs.find_one(job_id, virtool.db.jobs.LIST_PROJECTION)
-
-        await self.dispatch("jobs", "update", virtool.db.jobs.processor(document))
+        document = await self.db.jobs.find_one(job_id, virtool.db.jobs.PROJECTION)
 
         return virtool.utils.base_processor(document)
 

@@ -135,9 +135,6 @@ async def test_organize_groups(test_motor):
 
     documents = await test_motor.groups.find().to_list(None)
 
-    import pprint
-    pprint.pprint(documents)
-
     assert documents == [{
         "_id": "foobar",
         "permissions": {

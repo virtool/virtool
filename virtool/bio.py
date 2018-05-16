@@ -5,7 +5,6 @@ import re
 import zipfile
 
 import aiohttp
-import pymongo
 
 import virtool.analyses
 import virtool.errors
@@ -423,7 +422,7 @@ def parse_blast_content(content, rid):
     return output
 
 
-async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_index, rid):
+async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
@@ -452,12 +451,8 @@ async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_in
         if update["ready"]:
             update["result"] = await get_ncbi_blast_result(settings, rid)
 
-        document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
+        await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
             "$set": {
                 "results.$.blast": update
             }
-        }, return_document=pymongo.ReturnDocument.AFTER)
-
-        formatted = await virtool.analyses.format_analysis(db, document)
-
-        await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
+        })

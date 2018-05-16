@@ -1,5 +1,4 @@
 import pymongo.errors
-from pymongo import ReturnDocument
 
 import virtool.db.groups
 import virtool.db.users
@@ -97,7 +96,7 @@ async def update_permissions(req):
         "$set": {
             "permissions": old_document["permissions"]
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     await virtool.db.groups.update_member_users(db, group_id)
 
@@ -114,9 +113,9 @@ async def remove(req):
 
     group_id = req.match_info["group_id"]
 
-    document = await db.groups.find_one_and_delete({"_id": group_id})
+    delete_result = await db.groups.delete_one({"_id": group_id})
 
-    if not document:
+    if not delete_result.deleted_count:
         return not_found()
 
     await virtool.db.groups.update_member_users(db, group_id, remove=True)

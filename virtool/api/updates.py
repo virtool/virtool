@@ -1,7 +1,5 @@
 import asyncio
 
-import pymongo
-
 import virtool.app
 import virtool.http.routes
 import virtool.updates
@@ -25,7 +23,7 @@ async def get(req):
             "releases": releases,
             "current_version": req.app["version"]
         }
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -33,7 +31,6 @@ async def get(req):
 @routes.post("/api/updates/software", admin=True)
 async def upgrade(req):
     db = req.app["db"]
-    dispatch = req.app["dispatcher"].dispatch
 
     channel = req.app["settings"].get("software_channel")
 
@@ -56,9 +53,7 @@ async def upgrade(req):
                 "current_version": req.app["version"],
                 "releases": await virtool.updates.get_releases(db, req.app["settings"], channel, req.app["version"])
             }
-        }, return_document=pymongo.ReturnDocument)
-
-        await dispatch("status", "update", virtool.utils.base_processor(document))
+        })
 
     releases = document.get("releases", list())
 
@@ -78,9 +73,7 @@ async def upgrade(req):
                 "error": False
             }
         }
-    }, return_document=pymongo.ReturnDocument.AFTER)
-
-    await dispatch("status", "update", virtool.utils.base_processor(document))
+    })
 
     download_url = latest_release["download_url"]
 
@@ -88,7 +81,6 @@ async def upgrade(req):
         req.app,
         db,
         req.app["settings"],
-        dispatch,
         req.app.loop,
         download_url,
         latest_release["size"]

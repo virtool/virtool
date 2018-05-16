@@ -6,7 +6,6 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 
 import arrow
-import pymongo
 
 
 def base_processor(document):
@@ -154,7 +153,7 @@ async def reload(app):
     raise SystemError("Could not determine executable type")
 
 
-async def update_status_process(db, dispatch, _id, progress, step=None, error=None):
+async def update_status_process(db, _id, progress, step=None, error=None):
     """
     Update the process field in a status document. These fields are used to track long-running asynchronous processes
     such as software updates or data imports.
@@ -163,9 +162,6 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param dispatch: a reference to the dispatcher's dispatch method
-    :type dispatch: func
 
     :param _id: the database _id for the status document
     :type _id: str
@@ -195,10 +191,6 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
 
     document = await db.status.find_one_and_update({"_id": _id}, {
         "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
-    document = base_processor(document)
-
-    await dispatch("status", "update", document)
-
-    return document
+    return base_processor(document)

@@ -4,7 +4,6 @@ import os
 import shutil
 
 import aionotify
-import pymongo
 
 import virtool.db.files
 import virtool.utils
@@ -54,11 +53,10 @@ def has_read_extension(filename):
 
 class Manager:
 
-    def __init__(self, loop, executor, db, dispatch, files_path, watch_path, clean_interval=20):
+    def __init__(self, loop, executor, db, files_path, watch_path, clean_interval=20):
         self.loop = loop
         self.executor = executor
         self.db = db
-        self.dispatch = dispatch
         self.files_path = files_path
         self.watch_path = watch_path
         self.clean_interval = clean_interval
@@ -139,7 +137,7 @@ class Manager:
         path = os.path.join(self.watch_path, filename)
 
         if has_read_extension(filename):
-            document = await virtool.db.files.create(self.db, self.dispatch, filename, "reads")
+            document = await virtool.db.files.create(self.db, filename, "reads")
 
             await self.loop.run_in_executor(
                 self.executor,
@@ -164,15 +162,9 @@ class Manager:
                 "size": file_entry["size"],
                 "ready": True
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.files.PROJECTION)
+        }, projection=virtool.db.files.PROJECTION)
 
-        if document:
-            await self.dispatch(
-                "files",
-                "update",
-                virtool.utils.base_processor(document)
-            )
-        else:
+        if not document:
             await self.loop.run_in_executor(
                 self.executor,
                 os.remove,
@@ -187,16 +179,7 @@ class Manager:
         })
 
     async def handle_file_deletion(self, filename):
-        document = await self.db.files.find_one({"_id": filename})
-
-        if document:
-            await self.db.files.delete_one({"_id": filename})
-
-            await self.dispatch(
-                "files",
-                "remove",
-                [document["_id"]]
-            )
+        await self.db.files.delete_one({"_id": filename})
 
     async def close(self):
         self._clean_task.cancel()

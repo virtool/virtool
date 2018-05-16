@@ -30,7 +30,7 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.db.jobs.LIST_PROJECTION,
+        projection=virtool.db.jobs.PROJECTION,
         processor=virtool.db.jobs.processor
     )
 

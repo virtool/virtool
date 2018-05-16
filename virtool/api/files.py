@@ -59,8 +59,6 @@ async def remove(req):
     if delete_result.deleted_count == 0:
         return not_found("Document does not exist")
 
-    await req.app["dispatcher"].dispatch("files", "remove", [file_id])
-
     return json_response({
         "file_id": file_id,
         "removed": True

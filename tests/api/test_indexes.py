@@ -151,9 +151,9 @@ class TestCreate:
 
         assert resp.status == 201
 
-        expected_id = test_random_alphanumeric.history[0]
+        expected_id = test_random_alphanumeric.history[1]
 
-        expected_job_id = test_random_alphanumeric.history[1]
+        expected_job_id = test_random_alphanumeric.history[2]
 
         expected = {
             "_id": expected_id,

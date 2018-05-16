@@ -1,5 +1,4 @@
 from cerberus import Validator
-from pymongo import ReturnDocument
 
 import virtool.db.analyses
 import virtool.db.files
@@ -67,7 +66,7 @@ async def find(req):
         db_query,
         req.query,
         sort="created_at",
-        projection=virtool.samples.LIST_PROJECTION,
+        projection=virtool.db.samples.LIST_PROJECTION,
         base_query=base_query,
         reverse=True
     )
@@ -169,7 +168,7 @@ async def create(req):
 
     await db.samples.insert_one(document)
 
-    await virtool.db.files.reserve(db, req.app["dispatcher"].dispatch, data["files"])
+    await virtool.db.files.reserve(db, data["files"])
 
     task_args = {
         "sample_id": sample_id,
@@ -211,11 +210,9 @@ async def edit(req):
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
-    }, return_document=ReturnDocument.AFTER, projection=virtool.samples.LIST_PROJECTION)
+    }, projection=virtool.db.samples.LIST_PROJECTION)
 
     processed = virtool.utils.base_processor(document)
-
-    await req.app["dispatcher"].dispatch("sample", "update", processed)
 
     return json_response(processed)
 
@@ -257,7 +254,7 @@ async def set_rights(req):
     # Update the sample document with the new rights.
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
-    }, return_document=ReturnDocument.AFTER, projection=virtool.samples.RIGHTS_PROJECTION)
+    }, projection=virtool.db.samples.RIGHTS_PROJECTION)
 
     return json_response(document)
 
@@ -309,7 +306,7 @@ async def list_analyses(req):
 
         raise
 
-    documents = await db.analyses.find({"sample.id": sample_id}, virtool.jobs.analysis.LIST_PROJECTION).to_list(None)
+    documents = await db.analyses.find({"sample.id": sample_id}, virtool.db.analyses.PROJECTION).to_list(None)
 
     return json_response({
         "total_count": len(documents),

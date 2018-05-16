@@ -45,7 +45,7 @@ def otu_resource():
 
 
 @pytest.fixture
-async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, otu_resource):
+async def mock_job(loop, mocker, tmpdir, test_motor, otu_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
@@ -80,7 +80,6 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, otu_resource
         executor,
         test_motor,
         settings,
-        test_dispatch,
         mocker.stub("capture_exception"),
         "foobar",
         "pathoscope_bowtie",
@@ -319,7 +318,7 @@ async def test_pathoscope(mock_job):
         }
 
 
-async def test_import_results(test_motor, test_dispatch, mock_job):
+async def test_import_results(test_motor, mock_job):
     await test_motor.analyses.insert_one({
         "_id": "baz",
         "algorithm": "pathoscope_bowtie",
@@ -358,13 +357,3 @@ async def test_import_results(test_motor, test_dispatch, mock_job):
         "nuvs": False,
         "pathoscope": True
     }
-
-    assert test_dispatch.stub.call_args[0] == (
-        "samples",
-        "update",
-        {
-            "_id": "foobar",
-            "nuvs": False,
-            "pathoscope": True
-        }
-    )
