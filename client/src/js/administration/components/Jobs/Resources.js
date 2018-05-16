@@ -33,6 +33,8 @@ class Resources extends React.Component {
         super(props);
 
         this.state = {
+            mem: this.props.mem,
+            proc: this.props.proc,
             errorProc: false,
             errorMem: false,
             showAlert: false
@@ -43,14 +45,16 @@ class Resources extends React.Component {
         this.props.onGet();
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.mem !== this.props.mem) {
-            this.setState({errorMem: false});
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.mem !== prevState.mem) {
+            return { errorMem: false };
         }
 
-        if (nextProps.proc !== this.props.proc) {
-            this.setState({errorProc: false});
+        if (nextProps.proc !== prevState.proc) {
+            return { errorProc: false };
         }
+
+        return null;
     }
 
     handleChange = (e) => {

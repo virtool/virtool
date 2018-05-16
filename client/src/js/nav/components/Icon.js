@@ -22,9 +22,7 @@ class NotificationIcon extends React.Component {
 
     componentDidMount () {
         this.props.onGet();
-    }
 
-    componentDidMount () {
         this.interval = window.setInterval(() => {
             this.props.onGet();
         }, 300000);

@@ -38,7 +38,8 @@ class Groups extends React.Component {
             createGroupId: "",
             spaceError: false,
             submitted: false,
-            error: ""
+            error: "",
+            groups: props.groups
         };
     }
 
@@ -52,26 +53,25 @@ class Groups extends React.Component {
         }
     }
 
-    componentWillReceiveProps (nextProps) {
-
+    static getDerivedStateFromProps (nextProps, prevState) {
         // If there are no groups, skip update
         if (!nextProps.groups.length) {
-            return;
+            return null;
         }
 
-        const state = {};
+        const newState = {};
+
+        if (!some(nextProps.groups, {id: prevState.activeId}) || (prevState.groups === null && nextProps.groups)) {
+            newState.activeId = nextProps.groups[0].id;
+        }
 
         // What to do if the active group was removed OR the active group id in state if onList response is incoming.
-        if (!some(nextProps.groups, {id: this.state.activeId}) || (this.props.groups === null && nextProps.groups)) {
-            state.activeId = nextProps.groups[0].id;
+        if (nextProps.groups.length > prevState.groups.length) {
+            newState.activeId = difference(nextProps.groups, prevState.groups)[0].id;
+            newState.createGroupId = "";
         }
 
-        if (nextProps.groups.length > this.props.groups.length) {
-            state.activeId = difference(nextProps.groups, this.props.groups)[0].id;
-            state.createGroupId = "";
-        }
-
-        this.setState(state);
+        return newState;
     }
 
     handleModalExited = () => {

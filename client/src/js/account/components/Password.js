@@ -7,34 +7,40 @@ import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, InputError, RelativeTime } from "../../base";
 
-const getInitialState = () => ({
+const getInitialState = (props) => ({
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
     errorOldPassword: "",
     errorNewPassword: "",
-    errorConfirmPassword: ""
+    errorConfirmPassword: "",
+    error: props.error
 });
 
 export class ChangePassword extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
             if (nextProps.error.status === 400) {
-                this.setState({
-                    errorOldPassword: nextProps.error.message
-                });
+                return {
+                    errorOldPassword: nextProps.error.message,
+                    error: nextProps.error
+                };
             }
         }
 
+        return null;
+    }
+
+    componentDidUpdate (prevProps) {
         // Clears form on successful password change
-        if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
-            this.setState(getInitialState());
+        if (this.props.lastPasswordChange !== prevProps.lastPasswordChange) {
+            return getInitialState(this.props);
         }
     }
 

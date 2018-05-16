@@ -18,7 +18,8 @@ const getInitialState = (props) => {
     const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
 
     return {
-        schema: remainingSchema
+        schema: remainingSchema,
+        sequences: props.sequences
     };
 };
 
@@ -30,11 +31,11 @@ class IsolateSequences extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    componentWillReceiveProps (nextProps) {
-
-        if (this.props.sequences !== nextProps.sequences) {
-            this.setState(getInitialState(nextProps));
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (prevState.sequences !== nextProps.sequences) {
+            return getInitialState(nextProps);
         }
+        return null;
     }
 
     render () {

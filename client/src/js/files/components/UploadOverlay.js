@@ -53,7 +53,7 @@ const UploadOverlay = (props) => {
     );
 
     return <div>{content}</div>;
-}
+};
 
 UploadOverlay.propTypes = {
     uploads: PropTypes.arrayOf(PropTypes.object),
