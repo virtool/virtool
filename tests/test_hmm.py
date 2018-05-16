@@ -123,14 +123,10 @@ async def test_install_official(loop, mocker, tmpdir, test_motor):
     m_get_assets.assert_called_with(settings, "v1.9.2-beta.2", None, None)
 
 
-async def test_insert_annotations(test_motor, test_random_alphanumeric):
+async def test_insert_annotations(test_dbi, test_random_alphanumeric):
     with gzip.open(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), "rt") as f:
         annotations = json.load(f)
 
-    await virtool.db.hmm.insert_annotations(test_motor, annotations)
+    await virtool.db.hmm.insert_annotations(test_dbi, annotations)
 
-    assert set(await test_motor.hmm.distinct("_id")) == set(test_random_alphanumeric.history)
-
-    annotations = sorted(annotations, key=operator.itemgetter("cluster"))
-
-    assert await test_motor.hmm.find({}, sort=[("cluster", 1)]).to_list(None) == annotations
+    assert set(await test_dbi.hmm.distinct("_id")) == set(test_random_alphanumeric.history)

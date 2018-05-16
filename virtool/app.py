@@ -6,6 +6,7 @@ import sys
 
 import aiofiles
 import aiojobs.aiohttp
+from motor import motor_asyncio
 import pymongo
 import pymongo.errors
 from aiohttp import web
@@ -105,7 +106,26 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["db"] = virtool.db.iface.DB(app)
+    host = app["settings"]["db_host"]
+    port = app["settings"]["db_port"]
+    name = app["settings"]["db_name"]
+
+    client = motor_asyncio.AsyncIOMotorClient(
+        host,
+        port,
+        serverSelectionTimeoutMS=6000,
+        io_loop=app.loop
+    )
+
+    try:
+        await client.database_names()
+    except pymongo.errors.ServerSelectionTimeoutError:
+        raise virtool.errors.MongoConnectionError(
+            "Could not connect to MongoDB server at {}:{}".format(host, port)
+        )
+
+    app["db"] = virtool.db.iface.DB(client[name], app["dispatcher"].dispatch, app.loop)
+
     await app["db"].connect()
 
 
