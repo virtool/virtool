@@ -1,82 +1,27 @@
 import pytest
+import multidict
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_find(spawn_client, static_time):
+async def test_find(mocker, spawn_client, md_proxy):
     client = await spawn_client(authorize=True)
 
-    await client.db.indexes.insert_many([
-        {
-            "_id": "foo",
-            "version": 0,
-            "created_at": static_time,
-            "ready": True,
-            "has_files": True,
-            "user": {
-                "id": "test"
-            },
-            "job": {
-                "id": "abh675"
-            }
-        },
-        {
-            "_id": "bar",
-            "version": 1,
-            "created_at": static_time,
-            "ready": False,
-            "has_files": True,
-            "user": {
-                "id": "test"
-            },
-            "job": {
-                "id": "sj82la"
-            }
-        }
-    ])
+    expected = {
+        "documents": [
+            {"id": "bar"},
+            {"id": "foo"}
+        ]
+    }
+
+    m_find = mocker.patch("virtool.db.indexes.find", make_mocked_coro(expected))
 
     resp = await client.get("/api/indexes")
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "documents": [
-            {
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "bar",
-                "change_count": 0,
-                "modified_otu_count": 0,
-                "job": {
-                    "id": "sj82la"
-                },
-                "ready": False,
-                "user": {
-                    "id": "test"
-                },
-                "version": 1,
-            },
-            {
-                "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
-                "id": "foo",
-                "change_count": 0,
-                "modified_otu_count": 0,
-                "job": {
-                    "id": "abh675"
-                },
-                "ready": True,
-                "user": {
-                    "id": "test"
-                },
-                "version": 0,
-            }
-        ],
-        "total_count": 2,
-        "found_count": 2,
-        "page": 1,
-        "page_count": 1,
-        "per_page": 15
-    }
+    assert await resp.json() == expected
+
+    m_find.assert_called_with(client.db, md_proxy())
 
 
 @pytest.mark.parametrize("not_found", [False, True])

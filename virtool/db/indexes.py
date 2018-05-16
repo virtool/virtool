@@ -63,6 +63,8 @@ async def find(db, req_query, ref_id=None):
     for document in data["documents"]:
         document.update(await get_modification_stats(db, document["id"]))
 
+    data.update(await get_unbuilt_stats(db, ref_id))
+
     return data
 
 
@@ -274,3 +276,37 @@ async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
             }
         }
     })
+
+
+async def get_unbuilt_stats(db, ref_id=None):
+    """
+    Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metdata for a
+    index find request.
+
+    Can search against a specific reference or all references.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the ref id to search unbuilt changes for
+    :type ref_id: str
+
+    :return: the change count and modified OTU count
+    :rtype: dict
+
+    """
+    ref_query = dict()
+
+    if ref_id:
+        ref_query["ref.id"] = ref_id
+
+    history_query = {
+        **ref_query,
+        "index.id": "unbuilt"
+    }
+
+    return {
+        "total_otu_count": await db.otus.count(ref_query),
+        "change_count": await db.history.count(history_query),
+        "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
+    }
