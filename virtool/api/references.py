@@ -95,6 +95,16 @@ async def find_history(req):
         "reference.id": ref_id
     }
 
+    unbuilt = req.query.get("unbuilt", None)
+
+    if unbuilt == "true":
+        base_query["index.id"] = "unbuilt"
+
+    elif unbuilt == "false":
+        base_query["index.id"] = {
+            "$ne": "unbuilt"
+        }
+
     data = await virtool.db.history.find(
         db,
         req.query,
