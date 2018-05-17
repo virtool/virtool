@@ -1,7 +1,6 @@
 import { LOCATION_CHANGE, push } from "react-router-redux";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-//import * as filesAPI from "../files/api";
 import * as otusAPI from "./api";
 import {apiCall, apiFind, putGenericError, setPending} from "../sagaUtils";
 import {
@@ -20,8 +19,6 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT
-    //UPLOAD_IMPORT,
-    //COMMIT_IMPORT
 } from "../actionTypes";
 
 export function* updateAndGetOTU (apiMethod, action, actionType) {
@@ -113,25 +110,7 @@ export function* revert (action) {
         yield put({type: REVERT.FAILED, error});
     }
 }
-/*
-export function* uploadImport (action) {
-    try {
-        const uploadResponse = yield filesAPI.upload({
-            file: action.file,
-            fileType: "otus",
-            onProgress: action.onProgress
-        });
-        const getResponse = yield otusAPI.getImport({fileId: uploadResponse.body.id});
-        yield put({type: UPLOAD_IMPORT.SUCCEEDED, data: getResponse.body});
-    } catch (error) {
-        yield put({type: UPLOAD_IMPORT.FAILED, error});
-    }
-}
 
-export function* commitImport (action) {
-    yield setPending(apiCall(otusAPI.commitImport, action, COMMIT_IMPORT));
-}
-*/
 export function* watchOTUs () {
     yield throttle(300, LOCATION_CHANGE, findOTUs);
     yield takeLatest(FETCH_OTUS.REQUESTED, fetchOTUs);
@@ -148,6 +127,4 @@ export function* watchOTUs () {
     yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
     yield takeEvery(REMOVE_SEQUENCE.REQUESTED, removeSequence);
     yield takeEvery(REVERT.REQUESTED, revert);
-    //yield takeLatest(UPLOAD_IMPORT.REQUESTED, uploadImport);
-    //yield takeLatest(COMMIT_IMPORT.REQUESTED, commitImport);
 }

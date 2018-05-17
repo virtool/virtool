@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Label, Nav, NavItem } from "react-bootstrap";
+import { Label, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
@@ -12,6 +12,7 @@ import General from "./General";
 import History from "./History";
 import RemoveOTU from "./RemoveOTU";
 import Schema from "./Schema";
+import { getReference } from "../../../references/actions";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 
@@ -29,14 +30,23 @@ class OTUDetail extends React.Component {
         this.props.getOTU(this.props.match.params.otuId);
     }
 
+    componentDidUpdate (prevProps) {
+        if (this.props.detail !== null && prevProps.detail !== this.props.detail) {
+            this.props.onGetReference(this.props.detail.reference.id);
+        }
+    }
+
     render = () => {
 
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.otuId) {
+        if (this.props.detail === null ||
+            this.props.detail.id !== this.props.match.params.otuId ||
+            this.props.refDetail === null
+        ) {
             return <LoadingPlaceholder />;
         }
 
         const otuId = this.props.detail.id;
-        const refId = this.props.refId;
+        const refId = this.props.detail.reference.id;
 
         const { name, abbreviation } = this.props.detail;
 
@@ -69,6 +79,17 @@ class OTUDetail extends React.Component {
                 <Helmet>
                     <title>{`${name} - OTU`}</title>
                 </Helmet>
+
+                <Breadcrumb>
+                    <Breadcrumb.Item>
+                        <LinkContainer to={`/refs/${refId}/otus`}>
+                            <div>
+                                OTUs
+                            </div>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item active>{this.props.detail.name}</Breadcrumb.Item>
+                </Breadcrumb>
 
                 <h3 style={{marginBottom: "20px"}}>
                     <Flex alignItems="flex-end">
@@ -136,7 +157,7 @@ class OTUDetail extends React.Component {
 const mapStateToProps = state => ({
     detail: state.otus.detail,
     canModify: state.account.administrator,
-    refId: state.references.detail.id
+    refDetail: state.otus.detail
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -151,6 +172,10 @@ const mapDispatchToProps = dispatch => ({
 
     showRemove: () => {
         dispatch(showRemoveOTU());
+    },
+
+    onGetReference: (refId) => {
+        dispatch(getReference(refId));
     }
 
 });

@@ -15,8 +15,6 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
-    //UPLOAD_IMPORT,
-    //COMMIT_IMPORT,
     SELECT_ISOLATE,
     SHOW_EDIT_OTU,
     SHOW_REMOVE_OTU,
@@ -261,33 +259,6 @@ export const revert = (refId, otuId, version) => ({
     otuId,
     version
 });
-
-/**
- * Returns action that can trigger an API call for uploading a OTU database.
- *
- * @func
- * @param file {object} OTU database file
- * @param onProgress {function} function that sets the component's progress state with a numerical value
- * @returns {object}
- *
-export const uploadImport = (file, onProgress) => ({
-    type: UPLOAD_IMPORT.REQUESTED,
-    file,
-    onProgress
-});
-
- **
- * Returns action that can trigger an API call for committing a OTU database import.
- *
- * @func
- * @param fileId {string} unique OTU database file id
- * @returns {object}
- *
-export const commitImport = (fileId) => ({
-    type: COMMIT_IMPORT.REQUESTED,
-    fileId
-});
-*/
 
 /**
  * Returns action for selecting an isolate to view.

@@ -116,10 +116,7 @@ const mapStateToProps = (state) => {
         otuId: state.otus.detail.id,
         canModify: state.account.administrator,
         editing: state.otus.editSequence,
-        isolateName: formatIsolateName(activeIsolate),
-        //addSequence: state.otus.addSequence,
-        //editSequence: state.otus.editSequence,
-        //removeSequence: state.otus.removeSequence
+        isolateName: formatIsolateName(activeIsolate)
     };
 };
 

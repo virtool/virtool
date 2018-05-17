@@ -69,7 +69,6 @@ export class IsolateDetail extends React.Component {
                         onClick={this.props.showEditIsolate}
                         style={{paddingLeft: "7px"}}
                     />
-    
                     {isolate.default ? null : (
                         <Icon
                             name="star"
@@ -79,7 +78,6 @@ export class IsolateDetail extends React.Component {
                             style={{paddingLeft: "3px"}}
                         />
                     )}
-    
                     <Icon
                         name="trash"
                         bsStyle="danger"

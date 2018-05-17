@@ -93,14 +93,3 @@ export const removeSequence = ({ otuId, isolateId, sequenceId }) => (
 export const revert = ({ refId, otuId, version }) => (
     Request.delete(`/api/refs/${refId}/history/${otuId}.${version}`)
 );
-/*
-export const getImport = ({ refId, fileId }) => (
-    Request.get(`/api/refs/${refId}/otus/import`)
-        .query({file_id: fileId})
-);
-
-export const commitImport = ({ fileId }) => (
-    Request.post(`/api/otus/import`)
-        .send({file_id: fileId})
-);
-*/

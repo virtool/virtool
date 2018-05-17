@@ -10,7 +10,7 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
-import ReferenceOTUs from "../../../otus/components/OTUs";
+import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndex from "../../../indexes/components/Indexes";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
