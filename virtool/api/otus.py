@@ -654,7 +654,7 @@ async def get_sequence(req):
 
 
 @routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences", schema={
-    "id": {"type": "string", "minlength": 1, "required": True},
+    "accession": {"type": "string", "minlength": 1, "required": True},
     "definition": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
     "segment": {"type": "string"},
@@ -683,7 +683,6 @@ async def create_sequence(req):
 
     # Update POST data to make sequence document.
     data.update({
-        "_id": data.pop("id"),
         "otu_id": otu_id,
         "isolate_id": isolate_id,
         "host": data.get("host", ""),
@@ -692,12 +691,9 @@ async def create_sequence(req):
 
     old = await virtool.db.otus.join(db, otu_id, document)
 
-    try:
-        await db.sequences.insert_one(data)
-    except pymongo.errors.DuplicateKeyError:
-        return conflict("Sequence id already exists")
+    sequence_document = await db.sequences.insert_one(data)
 
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+    new = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
             "verified": False
         },
@@ -706,7 +702,7 @@ async def create_sequence(req):
         }
     })
 
-    new = await virtool.db.otus.join(db, otu_id, document)
+    new = await virtool.db.otus.join(db, otu_id, new)
 
     issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
@@ -726,12 +722,12 @@ async def create_sequence(req):
         "create_sequence",
         old,
         new,
-        "Created new sequence {} in {}".format(data["_id"], virtool.otus.format_isolate_name(isolate)),
+        "Created new sequence {} in {}".format(data["accession"], virtool.otus.format_isolate_name(isolate)),
         req["client"].user_id
     )
 
     headers = {
-        "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, data["_id"])
+        "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, sequence_document["_id"])
     }
 
     return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
