@@ -525,8 +525,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
         progress = progress_tracker.add(1)
 
-        if progress - progress_tracker.last_reported >= 0.05:
+        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
             await virtool.db.processes.update(db, process_id, progress=(0.2 + progress))
+            progress_tracker.reported()
 
     await virtool.db.processes.update(db, process_id, 0.6, "create_history")
 
@@ -556,7 +557,8 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
         progress = progress_tracker.add(1)
 
-        if progress - progress_tracker.last_reported >= 0.05:
+        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
             await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
+            progress_tracker.reported()
 
     await virtool.db.processes.update(db, process_id, 1)
