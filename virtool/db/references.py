@@ -511,6 +511,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
                 sequence.update({
                     "_id": sequence_id,
+                    "accession": sequence.get("_id", None) or sequence["accession"],
                     "otu_id": otu_id,
                     "isolate_id": isolate_id,
                     "reference": {
