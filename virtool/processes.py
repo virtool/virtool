@@ -43,7 +43,7 @@ class ProgressTracker:
 
         return self.progress
 
-    async def reported(self):
+    def reported(self):
         self.last_reported = self.progress
 
     @property
