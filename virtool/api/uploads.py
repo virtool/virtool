@@ -40,7 +40,6 @@ async def upload(req):
 
     document = await virtool.db.files.create(
         db,
-        req.app["dispatcher"].dispatch,
         filename,
         file_type,
         req["client"].user_id

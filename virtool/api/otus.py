@@ -1,9 +1,7 @@
 from copy import deepcopy
 
-import pymongo
 import pymongo.errors
 from aiohttp import web
-from pymongo import ReturnDocument
 
 import virtool.db.history
 import virtool.db.otus
@@ -149,7 +147,7 @@ async def edit(req):
     if not old:
         return not_found()
 
-    ref_id = old["ref"]["id"]
+    ref_id = old["reference"]["id"]
 
     name, abbreviation, schema = virtool.otus.evaluate_changes(data, old)
 
@@ -177,7 +175,7 @@ async def edit(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
@@ -192,12 +190,6 @@ async def edit(req):
         new,
         description,
         req["client"].user_id
-    )
-
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor(virtool.db.utils.apply_projection(new, virtool.otus.LIST_PROJECTION))
     )
 
     return json_response(await virtool.db.otus.join_and_format(db, otu_id, joined=new, issues=issues))
@@ -215,7 +207,6 @@ async def remove(req):
 
     removed = await virtool.db.otus.remove(
         db,
-        req.app["dispatcher"].dispatch,
         otu_id,
         req["client"].user_id
     )
@@ -301,7 +292,7 @@ async def add_isolate(req):
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not virtool.otus.check_source_type(settings, data["source_type"]):
+    if not await virtool.db.references.check_source_type(db, document["reference"]["id"], data["source_type"]):
         return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
@@ -333,7 +324,7 @@ async def add_isolate(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
@@ -364,8 +355,6 @@ async def add_isolate(req):
         description,
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     headers = {
         "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
@@ -424,7 +413,7 @@ async def edit_isolate(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
@@ -451,8 +440,6 @@ async def edit_isolate(req):
         "Renamed {} to {}".format(old_isolate_name, isolate_name),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     complete = await virtool.db.otus.join_and_format(db, otu_id, joined=new)
 
@@ -510,7 +497,7 @@ async def set_as_default(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
@@ -537,8 +524,6 @@ async def set_as_default(req):
         "Set {} as default".format(isolate_name),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     complete = await virtool.db.otus.join_and_format(db, otu_id, new)
 
@@ -595,7 +580,7 @@ async def remove_isolate(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
@@ -627,8 +612,6 @@ async def remove_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     return no_content()
 
 
@@ -642,7 +625,7 @@ async def list_sequences(req):
     if not await db.otus.find({"_id": otu_id}, {"isolates.id": isolate_id}).count():
         return not_found()
 
-    projection = list(virtool.otus.SEQUENCE_PROJECTION)
+    projection = list(virtool.db.otus.SEQUENCE_PROJECTION)
 
     projection.remove("otu_id")
     projection.remove("isolate_id")
@@ -662,7 +645,7 @@ async def get_sequence(req):
 
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(sequence_id, virtool.otus.SEQUENCE_PROJECTION)
+    document = await db.sequences.find_one(sequence_id, virtool.db.otus.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -721,7 +704,7 @@ async def create_sequence(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
@@ -746,8 +729,6 @@ async def create_sequence(req):
         "Created new sequence {} in {}".format(data["_id"], virtool.otus.format_isolate_name(isolate)),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     headers = {
         "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, data["_id"])
@@ -785,7 +766,7 @@ async def edit_sequence(req):
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     if not updated_sequence:
         return not_found()
@@ -797,7 +778,7 @@ async def edit_sequence(req):
         "$inc": {
             "version": 1
         }
-    }, return_document=ReturnDocument.AFTER)
+    })
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
@@ -820,8 +801,6 @@ async def edit_sequence(req):
         "Edited sequence {} in {}".format(sequence_id, virtool.otus.format_isolate_name(isolate)),
         req["client"].user_id
     )
-
-    await virtool.otus.dispatch_version_only(req, new)
 
     return json_response(virtool.utils.base_processor(updated_sequence))
 
@@ -881,8 +860,6 @@ async def remove_sequence(req):
         req["client"].user_id
     )
 
-    await virtool.otus.dispatch_version_only(req, new)
-
     return no_content()
 
 
@@ -898,4 +875,3 @@ async def list_history(req):
     documents = await db.history.find({"otu.id": otu_id}).to_list(None)
 
     return json_response(documents)
-

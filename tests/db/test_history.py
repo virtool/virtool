@@ -46,7 +46,7 @@ class TestAdd:
             "user": {
                 "id": "test"
             },
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "otu": {

@@ -73,7 +73,6 @@ def test_job_manager(mocker, loop, test_motor):
         loop,
         test_motor,
         MockSettings(),
-        mocker.stub(name="dispatch"),
         mocker.stub(name="capture_exception")
     )
 

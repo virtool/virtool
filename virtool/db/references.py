@@ -13,7 +13,6 @@ import virtool.processes
 import virtool.references
 import virtool.utils
 
-
 PROJECTION = [
     "_id",
     "created_at",
@@ -31,23 +30,54 @@ PROJECTION = [
 ]
 
 
-async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
-    await virtool.db.processes.update(db, dispatch, process_id, 0, step="delete_indexes")
+async def check_source_type(db, ref_id, source_type):
+    """
+    Check if the provided `source_type` is valid based on the current reference source type configuration.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the ref to get contributors for
+    :type ref_id: str
+
+    :param source_type: the source type to check
+    :type source_type: str
+
+    :return: source type is valid
+    :rtype: bool
+
+    """
+    document = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
+
+    restrict_source_types = document.get("restrict_source_types", False)
+    source_types = document.get("source_types", list())
+
+    # Return `False` when source_types are restricted and source_type is not allowed.
+    if source_type and restrict_source_types:
+        return source_type in source_types
+
+    # Return `True` when:
+    # - source_type is empty string (unknown)
+    # - source_types are not restricted
+    # - source_type is an allowed source_type
+    return True
+
+async def cleanup_removed(db, process_id, ref_id, user_id):
+    await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
 
     await db.indexes.delete_many({
-        "ref.id": ref_id
+        "reference.id": ref_id
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.5, step="delete_otus")
+    await virtool.db.processes.update(db, process_id, 0.5, step="delete_otus")
 
-    otu_count = db.otus.count({"ref.id": ref_id})
+    otu_count = await db.otus.count({"reference.id": ref_id})
 
     progress_tracker = virtool.processes.ProgressTracker(otu_count, factor=0.5, increment=0.03)
 
-    async for document in db.otus.find({"ref.id": ref_id}):
+    async for document in db.otus.find({"reference.id": ref_id}):
         await virtool.db.otus.remove(
             db,
-            dispatch,
             document["_id"],
             user_id,
             document=document
@@ -56,10 +86,10 @@ async def cleanup_removed(db, dispatch, process_id, ref_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported > 0.03:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.5 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.5 + progress))
             progress_tracker.reported()
 
-    await virtool.db.processes.update(db, dispatch, process_id, progress=1)
+    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def get_computed(db, ref_id, internal_control_id):
@@ -90,7 +120,7 @@ async def get_contributors(db, ref_id):
     :rtype: Union[None, List[dict]]
 
     """
-    return await virtool.db.history.get_contributors(db, {"ref.id": ref_id})
+    return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
 
 
 async def get_latest_build(db, ref_id):
@@ -108,7 +138,7 @@ async def get_latest_build(db, ref_id):
 
     """
     last_build = await db.indexes.find_one({
-        "ref.id": ref_id,
+        "reference.id": ref_id,
         "ready": True
     }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
 
@@ -183,12 +213,13 @@ async def check_import_abbreviation(db, otu_document, lower_name=None):
     return None
 
 
-async def clone(db, name, clone_from, description, public, user_id):
+async def clone(db, settings, name, clone_from, description, public, user_id):
 
-    source = await db.refs.find_one(clone_from)
+    source = await db.references.find_one(clone_from)
 
     document = await create_document(
         db,
+        settings,
         name,
         source["organism"],
         description,
@@ -221,7 +252,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
     excluded_isolate_ids = list()
     excluded_sequence_ids = list()
 
-    async for otu in db.otus.find({"ref.id": source_id}):
+    async for otu in db.otus.find({"reference.id": source_id}):
 
         new_otu_id = await virtool.db.utils.get_new_id(db.otus, excluded=excluded_otu_ids)
 
@@ -251,7 +282,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
         otu.update({
             "_id": new_otu_id,
             "created_at": virtool.utils.timestamp(),
-            "ref": {
+            "reference": {
                 "id": ref_id
             }
         })
@@ -275,7 +306,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
     await db.sequences.bulk_write(sequence_requests)
 
 
-async def create_document(db, name, organism, description, data_type, public, created_at=None, ref_id=None,
+async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
     if await db.references.count({"_id": ref_id}):
@@ -301,6 +332,8 @@ async def create_document(db, name, organism, description, data_type, public, cr
         "name": name,
         "organism": organism,
         "public": public,
+        "restrict_source_types": False,
+        "source_types": settings["default_source_types"],
         "users": users,
         "user": user
     }
@@ -308,7 +341,7 @@ async def create_document(db, name, organism, description, data_type, public, cr
     return document
 
 
-async def create_original(db):
+async def create_original(db, settings):
     # The `created_at` value should be the `created_at` value for the earliest history document.
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
@@ -327,6 +360,7 @@ async def create_original(db):
 
     document = await create_document(
         db,
+        settings,
         "Original",
         "virus",
         "Created from existing viruses after upgrade to Virtool v3",
@@ -337,12 +371,12 @@ async def create_original(db):
         users=users
     )
 
-    await db.refs.insert_one(document)
+    await db.references.insert_one(document)
 
     return document
 
 
-async def create_for_import(db, name, description, public, import_from, user_id):
+async def create_for_import(db, settings, name, description, public, import_from, user_id):
     """
     Import a previously exported Virtool reference.
 
@@ -375,6 +409,7 @@ async def create_for_import(db, name, description, public, import_from, user_id)
 
     document = await create_document(
         db,
+        settings,
         name,
         None,
         description,
@@ -393,7 +428,6 @@ async def create_for_import(db, name, description, public, import_from, user_id)
 
 async def import_file(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
-    dispatch = app["dispatch"]
 
     import_data = await app["run_in_thread"](virtool.references.load_import_file, path)
 
@@ -407,14 +441,14 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
     except (TypeError, KeyError):
         organism = ""
 
-    await db.refs.update_one({"_id": ref_id}, {
+    await db.references.update_one({"_id": ref_id}, {
         "$set": {
             "data_type": data_type,
             "organism": organism
         }
     })
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.1, "validate_documents")
+    await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
 
     otus = import_data["data"]
 
@@ -429,9 +463,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             }
         ]
 
-        await virtool.db.processes.update(db, dispatch, process_id, errors=errors)
+        await virtool.db.processes.update(db, process_id, errors=errors)
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.2, "import_documents")
+    await virtool.db.processes.update(db, process_id, 0.2, "import_documents")
 
     progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
@@ -456,7 +490,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             "verified": issues is None,
             "imported": True,
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": ref_id
             },
             "user": {
@@ -478,7 +512,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
                     "_id": sequence_id,
                     "otu_id": otu_id,
                     "isolate_id": isolate_id,
-                    "ref": {
+                    "reference": {
                         "id": ref_id
                     }
                 })
@@ -490,9 +524,9 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.2 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.2 + progress))
 
-    await virtool.db.processes.update(db, dispatch, process_id, 0.6, "create_history")
+    await virtool.db.processes.update(db, process_id, 0.6, "create_history")
 
     progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
@@ -521,6 +555,6 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, dispatch, process_id, progress=(0.6 + progress))
+            await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
 
-    await virtool.db.processes.update(db, dispatch, process_id, 1)
+    await virtool.db.processes.update(db, process_id, 1)

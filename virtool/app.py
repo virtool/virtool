@@ -6,15 +6,16 @@ import sys
 
 import aiofiles
 import aiojobs.aiohttp
+from motor import motor_asyncio
 import pymongo
 import pymongo.errors
 from aiohttp import web
-from motor import motor_asyncio
 
 import virtool.app_auth
 import virtool.app_dispatcher
 import virtool.app_routes
 import virtool.app_settings
+import virtool.db.iface
 import virtool.errors
 import virtool.files
 import virtool.http.errors
@@ -94,7 +95,6 @@ async def init_dispatcher(app):
 
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
-    app["dispatch"] = app["dispatcher"].dispatch
 
 
 async def init_db(app):
@@ -106,21 +106,27 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
+    host = app["settings"].get("db_host", "localhost")
+    port = app["settings"].get("db_port", 27017)
+    name = app["db_name"] or app["settings"]["db_name"]
 
-    db_host = app["settings"].get("db_host", "localhost")
-    db_port = app["settings"].get("db_port", 27017)
-
-    client = motor_asyncio.AsyncIOMotorClient(db_host, db_port, serverSelectionTimeoutMS=6000, io_loop=app.loop)
+    client = motor_asyncio.AsyncIOMotorClient(
+        host,
+        port,
+        serverSelectionTimeoutMS=6000,
+        io_loop=app.loop
+    )
 
     try:
         await client.database_names()
     except pymongo.errors.ServerSelectionTimeoutError:
         raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
+            "Could not connect to MongoDB server at {}:{}".format(host, port)
         )
 
-    app["db"] = client[app["db_name"]]
+    app["db"] = virtool.db.iface.DB(client[name], app["dispatcher"].dispatch, app.loop)
+
+    await app["db"].connect()
 
 
 async def init_check_db(app):
@@ -172,7 +178,6 @@ async def init_job_manager(app):
         app.loop,
         app["db"],
         app["settings"],
-        app["dispatcher"].dispatch,
         capture_exception
     )
 
@@ -195,7 +200,6 @@ async def init_file_manager(app):
             app.loop,
             app["executor"],
             app["db"],
-            app["dispatcher"].dispatch,
             files_path,
             app["settings"].get("watch_path"),
             clean_interval=20

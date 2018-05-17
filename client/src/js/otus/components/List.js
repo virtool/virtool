@@ -9,7 +9,7 @@ import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import OTUImport from "./Import";
+//import OTUImport from "./Import";
 import { createFindURL } from "../../utils";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
@@ -54,7 +54,7 @@ const OTUsList = (props) => {
         OTUComponents = (
             <ListGroupItem key="noOTUs" className="text-center">
                 <span>
-                    <Icon name="info" /> No OTUs found. <Link to={{state: {importOTUs: true}}}>Import</Link> or
+                    <Icon name="info" /> No OTUs found. {/*<Link to={{state: {importOTUs: true}}}>Import</Link> or*/}
                 </span>
                 <span> <Link to={{state: {createOTU: true}}}>Create</Link> some</span>
             </ListGroupItem>
@@ -115,7 +115,7 @@ const OTUsList = (props) => {
 
             <CreateOTU {...props} />
 
-            <OTUImport />
+            {/*<OTUImport />*/}
         </div>
     );
 };

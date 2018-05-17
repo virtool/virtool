@@ -11,65 +11,6 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-LIST_PROJECTION = [
-    "_id",
-    "name",
-    "abbreviation",
-    "version",
-    "verified"
-]
-
-SEQUENCE_PROJECTION = [
-    "_id",
-    "definition",
-    "host",
-    "otu_id",
-    "isolate_id",
-    "sequence",
-    "segment"
-]
-
-
-def check_source_type(settings, source_type):
-    """
-    Check if the provided `source_type` is valid based on the current server `settings`.
-
-    :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
-    :param source_type: the source type to check
-    :type source_type: str
-
-    :return: source type is valid
-    :rtype: bool
-
-    """
-    # Return `False` when source_types are restricted and source_type is not allowed.
-    if source_type and settings["restrict_source_types"]:
-        return source_type in settings["allowed_source_types"]
-
-    # Return `True` when:
-    # - source_type is empty string (unknown)
-    # - source_types are not restricted
-    # - source_type is an allowed source_type
-    return True
-
-
-async def dispatch_version_only(req, new):
-    """
-    Dispatch a otu update. Should be called when the document itself is not being modified.
-
-    :param req: the request object
-
-    :param new: the otu document
-    :type new: Coroutine[dict]
-
-    """
-    await req.app["dispatcher"].dispatch(
-        "otus",
-        "update",
-        virtool.utils.base_processor({key: new[key] for key in LIST_PROJECTION})
-    )
 
 
 def evaluate_changes(data, document):

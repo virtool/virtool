@@ -9,6 +9,17 @@ import virtool.db.samples
 import virtool.db.utils
 import virtool.utils
 
+PROJECTION = [
+    "_id",
+    "algorithm",
+    "created_at",
+    "ready",
+    "job",
+    "index",
+    "user",
+    "sample"
+]
+
 
 async def format_analysis(db, settings, document):
     """
@@ -166,7 +177,7 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
             "id": index_id,
             "version": index_version
         },
-        "ref": {
+        "reference": {
             "id": ref_id
         },
         "user": {

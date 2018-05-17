@@ -7,6 +7,7 @@ import asyncio
 import virtool.analyses
 import virtool.bio
 import virtool.db.analyses
+import virtool.db.samples
 import virtool.errors
 import virtool.http.routes
 import virtool.jobs.analysis
@@ -54,7 +55,7 @@ async def remove(req):
     if not document:
         return not_found()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.samples.PROJECTION)
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
 
     if not sample:
         return not_found("Sample not found")
@@ -66,8 +67,6 @@ async def remove(req):
 
     if not document["ready"]:
         return conflict("Analysis is still running")
-
-    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
     return no_content()
 
@@ -106,16 +105,11 @@ async def blast(req):
 
     blast_data, document = await virtool.db.analyses.update_nuvs_blast(db, settings, analysis_id, sequence_index, rid)
 
-    formatted = await virtool.db.analyses.format_analysis(db, settings, document)
-
-    await req.app["dispatcher"].dispatch("analyses", "update", virtool.utils.base_processor(formatted))
-
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
     asyncio.ensure_future(virtool.bio.wait_for_blast_result(
         db,
         req.app["settings"],
-        req.app["dispatcher"].dispatch,
         analysis_id,
         sequence_index,
         rid

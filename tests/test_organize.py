@@ -4,12 +4,12 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.organize
 
-ORIGINAL_REF = {
+ORIGINAL_REFERENCE = {
     "id": "original"
 }
 
 
-async def test_add_original_ref(test_motor):
+async def test_add_original_reference(test_motor):
     await test_motor.foobar.insert_many([
         {
             "_id": "baz"
@@ -19,16 +19,16 @@ async def test_add_original_ref(test_motor):
         }
     ])
 
-    await virtool.organize.add_original_ref(test_motor.foobar)
+    await virtool.organize.add_original_reference(test_motor.foobar)
 
     assert await test_motor.foobar.find().to_list(None) == [
         {
             "_id": "baz",
-            "ref": ORIGINAL_REF
+            "reference": ORIGINAL_REFERENCE
         },
         {
             "_id": "hello_world",
-            "ref": ORIGINAL_REF
+            "reference": ORIGINAL_REFERENCE
         }
     ]
 
@@ -86,14 +86,14 @@ async def test_organize_analyses(test_motor):
         {
             "_id": 1,
             "ready": True,
-            "ref": {
+            "reference": {
                 "id": "original"
             }
         },
         {
             "_id": 3,
             "ready": True,
-            "ref": {
+            "reference": {
                 "id": "original"
             }
         }
@@ -135,9 +135,6 @@ async def test_organize_groups(test_motor):
 
     documents = await test_motor.groups.find().to_list(None)
 
-    import pprint
-    pprint.pprint(documents)
-
     assert documents == [{
         "_id": "foobar",
         "permissions": {
@@ -154,12 +151,12 @@ async def test_organize_groups(test_motor):
 
 
 async def test_organize_indexes(mocker):
-    m_add_original_ref = mocker.patch("virtool.organize.add_original_ref", new=make_mocked_coro())
+    m_add_original_reference = mocker.patch("virtool.organize.add_original_reference", new=make_mocked_coro())
     m_db = mocker.Mock()
 
     await virtool.organize.organize_indexes(m_db)
 
-    m_add_original_ref.assert_called_with(m_db.indexes)
+    m_add_original_reference.assert_called_with(m_db.indexes)
 
 
 @pytest.mark.parametrize("has_otu", [True, False])
@@ -171,25 +168,32 @@ async def test_organize_references(has_references, has_otu, mocker, test_motor):
         })
 
     if has_references:
-        await test_motor.refs.insert_one({
+        await test_motor.references.insert_one({
             "_id": "baz"
         })
 
     m = mocker.patch("virtool.db.references.create_original", new=make_mocked_coro())
 
-    await virtool.organize.organize_references(test_motor)
+    settings = {
+        "default_source_types": [
+            "culture",
+            "strain"
+        ]
+    }
 
-    document = await test_motor.refs.find_one()
+    await virtool.organize.organize_references(test_motor, settings)
+
+    document = await test_motor.references.find_one()
 
     if has_otu and not has_references:
         assert document is None
-        m.assert_called_with(test_motor,)
+        m.assert_called_with(test_motor, settings)
 
     else:
         assert not m.called
 
     if has_references:
-        assert await test_motor.refs.find_one() == {
+        assert await test_motor.references.find_one() == {
             "_id": "baz"
         }
 
@@ -214,17 +218,17 @@ async def test_organize_sequences(test_motor, test_random_alphanumeric):
         {
             "_id": test_random_alphanumeric.history[0],
             "accession": "foo",
-            "ref": ORIGINAL_REF
+            "reference": ORIGINAL_REFERENCE
         },
         {
             "_id": test_random_alphanumeric.history[1],
             "accession": "bar",
-            "ref": ORIGINAL_REF
+            "reference": ORIGINAL_REFERENCE
         },
         {
             "_id": test_random_alphanumeric.history[2],
             "accession": "baz",
-            "ref": ORIGINAL_REF
+            "reference": ORIGINAL_REFERENCE
         }
     ]
 
@@ -249,11 +253,11 @@ async def test_organize_otus(collection_name, test_motor):
         assert results == [
             {
                 "_id": 1,
-                "ref": ORIGINAL_REF
+                "reference": ORIGINAL_REFERENCE
             },
             {
                 "_id": 2,
-                "ref": ORIGINAL_REF
+                "reference": ORIGINAL_REFERENCE
             }
         ]
     else:

@@ -54,7 +54,7 @@ async def test_get(ready, not_found, mocker, spawn_client):
 
 @pytest.mark.parametrize("has_sample", [True, False], ids=["with_sample", "without_sample"])
 @pytest.mark.parametrize("status", [204, 403, 404, 409])
-async def test_remove(has_sample, status, mocker, spawn_client, resp_is, test_dispatch):
+async def test_remove(has_sample, status, mocker, spawn_client, resp_is):
 
     client = await spawn_client(authorize=True)
 
@@ -87,19 +87,7 @@ async def test_remove(has_sample, status, mocker, spawn_client, resp_is, test_di
 
     if status == 204 and has_sample:
         assert resp.status == 204
-
-        assert test_dispatch.stub.call_args[0] == (
-            "samples",
-            "update",
-            {
-                "id": "baz",
-                "name": "Baz"
-            }
-        )
-
         return
-
-    assert not test_dispatch.stub.called
 
     if status == 404:
         assert await resp_is.not_found(resp)
@@ -115,7 +103,7 @@ async def test_remove(has_sample, status, mocker, spawn_client, resp_is, test_di
 
 
 @pytest.mark.parametrize("error", [None, "404_analysis", "404_sequence", "400_algorithm", "409_ready", "500_index"])
-async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
+async def test_blast(error, mocker, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     if error != "404_analysis":
@@ -154,8 +142,6 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
             {"index": 8, "sequence": "ACCAATAGACATT"}
         ]
     })
-
-    mocker.patch("virtool.db.analyses.format_analysis", new=m_format_analysis)
 
     # Do a bunch of mocking in virtool.bio module.
     m_initialize_ncbi_blast = make_mocked_coro(return_value=("FOOBAR1337", 23))
@@ -231,32 +217,9 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
         expected_format_arg = deepcopy(analysis_document)
         expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at=static_time)
 
-        assert m_format_analysis.call_args[0] == (
-            client.db,
-            client.app["settings"],
-            expected_format_arg
-        )
-
-        # Checking that the mock return value from m_format_analysis is passed to dispatch.
-        assert test_dispatch.stub.call_args[0] == (
-            "analyses",
-            "update",
-            {
-                "id": "foobar",
-                "algorithm": "nuvs",
-                "ready": True,
-                "results": [
-                    {"index": 3, "sequence": "ATAGAGATTAGAT"},
-                    {"index": 5, "sequence": "GGAGTTAGATTGG"},
-                    {"index": 8, "sequence": "ACCAATAGACATT"}
-                ]
-            }
-        )
-
         assert stub.call_args[0] == (
             client.db,
             {},
-            test_dispatch,
             "foobar",
             5,
             "FOOBAR1337"

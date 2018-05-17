@@ -40,7 +40,7 @@ def test_otu():
         "verified": False,
         "name": "Prunus virus F",
         "schema": [],
-        "ref": {
+        "reference": {
             "id": "hxn167"
         },
         "_id": "6116cba1"
@@ -95,7 +95,7 @@ def test_merged_otu():
                 "source_type": "isolate"
             }
         ],
-        "ref": {
+        "reference": {
             "id": "hxn167"
         },
         "last_indexed_version": 0,

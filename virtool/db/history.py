@@ -25,7 +25,7 @@ LIST_PROJECTION = [
     "created_at",
     "index",
     "otu",
-    "ref",
+    "reference",
     "user"
 ]
 
@@ -76,9 +76,9 @@ async def add(db, method_name, old, new, description, user_id):
         otu_version = "removed"
 
     try:
-        ref_id = old["ref"]["id"]
+        ref_id = old["reference"]["id"]
     except (TypeError, KeyError):
-        ref_id = new["ref"]["id"]
+        ref_id = new["reference"]["id"]
 
     document = {
         "_id": ".".join([str(otu_id), str(otu_version)]),
@@ -90,7 +90,7 @@ async def add(db, method_name, old, new, description, user_id):
             "name": otu_name,
             "version": otu_version
         },
-        "ref": {
+        "reference": {
             "id": ref_id
         },
         "index": {
@@ -262,8 +262,8 @@ async def revert(db, change_id):
         patched_otu, sequences = virtool.otus.split(patched)
 
         # Add the reverted sequences to the collection.
-        if len(sequences):
-            await db.sequences.insert_many(sequences)
+        for sequence in sequences:
+            await db.sequences.insert_one(sequence)
 
         # Replace the existing otu with the patched one. If it doesn't exist, insert it.
         await db.otus.replace_one({"_id": otu_id}, patched_otu, upsert=True)

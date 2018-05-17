@@ -93,7 +93,7 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
                 }
             ],
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -122,7 +122,6 @@ class TestCreate:
 
         m_add_history = mocker.patch("virtool.db.history.add", make_mocked_coro({"_id": "change.1"}))
 
-        #
         m_compose = mocker.patch("virtool.history.compose_create_description", return_value="Test description")
 
         m_create = mocker.patch("virtool.db.otus.create", make_mocked_coro(test_merged_otu))
@@ -298,8 +297,7 @@ class TestEdit:
             "Removed abbreviation TMV"
         )
     ])
-    async def test(self, data, existing_abbreviation, description, spawn_client, test_otu, test_add_history,
-                   test_dispatch):
+    async def test(self, data, existing_abbreviation, description, spawn_client, test_otu, test_add_history):
         """
         Test that changing the name and abbreviation results in changes to the otu document and a new change
         document in history. The that change both fields or one or the other results in the correct changes and
@@ -336,7 +334,7 @@ class TestEdit:
             "version": 1,
             "schema": [],
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -359,22 +357,6 @@ class TestEdit:
             isolate.pop("sequences")
 
         assert await client.db.otus.find_one() == expected
-
-        expected_dispatch = {
-            "id": "6116cba1",
-            "name": "Prunus virus F",
-            "abbreviation": existing_abbreviation,
-            "verified": False,
-            "version": 1
-        }
-
-        expected_dispatch.update(data)
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            expected_dispatch
-        )
 
         old.pop("issues")
 
@@ -431,7 +413,7 @@ class TestEdit:
                 "name": "Prunus virus F",
                 "lower_name": "Prunus virus F",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -440,7 +422,7 @@ class TestEdit:
                 "name": "Tobacco mosaic otu",
                 "lower_name": "tobacco mosaic otu",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -473,7 +455,7 @@ class TestEdit:
                 "lower_name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -483,7 +465,7 @@ class TestEdit:
                 "lower_name": "tobacco mosaic otu",
                 "abbreviation": "TMV",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -515,7 +497,7 @@ class TestEdit:
                 "lower_name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -525,7 +507,7 @@ class TestEdit:
                 "lower_name": "tobacco mosaic otu",
                 "abbreviation": "TMV",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -558,7 +540,7 @@ class TestEdit:
             "lower_name": "tobacco mosaic otu",
             "abbreviation": old_abbr,
             "isolates": [],
-            "ref": {
+            "reference": {
                 "id": "foo"
             }
         })
@@ -574,7 +556,7 @@ class TestEdit:
             "most_recent_change": None,
             "name": "Tobacco mosaic otu",
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "foo"
             }
         }
@@ -598,7 +580,7 @@ class TestRemove:
         ("", "Removed Prunus virus F"),
         ("PVF", "Removed Prunus virus F (PVF)")
     ])
-    async def test(self, abbreviation, description, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test(self, abbreviation, description, spawn_client, test_otu, test_add_history):
         """
         Test that an existing otu can be removed.
 
@@ -627,12 +609,6 @@ class TestRemove:
             None,
             description,
             "test"
-        )
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "remove",
-            ["6116cba1"]
         )
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -738,16 +714,13 @@ class TestGetIsolate:
 
 class TestAddIsolate:
 
-    async def test_is_default(self, mocker, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test_is_default(self, mocker, spawn_client, test_otu, test_add_history):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.otus.insert_one(test_otu)
 
@@ -758,6 +731,7 @@ class TestAddIsolate:
         }
 
         mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -803,27 +777,12 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_not_default(self, monkeypatch, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test_not_default(self, mocker, spawn_client, test_otu, test_add_history):
         """
         Test that a non-default isolate can be properly added
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.otus.insert_one(test_otu)
 
@@ -833,7 +792,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -879,28 +839,13 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_first(self, monkeypatch, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test_first(self, mocker, spawn_client, test_otu, test_add_history):
         """
         Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
         in the POST input.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         test_otu["isolates"] = []
 
@@ -912,7 +857,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -947,27 +893,12 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_force_case(self, monkeypatch, spawn_client, test_otu, test_dispatch):
+    async def test_force_case(self, mocker, spawn_client, test_otu):
         """
         Test that the ``source_type`` value is forced to lower case.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        client.app["settings"]["restrict_source_types"] = True
-        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.otus.insert_one(test_otu)
 
@@ -977,7 +908,8 @@ class TestAddIsolate:
             "default": False
         }
 
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
@@ -1010,19 +942,7 @@ class TestAddIsolate:
             }
         ]
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_empty(self, mocker, spawn_client, test_otu, test_dispatch):
+    async def test_empty(self, mocker, spawn_client, test_otu):
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
@@ -1033,6 +953,7 @@ class TestAddIsolate:
         await client.db.otus.insert_one(test_otu)
 
         mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
+        mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", {})
 
@@ -1063,18 +984,6 @@ class TestAddIsolate:
             }
         ]
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
@@ -1097,7 +1006,7 @@ class TestEditIsolate:
         ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
         ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
     ])
-    async def test(self, data, description, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test(self, data, description, spawn_client, test_otu, test_add_history):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
 
@@ -1147,19 +1056,7 @@ class TestEditIsolate:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_force_case(self, monkeypatch, spawn_client, test_otu, test_dispatch):
+    async def test_force_case(self, monkeypatch, spawn_client, test_otu):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -1191,18 +1088,6 @@ class TestEditIsolate:
         del expected["sequences"]
 
         assert (await client.db.otus.find_one("6116cba1", ["isolates"]))["isolates"] == [expected]
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
 
     async def test_invalid_input(self, spawn_client, test_otu, resp_is):
         """
@@ -1250,7 +1135,7 @@ class TestEditIsolate:
 
 class TestSetAsDefault:
 
-    async def test(self, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_otu, test_add_history):
         """
         Test changing the default isolate results in the correct changes, history, and response.
 
@@ -1309,22 +1194,10 @@ class TestSetAsDefault:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_no_change(self, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test_no_change(self, spawn_client, test_otu, test_add_history):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
-        Specifically no increment in version and no dispatch.
+        Specifically no increment in version.
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
@@ -1373,8 +1246,6 @@ class TestSetAsDefault:
 
         assert not test_add_history.called
 
-        assert not test_dispatch.stub.called
-
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
         ("test", "cab8b360"),
@@ -1396,7 +1267,7 @@ class TestSetAsDefault:
 
 class TestRemoveIsolate:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
         """
         Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
         database.
@@ -1448,7 +1319,7 @@ class TestRemoveIsolate:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1468,19 +1339,7 @@ class TestRemoveIsolate:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
-        )
-
-    async def test_change_default(self, spawn_client, test_otu, test_sequence, test_add_history, test_dispatch):
+    async def test_change_default(self, spawn_client, test_otu, test_sequence, test_add_history):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
@@ -1545,7 +1404,7 @@ class TestRemoveIsolate:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1569,7 +1428,7 @@ class TestRemoveIsolate:
             "name": "Prunus virus F",
             "schema": [],
             "version": 1,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1580,18 +1439,6 @@ class TestRemoveIsolate:
             new,
             "Removed Isolate 8816-v2 and set Isolate 7865 as default",
             "test"
-        )
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "verified": False,
-                "version": 1
-            }
         )
 
     @pytest.mark.parametrize("url", ["/api/otus/foobar/isolates/cab8b360", "/api/otus/test/isolates/foobar"])
@@ -1614,8 +1461,8 @@ class TestListSequences:
     async def test(self, spawn_client, test_otu, test_sequence):
         client = await spawn_client(authorize=True)
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
 
@@ -1650,8 +1497,8 @@ class TestGetSequence:
     async def test(self, spawn_client, test_otu, test_sequence):
         client = await spawn_client(authorize=True)
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
@@ -1677,7 +1524,7 @@ class TestGetSequence:
 
 class TestCreateSequence:
 
-    async def test(self, spawn_client, test_otu, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_otu, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1730,7 +1577,7 @@ class TestCreateSequence:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1760,23 +1607,11 @@ class TestCreateSequence:
             "test"
         )
 
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "abbreviation": "PVF",
-                "verified": True,
-                "name": "Prunus virus F",
-                "version": 1
-            }
-        )
-
     async def test_exists(self, spawn_client, test_otu, test_sequence, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", {
             "id": "KX269872",
@@ -1833,11 +1668,11 @@ class TestCreateSequence:
 
 class TestEditSequence:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         data = {
             "host": "Grapevine",
@@ -1878,7 +1713,7 @@ class TestEditSequence:
             "name": "Prunus virus F",
             "schema": [],
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1906,18 +1741,6 @@ class TestEditSequence:
             new,
             "Edited sequence KX269872 in Isolate 8816-v2",
             "test"
-        )
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "abbreviation": "PVF",
-                "verified": True,
-                "name": "Prunus virus F",
-                "version": 1
-            }
         )
 
     async def test_empty_input(self, spawn_client, resp_is):
@@ -1949,8 +1772,8 @@ class TestEditSequence:
     async def test_not_found(self, foobar, spawn_client, test_otu, test_sequence, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        await client.db.otus.insert(test_otu)
-        await client.db.sequences.insert(test_sequence)
+        await client.db.otus.insert_one(test_otu)
+        await client.db.sequences.insert_one(test_sequence)
 
         url = "/api/otus/{}/isolates/{}/sequences/{}".format(
             "foobar" if foobar == "otu_id" else "6116cba1",
@@ -1969,7 +1792,7 @@ class TestEditSequence:
 
 class TestRemoveSequence:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1987,18 +1810,6 @@ class TestRemoveSequence:
             new,
             "Removed sequence KX269872 from Isolate 8816-v2",
             "test"
-        )
-
-        assert test_dispatch.stub.call_args[0] == (
-            "otus",
-            "update",
-            {
-                "id": "6116cba1",
-                "abbreviation": "PVF",
-                "verified": False,
-                "name": "Prunus virus F",
-                "version": 1
-            }
         )
 
         assert resp.status == 204

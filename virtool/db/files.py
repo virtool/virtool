@@ -21,7 +21,7 @@ PROJECTION = [
 ]
 
 
-async def create(db, dispatch, filename, file_type, user_id=None):
+async def create(db, filename, file_type, user_id=None):
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
@@ -58,51 +58,27 @@ async def create(db, dispatch, filename, file_type, user_id=None):
     # Return document will all keys, but size.
     document = {key: document[key] for key in [key for key in PROJECTION if key != "size"]}
 
-    document = virtool.utils.base_processor(document)
-
-    await dispatch(
-        "files",
-        "update",
-        document
-    )
-
-    return document
+    return virtool.utils.base_processor(document)
 
 
-async def reserve(db, dispatch, file_ids):
+async def reserve(db, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserved": True
         }
     })
 
-    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
-        await dispatch(
-            "files",
-            "update",
-            virtool.utils.base_processor(document)
-        )
 
-
-async def release_reservations(db, dispatch, file_ids):
+async def release_reservations(db, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserve": False
         }
     })
 
-    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
-        await dispatch(
-            "files",
-            "update",
-            virtool.utils.base_processor(document)
-        )
 
-
-async def remove(loop, db, settings, dispatch, file_id):
+async def remove(loop, db, settings, file_id):
     await db.files.delete_one({"_id": file_id})
-
-    await dispatch("files", "remove", [file_id])
 
     file_path = os.path.join(settings.get("data_path"), "files", file_id)
 

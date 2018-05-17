@@ -131,7 +131,7 @@ class TestCreate:
                 "id": "unbuilt",
                 "version": "unbuilt"
             },
-            "ref": {
+            "reference": {
                 "id": "foo"
             }
         })
@@ -151,9 +151,9 @@ class TestCreate:
 
         assert resp.status == 201
 
-        expected_id = test_random_alphanumeric.history[0]
+        expected_id = test_random_alphanumeric.history[1]
 
-        expected_job_id = test_random_alphanumeric.history[1]
+        expected_job_id = test_random_alphanumeric.history[2]
 
         expected = {
             "_id": expected_id,
@@ -165,7 +165,7 @@ class TestCreate:
             "job": {
                 "id": expected_job_id
             },
-            "ref": {
+            "reference": {
                 "id": "foo"
             },
             "user": {
@@ -209,7 +209,7 @@ class TestCreate:
         if error == "unready":
             await client.db.indexes.insert_one({
                 "ready": False,
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             })
@@ -217,7 +217,7 @@ class TestCreate:
         if error == "unverified":
             await client.db.otus.insert_one({
                 "verified": False,
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             })

@@ -47,7 +47,7 @@ async def test_find(spawn_client, test_changes):
                     "name": "Prunus virus F",
                     "version": 1
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 }
             },
@@ -68,7 +68,7 @@ async def test_find(spawn_client, test_changes):
                     "name": "Prunus virus F",
                     "version": 1
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 }
             },
@@ -89,7 +89,7 @@ async def test_find(spawn_client, test_changes):
                     "name": "Prunus virus F",
                     "version": 1
                 },
-                "ref": {
+                "reference": {
                     "id": "hxn167"
                 }
             }
@@ -139,7 +139,7 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
                 "name": "Prunus virus F",
                 "version": 1
             },
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -191,7 +191,7 @@ async def test_remove(not_found, remove, create_mock_history, spawn_client, resp
                     "source_type": "isolate"
                 }
             ],
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             },
             "last_indexed_version": 0,

@@ -4,48 +4,6 @@ PATHOSCOPE_TASK_NAMES = [
 ]
 
 
-LIST_PROJECTION = [
-    "_id",
-    "name",
-    "host",
-    "isolate",
-    "created_at",
-    "user",
-    "imported",
-    "archived",
-    "pathoscope",
-    "nuvs"
-]
-
-
-PROJECTION = [
-    "_id",
-    "name",
-    "created_at",
-    "user",
-    "imported",
-    "archived",
-    "pathoscope",
-    "nuvs",
-    "group",
-    "group_read",
-    "group_write",
-    "all_read",
-    "all_write"
-]
-
-
-RIGHTS_PROJECTION = {
-    "_id": False,
-    "group": True,
-    "group_read": True,
-    "group_write": True,
-    "all_read": True,
-    "all_write": True,
-    "user": True
-}
-
-
 def calculate_algorithm_tags(analyses):
     """
     Calculate the algorithm tags (eg. "ip", True) that should be applied to a sample document based on a list of its
