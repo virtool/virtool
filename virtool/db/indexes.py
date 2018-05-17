@@ -13,7 +13,7 @@ PROJECTION = [
     "modified_count",
     "user",
     "ready",
-    "ref",
+    "reference",
     "version"
 ]
 
@@ -36,7 +36,7 @@ async def create_manifest(db, ref_id):
     """
     manifest = dict()
 
-    async for document in db.otus.find({"ref.id": ref_id}, ["version"]):
+    async for document in db.otus.find({"reference.id": ref_id}, ["version"]):
         manifest[document["_id"]] = document["version"]
 
     return manifest
@@ -47,7 +47,7 @@ async def find(db, req_query, ref_id=None):
 
     if ref_id:
         base_query = {
-            "ref.id": ref_id
+            "reference.id": ref_id
         }
 
     data = await paginate(
@@ -75,7 +75,7 @@ async def get_active_index_ids(db, ref_id):
         {
             "$match": {
                 "ready": False,
-                "ref.id": ref_id
+                "reference.id": ref_id
             }
         },
         {
@@ -137,7 +137,7 @@ async def get_current_id_and_version(db, ref_id):
 
     """
     document = await db.indexes.find_one(
-        {"ref.id": ref_id, "has_files": True, "ready": True},
+        {"reference.id": ref_id, "has_files": True, "ready": True},
         sort=[("version", pymongo.DESCENDING)],
         projection=["_id", "version"]
     )
@@ -247,7 +247,7 @@ async def get_next_version(db, ref_id):
     :rtype: int
 
     """
-    return await db.indexes.find({"ref.id": ref_id, "ready": True}).count()
+    return await db.indexes.find({"reference.id": ref_id, "ready": True}).count()
 
 
 async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
@@ -268,7 +268,7 @@ async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
     :type index_version: int
 
     """
-    await db.history.update_many({"ref.id": ref_id, "index.id": "unbuilt"}, {
+    await db.history.update_many({"reference.id": ref_id, "index.id": "unbuilt"}, {
         "$set": {
             "index": {
                 "id": index_id,
@@ -298,7 +298,7 @@ async def get_unbuilt_stats(db, ref_id=None):
     ref_query = dict()
 
     if ref_id:
-        ref_query["ref.id"] = ref_id
+        ref_query["reference.id"] = ref_id
 
     history_query = {
         **ref_query,

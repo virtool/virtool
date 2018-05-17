@@ -47,7 +47,7 @@ async def check_source_type(db, ref_id, source_type):
     :rtype: bool
 
     """
-    document = await db.refs.find_one(ref_id, ["restrict_source_types", "source_types"])
+    document = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
 
     restrict_source_types = document.get("restrict_source_types", False)
     source_types = document.get("source_types", list())
@@ -66,16 +66,16 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
 
     await db.indexes.delete_many({
-        "ref.id": ref_id
+        "reference.id": ref_id
     })
 
     await virtool.db.processes.update(db, process_id, 0.5, step="delete_otus")
 
-    otu_count = await db.otus.count({"ref.id": ref_id})
+    otu_count = await db.otus.count({"reference.id": ref_id})
 
     progress_tracker = virtool.processes.ProgressTracker(otu_count, factor=0.5, increment=0.03)
 
-    async for document in db.otus.find({"ref.id": ref_id}):
+    async for document in db.otus.find({"reference.id": ref_id}):
         await virtool.db.otus.remove(
             db,
             document["_id"],
@@ -120,7 +120,7 @@ async def get_contributors(db, ref_id):
     :rtype: Union[None, List[dict]]
 
     """
-    return await virtool.db.history.get_contributors(db, {"ref.id": ref_id})
+    return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
 
 
 async def get_latest_build(db, ref_id):
@@ -138,7 +138,7 @@ async def get_latest_build(db, ref_id):
 
     """
     last_build = await db.indexes.find_one({
-        "ref.id": ref_id,
+        "reference.id": ref_id,
         "ready": True
     }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
 
@@ -215,7 +215,7 @@ async def check_import_abbreviation(db, otu_document, lower_name=None):
 
 async def clone(db, settings, name, clone_from, description, public, user_id):
 
-    source = await db.refs.find_one(clone_from)
+    source = await db.references.find_one(clone_from)
 
     document = await create_document(
         db,
@@ -252,7 +252,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
     excluded_isolate_ids = list()
     excluded_sequence_ids = list()
 
-    async for otu in db.otus.find({"ref.id": source_id}):
+    async for otu in db.otus.find({"reference.id": source_id}):
 
         new_otu_id = await virtool.db.utils.get_new_id(db.otus, excluded=excluded_otu_ids)
 
@@ -282,7 +282,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
         otu.update({
             "_id": new_otu_id,
             "created_at": virtool.utils.timestamp(),
-            "ref": {
+            "reference": {
                 "id": ref_id
             }
         })
@@ -309,7 +309,7 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
 async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
-    if await db.refs.count({"_id": ref_id}):
+    if await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
     ref_id = ref_id or await virtool.db.utils.get_new_id(db.otus)
@@ -371,7 +371,7 @@ async def create_original(db, settings):
         users=users
     )
 
-    await db.refs.insert_one(document)
+    await db.references.insert_one(document)
 
     return document
 
@@ -441,7 +441,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
     except (TypeError, KeyError):
         organism = ""
 
-    await db.refs.update_one({"_id": ref_id}, {
+    await db.references.update_one({"_id": ref_id}, {
         "$set": {
             "data_type": data_type,
             "organism": organism
@@ -490,7 +490,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             "verified": issues is None,
             "imported": True,
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": ref_id
             },
             "user": {
@@ -512,7 +512,7 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
                     "_id": sequence_id,
                     "otu_id": otu_id,
                     "isolate_id": isolate_id,
-                    "ref": {
+                    "reference": {
                         "id": ref_id
                     }
                 })

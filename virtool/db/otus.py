@@ -48,7 +48,7 @@ async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
     if name:
         name_count = await db.otus.count({
             "lower_name": name.lower(),
-            "ref.id": ref_id
+            "reference.id": ref_id
         })
 
     abbr_count = 0
@@ -56,7 +56,7 @@ async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
     if abbreviation:
         abbr_count = await db.otus.count({
             "abbreviation": abbreviation,
-            "ref.id": ref_id
+            "reference.id": ref_id
         })
 
     unique_name = not name or not name_count
@@ -87,7 +87,7 @@ async def create(db, ref_id, name, abbreviation):
         "lower_name": name.lower(),
         "isolates": [],
         "version": 0,
-        "ref": {
+        "reference": {
             "id": ref_id
         },
         "schema": []
@@ -135,7 +135,7 @@ async def find(db, names, term, req_query, verified, ref_id=None):
 
     if ref_id is not None:
         base_query = {
-            "ref.id": ref_id
+            "reference.id": ref_id
         }
 
     if names is True or names == "true":

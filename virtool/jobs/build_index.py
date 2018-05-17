@@ -132,13 +132,13 @@ class BuildIndex(virtool.jobs.job.Job):
         # Find otus with changes.
         pipeline = [
             {"$project": {
-                "ref": True,
+                "reference": True,
                 "version": True,
                 "last_indexed_version": True,
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]}
             }},
             {"$match": {
-                "ref.id": self.ref_id,
+                "reference.id": self.ref_id,
                 "comp": {"$ne": 0}
             }}
         ]

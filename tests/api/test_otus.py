@@ -93,7 +93,7 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
                 }
             ],
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -334,7 +334,7 @@ class TestEdit:
             "version": 1,
             "schema": [],
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -413,7 +413,7 @@ class TestEdit:
                 "name": "Prunus virus F",
                 "lower_name": "Prunus virus F",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -422,7 +422,7 @@ class TestEdit:
                 "name": "Tobacco mosaic otu",
                 "lower_name": "tobacco mosaic otu",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -455,7 +455,7 @@ class TestEdit:
                 "lower_name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -465,7 +465,7 @@ class TestEdit:
                 "lower_name": "tobacco mosaic otu",
                 "abbreviation": "TMV",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -497,7 +497,7 @@ class TestEdit:
                 "lower_name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             },
@@ -507,7 +507,7 @@ class TestEdit:
                 "lower_name": "tobacco mosaic otu",
                 "abbreviation": "TMV",
                 "isolates": [],
-                "ref": {
+                "reference": {
                     "id": "foo"
                 }
             }
@@ -540,7 +540,7 @@ class TestEdit:
             "lower_name": "tobacco mosaic otu",
             "abbreviation": old_abbr,
             "isolates": [],
-            "ref": {
+            "reference": {
                 "id": "foo"
             }
         })
@@ -556,7 +556,7 @@ class TestEdit:
             "most_recent_change": None,
             "name": "Tobacco mosaic otu",
             "issues": None,
-            "ref": {
+            "reference": {
                 "id": "foo"
             }
         }
@@ -1319,7 +1319,7 @@ class TestRemoveIsolate:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1404,7 +1404,7 @@ class TestRemoveIsolate:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1428,7 +1428,7 @@ class TestRemoveIsolate:
             "name": "Prunus virus F",
             "schema": [],
             "version": 1,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1577,7 +1577,7 @@ class TestCreateSequence:
             "verified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
@@ -1713,7 +1713,7 @@ class TestEditSequence:
             "name": "Prunus virus F",
             "schema": [],
             "version": 0,
-            "ref": {
+            "reference": {
                 "id": "hxn167"
             }
         }
