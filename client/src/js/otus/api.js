@@ -12,8 +12,8 @@ export const get = ({ otuId }) => (
     Request.get(`/api/otus/${otuId}`)
 );
 
-export const getHistory = ({ refId, otuId }) => (
-    Request.get(`/api/refs/${refId}/otus/${otuId}/history`)
+export const getHistory = ({ otuId }) => (
+    Request.get(`/api/otus/${otuId}/history`)
 );
 
 export const getGenbank = (accession) => (
@@ -90,6 +90,6 @@ export const removeSequence = ({ otuId, isolateId, sequenceId }) => (
     Request.delete(`/api/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
 );
 
-export const revert = ({ refId, otuId, version }) => (
-    Request.delete(`/api/refs/${refId}/history/${otuId}.${version}`)
+export const revert = ({ otuId, version }) => (
+    Request.delete(`/api/history/${otuId}.${version}`)
 );

@@ -8,8 +8,8 @@ export const get = ({ indexVersion }) => (
     Request.get(`/api/indexes/${indexVersion}`)
 );
 
-export const getUnbuilt = () => (
-    Request.get("/api/indexes/unbuilt")
+export const getUnbuilt = ({ refId }) => (
+    Request.get(`/api/refs/${refId}/history?unbuilt=true`)
 );
 
 export const create = () => (

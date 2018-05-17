@@ -62,9 +62,8 @@ export const getOTU = (otuId) => ({
  * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTUHistory = (refId, otuId) => ({
+export const getOTUHistory = (otuId) => ({
     type: GET_OTU_HISTORY.REQUESTED,
-    refId,
     otuId
 });
 
@@ -253,9 +252,8 @@ export const removeSequence = (otuId, isolateId, sequenceId) => ({
  * @param version {string} OTU index version
  * @returns {object}
  */
-export const revert = (refId, otuId, version) => ({
+export const revert = (otuId, version) => ({
     type: REVERT.REQUESTED,
-    refId,
     otuId,
     version
 });

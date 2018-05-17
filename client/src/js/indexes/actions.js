@@ -27,7 +27,11 @@ export const getIndex = (indexVersion) => ({
  * @func
  * @returns {object}
  */
-export const getUnbuilt = simpleActionCreator(GET_UNBUILT.REQUESTED);
+export const getUnbuilt = (refId) => ({
+    type: GET_UNBUILT.REQUESTED,
+    refId
+});
+
 
 /**
  * Returns action that can trigger an API call for creating a new OTU index.

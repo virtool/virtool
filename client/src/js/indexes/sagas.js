@@ -20,8 +20,8 @@ export function* getIndex (action) {
     yield apiCall(indexesAPI.get, action, GET_INDEX);
 }
 
-export function* getUnbuilt () {
-    yield apiCall(indexesAPI.getUnbuilt, {}, GET_UNBUILT);
+export function* getUnbuilt (action) {
+    yield apiCall(indexesAPI.getUnbuilt, action, GET_UNBUILT);
 }
 
 export function* createIndex () {
