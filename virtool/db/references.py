@@ -335,6 +335,7 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "public": public,
         "restrict_source_types": False,
         "source_types": settings["default_source_types"],
+        "groups": list(),
         "users": users,
         "user": user
     }
