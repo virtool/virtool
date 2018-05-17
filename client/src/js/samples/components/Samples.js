@@ -5,8 +5,8 @@ import { connect } from "react-redux";
 import FileManager from "../../files/components/Manager";
 import SamplesList from "./List";
 import SampleDetail from "./Detail";
-import UniqueNames from "../../settings/components/General/UniqueNames";
-import SampleRights from "../../settings/components/General/SampleRights";
+import UniqueNames from "../../administration/components/General/UniqueNames";
+import SampleRights from "../../administration/components/General/SampleRights";
 import { LoadingPlaceholder } from "../../base";
 
 const SampleFileManager = () => (

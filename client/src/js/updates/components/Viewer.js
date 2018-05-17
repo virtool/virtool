@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
-import { updateSetting } from "../../settings/actions";
+import { updateSetting } from "../../administration/actions";
 import { Button, Flex, FlexItem, Icon, Radio, LoadingPlaceholder } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";

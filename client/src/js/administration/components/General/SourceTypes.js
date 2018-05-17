@@ -26,7 +26,7 @@ class SourceTypes extends React.Component {
     }
 
     remove = (sourceType) => {
-        this.props.onUpdate(without(this.props.allowed_source_types, sourceType));
+        this.props.onUpdate(without(this.props.default_source_types, sourceType));
     };
 
     handleEnable = () => {
@@ -42,7 +42,7 @@ class SourceTypes extends React.Component {
             // capitalized when rendered in the application.
             const newSourceType = toLower(this.state.value);
 
-            if (includes(this.props.allowed_source_types, newSourceType)) {
+            if (includes(this.props.default_source_types, newSourceType)) {
                 // Show error if the source type already exists in the list.
                 this.setState({
                     error: "Source type already exists."
@@ -53,7 +53,7 @@ class SourceTypes extends React.Component {
                     error: "Source types may not contain spaces."
                 });
             } else {
-                const newSourceTypes = this.props.allowed_source_types.concat([newSourceType]);
+                const newSourceTypes = this.props.default_source_types.concat([newSourceType]);
                 this.props.onUpdate(newSourceTypes);
                 this.setState(getInitialState());
             }
@@ -64,7 +64,7 @@ class SourceTypes extends React.Component {
 
         const restrictSourceTypes = this.props.restrict_source_types;
 
-        const listComponents = map(this.props.allowed_source_types.sort(), sourceType =>
+        const listComponents = map(this.props.default_source_types.sort(), sourceType =>
             <SourceTypeItem
                 key={sourceType}
                 onRemove={this.remove}
@@ -150,10 +150,11 @@ class SourceTypes extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    const { allowed_source_types, restrict_source_types } = state.settings.data;
+    const { default_source_types } = state.settings.data;
+    const { restrict_source_types } = state.references.detail;
 
     return {
-        allowed_source_types,
+        default_source_types,
         restrict_source_types
     };
 };
@@ -161,7 +162,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => ({
 
     onUpdate: (value) => {
-        dispatch(updateSetting("allowed_source_types", value));
+        dispatch(updateSetting("default_source_types", value));
     },
 
     onToggle: (value) => {

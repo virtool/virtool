@@ -15,7 +15,7 @@ const Notifications = (props) => {
     if (props.isAdmin && props.updates && props.updates.releases.length) {
         notification = (
             <div style={notificationStyle}>
-                <Link to="/settings/updates">
+                <Link to="/administration/updates">
                     Software update available
                 </Link>
             </div>

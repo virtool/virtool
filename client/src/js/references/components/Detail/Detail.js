@@ -12,8 +12,8 @@ import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceOTUs from "../../../otus/components/OTUs";
 import ReferenceIndex from "../../../indexes/components/Indexes";
-import SourceTypes from "../../../settings/components/General/SourceTypes";
-import InternalControl from "../../../settings/components/General/InternalControl";
+import SourceTypes from "../../../administration/components/General/SourceTypes";
+import InternalControl from "../../../administration/components/General/InternalControl";
 
 const ReferenceSettings = () => (
     <div>

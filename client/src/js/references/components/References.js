@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
 import { LoadingPlaceholder } from "../../base";
-import SourceTypes from "../../settings/components/General/SourceTypes";
+import SourceTypes from "../../administration/components/General/SourceTypes";
 
 const ReferenceSettings = () => (
     <div>
