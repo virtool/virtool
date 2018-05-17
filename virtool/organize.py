@@ -46,6 +46,16 @@ async def organize(db, settings, server_version):
 
     await organize_paths(db, settings)
 
+    await organize_dev(db)
+
+
+async def organize_dev(db):
+    await db.references.update_many({"groups": {"$exists": False}}, {
+        "$set": {
+            "groups": []
+        }
+    })
+
 
 async def organize_analyses(db):
     """
