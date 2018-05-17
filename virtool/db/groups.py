@@ -16,7 +16,7 @@ async def get_merged_permissions(db, id_list):
 async def update_member_users(db, group_id, remove=False):
     groups = await db.groups.find().to_list(None)
 
-    async for user in db.users.find({"groups": group_id}, ["groups", "permissions", "primary_group"]):
+    async for user in db.users.find({"groups": group_id}, ["administrator", "groups", "permissions", "primary_group"]):
         if remove:
             user["groups"].remove(group_id)
 
@@ -48,4 +48,10 @@ async def update_member_users(db, group_id, remove=False):
             projection=["groups", "permissions"]
         )
 
-        await virtool.db.users.update_sessions_and_keys(db, user["_id"], document["groups"], document["permissions"])
+        await virtool.db.users.update_sessions_and_keys(
+            db,
+            user["administrator"],
+            user["_id"],
+            document["groups"],
+            document["permissions"]
+        )

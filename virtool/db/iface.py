@@ -92,7 +92,11 @@ class Collection:
             return None
 
         if not silent and not self.silent:
-            await self.dispatch(self.name, "update", self.processor(document))
+            if self.projection:
+                projected = virtool.db.utils.apply_projection(document, self.projection)
+                await self.dispatch(self.name, "update", self.processor(projected))
+            else:
+                await self.dispatch(self.name, "update", self.processor(document))
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
@@ -107,6 +111,15 @@ class Collection:
 
         try:
             await self._collection.insert_one(document)
+
+            if not silent and not self.silent:
+                if self.projection:
+                    projected = virtool.db.utils.apply_projection(document, self.projection)
+                    await self.dispatch(self.name, "insert", self.processor(projected))
+                else:
+                    await self.dispatch(self.name, "insert", self.processor(document))
+
+            return document
         except pymongo.errors.DuplicateKeyError:
             if generate_id:
                 document.pop("_id")
@@ -114,15 +127,11 @@ class Collection:
 
             raise
 
-        if not silent and not self.silent:
-            await self.dispatch(self.name, "insert", self.processor(document))
-
-        return document
-
     async def replace_one(self, query, replacement, upsert=False):
         document = await self._collection.find_one_and_replace(
             query,
             replacement,
+            projection=self.projection,
             upsert=upsert
         )
 
@@ -137,7 +146,7 @@ class Collection:
         update_result = await self._collection.update_many(query, update)
 
         if not silent and not self.silent:
-            async for document in self._collection.find({"_id": {"$in": updated_ids}}):
+            async for document in self._collection.find({"_id": {"$in": updated_ids}}, projection=self.projection):
                 await self.dispatch(self.name, "update", self.processor(document))
 
         return update_result
@@ -148,9 +157,9 @@ class Collection:
         update_result = await self._collection.update_one(query, update, upsert=upsert)
 
         if document:
-            document = await self.find_one(document["_id"])
+            document = await self.find_one(document["_id"], projection=self.projection)
         else:
-            document = await self.find_one(query)
+            document = await self.find_one(query, projection=self.projection)
 
         if not silent and not self.silent and document:
             await self.dispatch(self.name, "update", self.processor(document))

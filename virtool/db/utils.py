@@ -19,7 +19,7 @@ def apply_projection(document, projection):
         if "_id" not in projection:
             projection.append("_id")
 
-        return {key: document[key] for key in projection}
+        return {key: document[key] for key in document if key in projection}
 
     if not isinstance(projection, dict):
         raise TypeError("Invalid type for projection: {}".format(type(projection)))
