@@ -62,6 +62,7 @@ async def check_source_type(db, ref_id, source_type):
     # - source_type is an allowed source_type
     return True
 
+
 async def cleanup_removed(db, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
 
