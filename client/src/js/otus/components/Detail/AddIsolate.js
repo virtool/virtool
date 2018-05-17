@@ -47,9 +47,18 @@ class AddIsolate extends React.Component {
         this.props.onSave(this.props.otuId, this.state.sourceType, this.state.sourceName);
     };
 
+    handleExit = () => {
+        this.setState(getInitialState(this.props));
+    };
+
     render () {
         return (
-            <Modal show={this.props.show} onEntered={this.handleModalEntered} onHide={this.props.onHide}>
+            <Modal
+                show={this.props.show}
+                onEntered={this.handleModalEntered}
+                onHide={this.props.onHide}
+                onExited={this.handleExit}
+            >
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Isolate
                 </Modal.Header>

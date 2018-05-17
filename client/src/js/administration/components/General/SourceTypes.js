@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
+import { editReference } from "../../../references/actions";
 import { updateSetting } from "../../actions";
 
 const getInitialState = () => ({
@@ -30,7 +31,7 @@ class SourceTypes extends React.Component {
     };
 
     handleEnable = () => {
-        this.props.onToggle(!this.props.restrict_source_types);
+        this.props.onToggle(this.props.refId, !this.props.restrict_source_types);
     };
 
     handleSubmit = (e) => {
@@ -151,11 +152,12 @@ class SourceTypes extends React.Component {
 
 const mapStateToProps = (state) => {
     const { default_source_types } = state.settings.data;
-    const { restrict_source_types } = state.references.detail;
+    const { restrict_source_types, id } = state.references.detail;
 
     return {
         default_source_types,
-        restrict_source_types
+        restrict_source_types,
+        refId: id
     };
 };
 
@@ -165,8 +167,9 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(updateSetting("default_source_types", value));
     },
 
-    onToggle: (value) => {
-        dispatch(updateSetting("restrict_source_types", value));
+    onToggle: (refId, value) => {
+        const update = { restrict_source_types: value };
+        dispatch(editReference(refId, update));
     }
 
 });

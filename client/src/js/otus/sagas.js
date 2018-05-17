@@ -76,7 +76,7 @@ export function* setIsolateAsDefault (action) {
 
 export function* removeOTU (action) {
     yield setPending(apiCall(otusAPI.remove, action, REMOVE_OTU));
-    yield put(push("/otus"));
+    yield put(push(`/refs/${action.refId}/otus`));
 }
 
 export function* addIsolate (action) {

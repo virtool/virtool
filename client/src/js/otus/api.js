@@ -28,8 +28,8 @@ export const create = ({ refId, name, abbreviation }) => (
         })
 );
 
-export const edit = ({ refId, otuId, name, abbreviation, schema }) => (
-    Request.patch(`/api/refs/${refId}/otus/${otuId}`)
+export const edit = ({ otuId, name, abbreviation, schema }) => (
+    Request.patch(`/api/otus/${otuId}`)
         .send({
             name,
             abbreviation,
@@ -37,8 +37,8 @@ export const edit = ({ refId, otuId, name, abbreviation, schema }) => (
         })
 );
 
-export const remove = ({ refId, otuId }) => (
-    Request.delete(`/api/refs/${refId}/otus/${otuId}`)
+export const remove = ({ otuId }) => (
+    Request.delete(`/api/otus/${otuId}`)
 );
 
 export const addIsolate = ({ otuId, sourceType, sourceName }) => (

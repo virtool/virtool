@@ -95,9 +95,8 @@ export const createOTU = (refId, name, abbreviation) => ({
  * @param schema {array} array of sequences in custom order
  * @returns {object}
  */
-export const editOTU = (refId, otuId, name, abbreviation, schema) => ({
+export const editOTU = (otuId, name, abbreviation, schema) => ({
     type: EDIT_OTU.REQUESTED,
-    refId,
     otuId,
     name,
     abbreviation,
