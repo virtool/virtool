@@ -5,7 +5,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-const OTUToolbar = ({ onFind, term, onFilter, search }) => (
+const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -31,17 +31,20 @@ const OTUToolbar = ({ onFind, term, onFilter, search }) => (
             <Icon name="filter" />
         </Button>
 
-        <LinkContainer to={{...window.location, state: {createOTU: true}}} replace>
-            <Button bsStyle="primary" tip="Create">
-                <Icon name="plus-square" />
-            </Button>
-        </LinkContainer>
+        {canModify ? (
+            <LinkContainer to={{...window.location, state: {createOTU: true}}} replace>
+                <Button bsStyle="primary" tip="Create">
+                    <Icon name="plus-square" />
+                </Button>
+            </LinkContainer>
+        ) : null}
     </div>
 );
 
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
-    search: state.router.location.search
+    search: state.router.location.search,
+    canModify: state.account.administrator
 });
 
 const mapDispatchToProps = (dispatch) => ({

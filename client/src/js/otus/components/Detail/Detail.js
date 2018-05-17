@@ -40,25 +40,29 @@ class OTUDetail extends React.Component {
 
         const { name, abbreviation } = this.props.detail;
 
-        const iconButtons = (
-            <span>
-                <small key="edit-icon" style={{paddingLeft: "5px"}}>
-                    <Icon
-                        bsStyle="warning"
-                        name="pencil-alt"
-                        onClick={this.props.showEdit}
-                    />
-                </small>
+        let iconButtons = [];
 
-                <small key="remove-icon" style={{paddingLeft: "5px"}}>
-                    <Icon
-                        bsStyle="danger"
-                        name="trash"
-                        onClick={this.props.showRemove}
-                    />
-                </small>
-            </span>
-        );
+        if (this.props.canModify) {
+            iconButtons = (
+                <span>
+                    <small key="edit-icon" style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="warning"
+                            name="pencil-alt"
+                            onClick={this.props.showEdit}
+                        />
+                    </small>
+
+                    <small key="remove-icon" style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="danger"
+                            name="trash"
+                            onClick={this.props.showRemove}
+                        />
+                    </small>
+                </span>
+            );
+        }
 
         return (
             <div>
@@ -131,7 +135,7 @@ class OTUDetail extends React.Component {
 
 const mapStateToProps = state => ({
     detail: state.otus.detail,
-    canModify: state.account.permissions.modify_otu,
+    canModify: state.account.administrator,
     refId: state.references.detail.id
 });
 

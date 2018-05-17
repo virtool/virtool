@@ -61,7 +61,7 @@ class Sequence extends React.Component {
                         {this.props.canModify ? (
                             <FlexItem grow={0} shrink={0}>
                                 <Icon
-                                    name="pencil"
+                                    name="pencil-alt"
                                     bsStyle="warning"
                                     tip="Edit Sequence"
                                     onClick={this.handleShowEditSequence}
@@ -71,7 +71,7 @@ class Sequence extends React.Component {
                         {this.props.canModify ? (
                             <FlexItem grow={0} shrink={0} pad={3}>
                                 <Icon
-                                    name="remove"
+                                    name="trash"
                                     bsStyle="danger"
                                     tip="Remove Sequence"
                                     onClick={this.handleShowRemoveSequence}

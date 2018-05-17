@@ -105,7 +105,7 @@ class AddSequence extends React.Component {
     };
 
     handleModalExited = () => {
-        this.setState(getInitialState());
+        this.setState(getInitialState(this.props));
         if (this.props.error) {
             this.props.onClearError("ADD_SEQUENCE_ERROR");
         }
@@ -176,7 +176,7 @@ class AddSequence extends React.Component {
                                     />
                                     <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                         <Button type="button" onClick={this.handleAutofill}>
-                                            <Icon name="wand" />
+                                            <Icon name="magic" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>

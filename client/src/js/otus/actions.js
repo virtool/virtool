@@ -128,9 +128,8 @@ export const removeOTU = (refId, otuId, history) => ({
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const addIsolate = (refId, otuId, sourceType, sourceName) => ({
+export const addIsolate = (otuId, sourceType, sourceName) => ({
     type: ADD_ISOLATE.REQUESTED,
-    refId,
     otuId,
     sourceType,
     sourceName
@@ -144,9 +143,8 @@ export const addIsolate = (refId, otuId, sourceType, sourceName) => ({
  * @param isolateId {string} unique isolate id
  * @returns {object}
  */
-export const setIsolateAsDefault = (refId, otuId, isolateId) => ({
+export const setIsolateAsDefault = (otuId, isolateId) => ({
     type: SET_ISOLATE_AS_DEFAULT.REQUESTED,
-    refId,
     otuId,
     isolateId
 });
@@ -161,9 +159,8 @@ export const setIsolateAsDefault = (refId, otuId, isolateId) => ({
  * @param sourceName {string} the name of the isolate source
  * @returns {object}
  */
-export const editIsolate = (refId, otuId, isolateId, sourceType, sourceName) => ({
+export const editIsolate = (otuId, isolateId, sourceType, sourceName) => ({
     type: EDIT_ISOLATE.REQUESTED,
-    refId,
     otuId,
     isolateId,
     sourceType,
@@ -180,9 +177,8 @@ export const editIsolate = (refId, otuId, isolateId, sourceType, sourceName) => 
  * first in resulting list (i.e. the next isolate) becomes default
  * @returns {object}
  */
-export const removeIsolate = (refId, otuId, isolateId, nextIsolateId) => ({
+export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
     type: REMOVE_ISOLATE.REQUESTED,
-    refId,
     otuId,
     isolateId,
     nextIsolateId
@@ -201,9 +197,8 @@ export const removeIsolate = (refId, otuId, isolateId, nextIsolateId) => ({
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const addSequence = (refId, otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: ADD_SEQUENCE.REQUESTED,
-    refId,
     otuId,
     isolateId,
     sequenceId,
@@ -226,9 +221,8 @@ export const addSequence = (refId, otuId, isolateId, sequenceId, definition, hos
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const editSequence = (refId, otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const editSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
-    refId,
     otuId,
     isolateId,
     sequenceId,
@@ -247,9 +241,8 @@ export const editSequence = (refId, otuId, isolateId, sequenceId, definition, ho
  * @param sequenceId {string} unique sequence id
  * @returns {object}
  */
-export const removeSequence = (refId, otuId, isolateId, sequenceId) => ({
+export const removeSequence = (otuId, isolateId, sequenceId) => ({
     type: REMOVE_SEQUENCE.REQUESTED,
-    refId,
     otuId,
     isolateId,
     sequenceId

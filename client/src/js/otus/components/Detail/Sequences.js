@@ -65,7 +65,7 @@ class IsolateSequences extends React.Component {
                     </span>
                     {this.props.canModify ? (
                         <Icon
-                            name="new-entry"
+                            name="plus-square"
                             bsStyle="primary"
                             tip="Add Sequence"
                             onClick={this.props.showAddSequence}
@@ -114,12 +114,12 @@ const mapStateToProps = (state) => {
         sequences,
         schema,
         otuId: state.otus.detail.id,
-        canModify: state.account.permissions.modify_OTU,
+        canModify: state.account.administrator,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        showAddSequence: state.otus.showAddSequence,
-        showEditSequence: state.otus.showEditSequence,
-        showRemoveSequence: state.otus.showRemoveSequence
+        //addSequence: state.otus.addSequence,
+        //editSequence: state.otus.editSequence,
+        //removeSequence: state.otus.removeSequence
     };
 };
 

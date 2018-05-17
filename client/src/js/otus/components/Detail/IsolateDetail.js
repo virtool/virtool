@@ -57,35 +57,39 @@ export class IsolateDetail extends React.Component {
             </Label>
         );
 
-        const modifyIcons = (
-            <span>
-                <Icon
-                    name="pencil-alt"
-                    bsStyle="warning"
-                    tip="Edit Name"
-                    onClick={this.props.showEditIsolate}
-                    style={{paddingLeft: "7px"}}
-                />
+        let modifyIcons;
 
-                {isolate.default ? null : (
+        if (this.props.canModify) {
+            modifyIcons = (
+                <span>
                     <Icon
-                        name="star"
-                        bsStyle="success"
-                        tip="Set as Default"
-                        onClick={this.handleSetDefaultIsolate}
+                        name="pencil-alt"
+                        bsStyle="warning"
+                        tip="Edit Name"
+                        onClick={this.props.showEditIsolate}
+                        style={{paddingLeft: "7px"}}
+                    />
+    
+                    {isolate.default ? null : (
+                        <Icon
+                            name="star"
+                            bsStyle="success"
+                            tip="Set as Default"
+                            onClick={this.handleSetDefaultIsolate}
+                            style={{paddingLeft: "3px"}}
+                        />
+                    )}
+    
+                    <Icon
+                        name="trash"
+                        bsStyle="danger"
+                        tip="Remove Isolate"
+                        onClick={this.props.showRemoveIsolate}
                         style={{paddingLeft: "3px"}}
                     />
-                )}
-
-                <Icon
-                    name="trash"
-                    bsStyle="danger"
-                    tip="Remove Isolate"
-                    onClick={this.props.showRemoveIsolate}
-                    style={{paddingLeft: "3px"}}
-                />
-            </span>
-        );
+                </span>
+            );
+        }
 
         return (
             <div>
@@ -144,7 +148,7 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: state.account.permissions.modify_OTU
+    canModify: state.account.administrator
 });
 
 const mapDispatchToProps = (dispatch) => ({
