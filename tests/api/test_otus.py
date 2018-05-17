@@ -1524,13 +1524,13 @@ class TestGetSequence:
 
 class TestCreateSequence:
 
-    async def test(self, spawn_client, test_otu, test_add_history):
+    async def test(self, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
 
         data = {
-            "id": "foobar",
+            "accession": "foobar",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"
@@ -1540,15 +1540,13 @@ class TestCreateSequence:
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/cab8b360/sequences/foobar"
+        sequence_id = test_random_alphanumeric.history[0]
 
-        data.update({
-            "isolate_id": "cab8b360",
-            "otu_id": "6116cba1"
-        })
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/cab8b360/sequences/" + sequence_id
 
         assert await resp.json() == {
-            "id": "foobar",
+            "id": sequence_id,
+            "accession": "foobar",
             "definition": "A made up sequence",
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
@@ -1585,7 +1583,8 @@ class TestCreateSequence:
         new = deepcopy(old)
 
         new["isolates"][0]["sequences"] = [{
-            "_id": "foobar",
+            "_id": test_random_alphanumeric.history[0],
+            "accession": "foobar",
             "definition": "A made up sequence",
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
@@ -1607,20 +1606,6 @@ class TestCreateSequence:
             "test"
         )
 
-    async def test_exists(self, spawn_client, test_otu, test_sequence, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_one(test_otu)
-        await client.db.sequences.insert_one(test_sequence)
-
-        resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", {
-            "id": "KX269872",
-            "sequence": "ATGCGTGTACTG",
-            "definition": "An already existing sequence"
-        })
-
-        assert await resp_is.conflict(resp, "Sequence id already exists")
-
     async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error information.
@@ -1629,13 +1614,13 @@ class TestCreateSequence:
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", {
-            "id": 2016,
+            "accession": 2016,
             "seq": "ATGCGTGTACTG",
             "definition": "A made up sequence"
         })
 
         assert await resp_is.invalid_input(resp, {
-            "id": ["must be of string type"],
+            "accession": ["must be of string type"],
             "sequence": ["required field"],
             "seq": ["unknown field"]
         })
@@ -1653,7 +1638,7 @@ class TestCreateSequence:
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         data = {
-            "id": "FOOBAR",
+            "accession": "FOOBAR",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"
