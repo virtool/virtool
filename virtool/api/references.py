@@ -10,10 +10,31 @@ import virtool.db.references
 import virtool.db.utils
 import virtool.http.routes
 import virtool.otus
+import virtool.references
 import virtool.utils
-from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
+
+
+RIGHTS_SCHEMA = {
+    "build": {
+        "type": "boolean",
+        "default": False
+    },
+    "modify": {
+        "type": "boolean",
+        "default": False
+    },
+    "modify_otu": {
+        "type": "boolean",
+        "default": False
+    },
+    "remove": {
+        "type": "boolean",
+        "default": False
+    }
+}
 
 
 @routes.get("/api/refs")
@@ -346,3 +367,126 @@ async def remove(req):
     return json_response(process, 202, headers)
 
 
+@routes.get("/api/refs/{ref_id}/groups")
+async def list_groups(req):
+    db = req.app["db"]
+    ref_id = req.match_info["ref_id"]
+
+    if not await db.references.count({"_id": ref_id}):
+        return not_found()
+
+    groups = await virtool.db.utils.get_one_field(db.references, "groups", ref_id)
+
+    return json_response(groups)
+
+
+@routes.get("/api/refs/{ref_id}/groups/{group_id}")
+async def get_group(req):
+    db = req.app["db"]
+    ref_id = req.match_info["ref_id"]
+    group_id = req.match_info["group_id"]
+
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups"])
+
+    if document is not None:
+        for group in document.get("groups", list()):
+            if group["id"] == group_id:
+                return json_response(group)
+
+    return not_found()
+
+
+@routes.post("/api/refs/{ref_id}/groups", schema={
+    **RIGHTS_SCHEMA, "group_id": {
+        "type": "string",
+        "required": True
+    }
+})
+async def add_group(req):
+    db = req.app["db"]
+    data = req["data"]
+    ref_id = req.match_info["ref_id"]
+
+    subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
+
+    if subdocument is None:
+        return not_found()
+
+    headers = {
+        "Location": "/api/refs/{}/groups/{}".format(ref_id, subdocument["id"])
+    }
+
+    return json_response(subdocument, headers=headers, status=201)
+
+
+@routes.post("/api/refs/{ref_id}/users", schema={
+    **RIGHTS_SCHEMA, "user_id": {
+        "type": "string",
+        "required": True
+    }
+})
+async def add_user(req):
+    db = req.app["db"]
+    data = req["data"]
+    ref_id = req.match_info["ref_id"]
+
+    subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
+
+    if subdocument is None:
+        return not_found()
+
+    headers = {
+        "Location": "/api/refs/{}/users/{}".format(ref_id, subdocument["id"])
+    }
+
+    return json_response(subdocument, headers=headers, status=201)
+
+
+@routes.patch("/api/refs/{ref_id}/groups/{group_id}", schema=RIGHTS_SCHEMA)
+async def edit_group(req):
+    db = req.app["db"]
+    data = req["data"]
+    ref_id = req.match_info["ref_id"]
+    group_id = req.match_info["group_id"]
+
+    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, group_id, "groups", data)
+
+    if subdocument is None:
+        return not_found()
+
+    return json_response(subdocument)
+
+
+@routes.patch("/api/refs/{ref_id}/users/{user_id}", schema=RIGHTS_SCHEMA)
+async def edit_user(req):
+    db = req.app["db"]
+    data = req["data"]
+    ref_id = req.match_info["ref_id"]
+    user_id = req.match_info["user_id"]
+
+    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, user_id, "users", data)
+
+    if subdocument is None:
+        return not_found()
+
+    return json_response(subdocument)
+
+
+@routes.delete("/api/refs/{ref_id}/groups/{group_id}")
+async def remove_group(req):
+    db = req.app["db"]
+    ref_id = req.match_info["ref_id"]
+    group_id = req.match_info["group_id"]
+
+    if not await db.references.count({"_id": ref_id, "groups.id": group_id}):
+        return not_found()
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$pull": {
+            "groups": {
+                "id": group_id
+            }
+        }
+    })
+
+    return no_content()

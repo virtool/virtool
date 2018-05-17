@@ -30,6 +30,35 @@ PROJECTION = [
 ]
 
 
+async def add_group_or_user(db, ref_id, field, data):
+
+    document = await db.references.find_one({"_id": ref_id}, [field])
+
+    if not document:
+        return None
+
+    subdocument_id = data.get("group_id", None) or data["user_id"]
+
+    if subdocument_id in [s["id"] for s in document[field]]:
+        raise virtool.errors.DatabaseError(field + " already exists")
+
+    rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+
+    subdocument = {
+        "id": subdocument_id,
+        "created_at": virtool.utils.timestamp(),
+        **rights
+    }
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            field: subdocument
+        }
+    })
+
+    return subdocument
+
+
 async def check_source_type(db, ref_id, source_type):
     """
     Check if the provided `source_type` is valid based on the current reference source type configuration.
@@ -91,6 +120,29 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
             progress_tracker.reported()
 
     await virtool.db.processes.update(db, process_id, progress=1)
+
+
+async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
+    document = await db.references.find_one({
+        "_id": ref_id,
+        field + ".id": subdocument_id
+    }, [field])
+
+    if document is None:
+        return None
+
+    for subdocument in document[field]:
+        if subdocument["id"] == subdocument_id:
+            rights = {data.get(key, False) for key in virtool.references.RIGHTS}
+            subdocument.update(rights)
+
+            document = await db.references.find_one_and_update({"_id": ref_id}, {
+                "$push": {
+                    field: document[field]
+                }
+            }, projection=[field])
+
+            return document[field]
 
 
 async def get_computed(db, ref_id, internal_control_id):

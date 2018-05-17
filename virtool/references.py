@@ -1,6 +1,13 @@
 import gzip
 import json
 
+RIGHTS = [
+    "build",
+    "modify",
+    "modify_otu",
+    "remove"
+]
+
 
 def get_owner_user(user_id):
     return {
