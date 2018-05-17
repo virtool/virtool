@@ -95,7 +95,7 @@ async def search(settings, session, accession):
     async with virtool.http.proxy.ProxyRequest(settings, session.get, SEARCH_URL, params=params) as resp:
         data = await resp.text()
 
-        match = SEARCH_REGEX.match(data)
+        match = SEARCH_REGEX.search(data)
 
         if match:
             gi = match.group(1)
