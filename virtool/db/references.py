@@ -138,15 +138,15 @@ async def get_latest_build(db, ref_id):
     :rtype: Union[None, dict]
 
     """
-    last_build = await db.indexes.find_one({
+    latest_build = await db.indexes.find_one({
         "reference.id": ref_id,
         "ready": True
     }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
 
-    if last_build is None:
+    if latest_build is None:
         return None
 
-    return virtool.utils.base_processor(last_build)
+    return virtool.utils.base_processor(latest_build)
 
 
 async def get_internal_control(db, internal_control_id):
