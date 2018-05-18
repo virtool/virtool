@@ -122,7 +122,70 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, process_id, progress=1)
 
 
+async def delete_group_or_user(db, ref_id, subdocument_id, field):
+    """
+    Delete an existing group or user as decided by the `field` argument.
+
+    :param db: the application database client
+    :type db: :class:`virtool.db.iface.DB`
+
+    :param ref_id: the id of the reference to modify
+    :type ref_id: str
+
+    :param subdocument_id: the id of the group or user to delete
+    :type subdocument_id: str
+
+    :param field: the field to modify: 'group' or 'user'
+    :type field: str
+
+    :return: the id of the removed subdocument
+    :rtype: str
+
+    """
+    document = await db.references.find_one({
+        "_id": ref_id,
+        field + ".id": subdocument_id
+    }, [field])
+
+    if document is None:
+        return None
+
+    # Retain only the subdocuments that don't match the passed `subdocument_id`.
+    filtered = [s for s in document[field] if s["id"] != subdocument_id]
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            field: filtered
+        }
+    })
+
+    return subdocument_id
+
+
 async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
+    """
+    Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
+    does not exist.
+
+    :param db: the application database client
+    :type db: :class:`virtool.db.iface.DB`
+
+    :param ref_id: the id of the reference to modify
+    :type ref_id: str
+
+    :param subdocument_id: the id of the group or user to modify
+    :type subdocument_id: str
+
+    :param field: the field to modify: 'group' or 'user'
+    :type field: str
+
+    :param data: the data to update the group or user with
+    :type data: dict
+
+    :return: the modified subdocument
+    :rtype: dict
+
+    """
     document = await db.references.find_one({
         "_id": ref_id,
         field + ".id": subdocument_id
