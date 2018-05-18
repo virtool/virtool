@@ -12,6 +12,7 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
+import virtool.errors
 from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
@@ -407,7 +408,10 @@ async def add_group(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
-    subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
+    try:
+        subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
+    except virtool.errors.DatabaseError:
+        raise conflict("Group already exists")
 
     if subdocument is None:
         return not_found()
@@ -430,7 +434,10 @@ async def add_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
-    subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
+    try:
+        subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
+    except virtool.errors.DatabaseError:
+        raise conflict("Group already exists")
 
     if subdocument is None:
         return not_found()
@@ -473,20 +480,28 @@ async def edit_user(req):
 
 
 @routes.delete("/api/refs/{ref_id}/groups/{group_id}")
-async def remove_group(req):
+async def delete_group(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    if not await db.references.count({"_id": ref_id, "groups.id": group_id}):
+    deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
+
+    if not deleted_id:
         return not_found()
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$pull": {
-            "groups": {
-                "id": group_id
-            }
-        }
-    })
+    return no_content()
+
+
+@routes.delete("/api/refs/{ref_id}/users/{user_id}")
+async def delete_user(req):
+    db = req.app["db"]
+    ref_id = req.match_info["ref_id"]
+    user_id = req.match_info["user_id"]
+
+    deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, user_id, "users")
+
+    if not deleted_id:
+        return not_found()
 
     return no_content()
