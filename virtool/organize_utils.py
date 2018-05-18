@@ -5,7 +5,7 @@ async def update_user_field(collection):
         }
     })
 
-    async for document in collection.find({"user_id": {"$exists": ""}}):
+    async for document in collection.find({"user_id": {"$exists": True}}):
         await collection.update_one({"_id": document["_id"]}, {
             "$set": {
                 "user": {
@@ -14,7 +14,7 @@ async def update_user_field(collection):
             }
         })
 
-    await collection.update_many({"user_id": {"$exists": ""}}, {
+    await collection.update_many({"user_id": {"$exists": True}}, {
         "$unset": {
             "user_id": ""
         }
@@ -22,7 +22,7 @@ async def update_user_field(collection):
 
 
 async def unset_version_field(collection):
-    await collection.update_many({"_version": {"$exists": ""}}, {
+    await collection.update_many({"_version": {"$exists": True}}, {
         "$unset": {
             "_version": ""
         }
