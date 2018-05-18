@@ -18,9 +18,9 @@ const PanelBadgeHeader = ({ title, count }) => (
     </Flex>
 );
 
-const IndexOTUEntry = ({ changeCount, id, name}) => (
+const IndexOTUEntry = ({ refId, changeCount, id, name}) => (
     <ListGroupItem>
-        <Link to={`/otus/${id}`}>
+        <Link to={`/refs/${refId}/otus/${id}`}>
             {name}
         </Link>
         <Badge>
@@ -31,6 +31,8 @@ const IndexOTUEntry = ({ changeCount, id, name}) => (
 
 const IndexGeneral = ({ detail }) => {
 
+    const refId = detail.reference.id;
+
     const contributors = map(detail.contributors, contributor =>
         <ListGroupItem key={contributor.id}>
             {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s" : ""}`}</Badge>
@@ -40,6 +42,7 @@ const IndexGeneral = ({ detail }) => {
     const otus = map(detail.otus, otu =>
         <IndexOTUEntry
             key={otu.id}
+            refId={refId}
             name={otu.name}
             id={otu.id}
             changeCount={otu.change_count}
@@ -51,8 +54,8 @@ const IndexGeneral = ({ detail }) => {
             <Table bordered>
                 <tbody>
                     <tr>
-                        <th>Change Count</th>
-                        <td>{detail.change_count}</td>
+                        <th className="col-xs-4">Change Count</th>
+                        <td className="col-xs-8">{detail.change_count}</td>
                     </tr>
                     <tr>
                         <th>Created</th>

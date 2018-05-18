@@ -30,17 +30,6 @@ export default class ReferenceForm extends React.Component {
                     </div>
                 </Col>
             );
-        } else if (this.props.state.internalControl != null) {
-            extraComponent = (
-                <Col xs={12} md={6}>
-                    <InputError
-                        label="Internal Control"
-                        name="internalControl"
-                        value={this.props.state.internalControl}
-                        onChange={this.props.onChange}
-                    />
-                </Col>
-            );
         }
 
         return (

@@ -2,10 +2,12 @@ import React from "react";
 import { Switch, Route } from "react-router-dom";
 import { connect } from "react-redux";
 
+import OTUDetail from "../../otus/components/Detail/Detail";
+import IndexDetail from "../../indexes/components/Detail";
 import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
 import { LoadingPlaceholder } from "../../base";
-import SourceTypes from "../../settings/components/General/SourceTypes";
+import SourceTypes from "../../administration/components/General/SourceTypes";
 
 const ReferenceSettings = () => (
     <div>
@@ -28,6 +30,8 @@ const References = (props) => {
             <Switch>
                 <Route path="/refs" component={ReferenceList} exact />
                 <Route path="/refs/settings" component={ReferenceSettings} />
+                <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                <Route path="/refs/:refId/indexes/:indexVersion" component={IndexDetail} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </div>

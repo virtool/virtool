@@ -34,7 +34,7 @@ const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
         {canModify ? (
             <LinkContainer to={{...window.location, state: {createOTU: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
-                    <Icon name="new-entry" />
+                    <Icon name="plus-square" />
                 </Button>
             </LinkContainer>
         ) : null}
@@ -42,9 +42,9 @@ const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
 );
 
 const mapStateToProps = (state) => ({
-    canModify: state.account.permissions.modify_OTU,
     term: getFindTerm(),
-    search: state.router.location.search
+    search: state.router.location.search,
+    canModify: state.account.administrator
 });
 
 const mapDispatchToProps = (dispatch) => ({

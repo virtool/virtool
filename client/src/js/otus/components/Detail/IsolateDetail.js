@@ -63,13 +63,12 @@ export class IsolateDetail extends React.Component {
             modifyIcons = (
                 <span>
                     <Icon
-                        name="pencil"
+                        name="pencil-alt"
                         bsStyle="warning"
                         tip="Edit Name"
                         onClick={this.props.showEditIsolate}
                         style={{paddingLeft: "7px"}}
                     />
-
                     {isolate.default ? null : (
                         <Icon
                             name="star"
@@ -79,9 +78,8 @@ export class IsolateDetail extends React.Component {
                             style={{paddingLeft: "3px"}}
                         />
                     )}
-
                     <Icon
-                        name="remove"
+                        name="trash"
                         bsStyle="danger"
                         tip="Remove Isolate"
                         onClick={this.props.showRemoveIsolate}
@@ -148,7 +146,7 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: state.account.permissions.modify_OTU
+    canModify: state.account.administrator
 });
 
 const mapDispatchToProps = (dispatch) => ({

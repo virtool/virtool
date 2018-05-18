@@ -82,16 +82,32 @@ class ReferenceManage extends React.Component {
                             <td><RelativeTime time={created_at} /> by {user.id}</td>
                         </tr>
                         <tr>
-                            <th>Latest Build</th>
-                            <td>{latest_build}</td>
-                        </tr>
-                        <tr>
                             <th>Internal Control</th>
                             <td>{internal_control ? internal_control.name : null}</td>
                         </tr>
                         <tr>
                             <th>Public</th>
                             <td>{`${this.props.detail.public}`}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+
+                <h5>
+                    <strong>Latest Build</strong>
+                </h5>
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-4">Version</th>
+                            <td className="col-xs-8">{latest_build.version}</td>
+                        </tr>
+                        <tr>
+                            <th>ID</th>
+                            <td>{latest_build.id}</td>
+                        </tr>
+                        <tr>
+                            <th>Created</th>
+                            <td><RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}</td>
                         </tr>
                     </tbody>
                 </Table>

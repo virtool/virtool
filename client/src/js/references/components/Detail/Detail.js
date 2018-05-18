@@ -10,10 +10,10 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
-import ReferenceOTUList from "../../../otus/components/List";
-import ReferenceIndex from "../../../indexes/components/Indexes";
-import SourceTypes from "../../../settings/components/General/SourceTypes";
-import InternalControl from "../../../settings/components/General/InternalControl";
+import ReferenceOTUs from "../../../otus/components/List";
+import ReferenceIndexList from "../../../indexes/components/List";
+import SourceTypes from "../../../administration/components/General/SourceTypes";
+import InternalControl from "../../../administration/components/General/InternalControl";
 
 const ReferenceSettings = () => (
     <div>
@@ -68,8 +68,8 @@ class ReferenceDetail extends React.Component {
                 <Switch>
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                    <Route path="/refs/:refId/otus" component={ReferenceOTUList} />
-                    <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
+                    <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
+                    <Route path="/refs/:refId/indexes" component={ReferenceIndexList} />
                     <Route path="/refs/:refId/settings" component={ReferenceSettings} />
                 </Switch>
 

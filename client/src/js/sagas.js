@@ -13,7 +13,7 @@ import { watchJobs } from "./jobs/sagas";
 import { watchOTUs } from "./otus/sagas";
 import { watchProcesses } from "./processes/sagas";
 import { watchSamples } from "./samples/sagas";
-import { watchSettings } from "./settings/sagas";
+import { watchSettings } from "./administration/sagas";
 import { watchSubtraction } from "./subtraction/sagas";
 import { watchUpdates } from "./updates/sagas";
 import { watchUsers } from "./users/sagas";

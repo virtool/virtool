@@ -9,11 +9,10 @@ import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import OTUImport from "./Import";
 import { createFindURL } from "../../utils";
 
-const OTUItem = ({ abbreviation, id, name, modified, verified }) => (
-    <LinkContainer to={`/otus/${id}`} key={id} className="spaced">
+const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
+    <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
         <ListGroupItem bsStyle={verified ? null : "warning"}>
             <Row>
                 <Col xs={11} md={7}>
@@ -47,14 +46,16 @@ const OTUsList = (props) => {
     const OTUCount = props.documents.length;
 
     if (OTUCount) {
-        OTUComponents = map(props.documents, document => <OTUItem key={document.id} {...document} />);
+        OTUComponents = map(props.documents, document =>
+            <OTUItem key={document.id} refId={props.refId} {...document} />
+        );
     } else {
         OTUComponents = (
             <ListGroupItem key="noOTUs" className="text-center">
                 <span>
-                    <Icon name="info" /> No OTUs found. <Link to={{state: {importOTUs: true}}}>Import</Link> or
+                    <Icon name="info" /> No OTUs found,
                 </span>
-                <span> <Link to={{state: {createOTU: true}}}>Create</Link> some</span>
+                <span> <Link to={{state: {createOTU: true}}}>create</Link> some.</span>
             </ListGroupItem>
         );
     }
@@ -112,8 +113,6 @@ const OTUsList = (props) => {
             />
 
             <CreateOTU {...props} />
-
-            <OTUImport />
         </div>
     );
 };

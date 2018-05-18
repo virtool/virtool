@@ -15,8 +15,6 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
-    UPLOAD_IMPORT,
-    COMMIT_IMPORT,
     SELECT_ISOLATE,
     SHOW_EDIT_OTU,
     SHOW_REMOVE_OTU,
@@ -77,8 +75,9 @@ export const getOTUHistory = (otuId) => ({
  * @param abbreviation {string} unique abbreviation for OTU name
  * @returns {object}
  */
-export const createOTU = (name, abbreviation) => ({
+export const createOTU = (refId, name, abbreviation) => ({
     type: CREATE_OTU.REQUESTED,
+    refId,
     name,
     abbreviation
 });
@@ -109,8 +108,9 @@ export const editOTU = (otuId, name, abbreviation, schema) => ({
  * @param history {object} list of all changes made to the OTU
  * @returns {object}
  */
-export const removeOTU = (otuId, history) => ({
+export const removeOTU = (refId, otuId, history) => ({
     type: REMOVE_OTU.REQUESTED,
+    refId,
     otuId,
     history
 });
@@ -256,32 +256,6 @@ export const revert = (otuId, version) => ({
     type: REVERT.REQUESTED,
     otuId,
     version
-});
-
-/**
- * Returns action that can trigger an API call for uploading a OTU database.
- *
- * @func
- * @param file {object} OTU database file
- * @param onProgress {function} function that sets the component's progress state with a numerical value
- * @returns {object}
- */
-export const uploadImport = (file, onProgress) => ({
-    type: UPLOAD_IMPORT.REQUESTED,
-    file,
-    onProgress
-});
-
-/**
- * Returns action that can trigger an API call for committing a OTU database import.
- *
- * @func
- * @param fileId {string} unique OTU database file id
- * @returns {object}
- */
-export const commitImport = (fileId) => ({
-    type: COMMIT_IMPORT.REQUESTED,
-    fileId
 });
 
 /**

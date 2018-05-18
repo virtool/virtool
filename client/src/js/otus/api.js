@@ -20,8 +20,8 @@ export const getGenbank = (accession) => (
     Request.get(`/api/genbank/${accession}`)
 );
 
-export const create = ({ name, abbreviation }) => (
-    Request.post("/api/otus")
+export const create = ({ refId, name, abbreviation }) => (
+    Request.post(`/api/refs/${refId}/otus`)
         .send({
             name,
             abbreviation
@@ -68,7 +68,7 @@ export const removeIsolate = ({ otuId, isolateId }) => (
 export const addSequence = ({ otuId, isolateId, sequenceId, definition, host, sequence, segment }) => (
     Request.post(`/api/otus/${otuId}/isolates/${isolateId}/sequences`)
         .send({
-            id: sequenceId,
+            accession: sequenceId,
             definition,
             host,
             sequence,
@@ -92,14 +92,4 @@ export const removeSequence = ({ otuId, isolateId, sequenceId }) => (
 
 export const revert = ({ otuId, version }) => (
     Request.delete(`/api/history/${otuId}.${version}`)
-);
-
-export const getImport = ({ fileId }) => (
-    Request.get("/api/otus/import")
-        .query({file_id: fileId})
-);
-
-export const commitImport = ({ fileId }) => (
-    Request.post("/api/otus/import")
-        .send({file_id: fileId})
 );

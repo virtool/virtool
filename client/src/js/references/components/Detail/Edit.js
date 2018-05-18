@@ -15,7 +15,6 @@ const getInitialState = (detail) => ({
     dataType: detail.data_type,
     organism: detail.organism,
     isPublic: detail.public,
-    internalControl: "",
     errorName: "",
     errorDataType: ""
 });

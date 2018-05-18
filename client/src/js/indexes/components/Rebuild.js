@@ -25,7 +25,7 @@ class RebuildIndex extends React.Component {
     }
 
     modalEntered = () => {
-        this.props.onGetUnbuilt();
+        this.props.onGetUnbuilt(this.props.refId);
     };
 
     handleHide = () => {
@@ -40,7 +40,7 @@ class RebuildIndex extends React.Component {
 
     save = (e) => {
         e.preventDefault();
-        this.props.onRebuild();
+        this.props.onRebuild(this.props.refId);
     };
 
     render () {
@@ -88,17 +88,18 @@ class RebuildIndex extends React.Component {
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "rebuild", true),
     unbuilt: state.indexes.unbuilt,
-    error: get(state, "errors.CREATE_INDEX_ERROR.message", "")
+    error: get(state, "errors.CREATE_INDEX_ERROR.message", ""),
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGetUnbuilt: () => {
-        dispatch(getUnbuilt());
+    onGetUnbuilt: (refId) => {
+        dispatch(getUnbuilt(refId));
     },
 
-    onRebuild: () => {
-        dispatch(createIndex());
+    onRebuild: (refId) => {
+        dispatch(createIndex(refId));
     },
 
     onHide: () => {

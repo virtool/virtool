@@ -20,12 +20,12 @@ export function* getIndex (action) {
     yield apiCall(indexesAPI.get, action, GET_INDEX);
 }
 
-export function* getUnbuilt () {
-    yield apiCall(indexesAPI.getUnbuilt, {}, GET_UNBUILT);
+export function* getUnbuilt (action) {
+    yield apiCall(indexesAPI.getUnbuilt, action, GET_UNBUILT);
 }
 
-export function* createIndex () {
-    yield setPending(apiCall(indexesAPI.create, {}, CREATE_INDEX));
+export function* createIndex (action) {
+    yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX));
     yield put({type: FIND_INDEXES.REQUESTED});
 }
 

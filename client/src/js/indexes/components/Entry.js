@@ -9,6 +9,7 @@ export default class IndexEntry extends React.PureComponent {
 
     static propTypes = {
         ready: PropTypes.bool,
+        refId: PropTypes.string,
         showReady: PropTypes.bool,
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -60,7 +61,7 @@ export default class IndexEntry extends React.PureComponent {
         }
 
         return (
-            <LinkContainer to={`/otus/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/refs/${this.props.refId}/indexes/${this.props.version}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>

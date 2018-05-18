@@ -28,12 +28,11 @@ class EditOTU extends React.Component {
                 return { errorName: nextProps.error };
             } else if (nextProps.error === "Abbreviation already exists") {
                 return { errorAbbreviation: nextProps.error };
-            } else {
-                return {
-                    errorName: "Name already exists",
-                    errorAbbrevation: "Abbreviation already exists"
-                };
             }
+            return {
+                errorName: "Name already exists",
+                errorAbbrevation: "Abbreviation already exists"
+            };
         }
 
         return null;

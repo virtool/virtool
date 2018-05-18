@@ -79,7 +79,7 @@ const IsolateEditor = (props) => {
                 {props.canModify ? (
                     <Icon
                         bsStyle="primary"
-                        name="new-entry"
+                        name="plus-square"
                         tip="Add Isolate"
                         style={{fontSize: "15px"}}
                         onClick={props.onShowAddIsolate}
@@ -106,7 +106,7 @@ const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     isolates: state.otus.detail.isolates,
     activeIsolateId: state.otus.activeIsolateId,
-    canModify: state.account.permissions.modify_OTU
+    canModify: state.account.administrator
 });
 
 const mapDispatchToProps = dispatch => ({

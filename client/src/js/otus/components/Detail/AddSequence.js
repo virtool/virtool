@@ -42,7 +42,7 @@ class AddSequence extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (!prevState.props.error && nextProps.error) {
+        if (!prevState.error && nextProps.error) {
             let error = "";
 
             if (nextProps.error.status === 422) {
@@ -55,9 +55,8 @@ class AddSequence extends React.Component {
                 };
             } else if (nextProps.error.status === 404) {
                 return { errorSegment: nextProps.error.message };
-            } else {
-                return { errorId: nextProps.error.message };
             }
+            return { errorId: nextProps.error.message };
         }
 
         return null;
@@ -106,7 +105,7 @@ class AddSequence extends React.Component {
     };
 
     handleModalExited = () => {
-        this.setState(getInitialState());
+        this.setState(getInitialState(this.props));
         if (this.props.error) {
             this.props.onClearError("ADD_SEQUENCE_ERROR");
         }
@@ -177,7 +176,7 @@ class AddSequence extends React.Component {
                                     />
                                     <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                         <Button type="button" onClick={this.handleAutofill}>
-                                            <Icon name="wand" />
+                                            <Icon name="magic" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>

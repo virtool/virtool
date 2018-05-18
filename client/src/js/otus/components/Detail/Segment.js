@@ -33,14 +33,14 @@ export default class Segment extends React.Component {
                         </Col>
                         <Col md={1}>
                             <Icon
-                                name="remove"
+                                name="trash"
                                 bsStyle="danger"
                                 style={{fontSize: "17px", padding: "0 5px"}}
                                 onClick={this.handleRemove}
                                 pullRight
                             />
                             <Icon
-                                name="pencil"
+                                name="pencil-alt"
                                 bsStyle="warning"
                                 style={{fontSize: "17px"}}
                                 onClick={this.handleEdit}

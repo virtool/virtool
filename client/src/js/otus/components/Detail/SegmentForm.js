@@ -17,7 +17,7 @@ class SegmentForm extends React.Component {
         };
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps (nextProps) {
         if (nextProps.errors && nextProps.errors.EDIT_OTU_ERROR) {
             return { error: nextProps.errors.EDIT_OTU_ERROR.message };
         }
