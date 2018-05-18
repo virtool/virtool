@@ -18,10 +18,9 @@ exports[`<Permissions /> renders correctly 1`] = `
         <code>
           test_create
         </code>
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="checkbox-checked"
+        <Checkbox
+          checked={true}
+          partial={false}
           pullRight={true}
         />
       </ListGroupItem>
@@ -34,10 +33,9 @@ exports[`<Permissions /> renders correctly 1`] = `
         <code>
           test_edit
         </code>
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="checkbox-unchecked"
+        <Checkbox
+          checked={false}
+          partial={false}
           pullRight={true}
         />
       </ListGroupItem>
@@ -50,10 +48,9 @@ exports[`<Permissions /> renders correctly 1`] = `
         <code>
           test_remove
         </code>
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="checkbox-checked"
+        <Checkbox
+          checked={true}
+          partial={false}
           pullRight={true}
         />
       </ListGroupItem>
@@ -66,10 +63,9 @@ exports[`<Permissions /> renders correctly 1`] = `
         <code>
           test_view
         </code>
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="checkbox-unchecked"
+        <Checkbox
+          checked={false}
+          partial={false}
           pullRight={true}
         />
       </ListGroupItem>
