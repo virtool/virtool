@@ -66,7 +66,7 @@ async def check_source_type(db, ref_id, source_type):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param ref_id: the id of the ref to get contributors for
+    :param ref_id: the reference context
     :type ref_id: str
 
     :param source_type: the source type to check
