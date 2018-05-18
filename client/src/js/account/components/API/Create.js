@@ -98,7 +98,7 @@ export class CreateAPIKey extends React.Component {
                     </Row>
 
                     <small className={CX("text-primary", {invisible: !this.state.copied})}>
-                        <Icon name="checkmark" /> Copied
+                        <Icon name="check" /> Copied
                     </small>
                 </Modal.Body>
             );
