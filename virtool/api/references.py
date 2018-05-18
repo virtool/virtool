@@ -294,6 +294,9 @@ async def create(req):
     "internal_control": {
         "type": "string"
     },
+    "restrict_source_types": {
+        "type": "boolean"
+    },
     "source_types": {
         "type": "list",
         "schema": {

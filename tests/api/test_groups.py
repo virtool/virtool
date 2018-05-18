@@ -91,7 +91,6 @@ class TestCreate:
         })
 
         assert await resp_is.invalid_input(resp, {
-            "test": ["unknown field"],
             "group_id": ["required field"]
         })
 

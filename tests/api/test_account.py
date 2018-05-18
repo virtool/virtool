@@ -133,8 +133,7 @@ async def test_update_settings(invalid_input, spawn_client, resp_is):
 
     if invalid_input:
         assert await resp_is.invalid_input(resp, {
-            "show_ids": ["must be of boolean type"],
-            "foo_bar": ["unknown field"]
+            "show_ids": ["must be of boolean type"]
         })
     else:
         assert resp.status == 200
