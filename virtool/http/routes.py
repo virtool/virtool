@@ -69,7 +69,7 @@ def protect(route_decorator, admin, permission, public, schema):
                     data = None
 
                 if schema and data is not None:
-                    v = Validator(schema)
+                    v = Validator(schema, purge_unknown=True)
 
                     if not v.validate(data):
                         return invalid_input(v.errors)
