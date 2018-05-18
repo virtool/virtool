@@ -3,7 +3,7 @@ import sys
 import copy
 import motor.motor_asyncio
 import logging
-import pymongo.errors
+from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 from aiohttp import web
 from mako.template import Template
 from cerberus import Validator
@@ -161,7 +161,8 @@ async def setup_db(req):
                 serverSelectionTimeoutMS=1500,
                 io_loop=req.app.loop
             )
-        except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
+        except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError) as err:
+            logger.debug(str(err))
             return report_error(req, "db_connection_error")
 
     else:
@@ -175,19 +176,20 @@ async def setup_db(req):
                 serverSelectionTimeoutMS=1500,
                 connect=True
             )
-        except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
+        except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError) as err:
+            logger.debug(str(err))
             return report_error(req, "db_connection_error")
 
     db = client[db_name]
 
     try:
         collection_names = await db.collection_names(include_system_collections=False)
-    except pymongo.errors.OperationFailure as err:
+    except OperationFailure as err:
         if any(substr in str(err) for substr in ["Authentication failed", "no users authenticated"]):
             return report_error(req, "db_auth_error")
 
         raise
-    except (pymongo.errors.ConnectionFailure, pymongo.errors.ServerSelectionTimeoutError, TypeError, ValueError):
+    except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError):
         return report_error(req, "db_connection_error")
 
     for collection_name in collection_names:
