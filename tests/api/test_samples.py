@@ -717,5 +717,5 @@ class TestAnalyze:
         })
 
         assert await resp_is.invalid_input(resp, {
-            "algorithm": ["required field"], "foobar": ["unknown field"], "ref_id": ["required field"]
+            "algorithm": ["required field"], "ref_id": ["required field"]
         })

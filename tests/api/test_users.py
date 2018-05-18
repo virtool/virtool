@@ -141,10 +141,9 @@ class TestCreate:
 
         resp = await client.post("/api/users", data)
 
-        assert resp.status == 422
+        print(await resp.json())
 
         assert await resp_is.invalid_input(resp, {
-            "username": ["unknown field"],
             "password": ["must be of string type"],
             "user_id": ["required field"]
         })
@@ -208,7 +207,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
     payload = dict(data)
 
     if error == "invalid_input":
-        payload["foobar"] = "baz"
+        payload["force_reset"] = "baz"
 
     resp = await client.patch("/api/users/bob", payload)
 
@@ -221,7 +220,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     elif error == "invalid_input":
         assert await resp_is.invalid_input(resp, {
-            "foobar": ["unknown field"]
+            "force_reset": ["must be of boolean type"]
         })
 
     elif error == "user_dne":

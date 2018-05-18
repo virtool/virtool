@@ -184,7 +184,6 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp_is.invalid_input(resp, {
-            "otu_name": ["unknown field"],
             "abbreviation": ["must be of string type"],
             "name": ["required field"]
         })
@@ -396,7 +395,6 @@ class TestEdit:
         assert resp.status == 422
 
         assert await resp_is.invalid_input(resp, {
-            "otu_name": ["unknown field"],
             "abbreviation": ["must be of string type"]
         })
 
@@ -1621,8 +1619,7 @@ class TestCreateSequence:
 
         assert await resp_is.invalid_input(resp, {
             "accession": ["must be of string type"],
-            "sequence": ["required field"],
-            "seq": ["unknown field"]
+            "sequence": ["required field"]
         })
 
     @pytest.mark.parametrize("otu_id, isolate_id", [
@@ -1749,8 +1746,7 @@ class TestEditSequence:
         assert resp.status == 422
 
         assert await resp_is.invalid_input(resp, {
-            "definition": ["must be of string type"],
-            "plant": ["unknown field"]
+            "definition": ["must be of string type"]
         })
 
     @pytest.mark.parametrize("foobar", ["otu_id", "isolate_id", "sequence_id"])

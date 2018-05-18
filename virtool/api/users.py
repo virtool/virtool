@@ -51,7 +51,7 @@ async def create(req):
         "user_id": {"type": "string", "minlength": 1, "required": True},
         "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"], "required": True},
         "force_reset": {"type": "boolean", "default": True}
-    })
+    }, purge_unknown=True)
 
     if not v.validate(data):
         return invalid_input(v.errors)
@@ -87,7 +87,7 @@ async def edit(req):
         "groups": {"type": "list", "allowed": groups},
         "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"]},
         "primary_group": {"type": "string"}
-    })
+    }, purge_unknown=True)
 
     if not v.validate(data):
         return invalid_input(v.errors)
