@@ -3,7 +3,7 @@ import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem } from "react-bootstrap";
+import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
@@ -23,33 +23,46 @@ class IndexDetail extends React.Component {
         }
 
         const indexVersion = this.props.match.params.indexVersion;
+        const refId = this.props.detail.reference.id;
 
         return (
             <div>
                 <Helmet>
-                    <title>{`Virus Index ${indexVersion} - Indexes`}</title>
+                    <title>{`OTU Index ${indexVersion} - Indexes`}</title>
                 </Helmet>
+
+                <Breadcrumb>
+                    <Breadcrumb.Item>
+                        <LinkContainer to={`/refs/${refId}/indexes`}>
+                            <div>
+                                Indexes
+                            </div>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item active>OTU Index {indexVersion}</Breadcrumb.Item>
+                </Breadcrumb>
+
                 <h3 className="view-header">
                     <strong>OTU Index {indexVersion}</strong>
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/otus/indexes/${indexVersion}/general`}>
+                    <LinkContainer to={`/refs/${refId}/indexes/${indexVersion}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/otus/indexes/${indexVersion}/changes`}>
+                    <LinkContainer to={`/refs/${refId}/indexes/${indexVersion}/changes`}>
                         <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
                     <Redirect
-                        from="/otus/indexes/:indexVersion"
-                        to={`/otus/indexes/${indexVersion}/general`}
+                        from="/refs/:refId/indexes/:indexVersion"
+                        to={`/refs/${refId}/indexes/${indexVersion}/general`}
                         exact
                     />
-                    <Route path="/otus/indexes/:indexVersion/general" component={IndexGeneral} />
-                    <Route path="/otus/indexes/:indexVersion/changes" component={IndexChanges} />
+                    <Route path="/refs/:refId/indexes/:indexVersion/general" component={IndexGeneral} />
+                    <Route path="/refs/:refId/indexes/:indexVersion/changes" component={IndexChanges} />
                 </Switch>
             </div>
         );

@@ -15,8 +15,8 @@ const JobTable = ({id, mem, proc, status, user}) => (
     <Table bordered>
         <tbody>
             <tr>
-                <th>Cores</th>
-                <td>{proc}</td>
+                <th className="col-xs-4">Cores</th>
+                <td className="col-xs-8">{proc}</td>
             </tr>
             <tr>
                 <th>Memory</th>

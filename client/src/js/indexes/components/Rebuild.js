@@ -40,7 +40,7 @@ class RebuildIndex extends React.Component {
 
     save = (e) => {
         e.preventDefault();
-        this.props.onRebuild();
+        this.props.onRebuild(this.props.refId);
     };
 
     render () {
@@ -98,8 +98,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(getUnbuilt(refId));
     },
 
-    onRebuild: () => {
-        dispatch(createIndex());
+    onRebuild: (refId) => {
+        dispatch(createIndex(refId));
     },
 
     onHide: () => {

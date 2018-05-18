@@ -60,7 +60,7 @@ export default class IndexEntry extends React.PureComponent {
         }
 
         return (
-            <LinkContainer to={`/otus/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/refs/${this.props.refId}/indexes/${this.props.version}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>

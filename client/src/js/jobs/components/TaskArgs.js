@@ -51,12 +51,30 @@ const TaskArgs = (props) => {
 
     }
 
-    const rowComponents = values(mapValues(props.taskArgs, (value, key) =>
-        <tr key={key}>
-            <th><code>{key}</code></th>
-            <td>{JSON.stringify(value)}</td>
-        </tr>
-    ));
+    const rowComponents = values(mapValues(props.taskArgs, (value, key) => {
+
+        if (key !== "manifest") {
+            return (
+                <tr key={key}>
+                    <th className="col-xs-4"><code>{key}</code></th>
+                    <td className="col-xs-8">{JSON.stringify(value)}</td>
+                </tr>
+            );
+        }
+
+        return (
+            <tr key={key}>
+                <th><code>{key}</code></th>
+                <td className="sequence-cell">
+                    <textarea
+                        rows="5"
+                        value={JSON.stringify(value)}
+                        readOnly
+                    />
+                </td>
+            </tr>
+        );
+    }));
 
     return (
         <Table bordered>

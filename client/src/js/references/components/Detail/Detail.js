@@ -11,7 +11,7 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceOTUs from "../../../otus/components/List";
-import ReferenceIndex from "../../../indexes/components/Indexes";
+import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
 
@@ -69,7 +69,7 @@ class ReferenceDetail extends React.Component {
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
                     <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
-                    <Route path="/refs/:refId/indexes" component={ReferenceIndex} />
+                    <Route path="/refs/:refId/indexes" component={ReferenceIndexList} />
                     <Route path="/refs/:refId/settings" component={ReferenceSettings} />
                 </Switch>
 

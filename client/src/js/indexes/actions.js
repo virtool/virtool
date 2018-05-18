@@ -39,7 +39,10 @@ export const getUnbuilt = (refId) => ({
  * @func
  * @returns {object}
  */
-export const createIndex = simpleActionCreator(CREATE_INDEX.REQUESTED);
+export const createIndex = (refId) => ({
+    type: CREATE_INDEX.REQUESTED,
+    refId
+});
 
 /**
  * Returns action that can trigger an API call for getting a specific page in the index version history.
