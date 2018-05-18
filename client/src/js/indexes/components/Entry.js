@@ -9,6 +9,7 @@ export default class IndexEntry extends React.PureComponent {
 
     static propTypes = {
         ready: PropTypes.bool,
+        refId: PropTypes.string,
         showReady: PropTypes.bool,
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),

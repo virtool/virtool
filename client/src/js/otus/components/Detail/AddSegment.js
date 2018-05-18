@@ -24,6 +24,7 @@ class AddSegment extends React.Component {
     }
 
     handleChange = (entry) => {
+
         this.setState({
             newEntry: {
                 name: entry.name,
@@ -82,7 +83,7 @@ AddSegment.propTypes = {
 };
 
 const mapStateToProps = (state) => ({
-    schema: state.otus.detail.schema
+    schema: state.otus.detail.schema ? state.otus.detail.schema : []
 });
 
 export default connect(mapStateToProps)(AddSegment);

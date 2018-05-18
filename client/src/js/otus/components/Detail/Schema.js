@@ -7,8 +7,8 @@ import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
-import { editOTU } from "../../actions";
 import { Button, NoneFound } from "../../../base";
+import { editOTU } from "../../actions";
 
 const getInitialState = (props) => ({
     segArray: props.schema ? props.schema : [],
@@ -57,6 +57,7 @@ class Schema extends React.Component {
                 newArray
             );
         }
+
     };
 
     handleAddNew = () => {
@@ -144,7 +145,6 @@ class Schema extends React.Component {
                         {(provided) => (
                             <div ref={provided.innerRef} {...provided.droppableProps}>
                                 {segments}
-                                {provided.placeholder}
                             </div>
                         )}
                     </Droppable>

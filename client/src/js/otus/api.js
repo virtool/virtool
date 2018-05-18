@@ -68,7 +68,7 @@ export const removeIsolate = ({ otuId, isolateId }) => (
 export const addSequence = ({ otuId, isolateId, sequenceId, definition, host, sequence, segment }) => (
     Request.post(`/api/otus/${otuId}/isolates/${isolateId}/sequences`)
         .send({
-            id: sequenceId,
+            accession: sequenceId,
             definition,
             host,
             sequence,

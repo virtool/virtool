@@ -24,6 +24,7 @@ class Sequence extends React.Component {
 
     static propTypes = {
         id: PropTypes.string,
+        accession: PropTypes.string,
         definition: PropTypes.string,
         host: PropTypes.string,
         sequence: PropTypes.string,
@@ -50,7 +51,8 @@ class Sequence extends React.Component {
 
     render () {
 
-        const accession = this.props.id;
+        const accession = this.props.accession;
+        const id = this.props.id;
 
         let buttons;
 
@@ -99,13 +101,13 @@ class Sequence extends React.Component {
             <ListGroupItem
                 className="spaced"
                 componentClass="div"
-                key={accession}
+                key={id}
                 onClick={this.state.in ? null : () => this.setState({in: true})}
             >
                 <div>
                     <Flex alignItems="center">
                         <FlexItem grow={0} shrink={0}>
-                            <Label>{accession}</Label>
+                            <Label>{id}</Label>
                         </FlexItem>
                         <FlexItem className="sequence-header-definition" grow={1} shrink={1} pad={5}>
                             {this.props.definition}
@@ -121,6 +123,10 @@ class Sequence extends React.Component {
                                 <tr>
                                     <th>Accession</th>
                                     <td>{accession}</td>
+                                </tr>
+                                <tr>
+                                    <th>Unique ID</th>
+                                    <td>{id}</td>
                                 </tr>
                                 <tr>
                                     <th>Host</th>
