@@ -30,6 +30,35 @@ PROJECTION = [
 ]
 
 
+async def add_group_or_user(db, ref_id, field, data):
+
+    document = await db.references.find_one({"_id": ref_id}, [field])
+
+    if not document:
+        return None
+
+    subdocument_id = data.get("group_id", None) or data["user_id"]
+
+    if subdocument_id in [s["id"] for s in document[field]]:
+        raise virtool.errors.DatabaseError(field[:-1] + " already exists")
+
+    rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+
+    subdocument = {
+        "id": subdocument_id,
+        "created_at": virtool.utils.timestamp(),
+        **rights
+    }
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            field: subdocument
+        }
+    })
+
+    return subdocument
+
+
 async def check_source_type(db, ref_id, source_type):
     """
     Check if the provided `source_type` is valid based on the current reference source type configuration.
@@ -37,7 +66,7 @@ async def check_source_type(db, ref_id, source_type):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param ref_id: the id of the ref to get contributors for
+    :param ref_id: the reference context
     :type ref_id: str
 
     :param source_type: the source type to check
@@ -93,6 +122,92 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
     await virtool.db.processes.update(db, process_id, progress=1)
 
 
+async def delete_group_or_user(db, ref_id, subdocument_id, field):
+    """
+    Delete an existing group or user as decided by the `field` argument.
+
+    :param db: the application database client
+    :type db: :class:`virtool.db.iface.DB`
+
+    :param ref_id: the id of the reference to modify
+    :type ref_id: str
+
+    :param subdocument_id: the id of the group or user to delete
+    :type subdocument_id: str
+
+    :param field: the field to modify: 'group' or 'user'
+    :type field: str
+
+    :return: the id of the removed subdocument
+    :rtype: str
+
+    """
+    document = await db.references.find_one({
+        "_id": ref_id,
+        field + ".id": subdocument_id
+    }, [field])
+
+    if document is None:
+        return None
+
+    # Retain only the subdocuments that don't match the passed `subdocument_id`.
+    filtered = [s for s in document[field] if s["id"] != subdocument_id]
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            field: filtered
+        }
+    })
+
+    return subdocument_id
+
+
+async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
+    """
+    Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
+    does not exist.
+
+    :param db: the application database client
+    :type db: :class:`virtool.db.iface.DB`
+
+    :param ref_id: the id of the reference to modify
+    :type ref_id: str
+
+    :param subdocument_id: the id of the group or user to modify
+    :type subdocument_id: str
+
+    :param field: the field to modify: 'group' or 'user'
+    :type field: str
+
+    :param data: the data to update the group or user with
+    :type data: dict
+
+    :return: the modified subdocument
+    :rtype: dict
+
+    """
+    document = await db.references.find_one({
+        "_id": ref_id,
+        field + ".id": subdocument_id
+    }, [field])
+
+    if document is None:
+        return None
+
+    for subdocument in document[field]:
+        if subdocument["id"] == subdocument_id:
+            rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+            subdocument.update(rights)
+
+            await db.references.update_one({"_id": ref_id}, {
+                "$set": {
+                    field: document[field]
+                }
+            })
+
+            return subdocument
+
+
 async def get_computed(db, ref_id, internal_control_id):
     contributors, internal_control, latest_build = await asyncio.gather(
         get_contributors(db, ref_id),
@@ -138,15 +253,15 @@ async def get_latest_build(db, ref_id):
     :rtype: Union[None, dict]
 
     """
-    last_build = await db.indexes.find_one({
+    latest_build = await db.indexes.find_one({
         "reference.id": ref_id,
         "ready": True
     }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
 
-    if last_build is None:
+    if latest_build is None:
         return None
 
-    return virtool.utils.base_processor(last_build)
+    return virtool.utils.base_processor(latest_build)
 
 
 async def get_internal_control(db, internal_control_id):
@@ -335,6 +450,7 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "public": public,
         "restrict_source_types": False,
         "source_types": settings["default_source_types"],
+        "groups": list(),
         "users": users,
         "user": user
     }

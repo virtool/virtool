@@ -1,3 +1,7 @@
+import pytest
+from aiohttp.test_utils import make_mocked_coro
+
+
 async def test_create(spawn_client, test_random_alphanumeric, static_time):
     client = await spawn_client(authorize=True, permissions=["create_ref"])
 
@@ -38,9 +42,105 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
             "modify_otu": True,
             "remove": True
         }],
+        groups=[],
         contributors=[],
         internal_control=None,
         restrict_source_types=False,
         source_types=default_source_type,
         latest_build=None
     )
+
+
+@pytest.mark.parametrize("error", [None, 404])
+@pytest.mark.parametrize("field", ["group", "user"])
+async def test_add_group_or_user(error, field, mocker, spawn_client, resp_is):
+    client = await spawn_client(authorize=True, permissions=["create_ref"])
+
+    expected = {"id": "test"}
+
+    if error == 404:
+        expected = None
+
+    m_add_group_or_user = mocker.patch("virtool.db.references.add_group_or_user", make_mocked_coro(expected))
+
+    url = "/api/refs/foobar/{}s".format(field)
+
+    resp = await client.post(url, {
+        field + "_id": "baz",
+        "modify": True
+    })
+
+    if error == 404:
+        assert await resp_is.not_found(resp)
+
+    else:
+        assert resp.status == 201
+
+        assert await resp.json() == expected
+
+        m_add_group_or_user.assert_called_with(client.db, "foobar", field + "s", {
+            "build": False,
+            "modify": True,
+            "modify_otu": False,
+            "remove": False,
+            field + "_id": "baz"
+        })
+
+
+@pytest.mark.parametrize("error", [None, 404])
+@pytest.mark.parametrize("field", ["group", "user"])
+async def test_edit_group_or_user(error, field, mocker, spawn_client, resp_is):
+    client = await spawn_client(authorize=True, permissions=["create_ref"])
+
+    expected = {"id": "test"}
+
+    if error == 404:
+        expected = None
+
+    m_edit_group_or_user = mocker.patch("virtool.db.references.edit_group_or_user", make_mocked_coro(expected))
+
+    url = "/api/refs/foobar/{}s/baz".format(field)
+
+    resp = await client.patch(url, {
+        "remove": True
+    })
+
+    if error == 404:
+        assert await resp_is.not_found(resp)
+
+    else:
+        assert resp.status == 200
+
+        assert await resp.json() == expected
+
+        m_edit_group_or_user.assert_called_with(client.db, "foobar", "baz", field + "s", {
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": True
+        })
+
+
+@pytest.mark.parametrize("error", [None, 404])
+@pytest.mark.parametrize("field", ["group", "user"])
+async def test_delete_group_or_user(error, field, mocker, spawn_client, resp_is):
+    client = await spawn_client(authorize=True, permissions=["create_ref"])
+
+    expected = "test"
+
+    if error == 404:
+        expected = None
+
+    m_edit_group_or_user = mocker.patch("virtool.db.references.delete_group_or_user", make_mocked_coro(expected))
+
+    url = "/api/refs/foobar/{}s/baz".format(field)
+
+    resp = await client.delete(url)
+
+    if error == 404:
+        assert await resp_is.not_found(resp)
+
+    else:
+        assert resp.status == 204
+
+        m_edit_group_or_user.assert_called_with(client.db, "foobar", "baz", field + "s")

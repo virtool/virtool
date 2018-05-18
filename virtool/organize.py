@@ -36,15 +36,25 @@ async def organize(db, settings, server_version):
     await organize_files(db)
     await organize_history(db)
     await organize_indexes(db)
-    await organize_references(db, settings)
+    await organize_users(db)
     await organize_groups(db)
+    await organize_references(db, settings)
     await organize_otus(db)
     await organize_sequences(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
-    await organize_users(db)
 
     await organize_paths(db, settings)
+
+    await organize_dev(db)
+
+
+async def organize_dev(db):
+    await db.references.update_many({"groups": {"$exists": False}}, {
+        "$set": {
+            "groups": []
+        }
+    })
 
 
 async def organize_analyses(db):
