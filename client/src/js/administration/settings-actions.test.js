@@ -23,17 +23,6 @@ describe("Settings Action Creators:", () => {
         expect(result).toEqual(expected);
     });
 
-    it("getControlReadahead: returns action to get search term matches", () => {
-        const term = "searchterm";
-        const result = getControlReadahead(term);
-        const expected = {
-            type: "GET_CONTROL_READAHEAD_REQUESTED",
-            term
-        };
-
-        expect(result).toEqual(expected);
-    });
-
     it("testProxy: returns simple action", () => {
         const result = testProxy();
         const expected = {
