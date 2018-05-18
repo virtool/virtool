@@ -53,6 +53,16 @@ class ReferenceManage extends React.Component {
             user
         } = this.props.detail;
 
+        let indexCreatedAt;
+
+        if (latest_build) {
+            indexCreatedAt = (
+                <span>
+                    <RelativeTime time={latest_build.created_at}/> by {latest_build.user.id}
+                </span>
+            );
+        }
+
         return (
             <div>
                 <Table bordered>
@@ -99,15 +109,15 @@ class ReferenceManage extends React.Component {
                     <tbody>
                         <tr>
                             <th className="col-xs-4">Version</th>
-                            <td className="col-xs-8">{latest_build.version}</td>
+                            <td className="col-xs-8">{latest_build ? latest_build.version : "None"}</td>
                         </tr>
                         <tr>
                             <th>ID</th>
-                            <td>{latest_build.id}</td>
+                            <td>{latest_build ? latest_build.id : "None"}</td>
                         </tr>
                         <tr>
                             <th>Created</th>
-                            <td><RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}</td>
+                            <td>{indexCreatedAt}</td>
                         </tr>
                     </tbody>
                 </Table>
