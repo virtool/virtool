@@ -376,8 +376,6 @@ async def clone_otus(db, source_id, source_ref_name, ref_id, user_id):
 
         for isolate in otu["isolates"]:
 
-            new_isolate_id = await virtool.db.otus.get_new_isolate_id(db, excluded_isolate_ids)
-
             async for sequence in await db.sequences.find({"otu_id": otu["_id"], "isolate_id": isolate["id"]}):
                 new_sequence_id = await virtool.db.utils.get_new_id(db.sequences, excluded=excluded_sequence_ids)
 

@@ -295,9 +295,6 @@ async def add_isolate(req):
     if not await virtool.db.references.check_source_type(db, document["reference"]["id"], data["source_type"]):
         return conflict("Source type is not allowed")
 
-    # Get a unique isolate_id for the new isolate.
-    isolate_id = await virtool.db.otus.get_new_isolate_id(db)
-
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     if isolates and data["default"]:
         for isolate in isolates:
