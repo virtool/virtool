@@ -10,6 +10,7 @@ import aiohttp
 import semver
 
 import virtool.app
+import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.http.proxy
@@ -55,10 +56,14 @@ async def get_releases(db, settings, channel, server_version):
 
     url = "https://www.virtool.ca/releases"
 
-    async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, url) as resp:
-            data = await resp.text()
-            data = json.loads(data)
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with virtool.http.proxy.ProxyRequest(settings, session.get, url) as resp:
+                data = await resp.text()
+                data = json.loads(data)
+    except aiohttp.ClientConnectionError:
+        # Return any existing release list or `None`.
+        return await virtool.db.utils.get_one_field(db.status, "releases", "software_update")
 
     data = data["software"]
 
