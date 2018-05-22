@@ -8,15 +8,13 @@ class Connection:
 
     def __init__(self, ws, session):
         self._ws = ws
+        self.ping = self._ws.ping
         self.user_id = session.user_id
         self.groups = session.groups
         self.permissions = session.permissions
 
     async def send(self, message):
         await self._ws.send_json(message, dumps=virtool.api.utils.dumps)
-
-    def ping(self):
-        return self._ws.ping()
 
     async def close(self):
         await self._ws.close()
@@ -44,7 +42,7 @@ class Dispatcher:
 
                 for connection in self.connections:
                     try:
-                        connection.ping()
+                        await connection.ping()
                     except RuntimeError as err:
                         if "unable to perform operation on <TCPTransport closed=True" in str(err):
                             to_remove.append(connection)
