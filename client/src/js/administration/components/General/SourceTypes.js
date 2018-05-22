@@ -1,7 +1,7 @@
 import React from "react";
 import { includes, map, toLower, without } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Row, Col, Panel, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
 import { editReference } from "../../../references/actions";
@@ -74,6 +74,12 @@ class SourceTypes extends React.Component {
             />
         );
 
+        const errorMessage = (
+            <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
+                <span className="input-error-message">{this.state.error ? this.state.error : "None"}</span>
+            </div>
+        );
+
         return (
             <div>
                 <Row>
@@ -123,24 +129,13 @@ class SourceTypes extends React.Component {
                                                 </Button>
                                             </InputGroup.Button>
                                         </InputGroup>
+                                        {errorMessage}
                                     </FormGroup>
                                 </form>
 
                                 <div>
                                     {listComponents}
                                 </div>
-
-                                <Overlay
-                                    show={!!this.state.error}
-                                    target={() => this.inputNode}
-                                    container={() => this.containerNode}
-                                    placement="top"
-                                    animation={false}
-                                >
-                                    <Popover id="source-type-error-popover" className="text-danger">
-                                        {this.state.error}
-                                    </Popover>
-                                </Overlay>
                             </Panel.Body>
                         </Panel>
                     </Col>
