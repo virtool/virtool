@@ -196,7 +196,7 @@ async def test_import(mocker, tmpdir, test_motor, static_time):
 
     m = mocker.patch("virtool.db.processes.update", make_mocked_coro())
 
-    await virtool.db.references.import_file(
+    await virtool.db.references.finish_import(
         app,
         os.path.join(str(tmpdir), "import.json.gz"),
         "bar",
