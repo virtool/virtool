@@ -253,7 +253,9 @@ async def get_isolate(req):
 
     isolate = dict(virtool.otus.find_isolate(document["isolates"], isolate_id), sequences=[])
 
-    async for sequence in db.sequences.find({"isolate_id": isolate_id}, {"otu_id": False, "isolate_id": False}):
+    cursor = db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, {"otu_id": False, "isolate_id": False})
+
+    async for sequence in cursor:
         sequence["id"] = sequence.pop("_id")
         isolate["sequences"].append(sequence)
 
@@ -272,7 +274,6 @@ async def add_isolate(req):
     """
     db = req.app["db"]
     data = req["data"]
-    settings = req.app["settings"]
 
     otu_id = req.match_info["otu_id"]
 
@@ -305,23 +306,9 @@ async def add_isolate(req):
         data["default"] = True
 
     # Set the isolate as the default isolate if it is the first one.
-    data.update({
-        "default": will_be_default,
-        "id": isolate_id
-    })
+    data.update["default"] = will_be_default
 
-    isolates.append(data)
-
-    # Push the new isolate to the database.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
+    isolate_id = await virtool.db.otus.append_isolate(db, otu_id, isolates, data)
 
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
@@ -593,7 +580,7 @@ async def remove_isolate(req):
         new["verified"] = True
 
     # Remove any sequences associated with the removed isolate.
-    await db.sequences.delete_many({"isolate_id": isolate_id})
+    await db.sequences.delete_many({"otu_id": otu_id, "isolate_id": isolate_id})
 
     description = "Removed {}".format(virtool.otus.format_isolate_name(isolate_to_remove))
 
@@ -619,7 +606,7 @@ async def list_sequences(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    if not await db.otus.find({"_id": otu_id}, {"isolates.id": isolate_id}).count():
+    if not await db.otus.find({"_id": otu_id, "isolates.id": isolate_id}).count():
         return not_found()
 
     projection = list(virtool.db.otus.SEQUENCE_PROJECTION)
@@ -627,7 +614,7 @@ async def list_sequences(req):
     projection.remove("otu_id")
     projection.remove("isolate_id")
 
-    documents = await db.sequences.find({"isolate_id": isolate_id}, projection).to_list(None)
+    documents = await db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, projection).to_list(None)
 
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
