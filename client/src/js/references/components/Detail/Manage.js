@@ -58,7 +58,7 @@ class ReferenceManage extends React.Component {
         if (latest_build) {
             indexCreatedAt = (
                 <span>
-                    <RelativeTime time={latest_build.created_at}/> by {latest_build.user.id}
+                    <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
                 </span>
             );
         }
