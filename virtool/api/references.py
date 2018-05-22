@@ -210,7 +210,9 @@ async def create(req):
     import_from = data.get("import_from", None)
 
     if clone_from:
-        document = await virtool.db.references.clone(
+        manifest = await virtool.db.references.get_manifest(db, clone_from)
+
+        document = await virtool.db.references.create_clone(
             db,
             settings,
             data["name"],
@@ -220,13 +222,28 @@ async def create(req):
             user_id
         )
 
+        process = await virtool.db.processes.register(db, "clone_reference")
+
+        document["process"] = {
+            "id": process["id"]
+        }
+
+        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_clone(
+            req.app,
+            document["_id"],
+            manifest,
+            document["created_at"],
+            process["id"],
+            user_id
+        ))
+
     elif import_from:
         if not await db.files.count({"_id": import_from}):
             return not_found("File not found")
 
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
 
-        document = await virtool.db.references.create_for_import(
+        document = await virtool.db.references.create_import(
             db,
             settings,
             data["name"],
@@ -242,7 +259,7 @@ async def create(req):
             "id": process["id"]
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.references.import_file(
+        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_import(
             req.app,
             path,
             document["_id"],
