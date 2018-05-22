@@ -32,5 +32,11 @@ async def middleware(req, handler):
 
 def handle_404(client_path):
     path = os.path.join(sys.path[0], "templates", "error_404.html")
-    html = Template(filename=path).render(hash=virtool.utils.get_static_hash(client_path))
+
+    try:
+        html = Template(filename=path).render(hash=virtool.utils.get_static_hash(client_path))
+    except FileNotFoundError:
+        with open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as handle:
+            return web.Response(body=handle.read(), content_type="text/html")
+
     return web.Response(body=html, content_type="text/html", status=404)

@@ -1,3 +1,4 @@
+import aiofiles
 import logging
 import os
 import sys
@@ -32,18 +33,26 @@ import virtool.http.login
 logger = logging.getLogger(__name__)
 
 
+async def client_path_error():
+    async with aiofiles.open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as f:
+        body = await f.read()
+        return web.Response(body=body, content_type="text/html")
+
+
 async def index_handler(req):
     if req.app["client_path"] is None:
-        client_path = await virtool.utils.get_client_path()
-
-        if client_path is None:
-            with open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as handle:
-                return web.Response(body=handle.read(), content_type="text/html")
+        try:
+            client_path = await virtool.utils.get_client_path()
+        except FileNotFoundError:
+            return await client_path_error()
 
         req.app["client_path"] = client_path
         req.app.router.add_static("/static", client_path)
 
-    static_hash = virtool.utils.get_static_hash(req.app["client_path"])
+    try:
+        static_hash = virtool.utils.get_static_hash(req.app["client_path"])
+    except FileNotFoundError:
+        return await client_path_error()
 
     if not req["client"].user_id:
         keys = virtool.http.login.generate_verification_keys()
