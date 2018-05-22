@@ -1,6 +1,7 @@
 import pytest
 
 import virtool.db.indexes
+import virtool.db.references
 import virtool.errors
 import virtool.jobs.build_index
 
@@ -13,7 +14,7 @@ async def test_create_manifest(test_motor, test_otu):
         dict(test_otu, _id="bar", version=11)
     ])
 
-    assert await virtool.db.indexes.create_manifest(test_motor, "hxn167") == {
+    assert await virtool.db.references.get_manifest(test_motor, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11

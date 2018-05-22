@@ -18,30 +18,6 @@ PROJECTION = [
 ]
 
 
-async def create_manifest(db, ref_id):
-    """
-    Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes
-    made at the time the index rebuild was started are included in the build.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param ref_id: the id of the reference to get the current index for
-    :type ref_id: str
-
-
-    :return: a manifest of otu ids and versions
-    :rtype: dict
-
-    """
-    manifest = dict()
-
-    async for document in db.otus.find({"reference.id": ref_id}, ["version"]):
-        manifest[document["_id"]] = document["version"]
-
-    return manifest
-
-
 async def find(db, req_query, ref_id=None):
     base_query = None
 

@@ -1,5 +1,6 @@
 import virtool.db.history
 import virtool.db.indexes
+import virtool.db.references
 import virtool.db.utils
 import virtool.history
 import virtool.http.routes
@@ -73,7 +74,7 @@ async def create(req):
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 
-    manifest = await virtool.db.indexes.create_manifest(db, ref_id)
+    manifest = await virtool.db.references.get_manifest(db, ref_id)
 
     user_id = req["client"].user_id
 

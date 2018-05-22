@@ -239,31 +239,6 @@ async def get_contributors(db, ref_id):
     return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_latest_build(db, ref_id):
-    """
-    Return the latest index build for the ref.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param ref_id: the id of the ref to get the latest build for
-    :type ref_id: str
-
-    :return: a subset of fields for the latest build
-    :rtype: Union[None, dict]
-
-    """
-    latest_build = await db.indexes.find_one({
-        "reference.id": ref_id,
-        "ready": True
-    }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
-
-    if latest_build is None:
-        return None
-
-    return virtool.utils.base_processor(latest_build)
-
-
 async def get_internal_control(db, internal_control_id):
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
@@ -292,42 +267,45 @@ async def get_internal_control(db, internal_control_id):
     }
 
 
-async def check_import_abbreviation(db, otu_document, lower_name=None):
+async def get_latest_build(db, ref_id):
     """
-    Check if the abbreviation for a otu document to be imported already exists in the database. If the abbreviation
-    exists, set the ``abbreviation`` field in the otu document to an empty string and return warning text to
-    send to the client.
+    Return the latest index build for the ref.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param otu_document: the otu document that is being imported
-    :type otu_document: dict
+    :param ref_id: the id of the ref to get the latest build for
+    :type ref_id: str
 
-    :param lower_name: the name of the otu coerced to lowercase
-    :type lower_name: str
+    :return: a subset of fields for the latest build
+    :rtype: Union[None, dict]
 
     """
-    lower_name = lower_name or otu_document["name"].lower()
+    latest_build = await db.indexes.find_one({
+        "reference.id": ref_id,
+        "ready": True
+    }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
 
-    # Check if abbreviation exists already.
-    otu_with_abbreviation = None
+    if latest_build is None:
+        return None
 
-    # Don't count empty strings as duplicate abbreviations!
-    if otu_document["abbreviation"]:
-        otu_with_abbreviation = await db.otus.find_one({"abbreviation": otu_document["abbreviation"]})
+    return virtool.utils.base_processor(latest_build)
 
-    if otu_with_abbreviation and otu_with_abbreviation["lower_name"] != lower_name:
-        # Remove the imported otu's abbreviation because it is already assigned to an existing otu.
-        otu_document["abbreviation"] = ""
 
-        # Record a message for the user.
-        return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-            otu_with_abbreviation["abbreviation"], otu_with_abbreviation["name"], otu_document["name"]
-        )
+async def get_manifest(db, ref_id):
+    """
+    Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes
+    made at the time the index rebuild was started are included in the build.
 
-    return None
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
+    :param ref_id: the id of the reference to get the current index for
+    :type ref_id: str
+
+
+    :return: a manifest of otu ids and versions
+    :rtype: dict
 
 async def clone(db, settings, name, clone_from, description, public, user_id):
 
