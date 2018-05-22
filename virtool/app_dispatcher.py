@@ -122,17 +122,23 @@ class Dispatcher:
             for connection in connections:
                 conn_modifier(connection)
 
-        if writer:
-            if not callable(writer):
-                raise TypeError("writer must be callable")
+        if writer and not callable(writer):
+            raise TypeError("writer must be callable")
 
-            for connection in connections:
-                await writer(connection, deepcopy(message))
+        if not writer:
+            async def writer(connection, message): await connection.send(message)
 
-            return
+        connections_to_remove = list()
 
         for connection in connections:
-            await connection.send(message)
+            try:
+                await writer(connection, deepcopy(message))
+            except RuntimeError as err:
+                if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
+                    connections_to_remove.append(connection)
+
+        for connection in connections_to_remove:
+            self.remove_connection(connection)
 
     async def close(self):
         self.alive = False
