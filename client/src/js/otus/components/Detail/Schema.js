@@ -32,15 +32,21 @@ const getItemStyle = (isDragging, draggableStyle) => ({
     ...draggableStyle
 });
 
+const getListStyle = isDraggingOver => ({
+    padding: 8,
+    overflow: "auto"
+});
+
 class Schema extends React.Component {
 
     constructor (props) {
         super(props);
 
         this.state = getInitialState(this.props);
+        this.onDragEnd = this.onDragEnd.bind(this);
     }
 
-    onDragEnd = (result) => {
+    onDragEnd (result) {
         if (result.destination) {
             const newArray = reorder(
                 this.state.segArray,
@@ -58,7 +64,7 @@ class Schema extends React.Component {
             );
         }
 
-    };
+    }
 
     handleAddNew = () => {
         this.setState({showAdd: true});
@@ -106,20 +112,23 @@ class Schema extends React.Component {
             segments = map(segArray, (segment, index) =>
                 <Draggable key={segment.name} draggableId={segment.name} index={index}>
                     {(provided, snapshot) => (
-                        <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={getItemStyle(
-                                snapshot.isDragging,
-                                provided.draggableProps.style
-                            )}
-                        >
-                            <Segment
-                                seg={segment}
-                                index={index}
-                                onClick={this.handleSegment}
-                            />
+                        <div>
+                            <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={getItemStyle(
+                                    snapshot.isDragging,
+                                    provided.draggableProps.style
+                                )}
+                            >
+                                <Segment
+                                    seg={segment}
+                                    index={index}
+                                    onClick={this.handleSegment}
+                                />
+                            </div>
+                            {provided.placeholder}
                         </div>
                     )}
                 </Draggable>
@@ -141,10 +150,14 @@ class Schema extends React.Component {
                 </Button>
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
-                    <Droppable droppableId="droppable">
-                        {(provided) => (
-                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                    <Droppable droppableId="droppable" direction="vertical">
+                        {(provided, snapshot) => (
+                            <div
+                                ref={provided.innerRef}
+                                style={getListStyle(snapshot.isDraggingOver)}
+                            >
                                 {segments}
+                                {provided.placeholder}
                             </div>
                         )}
                     </Droppable>
