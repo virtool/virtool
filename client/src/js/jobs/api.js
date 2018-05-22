@@ -32,5 +32,5 @@ export const clear = ({ scope }) => {
 };
 
 export const getResources = () => (
-    Request.get("/api/jobs/resources")
+    Request.get("/api/resources")
 );

@@ -139,7 +139,9 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.proc}
+                                    initialValue={this.props.maxProc < this.props.proc
+                                        ? this.props.maxProc
+                                        : this.props.proc}
                                     error={errorMessageProc}
                                     noMargin
                                     withButton
@@ -154,7 +156,9 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.mem}
+                                    initialValue={this.props.maxMem < this.props.mem
+                                        ? this.props.maxMem
+                                        : this.props.mem}
                                     error={errorMessageMem}
                                     noMargin
                                     withButton

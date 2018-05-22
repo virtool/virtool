@@ -9,7 +9,7 @@ import Task from "./Task";
 
 const taskNames = [
     "create_sample",
-    "rebuild_index",
+    "build_index",
     "create_subtraction",
     "pathoscope_bowtie",
     "nuvs"
