@@ -584,20 +584,15 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
 
     progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
 
-    used_otu_ids = set(await db.history.distinct("otu.id"))
-    used_isolate_ids = set()
-    used_sequence_ids = set()
-
     for otu in otus:
+
+        all_sequences = list()
 
         issues = virtool.otus.verify(otu)
 
-        otu_id = await virtool.db.utils.get_new_id(db.otus, excluded=used_otu_ids)
-
-        used_otu_ids.add(otu_id)
+        otu.pop("_id", None)
 
         otu.update({
-            "_id": otu_id,
             "created_at": created_at,
             "lower_name": otu["name"].lower(),
             "last_indexed_version": None,
@@ -613,29 +608,28 @@ async def import_file(app, path, ref_id, created_at, process_id, user_id):
             }
         })
 
-        for isolate in otu["isolates"]:
-            isolate_id = await virtool.db.otus.get_new_isolate_id(db, excluded=used_isolate_ids)
+        used_isolate_ids = set()
 
+        for isolate in otu["isolates"]:
+
+            isolate_id = virtool.utils.random_alphanumeric(3, excluded=used_isolate_ids)
+            used_isolate_ids.add(isolate_id)
             isolate["id"] = isolate_id
 
-            used_isolate_ids.add(isolate_id)
-
             for sequence in isolate.pop("sequences"):
-                sequence_id = await virtool.db.utils.get_new_id(db.sequences, excluded=used_sequence_ids)
-
-                sequence.update({
-                    "_id": sequence_id,
-                    "accession": sequence.get("_id", None) or sequence["accession"],
-                    "otu_id": otu_id,
+                all_sequences.append({
+                    **sequence,
+                    "accession": sequence.pop("_id", None) or sequence["accession"],
                     "isolate_id": isolate_id,
                     "reference": {
                         "id": ref_id
                     }
                 })
 
-                await db.sequences.insert_one(sequence)
+        document = await db.otus.insert_one(otu)
 
-        await db.otus.insert_one(otu)
+        for sequence in all_sequences:
+            await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
 
         progress = progress_tracker.add(1)
 
