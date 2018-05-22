@@ -4,6 +4,10 @@ from copy import deepcopy
 import virtool.api.utils
 
 
+async def default_writer(connection, message):
+    return await connection.send(message)
+
+
 class Connection:
 
     def __init__(self, ws, session):
@@ -73,7 +77,7 @@ class Dispatcher:
             pass
 
     async def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None,
-                       writer=None):
+                       writer=default_writer):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
 
@@ -124,9 +128,6 @@ class Dispatcher:
 
         if writer and not callable(writer):
             raise TypeError("writer must be callable")
-
-        if not writer:
-            async def writer(connection, message): await connection.send(message)
 
         connections_to_remove = list()
 
