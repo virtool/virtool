@@ -4,19 +4,21 @@ from copy import deepcopy
 import virtool.api.utils
 
 
+async def default_writer(connection, message):
+    return await connection.send(message)
+
+
 class Connection:
 
     def __init__(self, ws, session):
         self._ws = ws
+        self.ping = self._ws.ping
         self.user_id = session.user_id
         self.groups = session.groups
         self.permissions = session.permissions
 
     async def send(self, message):
         await self._ws.send_json(message, dumps=virtool.api.utils.dumps)
-
-    def ping(self):
-        return self._ws.ping()
 
     async def close(self):
         await self._ws.close()
@@ -44,7 +46,7 @@ class Dispatcher:
 
                 for connection in self.connections:
                     try:
-                        connection.ping()
+                        await connection.ping()
                     except RuntimeError as err:
                         if "unable to perform operation on <TCPTransport closed=True" in str(err):
                             to_remove.append(connection)
@@ -75,7 +77,7 @@ class Dispatcher:
             pass
 
     async def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None,
-                       writer=None):
+                       writer=default_writer):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
 
@@ -124,17 +126,20 @@ class Dispatcher:
             for connection in connections:
                 conn_modifier(connection)
 
-        if writer:
-            if not callable(writer):
-                raise TypeError("writer must be callable")
+        if writer and not callable(writer):
+            raise TypeError("writer must be callable")
 
-            for connection in connections:
-                await writer(connection, deepcopy(message))
-
-            return
+        connections_to_remove = list()
 
         for connection in connections:
-            await connection.send(message)
+            try:
+                await writer(connection, deepcopy(message))
+            except RuntimeError as err:
+                if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
+                    connections_to_remove.append(connection)
+
+        for connection in connections_to_remove:
+            self.remove_connection(connection)
 
     async def close(self):
         self.alive = False

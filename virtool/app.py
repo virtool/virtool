@@ -276,8 +276,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.http.proxy.middleware,
         virtool.http.errors.middleware,
+        virtool.http.proxy.middleware,
         virtool.http.query.middleware
     ]
 
