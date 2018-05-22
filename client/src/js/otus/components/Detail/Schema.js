@@ -32,11 +32,6 @@ const getItemStyle = (isDragging, draggableStyle) => ({
     ...draggableStyle
 });
 
-const getListStyle = isDraggingOver => ({
-    padding: 8,
-    overflow: "auto"
-});
-
 class Schema extends React.Component {
 
     constructor (props) {
@@ -151,10 +146,10 @@ class Schema extends React.Component {
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
-                        {(provided, snapshot) => (
+                        {(provided) => (
                             <div
                                 ref={provided.innerRef}
-                                style={getListStyle(snapshot.isDraggingOver)}
+                                style={{padding: 8, overflow: "auto"}}
                             >
                                 {segments}
                                 {provided.placeholder}
