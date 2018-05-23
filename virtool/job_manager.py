@@ -23,11 +23,6 @@ class Manager:
         #: A reference to Sentry client's `captureException` method.
         self.capture_exception = capture_exception
 
-        self._used = {
-            "proc": 0,
-            "mem": 0
-        }
-
         self.executor = executor
 
         #: A dict to store all the tracked job objects in.
@@ -47,43 +42,27 @@ class Manager:
         self._run_task = asyncio.ensure_future(self.run(), loop=self.loop)
 
     async def run(self):
-        iteration = 0
-
         while True:
             to_delete = list()
 
-            for job in self._jobs_dict.values():
+            available = get_available_resources(self.settings, self._jobs_dict)
+
+            for job_id, job in self._jobs_dict.items():
                 if not self._stop and not job.started:
-                    try:
-                        self.reserve_resources(job)
+                    if job.proc <= available["proc"] and job.mem <= available["mem"]:
                         job.start()
-                    except InsufficientResourceError:
-                        pass
+                        break
 
                 if job.finished:
-                    self.release_resources(job)
-                    to_delete.append(job.id)
+                    to_delete.append(job_id)
 
             for job_id in to_delete:
                 del self._jobs_dict[job_id]
 
-            iteration += 1
-
-            if iteration == 100:
-                iteration = 0
-
-                ids = await virtool.job.get_waiting_and_running_ids(self.db)
-
-                await self.db.jobs.delete_many({
-                    "_id": {
-                        "$in": [job_id for job_id in ids if job_id not in self._jobs_dict]
-                    }
-                })
-
             await asyncio.sleep(0.1, loop=self.loop)
 
             if self._stop and len(self._jobs_dict) == 0:
-                break
+                return
 
     async def new(self, task_name, task_args, user_id, job_id=None):
 
@@ -141,37 +120,21 @@ class Manager:
         for job in self._jobs_dict.values():
             await job.cancel()
 
-
-    def reserve_resources(self, job):
-        """
-        Reserve resources for the given job. Throws an :class:`InsufficientResourceError` if the required resources are
-        not available.
-
-        :param job: the job object to reserve resources for
-        :type job: :class:`virtool.job.Job`
-
-        :raises: :class:`InsufficientResourceError`
-
-        """
-        available = self.get_resources()["available"]
-
-        if job.proc <= available["proc"] and job.mem <= available["mem"]:
-            self._used["proc"] += job.proc
-            self._used["mem"] += job.mem
-        else:
-            raise InsufficientResourceError
-
-    def release_resources(self, job):
-        self._used["proc"] -= job.proc
-        self._used["mem"] -= job.mem
-
-    def get_resources(self):
-        return {
-            "used": dict(self._used),
-            "available": {key: self.settings.get(key) - self._used[key] for key in self._used},
-            "limit": {key: self.settings.get(key) for key in self._used}
-        }
+        await self._run_task
 
 
-class InsufficientResourceError(Exception):
-    pass
+def get_available_resources(settings, jobs):
+    used = get_used_resources(jobs)
+    return {key: settings[key] - used[key] for key in ["proc", "mem"]}
+
+
+def get_used_resources(jobs):
+    running_jobs = [j for j in jobs.values() if j.started]
+
+    return {
+        "proc": sum(j.proc for j in running_jobs),
+        "mem": sum(j.mem for j in running_jobs)
+    }
+
+
+
