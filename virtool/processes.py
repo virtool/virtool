@@ -1,14 +1,6 @@
-STEP_COUNTS = {
-    "delete_reference": 2,
-    "import_reference": 0,
-    "setup_remote_reference": 0,
-    "update_remote_reference": 0,
-    "update_software": 0,
-    "install_hmms": 0
-}
-
 FIRST_STEPS = {
     "delete_reference": "delete_indexes",
+    "clone_reference": "copy_otus",
     "import_reference": "load_file",
     "setup_remote_reference": "",
     "update_remote_reference": "",

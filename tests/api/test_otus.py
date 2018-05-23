@@ -712,7 +712,7 @@ class TestGetIsolate:
 
 class TestAddIsolate:
 
-    async def test_is_default(self, mocker, spawn_client, test_otu, test_add_history):
+    async def test_is_default(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
@@ -728,17 +728,18 @@ class TestAddIsolate:
             "default": True
         }
 
-        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/test"
+        isolate_id = test_random_alphanumeric.history[0]
+
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/" + isolate_id
 
         assert await resp.json() == {
-            "id": "test",
+            "id": isolate_id,
             "source_type": "isolate",
             "source_name": "b",
             "default": True,
@@ -755,7 +756,7 @@ class TestAddIsolate:
                 "source_name": "8816-v2"
             },
             {
-                "id": "test",
+                "id": isolate_id,
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": True
@@ -767,7 +768,8 @@ class TestAddIsolate:
 
         test_otu["isolates"][0]["sequences"] = []
 
-        assert test_add_history.call_args[0][1:] == (
+        test_add_history.assert_called_with(
+            client.db,
             "add_isolate",
             test_otu,
             new,
@@ -775,7 +777,7 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_not_default(self, mocker, spawn_client, test_otu, test_add_history):
+    async def test_not_default(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
         """
         Test that a non-default isolate can be properly added
 
@@ -790,19 +792,20 @@ class TestAddIsolate:
             "default": False
         }
 
-        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/test"
+        isolate_id = test_random_alphanumeric.history[0]
+
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/" + isolate_id
 
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "id": "test",
+            "id": isolate_id,
             "default": False,
             "sequences": []
         }
@@ -817,7 +820,7 @@ class TestAddIsolate:
                 "default": True
             },
             {
-                "id": "test",
+                "id": isolate_id,
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": False
@@ -829,7 +832,8 @@ class TestAddIsolate:
 
         test_otu["isolates"][0]["sequences"] = []
 
-        assert test_add_history.call_args[0][1:] == (
+        test_add_history.assert_called_with(
+            client.db,
             "add_isolate",
             test_otu,
             new,
@@ -837,7 +841,7 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_first(self, mocker, spawn_client, test_otu, test_add_history):
+    async def test_first(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
         """
         Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
         in the POST input.
@@ -855,19 +859,20 @@ class TestAddIsolate:
             "default": False
         }
 
-        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/test"
+        isolate_id = test_random_alphanumeric.history[0]
+
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/" + isolate_id
 
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "id": "test",
+            "id": isolate_id,
             "default": True,
             "sequences": []
         }
@@ -875,7 +880,7 @@ class TestAddIsolate:
         new = await client.db.otus.find_one("6116cba1")
 
         assert new["isolates"] == [{
-            "id": "test",
+            "id": isolate_id,
             "default": True,
             "source_type": "isolate",
             "source_name": "b"
@@ -883,7 +888,8 @@ class TestAddIsolate:
 
         new["isolates"][0]["sequences"] = []
 
-        assert test_add_history.call_args[0][1:] == (
+        test_add_history.assert_called_with(
+            client.db,
             "add_isolate",
             test_otu,
             new,
@@ -891,7 +897,7 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_force_case(self, mocker, spawn_client, test_otu):
+    async def test_force_case(self, mocker, spawn_client, test_otu, test_random_alphanumeric):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -906,19 +912,20 @@ class TestAddIsolate:
             "default": False
         }
 
-        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/test"
+        isolate_id = test_random_alphanumeric.history[0]
+
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/" + isolate_id
 
         assert await resp.json() == {
             "source_name": "Beta",
             "source_type": "isolate",
-            "id": "test",
+            "id": isolate_id,
             "default": False,
             "sequences": []
         }
@@ -933,14 +940,14 @@ class TestAddIsolate:
                 "source_name": "8816-v2"
             },
             {
-                "id": "test",
+                "id": isolate_id,
                 "source_name": "Beta",
                 "source_type": "isolate",
                 "default": False
             }
         ]
 
-    async def test_empty(self, mocker, spawn_client, test_otu):
+    async def test_empty(self, mocker, spawn_client, test_otu, test_random_alphanumeric):
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
@@ -950,17 +957,18 @@ class TestAddIsolate:
 
         await client.db.otus.insert_one(test_otu)
 
-        mocker.patch("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", {})
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/test"
+        isolate_id = test_random_alphanumeric.history[0]
+
+        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/" + isolate_id
 
         assert await resp.json() == {
-            "id": "test",
+            "id": isolate_id,
             "source_name": "",
             "source_type": "",
             "default": False,
@@ -975,7 +983,7 @@ class TestAddIsolate:
                 "source_name": "8816-v2"
             },
             {
-                "id": "test",
+                "id": isolate_id,
                 "source_name": "",
                 "source_type": "",
                 "default": False
@@ -1054,7 +1062,7 @@ class TestEditIsolate:
             "test"
         )
 
-    async def test_force_case(self, monkeypatch, spawn_client, test_otu):
+    async def test_force_case(self, spawn_client, test_otu):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -1066,8 +1074,6 @@ class TestEditIsolate:
         data = {
             "source_type": "Variant",
         }
-
-        monkeypatch.setattr("virtool.db.otus.get_new_isolate_id", make_mocked_coro("test"))
 
         resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
 

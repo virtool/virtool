@@ -136,7 +136,7 @@ async def generate_otu_fasta(db, otu_id):
     fasta = list()
 
     for isolate in otu["isolates"]:
-        async for sequence in db.sequences.find({"isolate_id": isolate["id"]}, ["sequence"]):
+        async for sequence in db.sequences.find({"otu_id": otu_id, "isolate_id": isolate["id"]}, ["sequence"]):
             fasta.append(format_fasta_entry(
                 otu["name"],
                 virtool.otus.format_isolate_name(isolate),

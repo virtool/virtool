@@ -1,5 +1,4 @@
 import pytest
-import multidict
 from aiohttp.test_utils import make_mocked_coro
 
 
@@ -144,7 +143,7 @@ class TestCreate:
 
         m_get_next_version = mocker.patch("virtool.db.indexes.get_next_version", new=make_mocked_coro(9))
 
-        m_create_manifest = mocker.patch("virtool.db.indexes.create_manifest", new=make_mocked_coro("manifest"))
+        m_create_manifest = mocker.patch("virtool.db.references.get_manifest", new=make_mocked_coro("manifest"))
 
         # Make API call.
         resp = await client.post("/api/refs/foo/indexes", {})

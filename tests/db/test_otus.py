@@ -23,35 +23,6 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, tes
     assert result == return_value
 
 
-@pytest.mark.parametrize("excluded", [True, False])
-@pytest.mark.parametrize("exists", [True, False])
-async def test_get_new_isolate_id(excluded, exists, mocker, test_motor, test_otu):
-    if exists:
-        test_otu["isolates"].append({
-            "id": "baz"
-        })
-
-    await test_motor.otus.insert(test_otu)
-
-    m = mocker.patch("virtool.utils.random_alphanumeric", return_value="foobar")
-
-    kwargs = dict(excluded=["foo"]) if excluded else dict()
-
-    assert await virtool.db.otus.get_new_isolate_id(test_motor, **kwargs) == "foobar"
-
-    if excluded and exists:
-        m.assert_called_with(8, excluded=["baz", "cab8b360", "foo"])
-
-    elif excluded:
-        m.assert_called_with(8, excluded=["cab8b360", "foo"])
-
-    elif exists:
-        m.assert_called_with(8, excluded=["baz", "cab8b360"])
-
-    else:
-        m.assert_called_with(8, excluded=["cab8b360"])
-
-
 @pytest.mark.parametrize("in_db", [True, False])
 @pytest.mark.parametrize("pass_document", [True, False])
 async def test_join(in_db, pass_document, mocker, test_motor, test_otu, test_sequence, test_merged_otu):

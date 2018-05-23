@@ -33,8 +33,6 @@ async def download_isolate(req):
     try:
         filename, fasta = await virtool.db.downloads.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
-        print(str(err))
-
         if "OTU does not exist" in str(err):
             return not_found("OTU does not exist")
 

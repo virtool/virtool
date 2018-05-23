@@ -1,3 +1,5 @@
+import pymongo.errors
+
 import virtool.db.history
 import virtool.db.utils
 import virtool.errors
@@ -23,6 +25,27 @@ SEQUENCE_PROJECTION = [
     "sequence",
     "segment"
 ]
+
+
+async def append_isolate(db, otu_id, isolates, isolate):
+    try:
+        isolate_id = virtool.utils.random_alphanumeric(length=3)
+
+        # Push the new isolate to the database.
+        await db.otus.update_one({"_id": otu_id}, {
+            "$set": {
+                "isolates": [*isolates, dict(isolate, id=isolate_id)],
+                "verified": False
+            },
+            "$inc": {
+                "version": 1
+            }
+        })
+
+        return isolate_id
+
+    except pymongo.errors.DuplicateKeyError:
+        return await append_isolate(db, otu_id, isolates, isolate)
 
 
 async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
@@ -97,28 +120,6 @@ async def create(db, ref_id, name, abbreviation):
     await db.otus.insert_one(document)
 
     return document
-
-
-async def get_new_isolate_id(db, excluded=None):
-    """
-    Generates a unique isolate id.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param excluded: a list or set of strings that may not be returned.
-    :type excluded: Union[set, list]
-
-    :return: a new unique isolate id
-    :rtype: Coroutine[str]
-
-    """
-    used_isolate_ids = await db.otus.distinct("isolates.id")
-
-    if excluded:
-        used_isolate_ids += excluded
-
-    return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
 
 
 async def find(db, names, term, req_query, verified, ref_id=None):

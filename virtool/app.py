@@ -148,6 +148,10 @@ async def init_check_db(app):
     await db.samples.create_index([("created_at", pymongo.DESCENDING)])
     await db.sequences.create_index("otu_id")
     await db.otus.create_index("name")
+    await db.otus.create_index([
+        ("_id", pymongo.ASCENDING),
+        ("isolate.id", pymongo.ASCENDING)
+    ])
     await db.otus.create_index("abbreviation")
 
 
