@@ -1,24 +1,8 @@
 import pytest
 
 import virtool.db.indexes
-import virtool.db.references
 import virtool.errors
 import virtool.jobs.build_index
-
-
-async def test_create_manifest(test_motor, test_otu):
-    await test_motor.otus.insert_many([
-        test_otu,
-        dict(test_otu, _id="foo", version=5),
-        dict(test_otu, _id="baz", version=3, reference={"id": "123"}),
-        dict(test_otu, _id="bar", version=11)
-    ])
-
-    assert await virtool.db.references.get_manifest(test_motor, "hxn167") == {
-        "6116cba1": 0,
-        "foo": 5,
-        "bar": 11
-    }
 
 
 @pytest.mark.parametrize("exists", [True, False])

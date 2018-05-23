@@ -13,35 +13,6 @@ import virtool.errors
 TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
 
 
-async def add_group_or_user(db, ref_id, field, data):
-
-    document = await db.references.find_one({"_id": ref_id}, [field])
-
-    if not document:
-        return None
-
-    subdocument_id = data.get("group_id", None) or data["user_id"]
-
-    if subdocument_id in [s["id"] for s in document[field]]:
-        raise virtool.errors.DatabaseError(field + " already exists")
-
-    rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
-
-    subdocument = {
-        "id": subdocument_id,
-        "created_at": virtool.utils.timestamp(),
-        **rights
-    }
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$push": {
-            field: subdocument
-        }
-    })
-
-    return subdocument
-
-
 @pytest.mark.parametrize("error", [None, "duplicate", "missing"])
 @pytest.mark.parametrize("field", ["group", "user"])
 @pytest.mark.parametrize("rights", [True, False])
@@ -103,6 +74,21 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
             "groups": subdocuments + ([expected] if field == "group" else []),
             "users": subdocuments + ([expected] if field == "user" else [])
         }
+
+
+async def test_create_manifest(test_motor, test_otu):
+    await test_motor.otus.insert_many([
+        test_otu,
+        dict(test_otu, _id="foo", version=5),
+        dict(test_otu, _id="baz", version=3, reference={"id": "123"}),
+        dict(test_otu, _id="bar", version=11)
+    ])
+
+    assert await virtool.db.references.get_manifest(test_motor, "hxn167") == {
+        "6116cba1": 0,
+        "foo": 5,
+        "bar": 11
+    }
 
 
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
@@ -180,27 +166,3 @@ async def test_delete_group_or_user(field, test_dbi):
         "groups": [subdocuments[1]] if field == "groups" else subdocuments,
         "users": [subdocuments[1]] if field == "users" else subdocuments
     }
-
-
-async def test_import(mocker, tmpdir, test_motor, static_time):
-
-    with gzip.open(TEST_IMPORT_FILE_PATH, "rt") as f:
-        data = json.load(f)
-
-    app = {
-        "db": test_motor,
-        "run_in_thread": make_mocked_coro(return_value=data)
-    }
-
-    shutil.copy(TEST_IMPORT_FILE_PATH, str(tmpdir))
-
-    m = mocker.patch("virtool.db.processes.update", make_mocked_coro())
-
-    await virtool.db.references.finish_import(
-        app,
-        os.path.join(str(tmpdir), "import.json.gz"),
-        "bar",
-        static_time,
-        "foo",
-        "bob"
-    )

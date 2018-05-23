@@ -306,12 +306,12 @@ async def add_isolate(req):
         data["default"] = True
 
     # Set the isolate as the default isolate if it is the first one.
-    data.update["default"] = will_be_default
+    data["default"] = will_be_default
 
     isolate_id = await virtool.db.otus.append_isolate(db, otu_id, isolates, data)
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.db.otus.join(db, otu_id, document)
+    new = await virtool.db.otus.join(db, otu_id)
 
     issues = await virtool.db.otus.verify(db, otu_id, joined=new)
 
@@ -344,7 +344,7 @@ async def add_isolate(req):
         "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
     }
 
-    return json_response(dict(data, sequences=[]), status=201, headers=headers)
+    return json_response(dict(data, id=isolate_id, sequences=[]), status=201, headers=headers)
 
 
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
