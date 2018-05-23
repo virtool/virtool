@@ -1,5 +1,4 @@
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
 
 import virtool.job
 import virtool.utils
@@ -8,7 +7,7 @@ import virtool.job_classes
 
 class Manager:
 
-    def __init__(self, loop, db, settings, dispatch, capture_exception):
+    def __init__(self, loop, executor, db, settings, dispatch, capture_exception):
         #: The application IO loop
         self.loop = loop
 
@@ -29,7 +28,7 @@ class Manager:
             "mem": 0
         }
 
-        self.executor = ProcessPoolExecutor()
+        self.executor = executor
 
         #: A dict to store all the tracked job objects in.
         self._jobs_dict = dict()
@@ -142,7 +141,6 @@ class Manager:
         for job in self._jobs_dict.values():
             await job.cancel()
 
-        self.executor.shutdown(wait=True)
 
     def reserve_resources(self, job):
         """

@@ -218,6 +218,7 @@ async def init_job_manager(app):
 
     app["job_manager"] = virtool.job_manager.Manager(
         app.loop,
+        app["process_executor"],
         app["db"],
         app["settings"],
         app["dispatcher"].dispatch,
@@ -295,6 +296,8 @@ async def on_shutdown(app):
     if file_manager is not None:
         await file_manager.close()
 
+    app["process_executor"].shutdown(wait=True)
+
 
 def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, force_version=None,
                ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
@@ -334,8 +337,6 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
                 app.on_startup.append(init_sentry)
         else:
             app["settings"] = dict()
-
-
 
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
