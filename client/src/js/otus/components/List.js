@@ -62,7 +62,7 @@ const OTUsList = (props) => {
 
     let alert;
 
-    if (props.modified_count) {
+    if (props.unbuiltChangeCount) {
         alert = (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">
@@ -123,7 +123,8 @@ const mapStateToProps = state => ({
     account: state.account,
     refId: state.references.detail.id,
     process: state.references.detail.process,
-    processes: state.processes.documents
+    processes: state.processes.documents,
+    unbuiltChangeCount: state.references.detail.unbuilt_change_count
 });
 
 const mapDispatchToProps = (dispatch) => ({
