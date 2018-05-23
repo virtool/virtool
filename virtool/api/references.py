@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import aiojobs.aiohttp
@@ -8,11 +9,11 @@ import virtool.db.otus
 import virtool.db.processes
 import virtool.db.references
 import virtool.db.utils
+import virtool.errors
 import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-import virtool.errors
 from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
@@ -52,7 +53,15 @@ async def find(req):
     data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
 
     for d in data["documents"]:
-        d["latest_build"] = await virtool.db.references.get_latest_build(db, d["id"])
+        latest_build, unbuilt_count = await asyncio.gather(
+            virtool.db.references.get_latest_build(db, d["id"]),
+            virtool.db.references.get_unbuilt_count(db, d["id"])
+        )
+
+        d.update({
+            "latest_build": latest_build,
+            "unbuilt_change_count": unbuilt_count
+        })
 
     return json_response(data)
 
