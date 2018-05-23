@@ -9,7 +9,7 @@ import { Button } from "../../../base";
 class RemoveOTU extends React.Component {
 
     handleConfirm = () => {
-        this.props.onConfirm(this.props.refDetail.reference.id, this.props.otuId, this.props.history);
+        this.props.onConfirm(this.props.refDetail.id, this.props.otuId, this.props.history);
     }
 
     render () {

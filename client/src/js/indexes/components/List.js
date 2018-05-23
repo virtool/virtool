@@ -21,7 +21,7 @@ class IndexesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const refId = this.props.documents[0].reference.id;
+        const refId = this.props.refId;
 
         let content;
 
@@ -114,7 +114,8 @@ class IndexesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    ...state.indexes
+    ...state.indexes,
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
