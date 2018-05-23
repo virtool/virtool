@@ -231,8 +231,8 @@ async def create(req):
         await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_clone(
             req.app,
             document["_id"],
-            manifest,
             document["created_at"],
+            manifest,
             process["id"],
             user_id
         ))

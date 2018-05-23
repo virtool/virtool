@@ -5,8 +5,6 @@ import virtool.utils
 
 async def register(db, process_type, file_size=0):
 
-    step_count = virtool.processes.STEP_COUNTS[process_type]
-
     if process_type in virtool.processes.UNIQUES:
         await db.processes.delete_many({"type": process_type})
         process_id = process_type
@@ -19,7 +17,6 @@ async def register(db, process_type, file_size=0):
         "created_at": virtool.utils.timestamp(),
         "progress": 0,
         "step": virtool.processes.FIRST_STEPS[process_type],
-        "step_count": step_count,
         "type": process_type
     }
 

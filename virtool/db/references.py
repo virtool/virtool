@@ -1,7 +1,6 @@
 import asyncio
 
 import pymongo
-from pymongo import InsertOne
 
 import virtool.db.history
 import virtool.db.otus
@@ -465,14 +464,12 @@ async def create_original(db, settings):
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
     db = app["db"]
 
-    await virtool.db.processes.update(db, process_id, 0.1, "copy_otus")
-
-    progress_tracker = virtool.processes.ProgressTracker(len(manifest), factor=0.5)
+    progress_tracker = virtool.processes.ProgressTracker(len(manifest), factor=0.6)
 
     inserted_otu_ids = list()
 
     for source_otu_id, version in manifest.items():
-        patched = await virtool.db.history.patch_to_version(db, source_otu_id, version)
+        _, patched, _ = await virtool.db.history.patch_to_version(db, source_otu_id, version)
 
         otu_id = await insert_joined_otu(db, patched, created_at, ref_id, user_id)
 
@@ -481,8 +478,12 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
         progress = progress_tracker.add(1)
 
         if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, process_id, progress=(0.2 + progress))
+            await virtool.db.processes.update(db, process_id, progress=progress)
             progress_tracker.reported()
+
+    await virtool.db.processes.update(db, process_id, 0.6, "create_history")
+
+    progress_tracker = virtool.processes.ProgressTracker(len(inserted_otu_ids), factor=0.4)
 
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "clone", user_id)
@@ -492,6 +493,8 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
         if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
             await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
             progress_tracker.reported()
+
+    await virtool.db.processes.update(db, process_id, 1)
 
 
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
@@ -557,27 +560,6 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "import", user_id)
 
-        # Join the otu document into a complete otu record. This will be used for recording history.
-        joined = await virtool.db.otus.join(db, otu_id)
-
-        # Build a ``description`` field for the otu creation change document.
-        description = "Imported {}".format(joined["name"])
-
-        abbreviation = joined.get("abbreviation", None)
-
-        # Add the abbreviation to the description if there is one.
-        if abbreviation:
-            description += " ({})".format(abbreviation)
-
-        await virtool.db.history.add(
-            db,
-            "import",
-            None,
-            joined,
-            description,
-            user_id
-        )
-
         progress = progress_tracker.add(1)
 
         if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
@@ -592,7 +574,7 @@ async def insert_change(db, otu_id, verb, user_id):
     joined = await virtool.db.otus.join(db, otu_id)
 
     # Build a ``description`` field for the otu creation change document.
-    description = "{}ed {}".format(verb.capitalize(), joined["name"])
+    description = "{}{}d {}".format(verb.capitalize(), "e" if verb == "import" else "", joined["name"])
 
     abbreviation = joined.get("abbreviation", None)
 
