@@ -23,7 +23,7 @@ PROJECTION = [
     "internal_control",
     "cloned_from",
     "imported_from",
-    "remoted_from",
+    "remotes_from",
     "process",
     "latest_build"
 ]
