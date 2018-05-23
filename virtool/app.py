@@ -44,7 +44,7 @@ def init_executors(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    executor = concurrent.futures.ThreadPoolExecutor()
     app.loop.set_default_executor(executor)
     app["executor"] = executor
 
