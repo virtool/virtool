@@ -1,14 +1,18 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
+import { Link } from "react-router-dom";
 import { find } from "lodash-es";
-import { RelativeTime, ProgressBar } from "../../base";
+import { RelativeTime, ProgressBar, Icon } from "../../base";
 import { Panel, Table, Row, ListGroup } from "react-bootstrap";
 
-const ReferenceHeader = ({ name, createdAt, user }) => (
+const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     <div style={{ marginLeft: "5px" }}>
         <Row>
             <strong>{name}</strong>
+            <Link to={{state: {newReference: true, cloneReference: true, refId}}} style={{float: "right"}}>
+                <Icon name="clone" bsStyle="warning" tip="Clone Reference" />
+            </Link>
         </Row>
         <Row>
             <small>
@@ -55,12 +59,12 @@ const ReferenceItem = (props) => {
     return (
         <Panel className="reference-item" onClick={props.onClick}>
             <Panel.Heading>
-                <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} />
+                <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} refId={props.id} />
             </Panel.Heading>
 
             <ReferenceMetadata {...props} />
             <Panel.Body style={{padding: 0, textAlign: "center"}}>
-                <span style={{visibility: `${progress !== 100 ? "visible" : "hidden"}`, fontSize: "small"}}>
+                <span style={{visibility: `${progress === 100 ? "hidden" : "visible"}`, fontSize: "small"}}>
                     {step}
                 </span>
             </Panel.Body>
@@ -80,8 +84,10 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
-    onClick: () => {
-        dispatch(push(`/refs/${ownProps.id}`));
+    onClick: (e) => {
+        if (e.target.nodeName !== "I") {
+            dispatch(push(`/refs/${ownProps.id}`));
+        }
     }
 });
 
