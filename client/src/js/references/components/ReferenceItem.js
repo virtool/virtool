@@ -76,13 +76,17 @@ const ReferenceItem = (props) => {
     const origin = getOrigin(props);
 
     let progress = 0;
+    let step;
 
     if (props.process && props.processes.length) {
-        progress = find(props.processes, ["id", props.process.id]).progress;
+        const process = find(props.processes, ["id", props.process.id]);
+        progress = process.progress;
+        step = process.step;
         progress *= 100;
+    } else {
+        step = "None";
+        progress = 100;
     }
-
-    const barStyle = { backgroundColor: "#f5f5f5" };
 
     return (
         <Panel className="reference-item" onClick={props.onClick}>
@@ -91,11 +95,17 @@ const ReferenceItem = (props) => {
             </Panel.Heading>
 
             <ReferenceMetadata {...props} origin={origin} />
+      
+            <Panel.Body style={{padding: 0, textAlign: "center"}}>
+                <span style={{visibility: `${progress !== 100 ? "visible" : "hidden"}`, fontSize: "small"}}>
+                    {step}
+                </span>
+            </Panel.Body>
+
             <ListGroup>
                 <ProgressBar
                     bsStyle={progress === 100 ? "success" : "warning"}
                     now={progress}
-                    style={barStyle}
                     affixed
                 />
             </ListGroup>

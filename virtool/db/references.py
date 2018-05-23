@@ -23,9 +23,10 @@ PROJECTION = [
     "internal_control",
     "cloned_from",
     "imported_from",
-    "remoted_from",
+    "remotes_from",
     "process",
-    "latest_build"
+    "latest_build",
+    "unbuilt_count"
 ]
 
 
@@ -208,16 +209,18 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
 
 
 async def get_computed(db, ref_id, internal_control_id):
-    contributors, internal_control, latest_build = await asyncio.gather(
+    contributors, internal_control, latest_build, unbuilt_count = await asyncio.gather(
         get_contributors(db, ref_id),
         get_internal_control(db, internal_control_id),
-        get_latest_build(db, ref_id)
+        get_latest_build(db, ref_id),
+        get_unbuilt_count(db, ref_id)
     )
 
     return {
         "contributors": contributors,
         "internal_control": internal_control,
-        "latest_build": latest_build
+        "latest_build": latest_build,
+        "unbuilt_change_count": unbuilt_count
     }
 
 
@@ -236,6 +239,26 @@ async def get_contributors(db, ref_id):
 
     """
     return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
+
+
+async def get_unbuilt_count(db, ref_id):
+    """
+    Return a count of unbuilt history changes associated with a given `ref_id`.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id: the id of the ref to count unbuilt changes for
+    :type ref_id: str
+
+    :return: the number of unbuilt changes
+    :rtype: int
+
+    """
+    return await db.history.count({
+        "reference.id": ref_id,
+        "index.id": "unbuilt"
+    })
 
 
 async def get_internal_control(db, internal_control_id):
