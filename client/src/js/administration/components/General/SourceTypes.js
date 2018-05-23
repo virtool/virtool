@@ -1,7 +1,7 @@
 import React from "react";
 import { includes, map, toLower, without } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Row, Col, Panel, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
 import { editReference } from "../../../references/actions";
@@ -12,10 +12,12 @@ const getInitialState = () => ({
     error: null
 });
 
-const SourceTypeItem = ({ onRemove, sourceType, restrictSourceTypes }) => (
-    <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
+const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
+    <ListGroupItem key={sourceType} disabled={!isDisabled}>
         <span className="text-capitalize">{sourceType}</span>
-        {restrictSourceTypes ? <Icon name="remove" onClick={() => onRemove(sourceType)} pullRight /> : null}
+        {isDisabled
+            ? <Icon name="trash" bsStyle="danger" onClick={() => onRemove(sourceType)} pullRight />
+            : null}
     </ListGroupItem>
 );
 
@@ -27,11 +29,17 @@ class SourceTypes extends React.Component {
     }
 
     remove = (sourceType) => {
-        this.props.onUpdate(without(this.props.default_source_types, sourceType));
+        this.props.onUpdate(
+            without(this.props.sourceTypesArray, sourceType),
+            this.props.isGlobalSettings,
+            this.props.refId
+        );
     };
 
     handleEnable = () => {
-        this.props.onToggle(this.props.refId, !this.props.restrict_source_types);
+        if (this.props.refId) {
+            this.props.onToggle(this.props.refId, !this.props.restrictSourceTypes);
+        }
     };
 
     handleSubmit = (e) => {
@@ -43,7 +51,7 @@ class SourceTypes extends React.Component {
             // capitalized when rendered in the application.
             const newSourceType = toLower(this.state.value);
 
-            if (includes(this.props.default_source_types, newSourceType)) {
+            if (includes(this.props.sourceTypesArray, newSourceType)) {
                 // Show error if the source type already exists in the list.
                 this.setState({
                     error: "Source type already exists."
@@ -54,8 +62,8 @@ class SourceTypes extends React.Component {
                     error: "Source types may not contain spaces."
                 });
             } else {
-                const newSourceTypes = this.props.default_source_types.concat([newSourceType]);
-                this.props.onUpdate(newSourceTypes);
+                const newSourceTypes = this.props.sourceTypesArray.concat([newSourceType]);
+                this.props.onUpdate(newSourceTypes, this.props.isGlobalSettings, this.props.refId);
                 this.setState(getInitialState());
             }
         }
@@ -63,15 +71,33 @@ class SourceTypes extends React.Component {
 
     render () {
 
-        const restrictSourceTypes = this.props.restrict_source_types;
+        const isDisabled = (this.props.isGlobalSettings && this.props.isAdmin) || this.props.restrictSourceTypes;
 
-        const listComponents = map(this.props.default_source_types.sort(), sourceType =>
+        const enableCheckbox = this.props.isGlobalSettings
+            ? null
+            : (
+                <FlexItem>
+                    <Checkbox
+                        label="Enable"
+                        checked={this.props.restrictSourceTypes}
+                        onClick={this.handleEnable}
+                    />
+                </FlexItem>
+            );
+
+        const listComponents = map(this.props.sourceTypesArray.sort(), sourceType =>
             <SourceTypeItem
                 key={sourceType}
                 onRemove={this.remove}
                 sourceType={sourceType}
-                restrictSourceTypes={restrictSourceTypes}
+                isDisabled={isDisabled}
             />
+        );
+
+        const errorMessage = (
+            <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
+                <span className="input-error-message">{this.state.error ? this.state.error : "None"}</span>
+            </div>
         );
 
         return (
@@ -82,13 +108,7 @@ class SourceTypes extends React.Component {
                             <FlexItem grow={1} >
                                 <h5><strong>Source Types</strong></h5>
                             </FlexItem>
-                            <FlexItem>
-                                <Checkbox
-                                    label="Enable"
-                                    checked={restrictSourceTypes}
-                                    onClick={this.handleEnable}
-                                />
-                            </FlexItem>
+                            {enableCheckbox}
                         </Flex>
                     </Col>
 
@@ -113,34 +133,27 @@ class SourceTypes extends React.Component {
                                             <FormControl
                                                 type="text"
                                                 inputRef={(node) => this.inputNode = node}
-                                                disabled={!restrictSourceTypes}
+                                                disabled={!isDisabled}
                                                 onChange={(e) => this.setState({value: e.target.value, error: null})}
                                                 value={this.state.value}
                                             />
                                             <InputGroup.Button>
-                                                <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
+                                                <Button
+                                                    type="submit"
+                                                    bsStyle="primary"
+                                                    disabled={!isDisabled}
+                                                >
                                                     <Icon name="plus-square" style={{paddingLeft: "3px"}} />
                                                 </Button>
                                             </InputGroup.Button>
                                         </InputGroup>
+                                        {errorMessage}
                                     </FormGroup>
                                 </form>
 
                                 <div>
                                     {listComponents}
                                 </div>
-
-                                <Overlay
-                                    show={!!this.state.error}
-                                    target={() => this.inputNode}
-                                    container={() => this.containerNode}
-                                    placement="top"
-                                    animation={false}
-                                >
-                                    <Popover id="source-type-error-popover" className="text-danger">
-                                        {this.state.error}
-                                    </Popover>
-                                </Overlay>
                             </Panel.Body>
                         </Panel>
                     </Col>
@@ -151,20 +164,34 @@ class SourceTypes extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    const { default_source_types } = state.settings.data;
-    const { restrict_source_types, id } = state.references.detail;
+
+    const isGlobalSettings = window.location.pathname === "/refs/settings";
+
+    const sourceTypesArray = isGlobalSettings
+        ? state.settings.data.default_source_types
+        : state.references.detail.source_types;
+
+    const restrictSourceTypes = state.references.detail ? state.references.detail.restrict_source_types : null;
+    const refId = state.references.detail ? state.references.detail.id : null;
 
     return {
-        default_source_types,
-        restrict_source_types,
-        refId: id
+        isAdmin: state.account.administrator,
+        isGlobalSettings,
+        restrictSourceTypes,
+        refId,
+        sourceTypesArray
     };
 };
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onUpdate: (value) => {
-        dispatch(updateSetting("default_source_types", value));
+    onUpdate: (value, isGlobal, refId) => {
+        if (isGlobal) {
+            dispatch(updateSetting("default_source_types", value));
+        } else {
+            const update = { source_types: value };
+            dispatch(editReference(refId, update));
+        }
     },
 
     onToggle: (refId, value) => {
