@@ -2,7 +2,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_create(spawn_client, test_random_alphanumeric, static_time):
+async def test_create(mocker, spawn_client, test_random_alphanumeric, static_time):
     client = await spawn_client(authorize=True, permissions=["create_ref"])
 
     default_source_type = [
@@ -21,6 +21,8 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
         "organism": "virus",
         "public": True
     }
+
+    m = mocker.patch("virtool.db.references.get_unbuilt_count", make_mocked_coro(5))
 
     resp = await client.post("/api/refs", data)
 
@@ -46,8 +48,14 @@ async def test_create(spawn_client, test_random_alphanumeric, static_time):
         contributors=[],
         internal_control=None,
         restrict_source_types=False,
+        unbuilt_change_count=5,
         source_types=default_source_type,
         latest_build=None
+    )
+
+    m.assert_called_with(
+        client.db,
+        test_random_alphanumeric.history[0]
     )
 
 
