@@ -9,7 +9,7 @@ import aiojobs.aiohttp
 from motor import motor_asyncio
 import pymongo
 import pymongo.errors
-from aiohttp import web
+from aiohttp import client, web
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -29,6 +29,14 @@ import virtool.setup
 import virtool.utils
 
 logger = logging.getLogger(__name__)
+
+
+async def init_http_client(app, server_version):
+    headers = {
+        "user-agent": "virtool/{}".format(server_version),
+    }
+
+    app["client"] = client.ClientSession(loop=app.loop, headers=headers)
 
 
 async def init_version(app):
