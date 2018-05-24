@@ -2,7 +2,7 @@ import asyncio
 
 import virtool.db.status
 import virtool.http.routes
-import virtool.updates
+import virtool.status
 import virtool.utils
 from virtool.api.utils import json_response, not_found
 
@@ -25,8 +25,29 @@ async def get_hmm(req):
     document = await virtool.db.status.fetch_and_update_hmm_releases(req.app)
     return json_response(virtool.utils.base_processor(document))
 
+
+@routes.post("/api/status/hmm")
+async def upgrade_hmm(req):
+    """
+    Install the latest official HMM database from GitHub.
+
+    """
+    db = req.app["db"]
+
+    document = await virtool.db.status.fetch_and_update_hmm_releases(req.app)
+
+    asyncio.ensure_future(virtool.db.hmm.install_official(
+        req.app.loop,
+        db,
+        req.app["settings"],
+        req.app["version"]
+    ), loop=req.app.loop)
+
+    return json_response(virtool.utils.base_processor(document))
+
+
 @routes.get("/api/status/software")
-async def get(req):
+async def get_software(req):
     db = req.app["db"]
     settings = req.app["settings"]
     session = req.app["client"]
@@ -42,7 +63,7 @@ async def get(req):
 
 
 @routes.post("/api/status/software", admin=True)
-async def upgrade(req):
+async def upgrade_software(req):
     db = req.app["db"]
     settings = req.app["settings"]
     session = req.app["client"]
@@ -90,7 +111,7 @@ async def upgrade(req):
 
     download_url = latest_release["download_url"]
 
-    await asyncio.ensure_future(virtool.updates.install(
+    await asyncio.ensure_future(virtool.status.install(
         req.app,
         db,
         req.app["settings"],

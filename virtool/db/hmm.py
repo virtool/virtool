@@ -8,6 +8,7 @@ import aiofiles
 import virtool.db.processes
 import virtool.github
 import virtool.hmm
+import virtool.http.utils
 
 PROJECTION = [
     "_id",
@@ -18,13 +19,41 @@ PROJECTION = [
 ]
 
 
+async def delete_unreferenced_hmms(db):
+    """
+    Deletes all HMM documents that are not used in analyses.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    """
+    agg = await db.analyses.aggregate([
+        {"$match": {
+            "algorithm": "nuvs"
+        }},
+        {"$project": {
+            "results.orfs.hits.hit": True
+        }},
+        {"$unwind": "$results"},
+        {"$unwind": "$results.orfs"},
+        {"$unwind": "$results.orfs.hits"},
+        {"$group": {
+            "_id": "$results.orfs.hits.hit"
+        }}
+    ]).to_list(None)
+
+    referenced_ids = list(set(a["_id"] for a in agg))
+
+    await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+
+
 async def install_official(loop, db, settings, server_version, username=None, token=None):
     """
     Runs a background Task that:
 
         - downloads the official profiles.hmm.gz file
-        - decompresses the profiles.hmm.gz file
-        - moves the profiles.hmm file to the correct data path
+        - decompresses the vthmm.tar.gz file
+        - moves the file to the correct data path
         - downloads the official annotations.json.gz file
         - imports the annotations into the database
 
@@ -79,7 +108,7 @@ async def install_official(loop, db, settings, server_version, username=None, to
         url, size = assets[0]
 
         await virtool.db.processes.update(db, "hmm_install", "download")
-        await virtool.github.download_asset(settings, url, size, target_path, progress_handler=handler)
+        await virtool.http.utils.download_file(settings, url, size, target_path, progress_handler=handler)
 
         await virtool.db.processes.update(db, "hmm_install", "decompress")
         await loop.run_in_executor(None, virtool.github.decompress_asset_file, target_path, temp_path)
@@ -107,9 +136,6 @@ async def install_official(loop, db, settings, server_version, username=None, to
 
 
 async def insert_annotations(db, annotations, progress_handler=None):
-    referenced_ids = await get_referenced_hmm_ids(db)
-
-    await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
     await db.hmm.update_many({}, {
         "$set": {
@@ -129,32 +155,3 @@ async def insert_annotations(db, annotations, progress_handler=None):
         if progress_handler:
             count += len(chunk)
             await progress_handler(count / total_count)
-
-
-async def get_referenced_hmm_ids(db):
-    """
-    Returns a list of HMM document ids that are referenced in analyses documents.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :return: HMM document ids
-    :rtype: Coroutine[list]
-
-    """
-    agg = await db.analyses.aggregate([
-        {"$match": {
-            "algorithm": "nuvs"
-        }},
-        {"$project": {
-            "results.orfs.hits.hit": True
-        }},
-        {"$unwind": "$results"},
-        {"$unwind": "$results.orfs"},
-        {"$unwind": "$results.orfs.hits"},
-        {"$group": {
-            "_id": "$results.orfs.hits.hit"
-        }}
-    ]).to_list(None)
-
-    return list(set(a["_id"] for a in agg))

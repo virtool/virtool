@@ -1,5 +1,6 @@
 import asyncio
 
+import virtool.db.status
 import virtool.http.routes
 import virtool.db.hmm
 import virtool.hmm
@@ -49,24 +50,5 @@ async def get(req):
 
     if document is None:
         return not_found()
-
-    return json_response(virtool.utils.base_processor(document))
-
-@routes.patch("/api/hmms/install", permission="modify_hmm")
-async def install(req):
-    """
-    Install the official HMM database from GitHub.
-
-    """
-    db = req.app["db"]
-
-    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"], reset=True)
-
-    asyncio.ensure_future(virtool.db.hmm.install_official(
-        req.app.loop,
-        db,
-        req.app["settings"],
-        req.app["version"]
-    ), loop=req.app.loop)
 
     return json_response(virtool.utils.base_processor(document))

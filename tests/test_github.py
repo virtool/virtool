@@ -6,6 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
 import virtool.github
+import virtool.http.utils
 
 
 def test_get_headers():
@@ -54,7 +55,7 @@ async def test_download_asset(error, tmpdir):
 
     handler = make_mocked_coro()
 
-    task = virtool.github.download_asset({"proxy_enable": False}, url, size, target_path, progress_handler=handler)
+    task = virtool.http.utils.download_file({"proxy_enable": False}, url, size, target_path, progress_handler=handler)
 
     if error == "url":
         with pytest.raises(virtool.errors.GitHubError) as err:

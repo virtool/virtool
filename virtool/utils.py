@@ -2,6 +2,7 @@ import datetime
 import os
 import shutil
 import sys
+import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 
@@ -194,3 +195,7 @@ async def update_status_process(db, _id, progress, step=None, error=None):
     })
 
     return base_processor(document)
+
+
+def get_temp_dir():
+    return tempfile.TemporaryDirectory()

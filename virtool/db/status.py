@@ -15,7 +15,8 @@ async def fetch_and_update_hmm_releases(app):
     """
     Return the HMM install status document or create one if none exists.
 
-    :param app: the application object
+    :param app: the app object
+    :type app: :class:`aiohttp.web.Application`
 
     """
     db = app["db"]
