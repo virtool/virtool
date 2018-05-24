@@ -22,7 +22,6 @@ import virtool.api.samples
 import virtool.api.settings
 import virtool.api.status
 import virtool.api.subtractions
-import virtool.api.updates
 import virtool.api.uploads
 import virtool.api.users
 import virtool.api.websocket
@@ -117,6 +116,5 @@ def setup_routes(app):
     app.router.add_routes(virtool.api.settings.routes)
     app.router.add_routes(virtool.api.status.routes)
     app.router.add_routes(virtool.api.subtractions.routes)
-    app.router.add_routes(virtool.api.updates.routes)
     app.router.add_routes(virtool.api.uploads.routes)
     app.router.add_routes(virtool.api.users.routes)
