@@ -1,10 +1,16 @@
+ul.nav {
+	.icon-pulse {
+		display: inline-block;
+		animation: pulse 2s infinite linear;
+	}
 
-.icon-pulse {
-    display: inline-block;
-	-moz-animation: pulse 2s infinite linear;
-	-o-animation: pulse 2s infinite linear;
-	-webkit-animation: pulse 2s infinite linear;
-	animation: pulse 2s infinite linear;
+	&:hover {
+		.icon-pulse {
+			-webkit-animation: none;
+			-o-animation: none;
+			animation: none;
+		}
+	}
 }
 
 @keyframes pulse {
