@@ -190,14 +190,9 @@ async def organize_sequences(db):
 async def organize_status(db, server_version):
     logger.info(" • status")
 
-    await db.status.update_one({"_id": "software_update"}, {
+    await db.status.update_one({"_id": "software"}, {
         "$set": {
-            "process": None
-        }
-    }, upsert=True)
-
-    await db.status.update_one({"_id": "version"}, {
-        "$set": {
+            "process": None,
             "version": server_version
         }
     }, upsert=True)

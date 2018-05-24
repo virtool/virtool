@@ -63,7 +63,7 @@ async def get_releases(db, settings, channel, server_version):
                 data = json.loads(data)
     except aiohttp.ClientConnectionError:
         # Return any existing release list or `None`.
-        return await virtool.db.utils.get_one_field(db.status, "releases", "software_update")
+        return await virtool.db.utils.get_one_field(db.status, "releases", "software")
 
     data = data["software"]
 
@@ -81,7 +81,7 @@ async def get_releases(db, settings, channel, server_version):
         if semver.compare(release["name"].replace("v", ""), server_version.replace("v", "")) == 1:
             releases.append(release)
 
-    await db.status.update_one({"_id": "software_update"}, {
+    await db.status.update_one({"_id": "software"}, {
         "$set": {
             "releases": releases
         }
@@ -140,13 +140,13 @@ async def install(app, db, settings, loop, download_url, size):
         try:
             await virtool.github.download_asset(settings, download_url, size, compressed_path, progress_handler=handler)
         except virtool.errors.GitHubError:
-            return await db.status.update_one({"_id": "software_update"}, {
+            return await db.status.update_one({"_id": "software"}, {
                 "$set": {
                     "process.error": "Could not find GitHub repository"
                 }
             })
         except FileNotFoundError:
-            return await db.status.update_one({"_id": "software_update"}, {
+            return await db.status.update_one({"_id": "software"}, {
                 "$set": {
                     "process.error": "Could not write to release download location"
                 }
@@ -166,7 +166,7 @@ async def install(app, db, settings, loop, download_url, size):
 
         good_tree = await loop.run_in_executor(None, check_tree, decompressed_path)
 
-        await db.status.update_one({"_id": "software_update"}, {
+        await db.status.update_one({"_id": "software"}, {
             "$set": {
                 "process.good_tree": good_tree
             }
@@ -177,7 +177,7 @@ async def install(app, db, settings, loop, download_url, size):
 
         await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
-        await db.status.update_one({"_id": "software_update"}, {
+        await db.status.update_one({"_id": "software"}, {
             "$set": {
                 "process.complete": True
             }
@@ -207,7 +207,7 @@ async def update_software_process(db, progress, step=None):
     :type step: str
 
     """
-    return await virtool.utils.update_status_process(db, "software_update", progress, step)
+    return await virtool.utils.update_status_process(db, "software", progress, step)
 
 
 def check_tree(path):
