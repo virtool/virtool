@@ -2,8 +2,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
-import { find } from "lodash-es";
 import { RelativeTime, ProgressBar, Icon } from "../../base";
+import { find, get } from "lodash-es";
 import { Panel, Table, Row, ListGroup } from "react-bootstrap";
 
 const ReferenceHeader = ({ name, createdAt, user, refId }) => (
@@ -22,7 +22,7 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     </div>
 );
 
-const ReferenceMetadata = ({ data_type, organism }) => (
+const ReferenceMetadata = ({ data_type, organism, origin }) => (
     <Table bordered>
         <tbody>
             <tr>
@@ -37,11 +37,47 @@ const ReferenceMetadata = ({ data_type, organism }) => (
                     {organism || "unknown"}
                 </td>
             </tr>
+            <tr>
+                <th>{origin.method}</th>
+                <td>
+                    {origin.fileName}
+                </td>
+            </tr>
         </tbody>
     </Table>
 );
 
+const getOrigin = (props) => {
+    let origin;
+
+    if (get(props, "imported_from", null)) {
+        origin = {
+            method: "Imported from file",
+            fileName: props.imported_from.name
+        };
+    } else if (get(props, "cloned_from", null)) {
+        origin = {
+            method: "Cloned from",
+            fileName: props.cloned_from.name
+        };
+    } else if (get(props, "remote_from", null)) {
+        origin = {
+            method: "Remote update from",
+            fileName: props.remote_from.name
+        };
+    } else {
+        origin = {
+            method: "Created",
+            fileName: "No File"
+        };
+    }
+
+    return origin;
+};
+
 const ReferenceItem = (props) => {
+
+    const origin = getOrigin(props);
 
     let progress = 0;
     let step;
@@ -62,12 +98,14 @@ const ReferenceItem = (props) => {
                 <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} refId={props.id} />
             </Panel.Heading>
 
-            <ReferenceMetadata {...props} />
+            <ReferenceMetadata {...props} origin={origin} />
+      
             <Panel.Body style={{padding: 0, textAlign: "center"}}>
                 <span style={{visibility: `${progress === 100 ? "hidden" : "visible"}`, fontSize: "small"}}>
                     {step}
                 </span>
             </Panel.Body>
+
             <ListGroup>
                 <ProgressBar
                     bsStyle={progress === 100 ? "success" : "warning"}

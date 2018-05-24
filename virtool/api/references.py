@@ -53,13 +53,15 @@ async def find(req):
     data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
 
     for d in data["documents"]:
-        latest_build, unbuilt_count = await asyncio.gather(
+        latest_build, otu_count, unbuilt_count = await asyncio.gather(
             virtool.db.references.get_latest_build(db, d["id"]),
+            virtool.db.references.get_otu_count(db, d["id"]),
             virtool.db.references.get_unbuilt_count(db, d["id"])
         )
 
         d.update({
             "latest_build": latest_build,
+            "otu_count": otu_count,
             "unbuilt_change_count": unbuilt_count
         })
 
@@ -69,7 +71,7 @@ async def find(req):
 @routes.get("/api/refs/{ref_id}")
 async def get(req):
     """
-    Get the complete representation of a specfic reference.
+    Get the complete representation of a specific reference.
 
     """
     db = req.app["db"]
@@ -355,9 +357,9 @@ async def edit(req):
         "$set": update
     }, projection=virtool.db.references.PROJECTION)
 
-    document["internal_control"] = await virtool.db.references.get_internal_control(db, internal_control_id)
-
     document = virtool.utils.base_processor(document)
+
+    document.update(await virtool.db.references.get_computed(db, document["_id"], internal_control_id))
 
     return json_response(document)
 

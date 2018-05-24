@@ -22,7 +22,8 @@ async def test_create(mocker, spawn_client, test_random_alphanumeric, static_tim
         "public": True
     }
 
-    m = mocker.patch("virtool.db.references.get_unbuilt_count", make_mocked_coro(5))
+    m_get_otu_count = mocker.patch("virtool.db.references.get_otu_count", make_mocked_coro(22))
+    m_get_unbuilt_count = mocker.patch("virtool.db.references.get_unbuilt_count", make_mocked_coro(5))
 
     resp = await client.post("/api/refs", data)
 
@@ -48,12 +49,18 @@ async def test_create(mocker, spawn_client, test_random_alphanumeric, static_tim
         contributors=[],
         internal_control=None,
         restrict_source_types=False,
+        otu_count=22,
         unbuilt_change_count=5,
         source_types=default_source_type,
         latest_build=None
     )
 
-    m.assert_called_with(
+    m_get_otu_count.assert_called_with(
+        client.db,
+        test_random_alphanumeric.history[0]
+    )
+
+    m_get_unbuilt_count.assert_called_with(
         client.db,
         test_random_alphanumeric.history[0]
     )

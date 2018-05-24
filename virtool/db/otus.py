@@ -236,6 +236,12 @@ async def remove(db, otu_id, user_id, document=None):
     # Remove the otu document itself.
     await db.otus.delete_one({"_id": otu_id})
 
+    await db.references.update_one({"_id": joined["reference"]["id"], "internal_control.id": joined["_id"]}, {
+        "$set": {
+            "internal_control": None
+        }
+    })
+
     description = virtool.history.compose_remove_description(joined)
 
     await virtool.db.history.add(
