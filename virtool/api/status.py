@@ -20,6 +20,11 @@ async def list_status(req):
     return json_response([status_processor(d) for d in status_documents])
 
 
+@routes.get("/api/status/hmm")
+async def get_hmm(req):
+    document = await virtool.db.status.fetch_and_update_hmm_releases(req.app)
+    return json_response(virtool.utils.base_processor(document))
+
 @routes.get("/api/status/software")
 async def get(req):
     db = req.app["db"]

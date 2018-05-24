@@ -52,18 +52,6 @@ async def get(req):
 
     return json_response(virtool.utils.base_processor(document))
 
-
-@routes.get("/api/hmms/install")
-async def get_install(req):
-    """
-    Get the HMM install document. Create one first if none exists.
-
-    """
-    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"])
-
-    return json_response(virtool.utils.base_processor(document))
-
-
 @routes.patch("/api/hmms/install", permission="modify_hmm")
 async def install(req):
     """

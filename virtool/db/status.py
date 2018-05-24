@@ -4,9 +4,41 @@ import aiohttp
 import semver
 
 import virtool.db.utils
+import virtool.github
 import virtool.http.proxy
+import virtool.utils
 
 VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
+
+
+async def fetch_and_update_hmm_releases(app):
+    """
+    Return the HMM install status document or create one if none exists.
+
+    :param app: the application object
+
+    """
+    db = app["db"]
+    settings = app["settings"]
+    session = app["session"]
+
+    etag = None
+
+    existing = await virtool.db.utils.get_one_field(db, "latest_release", "hmm")
+
+    if existing:
+        etag = existing.get("etag", None)
+
+    release = await virtool.github.get_latest_release(settings, session, "virtool/virtool-database", etag)
+
+    if release:
+        return await db.status.find_one_and_update({"_id": "hmm"}, {
+            "$set": {
+                "latest_release": virtool.github.format_release(release)
+            }
+        }, upsert=True)
+
+    return await db.status.find_one("hmm")
 
 
 async def fetch_and_update_software_releases(db, settings, session, server_version):
