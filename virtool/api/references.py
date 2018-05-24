@@ -71,7 +71,7 @@ async def find(req):
 @routes.get("/api/refs/{ref_id}")
 async def get(req):
     """
-    Get the complete representation of a specfic reference.
+    Get the complete representation of a specific reference.
 
     """
     db = req.app["db"]
@@ -357,9 +357,9 @@ async def edit(req):
         "$set": update
     }, projection=virtool.db.references.PROJECTION)
 
-    document["internal_control"] = await virtool.db.references.get_internal_control(db, internal_control_id)
-
     document = virtool.utils.base_processor(document)
+
+    document.update(await virtool.db.references.get_computed(db, document["_id"], internal_control_id))
 
     return json_response(document)
 
