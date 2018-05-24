@@ -31,9 +31,9 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-async def init_http_client(app, server_version):
+async def init_http_client(app):
     headers = {
-        "user-agent": "virtool/{}".format(server_version),
+        "user-agent": "virtool/{}".format(app["version"]),
     }
 
     app["client"] = client.ClientSession(loop=app.loop, headers=headers)
@@ -266,6 +266,7 @@ async def on_shutdown(app):
 
     """
     await app["dispatcher"].close()
+    await app["client"].close()
 
     job_manager = app.get("job_manager", None)
 
@@ -310,6 +311,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         app.on_startup.append(init_setup)
     else:
         app.on_startup.append(init_version)
+        app.on_startup.append(init_http_client)
         app.on_startup.append(init_routes)
 
         if not ignore_settings:
