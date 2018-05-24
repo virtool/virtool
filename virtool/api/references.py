@@ -53,13 +53,15 @@ async def find(req):
     data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
 
     for d in data["documents"]:
-        latest_build, unbuilt_count = await asyncio.gather(
+        latest_build, otu_count, unbuilt_count = await asyncio.gather(
             virtool.db.references.get_latest_build(db, d["id"]),
+            virtool.db.references.get_otu_count(db, d["id"]),
             virtool.db.references.get_unbuilt_count(db, d["id"])
         )
 
         d.update({
             "latest_build": latest_build,
+            "otu_count": otu_count,
             "unbuilt_change_count": unbuilt_count
         })
 
