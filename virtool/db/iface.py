@@ -81,11 +81,12 @@ class Collection:
 
         return delete_result
 
-    async def find_one_and_update(self, query, update, projection=None, silent=False):
+    async def find_one_and_update(self, query, update, projection=None, silent=False, upsert=False):
         document = await self._collection.find_one_and_update(
             query,
             update,
-            return_document=pymongo.ReturnDocument.AFTER
+            return_document=pymongo.ReturnDocument.AFTER,
+            upsert=upsert
         )
 
         if document is None:
