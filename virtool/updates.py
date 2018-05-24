@@ -1,13 +1,9 @@
 import asyncio
-import json
 import logging
 import os
 import shutil
 import sys
 import tempfile
-
-import aiohttp
-import semver
 
 import virtool.app
 import virtool.db.utils
@@ -29,65 +25,6 @@ RELEASE_KEYS = [
     "published_at",
     "html_url"
 ]
-
-
-async def get_releases(db, settings, channel, server_version):
-    """
-    Get a list of releases, from the Virtool Github repository, published since the current server version.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
-    :param channel: the software channel to use
-    :type channel: str
-
-    :param server_version: the current server version
-    :type server_version: str
-
-    :return: a list of Github releases
-    :rtype: Coroutine[list]
-
-    """
-    if server_version is None:
-        return list()
-
-    url = "https://www.virtool.ca/releases"
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with virtool.http.proxy.ProxyRequest(settings, session.get, url) as resp:
-                data = await resp.text()
-                data = json.loads(data)
-    except aiohttp.ClientConnectionError:
-        # Return any existing release list or `None`.
-        return await virtool.db.utils.get_one_field(db.status, "releases", "software")
-
-    data = data["software"]
-
-    # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
-    # will be empty. This is interpreted by the web client as an error.
-    if channel == "stable":
-        data = [r for r in data if "alpha" not in r["name"] and "beta" not in r["name"]]
-
-    elif channel == "beta":
-        data = [r for r in data if "alpha" not in r["name"]]
-
-    releases = list()
-
-    for release in data:
-        if semver.compare(release["name"].replace("v", ""), server_version.replace("v", "")) == 1:
-            releases.append(release)
-
-    await db.status.update_one({"_id": "software"}, {
-        "$set": {
-            "releases": releases
-        }
-    }, upsert=True)
-
-    return releases
 
 
 def format_software_release(release):
