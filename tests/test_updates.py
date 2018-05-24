@@ -11,45 +11,6 @@ import virtool.errors
 import virtool.updates
 
 
-def test_format_software_release():
-    formatted = virtool.updates.format_software_release({
-        "html_url": "https://github.com/virtool/virtool/releases/tag/v1.8.5",
-        "tag_name": "v1.8.5",
-        "name": "v1.8.5",
-        "draft": False,
-        "prerelease": False,
-        "published_at": "2017-03-24T21:03:18Z",
-        "assets": [
-            {
-                "url": "https://api.github.com/repos/virtool/virtool/releases/assets/3483395",
-                "name": "virtool.tar.gz",
-                "content_type": "application/gzip",
-                "state": "uploaded",
-                "size": 49963781,
-                "browser_download_url": "https://github.com/virtool/virtool/releases/download/v1.8.5/virtool.tar.gz"
-            }
-        ],
-        "body": "- add software tests for `hmm.py` module\r\n- allow upload and import of `*.hmm` profile files and "
-                "annotations\r\n- remove dropdown menu for checking `*hmm` files\r\n- show _none found_ message when "
-                "there are no annotations\r\n- fix #90"
-    })
-
-    assert formatted == {
-        "name": "v1.8.5",
-        "body": "- add software tests for `hmm.py` module\r\n- allow upload and import of `*.hmm` profile files "
-                "and annotations\r\n- remove dropdown menu for checking `*hmm` files\r\n- show _none found_ message "
-                "when there are no annotations\r\n- fix #90",
-        "prerelease": False,
-        "published_at": "2017-03-24T21:03:18Z",
-        "html_url": "https://github.com/virtool/virtool/releases/tag/v1.8.5",
-        "filename": "virtool.tar.gz",
-        "content_type": "application/gzip",
-        "size": 49963781,
-        "download_url": "https://github.com/virtool/virtool/releases/download/v1.8.5/virtool.tar.gz",
-        "asset_error": False
-    }
-
-
 @pytest.mark.parametrize("download_release_error", [None, virtool.errors.GitHubError, FileNotFoundError])
 async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker, test_motor):
     # This the replacement for the TemporaryDirectory that would normally be used by install().

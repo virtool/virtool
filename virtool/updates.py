@@ -27,38 +27,6 @@ RELEASE_KEYS = [
 ]
 
 
-def format_software_release(release):
-    """
-    Format a raw release object (dict) to something that can be sent to clients.
-
-    :param release: a raw release object
-    :type release: dict
-
-    :return: a formatted release
-    :rtype: dict
-
-    """
-    formatted = {key: release[key] for key in RELEASE_KEYS}
-
-    asset_error = False
-
-    try:
-        asset = release["assets"][0]
-
-        formatted.update({
-            "filename": asset["name"],
-            "content_type": asset["content_type"],
-            "size": asset["size"],
-            "download_url": asset["browser_download_url"]
-        })
-    except (KeyError, IndexError):
-        asset_error = True
-
-    formatted["asset_error"] = asset_error
-
-    return formatted
-
-
 async def install(app, db, settings, loop, download_url, size):
     """
     Installs the update described by the passed release document.
