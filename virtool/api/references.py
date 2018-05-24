@@ -69,7 +69,7 @@ async def find(req):
 @routes.get("/api/refs/{ref_id}")
 async def get(req):
     """
-    Get the complete representation of a specfic reference.
+    Get the complete representation of a specific reference.
 
     """
     db = req.app["db"]
