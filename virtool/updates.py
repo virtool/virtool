@@ -29,9 +29,9 @@ RELEASE_KEYS = [
 
 def format_software_release(release):
     """
-    Format a raw GitHub release object (dict) to something that can be sent to clients.
+    Format a raw release object (dict) to something that can be sent to clients.
 
-    :param release: a raw GitHub release object
+    :param release: a raw release object
     :type release: dict
 
     :return: a formatted release
