@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 
 import { getSoftwareUpdates } from "../../updates/actions";
-import { Icon, LoadingPlaceholder } from "../../base";
+import { Icon } from "../../base";
 
 class Welcome extends React.Component {
 
@@ -13,13 +13,22 @@ class Welcome extends React.Component {
     }
 
     render () {
-        let content;
+        let version;
+
+
 
         if (this.props.version) {
-            content = (
+            version = (
+                <small className="text-muted">
+                    {this.props.version}
+                </small>
+            );
+        }
+        return (
+            <div className="container">
                 <Panel>
                     <Panel.Body>
-                        <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
+                        <h3>Virtool {version}</h3>
                         <p>Viral infection diagnostics using next-generation sequencing</p>
 
                         <a
@@ -32,27 +41,13 @@ class Welcome extends React.Component {
                         </a>
                     </Panel.Body>
                 </Panel>
-            );
-        } else {
-            content = (
-                <Panel>
-                    <Panel.Body>
-                        <LoadingPlaceholder margin="0" />
-                    </Panel.Body>
-                </Panel>
-            );
-        }
-
-        return (
-            <div className="container">
-                {content}
             </div>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
-    version: get(state.updates.software, "current_version")
+    version: get(state.updates.software, "version")
 });
 
 const mapDispatchToProps = (dispatch) => ({
