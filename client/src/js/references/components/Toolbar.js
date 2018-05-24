@@ -23,15 +23,9 @@ const ReferenceToolbar = ({ onFind, term }) => (
             </div>
         </div>
 
-        <Link to={{state: {importReference: true}}}>
-            <Button bsStyle="primary" tip="Import">
-                Import
-            </Button>
-        </Link>
-
-        <Link to={{state: {createReference: true}}}>
-            <Button bsStyle="primary" tip="Create">
-                Create
+        <Link to={{state: {newReference: true, createReference: true}}}>
+            <Button bsStyle="primary" tip="Add New Reference">
+                <Icon name="plus-square" />
             </Button>
         </Link>
     </div>

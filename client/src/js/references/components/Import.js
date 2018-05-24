@@ -2,10 +2,10 @@ import React from "react";
 import { Modal, ButtonToolbar } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { upperFirst, find, noop } from "lodash-es";
+import { upperFirst, find } from "lodash-es";
 import ReferenceForm from "./Form";
 import { Button, UploadBar, ProgressBar } from "../../base";
-import { routerLocationHasState, createRandomString } from "../../utils";
+import { createRandomString } from "../../utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
@@ -20,23 +20,27 @@ const getInitialState = () => ({
     errorDataType: "",
     errorFileNumber: "",
     localId: "",
-    file: null,
-    uploadProgress: 0
+    file: null
 });
 
-const lockModal = (progress) => {
-    if (progress > 0 && progress < 100) {
-        return true;
-    }
-
-    return false;
-};
-
-class OTUImport extends React.Component {
+class ImportReference extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = getInitialState();
+    }
+
+    componentDidUpdate (prevProps, prevState) {
+        if (prevState.localId !== this.state.localId) {
+            this.props.lock(true);
+        }
+
+        if (prevState.localId.length) {
+            const file = find(this.props.uploads, { localId: prevState.localId });
+            if (!file || file.progress === 0 || file.progress === 100) {
+                this.props.lock(false);
+            }
+        }
     }
 
     handleChange = (e) => {
@@ -50,15 +54,11 @@ class OTUImport extends React.Component {
         });
     };
 
-    handleHide = () => {
-        this.props.onHide(this.props);
-    };
-
     handleDrop = (file) => {
 
         if (file.length > 1) {
             return this.setState({
-                errorFileNumber: "Only one file can be uploaded"
+                errorFileNumber: "Only one file can be uploaded at a time"
             });
         }
 
@@ -67,14 +67,6 @@ class OTUImport extends React.Component {
         const localId = createRandomString();
         this.setState({ localId });
         this.props.onDrop("reference", file[0], localId);
-    };
-
-    handleProgress = (e) => {
-        this.setState({uploadProgress: e.percent});
-    };
-
-    handleModalExited = () => {
-        this.setState(getInitialState());
     };
 
     handleSubmit = (e) => {
@@ -97,7 +89,6 @@ class OTUImport extends React.Component {
                 this.state.isPublic,
                 this.props.importId
             );
-            this.props.onHide(window.location);
         }
 
     };
@@ -108,7 +99,7 @@ class OTUImport extends React.Component {
 
     render () {
 
-        let progress;
+        let progress = 0;
         let uploadedFile;
         let message = "";
 
@@ -123,18 +114,8 @@ class OTUImport extends React.Component {
             message = `Upload complete: ${uploadedFile.name}`;
         }
 
-        const lock = lockModal(progress);
-
         return (
-            <Modal
-                show={this.props.show}
-                onHide={lock ? noop : this.props.onHide}
-                onExited={lock ? noop : this.handleModalExited}
-            >
-                <Modal.Header onHide={lock ? noop : this.props.onHide} closeButton>
-                    Import OTUs
-                </Modal.Header>
-
+            <React.Fragment>
                 <Modal.Body>
                     <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
                     <UploadBar onDrop={this.handleDrop} style={{ marginTop: "20px" }} message={message} />
@@ -148,20 +129,19 @@ class OTUImport extends React.Component {
                             type="submit"
                             bsStyle="primary"
                             onClick={this.handleSubmit}
-                            disabled={progress !== 100}
+                            disabled={progress !== 100 && progress !== 0}
                         >
-                            Save
+                            Import
                         </Button>
                     </ButtonToolbar>
                 </Modal.Footer>
-            </Modal>
+            </React.Fragment>
         );
     }
 
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "importReference"),
     uploads: state.files.uploads,
     importId: state.references.importData ? state.references.importData.id : null
 });
@@ -186,6 +166,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(OTUImport);
-
-
+export default connect(mapStateToProps, mapDispatchToProps)(ImportReference);

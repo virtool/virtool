@@ -2,8 +2,7 @@ import React from "react";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
 
-import ImportReference from "./Import";
-import CreateReference from "./Create";
+import AddReference from "./AddReference";
 import { ViewHeader, Flex, NoneFound } from "../../base";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
@@ -49,15 +48,15 @@ const ReferenceList = (props) => {
 
             <ReferenceContainer references={referenceComponents} />
 
-            <ImportReference />
-            <CreateReference />
+            {props.routerStateExists ? <AddReference /> : null}
         </div>
     );
 };
 
 const mapStateToProps = state => ({
     ...state.references,
-    account: state.account
+    account: state.account,
+    routerStateExists: !!state.router.location.state
 });
 
 export default connect(mapStateToProps, null)(ReferenceList);

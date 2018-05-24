@@ -5,7 +5,9 @@ import {
     CREATE_REFERENCE,
     EDIT_REFERENCE,
     REMOVE_REFERENCE,
-    IMPORT_REFERENCE
+    IMPORT_REFERENCE,
+    CLONE_REFERENCE,
+    REMOTE_REFERENCE
 } from "../actionTypes";
 
 export const listReferences = simpleActionCreator(LIST_REFERENCES);
@@ -32,6 +34,26 @@ export const editReference = (referenceId, update) => ({
 
 export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
     type: IMPORT_REFERENCE.REQUESTED,
+    name,
+    description,
+    dataType,
+    organism,
+    isPublic,
+    fileId
+});
+
+export const cloneReference = (name, description, dataType, organism, isPublic, refId) => ({
+    type: CLONE_REFERENCE.REQUESTED,
+    name,
+    description,
+    dataType,
+    organism,
+    isPublic,
+    refId
+});
+
+export const remoteReference = (name, description, dataType, organism, isPublic, fileId) => ({
+    type: REMOTE_REFERENCE.REQUESTED,
     name,
     description,
     dataType,

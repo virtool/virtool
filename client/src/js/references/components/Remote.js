@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Modal, ButtonToolbar } from "react-bootstrap";
 import { upperFirst } from "lodash-es";
 import ReferenceForm from "./Form";
-import { createReference } from "../actions";
+import { remoteReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button } from "../../base";
 
@@ -17,7 +17,7 @@ const getInitialState = () => ({
     errorDataType: ""
 });
 
-export class CreateReference extends React.Component {
+export class RemoteReference extends React.Component {
 
     constructor (props) {
         super(props);
@@ -85,7 +85,7 @@ export class CreateReference extends React.Component {
 const mapDispatchToProps = dispatch => ({
 
     onSubmit: (name, description, dataType, organism, isPublic) => {
-        dispatch(createReference(name, description, dataType, organism, isPublic));
+        dispatch(remoteReference(name, description, dataType, organism, isPublic));
     },
 
     onClearError: (error) => {
@@ -94,4 +94,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-export default connect(null, mapDispatchToProps)(CreateReference);
+export default connect(null, mapDispatchToProps)(RemoteReference);

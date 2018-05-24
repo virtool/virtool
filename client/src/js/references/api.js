@@ -37,6 +37,18 @@ export const importReference = ({ name, description, dataType, organism, isPubli
         })
 );
 
+export const cloneReference = ({ name, description, dataType, organism, isPublic, refId }) => (
+    Request.post("/api/refs")
+        .send({
+            name,
+            description,
+            data_type: dataType,
+            organism,
+            public: isPublic,
+            clone_from: refId
+        })
+);
+
 export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );

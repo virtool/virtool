@@ -20,12 +20,12 @@ export default class ReferenceForm extends React.Component {
 
         let extraComponent;
 
-        if (this.props.state.errorFileNumber != null) {
+        if (this.props.state.errorFileNumber != null || this.props.state.errorNoRef) {
             extraComponent = (
-                <Col xs={6}>
+                <Col xs={9}>
                     <div className="input-form-error">
                         <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
-                            {this.props.state.errorFileNumber}
+                            {this.props.state.errorFileNumber || this.props.state.errorNoRef}
                         </span>
                     </div>
                 </Col>
@@ -82,7 +82,7 @@ export default class ReferenceForm extends React.Component {
                     </Col>
                 </Row>
                 <Row>
-                    <Col xs={6}>
+                    <Col xs={3}>
                         <Checkbox
                             label="Public"
                             checked={this.props.state.isPublic}

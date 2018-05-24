@@ -68,6 +68,8 @@ export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
 export const EDIT_REFERENCE = createRequestActionType("EDIT_REFERENCE");
 export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
 export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
+export const CLONE_REFERENCE = createRequestActionType("CLONE_REFERENCE");
+export const REMOTE_REFERENCE = createRequestActionType("REMOTE_REFERENCE");
 
 // Processes
 export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
