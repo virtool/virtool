@@ -5,11 +5,13 @@ import shutil
 import sys
 
 import virtool.app
+import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.http.proxy
 import virtool.http.utils
+import virtool.processes
 import virtool.utils
 from virtool.utils import get_temp_dir
 
@@ -64,68 +66,64 @@ def copy_software_files(src, dest):
             shutil.copytree(src_path, dest_path)
 
 
-async def install_software(app, db, settings, loop, download_url, size):
+async def install_software(app, download_url, process_id, size):
     """
     Installs the update described by the passed release document.
 
     """
-    with get_temp_dir() as tempdir:
-        # Start download release step, reporting this to the DB.
-        await update_software_process(db, 0, "download")
+    db = app["db"]
 
+    with get_temp_dir() as tempdir:
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
 
-        async def handler(progress):
-            await update_software_process(db, progress)
+        progress_handler = virtool.processes.ProgressTracker(
+            db,
+            process_id,
+            size,
+            factor=0.5,
+            initial=0
+        )
 
         try:
-            await virtool.http.utils.download_file(settings, download_url, size, compressed_path, progress_handler=handler)
-        except virtool.errors.GitHubError:
-            return await db.status.update_one({"_id": "software"}, {
-                "$set": {
-                    "process.error": "Could not find GitHub repository"
-                }
-            })
+            await virtool.http.utils.download_file(
+                app,
+                download_url,
+                compressed_path,
+                progress_handler=progress_handler.add
+            )
         except FileNotFoundError:
-            return await db.status.update_one({"_id": "software"}, {
-                "$set": {
-                    "process.error": "Could not write to release download location"
-                }
-            })
+            await virtool.db.processes.update(db, process_id, errors=[
+                "Could not write to release download location"
+            ])
 
         # Start decompression step, reporting this to the DB.
-        await update_software_process(db, 0, "decompress")
+        await virtool.db.processes.update(db, process_id, step="unpack")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
-        await loop.run_in_executor(None, virtool.github.decompress_asset_file, compressed_path, str(tempdir))
+        await app["run_in_thread"](virtool.utils.decompress_tgz, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
-        await update_software_process(db, 0, "check_tree")
+        await virtool.db.processes.update(db, process_id, step="verify")
 
         # Check that the file structure matches our expectations.
         decompressed_path = os.path.join(str(tempdir), "virtool")
 
-        good_tree = await loop.run_in_executor(None, check_software_files, decompressed_path)
+        good_tree = await app["run_in_thread"](check_software_files, decompressed_path)
 
-        await db.status.update_one({"_id": "software"}, {
-            "$set": {
-                "process.good_tree": good_tree
-            }
-        })
+        if not good_tree:
+            await virtool.db.processes.update(db, process_id, errors=[
+                "Invalid unpacked installation tree"
+            ])
 
         # Copy the update files to the install directory.
-        await update_software_process(db, 0, "copy_files")
+        await virtool.db.processes.update(db, process_id, step="install")
 
-        await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
+        await app["run_in_thread"](copy_software_files, decompressed_path, INSTALL_PATH)
 
-        await db.status.update_one({"_id": "software"}, {
-            "$set": {
-                "process.complete": True
-            }
-        })
+        await virtool.db.processes.update(db, process_id, progress=1)
 
-        await asyncio.sleep(1.5, loop=loop)
+        await asyncio.sleep(1.5, loop=app.loop)
 
         await virtool.utils.reload(app)
 
