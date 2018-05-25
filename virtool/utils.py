@@ -2,6 +2,7 @@ import datetime
 import os
 import shutil
 import sys
+import tarfile
 import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -199,3 +200,22 @@ async def update_status_process(db, _id, progress, step=None, error=None):
 
 def get_temp_dir():
     return tempfile.TemporaryDirectory()
+
+
+def decompress_tgz(path, target):
+    """
+    Decompress the tar.gz file at ``path`` to the directory ``target``.
+
+    :param path: the path to the tar.gz file.
+    :type path: str
+
+    :param target: the path to directory into which to decompress the tar.gz file.
+    :type target: str
+
+    """
+    print(path)
+
+    shutil.copy2(path, "/home/igboyes")
+
+    with tarfile.open(path, "r:gz") as tar:
+        tar.extractall(target)
