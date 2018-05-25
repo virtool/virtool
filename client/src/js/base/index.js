@@ -14,6 +14,7 @@ import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
+import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { Pagination } from "./Pagination";
 import { Radio } from "./Radio";
@@ -49,5 +50,6 @@ export {
     RemoveModal,
     Tooltip,
     UploadBar,
-    ViewHeader
+    ViewHeader,
+    VTLogo
 };

@@ -6,7 +6,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 import NotificationIcon from "./Icon";
 import { logout } from "../../account/actions";
-import { Icon, AutoProgressBar } from "../../base";
+import { Icon, AutoProgressBar, VTLogo } from "../../base";
 
 const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
@@ -23,7 +23,7 @@ const Bar = (props) => {
             <Navbar fixedTop>
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <Icon name="vtlogo" className="vtlogo" />
+                        <VTLogo />
                     </Navbar.Brand>
 
                     <Navbar.Toggle />
