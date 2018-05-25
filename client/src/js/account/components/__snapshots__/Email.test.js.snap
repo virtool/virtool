@@ -1,59 +1,71 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Email /> renders correctly 1`] = `
-<Uncontrolled(Panel)
-  bsStyle="default"
+<Row
+  bsClass="row"
+  componentClass="div"
 >
-  <PanelHeading
-    bsClass="panel"
+  <Col
+    bsClass="col"
     componentClass="div"
+    lg={6}
+    md={8}
   >
-    Email
-  </PanelHeading>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <form
-      onSubmit={[Function]}
+    <Uncontrolled(Panel)
+      bsStyle="default"
     >
-      <InputError
-        error=""
-        label="Email address"
-        onBlur={[Function]}
-        onChange={[Function]}
-        value="test@virtool.ca"
-      />
-      <div
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
+      <PanelHeading
+        bsClass="panel"
+        componentClass="div"
       >
-        <Row
-          bsClass="row"
-          componentClass="div"
+        Email
+      </PanelHeading>
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <form
+          onSubmit={[Function]}
         >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            md={12}
-            xs={24}
+          <InputError
+            error=""
+            label="Email address"
+            onBlur={[Function]}
+            onChange={[Function]}
+            value="test@virtool.ca"
+          />
+          <div
+            style={
+              Object {
+                "marginTop": "20px",
+              }
+            }
           >
-            <Button
-              bsStyle="primary"
-              icon="save"
-              pullRight={true}
-              tipPlacement="top"
-              type="submit"
+            <Row
+              bsClass="row"
+              componentClass="div"
             >
-              Save
-            </Button>
-          </Col>
-        </Row>
-      </div>
-    </form>
-  </PanelBody>
-</Uncontrolled(Panel)>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                md={12}
+                xs={24}
+              >
+                <Button
+                  bsStyle="primary"
+                  icon="save"
+                  pullRight={true}
+                  tipPlacement="top"
+                  type="submit"
+                >
+                  Save
+                </Button>
+              </Col>
+            </Row>
+          </div>
+        </form>
+      </PanelBody>
+    </Uncontrolled(Panel)>
+  </Col>
+</Row>
 `;

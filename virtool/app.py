@@ -142,7 +142,7 @@ async def init_check_db(app):
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
-    await db.history.drop_indexes()
+    await db.indexes.drop_indexes()
     await db.indexes.create_index([("version", 1), ("reference.id", 1)], unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")

@@ -19,7 +19,7 @@ const SentryOptions = ({ enabled, onToggle }) => (
             </Col>
         </Row>
         <Row>
-            <Col xs={12} md={6} mdPush={6}>
+            <Col xs={12} md={4} mdPush={4}>
                 <Panel>
                     <Panel.Body>
                         Enable or disable Sentry error reporting.
@@ -30,7 +30,7 @@ const SentryOptions = ({ enabled, onToggle }) => (
                     </Panel.Footer>
                 </Panel>
             </Col>
-            <Col xs={12} md={6} mdPull={6}>
+            <Col xs={12} md={4} mdPull={4}>
                 <Panel>
                     <Panel.Body>
                         <Button onClick={() => {onToggle(!enabled)}} block>

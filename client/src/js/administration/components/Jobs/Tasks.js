@@ -50,7 +50,17 @@ const TaskLimits = (props) => {
             <Col md={12}>
                 <h5><strong>Task-specific Limits</strong></h5>
             </Col>
-            <Col md={6}>
+            <Col xs={12} md={4} mdPush={4}>
+                <Panel>
+                    <Panel.Body>
+                        Set limits on specific tasks.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <TasksFooter />
+                    </Panel.Footer>
+                </Panel>
+            </Col>
+            <Col xs={12} md={4} mdPull={4}>
                 <ListGroup>
                     <ListGroupItem key="title">
                         <Row>
@@ -61,16 +71,6 @@ const TaskLimits = (props) => {
                     </ListGroupItem>
                     {taskComponents}
                 </ListGroup>
-            </Col>
-            <Col md={6}>
-                <Panel>
-                    <Panel.Body>
-                        Set limits on specific tasks.
-                    </Panel.Body>
-                    <Panel.Footer>
-                        <TasksFooter />
-                    </Panel.Footer>
-                </Panel>
             </Col>
         </Row>
     );
