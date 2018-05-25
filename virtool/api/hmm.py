@@ -35,7 +35,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data["file_exists"] = virtool.hmm.file_exists(req.app["settings"].get("data_path"))
+    data["status"] = await db.status.find_one("hmm", {"_id": False})
 
     return json_response(data)
 
