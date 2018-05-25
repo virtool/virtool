@@ -17,7 +17,7 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
             <Col md={12}>
                 <h5><strong>Database</strong></h5>
             </Col>
-            <Col xs={12} md={6} mdPush={6}>
+            <Col xs={12} md={4} mdPush={4}>
                 <Panel>
                     <Panel.Body>
                         Change the parameters for connecting to MongoDB.
@@ -27,7 +27,7 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                     </Panel.Footer>
                 </Panel>
             </Col>
-            <Col xs={12} md={6} mdPull={6}>
+            <Col xs={12} md={4} mdPull={4}>
                 <Panel>
                     <Panel.Body>
                         <InputError
@@ -60,7 +60,7 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
             <Col xs={12}>
                 <h5><strong>Paths</strong></h5>
             </Col>
-            <Col xs={12} md={6} mdPush={6}>
+            <Col xs={12} md={4} mdPush={4}>
                 <Panel>
                     <Panel.Body>
                         Set the paths where Virtool looks for its data files and for FASTQ files to import.
@@ -70,7 +70,7 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                     </Panel.Footer>
                 </Panel>
             </Col>
-            <Col xs={12} md={6} mdPull={6}>
+            <Col xs={12} md={4} mdPull={4}>
                 <Panel>
                     <Panel.Body>
                         <InputError
