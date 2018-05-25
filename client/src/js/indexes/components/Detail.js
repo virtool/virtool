@@ -13,7 +13,7 @@ import { LoadingPlaceholder } from "../../base";
 class IndexDetail extends React.Component {
 
     componentDidMount () {
-        this.props.onGet(this.props.match.params.indexVersion);
+        this.props.onGet(this.props.match.params.indexId);
     }
 
     render () {
@@ -22,13 +22,13 @@ class IndexDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const indexVersion = this.props.match.params.indexVersion;
-        const refId = this.props.detail.reference.id;
+        const indexId = this.props.match.params.indexId;
+        const refId = this.props.match.params.refId;
 
         return (
             <div>
                 <Helmet>
-                    <title>{`OTU Index ${indexVersion} - Indexes`}</title>
+                    <title>{`OTU Index ${indexId} - Indexes`}</title>
                 </Helmet>
 
                 <Breadcrumb>
@@ -39,30 +39,30 @@ class IndexDetail extends React.Component {
                             </div>
                         </LinkContainer>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item active>OTU Index {indexVersion}</Breadcrumb.Item>
+                    <Breadcrumb.Item active>OTU Index {indexId}</Breadcrumb.Item>
                 </Breadcrumb>
 
                 <h3 className="view-header">
-                    <strong>OTU Index {indexVersion}</strong>
+                    <strong>OTU Index {indexId}</strong>
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${refId}/indexes/${indexVersion}/general`}>
+                    <LinkContainer to={`/refs/${refId}/indexes/${indexId}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/refs/${refId}/indexes/${indexVersion}/changes`}>
+                    <LinkContainer to={`/refs/${refId}/indexes/${indexId}/changes`}>
                         <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
                     <Redirect
-                        from="/refs/:refId/indexes/:indexVersion"
-                        to={`/refs/${refId}/indexes/${indexVersion}/general`}
+                        from="/refs/:refId/indexes/:indexId"
+                        to={`/refs/${refId}/indexes/${indexId}/general`}
                         exact
                     />
-                    <Route path="/refs/:refId/indexes/:indexVersion/general" component={IndexGeneral} />
-                    <Route path="/refs/:refId/indexes/:indexVersion/changes" component={IndexChanges} />
+                    <Route path="/refs/:refId/indexes/:indexId/general" component={IndexGeneral} />
+                    <Route path="/refs/:refId/indexes/:indexId/changes" component={IndexChanges} />
                 </Switch>
             </div>
         );

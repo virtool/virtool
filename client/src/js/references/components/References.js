@@ -31,7 +31,7 @@ const References = (props) => {
                 <Route path="/refs" component={ReferenceList} exact />
                 <Route path="/refs/settings" component={ReferenceSettings} />
                 <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
-                <Route path="/refs/:refId/indexes/:indexVersion" component={IndexDetail} />
+                <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </div>

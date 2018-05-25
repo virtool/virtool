@@ -4,8 +4,8 @@ export const find = () => (
     Request.get(`/api${window.location.pathname}`)
 );
 
-export const get = ({ indexVersion }) => (
-    Request.get(`/api/indexes/${indexVersion}`)
+export const get = ({ indexId }) => (
+    Request.get(`/api/indexes/${indexId}`)
 );
 
 export const getUnbuilt = ({ refId }) => (

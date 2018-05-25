@@ -17,7 +17,9 @@ class IndexesList extends React.Component {
 
     render () {
 
-        if (this.props.documents === null) {
+        if (this.props.documents === null ||
+                (this.props.documents.length &&
+                    this.props.documents[0].reference.id !== this.props.refId)) {
             return <LoadingPlaceholder />;
         }
 

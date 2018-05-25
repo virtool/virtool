@@ -16,9 +16,9 @@ export const findIndexes = simpleActionCreator(FIND_INDEXES.REQUESTED);
  * @param indexVersion {string} the version number of the index.
  * @returns {object}
  */
-export const getIndex = (indexVersion) => ({
+export const getIndex = (indexId) => ({
     type: GET_INDEX.REQUESTED,
-    indexVersion
+    indexId
 });
 
 /**

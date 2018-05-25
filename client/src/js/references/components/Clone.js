@@ -72,7 +72,7 @@ class CloneReference extends React.Component {
                 this.state.dataType,
                 this.state.organism,
                 this.state.isPublic,
-                this.props.importId
+                this.props.refId
             );
         }
 
