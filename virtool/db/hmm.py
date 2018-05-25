@@ -79,11 +79,18 @@ async def install_official(app, process_id):
 
     release = document["latest_release"]
 
-    print(release)
+    await virtool.db.processes.update(db, process_id, 0, step="download")
 
-    await virtool.db.processes.update(db, process_id, 0, step="download", file_progress=0, file_size=release["size"])
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        release["size"],
+        0.5,
+        initial=0
+    )
 
     with virtool.utils.get_temp_dir() as tempdir:
+
         temp_path = str(tempdir)
 
         path = os.path.join(temp_path, "hmm.tar.gz")
@@ -91,8 +98,8 @@ async def install_official(app, process_id):
         await virtool.http.utils.download_file(
             app,
             release["download_url"],
-            release["size"],
-            path
+            path,
+            progress_tracker.add
         )
 
         await virtool.db.processes.update(db, process_id, progress=0.5, step="decompress")
