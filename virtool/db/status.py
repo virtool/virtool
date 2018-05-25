@@ -21,7 +21,7 @@ async def fetch_and_update_hmm_release(app):
     """
     db = app["db"]
     settings = app["settings"]
-    session = app["session"]
+    session = app["client"]
 
     etag = None
 

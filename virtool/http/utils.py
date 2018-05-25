@@ -27,7 +27,7 @@ async def download_file(app, url, size, target_path, progress_handler=None):
     counter = 0
     last_reported = 0
 
-    async with virtool.http.proxy.ProxyRequest(app["settings"], app["session"].get, url) as resp:
+    async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
         if resp.status != 200:
             return None
 
