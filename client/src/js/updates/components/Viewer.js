@@ -101,13 +101,13 @@ class SoftwareUpdateViewer extends React.Component {
                             <strong>Software Updates</strong>
                         </h5>
                     </Col>
-                    <Col xs={12} md={8}>
+                    <Col xs={12} md={6}>
                         <Releases
                             releases={releases}
                             onShowModal={this.props.onShowModal}
                         />
                     </Col>
-                    <Col xs={12} md={4}>
+                    <Col xs={12} md={2}>
                         <Panel>
                             <Panel.Body>
                                 <Row>

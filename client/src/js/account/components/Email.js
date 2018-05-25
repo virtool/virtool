@@ -65,30 +65,34 @@ export class Email extends React.Component {
     render () {
 
         return (
-            <Panel bsStyle={this.state.error ? "danger" : "default"}>
-                <Panel.Heading>Email</Panel.Heading>
-                <Panel.Body>
-                    <form onSubmit={this.onSubmit}>
-                        <InputError
-                            label="Email address"
-                            value={this.state.email}
-                            onChange={this.handleChange}
-                            onBlur={this.handleBlur}
-                            error={this.state.error}
-                        />
+            <Row>
+                <Col md={8} lg={6}>
+                    <Panel bsStyle={this.state.error ? "danger" : "default"}>
+                        <Panel.Heading>Email</Panel.Heading>
+                        <Panel.Body>
+                            <form onSubmit={this.onSubmit}>
+                                <InputError
+                                    label="Email address"
+                                    value={this.state.email}
+                                    onChange={this.handleChange}
+                                    onBlur={this.handleBlur}
+                                    error={this.state.error}
+                                />
 
-                        <div style={{marginTop: "20px"}}>
-                            <Row>
-                                <Col xs={24} md={12}>
-                                    <Button type="submit" bsStyle="primary" icon="save" pullRight>
-                                        Save
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                    </form>
-                </Panel.Body>
-            </Panel>
+                                <div style={{marginTop: "20px"}}>
+                                    <Row>
+                                        <Col xs={24} md={12}>
+                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
+                                                Save
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            </form>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+            </Row>
         );
     }
 }

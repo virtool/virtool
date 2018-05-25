@@ -99,7 +99,7 @@ const ReferenceItem = (props) => {
             </Panel.Heading>
 
             <ReferenceMetadata {...props} origin={origin} />
-      
+
             <Panel.Body style={{padding: 0, textAlign: "center"}}>
                 <span style={{visibility: `${progress === 100 ? "hidden" : "visible"}`, fontSize: "small"}}>
                     {step}

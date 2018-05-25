@@ -10,7 +10,14 @@ const SampleRights = (props) => (
         <Col md={12}>
             <h5><strong>Default Sample Rights</strong></h5>
         </Col>
-        <Col md={6}>
+        <Col xs={12} md={4} mdPush={4}>
+            <Panel>
+                <Panel.Body>
+                    Set the method used to assign groups to new samples and the default rights.
+                </Panel.Body>
+            </Panel>
+        </Col>
+        <Col xs={12} md={4} mdPull={4}>
             <Panel>
                 <Panel.Body>
                     <label className="control-label" style={{width: "100%"}}>
@@ -62,13 +69,6 @@ const SampleRights = (props) => (
                         <option value="r">Read</option>
                         <option value="rw">Read & write</option>
                     </InputError>
-                </Panel.Body>
-            </Panel>
-        </Col>
-        <Col md={6}>
-            <Panel>
-                <Panel.Body>
-                    Set the method used to assign groups to new samples and the default rights.
                 </Panel.Body>
             </Panel>
         </Col>

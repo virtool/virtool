@@ -93,50 +93,54 @@ export class ChangePassword extends React.Component {
         const hasError = this.state.errorOldPassword || this.state.errorNewPassword || this.state.ConfirmPassword;
 
         return (
-            <Panel bsStyle={hasError ? "danger" : "default"}>
-                <Panel.Heading>Password</Panel.Heading>
-                <Panel.Body>
-                    <form onSubmit={this.onSubmit}>
-                        <InputError
-                            label="Old Password"
-                            type="password"
-                            name="oldPassword"
-                            value={this.state.oldPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorOldPassword}
-                        />
-                        <InputError
-                            label="New password"
-                            type="password"
-                            name="newPassword"
-                            value={this.state.newPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorNewPassword}
-                        />
-                        <InputError
-                            label="Confirm New Password"
-                            type="password"
-                            name="confirmPassword"
-                            value={this.state.confirmPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorConfirmPassword}
-                        />
+            <Row>
+                <Col md={8} lg={6}>
+                    <Panel bsStyle={hasError ? "danger" : "default"}>
+                        <Panel.Heading>Password</Panel.Heading>
+                        <Panel.Body>
+                            <form onSubmit={this.onSubmit}>
+                                <InputError
+                                    label="Old Password"
+                                    type="password"
+                                    name="oldPassword"
+                                    value={this.state.oldPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorOldPassword}
+                                />
+                                <InputError
+                                    label="New password"
+                                    type="password"
+                                    name="newPassword"
+                                    value={this.state.newPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorNewPassword}
+                                />
+                                <InputError
+                                    label="Confirm New Password"
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={this.state.confirmPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorConfirmPassword}
+                                />
 
-                        <div style={{marginTop: "20px"}}>
-                            <Row>
-                                <Col xs={12} md={6} className="text-muted">
-                                    Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                                </Col>
-                                <Col xs={12} md={6}>
-                                    <Button type="submit" bsStyle="primary" icon="save" pullRight>
-                                        Change
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                    </form>
-                </Panel.Body>
-            </Panel>
+                                <div style={{marginTop: "20px"}}>
+                                    <Row>
+                                        <Col xs={12} md={6} className="text-muted">
+                                            Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                                        </Col>
+                                        <Col xs={12} md={6}>
+                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
+                                                Change
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            </form>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+            </Row>
         );
     }
 }
