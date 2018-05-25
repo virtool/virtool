@@ -20,9 +20,6 @@ class NotificationIcon extends React.Component {
     }
 
     render () {
-
-        console.log(this.props);
-
         if (this.props.visible) {
             return (
                 <LinkContainer to="/administration/updates">
@@ -42,14 +39,9 @@ class NotificationIcon extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    console.log(state.account);
-    console.log(state.updates.software);
-
-    return {
-        visible: !!(state.account.administrator && state.updates.software && state.updates.software.releases.length)
-    }
-};
+const mapStateToProps = (state) => ({
+    visible: !!(state.account.administrator && state.updates.software && state.updates.software.releases.length)
+});
 
 const mapDispatchToProps = (dispatch) => ({
 
