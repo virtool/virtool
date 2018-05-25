@@ -1,5 +1,3 @@
-import tarfile
-
 import aiohttp
 
 import virtool.errors
