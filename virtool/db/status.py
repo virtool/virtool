@@ -25,12 +25,12 @@ async def fetch_and_update_hmm_release(app):
 
     etag = None
 
-    existing = await virtool.db.utils.get_one_field(db, "latest_release", "hmm")
+    existing = await virtool.db.utils.get_one_field(db.status, "latest_release", "hmm")
 
     if existing:
         etag = existing.get("etag", None)
 
-    release = await virtool.github.get_latest_release(settings, session, "virtool/virtool-database", etag)
+    release = await virtool.github.get_latest_release(settings, session, "virtool/virtool-hmm", etag)
 
     if release:
         return await db.status.find_one_and_update({"_id": "hmm"}, {

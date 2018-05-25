@@ -1,5 +1,8 @@
 import asyncio
+import aiojobs.aiohttp
 
+import virtool.db.hmm
+import virtool.db.processes
 import virtool.db.status
 import virtool.http.routes
 import virtool.status
@@ -36,12 +39,24 @@ async def upgrade_hmm(req):
 
     document = await virtool.db.status.fetch_and_update_hmm_release(req.app)
 
-    asyncio.ensure_future(virtool.db.hmm.install_official(
-        req.app.loop,
+    process = await virtool.db.processes.register(
         db,
-        req.app["settings"],
-        req.app["version"]
-    ), loop=req.app.loop)
+        "install_hmms",
+        file_size=document["latest_release"]["size"]
+    )
+
+    document = await db.status.find_one_and_update({"_id": "hmm"}, {
+        "$set": {
+            "process": {
+                "id": process["id"]
+            }
+        }
+    })
+
+    await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install_official(
+        req.app,
+        process["id"]
+    ))
 
     return json_response(virtool.utils.base_processor(document))
 

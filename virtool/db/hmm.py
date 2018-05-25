@@ -1,14 +1,16 @@
 import json
 import os
 import shutil
-import tempfile
 
 import aiofiles
 
 import virtool.db.processes
+import virtool.db.status
 import virtool.github
 import virtool.hmm
 import virtool.http.utils
+import virtool.processes
+import virtool.utils
 
 PROJECTION = [
     "_id",
@@ -47,7 +49,7 @@ async def delete_unreferenced_hmms(db):
     await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
 
-async def install_official(loop, db, settings, server_version, username=None, token=None):
+async def install_official(app, process_id):
     """
     Runs a background Task that:
 
@@ -59,99 +61,91 @@ async def install_official(loop, db, settings, server_version, username=None, to
 
     Task reports the following stages to the hmm_install status document:
 
-        1. check_github
-        2. download
+        1. download
         3. decompress
         4. install_profiles
         5. import_annotations
 
-    :param loop: the application event loop
+    :param app: the app object
+    :type app: :class:`aiohttp.web.Application`
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
-    :param server_version: the current server version
-    :type server_version: str
-
-    :param username: the GitHub username to use for auth
-    :type username: str
-
-    :param token: the GitHub token to use for auth
-    :type  token: str
+    :param process_id: the id for the process document
+    :type process_id: str
 
     """
-    await virtool.db.processes.update(db, "hmm_install", 0, step="check_github")
+    db = app["db"]
 
-    assets = await virtool.hmm.get_asset(settings, server_version, username, token)
+    document = await virtool.db.status.fetch_and_update_hmm_release(app)
 
-    await db.status.update_one({"_id": "hmm_install"}, {
-        "$set": {
-            "download_size": int(assets[0][1])
-        }
-    })
+    release = document["latest_release"]
 
-    await virtool.db.processes.update(db, "hmm_install", 0.5)
+    print(release)
 
-    if len(assets) == 0:
-        # Stop the install process if one of the annotation or profile assets are not found.
-        await virtool.db.processes.update(db, "hmm_install", errors=["Missing HMM asset file"])
+    await virtool.db.processes.update(db, process_id, 0, step="download", file_progress=0, file_size=release["size"])
 
-    async def handler(progress):
-        await virtool.db.processes.update(db, "hmm_install", progress=progress)
+    with virtool.utils.get_temp_dir() as tempdir:
+        temp_path = str(tempdir)
 
-    with tempfile.TemporaryDirectory() as temp_path:
-        target_path = os.path.join(temp_path, "vthmm.tar.gz")
+        path = os.path.join(temp_path, "hmm.tar.gz")
 
-        url, size = assets[0]
+        await virtool.http.utils.download_file(
+            app,
+            release["download_url"],
+            release["size"],
+            path
+        )
 
-        await virtool.db.processes.update(db, "hmm_install", "download")
-        await virtool.http.utils.download_file(settings, url, size, target_path, progress_handler=handler)
+        await virtool.db.processes.update(db, process_id, progress=0.5, step="decompress")
 
-        await virtool.db.processes.update(db, "hmm_install", "decompress")
-        await loop.run_in_executor(None, virtool.github.decompress_asset_file, target_path, temp_path)
+        await app["run_in_thread"](
+            virtool.utils.decompress_tgz,
+            path,
+            temp_path
+        )
 
-        await virtool.db.processes.update(db, "install_profiles")
+        '''
+        if len(assets) == 0:
+            # Stop the install process if one of the annotation or profile assets are not found.
+            await virtool.db.processes.update(db, process_id, errors=["Incomplete asset"])
+        '''
+
+        await virtool.db.processes.update(db, process_id, progress=0.7, step="install_profiles")
 
         decompressed_path = os.path.join(temp_path, "hmm")
-        install_path = os.path.join(settings.get("data_path"), "hmm", "profiles.hmm")
-        await loop.run_in_executor(None, shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
-        await virtool.db.processes.update(db, "hmm_install", "import_annotations")
+        install_path = os.path.join(app["settings"]["data_path"], "hmm", "profiles.hmm")
+
+        await app["run_in_thread"](shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
+
+        await virtool.db.processes.update(db, process_id, progress=0.8, step="import_annotations")
 
         async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
             annotations = json.loads(await f.read())
 
-        await insert_annotations(db, annotations, handler)
+        await delete_unreferenced_hmms(db)
 
-        await db.status.update_one({"_id": "hmm_install"}, {
+        await db.hmm.update_many({}, {
             "$set": {
-                "ready": True
+                "hidden": True
             }
         })
 
-        await virtool.db.processes.update(db, "hmm_install", progress=1)
+        progress_tracker = virtool.processes.ProgressTracker(len(annotations), increment=0.05, factor=0.2)
 
-
-async def insert_annotations(db, annotations, progress_handler=None):
-
-    await db.hmm.update_many({}, {
-        "$set": {
-            "hidden": True
-        }
-    })
-
-    count = 0
-    total_count = len(annotations)
-
-    for i in range(0, total_count, 30):
-        chunk = annotations[i:i + 30]
-
-        for annotation in chunk:
+        for annotation in annotations:
             await db.hmm.insert_one(dict(annotation, hidden=False))
 
-        if progress_handler:
-            count += len(chunk)
-            await progress_handler(count / total_count)
+            progress_tracker.add(1)
+            progress = progress_tracker.reported()
+
+            if progress - progress_tracker.last_reported > 0.05:
+                await virtool.db.processes.update(db, process_id, progress=progress)
+                progress_tracker.reported()
+
+        await db.status.update_one({"_id": "hmm"}, {
+            "$set": {
+                "installed": True
+            }
+        })
+
+        await virtool.db.processes.update(db, process_id, progress=1)
