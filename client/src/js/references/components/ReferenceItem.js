@@ -22,30 +22,72 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     </div>
 );
 
-const ReferenceMetadata = ({ data_type, organism, origin }) => (
-    <Table bordered>
-        <tbody>
-            <tr>
-                <th>Data Type</th>
-                <td className="text-capitalize">
-                    {data_type}
-                </td>
-            </tr>
-            <tr>
-                <th>Organism</th>
-                <td className="text-capitalize">
-                    {organism || "unknown"}
-                </td>
-            </tr>
-            <tr>
-                <th>{origin.method}</th>
-                <td>
-                    {origin.fileName}
-                </td>
-            </tr>
-        </tbody>
-    </Table>
-);
+const ReferenceMetadata = ({ data_type, organism, origin, latest_build, progress }) => {
+
+    let buildInfo;
+
+    if (progress === 100) {
+        if (latest_build) {
+            buildInfo = (
+                <React.Fragment>
+                    <tr>
+                        <th>Latest Build</th>
+                        <td>
+                            Created <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Index Build ID</th>
+                        <td>
+                            {latest_build.id}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Index Build Version</th>
+                        <td>
+                            {latest_build.version}
+                        </td>
+                    </tr>
+                </React.Fragment>
+            );
+        } else {
+            buildInfo = (
+                <tr>
+                    <th>Latest Build</th>
+                    <td>
+                        No Build Found
+                    </td>
+                </tr>
+            );
+        }
+    }
+
+    return (
+        <Table bordered>
+            <tbody>
+                <tr>
+                    <th>Data Type</th>
+                    <td className="text-capitalize">
+                        {data_type}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Organism</th>
+                    <td className="text-capitalize">
+                        {organism || "unknown"}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{origin.method}</th>
+                    <td>
+                        {origin.fileName}
+                    </td>
+                </tr>
+                {buildInfo}
+            </tbody>
+        </Table>
+    );
+};
 
 const getOrigin = (props) => {
     let origin;
@@ -98,8 +140,8 @@ const ReferenceItem = (props) => {
                 <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} refId={props.id} />
             </Panel.Heading>
 
-            <ReferenceMetadata {...props} origin={origin} />
-      
+            <ReferenceMetadata {...props} origin={origin} progress={progress} />
+
             <Panel.Body style={{padding: 0, textAlign: "center"}}>
                 <span style={{visibility: `${progress === 100 ? "hidden" : "visible"}`, fontSize: "small"}}>
                     {step}
