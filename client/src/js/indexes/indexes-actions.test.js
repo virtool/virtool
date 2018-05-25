@@ -25,11 +25,11 @@ describe("Indexes Action Creators:", () => {
     });
 
     it("getIndex: returns action to get specific index version", () => {
-        const indexVersion = "3";
-        const result = getIndex(indexVersion);
+        const indexId = "abc123";
+        const result = getIndex(indexId);
         const expected = {
             type: "GET_INDEX_REQUESTED",
-            indexVersion
+            indexId
         };
 
         expect(result).toEqual(expected);
