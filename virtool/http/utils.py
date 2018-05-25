@@ -4,7 +4,7 @@ import virtool.errors
 import virtool.http.proxy
 
 
-async def download_file(app, url, size, target_path, progress_handler=None):
+async def download_file(app, url, target_path, progress_handler=None):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``.
 
@@ -14,9 +14,6 @@ async def download_file(app, url, size, target_path, progress_handler=None):
     :param url: the download URL for the release
     :type url str
 
-    :param size: the size in bytes of the file to be downloaded.
-    :type size: int
-
     :param target_path: the path to write the downloaded file to.
     :type target_path: str
 
@@ -24,9 +21,6 @@ async def download_file(app, url, size, target_path, progress_handler=None):
     :type progress_handler: Callable[[Union[float, int]]]
 
     """
-    counter = 0
-    last_reported = 0
-
     async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
         if resp.status != 200:
             return None
@@ -41,9 +35,4 @@ async def download_file(app, url, size, target_path, progress_handler=None):
                 await handle.write(chunk)
 
                 if progress_handler:
-                    counter += len(chunk)
-                    progress = round(counter / size, 2)
-
-                    if progress - last_reported >= 0.01:
-                        last_reported = progress
-                        await progress_handler(progress)
+                    await progress_handler(len(chunk))
