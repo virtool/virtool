@@ -22,7 +22,6 @@ export default function updatesReducer (state = initialState, action) {
             return state;
 
         case GET_SOFTWARE_UPDATES.SUCCEEDED:
-            console.log(action);
             return {...state, software: action.data};
 
         case SHOW_INSTALL_MODAL:

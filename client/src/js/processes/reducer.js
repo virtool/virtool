@@ -1,14 +1,11 @@
 import { map } from "lodash-es";
-import {
-    WS_UPDATE_PROCESS,
-    LIST_PROCESSES,
-    GET_PROCESS
-} from "../actionTypes";
+import { WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
 
 export const initialState = {
     documents: [],
     detail: null
 };
+
 export const updateProcesses = (state, action) => {
     if (!state.documents.length) {
         return {
@@ -25,7 +22,7 @@ export const updateProcesses = (state, action) => {
     };
 };
 
-export default function referenceReducer (state = initialState, action) {
+export default function processReducer (state = initialState, action) {
 
     switch (action.type) {
 
