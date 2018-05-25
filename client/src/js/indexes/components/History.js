@@ -6,6 +6,15 @@ import { LoadingPlaceholder } from "../../base";
 
 export default function RebuildHistory ({ unbuilt, error }) {
 
+    const extraChanges = unbuilt.page_count > 1
+        ? (
+            <ListGroupItem key="last-item">
+                <div style={{textAlign: "right"}}>
+                    + {unbuilt.total_count - unbuilt.per_page} more changes
+                </div>
+            </ListGroupItem>
+        ) : null;
+
     let content;
 
     if (unbuilt === null) {
@@ -27,6 +36,7 @@ export default function RebuildHistory ({ unbuilt, error }) {
         content = (
             <ListGroup style={{overflowY: "auto", maxHeight: "700px"}}>
                 {historyComponents}
+                {extraChanges}
             </ListGroup>
         );
     }
