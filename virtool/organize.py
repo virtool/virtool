@@ -1,5 +1,6 @@
 import logging
 import os
+import pymongo.errors
 import shutil
 
 import virtool.db.references
@@ -202,6 +203,16 @@ async def organize_status(db, server_version):
             "version": server_version
         }
     }, upsert=True)
+
+    try:
+        await db.status.insert_one({
+            "_id": "hmm",
+            "installed": False,
+            "version": None,
+            "latest_release": None
+        })
+    except pymongo.errors.DuplicateKeyError:
+        pass
 
 
 async def organize_subtraction(db):
