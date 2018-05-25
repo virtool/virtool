@@ -8,12 +8,13 @@ import { Icon, RelativeTime, ListGroupItem } from "../../base";
 export default class IndexEntry extends React.PureComponent {
 
     static propTypes = {
+        id: PropTypes.string,
         ready: PropTypes.bool,
         refId: PropTypes.string,
         showReady: PropTypes.bool,
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-        modification_count: PropTypes.number,
+        change_count: PropTypes.number,
         modified_otu_count: PropTypes.number
     };
 
@@ -44,24 +45,25 @@ export default class IndexEntry extends React.PureComponent {
         // The description of
         let changeDescription;
 
-        if (this.props.modification_count !== null) {
+        if (this.props.change_count !== null) {
             // Text to show if no changes occurred since the last index build. Technically, should never be shown
             // because the rebuild button is not shown if no changes have been made.
             changeDescription = "No changes";
 
             // This should always test true in practice. Shows the number of changes and the number of OTUs
             // affected.
-            if (this.props.modification_count > 0) {
+            if (this.props.change_count > 0) {
                 changeDescription = (
                     <span>
-                        {this.props.modification_count} changes made in {this.props.modified_otu_count} OTUs
+                        {this.props.change_count} {" changes made in "}
+                        {this.props.modified_otu_count} {this.props.modified_otu_count === 1 ? "OTU" : "OTUs"}
                     </span>
                 );
             }
         }
 
         return (
-            <LinkContainer to={`/refs/${this.props.refId}/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/refs/${this.props.refId}/indexes/${this.props.id}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>
