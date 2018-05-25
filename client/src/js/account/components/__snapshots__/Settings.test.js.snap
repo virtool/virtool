@@ -2,139 +2,163 @@
 
 exports[`<Settings /> renders correctly 1`] = `
 <div>
-  <Uncontrolled(Panel)>
-    <PanelHeading
-      bsClass="panel"
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
       componentClass="div"
+      lg={6}
+      md={8}
     >
-      User Interface
-    </PanelHeading>
-    <PanelBody
-      bsClass="panel"
-      collapsible={false}
-    >
-      <ListGroup
-        bsClass="list-group"
-      >
-        <ListGroupItem
-          bsClass="list-group-item"
-          listItem={false}
+      <Uncontrolled(Panel)>
+        <PanelHeading
+          bsClass="panel"
+          componentClass="div"
         >
-          <Flex
-            alignContent="stretch"
-            alignItems="stretch"
-            direction="row"
-            justifyContent="flex-start"
-            wrap="nowrap"
-          >
-            <FlexItem
-              alignSelf={null}
-              basis="auto"
-              grow={0}
-              shrink={1}
-            >
-              <Checkbox
-                checked={false}
-                onClick={[Function]}
-                partial={false}
-                pullRight={false}
-              />
-            </FlexItem>
-            <FlexItem
-              alignSelf={null}
-              basis="auto"
-              grow={0}
-              pad={10}
-              shrink={1}
-            >
-              <div>
-                Show Unique ID Fields
-              </div>
-              <small>
-                Show the unique database IDs for Virtool records where possible. This is not required for normal use, but is useful for debugging.
-              </small>
-            </FlexItem>
-          </Flex>
-        </ListGroupItem>
-      </ListGroup>
-    </PanelBody>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Quick Analyze
-    </PanelHeading>
-    <PanelBody
-      bsClass="panel"
-      collapsible={false}
-    >
-      <ListGroup
-        bsClass="list-group"
-      >
-        <ListGroupItem
-          bsClass="list-group-item"
-          listItem={false}
+          User Interface
+        </PanelHeading>
+        <PanelBody
+          bsClass="panel"
+          collapsible={false}
         >
-          <Flex
-            alignContent="stretch"
-            alignItems="stretch"
-            direction="row"
-            justifyContent="flex-start"
-            wrap="nowrap"
+          <ListGroup
+            bsClass="list-group"
           >
-            <FlexItem
-              alignSelf={null}
-              basis="auto"
-              grow={0}
-              shrink={1}
+            <ListGroupItem
+              bsClass="list-group-item"
+              listItem={false}
             >
-              <Checkbox
-                checked={false}
-                onClick={[Function]}
-                partial={false}
-                pullRight={false}
-              />
-            </FlexItem>
-            <FlexItem
-              alignSelf={null}
-              basis="auto"
-              grow={0}
-              pad={10}
-              shrink={1}
-            >
-              <div>
-                Skip Dialog
-              </div>
-              <small>
-                Allow samples to be analyzed with a single click of  
-                <Icon
-                  bsStyle="success"
-                  faStyle="fas"
-                  fixedWidth={false}
-                  name="chart-area"
-                  pullRight={false}
-                />
-                 using a preconfigured algorithm. The algorithm selection dialog is not shown.
-              </small>
-              <div
-                style={
-                  Object {
-                    "marginTop": "7px",
-                  }
-                }
+              <Flex
+                alignContent="stretch"
+                alignItems="stretch"
+                direction="row"
+                justifyContent="flex-start"
+                wrap="nowrap"
               >
-                <AlgorithmSelect
-                  noLabel={true}
-                  onChange={[Function]}
-                />
-              </div>
-            </FlexItem>
-          </Flex>
-        </ListGroupItem>
-      </ListGroup>
-    </PanelBody>
-  </Uncontrolled(Panel)>
+                <FlexItem
+                  alignSelf={null}
+                  basis="auto"
+                  grow={0}
+                  shrink={1}
+                >
+                  <Checkbox
+                    checked={false}
+                    onClick={[Function]}
+                    partial={false}
+                    pullRight={false}
+                  />
+                </FlexItem>
+                <FlexItem
+                  alignSelf={null}
+                  basis="auto"
+                  grow={0}
+                  pad={10}
+                  shrink={1}
+                >
+                  <div>
+                    Show Unique ID Fields
+                  </div>
+                  <small>
+                    Show the unique database IDs for Virtool records where possible. This is not required for normal use, but is useful for debugging.
+                  </small>
+                </FlexItem>
+              </Flex>
+            </ListGroupItem>
+          </ListGroup>
+        </PanelBody>
+      </Uncontrolled(Panel)>
+    </Col>
+  </Row>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      lg={6}
+      md={8}
+    >
+      <Uncontrolled(Panel)>
+        <PanelHeading
+          bsClass="panel"
+          componentClass="div"
+        >
+          Quick Analyze
+        </PanelHeading>
+        <PanelBody
+          bsClass="panel"
+          collapsible={false}
+        >
+          <ListGroup
+            bsClass="list-group"
+          >
+            <ListGroupItem
+              bsClass="list-group-item"
+              listItem={false}
+            >
+              <Flex
+                alignContent="stretch"
+                alignItems="stretch"
+                direction="row"
+                justifyContent="flex-start"
+                wrap="nowrap"
+              >
+                <FlexItem
+                  alignSelf={null}
+                  basis="auto"
+                  grow={0}
+                  shrink={1}
+                >
+                  <Checkbox
+                    checked={false}
+                    onClick={[Function]}
+                    partial={false}
+                    pullRight={false}
+                  />
+                </FlexItem>
+                <FlexItem
+                  alignSelf={null}
+                  basis="auto"
+                  grow={0}
+                  pad={10}
+                  shrink={1}
+                >
+                  <div>
+                    Skip Dialog
+                  </div>
+                  <small>
+                    Allow samples to be analyzed with a single click of  
+                    <Icon
+                      bsStyle="success"
+                      faStyle="fas"
+                      fixedWidth={false}
+                      name="chart-area"
+                      pullRight={false}
+                    />
+                     using a preconfigured algorithm. The algorithm selection dialog is not shown.
+                  </small>
+                  <div
+                    style={
+                      Object {
+                        "marginTop": "7px",
+                      }
+                    }
+                  >
+                    <AlgorithmSelect
+                      noLabel={true}
+                      onChange={[Function]}
+                    />
+                  </div>
+                </FlexItem>
+              </Flex>
+            </ListGroupItem>
+          </ListGroup>
+        </PanelBody>
+      </Uncontrolled(Panel)>
+    </Col>
+  </Row>
 </div>
 `;
