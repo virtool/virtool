@@ -103,7 +103,13 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
 
     otu_count = await db.otus.count({"reference.id": ref_id})
 
-    progress_tracker = virtool.processes.ProgressTracker(otu_count, factor=0.5, increment=0.03)
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        otu_count,
+        factor=0.5,
+        initial=0.5
+    )
 
     async for document in db.otus.find({"reference.id": ref_id}):
         await virtool.db.otus.remove(
@@ -113,11 +119,7 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
             document=document
         )
 
-        progress = progress_tracker.add(1)
-
-        if progress - progress_tracker.last_reported > 0.03:
-            await virtool.db.processes.update(db, process_id, progress=(0.5 + progress))
-            progress_tracker.reported()
+        await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, progress=1)
 
@@ -507,7 +509,12 @@ async def create_original(db, settings):
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
     db = app["db"]
 
-    progress_tracker = virtool.processes.ProgressTracker(len(manifest), factor=0.6)
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(manifest),
+        factor=0.6
+    )
 
     inserted_otu_ids = list()
 
@@ -518,24 +525,21 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
 
         inserted_otu_ids.append(otu_id)
 
-        progress = progress_tracker.add(1)
-
-        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, process_id, progress=progress)
-            progress_tracker.reported()
+        await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 0.6, "create_history")
 
-    progress_tracker = virtool.processes.ProgressTracker(len(inserted_otu_ids), factor=0.4)
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(inserted_otu_ids),
+        factor=0.4,
+        initial=0.6
+    )
 
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "clone", user_id)
-
-        progress = progress_tracker.add(1)
-
-        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
-            progress_tracker.reported()
+        await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 1)
 
@@ -581,7 +585,13 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.2, "import_otus")
 
-    progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(otus),
+        factor=0.4,
+        initial=0.2
+    )
 
     inserted_otu_ids = list()
 
@@ -590,24 +600,21 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
         inserted_otu_ids.append(otu_id)
 
-        progress = progress_tracker.add(1)
-
-        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, process_id, progress=(0.2 + progress))
-            progress_tracker.reported()
+        await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 0.6, "create_history")
 
-    progress_tracker = virtool.processes.ProgressTracker(len(otus), factor=0.4)
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(otus),
+        factor=0.4,
+        initial=0.6
+    )
 
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "import", user_id)
-
-        progress = progress_tracker.add(1)
-
-        if progress_tracker.progress - progress_tracker.last_reported >= 0.05:
-            await virtool.db.processes.update(db, process_id, progress=(0.6 + progress))
-            progress_tracker.reported()
+        await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 1)
 
