@@ -22,7 +22,7 @@ async def list_status(req):
 
 @routes.get("/api/status/hmm")
 async def get_hmm(req):
-    document = await virtool.db.status.fetch_and_update_hmm_releases(req.app)
+    document = await virtool.db.status.fetch_and_update_hmm_release(req.app)
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -34,7 +34,7 @@ async def upgrade_hmm(req):
     """
     db = req.app["db"]
 
-    document = await virtool.db.status.fetch_and_update_hmm_releases(req.app)
+    document = await virtool.db.status.fetch_and_update_hmm_release(req.app)
 
     asyncio.ensure_future(virtool.db.hmm.install_official(
         req.app.loop,

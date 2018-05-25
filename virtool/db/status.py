@@ -11,7 +11,7 @@ import virtool.utils
 VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
 
 
-async def fetch_and_update_hmm_releases(app):
+async def fetch_and_update_hmm_release(app):
     """
     Return the HMM install status document or create one if none exists.
 
