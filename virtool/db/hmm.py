@@ -130,17 +130,17 @@ async def install_official(app, process_id):
             }
         })
 
-        progress_tracker = virtool.processes.ProgressTracker(len(annotations), increment=0.05, factor=0.2)
+        progress_tracker = virtool.processes.ProgressTracker(
+            db,
+            process_id,
+            len(annotations),
+            increment=0.05,
+            factor=0.2
+        )
 
         for annotation in annotations:
             await db.hmm.insert_one(dict(annotation, hidden=False))
-
-            progress_tracker.add(1)
-            progress = progress_tracker.reported()
-
-            if progress - progress_tracker.last_reported > 0.05:
-                await virtool.db.processes.update(db, process_id, progress=progress)
-                progress_tracker.reported()
+            await progress_tracker.add(1)
 
         await db.status.update_one({"_id": "hmm"}, {
             "$set": {
