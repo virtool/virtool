@@ -648,9 +648,6 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     db = app["db"]
 
-    import pprint
-    pprint.pprint(release)
-
     progress_tracker = virtool.processes.ProgressTracker(
         db,
         process_id,

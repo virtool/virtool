@@ -25,8 +25,6 @@ async def get(req):
     async with aiohttp.ClientSession() as session:
         gi = await virtool.genbank.search(settings, session, accession)
 
-        print(gi)
-
         if not gi:
             return not_found()
 
