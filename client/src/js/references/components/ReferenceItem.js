@@ -11,7 +11,11 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
         <Row>
             <strong>{name}</strong>
             <Link to={{state: {newReference: true, cloneReference: true, refId}}} style={{float: "right"}}>
-                <Icon name="clone" bsStyle="warning" tip="Clone Reference" />
+                <Icon
+                    name="clone"
+                    tip="Clone"
+                    style="default"
+                />
             </Link>
         </Row>
         <Row>
