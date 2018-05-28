@@ -50,52 +50,44 @@ def hmm_document():
     }
 
 
-class TestFind:
+async def test_find(spawn_client, hmm_document):
+    """
+    Check that a request with no URL parameters returns a list of HMM annotation documents.
 
-    async def test_no_params(self, tmpdir, spawn_client, hmm_document):
-        """
-        Check that a request with no URL parameters returns a list of HMM annotation documents.
+    """
+    client = await spawn_client(authorize=True)
 
-        """
-        client = await spawn_client(authorize=True)
+    hmm_document["hidden"] = False
 
-        client.app["settings"] = {
-            "data_path": str(tmpdir)
-        }
+    await client.db.hmm.insert_one(hmm_document)
 
-        tmpdir.mkdir("hmm")
+    resp = await client.get("/api/hmms")
 
-        hmm_document["hidden"] = False
+    assert resp.status == 200
 
-        await client.db.hmm.insert_one(hmm_document)
-
-        resp = await client.get("/api/hmms")
-
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "total_count": 1,
-            "found_count": 1,
-            "page": 1,
-            "page_count": 1,
-            "per_page": 15,
-            "file_exists": False,
-            "documents": [
-                {
-                    "names": [
-                        "ORF-63",
-                        "ORF67",
-                        "hypothetical protein"
-                    ],
-                    "id": "f8666902",
-                    "cluster": 3463,
-                    "count": 4,
-                    "families": {
-                        "Baculoviridae": 3
-                    }
+    assert await resp.json() == {
+        "total_count": 1,
+        "found_count": 1,
+        "page": 1,
+        "page_count": 1,
+        "per_page": 15,
+        "documents": [
+            {
+                "names": [
+                    "ORF-63",
+                    "ORF67",
+                    "hypothetical protein"
+                ],
+                "id": "f8666902",
+                "cluster": 3463,
+                "count": 4,
+                "families": {
+                    "Baculoviridae": 3
                 }
-            ]
-        }
+            }
+        ],
+        "status": None
+    }
 
 
 class TestGet:

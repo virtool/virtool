@@ -1,8 +1,6 @@
 import reducer, { initialState as reducerInitialState } from "./reducer";
 import {
     WS_UPDATE_STATUS,
-    GET_SOFTWARE_UPDATES,
-    GET_DATABASE_UPDATES,
     SHOW_INSTALL_MODAL,
     HIDE_INSTALL_MODAL
 } from "../actionTypes";
@@ -33,13 +31,13 @@ describe("Updates Reducer", () => {
     });
 
     describe("should handle WS_UPDATE_STATUS", () => {
-        
+
         it("when [action.data.id='software_update'], return with software data", () => {
             state = {};
             action = {
                 type: "WS_UPDATE_STATUS",
                 data: {
-                    id: "software_update"
+                    id: "software"
                 }
             };
             result = reducer(state, action);
@@ -77,20 +75,6 @@ describe("Updates Reducer", () => {
         expected = {
             ...state,
             software: action.data
-        };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle GET_DATABASE_UPDATES_SUCCEEDED", () => {
-        state = {};
-        action = {
-            type: "GET_DATABASE_UPDATES_SUCCEEDED",
-            data: {}
-        };
-        result = reducer(state, action);
-        expected = {
-            database: action.data
         };
 
         expect(result).toEqual(expected);

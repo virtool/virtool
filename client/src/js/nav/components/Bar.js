@@ -4,7 +4,8 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
-import NotificationIcon from "./Icon";
+
+import Update from "./Update";
 import { logout } from "../../account/actions";
 import { Icon, AutoProgressBar, VTLogo } from "../../base";
 
@@ -69,9 +70,7 @@ const Bar = (props) => {
                     </Nav>
 
                     <Nav pullRight>
-                        <NavItem>
-                            <NotificationIcon />
-                        </NavItem>
+                        <Update />
 
                         <NavItem
                             target="_blank"

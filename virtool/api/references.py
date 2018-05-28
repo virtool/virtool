@@ -10,6 +10,7 @@ import virtool.db.processes
 import virtool.db.references
 import virtool.db.utils
 import virtool.errors
+import virtool.github
 import virtool.http.routes
 import virtool.otus
 import virtool.references
@@ -219,6 +220,7 @@ async def create(req):
 
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
+    remote_from = data.get("remote_from", None)
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
@@ -273,6 +275,40 @@ async def create(req):
         await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_import(
             req.app,
             path,
+            document["_id"],
+            document["created_at"],
+            process["id"],
+            user_id
+        ))
+
+    elif remote_from:
+        document = await virtool.db.references.create_remote(
+            db,
+            settings,
+            data["name"],
+            data["description"],
+            data["public"],
+            remote_from,
+            user_id
+        )
+
+        latest_release = await virtool.github.get_latest_release(
+            settings,
+            req.app["client"],
+            remote_from
+        )
+
+        latest_release = virtool.github.format_release(latest_release)
+
+        process = await virtool.db.processes.register(db, "remote_reference")
+
+        document["process"] = {
+            "id": process["id"]
+        }
+
+        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_remote(
+            req.app,
+            latest_release,
             document["_id"],
             document["created_at"],
             process["id"],

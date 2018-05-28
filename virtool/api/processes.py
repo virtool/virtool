@@ -23,21 +23,3 @@ async def get(req):
     document = await db.processes.find_one(process_id)
 
     return json_response(virtool.utils.base_processor(document))
-
-
-@routes.get("/api/processes/software_update")
-async def get_software_update(req):
-    db = req.app["db"]
-
-    document = await db.processes.find_one({"type": "software_update"})
-
-    return json_response(virtool.utils.base_processor(document))
-
-
-@routes.get("/api/processes/hmm_install")
-async def get_hmm_install(req):
-    db = req.app["db"]
-
-    document = await db.processes.find_one({"type": "hmm_install"})
-
-    return json_response(virtool.utils.base_processor(document))

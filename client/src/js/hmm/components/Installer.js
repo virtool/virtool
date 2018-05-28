@@ -1,40 +1,13 @@
 import React from "react";
 import Numeral from "numeral";
-import { replace } from "lodash-es";
-import { Alert, Col, Panel, ProgressBar, Row } from "react-bootstrap";
+import { find, get, replace } from "lodash-es";
+import { Col, Panel, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { installHMMs, fetchHmms } from "../actions";
-import { Button, Icon } from "../../base";
-
-const steps = [
-    "check_github",
-    "download",
-    "decompress",
-    "install_profiles",
-    "import_annotations"
-];
+import { Button, Flex, FlexItem } from "../../base";
 
 class HMMInstall extends React.Component {
-
-    constructor (props) {
-        super(props);
-    }
-
-    getProgress (props) {
-        return 20 * (steps.indexOf(props.process.step) + props.process.progress);
-    }
-
-    componentDidUpdate (prevProps) {
-        if (prevProps.process) {
-            const prevProgress = this.getProgress(prevProps);
-            const progress = this.getProgress(this.props);
-
-            if (prevProgress !== 100 && progress === 100) {
-                this.props.onRefresh();
-            }
-        }
-    }
 
     render () {
         if (this.props.process && !this.props.process.error) {
@@ -71,26 +44,47 @@ class HMMInstall extends React.Component {
         }
 
         return (
-            <Alert bsStyle="warning" className="text-center">
-                <h5 className="text-warning">
-                    <strong>
-                        <Icon name="warning" /> No HMM file found.
-                    </strong>
-                </h5>
+            <Panel>
+                <Panel.Body>
+                    <Flex justifyContent="center" style={{padding: "10px 0"}}>
+                        <FlexItem>
+                            <i
+                                className="fas fa-info-circle text-primary"
+                                style={{fontSize: "40px", padding: "5px 10px 0 5px"}}
+                            />
+                        </FlexItem>
 
-                <Button icon="download" onClick={this.props.onInstall}>
-                    Install Official
-                </Button>
-            </Alert>
+                        <FlexItem>
+                            <p style={{fontSize: "22px", margin: "0 0 3px"}}>
+                                No HMM data available.
+                            </p>
+
+                            <p className="text-muted">
+                                You can download and install the offical HMM data automatically from our
+                                <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
+                            </p>
+
+                            <Button icon="download" onClick={this.props.onInstall}>
+                                Install Official
+                            </Button>
+                        </FlexItem>
+                    </Flex>
+                </Panel.Body>
+            </Panel>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
-    size: state.hmms.size,
-    ready: state.hmms.ready,
-    process: state.hmms.process
-});
+const mapStateToProps = (state) => {
+    const status = state.hmms.status;
+    const processId = get(status, "process.id");
+    const process = find(state.process, {id: processId});
+
+    return {
+        ...status,
+        process
+    }
+};
 
 const mapDispatchToProps = (dispatch) => ({
 

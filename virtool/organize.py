@@ -1,5 +1,6 @@
 import logging
 import os
+import pymongo.errors
 import shutil
 
 import virtool.db.references
@@ -190,17 +191,28 @@ async def organize_sequences(db):
 async def organize_status(db, server_version):
     logger.info(" • status")
 
-    await db.status.update_one({"_id": "software_update"}, {
-        "$set": {
-            "process": None
+    await db.status.delete_many({
+        "_id": {
+            "$in": ["software_update", "version"]
         }
-    }, upsert=True)
+    })
 
-    await db.status.update_one({"_id": "version"}, {
+    await db.status.update_one({"_id": "software"}, {
         "$set": {
+            "process": None,
             "version": server_version
         }
     }, upsert=True)
+
+    try:
+        await db.status.insert_one({
+            "_id": "hmm",
+            "installed": False,
+            "version": None,
+            "latest_release": None
+        })
+    except pymongo.errors.DuplicateKeyError:
+        pass
 
 
 async def organize_subtraction(db):

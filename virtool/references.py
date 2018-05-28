@@ -67,7 +67,7 @@ def detect_duplicates(otus):
     return duplicates
 
 
-def load_import_file(path):
+def load_reference_file(path):
     """
     Load a list of merged otus documents from a file handle associated with a Virtool ``otus.json.gz`` file.
 

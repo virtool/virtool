@@ -1,9 +1,10 @@
+import virtool.db.processes
+
 FIRST_STEPS = {
     "delete_reference": "delete_indexes",
     "clone_reference": "copy_otus",
     "import_reference": "load_file",
-    "setup_remote_reference": "",
-    "update_remote_reference": "",
+    "remote_reference": "download",
     "update_software": "",
     "install_hmms": ""
 }
@@ -16,16 +17,19 @@ UNIQUES = [
 
 class ProgressTracker:
 
-    def __init__(self, total, db=None, increment=0.05, factor=1):
-        self.total = total
+    def __init__(self, db, process_id, total, factor=1, increment=0.05, initial=0):
         self.db = db
-        self.increment = increment
+        self.process_id = process_id
+        self.total = total
         self.factor = factor
+        self.increment = increment
+        self.initial = initial
 
         self.count = 0
         self.last_reported = 0
+        self.progress = self.initial
 
-    def add(self, value):
+    async def add(self, value):
         count = self.count + value
 
         if count > self.total:
@@ -33,11 +37,10 @@ class ProgressTracker:
 
         self.count = count
 
+        self.progress = self.initial + round(self.count / self.total * self.factor, 2)
+
+        if self.progress - self.last_reported >= self.increment:
+            await virtool.db.processes.update(self.db, self.process_id, progress=self.progress)
+            self.last_reported = self.progress
+
         return self.progress
-
-    def reported(self):
-        self.last_reported = self.progress
-
-    @property
-    def progress(self):
-        return round(self.count / self.total * self.factor, 2)

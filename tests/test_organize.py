@@ -266,32 +266,34 @@ async def test_organize_otus(collection_name, test_motor):
     assert "viruses" not in await test_motor.collection_names()
 
 
-@pytest.mark.parametrize("has_update", [True, False])
+@pytest.mark.parametrize("has_software", [True, False])
+@pytest.mark.parametrize("has_software_update", [True, False])
 @pytest.mark.parametrize("has_version", [True, False])
-async def test_organize_status(has_update, has_version, test_motor):
-    if has_update:
+async def test_organize_status(has_software, has_software_update, has_version, test_motor):
+    if has_software:
         await test_motor.status.insert_one({
-            "_id": "software_update",
-            "process": {
-                "foobar": True
-            }
+            "_id": "software",
+            "version": "v2.2.2"
         })
 
+    if has_software_update:
+        await test_motor.status.insert_one({"_id": "software_update"})
+
     if has_version:
-        await test_motor.status.insert_one({
-            "_id": "version",
-            "version": "v2.28"
-        })
+        await test_motor.status.insert_one({"_id": "version"})
 
     await virtool.organize.organize_status(test_motor, "v3.0.0")
 
     assert await test_motor.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
         {
-            "_id": "software_update",
-            "process": None
+            "_id": "hmm",
+            "installed": False,
+            "latest_release": None,
+            "version": None
         },
         {
-            "_id": "version",
+            "_id": "software",
+            "process": None,
             "version": "v3.0.0"
         }
     ]

@@ -1,7 +1,10 @@
+import datetime
 import os
+import shutil
+import sys
+
 import arrow
 import pytest
-import datetime
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.utils
@@ -49,6 +52,22 @@ def collection():
             "name": "stuart"
         },
     ]
+
+
+def test_decompress_tgz(tmpdir):
+    path = str(tmpdir)
+
+    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+
+    shutil.copy(src_path, path)
+
+    virtool.utils.decompress_tgz(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
+
+    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
+
+    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
+
+    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
 
 
 class TestRm:

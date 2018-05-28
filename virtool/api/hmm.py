@@ -1,5 +1,4 @@
-import asyncio
-
+import virtool.db.status
 import virtool.http.routes
 import virtool.db.hmm
 import virtool.hmm
@@ -34,7 +33,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data["file_exists"] = virtool.hmm.file_exists(req.app["settings"].get("data_path"))
+    data["status"] = await db.status.find_one("hmm", {"_id": False})
 
     return json_response(data)
 
@@ -49,36 +48,5 @@ async def get(req):
 
     if document is None:
         return not_found()
-
-    return json_response(virtool.utils.base_processor(document))
-
-
-@routes.get("/api/hmms/install")
-async def get_install(req):
-    """
-    Get the HMM install document. Create one first if none exists.
-
-    """
-    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"])
-
-    return json_response(virtool.utils.base_processor(document))
-
-
-@routes.patch("/api/hmms/install", permission="modify_hmm")
-async def install(req):
-    """
-    Install the official HMM database from GitHub.
-
-    """
-    db = req.app["db"]
-
-    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"], reset=True)
-
-    asyncio.ensure_future(virtool.db.hmm.install_official(
-        req.app.loop,
-        db,
-        req.app["settings"],
-        req.app["version"]
-    ), loop=req.app.loop)
 
     return json_response(virtool.utils.base_processor(document))

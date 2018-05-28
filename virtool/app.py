@@ -9,7 +9,7 @@ import aiojobs.aiohttp
 from motor import motor_asyncio
 import pymongo
 import pymongo.errors
-from aiohttp import web
+from aiohttp import client, web
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -29,6 +29,14 @@ import virtool.setup
 import virtool.utils
 
 logger = logging.getLogger(__name__)
+
+
+async def init_http_client(app):
+    headers = {
+        "user-agent": "virtool/{}".format(app["version"]),
+    }
+
+    app["client"] = client.ClientSession(loop=app.loop, headers=headers)
 
 
 async def init_version(app):
@@ -253,11 +261,12 @@ async def on_shutdown(app):
     """
     A function called when the app is shutting down.
 
-    :param app: the Virtool application
+    :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
     """
     await app["dispatcher"].close()
+    await app["client"].close()
 
     job_manager = app.get("job_manager", None)
 
@@ -302,6 +311,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         app.on_startup.append(init_setup)
     else:
         app.on_startup.append(init_version)
+        app.on_startup.append(init_http_client)
         app.on_startup.append(init_routes)
 
         if not ignore_settings:
