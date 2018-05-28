@@ -213,9 +213,5 @@ def decompress_tgz(path, target):
     :type target: str
 
     """
-    print(path)
-
-    shutil.copy2(path, "/home/igboyes")
-
     with tarfile.open(path, "r:gz") as tar:
         tar.extractall(target)
