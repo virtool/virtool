@@ -24,7 +24,7 @@ async def find(req):
     return json_response(data)
 
 
-@routes.get("/api/indexes/{index_id_or_version}")
+@routes.get("/api/indexes/{index_id}")
 async def get(req):
     """
     Get the complete document for a given index.
@@ -32,16 +32,18 @@ async def get(req):
     """
     db = req.app["db"]
 
-    document = await virtool.db.indexes.get_index(db, req.match_info["index_id_or_version"])
+    index_id = req.match_info["index_id"]
+
+    document = await db.indexes.find_one(index_id)
 
     if not document:
         return not_found()
 
     document = virtool.utils.base_processor(document)
 
-    document["contributors"] = await virtool.db.indexes.get_contributors(db, document["id"])
+    document["contributors"] = await virtool.db.indexes.get_contributors(db, index_id)
 
-    document["otus"] = await virtool.db.indexes.get_otus(db, document["id"])
+    document["otus"] = await virtool.db.indexes.get_otus(db, index_id)
 
     document["change_count"] = sum(v["change_count"] for v in document["otus"])
 
@@ -126,7 +128,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@routes.get("/api/indexes/{index_id_or_version}/history")
+@routes.get("/api/indexes/{index_id}/history")
 async def find_history(req):
     """
     Find history changes for a specific index.
@@ -134,15 +136,15 @@ async def find_history(req):
     """
     db = req.app["db"]
 
-    document = await virtool.db.indexes.get_index(db, req.match_info["index_id_or_version"], projection=["_id"])
+    index_id = req.match_info["index_id"]
 
-    if not document:
+    if not await db.indexes.count({"_id": index_id}):
         return not_found()
 
     term = req.query.get("term", None)
 
     db_query = {
-        "index.id": document["_id"]
+        "index.id": index_id
     }
 
     if term:

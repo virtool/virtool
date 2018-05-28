@@ -281,98 +281,98 @@ class TestCreate:
     '''
 
 
-class TestFindHistory:
+@pytest.mark.parametrize("exists", [True, False])
+async def test(exists, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
 
-    @pytest.mark.parametrize("identifier", ["foobar", 0])
-    async def test(self, identifier, spawn_client):
-        client = await spawn_client(authorize=True)
-
+    if exists:
         await client.db.indexes.insert_one({
             "_id": "foobar",
             "version": 0
         })
 
-        await client.db.history.insert_many([
-            {
-                "_id": "zxbbvngc.0",
-                "otu": {
-                    "version": 0,
-                    "name": "Test",
-                    "id": "zxbbvngc"
-                },
-                "user": {
-                    "id": "igboyes"
-                },
-                "index": {
-                    "version": 0,
-                    "id": "foobar"
-                }
+    await client.db.history.insert_many([
+        {
+            "_id": "zxbbvngc.0",
+            "otu": {
+                "version": 0,
+                "name": "Test",
+                "id": "zxbbvngc"
             },
-            {
-                "_id": "zxbbvngc.1",
-                "otu": {
-                    "version": 1,
-                    "name": "Test",
-                    "id": "zxbbvngc"
-                },
-                "user": {
-                    "id": "igboyes"
-                },
-                "method_name": "add_isolate",
-                "index": {
-                    "version": 0,
-                    "id": "foobar"
-                }
+            "user": {
+                "id": "igboyes"
             },
-            {
-                "_id": "zxbbvngc.2",
-                "otu": {
-                    "version": 2,
-                    "name": "Test",
-                    "id": "zxbbvngc"
-                },
-                "user": {
-                    "id": "igboyes"
-                },
-                "method_name": "add_isolate",
-                "index": {
-                    "version": 0,
-                    "id": "foobar"
-                }
-            },
-            {
-                "_id": "kjs8sa99.3",
-                "otu": {
-                    "version": 3,
-                    "name": "Foo",
-                    "id": "kjs8sa99"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "method_name": "add_sequence",
-                "index": {
-                    "version": 0,
-                    "id": "foobar"
-                }
-            },
-            {
-                "_id": "test_1",
-                "index": {
-                    "id": "baz"
-                }
-
-            },
-            {
-                "_id": "test_2",
-                "index": {
-                    "id": "baz"
-                }
+            "index": {
+                "version": 0,
+                "id": "foobar"
             }
-        ])
+        },
+        {
+            "_id": "zxbbvngc.1",
+            "otu": {
+                "version": 1,
+                "name": "Test",
+                "id": "zxbbvngc"
+            },
+            "user": {
+                "id": "igboyes"
+            },
+            "method_name": "add_isolate",
+            "index": {
+                "version": 0,
+                "id": "foobar"
+            }
+        },
+        {
+            "_id": "zxbbvngc.2",
+            "otu": {
+                "version": 2,
+                "name": "Test",
+                "id": "zxbbvngc"
+            },
+            "user": {
+                "id": "igboyes"
+            },
+            "method_name": "add_isolate",
+            "index": {
+                "version": 0,
+                "id": "foobar"
+            }
+        },
+        {
+            "_id": "kjs8sa99.3",
+            "otu": {
+                "version": 3,
+                "name": "Foo",
+                "id": "kjs8sa99"
+            },
+            "user": {
+                "id": "fred"
+            },
+            "method_name": "add_sequence",
+            "index": {
+                "version": 0,
+                "id": "foobar"
+            }
+        },
+        {
+            "_id": "test_1",
+            "index": {
+                "id": "baz"
+            }
 
-        resp = await client.get("/api/indexes/{}/history".format(identifier))
+        },
+        {
+            "_id": "test_2",
+            "index": {
+                "id": "baz"
+            }
+        }
+    ])
 
+    resp = await client.get("/api/indexes/foobar/history")
+
+    if exists:
         assert resp.status == 200
 
         expected = {
@@ -448,9 +448,5 @@ class TestFindHistory:
 
         assert await resp.json() == expected
 
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get("/api/indexes/foobar/history")
-
+    else:
         assert await resp_is.not_found(resp)
