@@ -395,7 +395,7 @@ async def edit(req):
 
     document = virtool.utils.base_processor(document)
 
-    document.update(await virtool.db.references.get_computed(db, document["_id"], internal_control_id))
+    document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
     return json_response(document)
 
