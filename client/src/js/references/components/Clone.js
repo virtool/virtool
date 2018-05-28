@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, ButtonToolbar } from "react-bootstrap";
+import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { upperFirst, find } from "lodash-es";
 import ReferenceForm from "./Form";
@@ -87,7 +87,16 @@ class CloneReference extends React.Component {
         return (
             <React.Fragment>
                 <Modal.Body>
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                    <Alert bsStyle="info">
+                        <strong>
+                            Clone an existing reference.
+                        </strong>
+                    </Alert>
+                    <ReferenceForm
+                        state={this.state}
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
+                    />
                 </Modal.Body>
 
                 <Modal.Footer>

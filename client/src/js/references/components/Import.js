@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, ButtonToolbar } from "react-bootstrap";
+import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { upperFirst, find } from "lodash-es";
@@ -117,9 +117,25 @@ class ImportReference extends React.Component {
         return (
             <React.Fragment>
                 <Modal.Body>
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
-                    <UploadBar onDrop={this.handleDrop} style={{ marginTop: "20px" }} message={message} />
-                    <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
+                    <Alert bsStyle="info">
+                        <strong>
+                            Create a reference from a file previously exported from another Virtool reference.
+                        </strong>
+                    </Alert>
+                    <UploadBar
+                        onDrop={this.handleDrop}
+                        message={message}
+                    />
+                    <ReferenceForm
+                        state={this.state}
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
+                    />
+                    <ProgressBar
+                        bsStyle={progress === 100 ? "primary" : "success"}
+                        now={progress}
+                        affixed
+                    />
                 </Modal.Body>
 
                 <Modal.Footer>

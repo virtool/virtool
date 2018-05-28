@@ -59,7 +59,7 @@ export class AddReference extends React.Component {
                     New Reference
                 </Modal.Header>
 
-                <Nav bsStyle="tabs">
+                <Nav bsStyle="tabs" style={{marginBottom: 0}}>
                     <LinkContainer
                         to={{state: {newReference: true, createReference: true}}}
                         isActive={this.checkActive("isCreate")}
