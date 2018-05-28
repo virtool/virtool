@@ -14,7 +14,7 @@ const SampleFileManager = () => (
 );
 
 const SampleSettings = () => (
-    <div>
+    <div className="settings-container">
         <h3 className="view-header">
             <strong>
                 Sample Settings

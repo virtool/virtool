@@ -8,7 +8,6 @@ import { routerLocationHasState } from "../../utils";
 import ImportReference from "./Import";
 import CreateReference from "./Create";
 import CloneReference from "./Clone";
-import RemoteReference from "./Remote";
 
 export class AddReference extends React.Component {
 
@@ -21,7 +20,6 @@ export class AddReference extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-
         if (nextProps.show !== prevState.show) {
             return { show: nextProps.show };
         }
@@ -61,7 +59,7 @@ export class AddReference extends React.Component {
                     New Reference
                 </Modal.Header>
 
-                <Nav bsStyle="tabs">
+                <Nav bsStyle="tabs" style={{marginBottom: 0}}>
                     <LinkContainer
                         to={{state: {newReference: true, createReference: true}}}
                         isActive={this.checkActive("isCreate")}
@@ -80,19 +78,11 @@ export class AddReference extends React.Component {
                     >
                         <NavItem>Clone</NavItem>
                     </LinkContainer>
-                    <LinkContainer
-                        to={{state: {newReference: true, remoteReference: true}}}
-                        isActive={this.checkActive("isRemote")}
-                    >
-                        <NavItem>Remote</NavItem>
-                    </LinkContainer>
                 </Nav>
 
                 {this.props.isCreate ? <CreateReference /> : null}
                 {this.props.isImport ? <ImportReference lock={this.checkModalLock} /> : null}
                 {this.props.isClone ? <CloneReference /> : null}
-                {this.props.isRemote ? <RemoteReference /> : null}
-
             </Modal>
         );
     }
@@ -107,14 +97,12 @@ const mapStateToProps = state => {
     const isCreate = state.router.location.state["createReference"];
     const isImport = state.router.location.state["importReference"];
     const isClone = state.router.location.state["cloneReference"];
-    const isRemote = state.router.location.state["remoteReference"];
 
     return {
         show: routerLocationHasState(state, "newReference"),
         isCreate,
         isImport,
-        isClone,
-        isRemote
+        isClone
     };
 };
 

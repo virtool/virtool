@@ -10,12 +10,12 @@ import { LoadingPlaceholder, Pagination } from "../../base";
 class IndexChanges extends React.Component {
 
     componentDidMount () {
-        this.props.onGet(this.props.match.params.indexVersion, 1);
+        this.props.onGet(this.props.match.params.indexId, 1);
     }
 
     handlePage = (page) => {
-        this.props.onGet(this.props.match.params.indexVersion, page);
-    }
+        this.props.onGet(this.props.match.params.indexId, page);
+    };
 
     render () {
 

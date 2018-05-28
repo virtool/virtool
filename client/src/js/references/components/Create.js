@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Modal, ButtonToolbar } from "react-bootstrap";
+import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
 import { upperFirst } from "lodash-es";
 import ReferenceForm from "./Form";
 import { createReference } from "../actions";
@@ -67,7 +67,16 @@ export class CreateReference extends React.Component {
         return (
             <React.Fragment>
                 <Modal.Body>
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                    <Alert bsStyle="info">
+                        <strong>
+                            Create an empty reference.
+                        </strong>
+                    </Alert>
+                    <ReferenceForm
+                        state={this.state}
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
+                    />
                 </Modal.Body>
 
                 <Modal.Footer>

@@ -127,7 +127,7 @@ class ReferenceManage extends React.Component {
                 </h5>
                 <ContributorTable contributors={contributors} />
 
-                <RemoveReference id={id} />
+                <RemoveReference />
             </div>
         );
     }

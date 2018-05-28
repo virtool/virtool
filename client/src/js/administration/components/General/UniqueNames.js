@@ -11,7 +11,7 @@ const UniqueNames = ({ enabled, onToggle }) => (
             <Col md={12}>
                 <h5><strong>Unique Sample Names</strong></h5>
             </Col>
-            <Col xs={12} md={4} mdPush={4}>
+            <Col xs={12} md={6} mdPush={6}>
                 <Panel>
                     <Panel.Body>
                         Enable this feature to ensure that every created sample has a unique name. If a user
@@ -19,7 +19,7 @@ const UniqueNames = ({ enabled, onToggle }) => (
                     </Panel.Body>
                 </Panel>
             </Col>
-            <Col xs={12} md={4} mdPull={4}>
+            <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <Panel.Body>
                         <Button onClick={() => {onToggle(!enabled)}} block>

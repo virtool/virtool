@@ -14,7 +14,7 @@ import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder } from "../../base";
 
 const Server = () => (
-    <div>
+    <div className="settings-container">
         <HTTP />
         <Proxy />
         <Sentry />

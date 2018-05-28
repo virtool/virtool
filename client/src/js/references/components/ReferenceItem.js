@@ -11,7 +11,10 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
         <Row>
             <strong>{name}</strong>
             <Link to={{state: {newReference: true, cloneReference: true, refId}}} style={{float: "right"}}>
-                <Icon name="clone" bsStyle="warning" tip="Clone Reference" />
+                <Icon
+                    name="clone"
+                    tip="Clone"
+                />
             </Link>
         </Row>
         <Row>
@@ -101,11 +104,6 @@ const getOrigin = (props) => {
         origin = {
             method: "Cloned from",
             fileName: props.cloned_from.name
-        };
-    } else if (get(props, "remote_from", null)) {
-        origin = {
-            method: "Remote update from",
-            fileName: props.remote_from.name
         };
     } else {
         origin = {

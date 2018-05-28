@@ -49,7 +49,7 @@ const ProxyOptions = (props) => {
         <Row>
             <Col xs={12}>
                 <Row>
-                    <Col xs={12} md={4}>
+                    <Col xs={12} md={6}>
                         <Flex alignItems="center" style={{marginBottom: "10px"}}>
                             <FlexItem grow={1}>
                                 <strong>Proxy</strong>
@@ -67,7 +67,7 @@ const ProxyOptions = (props) => {
                 </Row>
             </Col>
 
-            <Col xs={12} md={4} mdPush={4}>
+            <Col xs={12} md={6} mdPush={6}>
                 <Panel>
                     <Panel.Body>
                         Configure the server to use a proxy for outgoing requests.
@@ -77,7 +77,7 @@ const ProxyOptions = (props) => {
                     </Panel.Footer>
                 </Panel>
             </Col>
-            <Col xs={12} md={4} mdPull={4}>
+            <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <Panel.Body>
                         <InputError

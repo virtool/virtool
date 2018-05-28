@@ -11,7 +11,7 @@ import Tasks from "../../administration/components/Jobs/Tasks";
 import { LoadingPlaceholder } from "../../base";
 
 const JobsSettings = () => (
-    <div>
+    <div className="settings-container">
         <h3 className="view-header">
             <strong>
                 Job Settings
