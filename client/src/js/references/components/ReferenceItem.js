@@ -14,7 +14,6 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
                 <Icon
                     name="clone"
                     tip="Clone"
-                    style="default"
                 />
             </Link>
         </Row>

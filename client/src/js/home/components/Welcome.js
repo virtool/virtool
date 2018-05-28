@@ -15,8 +15,6 @@ class Welcome extends React.Component {
     render () {
         let version;
 
-
-
         if (this.props.version) {
             version = (
                 <small className="text-muted">

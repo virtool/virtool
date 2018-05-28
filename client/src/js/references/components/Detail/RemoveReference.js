@@ -16,6 +16,10 @@ const RemoveReference = ({ id, onConfirm }) => (
     </Alert>
 );
 
+const mapStateToProps = (state) => ({
+    id: state.references.detail.id
+});
+
 const mapDispatchToProps = (dispatch) => ({
 
     onConfirm: (refId) => {
@@ -24,4 +28,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-export default connect(null, mapDispatchToProps)(RemoveReference);
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveReference);
