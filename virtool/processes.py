@@ -4,8 +4,7 @@ FIRST_STEPS = {
     "delete_reference": "delete_indexes",
     "clone_reference": "copy_otus",
     "import_reference": "load_file",
-    "setup_remote_reference": "",
-    "update_remote_reference": "",
+    "remote_reference": "download",
     "update_software": "",
     "install_hmms": ""
 }

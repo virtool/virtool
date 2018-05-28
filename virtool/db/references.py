@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 import pymongo
 
@@ -7,6 +8,8 @@ import virtool.db.otus
 import virtool.db.processes
 import virtool.db.utils
 import virtool.errors
+import virtool.github
+import virtool.http.utils
 import virtool.otus
 import virtool.processes
 import virtool.references
@@ -506,6 +509,31 @@ async def create_original(db, settings):
     return document
 
 
+async def create_remote(db, settings, name, description, public, remote_from, user_id):
+    created_at = virtool.utils.timestamp()
+
+    document = await create_document(
+        db,
+        settings,
+        name,
+        None,
+        description,
+        None,
+        public,
+        created_at=created_at,
+        user_id=user_id
+    )
+
+    document["remotes_from"] = {
+        "slug": remote_from,
+        "update": None,
+        "last_checked": created_at,
+        "last_updated": created_at
+    }
+
+    return document
+
+
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
     db = app["db"]
 
@@ -547,7 +575,7 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
 
-    import_data = await app["run_in_thread"](virtool.references.load_import_file, path)
+    import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
 
     try:
         data_type = import_data["data_type"]
@@ -597,9 +625,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     for otu in otus:
         otu_id = await insert_joined_otu(db, otu, created_at, ref_id, user_id)
-
         inserted_otu_ids.append(otu_id)
-
         await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 0.6, "create_history")
@@ -617,6 +643,71 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
         await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, 1)
+
+
+async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
+    db = app["db"]
+
+    import pprint
+    pprint.pprint(release)
+
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        release["size"],
+        factor=0.3
+    )
+
+    with virtool.utils.get_temp_dir() as tempdir:
+        temp_path = str(tempdir)
+
+        download_path = os.path.join(temp_path, "reference.tar.gz")
+
+        await virtool.http.utils.download_file(
+            app,
+            release["download_url"],
+            download_path,
+            progress_tracker.add
+        )
+
+        await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
+
+        import_data = await app["run_in_thread"](virtool.references.load_reference_file, download_path)
+
+    await virtool.db.processes.update(db, process_id, progress=0.4, step="import")
+
+    otus = import_data["data"]
+
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(otus),
+        factor=0.3,
+        initial=0.4
+    )
+
+    inserted_otu_ids = list()
+
+    for otu in otus:
+        otu_id = await insert_joined_otu(db, otu, created_at, ref_id, user_id)
+        inserted_otu_ids.append(otu_id)
+        await progress_tracker.add(1)
+
+    await virtool.db.processes.update(db, process_id, progress=0.7, step="create_history")
+
+    progress_tracker = virtool.processes.ProgressTracker(
+        db,
+        process_id,
+        len(otus),
+        factor=0.3,
+        initial=0.7
+    )
+
+    for otu_id in inserted_otu_ids:
+        await insert_change(db, otu_id, "remote", user_id)
+        await progress_tracker.add(1)
+
+    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def insert_change(db, otu_id, verb, user_id):
