@@ -52,7 +52,7 @@ export class IsolateDetail extends React.Component {
         const isolate = this.props.activeIsolate;
 
         const defaultIsolateLabel = (
-            <Label bsStyle="info" style={{visibility: this.props.default ? "visible" : "hidden"}}>
+            <Label bsStyle="info" style={{visibility: isolate.default ? "visible" : "hidden"}}>
                 <Icon name="star" /> Default Isolate
             </Label>
         );
@@ -65,7 +65,8 @@ export class IsolateDetail extends React.Component {
                     <Icon
                         name="pencil-alt"
                         bsStyle="warning"
-                        tip="Edit Name"
+                        tip="Edit Isolate"
+                        tipPlacement="left"
                         onClick={this.props.showEditIsolate}
                         style={{paddingLeft: "7px"}}
                     />
@@ -74,6 +75,7 @@ export class IsolateDetail extends React.Component {
                             name="star"
                             bsStyle="success"
                             tip="Set as Default"
+                            tipPlacement="left"
                             onClick={this.handleSetDefaultIsolate}
                             style={{paddingLeft: "3px"}}
                         />
@@ -82,6 +84,7 @@ export class IsolateDetail extends React.Component {
                         name="trash"
                         bsStyle="danger"
                         tip="Remove Isolate"
+                        tipPlacement="left"
                         onClick={this.props.showRemoveIsolate}
                         style={{paddingLeft: "3px"}}
                     />
@@ -116,6 +119,7 @@ export class IsolateDetail extends React.Component {
                             <Icon
                                 name="download"
                                 tip="Download FASTA"
+                                tipPlacement="left"
                                 style={{paddingLeft: "3px"}}
                                 onClick={this.handleDownload}
                             />

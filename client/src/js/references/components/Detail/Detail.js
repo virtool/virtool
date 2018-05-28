@@ -46,6 +46,7 @@ class ReferenceDetail extends React.Component {
                     <Icon
                         bsStyle="warning"
                         name="pencil-alt"
+                        tip="Edit"
                         onClick={this.props.onEdit}
                         pullRight
                     />

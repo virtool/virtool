@@ -33,7 +33,11 @@ export class IsolateButton extends React.Component {
                     <span>{formatIsolateName(this.props)}</span>
                 </div>
                 <div className="isolate-item-icon">
-                    <span>{this.props.default ? <Icon className="pull-right" name="star" /> : null}</span>
+                    <span>
+                        {this.props.default
+                            ? <Icon className="pull-right" name="star" tip="Set as Default" tipPlacement="left" />
+                            : null}
+                    </span>
                 </div>
             </ListGroupItem>
         );
@@ -81,6 +85,7 @@ const IsolateEditor = (props) => {
                         bsStyle="primary"
                         name="plus-square"
                         tip="Add Isolate"
+                        tipPlacement="left"
                         style={{fontSize: "15px"}}
                         onClick={props.onShowAddIsolate}
                     />

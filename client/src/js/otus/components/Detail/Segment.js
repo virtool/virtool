@@ -35,6 +35,8 @@ export default class Segment extends React.Component {
                             <Icon
                                 name="trash"
                                 bsStyle="danger"
+                                tip="Remove Segment"
+                                tipPlacement="left"
                                 style={{fontSize: "17px", padding: "0 5px"}}
                                 onClick={this.handleRemove}
                                 pullRight
@@ -42,6 +44,8 @@ export default class Segment extends React.Component {
                             <Icon
                                 name="pencil-alt"
                                 bsStyle="warning"
+                                tip="Edit Segment"
+                                tipPlacement="left"
                                 style={{fontSize: "17px"}}
                                 onClick={this.handleEdit}
                                 pullRight
