@@ -54,20 +54,12 @@ const IndexGeneral = ({ detail }) => {
             <Table bordered>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Change Count</th>
-                        <td className="col-xs-8">{detail.change_count}</td>
-                    </tr>
-                    <tr>
                         <th>Created</th>
                         <td><RelativeTime time={detail.created_at} /></td>
                     </tr>
                     <tr>
                         <th>Created By</th>
                         <td>{detail.user.id}</td>
-                    </tr>
-                    <tr>
-                        <th>Unique ID</th>
-                        <td>{detail.id}</td>
                     </tr>
                 </tbody>
             </Table>
@@ -76,22 +68,18 @@ const IndexGeneral = ({ detail }) => {
                 <Panel.Heading>
                     <PanelBadgeHeader title="Contributors" count={contributors.length} />
                 </Panel.Heading>
-                <Panel.Body>
-                    <ListGroup>
-                        {contributors}
-                    </ListGroup>
-                </Panel.Body>
+                <ListGroup>
+                    {contributors}
+                </ListGroup>
             </Panel>
 
             <Panel>
                 <Panel.Heading>
                     <PanelBadgeHeader title="OTUs" count={otus.length} />
                 </Panel.Heading>
-                <Panel.Body>
-                    <ListGroup>
-                        {otus}
-                    </ListGroup>
-                </Panel.Body>
+                <ListGroup>
+                    {otus}
+                </ListGroup>
             </Panel>
         </div>
     );

@@ -22,13 +22,15 @@ class IndexDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const indexId = this.props.match.params.indexId;
+        const indexId = this.props.detail.id;
+        const version = this.props.detail.version;
+
         const refId = this.props.match.params.refId;
 
         return (
             <div>
                 <Helmet>
-                    <title>{`OTU Index ${indexId} - Indexes`}</title>
+                    <title>{`Index ${version} - Indexes - Virtool`}</title>
                 </Helmet>
 
                 <Breadcrumb>
@@ -39,11 +41,13 @@ class IndexDetail extends React.Component {
                             </div>
                         </LinkContainer>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item active>OTU Index {indexId}</Breadcrumb.Item>
+                    <Breadcrumb.Item active>
+                        Index {version}
+                    </Breadcrumb.Item>
                 </Breadcrumb>
 
                 <h3 className="view-header">
-                    <strong>OTU Index {indexId}</strong>
+                    <strong>Index {version}</strong>
                 </h3>
 
                 <Nav bsStyle="tabs">
