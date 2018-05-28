@@ -10,7 +10,7 @@ import { LoadingPlaceholder } from "../../base";
 import SourceTypes from "../../administration/components/General/SourceTypes";
 
 const ReferenceSettings = () => (
-    <div>
+    <div className="settings-container">
         <h3 className="view-header">
             <strong>
                 Settings

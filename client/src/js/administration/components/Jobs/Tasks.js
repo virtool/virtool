@@ -50,7 +50,7 @@ const TaskLimits = (props) => {
             <Col md={12}>
                 <h5><strong>Task-specific Limits</strong></h5>
             </Col>
-            <Col xs={12} md={4} mdPush={4}>
+            <Col xs={12} md={6} mdPush={6}>
                 <Panel>
                     <Panel.Body>
                         Set limits on specific tasks.
@@ -60,13 +60,13 @@ const TaskLimits = (props) => {
                     </Panel.Footer>
                 </Panel>
             </Col>
-            <Col xs={12} md={4} mdPull={4}>
+            <Col xs={12} md={6} mdPull={6}>
                 <ListGroup>
                     <ListGroupItem key="title">
                         <Row>
-                            <Col md={4}>CPU</Col>
-                            <Col md={4}>Memory (GB)</Col>
-                            <Col md={4}>Instances</Col>
+                            <Col md={6}>CPU</Col>
+                            <Col md={6}>Memory (GB)</Col>
+                            <Col md={6}>Instances</Col>
                         </Row>
                     </ListGroupItem>
                     {taskComponents}

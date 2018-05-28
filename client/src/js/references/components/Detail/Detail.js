@@ -16,7 +16,7 @@ import SourceTypes from "../../../administration/components/General/SourceTypes"
 import InternalControl from "../../../administration/components/General/InternalControl";
 
 const ReferenceSettings = () => (
-    <div>
+    <div className="settings-container">
         <SourceTypes />
         <InternalControl />
     </div>

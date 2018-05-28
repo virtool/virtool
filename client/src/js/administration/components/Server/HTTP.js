@@ -23,7 +23,7 @@ const HTTPOptions = (props) => (
         <Col xs={12}>
             <h5><strong>HTTP Server</strong></h5>
         </Col>
-        <Col xs={12} md={4} mdPush={4}>
+        <Col xs={12} md={6} mdPush={6}>
             <Panel>
                 <Panel.Body>
                     Change the address and port the the web server listens on.
@@ -33,7 +33,7 @@ const HTTPOptions = (props) => (
                 </Panel.Footer>
             </Panel>
         </Col>
-        <Col xs={12} md={4} mdPull={4}>
+        <Col xs={12} md={6} mdPull={6}>
             <Panel>
                 <Panel.Body>
                     <InputError

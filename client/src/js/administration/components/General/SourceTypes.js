@@ -103,7 +103,7 @@ class SourceTypes extends React.Component {
         return (
             <div>
                 <Row>
-                    <Col xs={6} md={4}>
+                    <Col xs={6} md={6}>
                         <Flex alignItems="center">
                             <FlexItem grow={1} >
                                 <h5><strong>Source Types</strong></h5>
@@ -115,7 +115,7 @@ class SourceTypes extends React.Component {
                     <Col smHidden md={8} />
                 </Row>
                 <Row>
-                    <Col xs={12} md={4} mdPush={4}>
+                    <Col xs={12} md={6} mdPush={6}>
                         <Panel>
                             <Panel.Body>
                                 Configure a list of allowable source types. When a user creates a new isolate they will
@@ -124,7 +124,7 @@ class SourceTypes extends React.Component {
                             </Panel.Body>
                         </Panel>
                     </Col>
-                    <Col xs={12} md={4} mdPull={4}>
+                    <Col xs={12} md={6} mdPull={6}>
                         <Panel>
                             <Panel.Body>
                                 <form onSubmit={this.handleSubmit}>
@@ -157,7 +157,7 @@ class SourceTypes extends React.Component {
                             </Panel.Body>
                         </Panel>
                     </Col>
-                    <Col smHidden md={4} />
+                    <Col smHidden md={6} />
                 </Row>
             </div>
         );
