@@ -286,9 +286,7 @@ async def create(req):
         document = await virtool.db.references.create_remote(
             db,
             settings,
-            data["name"],
-            data["description"],
-            data["public"],
+            True,
             remote_from,
             user_id
         )

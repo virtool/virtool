@@ -509,15 +509,15 @@ async def create_original(db, settings):
     return document
 
 
-async def create_remote(db, settings, name, description, public, remote_from, user_id):
+async def create_remote(db, settings, public, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
         db,
         settings,
-        name,
+        "Plant Viruses",
         None,
-        description,
+        "The official plant virus reference from the Virtool developers",
         None,
         public,
         created_at=created_at,
