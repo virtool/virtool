@@ -196,6 +196,7 @@ async def find_indexes(req):
     },
     "remote_from": {
         "type": "string",
+        "allowed": ["virtool/virtool-database"],
         "excludes": [
             "clone_from",
             "import_from"
