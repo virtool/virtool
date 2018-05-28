@@ -15,17 +15,17 @@ class InternalControl extends React.Component {
         return (
             <div>
                 <Row>
-                    <Col xs={12} md={6}>
+                    <Col xs={12} md={4}>
                         <Flex alignItems="center" style={{marginBottom: "10px"}}>
                             <FlexItem grow={1} >
                                 <strong>Internal Control</strong>
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col smHidden md={6} />
+                    <Col smHidden md={8} />
                 </Row>
                 <Row>
-                    <Col xs={12} mdPush={6} md={6}>
+                    <Col xs={12} mdPush={4} md={4}>
                         <Panel>
                             <Panel.Body>
                                 Set an OTU that is spiked into samples to be used as a positive control.
@@ -33,7 +33,7 @@ class InternalControl extends React.Component {
                             </Panel.Body>
                         </Panel>
                     </Col>
-                    <Col xs={12} mdPull={6} md={6}>
+                    <Col xs={12} mdPull={4} md={4}>
                         <Panel>
                             <Panel.Body>
                                 <AsyncTypeahead

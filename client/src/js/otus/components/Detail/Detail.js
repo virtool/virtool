@@ -59,6 +59,8 @@ class OTUDetail extends React.Component {
                         <Icon
                             bsStyle="warning"
                             name="pencil-alt"
+                            tip="Edit OTU"
+                            tipPlacement="left"
                             onClick={this.props.showEdit}
                         />
                     </small>
@@ -67,6 +69,8 @@ class OTUDetail extends React.Component {
                         <Icon
                             bsStyle="danger"
                             name="trash"
+                            tip="Remove OTU"
+                            tipPlacement="left"
                             onClick={this.props.showRemove}
                         />
                     </small>

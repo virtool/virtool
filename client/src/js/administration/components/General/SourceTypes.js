@@ -103,7 +103,7 @@ class SourceTypes extends React.Component {
         return (
             <div>
                 <Row>
-                    <Col xs={6} md={3}>
+                    <Col xs={6} md={4}>
                         <Flex alignItems="center">
                             <FlexItem grow={1} >
                                 <h5><strong>Source Types</strong></h5>
@@ -112,7 +112,7 @@ class SourceTypes extends React.Component {
                         </Flex>
                     </Col>
 
-                    <Col smHidden md={9} />
+                    <Col smHidden md={8} />
                 </Row>
                 <Row>
                     <Col xs={12} md={4} mdPush={4}>

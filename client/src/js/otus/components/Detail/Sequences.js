@@ -68,6 +68,7 @@ class IsolateSequences extends React.Component {
                             name="plus-square"
                             bsStyle="primary"
                             tip="Add Sequence"
+                            tipPlacement="left"
                             onClick={this.props.showAddSequence}
                             pullRight
                         />
