@@ -26,22 +26,6 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, test_mo
         assert index_version == -1
 
 
-@pytest.mark.parametrize("value", ["jgwlhulj", 2])
-@pytest.mark.parametrize("projection", (
-    None,
-    ["_id", "version"]
-))
-async def test_get_index(projection, value, test_indexes, test_motor):
-    await test_motor.indexes.insert_many(test_indexes)
-
-    expected = test_indexes[2]
-
-    if projection:
-        expected = {k: expected[k] for k in projection}
-
-    assert await virtool.db.indexes.get_index(test_motor, value, projection) == expected
-
-
 @pytest.mark.parametrize("empty", [False, True])
 @pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_next_version(empty, has_ref, test_indexes, test_motor):
