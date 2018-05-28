@@ -90,6 +90,6 @@ export const removeSequence = ({ otuId, isolateId, sequenceId }) => (
     Request.delete(`/api/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
 );
 
-export const revert = ({ otuId, version }) => (
-    Request.delete(`/api/history/${otuId}.${version}`)
+export const revert = ({ change_id }) => (
+    Request.delete(`/api/history/${change_id}`)
 );

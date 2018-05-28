@@ -252,10 +252,10 @@ export const removeSequence = (otuId, isolateId, sequenceId) => ({
  * @param version {string} OTU index version
  * @returns {object}
  */
-export const revert = (otuId, version) => ({
+export const revert = (otuId, changeId) => ({
     type: REVERT.REQUESTED,
     otuId,
-    version
+    change_id: changeId
 });
 
 /**
