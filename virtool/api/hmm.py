@@ -1,5 +1,3 @@
-import asyncio
-
 import virtool.db.status
 import virtool.http.routes
 import virtool.db.hmm

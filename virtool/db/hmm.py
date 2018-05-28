@@ -110,12 +110,6 @@ async def install_official(app, process_id):
             temp_path
         )
 
-        '''
-        if len(assets) == 0:
-            # Stop the install process if one of the annotation or profile assets are not found.
-            await virtool.db.processes.update(db, process_id, errors=["Incomplete asset"])
-        '''
-
         await virtool.db.processes.update(db, process_id, progress=0.7, step="install_profiles")
 
         decompressed_path = os.path.join(temp_path, "hmm")

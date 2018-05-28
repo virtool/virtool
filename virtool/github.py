@@ -1,5 +1,3 @@
-import aiohttp
-
 import virtool.errors
 import virtool.http.proxy
 
@@ -37,9 +35,6 @@ async def get_latest_release(settings, session, slug, etag=None):
 
     :param slug: the slug for the GitHub repo
     :type slug: str
-
-    :param url: the url
-    :type url: str
 
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
     :type etag: str
