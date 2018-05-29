@@ -52,3 +52,31 @@ export const cloneReference = ({ name, description, dataType, organism, isPublic
 export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );
+
+export const addUser = ({ refId, user }) => (
+    Request.post(`/api/refs/${refId}/users`)
+        .send({ user })
+);
+
+export const editUser = ({ refId, userId, update }) => (
+    Request.patch(`/api/refs/${refId}/users/${userId}`)
+        .send(update)
+);
+
+export const removeUser = ({ refId, userId }) => (
+    Request.delete(`/api/refs/${refId}/users/${userId}`)
+);
+
+export const addGroup = ({ refId, group }) => (
+    Request.post(`/api/refs/${refId}/groups`)
+        .send({ group })
+);
+
+export const editGroup = ({ refId, groupId, update }) => (
+    Request.patch(`/api/refs/${refId}/groups/${groupId}`)
+        .send(update)
+);
+
+export const removeGroup = ({ refId, groupId }) => (
+    Request.delete(`/api/refs/${refId}/groups/${groupId}`)
+);

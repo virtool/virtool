@@ -10,6 +10,7 @@ import { LoadingPlaceholder, Icon } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
+import ReferenceUsers from "./Users";
 import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
@@ -19,6 +20,7 @@ const ReferenceSettings = () => (
     <div className="settings-container">
         <SourceTypes />
         <InternalControl />
+        <ReferenceUsers />
     </div>
 );
 
