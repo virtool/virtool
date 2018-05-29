@@ -126,15 +126,16 @@ class ImportReference extends React.Component {
                         onDrop={this.handleDrop}
                         message={message}
                     />
-                    <ReferenceForm
-                        state={this.state}
-                        onChange={this.handleChange}
-                        toggle={this.toggleCheck}
-                    />
                     <ProgressBar
                         bsStyle={progress === 100 ? "primary" : "success"}
                         now={progress}
                         affixed
+                        style={{marginBottom: "10px"}}
+                    />
+                    <ReferenceForm
+                        state={this.state}
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
                     />
                 </Modal.Body>
 
