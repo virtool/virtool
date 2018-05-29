@@ -169,7 +169,7 @@ async def find_indexes(req):
 @routes.post("/api/refs", permission="create_ref", schema={
     "name": {
         "type": "string",
-        "required": True
+        "default": ""
     },
     "description": {
         "type": "string",
@@ -177,7 +177,9 @@ async def find_indexes(req):
     },
     "data_type": {
         "type": "string",
-        "allowed": ["genome", "barcode"],
+        "allowed": [
+            "genome"
+        ],
         "default": "genome"
     },
     "clone_from": {
@@ -210,7 +212,6 @@ async def find_indexes(req):
         "type": "boolean",
         "default": False
     }
-
 })
 async def create(req):
     db = req.app["db"]

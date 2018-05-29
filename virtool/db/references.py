@@ -367,6 +367,8 @@ async def create_clone(db, settings, name, clone_from, description, public, user
 
     source = await db.references.find_one(clone_from)
 
+    name = name or "Clone of " + source["name"]
+
     document = await create_document(
         db,
         settings,
@@ -458,7 +460,7 @@ async def create_import(db, settings, name, description, public, import_from, us
     document = await create_document(
         db,
         settings,
-        name,
+        name or "Unnamed Import",
         None,
         description,
         None,
