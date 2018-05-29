@@ -60,7 +60,7 @@ async def get_latest_release(settings, session, slug, etag=None):
 
             return dict(data, etag=resp.headers["etag"])
 
-        elif resp.status == 404 or resp.status == 304:
+        elif resp.status == 304:
             return None
 
         else:
