@@ -752,7 +752,14 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     inserted_otu_ids = list()
 
     for otu in otus:
-        otu_id = await insert_joined_otu(db, otu, created_at, ref_id, user_id)
+        otu_id = await insert_joined_otu(
+            db,
+            otu,
+            created_at,
+            ref_id,
+            user_id,
+            remote=True
+        )
         inserted_otu_ids.append(otu_id)
         await progress_tracker.add(1)
 
@@ -802,7 +809,58 @@ async def insert_change(db, otu_id, verb, user_id):
     )
 
 
-async def insert_joined_otu(db, otu, created_at, ref_id, user_id):
+async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
+    all_sequences = list()
+
+    issues = virtool.otus.verify(otu)
+
+    otu.update({
+        "created_at": created_at,
+        "lower_name": otu["name"].lower(),
+        "last_indexed_version": None,
+        "issues": issues,
+        "verified": issues is None,
+        "imported": True,
+        "version": 0,
+        "reference": {
+            "id": ref_id
+        },
+        "user": {
+            "id": user_id
+        }
+    })
+
+    remote_id = otu.pop("_id")
+
+    if remote:
+        otu["remote"] = {
+            "id": remote_id
+        }
+
+    used_isolate_ids = set()
+
+    for isolate in otu["isolates"]:
+
+        isolate_id = virtool.utils.random_alphanumeric(3, excluded=used_isolate_ids)
+        used_isolate_ids.add(isolate_id)
+        isolate["id"] = isolate_id
+
+        for sequence in isolate.pop("sequences"):
+            all_sequences.append({
+                **sequence,
+                "accession": sequence.pop("_id", None) or sequence["accession"],
+                "isolate_id": isolate_id,
+                "reference": {
+                    "id": ref_id
+                }
+            })
+
+    document = await db.otus.insert_one(otu)
+
+    for sequence in all_sequences:
+        await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
+
+    return document["_id"]
     all_sequences = list()
 
     issues = virtool.otus.verify(otu)
