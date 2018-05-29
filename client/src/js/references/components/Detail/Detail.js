@@ -34,7 +34,32 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id } = this.props.detail;
+        const { name, id, remote_from } = this.props.detail;
+
+        let headerIcon;
+
+        if (this.props.pathname === `/refs/${id}/manage`) {
+            headerIcon = remote_from
+                ? (
+                    <Icon
+                        bsStyle="default"
+                        name="lock"
+                        pullRight
+                        style={{fontSize: "65%"}}
+                    />
+                )
+                : (
+                    <Icon
+                        bsStyle="warning"
+                        name="pencil-alt"
+                        tip="Edit"
+                        onClick={this.props.onEdit}
+                        pullRight
+                        style={{fontSize: "65%"}}
+                    />
+                );
+        }
+
 
         return (
             <div>
@@ -43,13 +68,7 @@ class ReferenceDetail extends React.Component {
                 </Helmet>
                 <h3 className="view-header">
                     <strong>{name}</strong>
-                    <Icon
-                        bsStyle="warning"
-                        name="pencil-alt"
-                        tip="Edit"
-                        onClick={this.props.onEdit}
-                        pullRight
-                    />
+                    {headerIcon}
                 </h3>
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
@@ -81,7 +100,8 @@ class ReferenceDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.references.detail
+    detail: state.references.detail,
+    pathname: state.router.location.pathname
 });
 
 const mapDispatchToProps = dispatch => ({
