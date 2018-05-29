@@ -4,7 +4,7 @@ import Helmet from "react-helmet";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem } from "react-bootstrap";
+import { Nav, NavItem, Badge } from "react-bootstrap";
 import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon } from "../../../base";
 
@@ -56,7 +56,7 @@ class ReferenceDetail extends React.Component {
                         <NavItem>Manage</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/otus`}>
-                        <NavItem>OTUs</NavItem>
+                        <NavItem>OTUs <Badge>{this.props.detail.otu_count}</Badge></NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/indexes`}>
                         <NavItem>Indexes</NavItem>
