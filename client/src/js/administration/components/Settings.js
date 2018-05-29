@@ -1,5 +1,4 @@
 import React from "react";
-import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
@@ -11,7 +10,7 @@ import Sentry from "./Server/Sentry";
 import Data from "./Data";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
-import { LoadingPlaceholder } from "../../base";
+import { LoadingPlaceholder, ViewHeader } from "../../base";
 
 const Server = () => (
     <div className="settings-container">
@@ -40,14 +39,9 @@ const Settings = ({ settings }) => {
 
     return (
         <div className="container-noside">
-            <Helmet>
-                <title>Administration</title>
-            </Helmet>
-            <h3 className="view-header">
-                <strong>
-                    Administration
-                </strong>
-            </h3>
+            <ViewHeader title="Administration">
+                <strong>Administration</strong>
+            </ViewHeader>
 
             <Nav bsStyle="tabs">
                 <LinkContainer to="/administration/server">

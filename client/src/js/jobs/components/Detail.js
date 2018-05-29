@@ -1,5 +1,4 @@
 import React from "react";
-import Helmet from "react-helmet";
 import Moment from "moment";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
@@ -7,7 +6,7 @@ import { push } from "react-router-redux";
 
 import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar, ViewHeader } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
 
@@ -72,10 +71,7 @@ class JobDetail extends React.Component {
 
         return (
             <div>
-                <Helmet>
-                    <title>{`${taskName} - Jobs`}</title>
-                </Helmet>
-                <h3 style={{marginBottom: "20px"}}>
+                <ViewHeader title={`${taskName} - Jobs`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <Flex alignItems="center">
@@ -97,7 +93,7 @@ class JobDetail extends React.Component {
                             onClick={this.handleClick}
                         />
                     </Flex>
-                </h3>
+                </ViewHeader>
 
                 <ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />
 

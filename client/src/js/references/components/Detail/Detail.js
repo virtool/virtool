@@ -1,12 +1,12 @@
 import React from "react";
+import Moment from "moment";
 import { connect } from "react-redux";
-import Helmet from "react-helmet";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem, Badge } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon, RelativeTime } from "../../../base";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
@@ -62,16 +62,18 @@ class ReferenceDetail extends React.Component {
 
         return (
             <div>
-                <Helmet>
-                    <title>{`${name} - References`}</title>
-                </Helmet>
-                <h3 className="view-header">
-                    <strong>{name}</strong>
-                    {headerIcon}
+                <ViewHeader title={`${name} - References`}>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={1}>
+                            <strong>{name}</strong>
+                        </FlexItem>
+                        {headerIcon}
+                    </Flex>
                     <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created <RelativeTime time={created_at} /> by {user.id}
+                        Created {Moment(created_at).calendar()} by {user.id}
                     </div>
-                </h3>
+                </ViewHeader>
+
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
                         <NavItem>Manage</NavItem>
