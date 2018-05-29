@@ -367,6 +367,8 @@ async def create_clone(db, settings, name, clone_from, description, public, user
 
     source = await db.references.find_one(clone_from)
 
+    name = name or "Clone of " + source["name"]
+
     document = await create_document(
         db,
         settings,
@@ -458,7 +460,7 @@ async def create_import(db, settings, name, description, public, import_from, us
     document = await create_document(
         db,
         settings,
-        name,
+        name or "Unnamed Import",
         None,
         description,
         None,
@@ -509,15 +511,15 @@ async def create_original(db, settings):
     return document
 
 
-async def create_remote(db, settings, name, description, public, remote_from, user_id):
+async def create_remote(db, settings, public, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
         db,
         settings,
-        name,
+        "Plant Viruses",
         None,
-        description,
+        "The official plant virus reference from the Virtool developers",
         None,
         public,
         created_at=created_at,
@@ -648,9 +650,6 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     db = app["db"]
 
-    import pprint
-    pprint.pprint(release)
-
     progress_tracker = virtool.processes.ProgressTracker(
         db,
         process_id,
@@ -706,6 +705,12 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "remote", user_id)
         await progress_tracker.add(1)
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "remotes_from.version": release["name"]
+        }
+    })
 
     await virtool.db.processes.update(db, process_id, progress=1)
 
