@@ -14,6 +14,7 @@ def format_release(release):
     return {
         "name": release["name"],
         "body": release["body"],
+        "etag": release["etag"],
         "filename": asset["name"],
         "size": asset["size"],
         "browser_url": release["url"],
@@ -40,7 +41,7 @@ async def get_latest_release(settings, session, slug, etag=None):
     :type etag: str
 
     :return: the latest release
-    :rtype: dict
+    :rtype: Coroutine[dict]
 
     """
     url = "{}/{}/releases/latest".format(BASE_URL, slug)
@@ -59,7 +60,7 @@ async def get_latest_release(settings, session, slug, etag=None):
 
             return dict(data, etag=resp.headers["etag"])
 
-        elif resp.status == 404 or resp.status == 304:
+        elif resp.status == 304:
             return None
 
         else:

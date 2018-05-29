@@ -8,53 +8,71 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { groupBy, map, reverse, sortBy } from "lodash-es";
+import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getOTUHistory, revert } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base";
 
-
-const getMethodIcon = (change) => {
-
-    switch (change.method_name) {
-        case "create":
-            return <Icon name="new-entry" bsStyle="primary" />;
-
-        case "edit":
-            return <Icon name="pencil" bsStyle="warning" />;
-
-        case "verify":
-            return <Icon name="checkmark" bsStyle="success" />;
-
-        case "remove":
-            return <Icon name="remove" bsStyle="danger" />;
-
-        case "add_isolate":
-            return <Icon name="lab" bsStyle="primary" />;
-
-        case "edit_isolate":
-            return <Icon name="lab" bsStyle="warning" />;
-
-        case "set_as_default":
-            return <Icon name="star" bsStyle="warning" />;
-
-        case "remove_isolate":
-            return <Icon name="lab" bsStyle="danger" />;
-
-        case "create_sequence":
-            return <Icon name="dna" bsStyle="primary" />;
-
-        case "edit_sequence":
-            return <Icon name="dna" bsStyle="warning" />;
-
-        case "remove_sequence":
-            return <Icon name="dna" bsStyle="danger" />;
-
-        default:
-            return <Icon name="warning" bsStyle="danger" />;
+const methodIconProps = {
+    add_isolate: {
+        name: "flask",
+        bsStyle: "primary"
+    },
+    create: {
+        name: "plus-square",
+        bsStyle: "primary"
+    },
+    create_sequence: {
+        name: "dna",
+        bsStyle: "primary"
+    },
+    edit: {
+        name: "pencil",
+        bsStyle: "warning"
+    },
+    edit_isolate: {
+        name: "flask",
+        bsStyle: "warning"
+    },
+    edit_sequence: {
+        name: "dna",
+        bsStyle: "warning"
+    },
+    remote: {
+        name: "link",
+        bsStyle: "primary"
+    },
+    remove: {
+        name: "trash",
+        bsStyle: "danger"
+    },
+    remove_isolate: {
+        name: "flask",
+        bsStyle: "danger"
+    },
+    remove_sequence: {
+        name: "dna",
+        bsStyle: "danger"
+    },
+    set_as_default: {
+        name: "star",
+        bsStyle: "warning"
+    },
+    update: {
+        name: "arrow-alt-circle-up",
+        bsStyle: "warning"
     }
+};
+
+const getMethodIcon = ({ method_name }) => {
+    const props = get(methodIconProps, method_name, {
+        name: "exclamation-triangle",
+        bsStyle: "danger"
+    });
+
+    return <Icon {...props} />;
 };
 
 export class Change extends React.Component {

@@ -2,6 +2,7 @@ import asyncio
 import os
 
 import pymongo
+import semver
 
 import virtool.db.history
 import virtool.db.otus
@@ -60,6 +61,69 @@ async def add_group_or_user(db, ref_id, field, data):
     })
 
     return subdocument
+
+
+async def check_for_remote_update(app, ref_id):
+    """
+    Check the the GitHub repository identified by the passed `slug` for a release newer than the provided `version`. If
+    a newer release is found, update the reference identified by the passed `ref_id` and return the release.
+
+    :param app: the application object
+    :type app: :class:`aiohttp.Application`
+
+    :param ref_id: the id of the reference to update
+    :type ref_id: str
+
+    :return: the latest release if newer than the passed version
+    :rtype: Coroutine[dict]
+
+    """
+    db = app["db"]
+
+    remotes_from = await virtool.db.utils.get_one_field(db.references, "remotes_from", ref_id)
+
+    etag = remotes_from.get("etag", None)
+
+    try:
+        latest_release = await virtool.github.get_latest_release(
+            app["settings"],
+            app["client"],
+            remotes_from["slug"],
+            etag
+        )
+    except virtool.errors.GitHubError as err:
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "remotes_from.etag": None,
+                "remotes_from.last_checked": virtool.utils.timestamp(),
+                "remotes_from.update": None,
+                "remotes_from.errors": [str(err)]
+            }
+        })
+
+        return None
+
+    update = remotes_from["update"]
+
+    if latest_release:
+        etag = latest_release["etag"]
+
+        latest_version = latest_release["name"].lstrip("v")
+        installed_version = remotes_from["version"].lstrip("v")
+
+        if semver.compare(latest_version, installed_version) == 1:
+            update = virtool.github.format_release(latest_release)
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "remotes_from.etag": etag,
+            "remotes_from.last_checked": virtool.utils.timestamp(),
+            "remotes_from.update": update,
+            "remotes_from.errors": None
+        }
+    })
+
+    return update
 
 
 async def check_source_type(db, ref_id, source_type):
@@ -785,3 +849,19 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id):
         await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
 
     return document["_id"]
+
+
+async def refresh_remotes(app):
+    db = app["db"]
+
+    try:
+        while True:
+            for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
+                await check_for_remote_update(
+                    app,
+                    ref_id
+                )
+
+            await asyncio.sleep(600, loop=app.loop)
+    except asyncio.CancelledError:
+        pass
