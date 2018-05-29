@@ -83,7 +83,7 @@ const mapStateToProps = (state) => {
     return {
         ...status,
         process
-    }
+    };
 };
 
 const mapDispatchToProps = (dispatch) => ({

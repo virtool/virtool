@@ -4,9 +4,9 @@ import Helmet from "react-helmet";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem } from "react-bootstrap";
+import { Nav, NavItem, Badge } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon } from "../../../base";
+import { LoadingPlaceholder, Icon, RelativeTime } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
@@ -34,7 +34,31 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id } = this.props.detail;
+        const { name, id, remote_from, created_at, user } = this.props.detail;
+
+        let headerIcon;
+
+        if (this.props.pathname === `/refs/${id}/manage`) {
+            headerIcon = remote_from
+                ? (
+                    <Icon
+                        bsStyle="default"
+                        name="lock"
+                        pullRight
+                        style={{fontSize: "65%"}}
+                    />
+                )
+                : (
+                    <Icon
+                        bsStyle="warning"
+                        name="pencil-alt"
+                        tip="Edit"
+                        onClick={this.props.onEdit}
+                        pullRight
+                        style={{fontSize: "65%"}}
+                    />
+                );
+        }
 
         return (
             <div>
@@ -43,20 +67,17 @@ class ReferenceDetail extends React.Component {
                 </Helmet>
                 <h3 className="view-header">
                     <strong>{name}</strong>
-                    <Icon
-                        bsStyle="warning"
-                        name="pencil-alt"
-                        tip="Edit"
-                        onClick={this.props.onEdit}
-                        pullRight
-                    />
+                    {headerIcon}
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created <RelativeTime time={created_at} /> by {user.id}
+                    </div>
                 </h3>
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
                         <NavItem>Manage</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/otus`}>
-                        <NavItem>OTUs</NavItem>
+                        <NavItem>OTUs <Badge>{this.props.detail.otu_count}</Badge></NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${id}/indexes`}>
                         <NavItem>Indexes</NavItem>
@@ -81,7 +102,8 @@ class ReferenceDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.references.detail
+    detail: state.references.detail,
+    pathname: state.router.location.pathname
 });
 
 const mapDispatchToProps = dispatch => ({

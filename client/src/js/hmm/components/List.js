@@ -22,7 +22,8 @@ const HMMList = (props) => {
 
         return (
             <div>
-                <ViewHeader title="HMMs"
+                <ViewHeader
+                    title="HMMs"
                     page={props.page}
                     count={props.documents.length}
                     foundCount={props.found_count}
