@@ -94,6 +94,14 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.get("/api/refs/{ref_id}/update")
+async def get_update(req):
+    ref_id = req.match_info["ref_id"]
+
+    update = await virtool.db.references.check_for_remote_update(req.app, ref_id)
+
+    return json_response(update)
+
 @routes.get("/api/refs/{ref_id}/otus")
 async def find_otus(req):
     db = req.app["db"]
