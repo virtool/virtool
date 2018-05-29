@@ -849,3 +849,19 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id):
         await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
 
     return document["_id"]
+
+
+async def refresh_remotes(app):
+    db = app["db"]
+
+    try:
+        while True:
+            for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
+                await check_for_remote_update(
+                    app,
+                    ref_id
+                )
+
+            await asyncio.sleep(600, loop=app.loop)
+    except asyncio.CancelledError:
+        pass
