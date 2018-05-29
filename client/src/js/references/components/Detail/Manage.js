@@ -42,15 +42,13 @@ class ReferenceManage extends React.Component {
 
         const {
             contributors,
-            created_at,
             data_type,
             description,
             id,
             internal_control,
             latest_build,
             name,
-            organism,
-            user
+            organism
         } = this.props.detail;
 
         let indexCreatedAt;
