@@ -41,7 +41,7 @@ async def get_latest_release(settings, session, slug, etag=None):
     :type etag: str
 
     :return: the latest release
-    :rtype: dict
+    :rtype: Coroutine[dict]
 
     """
     url = "{}/{}/releases/latest".format(BASE_URL, slug)
