@@ -4,21 +4,13 @@ exports[`<Account /> renders correctly 1`] = `
 <div
   className="container-noside"
 >
-  <HelmetWrapper
-    defer={true}
-    encodeSpecialCharacters={true}
-  >
-    <title>
-      Account
-    </title>
-  </HelmetWrapper>
-  <h3
-    className="view-header"
+  <ViewHeader
+    title="Account"
   >
     <strong>
       Account
     </strong>
-  </h3>
+  </ViewHeader>
   <Nav
     bsClass="nav"
     bsStyle="tabs"
