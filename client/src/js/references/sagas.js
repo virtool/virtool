@@ -11,6 +11,7 @@ import {
     EDIT_REFERENCE,
     IMPORT_REFERENCE,
     CLONE_REFERENCE,
+    REMOTE_REFERENCE,
     ADD_REFERENCE_USER,
     EDIT_REFERENCE_USER,
     REMOVE_REFERENCE_USER,
@@ -55,6 +56,14 @@ export function* cloneReference (action) {
     yield put(push({state: {cloneReference: false}}));
 }
 
+export function* remoteReference () {
+    yield setPending(apiCall(
+        referenceAPI.remoteReference,
+        { name: "Official Virtool Reference", remote_from: "virtool/virtool-database" },
+        REMOTE_REFERENCE
+    ));
+}
+
 export function* addRefUser (action) {
     yield apiCall(referenceAPI.addUsers, action, ADD_REFERENCE_USER);
 }
@@ -91,6 +100,7 @@ export function* watchReferences () {
     yield takeEvery(REMOVE_REFERENCE.REQUESTED, removeReference);
     yield takeLatest(IMPORT_REFERENCE.REQUESTED, importReference);
     yield takeLatest(CLONE_REFERENCE.REQUESTED, cloneReference);
+    yield takeLatest(REMOTE_REFERENCE.REQUESTED, remoteReference);
     yield takeEvery(ADD_REFERENCE_USER.REQUESTED, addRefUser);
     yield takeEvery(EDIT_REFERENCE_USER.REQUESTED, editRefUser);
     yield takeEvery(REMOVE_REFERENCE_USER.REQUESTED, removeRefUser);

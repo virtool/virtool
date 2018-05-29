@@ -7,6 +7,7 @@ import {
     REMOVE_REFERENCE,
     IMPORT_REFERENCE,
     CLONE_REFERENCE,
+    REMOTE_REFERENCE,
     ADD_REFERENCE_USER,
     EDIT_REFERENCE_USER,
     REMOVE_REFERENCE_USER,
@@ -55,6 +56,10 @@ export const cloneReference = (name, description, dataType, organism, isPublic, 
     organism,
     isPublic,
     refId
+});
+
+export const remoteReference = () => ({
+    type: REMOTE_REFERENCE.REQUESTED
 });
 
 export const removeReference = (refId) => ({

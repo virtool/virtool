@@ -1,13 +1,14 @@
 import React from "react";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
-
+import { Panel, Button } from "react-bootstrap";
 import AddReference from "./AddReference";
-import { ViewHeader, Flex, NoneFound } from "../../base";
+import { ViewHeader, Flex } from "../../base";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
+import { remoteReference } from "../actions";
 
-const ReferenceContainer = ({ references }) => (
+const ReferenceContainer = ({ remoteCard, references }) => (
     <Flex
         direction="row"
         wrap="wrap"
@@ -15,6 +16,7 @@ const ReferenceContainer = ({ references }) => (
         style={{minHeight: "min-content", marginRight: "-15px"}}
     >
         {references}
+        {remoteCard}
     </Flex>
 );
 
@@ -30,9 +32,18 @@ const ReferenceList = (props) => {
         referenceComponents = map(props.documents, document =>
             <ReferenceItem key={document.id} {...document} />
         );
-    } else {
-        referenceComponents = <NoneFound noun="references" noListGroup />;
     }
+
+    const remoteReferenceCard = (
+        <Panel className="reference-item-remote">
+            <span className="reference-remote-contents">
+                <p>Official Remote Reference</p>
+                <Button bsStyle="primary" onClick={props.onRemote}>
+                    Install
+                </Button>
+            </span>
+        </Panel>
+    );
 
     return (
         <div>
@@ -46,7 +57,7 @@ const ReferenceList = (props) => {
 
             <ReferenceToolbar />
 
-            <ReferenceContainer references={referenceComponents} />
+            <ReferenceContainer remoteCard={remoteReferenceCard} references={referenceComponents} />
 
             {props.routerStateExists ? <AddReference /> : null}
         </div>
@@ -59,4 +70,10 @@ const mapStateToProps = state => ({
     routerStateExists: !!state.router.location.state
 });
 
-export default connect(mapStateToProps, null)(ReferenceList);
+const mapDispatchToProps = dipatch => ({
+    onRemote: () => {
+        dipatch(remoteReference());
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceList);

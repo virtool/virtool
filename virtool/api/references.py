@@ -94,6 +94,14 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.get("/api/refs/{ref_id}/update")
+async def get_update(req):
+    ref_id = req.match_info["ref_id"]
+
+    update = await virtool.db.references.check_for_remote_update(req.app, ref_id)
+
+    return json_response(update)
+
 @routes.get("/api/refs/{ref_id}/otus")
 async def find_otus(req):
     db = req.app["db"]
@@ -169,7 +177,7 @@ async def find_indexes(req):
 @routes.post("/api/refs", permission="create_ref", schema={
     "name": {
         "type": "string",
-        "required": True
+        "default": ""
     },
     "description": {
         "type": "string",
@@ -177,7 +185,9 @@ async def find_indexes(req):
     },
     "data_type": {
         "type": "string",
-        "allowed": ["genome", "barcode"],
+        "allowed": [
+            "genome"
+        ],
         "default": "genome"
     },
     "clone_from": {
@@ -196,6 +206,7 @@ async def find_indexes(req):
     },
     "remote_from": {
         "type": "string",
+        "allowed": ["virtool/virtool-database"],
         "excludes": [
             "clone_from",
             "import_from"
@@ -209,7 +220,6 @@ async def find_indexes(req):
         "type": "boolean",
         "default": False
     }
-
 })
 async def create(req):
     db = req.app["db"]
@@ -285,9 +295,7 @@ async def create(req):
         document = await virtool.db.references.create_remote(
             db,
             settings,
-            data["name"],
-            data["description"],
-            data["public"],
+            True,
             remote_from,
             user_id
         )
@@ -395,7 +403,7 @@ async def edit(req):
 
     document = virtool.utils.base_processor(document)
 
-    document.update(await virtool.db.references.get_computed(db, document["_id"], internal_control_id))
+    document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
     return json_response(document)
 
