@@ -706,6 +706,12 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         await insert_change(db, otu_id, "remote", user_id)
         await progress_tracker.add(1)
 
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "remotes_from.version": release["name"]
+        }
+    })
+
     await virtool.db.processes.update(db, process_id, progress=1)
 
 
