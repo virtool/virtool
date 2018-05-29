@@ -14,6 +14,7 @@ def format_release(release):
     return {
         "name": release["name"],
         "body": release["body"],
+        "etag": release["etag"],
         "filename": asset["name"],
         "size": asset["size"],
         "browser_url": release["url"],
