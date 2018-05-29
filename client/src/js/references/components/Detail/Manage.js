@@ -88,10 +88,6 @@ class ReferenceManage extends React.Component {
                             <td>{organism}</td>
                         </tr>
                         <tr>
-                            <th>Created</th>
-                            <td><RelativeTime time={created_at} /> by {user.id}</td>
-                        </tr>
-                        <tr>
                             <th>Internal Control</th>
                             <td>{internal_control ? internal_control.name : null}</td>
                         </tr>
@@ -117,7 +113,7 @@ class ReferenceManage extends React.Component {
                         </tr>
                         <tr>
                             <th>Created</th>
-                            <td>{indexCreatedAt}</td>
+                            <td>{indexCreatedAt || "None"}</td>
                         </tr>
                     </tbody>
                 </Table>

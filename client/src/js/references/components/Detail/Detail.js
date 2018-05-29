@@ -6,7 +6,7 @@ import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem, Badge } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon } from "../../../base";
+import { LoadingPlaceholder, Icon, RelativeTime } from "../../../base";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
@@ -34,7 +34,7 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remote_from } = this.props.detail;
+        const { name, id, remote_from, created_at, user } = this.props.detail;
 
         let headerIcon;
 
@@ -60,7 +60,6 @@ class ReferenceDetail extends React.Component {
                 );
         }
 
-
         return (
             <div>
                 <Helmet>
@@ -69,6 +68,9 @@ class ReferenceDetail extends React.Component {
                 <h3 className="view-header">
                     <strong>{name}</strong>
                     {headerIcon}
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created <RelativeTime time={created_at} /> by {user.id}
+                    </div>
                 </h3>
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
