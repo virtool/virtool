@@ -105,6 +105,11 @@ const getOrigin = (props) => {
             method: "Cloned from",
             fileName: props.cloned_from.name
         };
+    } else if (get(props, "remotes_from", null)) {
+        origin = {
+            method: "Remote from",
+            fileName: props.remotes_from.slug
+        };
     } else {
         origin = {
             method: "Created",
