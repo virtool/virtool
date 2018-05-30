@@ -590,7 +590,7 @@ async def create_original(db, settings):
     return document
 
 
-async def create_remote(db, settings, public, remote_from, user_id):
+async def create_remote(db, settings, public, release, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
@@ -605,14 +605,35 @@ async def create_remote(db, settings, public, remote_from, user_id):
         user_id=user_id
     )
 
-    document["remotes_from"] = {
-        "slug": remote_from,
-        "update": None,
-        "last_checked": created_at,
-        "last_updated": created_at
-    }
+    document.update({
+        # Connection information for the GitHub remote repo.
+        "remotes_from": {
+            "errors": [],
+            "last_checked": created_at,
+            "slug": remote_from
+        },
+        # The latest available release on GitHub.
+        "release": release,
+        # The update history for the reference. We put the release being installed as the first history item.
+        "updates": [create_update_subdocument(created_at, release, user_id)]
+    })
 
     return document
+
+
+def create_update_subdocument(created_at, release, user_id):
+    update = dict(release)
+
+    update["created_at"] = created_at
+    update["github_url"] = update.pop("browser_url")
+    update["user"] = {
+        "id": user_id
+    }
+
+    for key in ["etag", "download_url", "content_type"]:
+        update.pop(key)
+
+    return update
 
 
 async def download_and_parse_release(app, url, process_id, progress_handler):
@@ -803,9 +824,9 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         await insert_change(db, otu_id, "remote", user_id)
         await progress_tracker.add(1)
 
-    await db.references.update_one({"_id": ref_id}, {
+    await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "remotes_from.version": release["name"]
+            "updates.$.ready": True
         }
     })
 
