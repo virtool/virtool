@@ -5,6 +5,7 @@ FIRST_STEPS = {
     "clone_reference": "copy_otus",
     "import_reference": "load_file",
     "remote_reference": "download",
+    "update_remote_reference": "download",
     "update_software": "",
     "install_hmms": ""
 }
@@ -17,7 +18,7 @@ UNIQUES = [
 
 class ProgressTracker:
 
-    def __init__(self, db, process_id, total, factor=1, increment=0.05, initial=0):
+    def __init__(self, db, process_id, total, factor=1, increment=0.03, initial=0):
         self.db = db
         self.process_id = process_id
         self.total = total

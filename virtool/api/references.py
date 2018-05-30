@@ -51,7 +51,14 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
+    data = await paginate(
+        db.references,
+        db_query,
+        req.query,
+        sort="name",
+        processor=virtool.db.references.processor,
+        projection=virtool.db.references.PROJECTION
+    )
 
     for d in data["documents"]:
         latest_build, otu_count, unbuilt_count = await asyncio.gather(
@@ -96,11 +103,80 @@ async def get(req):
 
 @routes.get("/api/refs/{ref_id}/update")
 async def get_update(req):
+    """
+    Get the latest update from GitHub and return it. Also updates the reference document. This is the only way of doing
+    so without waiting for an automatic refresh every 10 minutes.
+
+    """
     ref_id = req.match_info["ref_id"]
 
-    update = await virtool.db.references.check_for_remote_update(req.app, ref_id)
+    release = await virtool.db.references.check_for_remote_update(req.app, ref_id)
 
-    return json_response(update)
+    return json_response(release)
+
+
+@routes.post("/api/refs/{ref_id}/updates", schema={
+    "release_id": {
+        "type": "string"
+    }
+})
+async def update(req):
+    app = req.app
+    db = app["db"]
+
+    release_id = req["data"].get("release_id", None)
+
+    ref_id = req.match_info["ref_id"]
+
+    if not await db.references.count({"_id": ref_id}):
+        return not_found()
+
+    user_id = req["client"].user_id
+
+    created_at = virtool.utils.timestamp()
+
+    process = await virtool.db.processes.register(db, "update_remote_reference")
+
+    if release_id:
+        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
+
+        release = await virtool.github.get_release(
+            app["settings"],
+            app["client"],
+            remotes_from["slug"],
+            release_id=release_id
+        )
+    else:
+        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    update_subdocument = virtool.db.references.create_update_subdocument(
+        created_at,
+        release,
+        user_id
+    )
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            "updates": update_subdocument
+        },
+        "$set": {
+            "process": {
+                "id": process["id"]
+            }
+        }
+    })
+
+    await aiojobs.aiohttp.spawn(req, virtool.db.references.update_remote(
+        req.app,
+        ref_id,
+        created_at,
+        process["id"],
+        release,
+        user_id
+    ))
+
+    return json_response(update_subdocument, status=201)
+
 
 @routes.get("/api/refs/{ref_id}/otus")
 async def find_otus(req):
@@ -219,6 +295,9 @@ async def find_indexes(req):
     "public": {
         "type": "boolean",
         "default": False
+    },
+    "release_id": {
+        "type": "string"
     }
 })
 async def create(req):
@@ -231,6 +310,7 @@ async def create(req):
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
     remote_from = data.get("remote_from", None)
+    release_id = data.get("release_id", None)
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
@@ -292,21 +372,25 @@ async def create(req):
         ))
 
     elif remote_from:
+        release_id = 7917374
+
+        release = await virtool.github.get_release(
+            settings,
+            req.app["client"],
+            remote_from,
+            release_id=release_id
+        )
+
+        release = virtool.github.format_release(release)
+
         document = await virtool.db.references.create_remote(
             db,
             settings,
             True,
+            release,
             remote_from,
             user_id
         )
-
-        latest_release = await virtool.github.get_latest_release(
-            settings,
-            req.app["client"],
-            remote_from
-        )
-
-        latest_release = virtool.github.format_release(latest_release)
 
         process = await virtool.db.processes.register(db, "remote_reference")
 
@@ -316,7 +400,7 @@ async def create(req):
 
         await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_remote(
             req.app,
-            latest_release,
+            release,
             document["_id"],
             document["created_at"],
             process["id"],
