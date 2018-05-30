@@ -78,7 +78,7 @@ export default class AddReferenceMember extends React.Component {
             : <NoneFound noun="members" />;
 
         return (
-            <Modal show={this.props.show} onHide={this.handleExited}>
+            <Modal show={this.props.show} onHide={this.handleExited} onExit={this.handleExited}>
                 <Modal.Header closeButton>
                     Add Member
                 </Modal.Header>
