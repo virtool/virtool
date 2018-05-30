@@ -283,6 +283,16 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
 
 
 async def get_computed(db, ref_id, internal_control_id):
+    """
+    Get all computed data for the specified reference.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param ref_id:
+    :param internal_control_id:
+    :return:
+    """
     contributors, internal_control, latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_contributors(db, ref_id),
         get_internal_control(db, internal_control_id),
