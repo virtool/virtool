@@ -14,7 +14,34 @@ export default class Segment extends React.Component {
     };
 
     render () {
-        const { seg } = this.props;
+        const { seg, isRemote } = this.props;
+
+        let modifyIcons;
+
+        if (!isRemote) {
+            modifyIcons = (
+                <div>
+                    <Icon
+                        name="trash"
+                        bsStyle="danger"
+                        tip="Remove Segment"
+                        tipPlacement="left"
+                        style={{fontSize: "17px", padding: "0 5px"}}
+                        onClick={this.handleRemove}
+                        pullRight
+                    />
+                    <Icon
+                        name="pencil-alt"
+                        bsStyle="warning"
+                        tip="Edit Segment"
+                        tipPlacement="left"
+                        style={{fontSize: "17px"}}
+                        onClick={this.handleEdit}
+                        pullRight
+                    />
+                </div>
+            );
+        }
 
         return (
             <div >
@@ -32,24 +59,7 @@ export default class Segment extends React.Component {
                             </Label>
                         </Col>
                         <Col md={1}>
-                            <Icon
-                                name="trash"
-                                bsStyle="danger"
-                                tip="Remove Segment"
-                                tipPlacement="left"
-                                style={{fontSize: "17px", padding: "0 5px"}}
-                                onClick={this.handleRemove}
-                                pullRight
-                            />
-                            <Icon
-                                name="pencil-alt"
-                                bsStyle="warning"
-                                tip="Edit Segment"
-                                tipPlacement="left"
-                                style={{fontSize: "17px"}}
-                                onClick={this.handleEdit}
-                                pullRight
-                            />
+                            {modifyIcons}
                         </Col>
                     </Row>
                 </ListGroupItem>
@@ -61,5 +71,6 @@ export default class Segment extends React.Component {
 Segment.propTypes = {
     index: PropTypes.number.isRequired,
     seg: PropTypes.object.isRequired,
-    onClick: PropTypes.func
+    onClick: PropTypes.func,
+    isRemote: PropTypes.any
 };
