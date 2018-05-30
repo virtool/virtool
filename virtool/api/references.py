@@ -113,11 +113,70 @@ async def get_update(req):
     release = await virtool.db.references.check_for_remote_update(req.app, ref_id)
 
     return json_response(release)
+
+
+@routes.post("/api/refs/{ref_id}/updates", schema={
+    "release_id": {
+        "type": "string"
+    }
+})
+async def update(req):
+    app = req.app
+    db = app["db"]
+
+    release_id = req["data"].get("release_id", None)
+
     ref_id = req.match_info["ref_id"]
 
-    update = await virtool.db.references.check_for_remote_update(req.app, ref_id)
+    if not await db.references.count({"_id": ref_id}):
+        return not_found()
 
-    return json_response(update)
+    user_id = req["client"].user_id
+
+    created_at = virtool.utils.timestamp()
+
+    process = await virtool.db.processes.register(db, "update_remote_reference")
+
+    if release_id:
+        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
+
+        release = await virtool.github.get_release(
+            app["settings"],
+            app["client"],
+            remotes_from["slug"],
+            release_id=release_id
+        )
+    else:
+        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    update_subdocument = virtool.db.references.create_update_subdocument(
+        created_at,
+        release,
+        user_id
+    )
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            "updates": update_subdocument
+        },
+        "$set": {
+            "process": {
+                "id": process["id"]
+            }
+        }
+    })
+
+    await aiojobs.aiohttp.spawn(req, virtool.db.references.update_remote(
+        req.app,
+        ref_id,
+        created_at,
+        process["id"],
+        release,
+        user_id
+    ))
+
+    return json_response(update_subdocument, status=201)
+
 
 @routes.get("/api/refs/{ref_id}/otus")
 async def find_otus(req):
@@ -237,7 +296,7 @@ async def find_indexes(req):
         "type": "boolean",
         "default": False
     },
-    "version": {
+    "release_id": {
         "type": "string"
     }
 })
@@ -251,7 +310,7 @@ async def create(req):
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
     remote_from = data.get("remote_from", None)
-    version = data.get("version", None)
+    release_id = data.get("release_id", None)
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
@@ -313,12 +372,13 @@ async def create(req):
         ))
 
     elif remote_from:
+        release_id = 7917374
 
         release = await virtool.github.get_release(
             settings,
             req.app["client"],
             remote_from,
-            version=version
+            release_id=release_id
         )
 
         release = virtool.github.format_release(release)
