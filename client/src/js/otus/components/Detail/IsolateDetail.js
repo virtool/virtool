@@ -59,7 +59,7 @@ export class IsolateDetail extends React.Component {
 
         let modifyIcons;
 
-        if (this.props.canModify) {
+        if (this.props.canModify && !this.props.isRemote) {
             modifyIcons = (
                 <span>
                     <Icon
@@ -150,7 +150,8 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: state.account.administrator
+    canModify: state.account.administrator,
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = (dispatch) => ({

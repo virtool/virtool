@@ -53,7 +53,7 @@ export function* cloneReference (action) {
 export function* remoteReference () {
     yield setPending(apiCall(
         referenceAPI.remoteReference,
-        { name: "Official Virtool Reference", remote_from: "virtool/virtool-database" },
+        { remote_from: "virtool/virtool-database" },
         REMOTE_REFERENCE
     ));
 }

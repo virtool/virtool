@@ -34,12 +34,12 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remote_from, created_at, user } = this.props.detail;
+        const { name, id, remotes_from, created_at, user } = this.props.detail;
 
         let headerIcon;
 
         if (this.props.pathname === `/refs/${id}/manage`) {
-            headerIcon = remote_from
+            headerIcon = remotes_from
                 ? (
                     <Icon
                         bsStyle="default"

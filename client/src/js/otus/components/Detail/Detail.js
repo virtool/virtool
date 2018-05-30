@@ -37,21 +37,20 @@ class OTUDetail extends React.Component {
 
     render = () => {
 
-        if (this.props.detail === null ||
-            this.props.detail.id !== this.props.match.params.otuId ||
-            this.props.refDetail === null
+        if (this.props.detail === null
+            || this.props.detail.id !== this.props.match.params.otuId
+            || this.props.refDetail === null
         ) {
             return <LoadingPlaceholder />;
         }
 
-        const otuId = this.props.detail.id;
         const refId = this.props.detail.reference.id;
-
-        const { name, abbreviation } = this.props.detail;
+        const { id, name, abbreviation } = this.props.detail;
 
         let iconButtons = [];
+        let modifyOTUcomponents;
 
-        if (this.props.canModify) {
+        if (this.props.canModify && !this.props.refDetail.remotes_from) {
             iconButtons = (
                 <span>
                     <small key="edit-icon" style={{paddingLeft: "5px"}}>
@@ -74,6 +73,13 @@ class OTUDetail extends React.Component {
                         />
                     </small>
                 </span>
+            );
+
+            modifyOTUcomponents = (
+                <div>
+                    <EditOTU otuId={id} name={name} abbreviation={abbreviation} />
+                    <RemoveOTU otuId={id} otuName={name} history={this.props.history} />
+                </div>
             );
         }
 
@@ -121,19 +127,19 @@ class OTUDetail extends React.Component {
                 </h3>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/otu`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${id}/otu`}>
                         <NavItem>
                             OTU
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/schema`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${id}/schema`}>
                         <NavItem>
                             Schema
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/refs/${refId}/otus/${otuId}/history`}>
+                    <LinkContainer to={`/refs/${refId}/otus/${id}/history`}>
                         <NavItem>
                             History
                         </NavItem>
@@ -141,11 +147,10 @@ class OTUDetail extends React.Component {
 
                 </Nav>
 
-                <EditOTU otuId={otuId} name={name} abbreviation={abbreviation} />
-                <RemoveOTU otuId={otuId} otuName={name} history={this.props.history} />
+                {modifyOTUcomponents}
 
                 <Switch>
-                    <Redirect from="/refs/:refId/otus/:otuId" to={`/refs/${refId}/otus/${otuId}/otu`} exact />
+                    <Redirect from="/refs/:refId/otus/:otuId" to={`/refs/${refId}/otus/${id}/otu`} exact />
                     <Route path="/refs/:refId/otus/:otuId/otu" component={OTUSection} />
                     <Route path="/refs/:refId/otus/:otuId/history" component={History} />
                     <Route path="/refs/:refId/otus/:otuId/schema" component={Schema} />
@@ -158,7 +163,7 @@ class OTUDetail extends React.Component {
 const mapStateToProps = state => ({
     detail: state.otus.detail,
     canModify: state.account.administrator,
-    refDetail: state.otus.detail
+    refDetail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({
