@@ -58,10 +58,10 @@ export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );
 
-export const addUser = ({ refId, user }) => (
-    Request.post(`/api/refs/${refId}/users`)
-        .send({ user })
-);
+export const addUser = ({ refId, user }) => {
+    return Request.post(`/api/refs/${refId}/users`)
+        .send(user);
+};
 
 export const editUser = ({ refId, userId, update }) => (
     Request.patch(`/api/refs/${refId}/users/${userId}`)

@@ -1,28 +1,42 @@
 import React from "react";
 import { Panel } from "react-bootstrap";
 import { transform } from "lodash-es";
-import { ListGroupItem, Icon } from "../../../base";
+import { ListGroupItem, Icon, Identicon, Flex, FlexItem } from "../../../base";
 
-const UserEntry = ({ onEdit, onRemove, onToggleSelect, id, permissions, isSelected }) => (
-    <div>
+const UserEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, permissions, isSelected }) => (
+    <div style={{marginBottom: "-1px"}}>
         <ListGroupItem key={id} onClick={() => onToggleSelect(id)}>
-            <div style={{textAlign: "right"}}>
-                <div style={{float: "left"}}>{id}</div>
-                {onRemove
-                    ? (
-                        <Icon
-                            name="minus-circle"
-                            bsStyle="danger"
-                            tip="Remove Member"
-                            onClick={() => onRemove(id)}
-                        />)
-                    : null}
-
-            </div>
+            <Flex alignItems="center">
+                <Identicon size={32} hash={identicon} />
+                <FlexItem pad={10}>
+                    {id}
+                </FlexItem>
+                <FlexItem grow={1} shrink={1}>
+                    {onRemove
+                        ? (
+                            <Icon
+                                name="minus-circle"
+                                bsStyle="danger"
+                                tip="Remove Member"
+                                pullRight
+                                onClick={() => onRemove(id)}
+                            />)
+                        : null}
+                    {add
+                        ? (
+                            <Icon
+                                name="plus-circle"
+                                bsStyle="success"
+                                tip="Selected Member"
+                                pullRight
+                            />)
+                        : null}
+                </FlexItem>
+            </Flex>
         </ListGroupItem>
         {isSelected
             ? (
-                <Panel>
+                <Panel style={{margin: "0"}}>
                     <Panel.Body>
                         <label>Permissions</label>
                         {transform(permissions, (result, value, key) => {

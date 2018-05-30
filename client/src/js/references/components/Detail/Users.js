@@ -1,13 +1,45 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
-import { map, filter, some } from "lodash-es";
+import { map, filter, some, reduce } from "lodash-es";
 
 import UserEntry from "./UserEntry";
 import AddReferenceUser from "./AddUser";
-import { Flex, FlexItem, Icon } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 import { addReferenceUser, editReferenceUser, removeReferenceUser } from "../../../references/actions";
 import { listUsers } from "../../../users/actions";
+
+const getOtherUsers = (userList, users) => {
+    const otherUsers = filter(userList, user => {
+        return !some(users, takenUser => {
+            return user.id === takenUser.id;
+        });
+    });
+
+    return otherUsers;
+};
+
+const getCurrentUsers = (userList, users) => {
+
+    const takenUsers = filter(userList, user => {
+        return some(users, takenUser => {
+            return user.id === takenUser.id;
+        });
+    });
+
+    const currentList = users.slice();
+
+    map(takenUsers, (takenUser, index) => {
+        reduce(takenUser, (result, value, key) => {
+            if (key === "identicon") {
+                result[key] = value;
+            }
+            return result;
+        }, currentList[index]);
+    });
+
+    return currentList;
+};
 
 const getInitialState = () => ({
     value: "",
@@ -47,13 +79,8 @@ class ReferenceUsers extends React.Component {
         }
     };
 
-    handleSubmit = (e) => {
-        e.preventDefault();
-
-        const newSourceType = "";
-
-        const newSourceTypes = this.props.sourceTypesArray.concat([newSourceType]);
-        this.props.onUpdate(newSourceTypes, this.props.isGlobalSettings, this.props.refId);
+    handleAdd = (newUser) => {
+        this.props.onAdd(this.props.refId, newUser);
         this.setState(getInitialState());
     };
 
@@ -63,22 +90,22 @@ class ReferenceUsers extends React.Component {
 
     render () {
 
-        const otherUsers = filter(this.props.userList, user => {
-            return !some(this.props.users, takenUser => {
-                return user.id === takenUser.id;
-            });
-        });
+        if (!this.props.userList) {
+            return <LoadingPlaceholder />;
+        }
 
-        const userIds = map(otherUsers, "id");
+        const otherUsers = getOtherUsers(this.props.userList, this.props.users);
+        const currentUsers = getCurrentUsers(this.props.userList, this.props.users);
 
-        const listComponents = this.props.users.length
-            ? map(this.props.users, user =>
+        const listComponents = currentUsers.length
+            ? map(currentUsers, user =>
                 <UserEntry
                     key={user.id}
                     onEdit={this.edit}
                     onRemove={this.remove}
                     onToggleSelect={this.toggleUser}
                     id={user.id}
+                    identicon={user.identicon}
                     permissions={{
                         build: user.build,
                         modify: user.modify,
@@ -128,7 +155,7 @@ class ReferenceUsers extends React.Component {
                     <Col smHidden md={6} />
                 </Row>
 
-                <AddReferenceUser show={this.state.showAdd} userList={userIds} onAdd={this.add} onHide={this.handleHide} />
+                <AddReferenceUser show={this.state.showAdd} userList={otherUsers} onAdd={this.handleAdd} onHide={this.handleHide} />
             </div>
         );
     }
@@ -143,8 +170,9 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onAdd: (refId, users) => {
-        dispatch(addReferenceUser(refId, users));
+    onAdd: (refId, user) => {
+        console.log("inside onAdd dispatch: ", refId, user);
+        dispatch(addReferenceUser(refId, user));
     },
 
     onEdit: (refId, userId, update) => {
