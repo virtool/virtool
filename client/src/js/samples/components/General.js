@@ -1,5 +1,4 @@
 import React from "react";
-import Moment from "moment";
 import Numeral from "numeral";
 import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
@@ -22,15 +21,6 @@ const SampleDetailGeneral = (props) => (
                 )}
 
                 <IDRow id={props.id} />
-
-                <tr>
-                    <th>Created</th>
-                    <td>{Moment(props.created_at).calendar()}</td>
-                </tr>
-                <tr>
-                    <th>Created By</th>
-                    <td>{props.userId}</td>
-                </tr>
             </tbody>
         </table>
 

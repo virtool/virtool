@@ -44,30 +44,34 @@ export const PageHint = ({ page, count, totalCount, perPage = 15, pullRight = tr
  * @param foundCount {count} the number of documents found by the current query
  * @param totalCount {count} the total number of documents
  */
-export const ViewHeader = ({ title, page, count, foundCount, totalCount }) => (
+export const ViewHeader = ({ title, page, count, foundCount, totalCount, children }) => (
     <h3 className="view-header">
         <Helmet>
             <title>{title}</title>
         </Helmet>
-        <Flex alignItems="flex-end">
-            <FlexItem grow={0} shrink={0}>
-                <strong>{title}</strong> <Badge>{totalCount}</Badge>
-            </FlexItem>
-            <FlexItem grow={1} shrink={0}>
-                <PageHint
-                    page={page}
-                    count={count}
-                    totalCount={foundCount}
-                />
-            </FlexItem>
-        </Flex>
+        {foundCount ? (
+            <Flex alignItems="flex-end">
+                <FlexItem grow={0} shrink={0}>
+                    <strong>{title}</strong> <Badge>{totalCount}</Badge>
+                </FlexItem>
+                <FlexItem grow={1} shrink={0}>
+                    <PageHint
+                        page={page}
+                        count={count}
+                        totalCount={foundCount}
+                    />
+                </FlexItem>
+            </Flex>
+        ) : null}
+        {children}
     </h3>
 );
 
 ViewHeader.propTypes = {
     title: PropTypes.string,
-    page: PropTypes.number.isRequired,
-    count: PropTypes.number.isRequired,
-    foundCount: PropTypes.number.isRequired,
-    totalCount: PropTypes.number
+    page: PropTypes.number,
+    count: PropTypes.number,
+    foundCount: PropTypes.number,
+    totalCount: PropTypes.number,
+    children: PropTypes.node
 };

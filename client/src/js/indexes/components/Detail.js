@@ -1,5 +1,4 @@
 import React from "react";
-import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -8,7 +7,7 @@ import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
 import { getIndex } from "../actions";
-import { LoadingPlaceholder } from "../../base";
+import { LoadingPlaceholder, ViewHeader } from "../../base";
 
 class IndexDetail extends React.Component {
 
@@ -29,9 +28,7 @@ class IndexDetail extends React.Component {
 
         return (
             <div>
-                <Helmet>
-                    <title>{`Index ${version} - Indexes - Virtool`}</title>
-                </Helmet>
+                <ViewHeader title={`Index ${version} - Indexes - Virtool`} />
 
                 <Breadcrumb>
                     <Breadcrumb.Item>

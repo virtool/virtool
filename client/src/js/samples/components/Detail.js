@@ -1,5 +1,5 @@
 import React from "react";
-import Helmet from "react-helmet";
+import Moment from "moment";
 import { includes } from "lodash-es";
 import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -13,7 +13,7 @@ import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 import { getSample, showRemoveSample, hideSampleModal } from "../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader } from "../../base";
 import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
@@ -53,7 +53,7 @@ class SampleDetail extends React.Component {
                     <small style={{paddingLeft: "5px"}}>
                         <Icon
                             bsStyle="warning"
-                            name="pencil"
+                            name="pencil-alt"
                             tip="Edit Sample"
                             onClick={this.props.showEdit}
                         />
@@ -73,12 +73,11 @@ class SampleDetail extends React.Component {
             );
         }
 
+        const { created_at, user } = this.props.detail;
+
         return (
             <div>
-                <Helmet>
-                    <title>{`${detail.name} - Samples`}</title>
-                </Helmet>
-                <h3 style={{marginBottom: "20px"}}>
+                <ViewHeader title={`${detail.name} - Samples`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <strong>
@@ -89,7 +88,10 @@ class SampleDetail extends React.Component {
                         {editIcon}
                         {removeIcon}
                     </Flex>
-                </h3>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created {Moment(created_at).calendar()} by {user.id}
+                    </div>
+                </ViewHeader>
 
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/samples/${sampleId}/general`}>

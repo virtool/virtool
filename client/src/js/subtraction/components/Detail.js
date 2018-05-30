@@ -1,5 +1,4 @@
 import React from "react";
-import Helmet from "react-helmet";
 import Numeral from "numeral";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
@@ -8,7 +7,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../base";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
@@ -79,7 +78,7 @@ class SubtractionDetail extends React.Component {
 
             const editIcon = (
                 <Icon
-                    name="pencil"
+                    name="pencil-alt"
                     bsStyle="warning"
                     onClick={() => this.setState({showEdit: true})}
                     pullRight
@@ -88,10 +87,7 @@ class SubtractionDetail extends React.Component {
 
             return (
                 <div>
-                    <Helmet>
-                        <title>{`${data.id} - Subtraction`}</title>
-                    </Helmet>
-                    <h3 className="view-header">
+                    <ViewHeader title={`${data.id} - Subtraction`}>
                         <Flex alignItems="flex-end">
                             <FlexItem grow={0} shrink={0}>
                                 <strong>{data.id}</strong>
@@ -107,7 +103,7 @@ class SubtractionDetail extends React.Component {
                                 </small>
                             </FlexItem>
                         </Flex>
-                    </h3>
+                    </ViewHeader>
 
                     <Table bordered>
                         <tbody>

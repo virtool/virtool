@@ -1,5 +1,4 @@
 import React from "react";
-import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -14,7 +13,7 @@ import RemoveOTU from "./RemoveOTU";
 import Schema from "./Schema";
 import { getReference } from "../../../references/actions";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader } from "../../../base";
 
 const OTUSection = ({ match }) => (
     <div>
@@ -80,9 +79,7 @@ class OTUDetail extends React.Component {
 
         return (
             <div>
-                <Helmet>
-                    <title>{`${name} - OTU`}</title>
-                </Helmet>
+                <ViewHeader title={`${name} - OTU`} />
 
                 <Breadcrumb>
                     <Breadcrumb.Item>

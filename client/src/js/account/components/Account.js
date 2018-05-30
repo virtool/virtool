@@ -1,10 +1,10 @@
 import React from "react";
-import Helmet from "react-helmet";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 
+import { ViewHeader } from "../../base";
 import { getAccount } from "../actions";
 import AccountGeneral from "./General";
 import AccountSettings from "./Settings";
@@ -20,12 +20,9 @@ class Account extends React.Component {
 
         return (
             <div className="container-noside">
-                <Helmet>
-                    <title>Account</title>
-                </Helmet>
-                <h3 className="view-header">
+                <ViewHeader title="Account">
                     <strong>Account</strong>
-                </h3>
+                </ViewHeader>
                 <Nav bsStyle="tabs">
                     <LinkContainer to="/account/general">
                         <NavItem>General</NavItem>
