@@ -115,7 +115,7 @@ class ReferenceUsers extends React.Component {
                     }}
                     isSelected={this.state.selectedUser === user.id}
                 />)
-            : <div>No members assigned</div>;
+            : <div>No users assigned</div>;
 
         return (
             <div>
@@ -123,7 +123,7 @@ class ReferenceUsers extends React.Component {
                     <Col xs={6} md={6}>
                         <Flex alignItems="center">
                             <FlexItem grow={1} >
-                                <h5><strong>Members</strong></h5>
+                                <h5><strong>Users</strong></h5>
                             </FlexItem>
                             <FlexItem>
                                 <Icon
