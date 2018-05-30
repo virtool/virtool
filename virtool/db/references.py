@@ -18,24 +18,34 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
+    "remotes_from",
     "created_at",
     "data_type",
+    "imported_from",
+    "internal_control",
+    "latest_build",
     "name",
     "organism",
-    "public",
-    "user",
-    "internal_control",
-    "cloned_from",
-    "imported_from",
-    "remotes_from",
     "process",
-    "latest_build",
-    "unbuilt_count"
+    "public",
+    "release",
+    "remotes_from",
+    "unbuilt_count",
+    "updates",
+    "user"
 ]
 
 
-async def add_group_or_user(db, ref_id, field, data):
+def processor(document):
+    try:
+        document["installed"] = document.pop("updates")[-1]
+    except (KeyError, IndexError):
+        pass
 
+    return virtool.utils.base_processor(document)
+
+
+async def add_group_or_user(db, ref_id, field, data):
     document = await db.references.find_one({"_id": ref_id}, [field])
 
     if not document:
