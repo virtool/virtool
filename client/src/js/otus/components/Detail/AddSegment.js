@@ -66,7 +66,7 @@ class AddSegment extends React.Component {
                     />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit} >
+                    <Button bsStyle="primary" onClick={this.handleSubmit} >
                         Save
                     </Button>
                 </Modal.Footer>

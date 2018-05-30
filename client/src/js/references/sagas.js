@@ -11,7 +11,13 @@ import {
     EDIT_REFERENCE,
     IMPORT_REFERENCE,
     CLONE_REFERENCE,
-    REMOTE_REFERENCE
+    REMOTE_REFERENCE,
+    ADD_REFERENCE_USER,
+    EDIT_REFERENCE_USER,
+    REMOVE_REFERENCE_USER,
+    ADD_REFERENCE_GROUP,
+    EDIT_REFERENCE_GROUP,
+    REMOVE_REFERENCE_GROUP
 } from "../actionTypes";
 
 export function* listReferences (action) {
@@ -58,6 +64,54 @@ export function* remoteReference () {
     ));
 }
 
+export function* addRefUser (action) {
+    yield apiCall(referenceAPI.addUser, action, ADD_REFERENCE_USER);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
+export function* editRefUser (action) {
+    yield apiCall(referenceAPI.editUser, action, EDIT_REFERENCE_USER);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
+export function* removeRefUser (action) {
+    yield apiCall(referenceAPI.removeUser, action, REMOVE_REFERENCE_USER);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
+export function* addRefGroup (action) {
+    yield apiCall(referenceAPI.addGroup, action, ADD_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
+export function* editRefGroup (action) {
+    yield apiCall(referenceAPI.editGroup, action, EDIT_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
+export function* removeRefGroup (action) {
+    yield apiCall(referenceAPI.removeGroup, action, REMOVE_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeEvery(EDIT_REFERENCE.REQUESTED, editReference);
@@ -67,4 +121,10 @@ export function* watchReferences () {
     yield takeLatest(IMPORT_REFERENCE.REQUESTED, importReference);
     yield takeLatest(CLONE_REFERENCE.REQUESTED, cloneReference);
     yield takeLatest(REMOTE_REFERENCE.REQUESTED, remoteReference);
+    yield takeEvery(ADD_REFERENCE_USER.REQUESTED, addRefUser);
+    yield takeEvery(EDIT_REFERENCE_USER.REQUESTED, editRefUser);
+    yield takeEvery(REMOVE_REFERENCE_USER.REQUESTED, removeRefUser);
+    yield takeEvery(ADD_REFERENCE_GROUP.REQUESTED, addRefGroup);
+    yield takeEvery(EDIT_REFERENCE_GROUP.REQUESTED, editRefGroup);
+    yield takeEvery(REMOVE_REFERENCE_GROUP.REQUESTED, removeRefGroup);
 }
