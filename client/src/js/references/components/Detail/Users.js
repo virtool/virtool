@@ -67,8 +67,8 @@ class ReferenceUsers extends React.Component {
         this.props.onEdit(this.props.refId, user, update);
     };
 
-    remove = (user) => {
-        console.log("remove ", user);
+    handleRemove = (userId) => {
+        this.props.onRemove(this.props.refId, userId);
     };
 
     toggleUser = (user) => {
@@ -102,7 +102,7 @@ class ReferenceUsers extends React.Component {
                 <UserEntry
                     key={user.id}
                     onEdit={this.edit}
-                    onRemove={this.remove}
+                    onRemove={this.handleRemove}
                     onToggleSelect={this.toggleUser}
                     id={user.id}
                     identicon={user.identicon}

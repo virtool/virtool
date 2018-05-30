@@ -66,6 +66,10 @@ export function* remoteReference () {
 
 export function* addRefUser (action) {
     yield apiCall(referenceAPI.addUser, action, ADD_REFERENCE_USER);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
 }
 
 export function* editRefUser (action) {
@@ -78,6 +82,10 @@ export function* editRefUser (action) {
 
 export function* removeRefUser (action) {
     yield apiCall(referenceAPI.removeUser, action, REMOVE_REFERENCE_USER);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
 }
 
 export function* addRefGroup (action) {
