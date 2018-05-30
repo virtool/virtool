@@ -51,7 +51,14 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["name", "data_type"]))
 
-    data = await paginate(db.references, db_query, req.query, sort="name", projection=virtool.db.references.PROJECTION)
+    data = await paginate(
+        db.references,
+        db_query,
+        req.query,
+        sort="name",
+        processor=virtool.db.references.processor,
+        projection=virtool.db.references.PROJECTION
+    )
 
     for d in data["documents"]:
         latest_build, otu_count, unbuilt_count = await asyncio.gather(
