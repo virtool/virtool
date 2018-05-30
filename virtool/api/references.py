@@ -103,6 +103,16 @@ async def get(req):
 
 @routes.get("/api/refs/{ref_id}/update")
 async def get_update(req):
+    """
+    Get the latest update from GitHub and return it. Also updates the reference document. This is the only way of doing
+    so without waiting for an automatic refresh every 10 minutes.
+
+    """
+    ref_id = req.match_info["ref_id"]
+
+    release = await virtool.db.references.check_for_remote_update(req.app, ref_id)
+
+    return json_response(release)
     ref_id = req.match_info["ref_id"]
 
     update = await virtool.db.references.check_for_remote_update(req.app, ref_id)
