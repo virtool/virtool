@@ -45,6 +45,7 @@ class InternalControl extends React.Component {
                                     selected={selected}
                                     options={this.props.readahead || []}
                                     renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
+                                    disabled={!!this.props.isRemote}
                                 />
                             </Panel.Body>
                         </Panel>
@@ -59,8 +60,9 @@ const mapStateToProps = (state) => ({
     settings: state.settings.data,
     readahead: state.settings.readahead,
     readaheadPending: state.settings.readaheadPending,
-    internalControlId: state.references.detail.internal_control ? state.references.detail.internal_control : null,
-    refId: state.references.detail.id
+    internalControlId: state.references.detail.internal_control || null,
+    refId: state.references.detail.id,
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = (dispatch) => ({

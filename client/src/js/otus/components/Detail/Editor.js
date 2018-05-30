@@ -80,7 +80,7 @@ const IsolateEditor = (props) => {
                     </Badge>
                 </FlexItem>
 
-                {props.canModify ? (
+                {props.canModify && !props.isRemote ? (
                     <Icon
                         bsStyle="primary"
                         name="plus-square"
@@ -111,7 +111,8 @@ const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     isolates: state.otus.detail.isolates,
     activeIsolateId: state.otus.activeIsolateId,
-    canModify: state.account.administrator
+    canModify: state.account.administrator,
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = dispatch => ({

@@ -44,7 +44,7 @@ const OTUToolbar = ({ canModify, onFind, term, onFilter, search }) => (
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
     search: state.router.location.search,
-    canModify: state.account.administrator
+    canModify: (state.account.administrator && !state.references.detail.remotes_from)
 });
 
 const mapDispatchToProps = (dispatch) => ({

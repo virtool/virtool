@@ -121,6 +121,7 @@ class Schema extends React.Component {
                                     seg={segment}
                                     index={index}
                                     onClick={this.handleSegment}
+                                    isRemote={this.props.isRemote}
                                 />
                             </div>
                             {provided.placeholder}
@@ -134,15 +135,16 @@ class Schema extends React.Component {
 
         return (
             <div>
-                <Button
-                    bsStyle="primary"
-                    icon="new-entry"
-                    onClick={this.handleAddNew}
-                    style={{marginBottom: "10px"}}
-                    block
-                >
-                    Add Segment
-                </Button>
+                {this.props.isRemote ? null : (
+                    <Button
+                        bsStyle="primary"
+                        icon="new-entry"
+                        onClick={this.handleAddNew}
+                        style={{marginBottom: "10px"}}
+                        block
+                    >
+                        Add Segment
+                    </Button>)}
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
@@ -183,7 +185,8 @@ class Schema extends React.Component {
 const mapStateToProps = (state) => ({
     schema: state.otus.detail.schema,
     detail: state.otus.detail,
-    otuId: state.otus.detail.id
+    otuId: state.otus.detail.id,
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = (dispatch) => ({
