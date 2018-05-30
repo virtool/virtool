@@ -117,9 +117,9 @@ async def check_for_remote_update(app, ref_id):
 
         return document.get("release", None)
 
-    release = virtool.github.format_release(release)
-
     if release:
+        release = virtool.github.format_release(release)
+
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
                 "release": release,
@@ -774,7 +774,8 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         db,
         process_id,
         release["size"],
-        factor=0.3
+        factor=0.3,
+        increment=0.1
     )
 
     import_data = await download_and_parse_release(
@@ -838,7 +839,7 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
     joined = await virtool.db.otus.join(db, otu_id)
 
     # Build a ``description`` field for the otu creation change document.
-    description = "{}{}d {}".format(verb.capitalize(), "e" if verb == "import" else "", joined["name"])
+    description = "{}{}d {}".format(verb.capitalize(), "" if verb[-1] == "e" else "e", joined["name"])
 
     abbreviation = joined.get("abbreviation", None)
 
@@ -915,10 +916,26 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
     return document["_id"]
 
 
-async def update_joined_otu(db, otu, created_at, ref_id, user_id):
-    remote_id = otu.pop("_id")
+async def refresh_remotes(app):
+    db = app["db"]
 
-    old = await virtool.db.otus.join(db, remote_id)
+    try:
+        while True:
+            for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
+                await check_for_remote_update(
+                    app,
+                    ref_id
+                )
+
+            await asyncio.sleep(600, loop=app.loop)
+    except asyncio.CancelledError:
+        pass
+
+
+async def update_joined_otu(db, otu, created_at, ref_id, user_id):
+    remote_id = otu["_id"]
+
+    old = await virtool.db.otus.join(db, {"remote.id": remote_id})
 
     if old:
         sequence_updates = list()
@@ -940,42 +957,28 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
 
                 sequence_updates.append(sequence_update)
 
-        await db.otus.find_one_and_update({"reference.id": ref_id, "remote.id": remote_id}, {
+        await db.otus.update_one({"reference.id": ref_id, "remote.id": remote_id}, {
+            "$inc": {
+                "version": 1
+            },
             "$set": {
                 "abbreviation": otu["abbreviation"],
                 "name": otu["name"],
                 "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"],
-                "version": otu["version"]
+                "isolates": otu["isolates"]
             }
         })
-    else:
-        return await insert_joined_otu(
-            db,
-            otu,
-            created_at,
-            ref_id,
-            user_id,
-            remote=True
-        )
 
-    return old
+        return old
 
-
-async def refresh_remotes(app):
-    db = app["db"]
-
-    try:
-        while True:
-            for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
-                await check_for_remote_update(
-                    app,
-                    ref_id
-                )
-
-            await asyncio.sleep(600, loop=app.loop)
-    except asyncio.CancelledError:
-        pass
+    return await insert_joined_otu(
+        db,
+        otu,
+        created_at,
+        ref_id,
+        user_id,
+        remote=True
+    )
 
 
 async def update_remote(app, ref_id, created_at, process_id, release, user_id):
