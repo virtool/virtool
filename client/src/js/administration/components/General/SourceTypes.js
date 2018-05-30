@@ -71,9 +71,10 @@ class SourceTypes extends React.Component {
 
     render () {
 
-        const isDisabled = (this.props.isGlobalSettings && this.props.isAdmin) || this.props.restrictSourceTypes;
+        let isDisabled = (this.props.isGlobalSettings && this.props.isAdmin) || this.props.restrictSourceTypes;
+        isDisabled = this.props.isRemote ? false : isDisabled;
 
-        const enableCheckbox = this.props.isGlobalSettings
+        const enableCheckbox = this.props.isGlobalSettings || this.props.isRemote
             ? null
             : (
                 <FlexItem>
@@ -174,13 +175,15 @@ const mapStateToProps = (state) => {
 
     const restrictSourceTypes = state.references.detail ? state.references.detail.restrict_source_types : null;
     const refId = state.references.detail ? state.references.detail.id : null;
+    const isRemote = state.references.detail ? state.references.detail.remotes_from : null;
 
     return {
         isAdmin: state.account.administrator,
         isGlobalSettings,
         restrictSourceTypes,
         refId,
-        sourceTypesArray
+        sourceTypesArray,
+        isRemote
     };
 };
 
