@@ -157,7 +157,7 @@ async def find(db, names, term, req_query, verified, ref_id=None):
     return data
 
 
-async def join(db, otu_id, document=None):
+async def join(db, query, document=None):
     """
     Join the otu associated with the supplied ``otu_id`` with its sequences. If a otu entry is also passed,
     the database will not be queried for the otu based on its id.
@@ -165,8 +165,8 @@ async def join(db, otu_id, document=None):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param otu_id: the id of the otu to join.
-    :type otu_id: str
+    :param query: the id of the otu to join or a Mongo query.
+    :type query: Union[dict,str]
 
     :param document: use this otu document as a basis for the join instead finding it using the otu id.
     :type document: dict
@@ -176,13 +176,13 @@ async def join(db, otu_id, document=None):
 
     """
     # Get the otu entry if a ``document`` parameter was not passed.
-    document = document or await db.otus.find_one(otu_id)
+    document = document or await db.otus.find_one(query)
 
     if document is None:
         return None
 
     # Get the sequence entries associated with the isolate ids.
-    sequences = await db.sequences.find({"otu_id": otu_id}).to_list(None) or list()
+    sequences = await db.sequences.find({"otu_id": document["_id"]}).to_list(None) or list()
 
     # Merge the sequence entries into the otu entry.
     return virtool.otus.merge_otu(document, sequences)
