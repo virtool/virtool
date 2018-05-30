@@ -3,11 +3,11 @@ import { Panel } from "react-bootstrap";
 import { transform } from "lodash-es";
 import { ListGroupItem, Icon, Identicon, Flex, FlexItem } from "../../../base";
 
-const UserEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, permissions, isSelected }) => (
+const MemberEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, permissions, isSelected }) => (
     <div style={{marginBottom: "-1px"}}>
         <ListGroupItem key={id} onClick={() => onToggleSelect(id)}>
             <Flex alignItems="center">
-                <Identicon size={32} hash={identicon} />
+                {identicon ? <Identicon size={32} hash={identicon} /> : null}
                 <FlexItem pad={10}>
                     {id}
                 </FlexItem>
@@ -59,4 +59,4 @@ const UserEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, permi
     </div>
 );
 
-export default UserEntry;
+export default MemberEntry;

@@ -1,12 +1,12 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 import { map } from "lodash-es";
-import { Button } from "../../../base";
+import { Button, NoneFound } from "../../../base";
 
-import UserEntry from "./UserEntry";
+import MemberEntry from "./MemberEntry";
 
 const getInitialState = () => ({
-    selectedUser: "",
+    selected: "",
     id: "",
     build: false,
     modify: false,
@@ -14,7 +14,7 @@ const getInitialState = () => ({
     remove: false
 });
 
-export default class AddReferenceUser extends React.Component {
+export default class AddReferenceMember extends React.Component {
 
     constructor (props) {
         super(props);
@@ -23,7 +23,7 @@ export default class AddReferenceUser extends React.Component {
 
     handleChange = (id, key, value) => {
         this.setState({
-            id: id,
+            id,
             [key]: value
         });
     }
@@ -33,13 +33,7 @@ export default class AddReferenceUser extends React.Component {
             return;
         }
 
-        this.props.onAdd({
-            user_id: this.state.id,
-            build: this.state.build,
-            modify: this.state.modify,
-            modify_otu: this.state.modify_otu,
-            remove: this.state.remove
-        });
+        this.props.onAdd({...this.state});
     }
 
     handleExited = () => {
@@ -47,9 +41,9 @@ export default class AddReferenceUser extends React.Component {
         this.setState(getInitialState());
     }
 
-    toggleUser = (user) => {
-        if (this.state.selectedUser !== user || !this.state.selectedUser) {
-            this.setState({ ...getInitialState(), selectedUser: user });
+    toggleMember = (member) => {
+        if (this.state.selected !== member || !this.state.selected) {
+            this.setState({ ...getInitialState(), selected: member });
         } else {
             this.setState(getInitialState());
         }
@@ -57,16 +51,16 @@ export default class AddReferenceUser extends React.Component {
 
     render () {
 
-        const listComponents = this.props.userList.length
-            ? map(this.props.userList, user =>
-                <UserEntry
-                    key={user.id}
+        const listComponents = this.props.list.length
+            ? map(this.props.list, member =>
+                <MemberEntry
+                    key={member.id}
                     onEdit={this.handleChange}
-                    onToggleSelect={this.toggleUser}
-                    add={this.state.selectedUser === user.id}
-                    id={user.id}
-                    identicon={user.identicon}
-                    permissions={this.state.selectedUser === user.id
+                    onToggleSelect={this.toggleMember}
+                    add={this.state.selected === member.id}
+                    id={member.id}
+                    identicon={member.identicon}
+                    permissions={this.state.selected === member.id
                         ? {
                             build: this.state.build,
                             modify: this.state.modify,
@@ -74,19 +68,19 @@ export default class AddReferenceUser extends React.Component {
                             remove: this.state.remove
                         }
                         : {
-                            build: user.build,
-                            modify: user.modify,
-                            modify_otu: user.modify_otu,
-                            remove: user.remove
+                            build: member.build,
+                            modify: member.modify,
+                            modify_otu: member.modify_otu,
+                            remove: member.remove
                         }}
-                    isSelected={this.state.selectedUser === user.id}
+                    isSelected={this.state.selected === member.id}
                 />)
-            : <div>No users available</div>;
+            : <NoneFound noun="members" />;
 
         return (
             <Modal show={this.props.show} onHide={this.handleExited}>
                 <Modal.Header closeButton>
-                    Add User
+                    Add Member
                 </Modal.Header>
                 <Modal.Body style={{height: "300px", overflowY: "auto"}}>
                     {listComponents}

@@ -90,14 +90,26 @@ export function* removeRefUser (action) {
 
 export function* addRefGroup (action) {
     yield apiCall(referenceAPI.addGroup, action, ADD_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
 }
 
 export function* editRefGroup (action) {
     yield apiCall(referenceAPI.editGroup, action, EDIT_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
 }
 
 export function* removeRefGroup (action) {
     yield apiCall(referenceAPI.removeGroup, action, REMOVE_REFERENCE_GROUP);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
 }
 
 export function* watchReferences () {

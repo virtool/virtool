@@ -3,40 +3,35 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { map, filter, some, reduce } from "lodash-es";
 
-import UserEntry from "./UserEntry";
-import AddReferenceUser from "./AddUser";
+import MemberEntry from "./MemberEntry";
+import AddReferenceMember from "./AddMember";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 import { addReferenceUser, editReferenceUser, removeReferenceUser } from "../../../references/actions";
 import { listUsers } from "../../../users/actions";
 
 const getOtherUsers = (userList, users) => {
-    const otherUsers = filter(userList, user => {
-        return !some(users, takenUser => {
-            return user.id === takenUser.id;
-        });
-    });
-
+    const otherUsers = filter(userList, user => (
+        !some(users, ["id", user.id])
+    ));
     return otherUsers;
 };
 
 const getCurrentUsers = (userList, users) => {
 
-    const takenUsers = filter(userList, user => {
-        return some(users, takenUser => {
-            return user.id === takenUser.id;
-        });
-    });
+    const takenUsers = filter(userList, user => (
+        some(users, ["id", user.id])
+    ));
 
     const currentList = users.slice();
 
-    map(takenUsers, (takenUser, index) => {
+    map(takenUsers, (takenUser, index) => (
         reduce(takenUser, (result, value, key) => {
             if (key === "identicon") {
                 result[key] = value;
             }
             return result;
-        }, currentList[index]);
-    });
+        }, currentList[index])
+    ));
 
     return currentList;
 };
@@ -80,7 +75,13 @@ class ReferenceUsers extends React.Component {
     };
 
     handleAdd = (newUser) => {
-        this.props.onAdd(this.props.refId, newUser);
+        this.props.onAdd(this.props.refId, {
+            user_id: newUser.id,
+            build: newUser.build,
+            modify: newUser.modify,
+            modify_otu: newUser.modify_otu,
+            remove: newUser.remove
+        });
         this.setState(getInitialState());
     };
 
@@ -99,7 +100,7 @@ class ReferenceUsers extends React.Component {
 
         const listComponents = currentUsers.length
             ? map(currentUsers, user =>
-                <UserEntry
+                <MemberEntry
                     key={user.id}
                     onEdit={this.edit}
                     onRemove={this.handleRemove}
@@ -155,7 +156,12 @@ class ReferenceUsers extends React.Component {
                     <Col smHidden md={6} />
                 </Row>
 
-                <AddReferenceUser show={this.state.showAdd} userList={otherUsers} onAdd={this.handleAdd} onHide={this.handleHide} />
+                <AddReferenceMember
+                    show={this.state.showAdd}
+                    list={otherUsers}
+                    onAdd={this.handleAdd}
+                    onHide={this.handleHide}
+                />
             </div>
         );
     }
@@ -164,14 +170,12 @@ class ReferenceUsers extends React.Component {
 const mapStateToProps = (state) => ({
     refId: state.references.detail.id,
     users: state.references.detail.users,
-    groups: state.references.detail.groups,
     userList: state.users.list
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onAdd: (refId, user) => {
-        console.log("inside onAdd dispatch: ", refId, user);
         dispatch(addReferenceUser(refId, user));
     },
 

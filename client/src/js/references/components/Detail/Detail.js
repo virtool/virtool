@@ -11,6 +11,7 @@ import { LoadingPlaceholder, Icon, RelativeTime } from "../../../base";
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceUsers from "./Users";
+import ReferenceGroups from "./Groups";
 import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
@@ -21,6 +22,7 @@ const ReferenceSettings = () => (
         <SourceTypes />
         <InternalControl />
         <ReferenceUsers />
+        <ReferenceGroups />
     </div>
 );
 
