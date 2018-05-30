@@ -236,6 +236,9 @@ async def find_indexes(req):
     "public": {
         "type": "boolean",
         "default": False
+    },
+    "version": {
+        "type": "string"
     }
 })
 async def create(req):
@@ -248,6 +251,7 @@ async def create(req):
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
     remote_from = data.get("remote_from", None)
+    version = data.get("version", None)
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
@@ -309,21 +313,24 @@ async def create(req):
         ))
 
     elif remote_from:
-        document = await virtool.db.references.create_remote(
-            db,
-            settings,
-            True,
-            remote_from,
-            user_id
-        )
 
         release = await virtool.github.get_release(
             settings,
             req.app["client"],
-            remote_from
+            remote_from,
+            version=version
         )
 
         release = virtool.github.format_release(release)
+
+        document = await virtool.db.references.create_remote(
+            db,
+            settings,
+            True,
+            release,
+            remote_from,
+            user_id
+        )
 
         process = await virtool.db.processes.register(db, "remote_reference")
 
@@ -333,7 +340,7 @@ async def create(req):
 
         await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_remote(
             req.app,
-            latest_release,
+            release,
             document["_id"],
             document["created_at"],
             process["id"],
