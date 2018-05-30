@@ -12,6 +12,7 @@ def format_release(release):
     asset = release["assets"][0]
 
     return {
+        "id": release["id"],
         "name": release["name"],
         "body": release["body"],
         "etag": release["etag"],
