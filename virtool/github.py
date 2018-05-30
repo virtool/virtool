@@ -24,7 +24,7 @@ def format_release(release):
     }
 
 
-async def get_latest_release(settings, session, slug, etag=None):
+async def get_release(settings, session, slug, etag=None, version=None):
     """
     GET data from a GitHub API url.
 
@@ -40,11 +40,16 @@ async def get_latest_release(settings, session, slug, etag=None):
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
     :type etag: str
 
+    :param version: the release name to get
+    :type version: str
+
     :return: the latest release
     :rtype: Coroutine[dict]
 
     """
-    url = "{}/{}/releases/latest".format(BASE_URL, slug)
+    specifier = "tags/" + version if version else "latest"
+
+    url = "{}/{}/releases/{}".format(BASE_URL, slug, specifier)
 
     headers = dict(HEADERS)
 

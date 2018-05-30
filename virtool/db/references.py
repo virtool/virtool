@@ -85,7 +85,7 @@ async def check_for_remote_update(app, ref_id):
     etag = remotes_from.get("etag", None)
 
     try:
-        latest_release = await virtool.github.get_latest_release(
+        latest_release = await virtool.github.get_release(
             app["settings"],
             app["client"],
             remotes_from["slug"],

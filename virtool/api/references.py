@@ -300,13 +300,13 @@ async def create(req):
             user_id
         )
 
-        latest_release = await virtool.github.get_latest_release(
+        release = await virtool.github.get_release(
             settings,
             req.app["client"],
             remote_from
         )
 
-        latest_release = virtool.github.format_release(latest_release)
+        release = virtool.github.format_release(release)
 
         process = await virtool.db.processes.register(db, "remote_reference")
 
