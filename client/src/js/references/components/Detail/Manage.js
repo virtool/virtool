@@ -7,6 +7,7 @@ import { connect } from "react-redux";
 import { Link} from "react-router-dom";
 import RemoveReference from "./RemoveReference";
 import { Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, RelativeTime } from "../../../base";
+import { checkUserRefPermission } from "../../../utils";
 
 const Contributors = ({ contributors }) => {
 
@@ -165,6 +166,8 @@ class ReferenceManage extends React.Component {
             );
         }
 
+        const hasRemove = checkUserRefPermission(this.props, "remove");
+
         return (
             <div>
                 <Table bordered>
@@ -208,7 +211,7 @@ class ReferenceManage extends React.Component {
                     <Contributors contributors={contributors} />
                 </Panel>
 
-                <RemoveReference />
+                {hasRemove ? <RemoveReference /> : null}
             </div>
         );
     }
