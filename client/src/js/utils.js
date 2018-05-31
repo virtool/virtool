@@ -193,11 +193,11 @@ export const checkUserRefPermission = (props, permission) => {
     const { isAdmin, userId, userGroups } = props;
     const refUsers = props.detail.users;
     const refGroups = props.detail.groups;
-/*
+
     if (isAdmin) {
         return true;
     }
-*/
+
     const userExists = find(refUsers, ["id", userId]);
 
     const groupsExist = filter(refGroups, refGroup => {
