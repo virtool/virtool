@@ -26,18 +26,16 @@ async def clear(db, complete=False, failed=False):
         or_list = OR_COMPLETE
 
     if failed:
-        or_list = [*or_list, OR_FAILED]
+        or_list += OR_FAILED
 
     removed = list()
 
     if len(or_list):
         query = {
-            "_id": {
-                "$in": or_list
-            }
+            "$or": or_list
         }
 
-        removed = await db.jobs.find(query).distinct("_id")
+        removed = await db.jobs.distinct("_id", query)
         await db.jobs.delete_many(query)
 
     return removed
