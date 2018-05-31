@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem, Badge } from "react-bootstrap";
+import { Badge, Nav, NavItem } from "react-bootstrap";
 import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
 
@@ -69,7 +69,9 @@ class ReferenceDetail extends React.Component {
                 <ViewHeader title={`${name} - References`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
-                            <strong>{name}</strong>
+                            <Flex>
+                                <strong>{name}</strong>
+                            </Flex>
                         </FlexItem>
                         {headerIcon}
                     </Flex>
