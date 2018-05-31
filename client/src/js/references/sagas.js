@@ -62,6 +62,7 @@ export function* remoteReference () {
         { remote_from: "virtool/virtool-database" },
         REMOTE_REFERENCE
     ));
+    yield put(push({pathname: "/refs"}));
 }
 
 export function* addRefUser (action) {

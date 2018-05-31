@@ -40,6 +40,10 @@ const methodIconProps = {
         name: "dna",
         bsStyle: "warning"
     },
+    clone: {
+        name: "clone",
+        bsStyle: "primary"
+    },
     remote: {
         name: "link",
         bsStyle: "primary"
@@ -67,6 +71,7 @@ const methodIconProps = {
 };
 
 const getMethodIcon = ({ method_name }) => {
+
     const props = get(methodIconProps, method_name, {
         name: "exclamation-triangle",
         bsStyle: "danger"

@@ -1,11 +1,39 @@
 import React from "react";
-import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
+import Moment from "moment";
+import { Alert, ButtonToolbar, Modal, ListGroup, Col, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
-import { upperFirst, find } from "lodash-es";
+import { upperFirst, find, map } from "lodash-es";
 import ReferenceForm from "./Form";
-import { Button } from "../../base";
+import { Button, ListGroupItem, NoneFound } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
+
+const ReferenceSelect = ({ references, onSelect }) => (
+    <div>
+        <label className="control-label">References</label>
+        {references.length
+            ? (
+                <ListGroup style={{maxHeight: "84px", overflowY: "auto"}}>
+                    {map(references, reference =>
+                        <ListGroupItem key={reference.id} onClick={() => onSelect(reference.id)}>
+                            <Col xs={6}>
+                                <strong>{reference.name}</strong>
+                            </Col>
+                            <Col xs={5}>
+                                <span className="text-muted" style={{fontSize: "10px"}}>
+                                    Created {Moment(reference.created_at).calendar()} by {reference.user.id}
+                                </span>
+                            </Col>
+                            <Col xs={1}>
+                                <Badge>{reference.otu_count}</Badge>
+                            </Col>
+                        </ListGroupItem>
+                    )}
+                </ListGroup>
+            ) : <NoneFound noun="source references" />
+        }
+    </div>
+);
 
 const getInitialState = (refId, refArray) => {
 
@@ -13,26 +41,26 @@ const getInitialState = (refId, refArray) => {
 
     if (originalRef) {
         return {
+            reference: originalRef.name,
             name: originalRef.name,
             description: originalRef.description,
-            dataType: originalRef.data_type,
+            dataType: originalRef.data_type || "",
             organism: originalRef.organism,
             isPublic: originalRef.public,
             errorName: "",
-            errorDataType: "",
-            errorNoRef: ""
+            errorDataType: ""
         };
     }
 
     return {
+        reference: "",
         name: "",
         description: "",
         dataType: "",
         organism: "",
         isPublic: false,
         errorName: "",
-        errorDataType: "",
-        errorNoRef: "Target reference must be pre-selected in order to clone"
+        errorDataType: ""
     };
 };
 
@@ -46,12 +74,26 @@ class CloneReference extends React.Component {
     handleChange = (e) => {
         const { name, value } = e.target;
 
-        const errorType = `error${upperFirst(e.target.name)}`;
+        if (name === "name" || name === "dataType") {
+            const errorType = `error${upperFirst(e.target.name)}`;
 
-        this.setState({
-            [name]: value,
-            [errorType]: ""
-        });
+            this.setState({
+                [name]: value,
+                [errorType]: ""
+            });
+        } else if (name === "reference") {
+            this.setState({
+                [name]: value
+            });
+        } else {
+            this.setState({
+                [name]: value
+            });
+        }
+    };
+
+    handleSelect = (refId) => {
+        this.setState(getInitialState(refId, this.props.refDocuments));
     };
 
     handleSubmit = (e) => {
@@ -65,7 +107,7 @@ class CloneReference extends React.Component {
             this.setState({ errorDataType: "Required Field" });
         }
 
-        if (this.state.name.length && this.state.dataType.length && !this.state.errorNoRef.length) {
+        if (this.state.name.length && this.state.dataType.length) {
             this.props.onSubmit(
                 this.state.name,
                 this.state.description,
@@ -92,6 +134,7 @@ class CloneReference extends React.Component {
                             Clone an existing reference.
                         </strong>
                     </Alert>
+                    <ReferenceSelect references={this.props.refDocuments} onSelect={this.handleSelect} />
                     <ReferenceForm
                         state={this.state}
                         onChange={this.handleChange}
@@ -106,7 +149,7 @@ class CloneReference extends React.Component {
                             type="submit"
                             bsStyle="primary"
                             onClick={this.handleSubmit}
-                            disabled={!!this.state.errorNoRef.length}
+                            disabled={!this.props.refDocuments.length}
                         >
                             Clone
                         </Button>
