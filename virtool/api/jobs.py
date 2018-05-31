@@ -80,6 +80,25 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@routes.delete("/api/jobs", permission="remove_job")
+async def clear(req):
+    db = req.app["db"]
+
+    job_filter = req.query.get("filter", None)
+
+    # Remove jobs that completed successfully.
+    complete = job_filter in [None, "finished", "complete"]
+
+    # Remove jobs that errored or were cancelled.
+    failed = job_filter in [None, "finished", "failed"]
+
+    removed = await virtool.db.jobs.clear(db, complete=complete, failed=failed)
+
+    return json_response({
+        "removed": removed
+    })
+
+
 @routes.delete("/api/jobs/{job_id}", permission="remove_job")
 async def remove(req):
     """
@@ -112,25 +131,6 @@ async def remove(req):
         pass
 
     return no_content()
-
-
-@routes.delete("/api/jobs", permission="remove_job")
-async def clear(req):
-    db = req.app["db"]
-
-    path = req.path
-
-    # Remove jobs that completed successfully.
-    complete = path == "/api/jobs" or path == "/api/jobs/finished" or path == "/api/jobs/complete"
-
-    # Remove jobs that errored or were cancelled.
-    failed = path == "/api/jobs" or path == "/api/jobs/finished" or path == "/api/jobs/failed"
-
-    removed = await virtool.db.jobs.clear(db, complete=complete, failed=failed)
-
-    return json_response({
-        "removed": removed
-    })
 
 
 @routes.get("/api/resources")
