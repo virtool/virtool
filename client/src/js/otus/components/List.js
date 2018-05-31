@@ -1,5 +1,5 @@
 import React from "react";
-import { map, find } from "lodash-es";
+import { map, find, filter } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
@@ -10,6 +10,32 @@ import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPla
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import { createFindURL } from "../../utils";
+
+export const checkUserBuildPermission = (props) => {
+    const { isAdmin, userId, userGroups, refUsers, refGroups } = props;
+
+    if (isAdmin) {
+        return true;
+    }
+
+    const userExists = find(refUsers, ["id", userId]);
+
+    const groupsExist = filter(refGroups, refGroup => {
+        const result = filter(userGroups, group => group === refGroup.id);
+        return result;
+    });
+
+    if (userExists && userExists.build) {
+        return true;
+    }
+
+    if (groupsExist.length) {
+        const hasBuildPermission = filter(groupsExist, group => group.build);
+        return !!hasBuildPermission.length;
+    }
+
+    return false;
+};
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -60,9 +86,11 @@ const OTUsList = (props) => {
         );
     }
 
+    const hasPermission = checkUserBuildPermission(props);
+
     let alert;
 
-    if (props.unbuiltChangeCount) {
+    if (props.unbuiltChangeCount && hasPermission) {
         alert = (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">
@@ -120,11 +148,15 @@ const OTUsList = (props) => {
 
 const mapStateToProps = state => ({
     ...state.otus,
-    account: state.account,
     refId: state.references.detail.id,
     process: state.references.detail.process,
     processes: state.processes.documents,
-    unbuiltChangeCount: state.references.detail.unbuilt_change_count
+    unbuiltChangeCount: state.references.detail.unbuilt_change_count,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    refUsers: state.references.detail.users,
+    refGroups: state.references.detail.groups
 });
 
 const mapDispatchToProps = (dispatch) => ({
