@@ -29,7 +29,7 @@ const methodIconProps = {
         bsStyle: "primary"
     },
     edit: {
-        name: "pencil",
+        name: "pencil-alt",
         bsStyle: "warning"
     },
     edit_isolate: {
@@ -180,7 +180,7 @@ class OTUHistory extends React.Component {
                     <h4>Built Changes</h4>
                     <HistoryList
                         history={changes.built}
-                        canModify={this.props.canModify}
+                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
                     />
                 </div>
             );
@@ -193,7 +193,7 @@ class OTUHistory extends React.Component {
                     <HistoryList
                         history={changes.unbuilt}
                         revert={this.props.revert}
-                        canModify={this.props.canModify}
+                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
                         unbuilt
                     />
                 </div>
@@ -213,7 +213,7 @@ class OTUHistory extends React.Component {
 const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     history: state.otus.detailHistory,
-    canModify: (state.account.administrator && !state.references.detail.remotes_from)
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = dispatch => ({

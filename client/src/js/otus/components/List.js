@@ -1,5 +1,5 @@
 import React from "react";
-import { map, find, filter } from "lodash-es";
+import { map, find } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
@@ -60,10 +60,11 @@ const OTUsList = (props) => {
         );
     }
 
-    const hasPermission = checkUserRefPermission(props, "build");
+    const hasBuild = checkUserRefPermission(props, "build");
+    const hasRemoveOTU = checkUserRefPermission(props, "modify_otu");
     let alert;
 
-    if (props.unbuiltChangeCount && hasPermission) {
+    if (props.unbuiltChangeCount && hasBuild) {
         alert = (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">
@@ -100,7 +101,7 @@ const OTUsList = (props) => {
 
             {alert}
 
-            <OTUToolbar />
+            <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
 
             <ListGroup>
                 {OTUComponents}

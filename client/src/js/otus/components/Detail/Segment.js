@@ -14,11 +14,11 @@ export default class Segment extends React.Component {
     };
 
     render () {
-        const { seg, isRemote } = this.props;
+        const { seg, canModify } = this.props;
 
         let modifyIcons;
 
-        if (!isRemote) {
+        if (canModify) {
             modifyIcons = (
                 <div>
                     <Icon
@@ -72,5 +72,5 @@ Segment.propTypes = {
     index: PropTypes.number.isRequired,
     seg: PropTypes.object.isRequired,
     onClick: PropTypes.func,
-    isRemote: PropTypes.any
+    canModify: PropTypes.bool
 };
