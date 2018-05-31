@@ -42,6 +42,10 @@ class Schema extends React.Component {
     }
 
     onDragEnd (result) {
+        if (!this.props.hasModifyOTU || this.props.isRemote) {
+            return;
+        }
+
         if (result.destination) {
             const newArray = reorder(
                 this.state.segArray,
