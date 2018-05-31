@@ -17,19 +17,10 @@ export const remove = ({ jobId }) => (
     Request.delete(`/api/jobs/${jobId}`)
 );
 
-export const clear = ({ scope }) => {
-    let suffix;
-
-    if (scope === "complete") {
-        suffix = "/complete";
-    } else if (scope === "failed")
-        suffix = "/failed";
-    else {
-        suffix = "";
-    }
-
-    return Request.delete(`/api/jobs${suffix}`);
-};
+export const clear = ({ scope }) => (
+    Request.delete(`/api/jobs`)
+        .query({filter: scope || "finished"})
+);
 
 export const getResources = () => (
     Request.get("/api/resources")
