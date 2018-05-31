@@ -17,9 +17,9 @@ import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
 
-const ReferenceSettings = () => (
+const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
-        <SourceTypes />
+        {isRemote ? null : <SourceTypes />}
         <InternalControl />
         <ReferenceUsers />
         <ReferenceGroups />
@@ -98,7 +98,7 @@ class ReferenceDetail extends React.Component {
                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
                     <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
                     <Route path="/refs/:refId/indexes" component={ReferenceIndexList} />
-                    <Route path="/refs/:refId/settings" component={ReferenceSettings} />
+                    <Route path="/refs/:refId/settings" render={() => <ReferenceSettings isRemote={remotes_from} />} />
                 </Switch>
 
                 <EditReference />
