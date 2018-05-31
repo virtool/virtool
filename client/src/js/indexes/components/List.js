@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkUserBuildPermission } from "../../otus/components/List";
+import { checkUserRefPermission } from "../../utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
@@ -52,8 +52,7 @@ class IndexesList extends React.Component {
                 indexComponents = <NoneFound noun="indexes" noListGroup />;
             }
 
-            const hasBuildPermission = checkUserBuildPermission(this.props);
-
+            const hasBuildPermission = checkUserRefPermission(this.props, "build");
             let alert;
 
             if (this.props.modified_otu_count) {
@@ -124,8 +123,7 @@ const mapStateToProps = (state) => ({
     isAdmin: state.account.administrator,
     userId: state.account.id,
     userGroups: state.account.groups,
-    refUsers: state.references.detail.users,
-    refGroups: state.references.detail.groups
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = (dispatch) => ({

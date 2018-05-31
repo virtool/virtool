@@ -9,33 +9,7 @@ import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { createFindURL } from "../../utils";
-
-export const checkUserBuildPermission = (props) => {
-    const { isAdmin, userId, userGroups, refUsers, refGroups } = props;
-
-    if (isAdmin) {
-        return true;
-    }
-
-    const userExists = find(refUsers, ["id", userId]);
-
-    const groupsExist = filter(refGroups, refGroup => {
-        const result = filter(userGroups, group => group === refGroup.id);
-        return result;
-    });
-
-    if (userExists && userExists.build) {
-        return true;
-    }
-
-    if (groupsExist.length) {
-        const hasBuildPermission = filter(groupsExist, group => group.build);
-        return !!hasBuildPermission.length;
-    }
-
-    return false;
-};
+import { createFindURL, checkUserRefPermission } from "../../utils";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -86,8 +60,7 @@ const OTUsList = (props) => {
         );
     }
 
-    const hasPermission = checkUserBuildPermission(props);
-
+    const hasPermission = checkUserRefPermission(props, "build");
     let alert;
 
     if (props.unbuiltChangeCount && hasPermission) {
@@ -155,8 +128,7 @@ const mapStateToProps = state => ({
     isAdmin: state.account.administrator,
     userId: state.account.id,
     userGroups: state.account.groups,
-    refUsers: state.references.detail.users,
-    refGroups: state.references.detail.groups
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = (dispatch) => ({

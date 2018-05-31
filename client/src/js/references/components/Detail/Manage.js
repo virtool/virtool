@@ -216,7 +216,10 @@ class ReferenceManage extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.references.detail
+    detail: state.references.detail,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups
 });
 
 export default connect(mapStateToProps)(ReferenceManage);
