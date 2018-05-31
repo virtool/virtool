@@ -5,26 +5,45 @@ import { map, sortBy } from "lodash-es";
 import RemoveReference from "./RemoveReference";
 import { RelativeTime, ListGroupItem, LoadingPlaceholder } from "../../../base";
 
-const ContributorTable = ({ contributors }) => {
-
-    const sorted = sortBy(contributors, ["id", "count"]);
-
-    let components;
+const Contributors = ({ contributors }) => {
 
     if (contributors.length) {
-        components = map(sorted, entry =>
+        const sorted = sortBy(contributors, ["id", "count"]);
+
+        const contributorComponents = map(sorted, entry =>
             <ListGroupItem key={entry.id}>
                 {entry.id} <Badge>{entry.count}</Badge>
             </ListGroupItem>
         );
-    } else {
-        components = (
+
+        return (
+            <ListGroup>
+                {contributorComponents}
+            </ListGroup>
+        );
+    }
+
+    return <NoneFound noun="contributors" />;
+};
+
+const LatestBuild = ({ id, latestBuild }) => {
+    if (latestBuild) {
+        return (
             <ListGroupItem>
-                None <Badge>0</Badge>
+                <strong>
+                    <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>
+                        Index {latestBuild.version}
+                    </Link>
+                </strong>
+                <span>
+                    &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
+                </span>
             </ListGroupItem>
         );
     }
 
+    return <NoneFound noun="index builds" noListGroup />;
+};
     return (
         <ListGroup style={{maxHeight: 210, overflowY: "auto"}}>
             {components}
@@ -41,23 +60,16 @@ class ReferenceManage extends React.Component {
         }
 
         const {
+            id,
             contributors,
             data_type,
             description,
-            id,
             internal_control,
             latest_build,
-            name,
-            organism
+            organism,
         } = this.props.detail;
 
-        let indexCreatedAt;
 
-        if (latest_build) {
-            indexCreatedAt = (
-                <span>
-                    <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
-                </span>
             );
         }
 
@@ -66,16 +78,8 @@ class ReferenceManage extends React.Component {
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th className="col-xs-4">Name</th>
-                            <td className="col-xs-8">{name}</td>
-                        </tr>
-                        <tr>
-                            <th>ID</th>
-                            <td>{id}</td>
-                        </tr>
-                        <tr>
-                            <th>Description</th>
-                            <td>{description}</td>
+                            <th className="col-xs-4">Description</th>
+                            <td className="col-xs-8">{description}</td>
                         </tr>
                         <tr>
                             <th>Data Type</th>
@@ -89,37 +93,28 @@ class ReferenceManage extends React.Component {
                             <th>Internal Control</th>
                             <td>{internal_control ? internal_control.name : null}</td>
                         </tr>
-                        <tr>
-                            <th>Public</th>
-                            <td>{`${this.props.detail.public}`}</td>
-                        </tr>
                     </tbody>
                 </Table>
 
-                <h5>
-                    <strong>Latest Build</strong>
-                </h5>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className="col-xs-4">Version</th>
-                            <td className="col-xs-8">{latest_build ? latest_build.version : "None"}</td>
-                        </tr>
-                        <tr>
-                            <th>ID</th>
-                            <td>{latest_build ? latest_build.id : "None"}</td>
-                        </tr>
-                        <tr>
-                            <th>Created</th>
-                            <td>{indexCreatedAt || "None"}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                {remote}
 
-                <h5>
-                    <strong>Contributors</strong>
-                </h5>
-                <ContributorTable contributors={contributors} />
+                <Panel>
+                    <Panel.Heading>
+                        Latest Index Build
+                    </Panel.Heading>
+
+                    <ListGroup>
+                        <LatestBuild refId={id} latestBuild={latest_build} />
+                    </ListGroup>
+                </Panel>
+
+                <Panel>
+                    <Panel.Heading>
+                        Contributors
+                    </Panel.Heading>
+
+                    <Contributors contributors={contributors} />
+                </Panel>
 
                 <RemoveReference />
             </div>
