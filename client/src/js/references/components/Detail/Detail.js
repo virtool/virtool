@@ -5,6 +5,7 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem } from "react-bootstrap";
+import { filter, find } from "lodash-es";
 import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
 
@@ -16,6 +17,34 @@ import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
+
+const checkUserModifyRefPermission = (props) => {
+    const { isAdmin, userId, userGroups } = props;
+    const refUsers = props.detail.users;
+    const refGroups = props.detail.groups;
+
+    if (isAdmin) {
+        return true;
+    }
+
+    const userExists = find(refUsers, ["id", userId]);
+
+    const groupsExist = filter(refGroups, refGroup => {
+        const result = filter(userGroups, group => group === refGroup.id);
+        return result;
+    });
+
+    if (userExists && userExists.modify) {
+        return true;
+    }
+
+    if (groupsExist.length) {
+        const hasBuildPermission = filter(groupsExist, group => group.modify);
+        return !!hasBuildPermission.length;
+    }
+
+    return false;
+};
 
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
@@ -40,6 +69,8 @@ class ReferenceDetail extends React.Component {
 
         const { name, id, remotes_from, created_at, user } = this.props.detail;
 
+        const hasModify = checkUserModifyRefPermission(this.props);
+
         let headerIcon;
 
         if (this.props.pathname === `/refs/${id}/manage`) {
@@ -52,7 +83,10 @@ class ReferenceDetail extends React.Component {
                         style={{fontSize: "65%"}}
                     />
                 )
-                : (
+                : null;
+
+            headerIcon = (hasModify && !remotes_from)
+                ? (
                     <Icon
                         bsStyle="warning"
                         name="pencil-alt"
@@ -61,7 +95,7 @@ class ReferenceDetail extends React.Component {
                         pullRight
                         style={{fontSize: "65%"}}
                     />
-                );
+                ) : headerIcon;
         }
 
         return (
@@ -111,7 +145,11 @@ class ReferenceDetail extends React.Component {
 
 const mapStateToProps = state => ({
     detail: state.references.detail,
-    pathname: state.router.location.pathname
+    pathname: state.router.location.pathname,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    refDetail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({
