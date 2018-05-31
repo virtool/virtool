@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
+import { checkUserRefPermission } from "../../utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
@@ -51,10 +52,11 @@ class IndexesList extends React.Component {
                 indexComponents = <NoneFound noun="indexes" noListGroup />;
             }
 
+            const hasBuildPermission = checkUserRefPermission(this.props, "build");
             let alert;
 
             if (this.props.modified_otu_count) {
-                const button = (
+                const button = hasBuildPermission ? (
                     <FlexItem pad={20}>
                         <LinkContainer to={{state: {rebuild: true}}}>
                             <Button bsStyle="warning" icon="hammer" pullRight>
@@ -62,7 +64,7 @@ class IndexesList extends React.Component {
                             </Button>
                         </LinkContainer>
                     </FlexItem>
-                );
+                ) : null;
 
                 alert = (
                     <Alert bsStyle="warning">
@@ -117,7 +119,11 @@ class IndexesList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.indexes,
-    refId: state.references.detail.id
+    refId: state.references.detail.id,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -7,6 +7,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem } from "react-bootstrap";
 import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
+import { checkUserRefPermission } from "../../../utils";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
@@ -39,6 +40,7 @@ class ReferenceDetail extends React.Component {
         }
 
         const { name, id, remotes_from, created_at, user } = this.props.detail;
+        const hasModify = checkUserRefPermission(this.props, "modify");
 
         let headerIcon;
 
@@ -52,7 +54,10 @@ class ReferenceDetail extends React.Component {
                         style={{fontSize: "65%"}}
                     />
                 )
-                : (
+                : null;
+
+            headerIcon = (hasModify && !remotes_from)
+                ? (
                     <Icon
                         bsStyle="warning"
                         name="pencil-alt"
@@ -61,7 +66,7 @@ class ReferenceDetail extends React.Component {
                         pullRight
                         style={{fontSize: "65%"}}
                     />
-                );
+                ) : headerIcon;
         }
 
         return (
@@ -111,7 +116,11 @@ class ReferenceDetail extends React.Component {
 
 const mapStateToProps = state => ({
     detail: state.references.detail,
-    pathname: state.router.location.pathname
+    pathname: state.router.location.pathname,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    refDetail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({

@@ -14,11 +14,12 @@ import Schema from "./Schema";
 import { getReference } from "../../../references/actions";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader } from "../../../base";
+import { checkUserRefPermission } from "../../../utils";
 
-const OTUSection = ({ match }) => (
+const OTUSection = ({ hasModifyOTU, match }) => (
     <div>
         <General />
-        <IsolateEditor />
+        <IsolateEditor hasModifyOTU={hasModifyOTU} />
         <AddIsolate otuId={match.params.otuId} />
     </div>
 );
@@ -30,27 +31,29 @@ class OTUDetail extends React.Component {
     }
 
     componentDidUpdate (prevProps) {
-        if (this.props.detail !== null && prevProps.detail !== this.props.detail) {
-            this.props.onGetReference(this.props.detail.reference.id);
+        if (this.props.otuDetail !== null && prevProps.otuDetail !== this.props.otuDetail) {
+            this.props.onGetReference(this.props.otuDetail.reference.id);
         }
     }
 
     render = () => {
 
-        if (this.props.detail === null
-            || this.props.detail.id !== this.props.match.params.otuId
-            || this.props.refDetail === null
+        if (this.props.otuDetail === null
+            || this.props.otuDetail.id !== this.props.match.params.otuId
+            || this.props.detail === null
         ) {
             return <LoadingPlaceholder />;
         }
 
-        const refId = this.props.detail.reference.id;
-        const { id, name, abbreviation } = this.props.detail;
+        const refId = this.props.otuDetail.reference.id;
+        const { id, name, abbreviation } = this.props.otuDetail;
+
+        const hasModifyOTU = checkUserRefPermission(this.props, "modify_otu");
 
         let iconButtons = [];
         let modifyOTUcomponents;
 
-        if (this.props.canModify && !this.props.refDetail.remotes_from) {
+        if (!this.props.detail.remotes_from && hasModifyOTU) {
             iconButtons = (
                 <span>
                     <small key="edit-icon" style={{paddingLeft: "5px"}}>
@@ -95,7 +98,7 @@ class OTUDetail extends React.Component {
                             </div>
                         </LinkContainer>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item active>{this.props.detail.name}</Breadcrumb.Item>
+                    <Breadcrumb.Item active>{this.props.otuDetail.name}</Breadcrumb.Item>
                 </Breadcrumb>
 
                 <h3 style={{marginBottom: "20px"}}>
@@ -113,7 +116,7 @@ class OTUDetail extends React.Component {
                             </Flex>
                         </FlexItem>
 
-                        {this.props.detail.modified ? (
+                        {this.props.otuDetail.modified ? (
                             <small>
                                 <Label bsStyle="warning" className="with-icon">
                                     <Icon name="flag" />
@@ -151,9 +154,19 @@ class OTUDetail extends React.Component {
 
                 <Switch>
                     <Redirect from="/refs/:refId/otus/:otuId" to={`/refs/${refId}/otus/${id}/otu`} exact />
-                    <Route path="/refs/:refId/otus/:otuId/otu" component={OTUSection} />
-                    <Route path="/refs/:refId/otus/:otuId/history" component={History} />
-                    <Route path="/refs/:refId/otus/:otuId/schema" component={Schema} />
+                    <Route
+                        path="/refs/:refId/otus/:otuId/otu"
+                        render={({match}) => <OTUSection hasModifyOTU={hasModifyOTU} match={match} />}
+                        match={window.location}
+                    />
+                    <Route
+                        path="/refs/:refId/otus/:otuId/history"
+                        render={() => <History hasModifyOTU={hasModifyOTU} />}
+                    />
+                    <Route
+                        path="/refs/:refId/otus/:otuId/schema"
+                        render={() => <Schema hasModifyOTU={hasModifyOTU} />}
+                    />
                 </Switch>
             </div>
         );
@@ -161,9 +174,11 @@ class OTUDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    detail: state.otus.detail,
-    canModify: state.account.administrator,
-    refDetail: state.references.detail
+    otuDetail: state.otus.detail,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({

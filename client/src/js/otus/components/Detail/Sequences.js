@@ -46,7 +46,7 @@ class IsolateSequences extends React.Component {
                 <Sequence
                     key={sequence.id}
                     active={sequence.accession === this.props.activeSequenceId}
-                    canModify={this.props.canModify && !this.props.isRemote}
+                    canModify={this.props.hasModifyOTU && !this.props.isRemote}
                     showEditSequence={this.props.showEditSequence}
                     showRemoveSequence={this.props.showRemoveSequence}
                     {...sequence}
@@ -63,7 +63,7 @@ class IsolateSequences extends React.Component {
                     <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
                         <Badge>{this.props.sequences.length}</Badge>
                     </span>
-                    {this.props.canModify && !this.props.isRemote ? (
+                    {this.props.hasModifyOTU && !this.props.isRemote ? (
                         <Icon
                             name="plus-square"
                             bsStyle="primary"
@@ -115,7 +115,6 @@ const mapStateToProps = (state) => {
         sequences,
         schema,
         otuId: state.otus.detail.id,
-        canModify: state.account.administrator,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
         isRemote: state.references.detail.remotes_from

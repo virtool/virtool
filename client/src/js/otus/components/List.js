@@ -9,7 +9,7 @@ import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { createFindURL } from "../../utils";
+import { createFindURL, checkUserRefPermission } from "../../utils";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -60,9 +60,11 @@ const OTUsList = (props) => {
         );
     }
 
+    const hasBuild = checkUserRefPermission(props, "build");
+    const hasRemoveOTU = checkUserRefPermission(props, "modify_otu");
     let alert;
 
-    if (props.unbuiltChangeCount) {
+    if (props.unbuiltChangeCount && hasBuild) {
         alert = (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">
@@ -99,7 +101,7 @@ const OTUsList = (props) => {
 
             {alert}
 
-            <OTUToolbar />
+            <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
 
             <ListGroup>
                 {OTUComponents}
@@ -120,11 +122,14 @@ const OTUsList = (props) => {
 
 const mapStateToProps = state => ({
     ...state.otus,
-    account: state.account,
     refId: state.references.detail.id,
     process: state.references.detail.process,
     processes: state.processes.documents,
-    unbuiltChangeCount: state.references.detail.unbuilt_change_count
+    unbuiltChangeCount: state.references.detail.unbuilt_change_count,
+    isAdmin: state.account.administrator,
+    userId: state.account.id,
+    userGroups: state.account.groups,
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = (dispatch) => ({

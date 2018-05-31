@@ -5,7 +5,7 @@
  * @author igboyes
  */
 import Numeral from "numeral";
-import { capitalize, get, replace, sampleSize, split, startCase } from "lodash-es";
+import { capitalize, get, replace, sampleSize, split, startCase, filter, find } from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -188,3 +188,31 @@ export const toScientificNotation = (number) => {
 export const checkAdminOrPermission = (isAdmin, permissions, permission) => (
     isAdmin || permissions[permission]
 );
+
+export const checkUserRefPermission = (props, permission) => {
+    const { isAdmin, userId, userGroups } = props;
+    const refUsers = props.detail.users;
+    const refGroups = props.detail.groups;
+
+    if (isAdmin) {
+        return true;
+    }
+
+    const userExists = find(refUsers, ["id", userId]);
+
+    const groupsExist = filter(refGroups, refGroup => {
+        const result = filter(userGroups, group => group === refGroup.id);
+        return result;
+    });
+
+    if (userExists && userExists[permission]) {
+        return true;
+    }
+
+    if (groupsExist.length) {
+        const hasBuildPermission = filter(groupsExist, group => group[permission]);
+        return !!hasBuildPermission.length;
+    }
+
+    return false;
+};

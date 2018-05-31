@@ -42,6 +42,10 @@ class Schema extends React.Component {
     }
 
     onDragEnd (result) {
+        if (!this.props.hasModifyOTU || this.props.isRemote) {
+            return;
+        }
+
         if (result.destination) {
             const newArray = reorder(
                 this.state.segArray,
@@ -121,7 +125,7 @@ class Schema extends React.Component {
                                     seg={segment}
                                     index={index}
                                     onClick={this.handleSegment}
-                                    isRemote={this.props.isRemote}
+                                    canModify={this.props.hasModifyOTU && !this.props.isRemote}
                                 />
                             </div>
                             {provided.placeholder}
@@ -135,7 +139,7 @@ class Schema extends React.Component {
 
         return (
             <div>
-                {this.props.isRemote ? null : (
+                {this.props.hasModifyOTU && !this.props.isRemote ? (
                     <Button
                         bsStyle="primary"
                         icon="new-entry"
@@ -144,7 +148,7 @@ class Schema extends React.Component {
                         block
                     >
                         Add Segment
-                    </Button>)}
+                    </Button>) : null}
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
