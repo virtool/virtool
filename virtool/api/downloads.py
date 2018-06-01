@@ -103,7 +103,7 @@ async def download_reference(req):
     body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": "attachment; filename='reference.json.gz'"},
+        headers={"Content-Disposition": "attachment; filename='reference.{}.json.gz'".format(scope)},
         content_type="application/gzip",
         body=body
     )
