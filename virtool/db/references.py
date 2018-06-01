@@ -658,7 +658,7 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
         return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
 
 
-async def export(db, ref_id, scope="built"):
+async def export(db, ref_id, scope):
     # A list of joined viruses.
     otu_list = list()
 
@@ -677,6 +677,11 @@ async def export(db, ref_id, scope="built"):
             )
 
             otu_list.append(joined)
+
+    elif scope == "unbuilt":
+        async for document in db.otus.find(query):
+            last_verified = await virtool.db.history.patch_to_verified(db, document["_id"])
+            otu_list.append(last_verified)
 
     return otu_list
 

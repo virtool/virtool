@@ -88,7 +88,12 @@ async def download_reference(req):
 
     document = await db.references.find_one(ref_id, ["data_type", "organism"])
 
-    otu_list = await virtool.db.references.export(db, ref_id)
+    if document is None:
+        return not_found()
+
+    scope = req.query.get("scope", "built")
+
+    otu_list = await virtool.db.references.export(db, ref_id, scope)
 
     data = {
         "data": otu_list,
