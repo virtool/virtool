@@ -172,10 +172,7 @@ def format_otu(joined, issues=False, most_recent_change=None):
     if most_recent_change:
         formatted["most_recent_change"] = virtool.utils.base_processor(most_recent_change)
 
-    formatted["issues"] = None
-
-    if issues is False:
-        formatted["issues"] = verify(joined)
+    formatted["issues"] = issues or verify(joined)
 
     return formatted
 
