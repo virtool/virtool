@@ -33,7 +33,7 @@ const initialState = {
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
 
-    if (analysisDetail.id === analysisId) {
+    if (analysisDetail && analysisDetail.id === analysisId) {
         return {...state, analysisDetail: {
             ...analysisDetail,
             results: map(analysisDetail.results, sequence => {
