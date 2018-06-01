@@ -1,5 +1,9 @@
 import Request from "superagent";
 
+export const fetch = ({ page }) => (
+    Request.get(`/api${window.location.pathname}?page=${page}`)
+);
+
 export const find = () => (
     Request.get(`/api${window.location.pathname}${window.location.search}`)
 );

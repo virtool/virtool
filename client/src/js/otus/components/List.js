@@ -5,11 +5,19 @@ import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
+import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
-import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder, ScrollList } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import { createFindURL, checkUserRefPermission } from "../../utils";
+
+import { fetchOTUs } from "../actions";
+
+const cache = new CellMeasurerCache({
+    fixedWidth: true,
+    defaultHeight: 100
+});
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -36,6 +44,23 @@ const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
 );
 
 const OTUsList = (props) => {
+
+    const rowRenderer = ({ index, key, style, parent }) => {
+        console.log("documents[index]: ", props.documents[index]);
+        return (
+            <CellMeasurer
+                key={key}
+                cache={cache}
+                parent={parent}
+                columnIndex={0}
+                rowIndex={index}
+            >
+                <div style={style} className="infinite-scroll-row">
+                    <OTUItem key={props.documents[index].id} refId={props.refId} {...props.documents[index]} />
+                </div>
+            </CellMeasurer>
+        );
+    };
 
     let OTUComponents;
 
@@ -103,7 +128,7 @@ const OTUsList = (props) => {
 
             <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
 
-            <ListGroup>
+            {/*<ListGroup>
                 {OTUComponents}
             </ListGroup>
 
@@ -112,9 +137,21 @@ const OTUsList = (props) => {
                 onPage={props.onPage}
                 page={props.page}
                 pageCount={props.page_count}
-            />
+            />*/}
 
             <CreateOTU {...props} />
+
+            <ListGroup>
+                <ScrollList
+                    hasNextPage={props.page < props.page_count}
+                    isNextPageLoading={props.isLoading}
+                    list={props.documents}
+                    loadNextPage={() => props.loadNextPage(props.page+1)}
+                    page={props.page}
+                    rowRenderer={rowRenderer}
+                    cache={cache}
+                />
+            </ListGroup>
         </div>
     );
 };
@@ -141,6 +178,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
         dispatch(push({state: {createOTU: false}}));
+    },
+
+    loadNextPage: (page) => {
+        dispatch(fetchOTUs(page));
     }
 });
 

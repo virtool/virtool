@@ -24,6 +24,8 @@ import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
+import { ScrollList } from "./ScrollList";
+
 export {
     Alert,
     AlgorithmSelect,
@@ -51,5 +53,6 @@ export {
     Tooltip,
     UploadBar,
     ViewHeader,
-    VTLogo
+    VTLogo,
+    ScrollList
 };
