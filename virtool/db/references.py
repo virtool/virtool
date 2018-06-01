@@ -1,4 +1,6 @@
 import asyncio
+import gzip
+import json
 import os
 
 import pymongo
@@ -654,6 +656,29 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
         await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
 
         return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
+
+
+async def export(db, ref_id, scope="built"):
+    # A list of joined viruses.
+    otu_list = list()
+
+    query = {
+        "reference.id": ref_id
+    }
+
+    if scope == "built":
+        query["last_indexed_version"] = {"$ne": None}
+
+        async for document in db.otus.find(query):
+            _, joined, _ = await virtool.db.history.patch_to_version(
+                db,
+                document["_id"],
+                document["last_indexed_version"]
+            )
+
+            otu_list.append(joined)
+
+    return otu_list
 
 
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):

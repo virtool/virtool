@@ -4,17 +4,17 @@ Provides request handlers for file downloads.
 """
 import gzip
 import json
-
 from aiohttp import web
 
 import virtool.bio
 import virtool.db.downloads
 import virtool.db.history
 import virtool.db.otus
+import virtool.db.references
 import virtool.errors
 import virtool.http.routes
 import virtool.otus
-from virtool.api.utils import not_found
+from virtool.api.utils import CustomEncoder, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -79,36 +79,31 @@ async def download_otu(req):
 async def download_reference(req):
     """
     Export all otus and sequences for a given reference as a gzipped JSON string. Made available as a downloadable file
-    named ``referebce.json.gz``.
+    named ``reference.json.gz``.
 
     """
     db = req.app["db"]
 
-    # A list of joined otus.
-    otu_list = list()
+    ref_id = req.match_info["ref_id"]
 
-    async for document in db.otus.find({"last_indexed_version": {"$ne": None}}):
-        # If the otu has been changed since the last index rebuild, patch it to its last indexed version.
-        if document["version"] != document["last_indexed_version"]:
-            _, joined, _ = await virtool.db.history.patch_to_version(
-                db,
-                document["_id"],
-                document["last_indexed_version"]
-            )
-        else:
-            joined = await virtool.db.otus.join(db, document["_id"], document)
+    document = await db.references.find_one(ref_id, ["data_type", "organism"])
 
-        otu_list.append(joined)
+    otu_list = await virtool.db.references.export(db, ref_id)
 
-    # Convert the list of otus to a JSON-formatted string.
-    json_string = json.dumps(otu_list)
+    data = {
+        "data": otu_list,
+        "data_type": document["data_type"],
+        "organism": document["organism"]
+    }
+
+    # Convert the list of viruses to a JSON-formatted string.
+    json_string = json.dumps(data, cls=CustomEncoder)
 
     # Compress the JSON string with gzip.
-    body = await req.app.loop.run_in_executor(req.app["process_executor"], gzip.compress,
-                                              bytes(json_string, "utf-8"))
+    body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": "attachment; filename='otus.json.gz'"},
+        headers={"Content-Disposition": "attachment; filename='reference.json.gz'"},
         content_type="application/gzip",
         body=body
     )
