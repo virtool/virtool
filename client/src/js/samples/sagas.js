@@ -1,4 +1,4 @@
-import { includes, noop } from "lodash-es";
+import { get, includes, noop } from "lodash-es";
 import { LOCATION_CHANGE, push } from "react-router-redux";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
@@ -27,6 +27,8 @@ import {
     REMOVE_ANALYSIS
 } from "../actionTypes";
 
+export const getAnalysisDetailId = (state) => get(state, "samples.analysisDetail.id", null);
+
 export function* watchSamples () {
     yield throttle(200, LOCATION_CHANGE, findSamples);
     yield takeEvery(WS_UPDATE_SAMPLE, wsSample);
@@ -52,7 +54,11 @@ export function* wsSample () {
 }
 
 export function* wsUpdateAnalysis (action) {
-    yield getAnalysis({analysisId: action.update.id});
+    const currentAnalysisId = yield select(getAnalysisDetailId);
+
+    if (currentAnalysisId === action.update.id) {
+        yield getAnalysis({analysisId: currentAnalysisId});
+    }
 }
 
 export function* findSamples (action) {
