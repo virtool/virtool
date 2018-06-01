@@ -76,6 +76,8 @@ async def remove(req):
     if not document["ready"]:
         return conflict("Analysis is still running")
 
+    await db.analyses.delete_one({"_id": analysis_id})
+
     await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
     return no_content()

@@ -13,6 +13,7 @@ import {
     REMOVE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
+    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
@@ -89,6 +90,8 @@ export const getAnalysis = (analysisId) => ({
     type: GET_ANALYSIS.REQUESTED,
     analysisId
 });
+
+export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
 
 export const getAnalysisProgress = (progress) => ({
     type: GET_ANALYSIS_PROGRESS,
