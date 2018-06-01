@@ -10,6 +10,7 @@ import {
     FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_ANALYSIS,
+    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS, GET_ANALYSIS_PROGRESS
@@ -100,6 +101,9 @@ export default function samplesReducer (state = initialState, action) {
 
         case GET_ANALYSIS_PROGRESS:
             return {...state, getAnalysisProgress: action.progress};
+
+        case CLEAR_ANALYSIS:
+            return {...state, getAnalysisProgress: 0, analysisDetail: null};
 
         case ANALYZE.REQUESTED:
             return {

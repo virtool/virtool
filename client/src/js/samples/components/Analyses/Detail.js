@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
 import {IDRow, LoadingPlaceholder, RelativeTime} from "../../../base";
 
-import { getAnalysis } from "../../actions";
+import { getAnalysis, clearAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 import NuVsViewer from "./NuVs/Viewer";
@@ -13,6 +13,10 @@ class AnalysisDetail extends React.Component {
 
     componentDidMount () {
         this.props.getAnalysis(this.props.match.params.analysisId);
+    }
+
+    componentWillUnmount () {
+        this.props.clearAnalysis();
     }
 
     render () {
@@ -108,6 +112,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     getAnalysis: (analysisId) => {
         dispatch(getAnalysis(analysisId));
+    },
+
+    clearAnalysis: () => {
+        dispatch(clearAnalysis());
     }
 
 });
