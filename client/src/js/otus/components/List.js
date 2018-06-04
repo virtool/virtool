@@ -1,5 +1,5 @@
 import React from "react";
-import { map, find } from "lodash-es";
+import { find } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
@@ -12,8 +12,6 @@ import {
     FlexItem,
     Icon,
     ListGroupItem,
-    Pagination,
-    ViewHeader,
     LoadingPlaceholder,
     ScrollList
 } from "../../base";
@@ -84,49 +82,28 @@ class OTUsList extends React.Component {
         return null;
     }
 
-    rowRenderer = ({ index, key, style, parent }) => {
-        return (
-            <CellMeasurer
-                key={key}
-                cache={cache}
-                parent={parent}
-                columnIndex={0}
-                rowIndex={index}
-            >
-                <div style={style} className="infinite-scroll-row">
-                    <OTUItem
-                        key={this.state.masterList[index].id}
-                        refId={this.props.refId}
-                        {...this.state.masterList[index]}
-                    />
-                </div>
-            </CellMeasurer>
-        );
-    };
+    rowRenderer = ({ index, key, style, parent }) => (
+        <CellMeasurer
+            key={key}
+            cache={cache}
+            parent={parent}
+            columnIndex={0}
+            rowIndex={index}
+        >
+            <div style={style} className="infinite-scroll-row">
+                <OTUItem
+                    key={this.state.masterList[index].id}
+                    refId={this.props.refId}
+                    {...this.state.masterList[index]}
+                />
+            </div>
+        </CellMeasurer>
+    );
 
     render () {
 
-        let OTUComponents;
-
         if (this.props.documents === null) {
             return <div />;
-        }
-
-        const OTUCount = this.props.documents.length;
-
-        if (OTUCount) {
-            OTUComponents = map(this.props.documents, document =>
-                <OTUItem key={document.id} refId={this.props.refId} {...document} />
-            );
-        } else {
-            OTUComponents = (
-                <ListGroupItem key="noOTUs" className="text-center">
-                    <span>
-                        <Icon name="info" /> No OTUs found,
-                    </span>
-                    <span> <Link to={{state: {createOTU: true}}}>create</Link> some.</span>
-                </ListGroupItem>
-            );
         }
 
         const hasBuild = checkUserRefPermission(this.props, "build");
@@ -164,12 +141,6 @@ class OTUsList extends React.Component {
 
         return (
             <div className="inner-list-container">
-                <ViewHeader
-                    page={this.props.page}
-                    count={OTUCount}
-                    foundCount={this.props.found_count}
-                />
-
                 {alert}
 
                 <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
