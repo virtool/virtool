@@ -683,6 +683,11 @@ async def export(db, ref_id, scope):
             last_verified = await virtool.db.history.patch_to_verified(db, document["_id"])
             otu_list.append(last_verified)
 
+    else:
+        async for document in db.otus.find(query):
+            current = await virtool.db.otus.join(db, document["_id"], document)
+            otu_list.append(current)
+
     return otu_list
 
 
