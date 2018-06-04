@@ -94,10 +94,7 @@ async def test_add_group_or_user(error, field, mocker, spawn_client, resp_is):
         assert await resp.json() == expected
 
         m_add_group_or_user.assert_called_with(client.db, "foobar", field + "s", {
-            "build": False,
             "modify": True,
-            "modify_otu": False,
-            "remove": False,
             field + "_id": "baz"
         })
 
@@ -129,9 +126,6 @@ async def test_edit_group_or_user(error, field, mocker, spawn_client, resp_is):
         assert await resp.json() == expected
 
         m_edit_group_or_user.assert_called_with(client.db, "foobar", "baz", field + "s", {
-            "build": False,
-            "modify": False,
-            "modify_otu": False,
             "remove": True
         })
 

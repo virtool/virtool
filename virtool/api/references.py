@@ -15,7 +15,7 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -565,8 +565,14 @@ async def add_group(req):
 
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
-    except virtool.errors.DatabaseError:
-        raise conflict("Group already exists")
+    except virtool.errors.DatabaseError as err:
+        if "already exists" in str(err):
+            return conflict("Group already exists")
+
+        if "does not exist" in str(err):
+            return bad_request("Group does not exist")
+
+        raise
 
     if subdocument is None:
         return not_found()
@@ -591,8 +597,14 @@ async def add_user(req):
 
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
-    except virtool.errors.DatabaseError:
-        raise conflict("Group already exists")
+    except virtool.errors.DatabaseError as err:
+        if "already exists" in str(err):
+            return conflict("User already exists")
+
+        if "does not exist" in str(err):
+            return bad_request("User does not exist")
+
+        raise
 
     if subdocument is None:
         return not_found()

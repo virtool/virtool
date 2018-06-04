@@ -13,7 +13,7 @@ import virtool.errors
 TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
 
 
-@pytest.mark.parametrize("error", [None, "duplicate", "missing"])
+@pytest.mark.parametrize("error", [None, "duplicate", "missing", "missing_member"])
 @pytest.mark.parametrize("field", ["group", "user"])
 @pytest.mark.parametrize("rights", [True, False])
 async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
@@ -31,11 +31,15 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 
     if error != "missing":
         await test_dbi.references.insert_one({
-
             "_id": ref_id,
             "groups": subdocuments,
             "users": subdocuments
         })
+
+    if error != "missing_member":
+        for _id in ["bar", "buzz"]:
+            await test_dbi.groups.insert_one({"_id": _id})
+            await test_dbi.users.insert_one({"_id": _id})
 
     subdocument_id = "bar" if error == "duplicate" else "buzz"
 
@@ -48,11 +52,15 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 
     task = virtool.db.references.add_group_or_user(test_dbi, ref_id, field + "s", payload)
 
-    if error == "duplicate":
+    if error == "duplicate" or error == "missing_member":
         with pytest.raises(virtool.errors.DatabaseError) as err:
             await task
 
-        assert field + " already exists" in str(err)
+        if error == "duplicate":
+            assert field + " already exists" in str(err)
+
+        else:
+            assert field + " does not exist" in str(err)
 
     elif error == "missing":
         assert await task is None
