@@ -4,10 +4,19 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Row, Col, ListGroup, Panel } from "react-bootstrap";
+import { Alert, Row, Col, Panel } from "react-bootstrap";
 import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
-import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader, LoadingPlaceholder, ScrollList } from "../../base";
+import {
+    Flex,
+    FlexItem,
+    Icon,
+    ListGroupItem,
+    Pagination,
+    ViewHeader,
+    LoadingPlaceholder,
+    ScrollList
+} from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import { createFindURL, checkUserRefPermission } from "../../utils";
@@ -43,10 +52,39 @@ const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     </LinkContainer>
 );
 
-const OTUsList = (props) => {
+class OTUsList extends React.Component {
 
-    const rowRenderer = ({ index, key, style, parent }) => {
-        console.log("documents[index]: ", props.documents[index]);
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
+    }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+
+        if (prevState.masterList === null && nextProps.documents) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        }
+
+        if (prevState.list !== nextProps.documents) {
+            return {
+                masterList: prevState.masterList.concat(nextProps.documents),
+                list: nextProps.documents,
+                page: prevState.page + 1
+            };
+        }
+
+        return null;
+    }
+
+    rowRenderer = ({ index, key, style, parent }) => {
         return (
             <CellMeasurer
                 key={key}
@@ -56,105 +94,101 @@ const OTUsList = (props) => {
                 rowIndex={index}
             >
                 <div style={style} className="infinite-scroll-row">
-                    <OTUItem key={props.documents[index].id} refId={props.refId} {...props.documents[index]} />
+                    <OTUItem
+                        key={this.state.masterList[index].id}
+                        refId={this.props.refId}
+                        {...this.state.masterList[index]}
+                    />
                 </div>
             </CellMeasurer>
         );
     };
 
-    let OTUComponents;
+    render () {
 
-    if (props.documents === null) {
-        return <div />;
-    }
+        let OTUComponents;
 
-    const OTUCount = props.documents.length;
+        if (this.props.documents === null) {
+            return <div />;
+        }
 
-    if (OTUCount) {
-        OTUComponents = map(props.documents, document =>
-            <OTUItem key={document.id} refId={props.refId} {...document} />
-        );
-    } else {
-        OTUComponents = (
-            <ListGroupItem key="noOTUs" className="text-center">
-                <span>
-                    <Icon name="info" /> No OTUs found,
-                </span>
-                <span> <Link to={{state: {createOTU: true}}}>create</Link> some.</span>
-            </ListGroupItem>
-        );
-    }
+        const OTUCount = this.props.documents.length;
 
-    const hasBuild = checkUserRefPermission(props, "build");
-    const hasRemoveOTU = checkUserRefPermission(props, "modify_otu");
-    let alert;
+        if (OTUCount) {
+            OTUComponents = map(this.props.documents, document =>
+                <OTUItem key={document.id} refId={this.props.refId} {...document} />
+            );
+        } else {
+            OTUComponents = (
+                <ListGroupItem key="noOTUs" className="text-center">
+                    <span>
+                        <Icon name="info" /> No OTUs found,
+                    </span>
+                    <span> <Link to={{state: {createOTU: true}}}>create</Link> some.</span>
+                </ListGroupItem>
+            );
+        }
 
-    if (props.unbuiltChangeCount && hasBuild) {
-        alert = (
-            <Alert bsStyle="warning">
-                <Flex alignItems="center">
-                    <Icon name="info" />
-                    <FlexItem pad={5}>
-                        <span>The OTU database has changed. </span>
-                        <Link to={`/refs/${props.refId}/indexes`}>Rebuild the index</Link>
-                        <span> to use the changes in further analyses.</span>
-                    </FlexItem>
-                </Flex>
-            </Alert>
-        );
-    }
+        const hasBuild = checkUserRefPermission(this.props, "build");
+        const hasRemoveOTU = checkUserRefPermission(this.props, "modify_otu");
+        let alert;
 
-    const importProgress = props.process ? find(props.processes, { id: props.process.id }).progress : 1;
+        if (this.props.unbuiltChangeCount && hasBuild) {
+            alert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            <span>The OTU database has changed. </span>
+                            <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>
+                            <span> to use the changes in further analyses.</span>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
+        }
 
-    if (importProgress < 1) {
+        const importProgress = this.props.process
+            ? find(this.props.processes, { id: this.props.process.id }).progress
+            : 1;
+
+        if (importProgress < 1) {
+            return (
+                <Panel>
+                    <Panel.Body>
+                        <LoadingPlaceholder message="Import in progress" margin="1.2rem" />
+                    </Panel.Body>
+                </Panel>
+            );
+        }
+
         return (
-            <Panel>
-                <Panel.Body>
-                    <LoadingPlaceholder message="Import in progress" margin="1.2rem" />
-                </Panel.Body>
-            </Panel>
-        );
-    }
+            <div className="inner-list-container">
+                <ViewHeader
+                    page={this.props.page}
+                    count={OTUCount}
+                    foundCount={this.props.found_count}
+                />
 
-    return (
-        <div>
-            <ViewHeader
-                page={props.page}
-                count={OTUCount}
-                foundCount={props.found_count}
-            />
+                {alert}
 
-            {alert}
+                <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
 
-            <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
+                <CreateOTU {...this.props} />
 
-            {/*<ListGroup>
-                {OTUComponents}
-            </ListGroup>
-
-            <Pagination
-                documentCount={OTUCount}
-                onPage={props.onPage}
-                page={props.page}
-                pageCount={props.page_count}
-            />*/}
-
-            <CreateOTU {...props} />
-
-            <ListGroup>
                 <ScrollList
-                    hasNextPage={props.page < props.page_count}
-                    isNextPageLoading={props.isLoading}
-                    list={props.documents}
-                    loadNextPage={() => props.loadNextPage(props.page+1)}
-                    page={props.page}
-                    rowRenderer={rowRenderer}
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    list={this.state.masterList}
+                    loadNextPage={() => this.props.loadNextPage(this.state.page)}
+                    page={this.props.page}
+                    rowRenderer={this.rowRenderer}
                     cache={cache}
                 />
-            </ListGroup>
-        </div>
-    );
-};
+            </div>
+        );
+    }
+}
 
 
 const mapStateToProps = state => ({

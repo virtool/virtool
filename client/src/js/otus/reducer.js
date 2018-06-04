@@ -89,8 +89,6 @@ export const receiveOTU = (state, action) => {
 
 export default function OTUsReducer (state = initialState, action) {
 
-    //console.log(action);
-
     switch (action.type) {
 
         case WS_UPDATE_STATUS:
@@ -104,7 +102,7 @@ export default function OTUsReducer (state = initialState, action) {
             return {...state, isLoading: true};
 
         case FETCH_OTUS.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false}; 
+            return {...state, ...action.data, isLoading: false};
 
         case FIND_OTUS.SUCCEEDED:
             return {...state, ...action.data};

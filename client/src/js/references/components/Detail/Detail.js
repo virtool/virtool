@@ -70,7 +70,7 @@ class ReferenceDetail extends React.Component {
         }
 
         return (
-            <div>
+            <div className="detail-container">
                 <ViewHeader title={`${name} - References`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>

@@ -71,6 +71,7 @@
 @breadcrumb-padding-vertical: 3px;
 
 body {
+  height: calc(100vh - 40px);
   padding-top: 65px;
   font-family: 'Roboto', sans-serif;
   overflow-y: scroll;
@@ -102,8 +103,14 @@ td.sequence-cell > textarea {
   border: none;
 }
 
+#app-container {
+  height: 100%;
+}
+
 .container {
   width: 100vw;
+  height: 100%;
+  max-width: 100%;
   padding-left: 110px;
   padding-right: 35px;
 }

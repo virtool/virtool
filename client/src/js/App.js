@@ -21,7 +21,7 @@ import { LoadingPlaceholder } from "./base";
 const Inner = (props) => {
     if (props.ready) {
         return (
-            <div>
+            <div style={{height: "100%"}}>
                 <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
 
                 <NavBar />
