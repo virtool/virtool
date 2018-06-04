@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-import pymongo.errors
 from aiohttp import web
 
 import virtool.db.history
@@ -313,16 +312,7 @@ async def add_isolate(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id)
 
-    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
-
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    issues = await virtool.db.otus.update_verification(db, new)
 
     isolate_name = virtool.otus.format_isolate_name(data)
 
@@ -344,7 +334,11 @@ async def add_isolate(req):
         "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
     }
 
-    return json_response(dict(data, id=isolate_id, sequences=[]), status=201, headers=headers)
+    return json_response(
+        dict(data, id=isolate_id, sequences=[]),
+        status=201,
+        headers=headers
+    )
 
 
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
@@ -402,16 +396,7 @@ async def edit_isolate(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
-
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    await virtool.db.otus.update_verification(db, new)
 
     isolate_name = virtool.otus.format_isolate_name(isolate)
 
@@ -486,16 +471,7 @@ async def set_as_default(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id, document)
 
-    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
-
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    await virtool.db.otus.update_verification(db, new)
 
     isolate_name = virtool.otus.format_isolate_name(isolate)
 
@@ -688,16 +664,7 @@ async def create_sequence(req):
 
     new = await virtool.db.otus.join(db, otu_id, new)
 
-    issues = await virtool.db.otus.verify(db, otu_id, joined=new)
-
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    await virtool.db.otus.update_verification(db, new)
 
     isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 
@@ -762,14 +729,7 @@ async def edit_sequence(req):
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
-    if await virtool.db.otus.verify(db, otu_id, joined=new) is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    await virtool.db.otus.update_verification(db, new)
 
     isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 
@@ -820,14 +780,7 @@ async def remove_sequence(req):
 
     new = await virtool.db.otus.join(db, otu_id)
 
-    if await virtool.db.otus.verify(db, otu_id, joined=new) is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
+    await virtool.db.otus.update_verification(db, new)
 
     isolate_name = virtool.otus.format_isolate_name(isolate)
 
