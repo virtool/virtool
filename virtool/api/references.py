@@ -22,20 +22,16 @@ routes = virtool.http.routes.Routes()
 
 RIGHTS_SCHEMA = {
     "build": {
-        "type": "boolean",
-        "default": False
+        "type": "boolean"
     },
     "modify": {
-        "type": "boolean",
-        "default": False
+        "type": "boolean"
     },
     "modify_otu": {
-        "type": "boolean",
-        "default": False
+        "type": "boolean"
     },
     "remove": {
-        "type": "boolean",
-        "default": False
+        "type": "boolean"
     }
 }
 

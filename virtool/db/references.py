@@ -270,7 +270,7 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
 
     for subdocument in document[field]:
         if subdocument["id"] == subdocument_id:
-            rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+            rights = {key: data.get(key, subdocument[key]) for key in virtool.references.RIGHTS}
             subdocument.update(rights)
 
             await db.references.update_one({"_id": ref_id}, {
