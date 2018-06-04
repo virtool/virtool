@@ -1,6 +1,4 @@
 import asyncio
-import gzip
-import json
 import os
 
 import pymongo
