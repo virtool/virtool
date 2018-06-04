@@ -16,7 +16,6 @@ import {
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
 import { checkUserRefPermission } from "../../utils";
-
 import { fetchOTUs } from "../actions";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
