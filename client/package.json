@@ -63,7 +63,6 @@
     "react-router-dom": "^4.1.1",
     "react-router-redux": "^5.0.0-alpha.8",
     "react-svg-gauge": "^1.0.4",
-    "react-virtualized": "^9.19.1",
     "redux": "^4.0.0",
     "redux-saga": "^0.16.0",
     "reselect": "^3.0.1",

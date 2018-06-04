@@ -5,8 +5,6 @@ import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Row, Col, Panel } from "react-bootstrap";
-import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
-
 import {
     Flex,
     FlexItem,
@@ -17,14 +15,9 @@ import {
 } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { createFindURL, checkUserRefPermission } from "../../utils";
+import { checkUserRefPermission } from "../../utils";
 
 import { fetchOTUs } from "../actions";
-
-const cache = new CellMeasurerCache({
-    fixedWidth: true,
-    defaultHeight: 100
-});
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -71,33 +64,23 @@ class OTUsList extends React.Component {
             };
         }
 
-        if (prevState.list !== nextProps.documents) {
+        if (prevState.page !== nextProps.page) {
             return {
                 masterList: prevState.masterList.concat(nextProps.documents),
                 list: nextProps.documents,
-                page: prevState.page + 1
+                page: nextProps.page
             };
         }
 
         return null;
     }
 
-    rowRenderer = ({ index, key, style, parent }) => (
-        <CellMeasurer
-            key={key}
-            cache={cache}
-            parent={parent}
-            columnIndex={0}
-            rowIndex={index}
-        >
-            <div style={style} className="infinite-scroll-row">
-                <OTUItem
-                    key={this.state.masterList[index].id}
-                    refId={this.props.refId}
-                    {...this.state.masterList[index]}
-                />
-            </div>
-        </CellMeasurer>
+    rowRenderer = (index) => (
+        <OTUItem
+            key={this.state.masterList[index].id}
+            refId={this.props.refId}
+            {...this.state.masterList[index]}
+        />
     );
 
     render () {
@@ -140,7 +123,7 @@ class OTUsList extends React.Component {
         }
 
         return (
-            <div className="inner-list-container">
+            <div>
                 {alert}
 
                 <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
@@ -151,10 +134,9 @@ class OTUsList extends React.Component {
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
                     list={this.state.masterList}
-                    loadNextPage={() => this.props.loadNextPage(this.state.page)}
-                    page={this.props.page}
+                    loadNextPage={this.props.loadNextPage}
+                    page={this.state.page}
                     rowRenderer={this.rowRenderer}
-                    cache={cache}
                 />
             </div>
         );
@@ -175,12 +157,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-
-    onPage: (page) => {
-        const url = createFindURL({ page });
-        dispatch(push(url.pathname + url.search));
-    },
-
     onHide: () => {
         dispatch(push({state: {createOTU: false}}));
     },

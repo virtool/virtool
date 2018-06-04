@@ -1,46 +1,36 @@
 import React from "react";
-import { InfiniteLoader, List, AutoSizer } from "react-virtualized";
-import { noop } from "lodash-es";
+import { map } from "lodash-es";
+import { LoadingPlaceholder } from "./index";
 
 export class ScrollList extends React.Component {
 
+    componentDidMount () {
+        window.addEventListener("scroll", this.onScroll, false);
+    }
+
+    componentWillUnMount () {
+        window.removeEventListener("scroll", this.onScroll, false);
+    }
+
+    onScroll = () => {
+        if (this.props.list.length
+            && this.props.hasNextPage
+            && !this.props.isNextPageLoading
+            && (document.body.offsetHeight - 500) <= (window.innerHeight + window.scrollY)
+        ) {
+            this.props.loadNextPage(this.props.page + 1);
+        }
+    };
+
     render () {
 
-        const { hasNextPage, isNextPageLoading, loadNextPage, list } = this.props;
-
-        const rowCount = hasNextPage ? list.length + 1 : list.length;
-        const loadMoreRows = isNextPageLoading ? noop : loadNextPage;
-
-        const isRowLoaded = ({ index }) => (
-            !hasNextPage || index < list.length
-        );
+        const { list, rowRenderer, isNextPageLoading } = this.props;
 
         return (
-            <InfiniteLoader
-                isRowLoaded={isRowLoaded}
-                loadMoreRows={loadMoreRows}
-                rowCount={rowCount}
-            >
-                {({ onRowsRendered, registerChild }) =>
-                    <div className="infinite-scroll-list">
-                        <AutoSizer>
-                            {({ width, height }) => (
-                                <List
-                                    ref={registerChild}
-                                    onRowsRendered={onRowsRendered}
-                                    width={width}
-                                    height={height}
-                                    deferredMeasurementCache={this.props.cache}
-                                    rowHeight={this.props.cache.rowHeight}
-                                    rowRenderer={this.props.rowRenderer}
-                                    rowCount={list.length}
-                                    overscanRowCount={3}
-                                />
-                            )}
-                        </AutoSizer>
-                    </div>
-                }
-            </InfiniteLoader>
+            <div>
+                {map(list, (item, index) => rowRenderer(index))}
+                {isNextPageLoading ? <LoadingPlaceholder margin="20px" /> : null}
+            </div>
         );
     }
 }
