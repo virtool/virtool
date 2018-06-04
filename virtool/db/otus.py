@@ -140,7 +140,7 @@ async def find(db, names, term, req_query, verified, ref_id=None):
         }
 
     if names is True or names == "true":
-        data = await db.otus.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
+        data = await db.otus.find({**db_query, **base_query}, ["name"], sort=[("name", 1)]).to_list(None)
         return [virtool.utils.base_processor(d) for d in data]
 
     data = await paginate(
