@@ -312,7 +312,7 @@ async def add_isolate(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.db.otus.join(db, otu_id)
 
-    issues = await virtool.db.otus.update_verification(db, new)
+    await virtool.db.otus.update_verification(db, new)
 
     isolate_name = virtool.otus.format_isolate_name(data)
 
