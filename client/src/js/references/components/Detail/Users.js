@@ -5,7 +5,7 @@ import { map, filter, some, reduce } from "lodash-es";
 
 import MemberEntry from "./MemberEntry";
 import AddReferenceMember from "./AddMember";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../../base";
 import { addReferenceUser, editReferenceUser, removeReferenceUser } from "../../../references/actions";
 import { listUsers } from "../../../users/actions";
 
@@ -115,7 +115,7 @@ class ReferenceUsers extends React.Component {
                     }}
                     isSelected={this.state.selectedUser === user.id}
                 />)
-            : <div>No users assigned</div>;
+            : <NoneFound noun="users" style={{margin: "0"}} />;
 
         return (
             <div>
@@ -161,6 +161,7 @@ class ReferenceUsers extends React.Component {
                     list={otherUsers}
                     onAdd={this.handleAdd}
                     onHide={this.handleHide}
+                    noun="users"
                 />
             </div>
         );

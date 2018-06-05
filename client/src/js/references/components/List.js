@@ -3,22 +3,11 @@ import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel, Button } from "react-bootstrap";
 import AddReference from "./AddReference";
-import { ViewHeader, Flex } from "../../base";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
 import { remoteReference } from "../actions";
+import { ViewHeader } from "../../base";
 
-const ReferenceContainer = ({ remoteCard, references }) => (
-    <Flex
-        direction="row"
-        wrap="wrap"
-        alignItems="stretch"
-        style={{minHeight: "min-content", marginRight: "-15px"}}
-    >
-        {references}
-        {remoteCard}
-    </Flex>
-);
 
 const ReferenceList = (props) => {
 
@@ -34,9 +23,9 @@ const ReferenceList = (props) => {
         );
     }
 
-    const remoteReferenceCard = (
-        <Panel className="reference-item-remote">
-            <span className="reference-remote-contents">
+    referenceComponents.push(
+        <Panel key="remote" className="card reference-remote">
+            <span>
                 <p>Official Remote Reference</p>
                 <Button bsStyle="primary" onClick={props.onRemote}>
                     Install
@@ -57,7 +46,9 @@ const ReferenceList = (props) => {
 
             <ReferenceToolbar />
 
-            <ReferenceContainer remoteCard={remoteReferenceCard} references={referenceComponents} />
+            <div className="card-container">
+                {referenceComponents}
+            </div>
 
             {props.routerStateExists ? <AddReference /> : null}
         </div>

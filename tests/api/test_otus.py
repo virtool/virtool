@@ -332,7 +332,12 @@ class TestEdit:
             "name": "Prunus virus F",
             "version": 1,
             "schema": [],
-            "issues": None,
+            "issues": {
+                "empty_isolate": ["cab8b360"],
+                "empty_otu": False,
+                "empty_sequence":False,
+                "isolate_inconsistency": False
+            },
             "reference": {
                 "id": "hxn167"
             }
@@ -553,7 +558,12 @@ class TestEdit:
             "isolates": [],
             "most_recent_change": None,
             "name": "Tobacco mosaic otu",
-            "issues": None,
+            "issues": {
+                "empty_isolate": False,
+                "empty_otu": True,
+                "empty_sequence": False,
+                "isolate_inconsistency": False
+            },
             "reference": {
                 "id": "foo"
             }

@@ -5,7 +5,7 @@ import { map, filter, some } from "lodash-es";
 
 import MemberEntry from "./MemberEntry";
 import AddReferenceMember from "./AddMember";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../../base";
 import { addReferenceGroup, editReferenceGroup, removeReferenceGroup } from "../../../references/actions";
 import { listGroups } from "../../../groups/actions";
 
@@ -94,7 +94,7 @@ class ReferenceGroups extends React.Component {
                     }}
                     isSelected={this.state.selectedGroup === group.id}
                 />)
-            : <div>No groups assigned</div>;
+            : <NoneFound noun="groups" style={{margin: "0"}} />;
 
         return (
             <div>
@@ -140,6 +140,7 @@ class ReferenceGroups extends React.Component {
                     list={otherGroups}
                     onAdd={this.handleAdd}
                     onHide={this.handleHide}
+                    noun="groups"
                 />
             </div>
         );

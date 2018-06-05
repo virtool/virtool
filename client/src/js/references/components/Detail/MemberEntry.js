@@ -15,7 +15,7 @@ const MemberEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, per
                     {onRemove
                         ? (
                             <Icon
-                                name="minus-circle"
+                                name="trash"
                                 bsStyle="danger"
                                 tip="Remove Member"
                                 pullRight

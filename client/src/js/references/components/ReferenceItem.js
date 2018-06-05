@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { RelativeTime, ProgressBar, Icon } from "../../base";
 import { find, get } from "lodash-es";
-import { Panel, Table, Row, ListGroup } from "react-bootstrap";
+import { Panel, Table, Row } from "react-bootstrap";
 
 const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     <div style={{ marginLeft: "5px" }}>
@@ -138,7 +138,7 @@ const ReferenceItem = (props) => {
     }
 
     return (
-        <Panel className="reference-item" onClick={props.onClick}>
+        <Panel className="card reference-item" onClick={props.onClick}>
             <Panel.Heading>
                 <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} refId={props.id} />
             </Panel.Heading>
@@ -151,13 +151,11 @@ const ReferenceItem = (props) => {
                 </span>
             </Panel.Body>
 
-            <ListGroup>
-                <ProgressBar
-                    bsStyle={progress === 100 ? "success" : "warning"}
-                    now={progress}
-                    affixed
-                />
-            </ListGroup>
+            <ProgressBar
+                bsStyle={progress === 100 ? "success" : "warning"}
+                now={progress}
+                affixed
+            />
         </Panel>
     );
 };

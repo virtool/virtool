@@ -52,6 +52,12 @@ async def add_group_or_user(db, ref_id, field, data):
 
     subdocument_id = data.get("group_id", None) or data["user_id"]
 
+    if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
+        raise virtool.errors.DatabaseError("group does not exist")
+
+    if field == "users" and await db.users.count({"_id": subdocument_id}) == 0:
+        raise virtool.errors.DatabaseError("user does not exist")
+
     if subdocument_id in [s["id"] for s in document[field]]:
         raise virtool.errors.DatabaseError(field[:-1] + " already exists")
 
@@ -270,7 +276,7 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
 
     for subdocument in document[field]:
         if subdocument["id"] == subdocument_id:
-            rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+            rights = {key: data.get(key, subdocument[key]) for key in virtool.references.RIGHTS}
             subdocument.update(rights)
 
             await db.references.update_one({"_id": ref_id}, {
@@ -654,6 +660,39 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
         await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
 
         return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
+
+
+async def export(db, ref_id, scope):
+    # A list of joined viruses.
+    otu_list = list()
+
+    query = {
+        "reference.id": ref_id
+    }
+
+    if scope == "built":
+        query["last_indexed_version"] = {"$ne": None}
+
+        async for document in db.otus.find(query):
+            _, joined, _ = await virtool.db.history.patch_to_version(
+                db,
+                document["_id"],
+                document["last_indexed_version"]
+            )
+
+            otu_list.append(joined)
+
+    elif scope == "unbuilt":
+        async for document in db.otus.find(query):
+            last_verified = await virtool.db.history.patch_to_verified(db, document["_id"])
+            otu_list.append(last_verified)
+
+    else:
+        async for document in db.otus.find(query):
+            current = await virtool.db.otus.join(db, document["_id"], document)
+            otu_list.append(current)
+
+    return otu_list
 
 
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
