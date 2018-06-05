@@ -1,10 +1,24 @@
-.reference-item {
-  align-self: flex-start;
-  cursor: pointer;
-  flex: 0 0 auto;
-  margin: 1rem 1rem 0 0;
-  min-width: 300px;
+.card-container {
+  display: grid;
+  grid-auto-rows: 1fr;
+  grid-gap: 5px 15px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  @media (min-width: 1420px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+
+.card {
   box-shadow: 1px 1px 2px 0 #d5d5d5;
+}
+
+.reference-item {
+  cursor: pointer;
   transform: scale(1);
   transition: transform 100ms ease-in;
 
@@ -13,22 +27,6 @@
   }
 }
 
-.reference-item-remote {
-  align-self: flex-start;
-  cursor: pointer;
-  flex: 0 0 auto;
-  margin: 1rem 1rem 0 0;
-  width: 300px;
-  height: 300px;
+.reference-remote {
   border: 2px dashed #23587f;
-  text-align: center;
-  line-height: 300px;
-}
-
-.reference-remote-contents {
-  display: inline-block;
-  vertical-align: middle;
-  line-height: normal;
-  padding: 6px 12px;
-  font-size: 14px;
 }

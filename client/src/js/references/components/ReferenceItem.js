@@ -138,7 +138,7 @@ const ReferenceItem = (props) => {
     }
 
     return (
-        <Panel className="reference-item" onClick={props.onClick}>
+        <Panel className="card reference-item" onClick={props.onClick}>
             <Panel.Heading>
                 <ReferenceHeader name={props.name} createdAt={props.created_at} user={props.user.id} refId={props.id} />
             </Panel.Heading>
