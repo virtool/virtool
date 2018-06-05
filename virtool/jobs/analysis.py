@@ -39,6 +39,7 @@ class Base(virtool.jobs.job.Job):
     - constructing paths used by all subclasses
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -160,7 +161,6 @@ class Base(virtool.jobs.job.Job):
 
 
 class Pathoscope(Base):
-
     """
     A base class for all Pathoscope-based tasks. Subclass of :class:`.sample_analysis.Base`.
 
@@ -233,7 +233,7 @@ class Pathoscope(Base):
             pi,
             refs,
             reads
-        ) = await self.run_in_executor(run_patho, self.analysis_path, vta_path, reassigned_path)
+        ) = await self.run_in_executor(run_patho, vta_path, reassigned_path)
 
         read_count = len(reads)
 
@@ -315,12 +315,12 @@ class Pathoscope(Base):
 
 
 class PathoscopeBowtie(Pathoscope):
-
     """
     A Pathoscope analysis job that uses Bowtie2 to map reads to viral and host references. The ad-hoc isolate index
     is built using ``bowtie2-build``.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -499,7 +499,6 @@ class PathoscopeBowtie(Pathoscope):
 
 
 class NuVs(Base):
-
     """
     A job class for NuVs, a custom workflow used for identifying potential viral sequences from sample libraries. The
     workflow consists of the following steps:
@@ -513,6 +512,7 @@ class NuVs(Base):
     5. Using HMMER/vFAM, identify possible viral domains in the ORFs.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -781,7 +781,6 @@ class NuVs(Base):
 
         await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
 
-
     async def cleanup(self):
         try:
             self.temp_dir.cleanup()
@@ -791,8 +790,7 @@ class NuVs(Base):
         await super().cleanup()
 
 
-def run_patho(analysis_path, vta_path, reassigned_path):
-
+def run_patho(vta_path, reassigned_path):
     u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path)
 
     best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = virtool.pathoscope.compute_best_hit(
@@ -830,7 +828,6 @@ def run_patho(analysis_path, vta_path, reassigned_path):
 
 
 def run_reunion(analysis_path, read_paths, unmapped_path):
-
     headers = virtool.bio.read_fastq_headers(unmapped_path)
 
     unmapped_roots = {h.split(" ")[0] for h in headers}

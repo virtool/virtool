@@ -124,7 +124,7 @@ async def init_db(app):
     port = app["settings"].get("db_port", 27017)
     name = app["db_name"] or app["settings"]["db_name"]
 
-    client = motor_asyncio.AsyncIOMotorClient(
+    db_client = motor_asyncio.AsyncIOMotorClient(
         host,
         port,
         serverSelectionTimeoutMS=6000,
@@ -132,13 +132,13 @@ async def init_db(app):
     )
 
     try:
-        await client.database_names()
+        await db_client.database_names()
     except pymongo.errors.ServerSelectionTimeoutError:
         raise virtool.errors.MongoConnectionError(
             "Could not connect to MongoDB server at {}:{}".format(host, port)
         )
 
-    app["db"] = virtool.db.iface.DB(client[name], app["dispatcher"].dispatch, app.loop)
+    app["db"] = virtool.db.iface.DB(db_client[name], app["dispatcher"].dispatch, app.loop)
 
     await app["db"].connect()
 

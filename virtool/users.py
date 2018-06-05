@@ -101,7 +101,8 @@ def hash_password(password):
 
 def limit_permissions(permissions, limit_filter):
     """
-    Make sure permission values in `permissions` do not exceed those in `limit_filter`. Returns a filtered set permissions
+    Make sure permission values in `permissions` do not exceed those in `limit_filter`. Returns a filtered set
+    permissions.
 
     :param limit_filter: the limiting permissions that cannot be exceeded
     :type limit_filter:

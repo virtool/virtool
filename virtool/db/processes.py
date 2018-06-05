@@ -3,7 +3,7 @@ import virtool.processes
 import virtool.utils
 
 
-async def register(db, process_type, file_size=0):
+async def register(db, process_type):
 
     if process_type in virtool.processes.UNIQUES:
         await db.processes.delete_many({"type": process_type})

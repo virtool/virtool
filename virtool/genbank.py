@@ -14,12 +14,16 @@ SEARCH_REGEX = re.compile("<Id>([0-9]+)</Id>")
 
 async def fetch(settings, session, gi):
     """
+    Fetch the Genbank record for the passed `gi`.
 
     :param settings: the application settings object
     :type settings: :class:`virtool.app_settings.Settings`
 
     :param session: an aiohttp client session
     :type session: :class:`aiohttp.ClientSession`
+
+    :param gi: the GI to fetch
+    :type gi: Union[int,str]
 
     :return: parsed Genbank data
     :rtype: dict

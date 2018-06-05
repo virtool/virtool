@@ -12,7 +12,7 @@ import virtool.http.proxy
 import virtool.jobs.analysis
 import virtool.utils
 
-BLAST_CGI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
 
 COMPLEMENT_TABLE = {
@@ -298,7 +298,7 @@ async def initialize_ncbi_blast(settings, sequence):
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_URL, params=params, data=data) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 
@@ -349,7 +349,7 @@ async def check_rid(settings, rid):
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
 
@@ -365,7 +365,7 @@ async def get_ncbi_blast_result(settings, rid):
     }
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
             return parse_blast_content(await resp.read(), rid)
 
 

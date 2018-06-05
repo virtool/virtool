@@ -246,6 +246,7 @@ async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
     """
     Update the BLAST data for a sequence in a NuVs analysis.
 
+    :param settings:
     :param db:
 
     :param analysis_id:
