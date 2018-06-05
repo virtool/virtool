@@ -18,7 +18,7 @@ export const remove = ({ jobId }) => (
 );
 
 export const clear = ({ scope }) => (
-    Request.delete(`/api/jobs`)
+    Request.delete("/api/jobs")
         .query({filter: scope || "finished"})
 );
 
