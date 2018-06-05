@@ -151,13 +151,11 @@ const ReferenceItem = (props) => {
                 </span>
             </Panel.Body>
 
-            <ListGroup>
-                <ProgressBar
-                    bsStyle={progress === 100 ? "success" : "warning"}
-                    now={progress}
-                    affixed
-                />
-            </ListGroup>
+            <ProgressBar
+                bsStyle={progress === 100 ? "success" : "warning"}
+                now={progress}
+                affixed
+            />
         </Panel>
     );
 };

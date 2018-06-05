@@ -1,7 +1,7 @@
 .card-container {
   display: grid;
   grid-auto-rows: 1fr;
-  grid-gap: 5px 15px;
+  grid-gap: 0 15px;
   grid-template-columns: 1fr;
 
   @media (min-width: 992px) {
@@ -15,6 +15,16 @@
 
 .card {
   box-shadow: 1px 1px 2px 0 #d5d5d5;
+
+  .progress-affixed {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    height: 5px;
+    margin: 0;
+  }
 }
 
 .reference-item {
