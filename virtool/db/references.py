@@ -80,8 +80,8 @@ async def add_group_or_user(db, ref_id, field, data):
 
 async def check_for_remote_update(app, ref_id):
     """
-    Check the the GitHub repository identified by the passed `slug` for a release newer than the provided `version`. If
-    a newer release is found, update the reference identified by the passed `ref_id` and return the release.
+    Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
+    reference identified by the passed `ref_id` and return the release.
 
     :param app: the application object
     :type app: :class:`aiohttp.Application`
@@ -89,7 +89,7 @@ async def check_for_remote_update(app, ref_id):
     :param ref_id: the id of the reference to update
     :type ref_id: str
 
-    :return: the latest release if newer than the passed version
+    :return: the latest release
     :rtype: Coroutine[dict]
 
     """
