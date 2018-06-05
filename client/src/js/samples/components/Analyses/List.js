@@ -64,59 +64,9 @@ class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
-        let alertMessage;
-        let isBlocked = false;
-
-        if (this.props.modifiedCount) {
-            alertMessage = (
-                <div>
-                    <span>Note: The OTU database has changed. </span>
-                    <Link to="/otus/indexes">Rebuild the index</Link>
-                    <span> to use the latest changes.</span>
-                </div>
-            );
-        }
-
-        if (this.props.indexArray) {
-            const readyIndexes = map(this.props.indexArray, ["ready", true]);
-
-            if (!readyIndexes.length) {
-                alertMessage = (
-                    <div>
-                        <span>
-                            A OTU database index build is in progress.
-                        </span>
-                    </div>
-                );
-
-                isBlocked = true;
-            }
-        } else {
-            alertMessage = (
-                <div>
-                    <span>A OTU database is not found. </span>
-                    <Link to="/otus/indexes">Add a database</Link>
-                    <span> to use in analyses.</span>
-                </div>
-            );
-
-            isBlocked = true;
-        }
-
-
-        let indexAlert;
-
-        if (alertMessage) {
-            indexAlert = (
-                <Alert bsStyle="warning" icon="info">
-                    {alertMessage}
-                </Alert>
-            );
-        }
-
         let hmmAlert;
 
-        if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
+        if (!this.props.hmms.status.installed) {
             hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -134,12 +84,10 @@ class AnalysesList extends React.Component {
         return (
             <div>
                 {hmmAlert}
-                {indexAlert}
 
                 {this.props.canModify ?
                     <AnalysesToolbar
                         onClick={() => this.setState({show: true})}
-                        isDisabled={isBlocked}
                     /> : null}
 
                 <ListGroup>
@@ -161,7 +109,6 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    modifiedCount: state.indexes.modified_otu_count,
     indexArray: state.indexes.documents,
     hmms: state.hmms,
     canModify: getCanModify(state)
