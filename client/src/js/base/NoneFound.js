@@ -10,7 +10,7 @@ import { Icon } from "./Icon";
  * @param noun {string} the name of the items of which none were found (eg. samples)
  * @param noListGroup {boolean} don't include a ListGroup in the returned element
  */
-export const NoneFound = ({ noun, noListGroup }) => {
+export const NoneFound = ({ noun, noListGroup, style }) => {
     const item = (
         <ListGroupItem className="text-center">
             <Icon name="info-circle" /> No {noun} found
@@ -22,7 +22,7 @@ export const NoneFound = ({ noun, noListGroup }) => {
     }
 
     return (
-        <ListGroup>
+        <ListGroup style={style}>
             {item}
         </ListGroup>
     );
@@ -30,5 +30,6 @@ export const NoneFound = ({ noun, noListGroup }) => {
 
 NoneFound.propTypes = {
     noun: PropTypes.string.isRequired,
-    noListGroup: PropTypes.bool
+    noListGroup: PropTypes.bool,
+    style: PropTypes.object
 };
