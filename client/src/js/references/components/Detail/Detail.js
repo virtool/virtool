@@ -4,8 +4,8 @@ import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem } from "react-bootstrap";
-import { getReference } from "../../actions";
+import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
+import { getReference, exportReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
 import { checkUserRefPermission } from "../../../utils";
 
@@ -18,6 +18,27 @@ import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
 
+class CustomToggle extends React.Component {
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            scope: ""
+        };
+    }
+
+    render () {
+        return (
+            <Icon
+                name="ellipsis-v"
+                tip="Options"
+                onClick={this.props.onClick}
+                style={{fontSize: "65%", paddingLeft: "5px"}}
+            />
+        );
+    }
+}
+
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
@@ -29,8 +50,22 @@ const ReferenceSettings = ({ isRemote }) => (
 
 class ReferenceDetail extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            showExport: false
+        };
+    }
+
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
+    }
+
+    handleSelect = (key) => {
+        this.setState({ scope: key });
+
+        this.props.onExport(this.props.match.params.refId, key);
     }
 
     render = () => {
@@ -43,6 +78,7 @@ class ReferenceDetail extends React.Component {
         const hasModify = checkUserRefPermission(this.props, "modify");
 
         let headerIcon;
+        let exportButton;
 
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from
@@ -67,6 +103,18 @@ class ReferenceDetail extends React.Component {
                         style={{fontSize: "65%"}}
                     />
                 ) : headerIcon;
+
+            exportButton = (
+                <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
+                    <CustomToggle bsRole="toggle" />
+                    <Dropdown.Menu className="export-ref-dropdown-menu">
+                        <MenuItem header>Export</MenuItem>
+                        <MenuItem eventKey="built" onSelect={this.handleSelect}>Built</MenuItem>
+                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>Unbuilt</MenuItem>
+                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>Unverified</MenuItem>
+                    </Dropdown.Menu>
+                </Dropdown>
+            );
         }
 
         return (
@@ -79,6 +127,7 @@ class ReferenceDetail extends React.Component {
                             </Flex>
                         </FlexItem>
                         {headerIcon}
+                        {exportButton}
                     </Flex>
                     <div className="text-muted" style={{fontSize: "12px"}}>
                         Created {Moment(created_at).calendar()} by {user.id}
@@ -131,6 +180,10 @@ const mapDispatchToProps = dispatch => ({
 
     onEdit: () => {
         dispatch(push({...window.location, state: {editReference: true}}));
+    },
+
+    onExport: (refId, scope) => {
+        dispatch(exportReference(refId, scope));
     }
 
 });

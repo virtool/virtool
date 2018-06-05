@@ -12,6 +12,7 @@ import {
     IMPORT_REFERENCE,
     CLONE_REFERENCE,
     REMOTE_REFERENCE,
+    EXPORT_REFERENCE,
     ADD_REFERENCE_USER,
     EDIT_REFERENCE_USER,
     REMOVE_REFERENCE_USER,
@@ -63,6 +64,10 @@ export function* remoteReference () {
         REMOTE_REFERENCE
     ));
     yield put(push({pathname: "/refs"}));
+}
+
+export function* exportReference (action) {
+    yield apiCall(referenceAPI.exportReference, action, EXPORT_REFERENCE);
 }
 
 export function* addRefUser (action) {
@@ -122,6 +127,7 @@ export function* watchReferences () {
     yield takeLatest(IMPORT_REFERENCE.REQUESTED, importReference);
     yield takeLatest(CLONE_REFERENCE.REQUESTED, cloneReference);
     yield takeLatest(REMOTE_REFERENCE.REQUESTED, remoteReference);
+    yield takeLatest(EXPORT_REFERENCE.REQUESTED, exportReference);
     yield takeEvery(ADD_REFERENCE_USER.REQUESTED, addRefUser);
     yield takeEvery(EDIT_REFERENCE_USER.REQUESTED, editRefUser);
     yield takeEvery(REMOVE_REFERENCE_USER.REQUESTED, removeRefUser);

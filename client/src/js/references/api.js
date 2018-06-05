@@ -54,6 +54,10 @@ export const remoteReference = ({ remote_from }) => (
         .send({ remote_from })
 );
 
+export const exportReference = ({ refId, scope }) => (
+    Request.get(`/download/refs/${refId}?scope=${scope}`)
+);
+
 export const remove = ({ refId }) => (
     Request.delete(`/api/refs/${refId}`)
 );

@@ -8,6 +8,7 @@ import {
     IMPORT_REFERENCE,
     CLONE_REFERENCE,
     REMOTE_REFERENCE,
+    EXPORT_REFERENCE,
     ADD_REFERENCE_USER,
     EDIT_REFERENCE_USER,
     REMOVE_REFERENCE_USER,
@@ -36,6 +37,12 @@ export const editReference = (referenceId, update) => ({
     type: EDIT_REFERENCE.REQUESTED,
     referenceId,
     update
+});
+
+export const exportReference = (refId, scope) => ({
+    type: EXPORT_REFERENCE.REQUESTED,
+    refId,
+    scope
 });
 
 export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({

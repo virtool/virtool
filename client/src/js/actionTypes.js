@@ -70,6 +70,7 @@ export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
 export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
 export const CLONE_REFERENCE = createRequestActionType("CLONE_REFERENCE");
 export const REMOTE_REFERENCE = createRequestActionType("REMOTE_REFERENCE");
+export const EXPORT_REFERENCE = createRequestActionType("EXPORT_REFERENCE_GROUP");
 export const ADD_REFERENCE_USER = createRequestActionType("ADD_REFERENCE_USER");
 export const EDIT_REFERENCE_USER = createRequestActionType("EDIT_REFERENCE_USER");
 export const REMOVE_REFERENCE_USER = createRequestActionType("REMOVE_REFERENCE_USER");
