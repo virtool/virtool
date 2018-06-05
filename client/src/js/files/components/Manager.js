@@ -1,15 +1,72 @@
 import React from "react";
-import { capitalize, filter, forEach, map } from "lodash-es";
-import { ListGroup } from "react-bootstrap";
+import { capitalize, filter, forEach, map, some } from "lodash-es";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
 
 import File from "./File";
 import { findFiles, removeFile, upload } from "../actions";
-import { Alert, LoadingPlaceholder, NoneFound, Pagination, ViewHeader, UploadBar } from "../../base";
-import { createRandomString, checkAdminOrPermission } from "../../utils";
+import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
+import { createRandomString, checkAdminOrPermission, isArrayEqual } from "../../utils";
+
+const checkArrayIncludes = (l, s) => {
+
+    const longer = l.slice();
+    const shorter = s.slice();
+
+    map(shorter, element => {
+        if (!some(longer, element)) {
+            longer.push(element);
+        }
+        return element;
+    });
+
+    return longer;
+};
 
 class FileManager extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
+    }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+        const filtered = filter(nextProps.documents, {type: nextProps.fileType});
+
+        if (prevState.masterList === null || !prevState.masterList.length) {
+            return {
+                masterList: filtered,
+                list: filtered,
+                page: nextProps.page
+            };
+        }
+
+        if (prevState.page !== nextProps.page) {
+
+            return {
+                masterList: checkArrayIncludes(prevState.masterList, filtered),
+                list: filtered,
+                page: nextProps.page
+            };
+        } else if (!isArrayEqual(prevState.list, filtered)) {
+            return {
+                masterList: checkArrayIncludes(prevState.masterList, filtered),
+                list: filtered
+            };
+        }
+        return null;
+    }
+
+    rowRenderer = (index) => (
+        <File
+            key={this.state.masterList[index].id}
+            {...this.state.masterList[index]}
+            onRemove={this.props.onRemove}
+        />
+    );
 
     componentDidMount () {
         this.props.onFind(this.props.fileType);
@@ -32,19 +89,6 @@ class FileManager extends React.Component {
         }
 
         const filtered = filter(this.props.documents, {type: this.props.fileType});
-
-        let fileComponents;
-
-        if (filtered.length) {
-            fileComponents = map(filtered, document =>
-                <File key={document.id} {...document} onRemove={this.props.onRemove} />
-            );
-        } else {
-            fileComponents = (
-                <NoneFound noun="files" />
-            );
-        }
-
         const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
 
         let toolbar;
@@ -74,15 +118,15 @@ class FileManager extends React.Component {
 
                 {toolbar}
 
-                <ListGroup>
-                    {fileComponents}
-                </ListGroup>
+                {filtered.length ? null : <NoneFound noun="files" />}
 
-                <Pagination
-                    documentCount={this.props.documents.length}
-                    page={this.props.page}
-                    pageCount={this.props.page_count}
-                    onPage={this.handlePage}
+                <ScrollList
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    list={this.state.masterList}
+                    loadNextPage={this.handlePage}
+                    page={this.state.page}
+                    rowRenderer={this.rowRenderer}
                 />
             </div>
         );
@@ -112,9 +156,6 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onFind: (fileType, page = 1) => {
-        const url = new window.URL(window.location);
-        url.searchParams.set("page", page);
-        dispatch(push(url.pathname + url.search));
         dispatch(findFiles(fileType, page));
     },
 

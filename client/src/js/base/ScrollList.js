@@ -8,7 +8,7 @@ export class ScrollList extends React.Component {
         window.addEventListener("scroll", this.onScroll, false);
     }
 
-    componentWillUnMount () {
+    componentWillUnmount () {
         window.removeEventListener("scroll", this.onScroll, false);
     }
 

@@ -15,7 +15,7 @@ import {
 } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { checkUserRefPermission } from "../../utils";
+import { checkUserRefPermission, isArrayEqual } from "../../utils";
 import { fetchOTUs } from "../actions";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
@@ -68,6 +68,11 @@ class OTUsList extends React.Component {
                 masterList: prevState.masterList.concat(nextProps.documents),
                 list: nextProps.documents,
                 page: nextProps.page
+            };
+        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents
             };
         }
 

@@ -5,7 +5,19 @@
  * @author igboyes
  */
 import Numeral from "numeral";
-import { capitalize, get, replace, sampleSize, split, startCase, filter, find } from "lodash-es";
+import {
+    capitalize,
+    get,
+    replace,
+    sampleSize,
+    split,
+    startCase,
+    filter,
+    find,
+    differenceWith,
+    isEqual,
+    isEmpty
+} from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -23,6 +35,14 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  */
 export const byteSize = bytes => (
     Numeral(bytes).format("0.0 b")
+);
+
+/*
+ * Deep comparison of two arrays of objects.
+ * Returns true if contents are identical.
+ */
+export const isArrayEqual = (x, y) => (
+    isEmpty(differenceWith(x, y, isEqual))
 );
 
 /**

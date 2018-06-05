@@ -55,14 +55,15 @@ export default function fileReducer (state = initialState, action) {
 
         case FIND_FILES.REQUESTED:
             return {
-                ...initialState,
+                ...state,
                 showUploadOverlay: state.showUploadOverlay,
                 uploads: state.uploads,
-                uploadsComplete: state.uploadsComplete
+                uploadsComplete: state.uploadsComplete,
+                isLoading: true
             };
 
         case FIND_FILES.SUCCEEDED:
-            return {...state, ...action.data, fileType: action.fileType };
+            return {...state, ...action.data, fileType: action.fileType, isLoading: false };
 
         case REMOVE_FILE.SUCCEEDED:
             return {...state, documents: reject(state.documents, {id: action.data.file_id})};

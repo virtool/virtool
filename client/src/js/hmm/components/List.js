@@ -6,7 +6,7 @@ import { push } from "react-router-redux";
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
 import { Icon, LoadingPlaceholder, ViewHeader, ScrollList } from "../../base";
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, isArrayEqual } from "../../utils";
 import { findHmms } from "../actions";
 
 class HMMList extends React.Component {
@@ -35,6 +35,11 @@ class HMMList extends React.Component {
                 masterList: prevState.masterList.concat(nextProps.documents),
                 list: nextProps.documents,
                 page: nextProps.page
+            };
+        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents
             };
         }
 
