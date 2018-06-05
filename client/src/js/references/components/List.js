@@ -25,7 +25,7 @@ const ReferenceList = (props) => {
 
     referenceComponents.push(
         <Panel key="remote" className="card reference-remote">
-            <span className="reference-remote-contents">
+            <span>
                 <p>Official Remote Reference</p>
                 <Button bsStyle="primary" onClick={props.onRemote}>
                     Install
