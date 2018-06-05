@@ -52,6 +52,12 @@ async def add_group_or_user(db, ref_id, field, data):
 
     subdocument_id = data.get("group_id", None) or data["user_id"]
 
+    if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
+        raise virtool.errors.DatabaseError("group does not exist")
+
+    if field == "users" and await db.users.count({"_id": subdocument_id}) == 0:
+        raise virtool.errors.DatabaseError("user does not exist")
+
     if subdocument_id in [s["id"] for s in document[field]]:
         raise virtool.errors.DatabaseError(field[:-1] + " already exists")
 
@@ -270,7 +276,7 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
 
     for subdocument in document[field]:
         if subdocument["id"] == subdocument_id:
-            rights = {key: data.get(key, False) for key in virtool.references.RIGHTS}
+            rights = {key: data.get(key, subdocument[key]) for key in virtool.references.RIGHTS}
             subdocument.update(rights)
 
             await db.references.update_one({"_id": ref_id}, {
