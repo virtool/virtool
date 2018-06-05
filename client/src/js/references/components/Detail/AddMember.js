@@ -75,14 +75,16 @@ export default class AddReferenceMember extends React.Component {
                         }}
                     isSelected={this.state.selected === member.id}
                 />)
-            : <NoneFound noun="members" />;
+            : <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
+
+        const modalStyle = listComponents.length ? {height: "300px", overflowY: "auto"} : null;
 
         return (
             <Modal show={this.props.show} onHide={this.handleExited} onExit={this.handleExited}>
                 <Modal.Header closeButton>
-                    Add Member
+                    <span className="text-capitalize">Add {this.props.noun}</span>
                 </Modal.Header>
-                <Modal.Body style={{height: "300px", overflowY: "auto"}}>
+                <Modal.Body style={modalStyle}>
                     {listComponents}
                 </Modal.Body>
                 <Modal.Footer>
