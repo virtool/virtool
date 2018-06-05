@@ -1,14 +1,17 @@
-import gzip
-import json
 import os
-import shutil
 import sys
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.references
 import virtool.errors
+
+RIGHTS = {
+    "build": False,
+    "modify": False,
+    "modify_otu": False,
+    "remove": False
+}
 
 TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
 
@@ -21,12 +24,8 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
     ref_id = "foo"
 
     subdocuments = [
-        {
-            "id": "bar"
-        },
-        {
-            "id": "baz"
-        }
+        {**RIGHTS, "id": "bar"},
+        {**RIGHTS, "id": "baz"}
     ]
 
     if error != "missing":
@@ -106,12 +105,8 @@ async def test_edit_group_or_user(field, missing, test_dbi, static_time):
     ref_id = "foo"
 
     subdocuments = [
-        {
-            "id": "bar"
-        },
-        {
-            "id": "baz"
-        }
+        {**RIGHTS, "id": "bar"},
+        {**RIGHTS, "id": "baz"}
     ]
 
     if missing != "reference":
