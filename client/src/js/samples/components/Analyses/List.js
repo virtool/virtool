@@ -66,7 +66,7 @@ class AnalysesList extends React.Component {
 
         let hmmAlert;
 
-        if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
+        if (!this.props.hmms.status.installed) {
             hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -109,7 +109,6 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    modifiedCount: state.indexes.modified_otu_count,
     indexArray: state.indexes.documents,
     hmms: state.hmms,
     canModify: getCanModify(state)
