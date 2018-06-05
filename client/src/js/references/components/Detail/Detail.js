@@ -74,11 +74,14 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, created_at, user } = this.props.detail;
+        const { name, id, remotes_from, cloned_from, imported_from, created_at, user } = this.props.detail;
         const hasModify = checkUserRefPermission(this.props, "modify");
 
         let headerIcon;
         let exportButton;
+
+        const disableExport = !!(remotes_from || cloned_from || imported_from);
+        console.log("disabled options? ", disableExport);
 
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from
@@ -109,9 +112,27 @@ class ReferenceDetail extends React.Component {
                     <CustomToggle bsRole="toggle" />
                     <Dropdown.Menu className="export-ref-dropdown-menu">
                         <MenuItem header>Export</MenuItem>
-                        <MenuItem eventKey="built" onSelect={this.handleSelect}>Built</MenuItem>
-                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>Unbuilt</MenuItem>
-                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>Unverified</MenuItem>
+                        <MenuItem
+                            eventKey="built"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Built
+                        </MenuItem>
+                        <MenuItem
+                            eventKey="unbuilt"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Unbuilt
+                        </MenuItem>
+                        <MenuItem
+                            eventKey="unverified"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Unverified
+                        </MenuItem>
                     </Dropdown.Menu>
                 </Dropdown>
             );
