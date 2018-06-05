@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
@@ -37,7 +37,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
 
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
-    canCreate: state.account.permissions.create_sample
+    canCreate: checkAdminOrPermission(state.account.administrator, state.account.permissions, "create_sample")
 });
 
 const mapDispatchToProps = (dispatch) => ({

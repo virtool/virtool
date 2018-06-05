@@ -44,10 +44,16 @@ class FileManager extends React.Component {
             };
         }
 
-        if (prevState.page !== nextProps.page) {
+        if (prevState.page < nextProps.page) {
 
             return {
                 masterList: checkArrayIncludes(prevState.masterList, filtered),
+                list: filtered,
+                page: nextProps.page
+            };
+        } else if (prevState.page > nextProps.page && nextProps.page === 1) {
+            return {
+                masterList: filtered,
                 list: filtered,
                 page: nextProps.page
             };
@@ -60,12 +66,27 @@ class FileManager extends React.Component {
         return null;
     }
 
+    handleRemove = (fileId) => {
+        const newArray = map(this.state.masterList, item => {
+            if (item.id === fileId) {
+                item.pending = "remove";
+            }
+            return item;
+        });
+
+        this.setState({ masterList: newArray });
+
+        this.props.onRemove(fileId);
+    };
+
     rowRenderer = (index) => (
-        <File
-            key={this.state.masterList[index].id}
-            {...this.state.masterList[index]}
-            onRemove={this.props.onRemove}
-        />
+        this.state.masterList[index].pending ? null : (
+            <File
+                key={this.state.masterList[index].id}
+                {...this.state.masterList[index]}
+                onRemove={this.handleRemove}
+            />
+        )
     );
 
     componentDidMount () {
