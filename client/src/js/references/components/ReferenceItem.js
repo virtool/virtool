@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { RelativeTime, ProgressBar, Icon } from "../../base";
 import { find, get } from "lodash-es";
-import { Panel, Table, Row, ListGroup } from "react-bootstrap";
+import { Panel, Table, Row } from "react-bootstrap";
 
 const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     <div style={{ marginLeft: "5px" }}>

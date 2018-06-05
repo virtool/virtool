@@ -1,5 +1,5 @@
 import React from "react";
-import { chunk, map } from "lodash-es";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel, Button } from "react-bootstrap";
 import AddReference from "./AddReference";
