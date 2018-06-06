@@ -95,6 +95,8 @@ async def check_for_remote_update(app, ref_id):
     """
     db = app["db"]
 
+    last_checked = virtool.utils.timestamp()
+
     document = await db.references.find_one(ref_id, [
         "remotes_from",
         "release",
@@ -116,7 +118,7 @@ async def check_for_remote_update(app, ref_id):
     except virtool.errors.GitHubError as err:
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
-                "remotes_from.last_checked": virtool.utils.timestamp(),
+                "remotes_from.last_checked": last_checked,
                 "remotes_from.errors": [str(err)]
             }
         })
@@ -129,8 +131,15 @@ async def check_for_remote_update(app, ref_id):
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
                 "release": release,
-                "remotes_from.last_checked": virtool.utils.timestamp(),
-                "remotes_from.errors": None
+                "remotes_from.errors": None,
+                "remotes_from.last_checked": last_checked
+            }
+        })
+
+    else:
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "remotes_from.last_checked": last_checked
             }
         })
 
