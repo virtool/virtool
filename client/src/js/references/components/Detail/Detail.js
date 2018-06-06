@@ -5,9 +5,9 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { getReference, exportReference } from "../../actions";
+import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
-import { checkUserRefPermission } from "../../../utils";
+import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
@@ -50,22 +50,12 @@ const ReferenceSettings = ({ isRemote }) => (
 
 class ReferenceDetail extends React.Component {
 
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            showExport: false
-        };
-    }
-
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
     }
 
     handleSelect = (key) => {
-        this.setState({ scope: key });
-
-        this.props.onExport(this.props.match.params.refId, key);
+        followDownload(`/download/refs/${this.props.match.params.refId}?scope=${key}`);
     }
 
     render = () => {
@@ -81,7 +71,6 @@ class ReferenceDetail extends React.Component {
         let exportButton;
 
         const disableExport = !!(remotes_from || cloned_from || imported_from);
-        console.log("disabled options? ", disableExport);
 
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from
@@ -201,10 +190,6 @@ const mapDispatchToProps = dispatch => ({
 
     onEdit: () => {
         dispatch(push({...window.location, state: {editReference: true}}));
-    },
-
-    onExport: (refId, scope) => {
-        dispatch(exportReference(refId, scope));
     }
 
 });
