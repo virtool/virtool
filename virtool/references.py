@@ -110,52 +110,71 @@ def get_owner_user(user_id):
     }
 
 
-def detect_duplicates(otus):
-    fields = ["_id", "name", "abbreviation"]
+def detect_duplicate_abbreviation(otu, seen, duplicates):
+    abbreviation = otu.get("abbreviation", "")
 
-    seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
-    duplicates = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
+    if abbreviation and abbreviation in seen:
+        duplicates.add(abbreviation)
+    else:
+        seen.add(abbreviation)
+
+
+def detect_duplicate_isolate_ids(otu, duplicate_isolate_ids):
+    duplicates = set()
+
+    isolate_ids = [i["id"] for i in otu["isolates"]]
+
+    for isolate_id in isolate_ids:
+        if isolate_ids.count(isolate_id) > 1:
+            duplicates.add(isolate_id)
+
+    if duplicates:
+        duplicate_isolate_ids[otu["_id"]] = {
+            "name": otu["name"],
+            "duplicates": list(duplicates)
+        }
+
+
+def detect_duplicate_name(otu, seen, duplicates):
+    lowered = otu["name"].lower()
+
+    if otu.lower() in seen:
+        duplicates.add(otu["name"])
+    else:
+        seen.add(lowered)
+
+
+def detect_duplicates(otus):
+    seen_names = set()
+    seen_abbreviations = set()
+
+    duplicate_abbreviations = set()
+    duplicate_names = set()
+    duplicate_isolate_ids = dict()
 
     for joined in otus:
-        for field in fields:
-            value = joined[field]
+        detect_duplicate_name(
+            joined,
+            seen_names,
+            duplicate_names
+        )
 
-            if field == "abbreviation" and value == "":
-                continue
+        detect_duplicate_abbreviation(
+            joined,
+            seen_abbreviations,
+            duplicate_abbreviations
+        )
 
-            if field == "name":
-                value = value.lower()
+        detect_duplicate_isolate_ids(
+            joined,
+            duplicate_isolate_ids
+        )
 
-            if value in seen[field]:
-                duplicates[field].add(value)
-            else:
-                seen[field].add(value)
-
-        for isolate in joined["isolates"]:
-            if "isolate_id" in isolate:
-                isolate["id"] = isolate.pop("isolate_id")
-
-            isolate_id = isolate["id"]
-
-            if isolate_id in seen:
-                duplicates["isolate_id"].add(isolate_id)
-            else:
-                seen["isolate_id"].add(isolate_id)
-
-            for sequence in isolate["sequences"]:
-                sequence_id = sequence.get("id", sequence["_id"])
-
-                if sequence_id in seen["sequence_id"]:
-                    duplicates["sequence_id"].add(sequence_id)
-                else:
-                    seen["sequence_id"].add(sequence_id)
-
-    if not any(duplicates.values()):
-        duplicates = None
-    else:
-        duplicates = {key: list(duplicates[key]) for key in duplicates}
-
-    return duplicates
+    return (
+        duplicate_abbreviations,
+        duplicate_names,
+        duplicate_isolate_ids
+    )
 
 
 def load_reference_file(path):
@@ -172,3 +191,44 @@ def load_reference_file(path):
     with open(path, "rb") as handle:
         with gzip.open(handle, "rt") as gzip_file:
             return json.load(gzip_file)
+
+
+def validate_import_data(import_data, strict=True, verify=True):
+    errors = list()
+
+    v = Validator(get_import_schema(require_id=strict, require_meta=strict))
+
+    if not v.validate(import_data):
+        return [{
+            "id": "missing fields",
+            "message": "Some fields are missing",
+            "missing": v.errors
+        }]
+
+    duplicate_abbreviations, duplicate_names, duplicate_isolate_ids = detect_duplicates(import_data["data"])
+
+    if duplicate_abbreviations:
+        errors.append({
+            "id": "duplicate_abbreviations",
+            "message": "Duplicate OTU abbreviations found",
+            "duplicates": duplicate_abbreviations
+        })
+
+    if duplicate_names:
+        errors.append({
+            "id": "duplicate_names",
+            "message": "Duplicate OTU names found",
+            "duplicates": duplicate_abbreviations
+        })
+
+    if duplicate_isolate_ids:
+        errors.append({
+            "id": "duplicate_isolate_ids",
+            "message": "Duplicate isolate ids found in some OTUs",
+            "duplicates": duplicate_isolate_ids
+        })
+
+    if verify:
+        pass
+
+    return errors or None
