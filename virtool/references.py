@@ -1,5 +1,6 @@
 import gzip
 import json
+from cerberus import Validator
 
 RIGHTS = [
     "build",
@@ -7,6 +8,96 @@ RIGHTS = [
     "modify_otu",
     "remove"
 ]
+
+
+def get_isolate_schema(require_id):
+    return {
+        "id": {
+            "type": "string",
+            "required": require_id
+        },
+        "source_type": {
+            "type": "string",
+            "required": True
+        },
+        "source_name": {
+            "type": "string",
+            "required": True
+        },
+        "default": {
+            "type": "boolean",
+            "required": True
+        },
+        "sequences": {
+            "type": list,
+            "schema": {
+                "type": dict,
+                "schema": get_sequence_schema(require_id)
+            }
+        }
+    }
+
+
+def get_sequence_schema(require_id):
+    return {
+        "_id": {
+            "type": "string",
+            "required": require_id
+        },
+        "accession": {
+            "type": "string",
+            "required": True
+        },
+        "definition": {
+            "type": "string",
+            "required": require_id
+        },
+        "sequence": {
+            "type": "string",
+            "required": True
+        }
+    }
+
+
+def get_import_schema(require_id=True, require_meta=True):
+    return {
+        "data_type": {
+            "type": "string",
+            "required": require_meta
+        },
+        "organism": {
+            "type": "string",
+            "required": require_meta
+        },
+        "data": {
+            "type": "list",
+            "schema": {
+                "type": dict,
+                "schema": get_otu_schema(require_id)
+            }
+        }
+    }
+
+
+def get_otu_schema(require_id):
+    return {
+        "_id": {
+            "type": "string",
+            "required": require_id
+        },
+        "abbreviation": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string",
+            "required": True
+        },
+        "isolates": {
+            "type": "list",
+            "required": True,
+            "schema": get_isolate_schema(require_id)
+        }
+    }
 
 
 def get_owner_user(user_id):
