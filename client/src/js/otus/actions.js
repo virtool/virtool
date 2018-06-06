@@ -33,8 +33,9 @@ import {
  * @func
  * @returns {object}
  */
-export const fetchOTUs = (page) => ({
+export const fetchOTUs = (refId, page) => ({
     type: FETCH_OTUS.REQUESTED,
+    refId,
     page
 });
 

@@ -81,6 +81,7 @@ class HMMList extends React.Component {
                     <ScrollList
                         hasNextPage={this.props.page < this.props.page_count}
                         isNextPageLoading={this.props.isLoading}
+                        isLoadError={this.props.errorLoad}
                         list={this.state.masterList}
                         loadNextPage={this.props.loadNextPage}
                         page={this.state.page}

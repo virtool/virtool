@@ -55,7 +55,7 @@ class OTUsList extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
 
-        if (prevState.masterList === null && nextProps.documents) {
+        if (nextProps.page === 1) {
             return {
                 masterList: nextProps.documents,
                 list: nextProps.documents,
@@ -78,6 +78,10 @@ class OTUsList extends React.Component {
 
         return null;
     }
+
+    handleNextPage = (page) => {
+        this.props.loadNextPage(this.props.refId, page);
+    };
 
     rowRenderer = (index) => (
         <OTUItem
@@ -137,8 +141,9 @@ class OTUsList extends React.Component {
                 <ScrollList
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
                     list={this.state.masterList}
-                    loadNextPage={this.props.loadNextPage}
+                    loadNextPage={this.handleNextPage}
                     page={this.state.page}
                     rowRenderer={this.rowRenderer}
                 />
@@ -165,8 +170,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(push({state: {createOTU: false}}));
     },
 
-    loadNextPage: (page) => {
-        dispatch(fetchOTUs(page));
+    loadNextPage: (refId, page) => {
+        dispatch(fetchOTUs(refId, page));
     }
 });
 

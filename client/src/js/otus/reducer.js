@@ -99,10 +99,13 @@ export default function OTUsReducer (state = initialState, action) {
             return state;
 
         case FETCH_OTUS.REQUESTED:
-            return {...state, isLoading: true};
+            return {...state, isLoading: true, errorLoad: false};
 
         case FETCH_OTUS.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false};
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FETCH_OTUS.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case FIND_OTUS.SUCCEEDED:
             return {...state, ...action.data};
