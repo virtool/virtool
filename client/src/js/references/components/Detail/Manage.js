@@ -111,7 +111,7 @@ const Remote = ({ updates, release, remotesFrom }) => {
                         Remote Reference
                     </FlexItem>
                     <FlexItem>
-                        <a href={`https://github.com/${remotesFrom.slug}`}>
+                        <a href={`https://github.com/${remotesFrom.slug}`} target="_blank">
                             <Icon faStyle="fab" name="github" /> {remotesFrom.slug}
                         </a>
                     </FlexItem>
@@ -133,6 +133,23 @@ const Remote = ({ updates, release, remotesFrom }) => {
     );
 };
 
+const Clone = ({ source }) => (
+    <Panel>
+        <Panel.Heading>Clone Reference</Panel.Heading>
+        <ListGroup>
+            <ListGroupItem>
+                <strong>Source Reference</strong>
+                <span>
+                    {" / "}
+                    <a href={`/refs/${source.id}`}>
+                        {source.name}
+                    </a>
+                </span>
+            </ListGroupItem>
+        </ListGroup>
+    </Panel>
+);
+
 class ReferenceManage extends React.Component {
 
     render () {
@@ -151,10 +168,12 @@ class ReferenceManage extends React.Component {
             organism,
             release,
             remotes_from,
+            cloned_from,
             updates
         } = this.props.detail;
 
         let remote;
+        let clone;
 
         if (remotes_from) {
             remote = (
@@ -163,6 +182,12 @@ class ReferenceManage extends React.Component {
                     remotesFrom={remotes_from}
                     updates={updates}
                 />
+            );
+        }
+
+        if (cloned_from) {
+            clone = (
+                <Clone source={cloned_from} />
             );
         }
 
@@ -192,6 +217,7 @@ class ReferenceManage extends React.Component {
                 </Table>
 
                 {remote}
+                {clone}
 
                 <Panel>
                     <Panel.Heading>
