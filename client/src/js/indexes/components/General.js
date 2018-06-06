@@ -51,19 +51,6 @@ const IndexGeneral = ({ detail }) => {
 
     return (
         <div>
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th>Created</th>
-                        <td><RelativeTime time={detail.created_at} /></td>
-                    </tr>
-                    <tr>
-                        <th>Created By</th>
-                        <td>{detail.user.id}</td>
-                    </tr>
-                </tbody>
-            </Table>
-
             <Panel>
                 <Panel.Heading>
                     <PanelBadgeHeader title="Contributors" count={contributors.length} />

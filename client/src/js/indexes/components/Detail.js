@@ -1,4 +1,5 @@
 import React from "react";
+import Moment from "moment";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -22,14 +23,12 @@ class IndexDetail extends React.Component {
         }
 
         const indexId = this.props.detail.id;
-        const version = this.props.detail.version;
+        const { version, created_at, user } = this.props.detail;
 
         const refId = this.props.match.params.refId;
 
         return (
             <div>
-                <ViewHeader title={`Index ${version} - Indexes - Virtool`} />
-
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}/indexes`}>
@@ -43,9 +42,12 @@ class IndexDetail extends React.Component {
                     </Breadcrumb.Item>
                 </Breadcrumb>
 
-                <h3 className="view-header">
+                <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
                     <strong>Index {version}</strong>
-                </h3>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created {Moment(created_at).calendar()} by {user.id}
+                    </div>
+                </ViewHeader>
 
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${refId}/indexes/${indexId}/general`}>
