@@ -3,7 +3,6 @@ import { map } from "lodash-es";
 import { Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 
-
 import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, Pagination } from "../../base";
 
