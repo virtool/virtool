@@ -5,10 +5,11 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem } from "react-bootstrap";
-import { getReference } from "../../actions";
+import { getReference} from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
 import { checkUserRefPermission } from "../../../utils";
 
+import { fetchOTUs } from "../../../otus/actions";
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceUsers from "./Users";
@@ -31,6 +32,7 @@ class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
+        this.props.onOTUFirstPage(this.props.match.params.refId, 1);
     }
 
     render = () => {
@@ -127,6 +129,10 @@ const mapDispatchToProps = dispatch => ({
 
     onGetReference: (refId) => {
         dispatch(getReference(refId));
+    },
+
+    onOTUFirstPage: (refId, page) => {
+        dispatch(fetchOTUs(refId, page));
     },
 
     onEdit: () => {
