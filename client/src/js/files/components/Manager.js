@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize, filter, forEach, map, some } from "lodash-es";
+import { capitalize, forEach, map, some } from "lodash-es";
 import { connect } from "react-redux";
 
 import File from "./File";
@@ -34,33 +34,25 @@ class FileManager extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        const filtered = filter(nextProps.documents, {type: nextProps.fileType});
 
-        if (prevState.masterList === null || !prevState.masterList.length) {
+        if (nextProps.page === 1) {
             return {
-                masterList: filtered,
-                list: filtered,
+                masterList: nextProps.documents,
+                list: nextProps.documents,
                 page: nextProps.page
             };
         }
 
         if (prevState.page < nextProps.page) {
-
             return {
-                masterList: checkArrayIncludes(prevState.masterList, filtered),
-                list: filtered,
+                masterList: checkArrayIncludes(prevState.masterList, nextProps.documents),
+                list: nextProps.documents,
                 page: nextProps.page
             };
-        } else if (prevState.page > nextProps.page && nextProps.page === 1) {
+        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
             return {
-                masterList: filtered,
-                list: filtered,
-                page: nextProps.page
-            };
-        } else if (!isArrayEqual(prevState.list, filtered)) {
-            return {
-                masterList: checkArrayIncludes(prevState.masterList, filtered),
-                list: filtered
+                masterList: checkArrayIncludes(prevState.masterList, nextProps.documents),
+                list: nextProps.documents
             };
         }
         return null;
@@ -109,7 +101,6 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const filtered = filter(this.props.documents, {type: this.props.fileType});
         const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
 
         let toolbar;
@@ -139,11 +130,12 @@ class FileManager extends React.Component {
 
                 {toolbar}
 
-                {filtered.length ? null : <NoneFound noun="files" />}
+                {this.props.documents.length ? null : <NoneFound noun="files" />}
 
                 <ScrollList
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
                     list={this.state.masterList}
                     loadNextPage={this.handlePage}
                     page={this.state.page}
