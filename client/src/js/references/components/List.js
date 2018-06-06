@@ -6,13 +6,13 @@ import AddReference from "./AddReference";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
 import { remoteReference } from "../actions";
-import { ViewHeader } from "../../base";
+import { ViewHeader, LoadingPlaceholder } from "../../base";
 
 
 const ReferenceList = (props) => {
 
     if (props.documents === null) {
-        return <div />;
+        return <LoadingPlaceholder />;
     }
 
     let referenceComponents;
