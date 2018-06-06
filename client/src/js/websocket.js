@@ -38,7 +38,7 @@ export default function WSConnection (dispatch) {
             return dispatch(documentUpdaters[iface](message.data));
         }
 
-        if (operation === "remove" && documentRemovers[iface]) {
+        if (operation === "delete" && documentRemovers[iface]) {
             return dispatch(documentRemovers[iface](message.data));
         }
     };
