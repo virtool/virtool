@@ -1,12 +1,11 @@
 import React from "react";
-import Moment from "moment";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
 import { getReference } from "../../actions";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime } from "../../../base";
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import EditReference from "./Edit";
@@ -134,7 +133,7 @@ class ReferenceDetail extends React.Component {
                         {exportButton}
                     </Flex>
                     <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created {Moment(created_at).calendar()} by {user.id}
+                        Created <RelativeTime time={created_at} /> by {user.id}
                     </div>
                 </ViewHeader>
 

@@ -1,5 +1,4 @@
 import React from "react";
-import Moment from "moment";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -8,7 +7,7 @@ import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
 import { getIndex } from "../actions";
-import { LoadingPlaceholder, ViewHeader } from "../../base";
+import { LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
 
 class IndexDetail extends React.Component {
 
@@ -45,7 +44,7 @@ class IndexDetail extends React.Component {
                 <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
                     <strong>Index {version}</strong>
                     <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created {Moment(created_at).calendar()} by {user.id}
+                        Created <RelativeTime time={created_at} /> by {user.id}
                     </div>
                 </ViewHeader>
 
