@@ -1,5 +1,4 @@
 import React from "react";
-import Moment from "moment";
 import { includes } from "lodash-es";
 import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -13,7 +12,7 @@ import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 import { getSample, showRemoveSample, hideSampleModal } from "../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
 import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
@@ -89,7 +88,7 @@ class SampleDetail extends React.Component {
                         {removeIcon}
                     </Flex>
                     <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created {Moment(created_at).calendar()} by {user.id}
+                        Created <RelativeTime time={created_at} /> by {user.id}
                     </div>
                 </ViewHeader>
 

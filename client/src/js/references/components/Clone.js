@@ -1,10 +1,9 @@
 import React from "react";
-import Moment from "moment";
 import { Alert, ButtonToolbar, Modal, ListGroup, Col, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
 import { upperFirst, find, map } from "lodash-es";
 import ReferenceForm from "./Form";
-import { Button, ListGroupItem, NoneFound } from "../../base";
+import { Button, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
 
@@ -25,7 +24,7 @@ const ReferenceSelect = ({ references, onSelect, selected }) => (
                             </Col>
                             <Col xs={6}>
                                 <span className="text-muted" style={{fontSize: "10px"}}>
-                                    Created {Moment(reference.created_at).calendar()} by {reference.user.id}
+                                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
                                 </span>
                             </Col>
                             <Col xs={1}>
