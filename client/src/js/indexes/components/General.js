@@ -1,11 +1,9 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
+import { Badge, Panel, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-
-
-import { Flex, FlexItem, RelativeTime } from "../../base";
+import { Flex, FlexItem } from "../../base";
 
 const PanelBadgeHeader = ({ title, count }) => (
     <Flex alignItems="center">
