@@ -19,14 +19,8 @@ import SourceTypes from "../../../administration/components/General/SourceTypes"
 import InternalControl from "../../../administration/components/General/InternalControl";
 
 class CustomToggle extends React.Component {
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            scope: ""
-        };
-    }
-
+    // Bootstrap Dropdown requires custom dropdown components to be class components
+    // in order to use refs.
     render () {
         return (
             <Icon
