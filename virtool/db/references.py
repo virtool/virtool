@@ -766,22 +766,18 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
 
-    otus = import_data["data"]
+    errors = virtool.references.validate_import_data(
+        import_data,
+        require_meta=False,
+        require_verification=False
+    )
 
-    duplicates = virtool.references.detect_duplicates(otus)
-
-    if duplicates:
-        errors = [
-            {
-                "id": "duplicates",
-                "message": "Duplicates found.",
-                "duplicates": duplicates
-            }
-        ]
-
-        await virtool.db.processes.update(db, process_id, errors=errors)
+    if errors:
+        return await virtool.db.processes.update(db, process_id, errors=errors)
 
     await virtool.db.processes.update(db, process_id, 0.2, "import_otus")
+
+    otus = import_data["data"]
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
