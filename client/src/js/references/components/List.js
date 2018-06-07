@@ -15,7 +15,7 @@ const ReferenceList = (props) => {
         return <div />;
     }
 
-    let referenceComponents;
+    let referenceComponents = [];
 
     if (props.documents.length) {
         referenceComponents = map(props.documents, document =>
