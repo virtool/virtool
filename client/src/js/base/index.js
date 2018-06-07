@@ -16,7 +16,6 @@ import { ListGroupItem } from "./ListGroupItem";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
-import { Pagination } from "./Pagination";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveModal } from "./RemoveModal";
@@ -45,7 +44,6 @@ export {
     ListGroupItem,
     LoadingPlaceholder,
     NoneFound,
-    Pagination,
     ProgressBar,
     Radio,
     RelativeTime,
