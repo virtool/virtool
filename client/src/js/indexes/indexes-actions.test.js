@@ -54,12 +54,12 @@ describe("Indexes Action Creators:", () => {
     });
 
     it("getIndexHistory: returns action to retrieve the index changes history", () => {
-        const indexVersion = "3";
+        const indexId = "abc123";
         const page = "1";
-        const result = getIndexHistory(indexVersion, page);
+        const result = getIndexHistory(indexId, page);
         const expected = {
             type: "GET_INDEX_HISTORY_REQUESTED",
-            indexVersion,
+            indexId,
             page
         };
 
