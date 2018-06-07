@@ -94,7 +94,7 @@ class OTUsList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         const hasBuild = checkUserRefPermission(this.props, "build");

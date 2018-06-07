@@ -52,8 +52,8 @@ export const createIndex = (refId) => ({
  * @param page {number} the page to retrieve from the list of changes.
  * @returns {object}
  */
-export const getIndexHistory = (indexVersion, page) => ({
+export const getIndexHistory = (indexId, page) => ({
     type: GET_INDEX_HISTORY.REQUESTED,
-    indexVersion,
+    indexId,
     page
 });

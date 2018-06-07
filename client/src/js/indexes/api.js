@@ -16,6 +16,6 @@ export const create = ({ refId }) => (
     Request.post(`/api/refs/${refId}/indexes`)
 );
 
-export const getHistory = ({ indexVersion, page = 1 }) => (
-    Request.get(`/api/indexes/${indexVersion}/history?page=${page}`)
+export const getHistory = ({ indexId, page = 1 }) => (
+    Request.get(`/api/indexes/${indexId}/history?page=${page}`)
 );

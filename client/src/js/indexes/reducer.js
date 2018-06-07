@@ -43,7 +43,7 @@ export default function indexesReducer (state = initialState, action) {
             return {...state, unbuilt: action.data};
 
         case GET_INDEX_HISTORY.REQUESTED:
-            return {...state, history: null, isLoading: true, errorLoad: false};
+            return {...state, isLoading: true, errorLoad: false};
 
         case GET_INDEX_HISTORY.SUCCEEDED:
             return {...state, history: action.data, isLoading: false, errorLoad: false};
