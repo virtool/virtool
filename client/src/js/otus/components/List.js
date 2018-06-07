@@ -152,7 +152,6 @@ class OTUsList extends React.Component {
     }
 }
 
-
 const mapStateToProps = state => ({
     ...state.otus,
     refId: state.references.detail.id,

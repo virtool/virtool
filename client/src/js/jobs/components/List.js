@@ -1,57 +1,96 @@
 import React from "react";
-import { map } from "lodash-es";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
 
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
-import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
-import { createFindURL } from "../../utils";
+import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
+import { fetchJobs } from "../actions";
+import { isArrayEqual } from "../../utils";
 
-export const JobsList = (props) => {
+export class JobsList extends React.Component {
 
-    if (props.documents === null) {
-        return <LoadingPlaceholder />;
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
     }
 
-    let jobComponents;
+    static getDerivedStateFromProps (nextProps, prevState) {
 
-    if (props.documents.length) {
-        jobComponents = map(props.documents, doc =>
-            <Job key={doc.id} {...doc} />
+        if (nextProps.page === 1) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        }
+
+        if (prevState.page !== nextProps.page) {
+            return {
+                masterList: prevState.masterList.concat(nextProps.documents),
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents
+            };
+        }
+
+        return null;
+    }
+
+    componentDidMount () {
+        this.props.onNextPage(1);
+    }
+
+    rowRenderer = (index) => (
+        <Job key={this.state.masterList[index].id} {...this.state.masterList[index]} />
+    );
+
+    render () {
+
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
+        let noJobs;
+
+        if (!this.state.masterList.length) {
+            noJobs = <NoneFound noun="jobs" noListGroup />;
+        }
+
+        return (
+            <div>
+                <ViewHeader
+                    title="Jobs"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
+
+                <JobsToolbar />
+
+                {noJobs}
+
+                <ScrollList
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
+                    list={this.state.masterList}
+                    loadNextPage={this.onNextPage}
+                    page={this.state.page}
+                    rowRenderer={this.rowRenderer}
+                />
+            </div>
         );
     }
-
-    if (!props.documents.length) {
-        jobComponents = <NoneFound noun="jobs" noListGroup />;
-    }
-
-    return (
-        <div>
-            <ViewHeader
-                title="Jobs"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
-
-            <JobsToolbar />
-
-            <ListGroup>
-                {jobComponents}
-            </ListGroup>
-
-            <Pagination
-                documentCount={props.documents.length}
-                onPage={props.onPage}
-                page={props.page}
-                pageCount={props.page_count}
-            />
-        </div>
-    );
-};
+}
 
 const mapStateToProps = (state) => {
 
@@ -66,9 +105,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onPage: (page) => {
-        const url = createFindURL({ page });
-        dispatch(push(url.pathname + url.search));
+    onNextPage: (page) => {
+        dispatch(fetchJobs(page));
     }
 
 });

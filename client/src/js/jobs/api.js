@@ -5,6 +5,10 @@ export const find = () => (
     Request.get(`/api/jobs${window.location.search}`)
 );
 
+export const fetch = ({ page }) => (
+    Request.get(`/api/jobs?page=${page}`)
+);
+
 export const get = ({ jobId }) => (
     Request.get(`/api/jobs/${jobId}`)
 );
