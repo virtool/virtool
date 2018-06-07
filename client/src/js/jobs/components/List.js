@@ -5,7 +5,7 @@ import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { fetchJobs } from "../actions";
-import { isArrayEqual } from "../../utils";
+import { getUpdatedScrollListState } from "../../utils";
 
 export class JobsList extends React.Component {
 
@@ -19,29 +19,7 @@ export class JobsList extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-
-        if (nextProps.page === 1) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        }
-
-        if (prevState.page !== nextProps.page) {
-            return {
-                masterList: prevState.masterList.concat(nextProps.documents),
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents
-            };
-        }
-
-        return null;
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     componentDidMount () {

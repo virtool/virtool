@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkUserRefPermission, isArrayEqual } from "../../utils";
+import { checkUserRefPermission, getUpdatedScrollListState } from "../../utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
@@ -23,29 +23,7 @@ class IndexesList extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-
-        if (nextProps.page === 1) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        }
-
-        if (prevState.page !== nextProps.page) {
-            return {
-                masterList: prevState.masterList.concat(nextProps.documents),
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents
-            };
-        }
-
-        return null;
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     handleNextPage = (page) => {

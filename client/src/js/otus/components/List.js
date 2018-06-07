@@ -16,7 +16,7 @@ import {
 } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { checkUserRefPermission, isArrayEqual } from "../../utils";
+import { checkUserRefPermission, getUpdatedScrollListState } from "../../utils";
 import { fetchOTUs } from "../actions";
 
 const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
@@ -55,29 +55,7 @@ class OTUsList extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-
-        if (nextProps.page === 1) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        }
-
-        if (prevState.page !== nextProps.page) {
-            return {
-                masterList: prevState.masterList.concat(nextProps.documents),
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents
-            };
-        }
-
-        return null;
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     handleNextPage = (page) => {

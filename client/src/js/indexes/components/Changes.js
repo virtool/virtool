@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 
 import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ScrollList } from "../../base";
-import { isArrayEqual } from "../../utils";
+import { getUpdatedScrollListState } from "../../utils";
 
 class IndexChanges extends React.Component {
 
@@ -22,28 +22,7 @@ class IndexChanges extends React.Component {
             return null;
         }
 
-        if (nextProps.history.page === 1) {
-            return {
-                masterList: nextProps.history.documents,
-                list: nextProps.history.documents,
-                page: nextProps.history.page
-            };
-        }
-
-        if (prevState.page !== nextProps.history.page) {
-            return {
-                masterList: prevState.masterList.concat(nextProps.history.documents),
-                list: nextProps.history.documents,
-                page: nextProps.history.page
-            };
-        } else if (!isArrayEqual(prevState.list, nextProps.history.documents)) {
-            return {
-                masterList: nextProps.history.documents,
-                list: nextProps.history.documents
-            };
-        }
-
-        return null;
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     handlePage = (page) => {
