@@ -44,13 +44,7 @@ export class JobsList extends React.Component {
 
         return (
             <div>
-                <ViewHeader
-                    title="Jobs"
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
+                <ViewHeader title="Jobs" totalCount={this.props.total_count} />
 
                 <JobsToolbar />
 

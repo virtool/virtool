@@ -41,7 +41,7 @@ export class ScrollList extends React.Component {
 
         // List is shorter than UI page (therefore no scrollbars to auto-load) or
         // request for next page failed.
-        if ((contentHeight <= (window.innerHeight + window.scrollY) && (hasNextPage && !isNextPageLoading)) 
+        if ((contentHeight <= (window.innerHeight + window.scrollY) && (hasNextPage && !isNextPageLoading))
             || errorLoad) {
             loadMoreButton = (
                 <Button bsStyle="primary" onClick={this.loadMore} block>

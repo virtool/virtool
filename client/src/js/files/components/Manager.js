@@ -122,9 +122,6 @@ class FileManager extends React.Component {
             <div>
                 <ViewHeader
                     title={`${titleType} Files`}
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
                     totalCount={this.props.total_count}
                 />
 

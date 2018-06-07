@@ -39,7 +39,7 @@ class HMMList extends React.Component {
         if (this.props.status.installed) {
             return (
                 <div>
-                    <ViewHeader title="HMMs" />
+                    <ViewHeader title="HMMs" totalCount={this.props.found_count} />
 
                     <FormGroup>
                         <InputGroup>

@@ -47,13 +47,7 @@ export class SamplesList extends React.Component {
 
         return (
             <div>
-                <ViewHeader
-                    title="Samples"
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
+                <ViewHeader title="Samples" totalCount={this.props.total_count} />
 
                 <SampleToolbar />
 

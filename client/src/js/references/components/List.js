@@ -36,13 +36,7 @@ const ReferenceList = (props) => {
 
     return (
         <div>
-            <ViewHeader
-                title="References"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
+            <ViewHeader title="References" totalCount={props.total_count} />
 
             <ReferenceToolbar />
 
