@@ -766,10 +766,10 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
 
-    errors = virtool.references.validate_import_data(
+    errors = virtool.references.check_import_data(
         import_data,
-        require_meta=False,
-        require_verification=False
+        strict=False,
+        verify=True
     )
 
     if errors:
@@ -828,6 +828,15 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         process_id,
         progress_tracker.add
     )
+
+    errors = virtool.references.check_import_data(
+        import_data,
+        strict=True,
+        verify=True
+    )
+
+    if errors:
+        return await virtool.db.processes.update(db, process_id, errors=errors)
 
     await virtool.db.processes.update(db, process_id, progress=0.4, step="import")
 
