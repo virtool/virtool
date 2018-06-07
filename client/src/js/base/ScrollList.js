@@ -32,7 +32,7 @@ export class ScrollList extends React.Component {
     };
 
     render () {
-        const { list, rowRenderer, isNextPageLoading } = this.props;
+        const { list, rowRenderer, isNextPageLoading, hasNextPage, errorLoad } = this.props;
 
         let loadMoreButton;
 
@@ -41,8 +41,7 @@ export class ScrollList extends React.Component {
 
         // List is shorter than UI page (therefore no scrollbars to auto-load) or
         // request for next page failed.
-        if ((contentHeight <= (window.innerHeight + window.scrollY) && this.props.hasNextPage)
-            || this.props.errorLoad) {
+        if ((contentHeight <= (window.innerHeight + window.scrollY) && hasNextPage) || errorLoad) {
             loadMoreButton = (
                 <Button bsStyle="primary" onClick={this.loadMore} block>
                     Load More
@@ -53,7 +52,7 @@ export class ScrollList extends React.Component {
         return (
             <div>
                 {map(list, (item, index) => rowRenderer(index))}
-                {isNextPageLoading ? <LoadingPlaceholder margin="20px" /> : null}
+                {(isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null}
                 {loadMoreButton || null}
             </div>
         );

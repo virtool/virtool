@@ -11,7 +11,8 @@ import {
     Icon,
     ListGroupItem,
     LoadingPlaceholder,
-    ScrollList
+    ScrollList,
+    NoneFound
 } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
@@ -97,6 +98,12 @@ class OTUsList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
+        let noOTUs;
+
+        if (!this.state.masterList.length) {
+            noOTUs = <NoneFound noun="otus" />;
+        }
+
         const hasBuild = checkUserRefPermission(this.props, "build");
         const hasRemoveOTU = checkUserRefPermission(this.props, "modify_otu");
         let alert;
@@ -137,6 +144,8 @@ class OTUsList extends React.Component {
                 <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
 
                 <CreateOTU {...this.props} />
+
+                {noOTUs}
 
                 <ScrollList
                     hasNextPage={this.props.page < this.props.page_count}
