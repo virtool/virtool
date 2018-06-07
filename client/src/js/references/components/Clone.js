@@ -1,27 +1,30 @@
 import React from "react";
-import Moment from "moment";
 import { Alert, ButtonToolbar, Modal, ListGroup, Col, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
 import { upperFirst, find, map } from "lodash-es";
 import ReferenceForm from "./Form";
-import { Button, ListGroupItem, NoneFound } from "../../base";
+import { Button, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
 
-const ReferenceSelect = ({ references, onSelect }) => (
+const ReferenceSelect = ({ references, onSelect, selected }) => (
     <div>
-        <label className="control-label">References</label>
+        <label className="control-label">Source Reference</label>
         {references.length
             ? (
                 <ListGroup style={{maxHeight: "84px", overflowY: "auto"}}>
                     {map(references, reference =>
-                        <ListGroupItem key={reference.id} onClick={() => onSelect(reference.id)}>
-                            <Col xs={6}>
+                        <ListGroupItem
+                            key={reference.id}
+                            onClick={() => onSelect(reference.id)}
+                            active={selected === reference.id}
+                        >
+                            <Col xs={5}>
                                 <strong>{reference.name}</strong>
                             </Col>
-                            <Col xs={5}>
+                            <Col xs={6}>
                                 <span className="text-muted" style={{fontSize: "10px"}}>
-                                    Created {Moment(reference.created_at).calendar()} by {reference.user.id}
+                                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
                                 </span>
                             </Col>
                             <Col xs={1}>
@@ -41,8 +44,8 @@ const getInitialState = (refId, refArray) => {
 
     if (originalRef) {
         return {
-            reference: originalRef.name,
-            name: originalRef.name,
+            reference: originalRef.id,
+            name: `Clone of ${originalRef.name}`,
             description: originalRef.description,
             dataType: originalRef.data_type || "",
             organism: originalRef.organism,
@@ -114,7 +117,7 @@ class CloneReference extends React.Component {
                 this.state.dataType,
                 this.state.organism,
                 this.state.isPublic,
-                this.props.refId
+                this.state.reference
             );
         }
 
@@ -134,7 +137,11 @@ class CloneReference extends React.Component {
                             Clone an existing reference.
                         </strong>
                     </Alert>
-                    <ReferenceSelect references={this.props.refDocuments} onSelect={this.handleSelect} />
+                    <ReferenceSelect
+                        references={this.props.refDocuments}
+                        onSelect={this.handleSelect}
+                        selected={this.state.reference}
+                    />
                     <ReferenceForm
                         state={this.state}
                         onChange={this.handleChange}

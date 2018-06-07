@@ -25,9 +25,28 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     </div>
 );
 
-const ReferenceMetadata = ({ data_type, organism, origin, latest_build, progress }) => {
+const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, progress }) => {
 
     let buildInfo;
+    let originData;
+
+    if (origin.method === "Imported from") {
+        originData = origin.data.name;
+    } else if (origin.method === "Remotes from") {
+        originData = (
+            <a href={`https://www.github.com/${origin.data.slug}`} rel="noopener noreferrer" target="_blank">
+                {origin.data.slug}
+            </a>
+        );
+    } else if (origin.method === "Cloned from") {
+        originData = (
+            <a href={`/refs/${origin.data.id}`} rel="noopener noreferrer">
+                {origin.data.name}
+            </a>
+        );
+    } else {
+        originData = origin.data;
+    }
 
     if (progress === 100) {
         if (latest_build) {
@@ -36,19 +55,12 @@ const ReferenceMetadata = ({ data_type, organism, origin, latest_build, progress
                     <tr>
                         <th>Latest Build</th>
                         <td>
-                            Created <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Index Build ID</th>
-                        <td>
-                            {latest_build.id}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Index Build Version</th>
-                        <td>
-                            {latest_build.version}
+                            <a href={`/refs/${id}/indexes/${latest_build.id}`} rel="noopener noreferrer">
+                                Index {latest_build.version}
+                            </a>
+                            <div className="text-muted" style={{fontSize: "12px"}}>
+                                Created <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
+                            </div>
                         </td>
                     </tr>
                 </React.Fragment>
@@ -83,7 +95,7 @@ const ReferenceMetadata = ({ data_type, organism, origin, latest_build, progress
                 <tr>
                     <th>{origin.method}</th>
                     <td>
-                        {origin.fileName}
+                        {originData}
                     </td>
                 </tr>
                 {buildInfo}
@@ -97,23 +109,23 @@ const getOrigin = (props) => {
 
     if (get(props, "imported_from", null)) {
         origin = {
-            method: "Imported from file",
-            fileName: props.imported_from.name
+            method: "Imported from",
+            data: props.imported_from
         };
     } else if (get(props, "cloned_from", null)) {
         origin = {
             method: "Cloned from",
-            fileName: props.cloned_from.name
+            data: props.cloned_from
         };
     } else if (get(props, "remotes_from", null)) {
         origin = {
-            method: "Remote from",
-            fileName: props.remotes_from.slug
+            method: "Remotes from",
+            data: props.remotes_from
         };
     } else {
         origin = {
             method: "Created",
-            fileName: "No File"
+            data: "No File"
         };
     }
 
@@ -166,7 +178,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
     onClick: (e) => {
-        if (e.target.nodeName !== "I") {
+        if (e.target.nodeName !== "I" && e.target.nodeName !== "A") {
             dispatch(push(`/refs/${ownProps.id}`));
         }
     }

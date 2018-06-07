@@ -1,13 +1,12 @@
 import React from "react";
-import Moment from "moment";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem } from "react-bootstrap";
-import { getReference} from "../../actions";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem } from "../../../base";
-import { checkUserRefPermission } from "../../../utils";
+import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
+import { getReference } from "../../actions";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime } from "../../../base";
+import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import { fetchOTUs } from "../../../otus/actions";
 import EditReference from "./Edit";
@@ -18,6 +17,21 @@ import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
 import InternalControl from "../../../administration/components/General/InternalControl";
+
+class CustomToggle extends React.Component {
+    // Bootstrap Dropdown requires custom dropdown components to be class components
+    // in order to use refs.
+    render () {
+        return (
+            <Icon
+                name="ellipsis-v"
+                tip="Options"
+                onClick={this.props.onClick}
+                style={{fontSize: "65%", paddingLeft: "5px"}}
+            />
+        );
+    }
+}
 
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
@@ -35,16 +49,23 @@ class ReferenceDetail extends React.Component {
         this.props.onOTUFirstPage(this.props.match.params.refId, 1);
     }
 
+    handleSelect = (key) => {
+        followDownload(`/download/refs/${this.props.match.params.refId}?scope=${key}`);
+    }
+
     render = () => {
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, created_at, user } = this.props.detail;
+        const { name, id, remotes_from, cloned_from, imported_from, created_at, user } = this.props.detail;
         const hasModify = checkUserRefPermission(this.props, "modify");
 
         let headerIcon;
+        let exportButton;
+
+        const disableExport = !!(remotes_from || cloned_from || imported_from);
 
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from
@@ -69,6 +90,36 @@ class ReferenceDetail extends React.Component {
                         style={{fontSize: "65%"}}
                     />
                 ) : headerIcon;
+
+            exportButton = (
+                <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
+                    <CustomToggle bsRole="toggle" />
+                    <Dropdown.Menu className="export-ref-dropdown-menu">
+                        <MenuItem header>Export</MenuItem>
+                        <MenuItem
+                            eventKey="built"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Built
+                        </MenuItem>
+                        <MenuItem
+                            eventKey="unbuilt"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Unbuilt
+                        </MenuItem>
+                        <MenuItem
+                            eventKey="unverified"
+                            onSelect={this.handleSelect}
+                            disabled={!disableExport}
+                        >
+                            Unverified
+                        </MenuItem>
+                    </Dropdown.Menu>
+                </Dropdown>
+            );
         }
 
         return (
@@ -81,9 +132,10 @@ class ReferenceDetail extends React.Component {
                             </Flex>
                         </FlexItem>
                         {headerIcon}
+                        {exportButton}
                     </Flex>
                     <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created {Moment(created_at).calendar()} by {user.id}
+                        Created <RelativeTime time={created_at} /> by {user.id}
                     </div>
                 </ViewHeader>
 
