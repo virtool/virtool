@@ -12,8 +12,8 @@ export function* watchIndexes () {
     yield takeLatest(GET_INDEX_HISTORY.REQUESTED, getIndexHistory);
 }
 
-export function* findIndexes () {
-    yield apiCall(indexesAPI.find, {}, FIND_INDEXES);
+export function* findIndexes (action) {
+    yield apiCall(indexesAPI.find, action, FIND_INDEXES);
 }
 
 export function* getIndex (action) {
@@ -26,7 +26,11 @@ export function* getUnbuilt (action) {
 
 export function* createIndex (action) {
     yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX));
-    yield put({type: FIND_INDEXES.REQUESTED});
+    yield put({
+        type: FIND_INDEXES.REQUESTED,
+        refId: action.refId,
+        page: 1
+    });
 }
 
 export function* getIndexHistory (action) {

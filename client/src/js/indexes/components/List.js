@@ -1,20 +1,75 @@
 import React from "react";
-import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkUserRefPermission } from "../../utils";
-import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
+import { checkUserRefPermission, isArrayEqual } from "../../utils";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
 
 class IndexesList extends React.Component {
 
-    componentDidMount () {
-        this.props.onFind();
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
+
+        this.firstReady = false;
     }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+
+        if (nextProps.page === 1) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        }
+
+        if (prevState.page !== nextProps.page) {
+            return {
+                masterList: prevState.masterList.concat(nextProps.documents),
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents
+            };
+        }
+
+        return null;
+    }
+
+    handleNextPage = (page) => {
+        this.props.loadNextPage(this.props.refId, page);
+    };
+
+    rowRenderer = (index) => {
+
+        let isActive = false;
+
+        if (!this.firstReady && this.state.masterList[index].ready) {
+            isActive = true;
+            this.firstReady = true;
+        }
+
+        return (
+            <IndexEntry
+                key={this.state.masterList[index].id}
+                showReady={!this.state.masterList[index].ready || isActive}
+                {...this.state.masterList[index]}
+                refId={this.props.refId}
+            />
+        );
+    };
 
     render () {
 
@@ -24,36 +79,16 @@ class IndexesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const refId = this.props.refId;
+        let noIndexes;
+        let alert;
 
-        let content;
+        if (!this.state.masterList.length) {
+            noIndexes = <NoneFound noun="indexes" />;
+        }
 
         if (this.props.total_otu_count) {
-            // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
-            // the newest ready index with a checkmark in the index list.
-            let haveSeenReady = false;
-
-            let indexComponents;
-
-            if (this.props.documents.length) {
-                // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting
-                // the showReady prop to true.
-                indexComponents = map(this.props.documents, doc => {
-                    const entry = (
-                        <IndexEntry
-                            key={doc.id}
-                            showReady={!doc.ready || !haveSeenReady} {...doc} refId={refId}
-                        />
-                    );
-                    haveSeenReady = haveSeenReady || doc.ready;
-                    return entry;
-                });
-            } else {
-                indexComponents = <NoneFound noun="indexes" noListGroup />;
-            }
 
             const hasBuildPermission = checkUserRefPermission(this.props, "build");
-            let alert;
 
             if (this.props.modified_otu_count) {
                 const button = hasBuildPermission ? (
@@ -86,17 +121,8 @@ class IndexesList extends React.Component {
                 );
             }
 
-            content = (
-                <div>
-                    {alert}
-
-                    <div className="list-group">
-                        {indexComponents}
-                    </div>
-                </div>
-            );
         } else {
-            content = (
+            alert = (
                 <Alert bsStyle="warning" icon="warning">
                     At least one OTU must be added to the database before an index can be built.
                 </Alert>
@@ -105,13 +131,18 @@ class IndexesList extends React.Component {
 
         return (
             <div>
-                <ViewHeader
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                />
+                {alert}
+                {noIndexes}
 
-                {content}
+                <ScrollList
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
+                    list={this.state.masterList}
+                    loadNextPage={this.handleNextPage}
+                    page={this.state.page}
+                    rowRenderer={this.rowRenderer}
+                />
             </div>
         );
     }
@@ -128,8 +159,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: () => {
-        dispatch(findIndexes());
+    onFind: (refId, page) => {
+        dispatch(findIndexes(refId, page));
     }
 
 });

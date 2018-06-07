@@ -30,8 +30,14 @@ export default function indexesReducer (state = initialState, action) {
                 )
             };
 
+        case FIND_INDEXES.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
         case FIND_INDEXES.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FIND_INDEXES.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case GET_INDEX.REQUESTED:
             return {...state, detail: null};
