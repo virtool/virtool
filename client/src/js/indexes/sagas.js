@@ -1,6 +1,7 @@
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import * as indexesAPI from "./api";
+import { get as getReference } from "../references/api";
 import { apiCall, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_INDEX,
@@ -8,7 +9,8 @@ import {
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
-    GET_INDEX_HISTORY
+    GET_INDEX_HISTORY,
+    GET_REFERENCE
 } from "../actionTypes";
 
 export function* watchIndexes () {
@@ -22,6 +24,7 @@ export function* watchIndexes () {
 
 export function* wsUpdateIndex (action) {
     yield findIndexes({ refId: action.data.reference.id, page: 1 });
+    yield apiCall(getReference, { referenceId: action.data.reference.id }, GET_REFERENCE);
 }
 
 export function* findIndexes (action) {
