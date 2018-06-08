@@ -68,21 +68,3 @@ async def test_init_dispatcher(loop):
     await virtool.app.init_dispatcher(app)
 
     assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)
-
-
-async def test_init_job_manager(mocker, loop):
-    app = web.Application(loop=loop)
-
-    app["db"] = None
-    app["process_executor"] = mocker.MagicMock()
-    app["settings"] = None
-    app["dispatcher"] = mocker.MagicMock()
-
-    await virtool.app.init_job_manager(app)
-
-    assert isinstance(app["job_manager"], virtool.jobs.manager.Manager)
-
-    assert app["job_manager"].loop == loop
-    assert app["job_manager"].executor == app["process_executor"]
-    assert app["job_manager"].db is None
-    assert app["job_manager"].settings is None
