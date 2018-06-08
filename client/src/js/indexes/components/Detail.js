@@ -6,13 +6,14 @@ import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
-import { getIndex } from "../actions";
-import { LoadingPlaceholder, ViewHeader } from "../../base";
+import { getIndex, getIndexHistory } from "../actions";
+import { LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
 
 class IndexDetail extends React.Component {
 
     componentDidMount () {
-        this.props.onGet(this.props.match.params.indexId);
+        this.props.onGetIndex(this.props.match.params.indexId);
+        this.props.onGetChanges(this.props.match.params.indexId, 1);
     }
 
     render () {
@@ -22,14 +23,12 @@ class IndexDetail extends React.Component {
         }
 
         const indexId = this.props.detail.id;
-        const version = this.props.detail.version;
+        const { version, created_at, user } = this.props.detail;
 
         const refId = this.props.match.params.refId;
 
         return (
             <div>
-                <ViewHeader title={`Index ${version} - Indexes - Virtool`} />
-
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}/indexes`}>
@@ -43,9 +42,12 @@ class IndexDetail extends React.Component {
                     </Breadcrumb.Item>
                 </Breadcrumb>
 
-                <h3 className="view-header">
+                <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
                     <strong>Index {version}</strong>
-                </h3>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created <RelativeTime time={created_at} /> by {user.id}
+                    </div>
+                </ViewHeader>
 
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${refId}/indexes/${indexId}/general`}>
@@ -77,8 +79,12 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGet: (indexVersion) => {
-        dispatch(getIndex(indexVersion));
+    onGetIndex: (indexId) => {
+        dispatch(getIndex(indexId));
+    },
+
+    onGetChanges: (indexId, page) => {
+        dispatch(getIndexHistory(indexId, page));
     }
 
 });

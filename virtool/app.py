@@ -6,10 +6,11 @@ import sys
 
 import aiofiles
 import aiojobs.aiohttp
-from motor import motor_asyncio
 import pymongo
 import pymongo.errors
 from aiohttp import client, web
+from motor import motor_asyncio
+from urllib.parse import quote_plus
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -120,25 +121,45 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    host = app["settings"].get("db_host", "localhost")
-    port = app["settings"].get("db_port", 27017)
-    name = app["db_name"] or app["settings"]["db_name"]
+    settings = app["settings"]
+    
+    app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
-    db_client = motor_asyncio.AsyncIOMotorClient(
-        host,
-        port,
-        serverSelectionTimeoutMS=6000,
-        io_loop=app.loop
-    )
+    db_host = settings.get("db_host", "localhost")
+    db_port = settings.get("db_port", 27017)
+    db_use_auth = settings.get("db_use_auth", False)
+
+    if db_use_auth:
+        db_username = quote_plus(settings["db_username"])
+        db_password = quote_plus(settings["db_password"])
+
+        string = "mongodb://{}:{}@{}:{}/{}".format(db_username, db_password, db_host, db_port, app["db_name"])
+
+        if settings["db_use_ssl"]:
+            string += "?ssl=true"
+
+        db_client = motor_asyncio.AsyncIOMotorClient(
+            string,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
+        )
+
+    else:
+        db_client = motor_asyncio.AsyncIOMotorClient(
+            db_host,
+            db_port,
+            serverSelectionTimeoutMS=6000,
+            io_loop=app.loop
+        )
 
     try:
         await db_client.database_names()
     except pymongo.errors.ServerSelectionTimeoutError:
         raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(host, port)
+            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
         )
 
-    app["db"] = virtool.db.iface.DB(db_client[name], app["dispatcher"].dispatch, app.loop)
+    app["db"] = virtool.db.iface.DB(db_client[app["db_name"]], app["dispatcher"].dispatch, app.loop)
 
     await app["db"].connect()
 
@@ -195,6 +216,7 @@ async def init_job_manager(app):
 
     app["job_manager"] = virtool.jobs.manager.Manager(
         app.loop,
+        app["process_executor"],
         app["db"],
         app["settings"],
         capture_exception
@@ -238,27 +260,14 @@ async def init_setup(app):
     virtool.setup.setup_routes(app)
 
     app["setup"] = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
-
-        "first_user_id": None,
-        "first_user_password": None,
-
-        "data_path": None,
-        "watch_path": None,
-
+        **virtool.setup.DB_VALUES,
+        **virtool.setup.FIRST_USER_VALUES,
+        "data_path": "",
+        "watch_path": "",
         "errors": {
-            "db_exists_error": False,
-            "db_connection_error": False,
-            "db_name_error": False,
-            "password_confirmation_error": False,
-            "data_not_empty_error": False,
-            "data_not_found_error": False,
-            "data_permission_error": False,
-            "watch_not_empty_error": False,
-            "watch_not_found_error": False,
-            "watch_permission_error": False
+            **virtool.setup.DATA_ERRORS,
+            **virtool.setup.DB_ERRORS,
+            **virtool.setup.WATCH_ERRORS
         }
     }
 
@@ -283,6 +292,8 @@ async def on_shutdown(app):
 
     if file_manager is not None:
         await file_manager.close()
+
+    app["process_executor"].shutdown(wait=True)
 
 
 def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, force_version=None,

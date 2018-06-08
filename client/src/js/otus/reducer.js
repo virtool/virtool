@@ -3,6 +3,7 @@ import { find, map } from "lodash-es";
 import { formatIsolateName } from "../utils";
 import {
     WS_UPDATE_STATUS,
+    FETCH_OTUS,
     FIND_OTUS,
     GET_OTU,
     EDIT_OTU,
@@ -97,8 +98,14 @@ export default function OTUsReducer (state = initialState, action) {
 
             return state;
 
-        case FIND_OTUS.REQUESTED:
-            return {...state, ...action.terms};
+        case FETCH_OTUS.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
+        case FETCH_OTUS.SUCCEEDED:
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FETCH_OTUS.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case FIND_OTUS.SUCCEEDED:
             return {...state, ...action.data};

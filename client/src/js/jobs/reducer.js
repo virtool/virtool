@@ -1,5 +1,13 @@
 import { map, reject } from "lodash-es";
-import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, GET_RESOURCES } from "../actionTypes";
+import {
+    WS_UPDATE_JOB,
+    WS_REMOVE_JOB,
+    FIND_JOBS,
+    FETCH_JOBS,
+    GET_JOB,
+    CANCEL_JOB,
+    GET_RESOURCES
+} from "../actionTypes";
 
 export const initialState = {
     documents: null,
@@ -24,6 +32,15 @@ export default function jobsReducer (state = initialState, action) {
 
         case FIND_JOBS.SUCCEEDED:
             return {...state, ...action.data};
+
+        case FETCH_JOBS.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
+        case FETCH_JOBS.SUCCEEDED:
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FETCH_JOBS.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case GET_JOB.REQUESTED:
             return {...state, detail: null};

@@ -11,13 +11,16 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
+    FETCH_SAMPLES,
     FIND_ANALYSES,
     GET_ANALYSIS,
+    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
     SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL, GET_ANALYSIS_PROGRESS
+    HIDE_SAMPLE_MODAL,
+    GET_ANALYSIS_PROGRESS
 } from "../actionTypes";
 
 /**
@@ -152,6 +155,11 @@ export const removeSample = (sampleId) => ({
     sampleId
 });
 
+export const fetchSamples = (page) => ({
+    type: FETCH_SAMPLES.REQUESTED,
+    page
+});
+
 /**
  * Returns action for displaying the remove sample modal.
  *
@@ -191,6 +199,8 @@ export const getAnalysis = (analysisId) => ({
     type: GET_ANALYSIS.REQUESTED,
     analysisId
 });
+
+export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
 
 /**
  * Returns action for getting the current progress state.

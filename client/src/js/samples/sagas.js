@@ -1,4 +1,4 @@
-import { includes, noop } from "lodash-es";
+import { get, includes, noop } from "lodash-es";
 import { LOCATION_CHANGE, push } from "react-router-redux";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
@@ -20,12 +20,15 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
+    FETCH_SAMPLES,
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS
 } from "../actionTypes";
+
+export const getAnalysisDetailId = (state) => get(state, "samples.analysisDetail.id", null);
 
 export function* watchSamples () {
     yield throttle(200, LOCATION_CHANGE, findSamples);
@@ -40,6 +43,7 @@ export function* watchSamples () {
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
+    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
@@ -52,11 +56,19 @@ export function* wsSample () {
 }
 
 export function* wsUpdateAnalysis (action) {
-    yield getAnalysis({analysisId: action.update.id});
+    const currentAnalysisId = yield select(getAnalysisDetailId);
+
+    if (currentAnalysisId === action.update.id) {
+        yield getAnalysis({analysisId: currentAnalysisId});
+    }
 }
 
 export function* findSamples (action) {
     yield apiFind("/samples", samplesAPI.find, action, FIND_SAMPLES);
+}
+
+export function* fetchSamples (action) {
+    yield apiCall(samplesAPI.fetch, action, FETCH_SAMPLES);
 }
 
 export function* findReadFiles () {

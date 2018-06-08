@@ -5,7 +5,19 @@
  * @author igboyes
  */
 import Numeral from "numeral";
-import { capitalize, get, replace, sampleSize, split, startCase, filter, find } from "lodash-es";
+import {
+    capitalize,
+    get,
+    replace,
+    sampleSize,
+    split,
+    startCase,
+    filter,
+    find,
+    differenceWith,
+    isEqual,
+    isEmpty
+} from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -23,6 +35,14 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  */
 export const byteSize = bytes => (
     Numeral(bytes).format("0.0 b")
+);
+
+/*
+ * Deep comparison of two arrays of objects.
+ * Returns true if contents are identical.
+ */
+export const isArrayEqual = (x, y) => (
+    isEmpty(differenceWith(x, y, isEqual))
 );
 
 /**
@@ -215,4 +235,29 @@ export const checkUserRefPermission = (props, permission) => {
     }
 
     return false;
+};
+
+export const getUpdatedScrollListState = (nextProps, prevState) => {
+    if (nextProps.page === 1) {
+        return {
+            masterList: nextProps.documents,
+            list: nextProps.documents,
+            page: nextProps.page
+        };
+    }
+
+    if (prevState.page !== nextProps.page) {
+        return {
+            masterList: prevState.masterList.concat(nextProps.documents),
+            list: nextProps.documents,
+            page: nextProps.page
+        };
+    } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+        return {
+            masterList: nextProps.documents,
+            list: nextProps.documents
+        };
+    }
+
+    return null;
 };

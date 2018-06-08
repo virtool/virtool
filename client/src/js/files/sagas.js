@@ -48,7 +48,7 @@ export function* upload (action) {
 
         if (response) {
             yield put({type: UPLOAD.SUCCEEDED, data: response.body});
-            return yield findFiles(action.fileType);
+            return yield findFiles(action);
         }
 
         yield put(uploadProgress(localId, progress));

@@ -75,7 +75,9 @@ describe("HMM Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            ...action.data
+            ...action.data,
+            isLoading: false,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);

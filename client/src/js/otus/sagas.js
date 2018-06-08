@@ -34,7 +34,7 @@ export function* updateAndGetOTU (apiMethod, action, actionType) {
 }
 
 export function* fetchOTUs (action) {
-    yield apiCall(otusAPI.find, action, FETCH_OTUS);
+    yield apiCall(otusAPI.fetch, action, FETCH_OTUS);
 }
 
 export function* findOTUs (action) {

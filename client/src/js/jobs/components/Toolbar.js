@@ -9,7 +9,7 @@ import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bo
 import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 
 /**
  * A toolbar component for the jobs list view.
@@ -57,7 +57,7 @@ const JobsToolbar = (props) => {
 
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
-    canRemove: state.account.permissions.remove_job
+    canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job")
 });
 
 const mapDispatchToProps = (dispatch) => ({

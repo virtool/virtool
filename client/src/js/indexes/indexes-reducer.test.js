@@ -53,7 +53,9 @@ describe("Indexes Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            ...action.data
+            ...action.data,
+            isLoading: false,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);
@@ -111,7 +113,8 @@ describe("Indexes Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            history: null
+            isLoading: true,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);
@@ -126,7 +129,9 @@ describe("Indexes Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            history: action.data
+            history: action.data,
+            isLoading: false,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);

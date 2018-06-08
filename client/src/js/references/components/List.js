@@ -6,13 +6,13 @@ import AddReference from "./AddReference";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
 import { remoteReference } from "../actions";
-import { ViewHeader } from "../../base";
+import { ViewHeader, LoadingPlaceholder } from "../../base";
 
 
 const ReferenceList = (props) => {
 
     if (props.documents === null) {
-        return <div />;
+        return <LoadingPlaceholder />;
     }
 
     let referenceComponents = [];
@@ -36,13 +36,7 @@ const ReferenceList = (props) => {
 
     return (
         <div>
-            <ViewHeader
-                title="References"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
+            <ViewHeader title="References" totalCount={props.total_count} />
 
             <ReferenceToolbar />
 

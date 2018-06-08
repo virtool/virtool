@@ -46,7 +46,9 @@ describe("Files Reducer", () => {
             ...initialState,
             showUploadOverlay: state.showUploadOverlay,
             uploads: state.uploads,
-            uploadsComplete: state.uploadsComplete
+            uploadsComplete: state.uploadsComplete,
+            isLoading: true,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);
@@ -63,7 +65,9 @@ describe("Files Reducer", () => {
         expected = {
             ...state,
             ...action.data,
-            fileType: action.fileType
+            fileType: action.fileType,
+            isLoading: false,
+            errorLoad: false
         };
 
         expect(result).toEqual(expected);

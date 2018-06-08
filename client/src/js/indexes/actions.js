@@ -1,4 +1,3 @@
-import { simpleActionCreator } from "../utils";
 import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 
 /**
@@ -7,7 +6,12 @@ import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY }
  * @func
  * @returns {object}
  */
-export const findIndexes = simpleActionCreator(FIND_INDEXES.REQUESTED);
+export const findIndexes = (refId, page) => ({
+    type: FIND_INDEXES.REQUESTED,
+    refId,
+    page
+});
+
 
 /**
  * Returns action that can trigger an API call for getting specific OTU index.
@@ -52,8 +56,8 @@ export const createIndex = (refId) => ({
  * @param page {number} the page to retrieve from the list of changes.
  * @returns {object}
  */
-export const getIndexHistory = (indexVersion, page) => ({
+export const getIndexHistory = (indexId, page) => ({
     type: GET_INDEX_HISTORY.REQUESTED,
-    indexVersion,
+    indexId,
     page
 });

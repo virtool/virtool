@@ -1,11 +1,9 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
+import { Badge, Panel, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-
-
-import { Flex, FlexItem, RelativeTime } from "../../base";
+import { Flex, FlexItem } from "../../base";
 
 const PanelBadgeHeader = ({ title, count }) => (
     <Flex alignItems="center">
@@ -51,19 +49,6 @@ const IndexGeneral = ({ detail }) => {
 
     return (
         <div>
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th>Created</th>
-                        <td><RelativeTime time={detail.created_at} /></td>
-                    </tr>
-                    <tr>
-                        <th>Created By</th>
-                        <td>{detail.user.id}</td>
-                    </tr>
-                </tbody>
-            </Table>
-
             <Panel>
                 <Panel.Heading>
                     <PanelBadgeHeader title="Contributors" count={contributors.length} />

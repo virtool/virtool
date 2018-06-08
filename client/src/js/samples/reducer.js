@@ -10,6 +10,7 @@ import {
     FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_ANALYSIS,
+    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
@@ -33,7 +34,7 @@ export const initialState = {
 export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
 
-    if (analysisDetail.id === analysisId) {
+    if (analysisDetail && analysisDetail.id === analysisId) {
         return {...state, analysisDetail: {
             ...analysisDetail,
             results: map(analysisDetail.results, sequence => {
@@ -101,6 +102,9 @@ export default function samplesReducer (state = initialState, action) {
 
         case GET_ANALYSIS_PROGRESS:
             return {...state, getAnalysisProgress: action.progress};
+
+        case CLEAR_ANALYSIS:
+            return {...state, getAnalysisProgress: 0, analysisDetail: null};
 
         case ANALYZE.REQUESTED:
             return {

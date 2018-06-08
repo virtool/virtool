@@ -20,20 +20,20 @@ export default class IndexEntry extends React.PureComponent {
 
     render () {
 
-        let ready;
+        let stateIcon;
 
         // Decide what icon/text should be shown at the right end of the index document. If the index is building a
         // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
         // content is shown at the right.
         if (this.props.showReady) {
             if (this.props.ready) {
-                ready = (
+                stateIcon = (
                     <span className="pull-right">
-                        <Icon name="checkmark" bsStyle="success" /> <strong>Active</strong>
+                        <Icon name="check" bsStyle="success" /> <strong>Active</strong>
                     </span>
                 );
             } else {
-                ready = (
+                stateIcon = (
                     <div className="pull-right" >
                         <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} />
                         <strong> Building</strong>
@@ -78,7 +78,7 @@ export default class IndexEntry extends React.PureComponent {
                             {changeDescription}
                         </Col>
                         <Col md={2}>
-                            {ready}
+                            {stateIcon}
                         </Col>
                     </Row>
                 </ListGroupItem>

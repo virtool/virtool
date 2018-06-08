@@ -1,5 +1,5 @@
 import { simpleActionCreator } from "../utils";
-import { GET_HMM, INSTALL_HMMS, FETCH_HMMS } from "../actionTypes";
+import { GET_HMM, INSTALL_HMMS, FETCH_HMMS, FIND_HMMS } from "../actionTypes";
 
 /**
  * Returns action for fetching available HMMs.
@@ -8,6 +8,11 @@ import { GET_HMM, INSTALL_HMMS, FETCH_HMMS } from "../actionTypes";
  * @returns {object}
  */
 export const fetchHmms = simpleActionCreator(FETCH_HMMS);
+
+export const findHmms = (page) => ({
+    type: FIND_HMMS.REQUESTED,
+    page
+});
 
 /**
  * Returns action that can trigger an API call for getting specific hmm documents from database.

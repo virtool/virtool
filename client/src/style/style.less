@@ -70,23 +70,16 @@
 @breadcrumb-padding-vertical: 3px;
 
 body {
+  height: calc(100vh - 40px);
   padding-top: 65px;
   font-family: 'Roboto', sans-serif;
   overflow-y: scroll;
-}
-
-body.modal-open nav.navbar-fixed-top {
-  margin-left: -15px;
 }
 
 // Overrides bootstrap modal shifting containers
 body.modal-open {
   overflow: scroll !important;
   padding-right: 0 !important;
-}
-
-body.modal-open .navbar-fixed-top > .container {
-  margin-right: -15px;
 }
 
 td.sequence-cell {
@@ -103,6 +96,7 @@ td.sequence-cell > textarea {
 
 .container {
   width: 100vw;
+  max-width: 100%;
   padding-left: 110px;
   padding-right: 35px;
 }
