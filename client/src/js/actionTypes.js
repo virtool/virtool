@@ -125,7 +125,6 @@ export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
-
 export const FIND_INDEXES = createRequestActionType("FIND_INDEXES");
 export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");

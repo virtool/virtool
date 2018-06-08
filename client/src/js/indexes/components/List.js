@@ -27,7 +27,7 @@ class IndexesList extends React.Component {
     }
 
     handleNextPage = (page) => {
-        this.props.loadNextPage(this.props.refId, page);
+        this.props.onFind(this.props.refId, page);
     };
 
     rowRenderer = (index) => {
@@ -56,6 +56,8 @@ class IndexesList extends React.Component {
                     this.props.documents[0].reference.id !== this.props.refId)) {
             return <LoadingPlaceholder />;
         }
+
+        this.firstReady = false;
 
         let noIndexes;
         let alert;

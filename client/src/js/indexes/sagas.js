@@ -1,15 +1,30 @@
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import * as indexesAPI from "./api";
+import { get as getReference } from "../references/api";
 import { apiCall, setPending } from "../sagaUtils";
-import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
+import {
+    WS_UPDATE_INDEX,
+    FIND_INDEXES,
+    GET_INDEX,
+    GET_UNBUILT,
+    CREATE_INDEX,
+    GET_INDEX_HISTORY,
+    GET_REFERENCE
+} from "../actionTypes";
 
 export function* watchIndexes () {
+    yield takeLatest(WS_UPDATE_INDEX, wsUpdateIndex);
     yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
     yield takeLatest(GET_INDEX.REQUESTED, getIndex);
     yield takeLatest(GET_UNBUILT.REQUESTED, getUnbuilt);
     yield takeEvery(CREATE_INDEX.REQUESTED, createIndex);
     yield takeLatest(GET_INDEX_HISTORY.REQUESTED, getIndexHistory);
+}
+
+export function* wsUpdateIndex (action) {
+    yield findIndexes({ refId: action.data.reference.id, page: 1 });
+    yield apiCall(getReference, { referenceId: action.data.reference.id }, GET_REFERENCE);
 }
 
 export function* findIndexes (action) {

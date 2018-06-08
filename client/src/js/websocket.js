@@ -1,6 +1,7 @@
 import { WS_CLOSED } from "./actionTypes";
 import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
+import { wsUpdateIndex } from "./indexes/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateProcess } from "./processes/actions";
 import { wsUpdateStatus } from "./status/actions";
@@ -8,6 +9,7 @@ import { wsUpdateStatus } from "./status/actions";
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
     files: wsUpdateFile,
+    indexes: wsUpdateIndex,
     jobs: wsUpdateJob,
     processes: wsUpdateProcess,
     samples: wsUpdateSample,

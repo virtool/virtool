@@ -1,6 +1,4 @@
-import { concat, find, reject } from "lodash-es";
 import {
-    WS_UPDATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
@@ -20,15 +18,6 @@ export const initialState = {
 export default function indexesReducer (state = initialState, action) {
 
     switch (action.type) {
-
-        case WS_UPDATE_INDEX:
-            return {
-                ...state,
-                documents: concat(
-                    reject(state.documents, {index_id: action.index_id}),
-                    {...find(state.documents, {index_id: action.index_id}), ...action.data}
-                )
-            };
 
         case FIND_INDEXES.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};

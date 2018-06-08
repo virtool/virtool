@@ -1,4 +1,23 @@
-import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
+import {
+    WS_UPDATE_INDEX,
+    FIND_INDEXES,
+    GET_INDEX,
+    GET_UNBUILT,
+    CREATE_INDEX,
+    GET_INDEX_HISTORY
+} from "../actionTypes";
+
+/**
+ * Returns an action that should be dispatched when an index document is updated via websocket.
+ *
+ * @func
+ * @param data {object} the data passed in the websocket message
+ * @returns {object}
+ */
+export const wsUpdateIndex = (data) => ({
+    type: WS_UPDATE_INDEX,
+    data
+});
 
 /**
  * Returns action that can trigger an API call for getting available OTU indexes.
