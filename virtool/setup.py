@@ -4,15 +4,53 @@ import os
 import sys
 
 import motor.motor_asyncio
+import logging
 import pymongo.errors
 from aiohttp import web
 from cerberus import Validator
 from mako.template import Template
+from cerberus import Validator
 
 import virtool.app_settings
 import virtool.users
 import virtool.utils
 from virtool.api.utils import json_response
+
+DATA_ERRORS = {
+    "data_not_found_error": False,
+    "data_not_empty_error": False,
+    "data_permission_error": False
+}
+
+DB_ERRORS = {
+    "db_auth_error": False,
+    "db_connection_error": False,
+    "db_host_error": False,
+    "db_name_error": False,
+    "db_port_error": False,
+    "db_not_empty_error": False
+}
+
+DB_VALUES = {
+    "db_host": "",
+    "db_port": 0,
+    "db_username": "",
+    "db_password": "",
+    "db_name": "",
+    "db_use_auth": False,
+    "db_use_ssl": False
+}
+
+FIRST_USER_VALUES = {
+    "first_user_id": "",
+    "first_user_password": ""
+}
+
+WATCH_ERRORS = {
+    "watch_not_empty_error": False,
+    "watch_not_found_error": False,
+    "watch_permission_error": False
+}
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +66,31 @@ def setup_routes(app):
     app.router.add_get(r"/setup/save", save_and_reload)
     app.router.add_static("/static", app["client_path"])
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
+
+
+def create_connection_string(username, password, host, port, db_name, use_ssl):
+    string = "mongodb://{}:{}@{}:{}/{}".format(
+        quote_plus(username),
+        quote_plus(password),
+        host,
+        port,
+        db_name
+    )
+
+    if use_ssl:
+        string += "?ssl=true"
+
+    return string
+
+
+def report_error(req, key):
+    req.app["setup"].update(DB_VALUES)
+    req.app["setup"]["errors"].update({
+        **DB_ERRORS,
+        key: True
+    })
+
+    return web.HTTPFound("/setup")
 
 
 async def unavailable(req):
@@ -57,63 +120,94 @@ async def setup_get(req):
 async def setup_db(req):
     data = await req.post()
 
-    v = Validator({
-        "db_host": {"type": "string", "coerce": lambda x: x if x else "localhost", "required": True, "empty": False},
-        "db_port": {"type": "integer", "coerce": lambda x: int(x) if x else 27017, "required": True, "empty": False},
-        "db_name": {"type": "string", "coerce": lambda x: x if x else "virtool", "required": True, "empty": False}
-    }, allow_unknown=False)
-
-    v.validate(dict(data))
-
-    data = v.document
-
-    clear_update = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None
-    }
+    db_host = data.get("db_host", None) or "localhost"
 
     try:
-        # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails
-        connection = motor.motor_asyncio.AsyncIOMotorClient(
-            io_loop=req.app.loop,
-            host=data["db_host"],
-            port=int(data["db_port"]),
-            serverSelectionTimeoutMS=1500
+        db_port = int(data.get("db_port", 0) or 27017)
+    except ValueError as err:
+        if "invalid literal for int" in str(err):
+            return report_error(req, "db_port_error")
+
+        raise
+
+    db_name = data["db_name"] or "virtool"
+
+    if "." in db_name:
+        return report_error(req, "db_name_error")
+
+    db_username = data["db_username"] or ""
+    db_password = data["db_password"] or ""
+    use_auth = bool(db_username or db_password)
+    use_ssl = bool(data.get("db_use_ssl", False))
+
+    if use_auth:
+        if not db_username:
+            return report_error(req, "db_username_error")
+
+        if not db_username:
+            return report_error(req, "db_password_error")
+
+        string = create_connection_string(
+            db_username,
+            db_password,
+            db_host,
+            db_port,
+            db_name,
+            use_ssl
         )
 
-        # Succeeds if the connection was successful. Names will always contain at least the 'local' database.
-        names = await connection.database_names()
+        try:
+            client = motor.motor_asyncio.AsyncIOMotorClient(
+                string,
+                serverSelectionTimeoutMS=1500,
+                io_loop=req.app.loop
+            )
+        except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError) as err:
+            logger.debug(str(err))
+            return report_error(req, "db_connection_error")
 
-        if data["db_name"] in names:
-            req.app["setup"].update(clear_update)
-            req.app["setup"]["errors"].update({
-                "db_exists_error": True,
-                "db_connection_error": False,
-                "db_name_error": False
-            })
-        elif "." in data["db_name"]:
-            req.app["setup"].update(clear_update)
-            req.app["setup"]["errors"].update({
-                "db_exists_error": False,
-                "db_connection_error": False,
-                "db_name_error": True
-            })
-        else:
-            req.app["setup"].update(data)
-            req.app["setup"]["errors"].update({
-                "db_exists_error": False,
-                "db_connection_error": False,
-                "db_name_error": False
-            })
+    else:
+        try:
+            # Try to make a connection to the MongoDB instance. This will throw a ConnectionFailure exception if it
+            # fails
+            client = motor.motor_asyncio.AsyncIOMotorClient(
+                io_loop=req.app.loop,
+                host=db_host,
+                port=db_port,
+                serverSelectionTimeoutMS=1500,
+                connect=True
+            )
+        except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError) as err:
+            logger.debug(str(err))
+            return report_error(req, "db_connection_error")
 
-    except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
-        req.app["setup"].update(clear_update)
-        req.app["setup"]["errors"].update({
-            "db_exists_error": False,
-            "db_connection_error": True,
-            "db_name_error": False
-        })
+    db = client[db_name]
+
+    try:
+        collection_names = await db.collection_names(include_system_collections=False)
+    except OperationFailure as err:
+        if any(substr in str(err) for substr in ["Authentication failed", "no users authenticated"]):
+            return report_error(req, "db_auth_error")
+
+        raise
+    except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError):
+        return report_error(req, "db_connection_error")
+
+    for collection_name in collection_names:
+        if await db[collection_name].count():
+            return report_error(req, "db_not_empty_error")
+
+    req.app["setup"].update({
+        "db_host": db_host,
+        "db_port": db_port,
+        "db_username": db_username,
+        "db_password": db_password,
+        "db_name": db_name,
+        "db_use_auth": use_auth,
+        "db_use_ssl": use_ssl
+    })
+
+    req.app["setup"]["errors"].update(DB_ERRORS)
 
     return web.HTTPFound("/setup")
 
@@ -123,26 +217,17 @@ async def setup_user(req):
 
     v = Validator({
         "user_id": {"type": "string", "required": True},
-        "password": {"type": "string", "required": True},
-        "password_confirm": {"type": "string", "required": True},
+        "password": {"type": "string", "required": True}
     }, allow_unknown=False)
 
     v.validate(dict(data))
 
     data = v.document
 
-    if data["password"] == data["password_confirm"]:
-        req.app["setup"]["errors"]["password_confirmation_error"] = False
-        req.app["setup"].update({
-            "first_user_id": data["user_id"],
-            "first_user_password": virtool.users.hash_password(data["password"])
-        })
-    else:
-        req.app["setup"]["errors"]["password_confirmation_error"] = True
-        req.app["setup"].update({
-            "first_user_id": None,
-            "first_user_password": None
-        })
+    req.app["setup"].update({
+        "first_user_id": data["user_id"],
+        "first_user_password": virtool.user.hash_password(data["password"])
+    })
 
     return web.HTTPFound("/setup")
 
@@ -158,13 +243,9 @@ async def setup_data(req):
 
     data_path = v.document["data_path"]
 
-    req.app["setup"]["data_path"] = None
+    req.app["setup"]["data_path"] = ""
 
-    req.app["setup"]["errors"].update({
-        "data_not_found_error": False,
-        "data_not_empty_error": False,
-        "data_permission_error": False
-    })
+    req.app["setup"]["errors"].update(DATA_ERRORS)
 
     joined_path = str(data_path)
 
@@ -207,13 +288,8 @@ async def setup_watch(req):
 
     watch_path = v.document["watch_path"]
 
-    req.app["setup"]["watch_path"] = None
-
-    req.app["setup"]["errors"].update({
-        "watch_not_found_error": False,
-        "watch_not_empty_error": False,
-        "watch_permission_error": False
-    })
+    req.app["setup"]["watch_path"] = ""
+    req.app["setup"]["errors"].update(WATCH_ERRORS)
 
     joined_path = str(watch_path)
 
@@ -247,27 +323,14 @@ async def setup_watch(req):
 
 async def clear(req):
     req.app["setup"] = {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
-
-        "first_user_id": None,
-        "first_user_password": None,
-
-        "data_path": None,
-        "watch_path": None,
-
+        **DB_VALUES,
+        **FIRST_USER_VALUES,
+        "data_path": "",
+        "watch_path": "",
         "errors": {
-            "db_exists_error": False,
-            "db_connection_error": False,
-            "db_name_error": False,
-            "password_confirmation_error": False,
-            "data_not_empty_error": False,
-            "data_not_found_error": False,
-            "data_permission_error": False,
-            "watch_not_empty_error": False,
-            "watch_not_found_error": False,
-            "watch_permission_error": False
+            **DB_ERRORS,
+            **DATA_ERRORS,
+            **WATCH_ERRORS
         }
     }
 
@@ -277,18 +340,32 @@ async def clear(req):
 async def save_and_reload(req):
     data = req.app["setup"]
 
-    connection = motor.motor_asyncio.AsyncIOMotorClient(
-        io_loop=req.app.loop,
-        host=req.app["setup"]["db_host"],
-        port=int(req.app["setup"]["db_port"])
-    )
+    if data["db_use_auth"]:
+        string = create_connection_string(
+            data["db_username"],
+            data["db_password"],
+            data["db_host"],
+            data["db_port"],
+            data["db_name"],
+            data["db_use_ssl"]
+        )
 
-    db_name = data["db_name"]
+        client = motor.motor_asyncio.AsyncIOMotorClient(
+            string,
+            serverSelectionTimeoutMS=1500,
+            io_loop=req.app.loop
+        )
+    else:
+        client = motor.motor_asyncio.AsyncIOMotorClient(
+            io_loop=req.app.loop,
+            host=data["db_host"],
+            port=data["db_port"]
+        )
 
-    user_id = req.app["setup"]["first_user_id"]
+    db = client[data["db_name"]]
 
-    await connection[db_name].users.insert_one({
-        "_id": user_id,
+    await db.users.insert_one({
+        "_id": req.app["setup"]["first_user_id"],
         # A list of group _ids the user is associated with.
         "administrator": True,
         "groups": list(),
@@ -331,7 +408,11 @@ async def save_and_reload(req):
     for subdir in sub_dirs:
         os.makedirs(os.path.join(data_path, subdir))
 
-    settings_dict = {key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]}
+    settings_dict = {key: data[key] for key in [
+        *DB_VALUES.keys(),
+        "data_path",
+        "watch_path"
+    ]}
 
     settings_path = os.path.join(sys.path[0], "settings.json")
 

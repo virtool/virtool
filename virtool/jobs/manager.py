@@ -1,5 +1,4 @@
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
 
 import virtool.db.jobs
 import virtool.db.utils
@@ -11,7 +10,7 @@ import virtool.utils
 
 class Manager:
 
-    def __init__(self, loop, db, settings, capture_exception):
+    def __init__(self, loop, executor, db, settings, capture_exception):
         #: The application IO loop
         self.loop = loop
 
@@ -24,12 +23,7 @@ class Manager:
         #: A reference to Sentry client's `captureException` method.
         self.capture_exception = capture_exception
 
-        self._used = {
-            "proc": 0,
-            "mem": 0
-        }
-
-        self.executor = ProcessPoolExecutor()
+        self.executor = executor
 
         #: A dict to store all the tracked job objects in.
         self._jobs_dict = dict()
@@ -48,38 +42,23 @@ class Manager:
         self._run_task = asyncio.ensure_future(self.run(), loop=self.loop)
 
     async def run(self):
-        iteration = 0
-
         while True:
             to_delete = list()
 
-            for job in self._jobs_dict.values():
-                if not self._stop and not job.started:
-                    try:
-                        self.reserve_resources(job)
-                        job.start()
-                    except virtool.errors.InsufficientResourceError:
-                        pass
+            if len(self._jobs_dict):
+                available = get_available_resources(self.settings, self._jobs_dict)
 
-                if job.finished:
-                    self.release_resources(job)
-                    to_delete.append(job.id)
+                for job_id, job in self._jobs_dict.values():
+                    if not self._stop and not job.started:
+                        if job.proc <= available["proc"] and job.mem <= available["mem"]:
+                            job.start()
+                            break
 
-            for job_id in to_delete:
-                del self._jobs_dict[job_id]
+                    if job.finished:
+                        to_delete.append(job.id)
 
-            iteration += 1
-
-            if iteration == 100:
-                iteration = 0
-
-                ids = await virtool.db.jobs.get_waiting_and_running_ids(self.db)
-
-                await self.db.jobs.delete_many({
-                    "_id": {
-                        "$in": [job_id for job_id in ids if job_id not in self._jobs_dict]
-                    }
-                })
+                for job_id in to_delete:
+                    del self._jobs_dict[job_id]
 
             await asyncio.sleep(0.1, loop=self.loop)
 
@@ -141,32 +120,16 @@ class Manager:
 
         self.executor.shutdown(wait=True)
 
-    def reserve_resources(self, job):
-        """
-        Reserve resources for the given job. Throws an :class:`InsufficientResourceError` if the required resources are
-        not available.
 
-        :param job: the job object to reserve resources for
-        :type job: :class:`virtool.job.Job`
+def get_available_resources(settings, jobs):
+    used = get_used_resources(jobs)
+    return {key: settings[key] - used[key] for key in ["proc", "mem"]}
 
-        :raises: :class:`InsufficientResourceError`
 
-        """
-        available = self.get_resources()["available"]
+def get_used_resources(jobs):
+    running_jobs = [j for j in jobs.values() if j.started]
 
-        if job.proc <= available["proc"] and job.mem <= available["mem"]:
-            self._used["proc"] += job.proc
-            self._used["mem"] += job.mem
-        else:
-            raise virtool.errors.InsufficientResourceError
-
-    def release_resources(self, job):
-        self._used["proc"] -= job.proc
-        self._used["mem"] -= job.mem
-
-    def get_resources(self):
-        return {
-            "used": dict(self._used),
-            "available": {key: self.settings.get(key) - self._used[key] for key in self._used},
-            "limit": {key: self.settings.get(key) for key in self._used}
-        }
+    return {
+        "proc": sum(j.proc for j in running_jobs),
+        "mem": sum(j.mem for j in running_jobs)
+    }

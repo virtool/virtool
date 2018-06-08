@@ -11,21 +11,27 @@ import virtool.users
 @pytest.fixture
 def mock_setup():
     return {
-        "db_host": None,
-        "db_port": None,
-        "db_name": None,
+        "db_host": "",
+        "db_port": 0,
+        "db_name": "",
+        "db_username": "",
+        "db_password": "",
+        "db_use_auth": False,
+        "db_use_ssl": False,
 
-        "first_user_id": None,
-        "first_user_password": None,
+        "first_user_id": "",
+        "first_user_password": "",
 
-        "data_path": None,
-        "watch_path": None,
+        "data_path": "",
+        "watch_path": "",
 
         "errors": {
-            "db_exists_error": False,
+            "db_auth_error": False,
             "db_connection_error": False,
+            "db_host_error": False,
             "db_name_error": False,
-            "password_confirmation_error": False,
+            "db_not_empty_error": False,
+            "db_port_error": False,
             "data_not_empty_error": False,
             "data_not_found_error": False,
             "data_permission_error": False,
@@ -64,7 +70,7 @@ async def test_setup_redirect(url, spawn_client):
     assert "Connect to MongoDB" in await resp.text()
 
 
-class TestSetupGet:
+class TestGet:
 
     @pytest.mark.parametrize("field,value", [
         ("db_host", "192.168.20.170"),
@@ -142,89 +148,49 @@ class TestSetupGet:
         assert '''<input type="password" class="form-control" name="password"''' \
                ''' id="password" value='dummy password'>''' in text
 
-        assert '''<input type="password" class="form-control" name="password_confirm"''' \
-               ''' id="password_confirm" value='dummy password'>''' in text
 
+@pytest.mark.parametrize("error", [None, "db_connection_error", "db_not_empty_error"])
+async def test_db(error, spawn_client, test_db_name, mock_setup):
+    client = await spawn_client(setup_mode=True)
 
-class TestSetupDB:
+    update = {
+        "db_host": "foobar" if error == "db_connection_error" else "localhost",
+        "db_port": 27017,
+        "db_name": test_db_name,
+        "db_username": "",
+        "db_password": ""
+    }
 
-    async def test(self, spawn_client, test_db_name, mock_setup):
-        client = await spawn_client(setup_mode=True)
-
-        update = {
-            "db_host": "localhost",
-            "db_port": 27017,
-            "db_name": test_db_name
-        }
-
-        resp = await client.post_form("/setup/db", update)
-
-        assert resp.status == 200
-
-        expected = dict(mock_setup)
-
-        expected.update(update)
-
-        assert client.app["setup"] == expected
-
-    async def test_connection_error(self, spawn_client, mock_setup):
-        client = await spawn_client(setup_mode=True)
-
-        update = {
-            "db_host": "foobar",
-            "db_port": 27017,
-            "db_name": "test"
-        }
-
-        resp = await client.post_form("/setup/db", update)
-
-        assert resp.status == 200
-
-        mock_setup["errors"]["db_connection_error"] = True
-
-        assert client.app["setup"] == mock_setup
-
-    async def test_exists_error(self, spawn_client, test_db_name, mock_setup):
-        client = await spawn_client(setup_mode=True)
-
-        foobar_db_name = test_db_name + "-foobar"
-
-        update = {
-            "db_host": "localhost",
-            "db_port": 27017,
-            "db_name": foobar_db_name
-        }
-
-        connection = motor.motor_asyncio.AsyncIOMotorClient(
+    if error == "db_not_empty_error":
+        db_client = motor.motor_asyncio.AsyncIOMotorClient(
             io_loop=client.app.loop,
             host="localhost",
-            port=27017,
-            serverSelectionTimeoutMS=1500
+            port=27017
         )
 
-        await connection[foobar_db_name].test.insert_one({"_id": "test"})
+        await db_client[test_db_name].references.insert_one({"_id": "test"})
 
-        resp = await client.post_form("/setup/db", update)
+    resp = await client.post_form("/setup/db", update)
 
-        await connection.drop_database(foobar_db_name)
+    assert resp.status == 200
 
-        assert resp.status == 200
+    errors = None
 
-        mock_setup["errors"]["db_exists_error"] = True
+    if error == "db_connection_error":
+        errors = dict(mock_setup["errors"], db_connection_error=True)
 
-        assert client.app["setup"] == mock_setup
+    if error == "db_not_empty_error":
+        errors = dict(mock_setup["errors"], db_not_empty_error=True)
 
-
-class TestSetupUser:
-
-    async def test(self, mocker, spawn_client, mock_setup):
-        client = await spawn_client(setup_mode=True)
-
-        update = {
-            "user_id": "baz",
-            "password": "foobar",
-            "password_confirm": "foobar"
+    if errors:
+        assert client.app["setup"] == {
+            **mock_setup,
+            "errors": errors
         }
+    else:
+        assert client.app["setup"] == {
+            **mock_setup,
+            **update
 
         mocker.patch("virtool.users.hash_password", return_value="hashed")
 
@@ -248,94 +214,82 @@ class TestSetupUser:
             "password_confirm": "hello_world"
         }
 
-        resp = await client.post_form("/setup/user", update)
 
-        assert resp.status == 200
+async def test_user(mocker, spawn_client, mock_setup):
+    client = await spawn_client(setup_mode=True)
 
-        mock_setup["errors"]["password_confirmation_error"] = True
+    update = {
+        "user_id": "baz",
+        "password": "foobar",
+        "password_confirm": "foobar"
+    }
 
-        assert client.app["setup"] == mock_setup
+    mocker.patch("virtool.user.hash_password", return_value="hashed")
 
+    resp = await client.post_form("/setup/user", update)
 
-class TestSetupPaths:
+    assert resp.status == 200
 
-    @pytest.mark.parametrize("issue", [None, "not_empty", "not_found", "permission"])
-    @pytest.mark.parametrize("prefix", ["data", "watch"])
-    async def test(self, issue, prefix, tmpdir, spawn_client, mock_setup):
-        client = await spawn_client(setup_mode=True)
+    mock_setup.update({
+        "first_user_id": "baz",
+        "first_user_password": "hashed"
+    })
 
-        path = os.path.join(str(tmpdir), "foobar", "data")
-
-        update = {
-            "{}_path".format(prefix): path
-        }
-
-        if not issue == "not_found":
-            os.makedirs(path)
-
-        if issue == "not_empty":
-            with open(os.path.join(path, "test.txt"), "w") as handle:
-                handle.write("hello world")
-
-        if issue == "permission":
-            os.chmod(path, 000)
-
-        resp = await client.post_form("/setup/{}".format(prefix), update)
-
-        assert resp.status == 200
-
-        if issue is not None:
-            mock_setup["errors"]["{}_{}_error".format(prefix, issue)] = True
-
-        assert client.app["setup"] == mock_setup
+    assert client.app["setup"] == mock_setup
 
 
-class TestClear:
+@pytest.mark.parametrize("issue", [None, "not_empty", "not_found", "permission"])
+@pytest.mark.parametrize("prefix", ["data", "watch"])
+async def test(issue, prefix, tmpdir, spawn_client, mock_setup):
+    client = await spawn_client(setup_mode=True)
 
-    async def test(self, spawn_client, mock_setup):
-        client = await spawn_client(setup_mode=True)
+    path = os.path.join(str(tmpdir), "foobar", "data")
 
-        mock_setup.update({
-            "db_host": "192.168.20.170",
-            "db_port": 9950,
-            "db_name": "virtool"
-        })
+    update = {
+        "{}_path".format(prefix): path
+    }
 
-        client.app["setup"] = mock_setup
+    if not issue == "not_found":
+        os.makedirs(path)
 
-        resp = await client.get("/setup/clear")
+    if issue == "not_empty":
+        with open(os.path.join(path, "test.txt"), "w") as handle:
+            handle.write("hello world")
 
-        assert resp.status == 200
+    if issue == "permission":
+        os.chmod(path, 000)
 
-        assert client.app["setup"] == {
-            "db_host": None,
-            "db_port": None,
-            "db_name": None,
+    resp = await client.post_form("/setup/{}".format(prefix), update)
 
-            "first_user_id": None,
-            "first_user_password": None,
+    assert resp.status == 200
 
-            "data_path": None,
-            "watch_path": None,
+    if issue is not None:
+        mock_setup["errors"]["{}_{}_error".format(prefix, issue)] = True
 
-            "errors": {
-                "db_exists_error": False,
-                "db_connection_error": False,
-                "db_name_error": False,
-                "password_confirmation_error": False,
-                "data_not_empty_error": False,
-                "data_not_found_error": False,
-                "data_permission_error": False,
-                "watch_not_empty_error": False,
-                "watch_not_found_error": False,
-                "watch_permission_error": False
-            }
-        }
+    assert client.app["setup"] == mock_setup
+
+
+async def test_clear(spawn_client, mock_setup):
+    client = await spawn_client(setup_mode=True)
+
+    client.app["setup"] = {
+        **mock_setup,
+        "db_host": "192.168.20.170",
+        "db_port": 9950,
+        "db_name": "virtool"
+    }
+
+    resp = await client.get("/setup/clear")
+
+    assert resp.status == 200
+
+    assert client.app["setup"] == mock_setup
 
 
 async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_time):
     client = await spawn_client(setup_mode=True)
 
+    m_reload = mocker.patch("virtool.utils.reload", new=make_mocked_coro())
     connection = motor.motor_asyncio.AsyncIOMotorClient(
         io_loop=client.app.loop,
         host="localhost",
@@ -352,25 +306,14 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     watch = tmpdir.mkdir("watch")
 
     client.app["setup"] = {
-        'db_host': "localhost",
-        'db_port': 27017,
-        'db_name': "foobar",
-        'first_user_id': "fred",
-        'first_user_password': "hashed",
-        'data_path': str(data),
-        'watch_path': str(watch),
-        'errors': {
-            'data_not_found_error': False,
-            'watch_not_empty_error': False,
-            'password_confirmation_error': False,
-            'db_exists_error': False,
-            "db_name_error": False,
-            'data_not_empty_error': False,
-            'data_permission_error': False,
-            'db_connection_error': False,
-            'watch_permission_error': False,
-            'watch_not_found_error': False
-        }
+        **mock_setup,
+        "db_host": "localhost",
+        "db_port": 27017,
+        "db_name": "foobar",
+        "first_user_id": "fred",
+        "first_user_password": "hashed",
+        "data_path": str(data),
+        "watch_path": str(watch)
     }
 
     await client.get("/setup/save")
@@ -414,9 +357,13 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     assert m_reload.called
 
     m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
-        "db_host": "localhost",
-        "db_port": 27017,
-        "db_name": "foobar",
         "data_path": str(data),
+        "db_host": "localhost",
+        "db_name": "foobar",
+        "db_password": "",
+        "db_port": 27017,
+        "db_use_auth": False ,
+        "db_use_ssl": False,
+        "db_username": "",
         "watch_path": str(watch)
     })

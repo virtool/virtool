@@ -14,6 +14,7 @@ import {
     FETCH_SAMPLES,
     FIND_ANALYSES,
     GET_ANALYSIS,
+    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
@@ -198,6 +199,8 @@ export const getAnalysis = (analysisId) => ({
     type: GET_ANALYSIS.REQUESTED,
     analysisId
 });
+
+export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
 
 /**
  * Returns action for getting the current progress state.
