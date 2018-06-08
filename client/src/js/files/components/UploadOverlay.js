@@ -10,7 +10,7 @@ import { hideUploadOverlay } from "../actions";
 import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 
 const UploadItem = ({ localId, name, progress, size}) => (
-    <ListGroupItem key={localId} disabled={progress === 0}>
+    <ListGroupItem key={localId}>
         <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
         <Flex>
             <FlexItem grow={1}>
