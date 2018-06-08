@@ -22,8 +22,14 @@ export default function hmmsReducer (state = initialState, action) {
 
             return state;
 
+        case FIND_HMMS.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
         case FIND_HMMS.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FIND_HMMS.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case GET_HMM.REQUESTED:
             return {...state, detail: null};

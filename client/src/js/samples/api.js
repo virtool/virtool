@@ -4,6 +4,10 @@ export const find = () => (
     Request.get(`/api/samples${window.location.search}`)
 );
 
+export const fetch = ({ page }) => (
+    Request.get(`/api/samples?page=${page}`)
+);
+
 export const findReadyHosts = () => (
     Request.get("/api/subtractions")
         .query({

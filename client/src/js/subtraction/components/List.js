@@ -41,13 +41,7 @@ const SubtractionList = (props) => {
 
     return (
         <div>
-            <ViewHeader
-                title="Subtraction"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
+            <ViewHeader title="Subtraction" totalCount={props.total_count} />
 
             {alert}
 

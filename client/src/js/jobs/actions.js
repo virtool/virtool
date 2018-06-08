@@ -3,6 +3,7 @@ import {
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
     FIND_JOBS,
+    FETCH_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
@@ -41,6 +42,11 @@ export const wsRemoveJob = (jobId) => ({
  * @returns {object}
  */
 export const findJobs = simpleActionCreator(FIND_JOBS.REQUESTED);
+
+export const fetchJobs = (page) => ({
+    type: FETCH_JOBS.REQUESTED,
+    page
+});
 
 /**
  * Returns action that can trigger an API call for getting a specific job document.

@@ -6,13 +6,14 @@ import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
-import { getIndex } from "../actions";
+import { getIndex, getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
 
 class IndexDetail extends React.Component {
 
     componentDidMount () {
-        this.props.onGet(this.props.match.params.indexId);
+        this.props.onGetIndex(this.props.match.params.indexId);
+        this.props.onGetChanges(this.props.match.params.indexId, 1);
     }
 
     render () {
@@ -78,8 +79,12 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGet: (indexVersion) => {
-        dispatch(getIndex(indexVersion));
+    onGetIndex: (indexId) => {
+        dispatch(getIndex(indexId));
+    },
+
+    onGetChanges: (indexId, page) => {
+        dispatch(getIndexHistory(indexId, page));
     }
 
 });

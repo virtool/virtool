@@ -4,10 +4,12 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { getReference } from "../../actions";
 import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime } from "../../../base";
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
+import { findIndexes } from "../../../indexes/actions";
+import { fetchOTUs } from "../../../otus/actions";
+import { getReference } from "../../actions";
 import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceUsers from "./Users";
@@ -45,6 +47,8 @@ class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
+        this.props.onOTUFirstPage(this.props.match.params.refId, 1);
+        this.props.onFindIndexes(this.props.match.params.refId, 1);
     }
 
     handleSelect = (key) => {
@@ -121,7 +125,7 @@ class ReferenceDetail extends React.Component {
         }
 
         return (
-            <div>
+            <div className="detail-container">
                 <ViewHeader title={`${name} - References`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
@@ -181,8 +185,16 @@ const mapDispatchToProps = dispatch => ({
         dispatch(getReference(refId));
     },
 
+    onOTUFirstPage: (refId, page) => {
+        dispatch(fetchOTUs(refId, page));
+    },
+
     onEdit: () => {
         dispatch(push({...window.location, state: {editReference: true}}));
+    },
+
+    onFindIndexes: (refId, page) => {
+        dispatch(findIndexes(refId, page));
     }
 
 });

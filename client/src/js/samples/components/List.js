@@ -1,71 +1,81 @@
 import React from "react";
-import { map } from "lodash-es";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-import { ListGroup } from "react-bootstrap";
 
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
 import QuickAnalyze from "./QuickAnalyze";
-import { LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
-import { createFindURL } from "../../utils";
+import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader } from "../../base";
+import { fetchSamples } from "../actions";
+import { getUpdatedScrollListState } from "../../utils";
 
-const SamplesList = (props) => {
+export class SamplesList extends React.Component {
 
-    if (props.documents === null) {
-        return <LoadingPlaceholder />;
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
     }
 
-    let sampleComponents = map(props.documents, document =>
+    static getDerivedStateFromProps (nextProps, prevState) {
+        return getUpdatedScrollListState(nextProps, prevState);
+    }
+
+    rowRenderer = (index) => (
         <SampleEntry
-            key={document.id}
-            id={document.id}
-            userId={document.user.id}
-            {...document}
+            key={this.state.masterList[index].id}
+            id={this.state.masterList[index].id}
+            userId={this.state.masterList[index].user.id}
+            {...this.state.masterList[index]}
         />
     );
 
-    if (!props.documents.length) {
-        sampleComponents = <NoneFound key="noSample" noun="samples" noListGroup />;
+    render () {
+
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
+        let noSamples;
+
+        if (!this.state.masterList.length) {
+            noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
+        }
+
+        return (
+            <div>
+                <ViewHeader title="Samples" totalCount={this.props.total_count} />
+
+                <SampleToolbar />
+
+                {noSamples}
+
+                <ScrollList
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
+                    list={this.state.masterList}
+                    loadNextPage={this.onNextPage}
+                    page={this.state.page}
+                    rowRenderer={this.rowRenderer}
+                />
+
+                <CreateSample />
+
+                <QuickAnalyze />
+            </div>
+        );
     }
-
-    return (
-        <div>
-            <ViewHeader
-                title="Samples"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
-
-            <SampleToolbar />
-
-            <ListGroup>
-                {sampleComponents}
-            </ListGroup>
-
-            <Pagination
-                documentCount={props.documents.length}
-                onPage={props.onFind}
-                page={props.page}
-                pageCount={props.page_count}
-            />
-
-            <CreateSample />
-
-            <QuickAnalyze />
-        </div>
-    );
-};
+}
 
 const mapStateToProps = (state) => ({...state.samples});
 
 const mapDispatchToProps = (dispatch) => ({
-    onFind: (page) => {
-        const url = createFindURL({page});
-        dispatch(push(url.pathname + url.search));
+    onNextPage: (page) => {
+        dispatch(fetchSamples(page));
     }
 });
 

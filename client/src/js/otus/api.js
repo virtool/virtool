@@ -1,5 +1,9 @@
 import Request from "superagent";
 
+export const fetch = ({ refId, page }) => (
+    Request.get(`/api/refs/${refId}/otus?page=${page}`)
+);
+
 export const find = () => (
     Request.get(`/api${window.location.pathname}${window.location.search}`)
 );

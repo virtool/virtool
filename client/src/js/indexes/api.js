@@ -1,7 +1,7 @@
 import Request from "superagent";
 
-export const find = () => (
-    Request.get(`/api${window.location.pathname}`)
+export const find = ({ refId, page }) => (
+    Request.get(`/api/refs/${refId}/indexes?page=${page}`)
 );
 
 export const get = ({ indexId }) => (
@@ -16,6 +16,6 @@ export const create = ({ refId }) => (
     Request.post(`/api/refs/${refId}/indexes`)
 );
 
-export const getHistory = ({ indexVersion, page = 1 }) => (
-    Request.get(`/api/indexes/${indexVersion}/history?page=${page}`)
+export const getHistory = ({ indexId, page = 1 }) => (
+    Request.get(`/api/indexes/${indexId}/history?page=${page}`)
 );

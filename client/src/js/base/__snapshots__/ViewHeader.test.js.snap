@@ -1,41 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ViewHeader /> <PageHint /> subcomponent displays 0 of 0 if required props equal 0 1`] = `
-<span
-  className="text-muted pull-right"
-  style={
-    Object {
-      "fontSize": "12px",
-    }
-  }
->
-  Viewing 
-  0
-   - 
-  0
-   of 
-  0
-</span>
-`;
-
-exports[`<ViewHeader /> <PageHint /> subcomponent displays first to last of totalCount otherwise 1`] = `
-<span
-  className="text-muted pull-right"
-  style={
-    Object {
-      "fontSize": "12px",
-    }
-  }
->
-  Viewing 
-  31
-   - 
-  40
-   of 
-  1500
-</span>
-`;
-
 exports[`<ViewHeader /> renders correctly 1`] = `
 <h3
   className="view-header"
@@ -46,38 +10,5 @@ exports[`<ViewHeader /> renders correctly 1`] = `
   >
     <title />
   </HelmetWrapper>
-  <Flex
-    alignContent="stretch"
-    alignItems="flex-end"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={0}
-    >
-      <strong />
-       
-      <Badge
-        bsClass="badge"
-        pullRight={false}
-      />
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      shrink={0}
-    >
-      <PageHint
-        count={5}
-        page={1}
-        totalCount={20}
-      />
-    </FlexItem>
-  </Flex>
 </h3>
 `;

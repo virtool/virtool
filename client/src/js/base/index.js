@@ -16,13 +16,14 @@ import { ListGroupItem } from "./ListGroupItem";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
-import { Pagination } from "./Pagination";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveModal } from "./RemoveModal";
 import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
+
+import { ScrollList } from "./ScrollList";
 
 export {
     Alert,
@@ -43,7 +44,6 @@ export {
     ListGroupItem,
     LoadingPlaceholder,
     NoneFound,
-    Pagination,
     ProgressBar,
     Radio,
     RelativeTime,
@@ -51,5 +51,6 @@ export {
     Tooltip,
     UploadBar,
     ViewHeader,
-    VTLogo
+    VTLogo,
+    ScrollList
 };

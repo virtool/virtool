@@ -24,9 +24,9 @@ class RebuildIndex extends React.Component {
         return null;
     }
 
-    modalEntered = () => {
+    componentDidMount () {
         this.props.onGetUnbuilt(this.props.refId);
-    };
+    }
 
     handleHide = () => {
         this.setState({ error: "" });
@@ -65,7 +65,7 @@ class RebuildIndex extends React.Component {
             : null;
 
         return (
-            <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.handleHide}>
+            <Modal bsSize="large" show={this.props.show} onHide={this.handleHide}>
                 <Modal.Header onHide={this.handleHide} closeButton>
                     Rebuild Index
                 </Modal.Header>
