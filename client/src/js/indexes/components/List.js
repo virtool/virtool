@@ -27,7 +27,7 @@ class IndexesList extends React.Component {
     }
 
     handleNextPage = (page) => {
-        this.props.loadNextPage(this.props.refId, page);
+        this.props.onFind(this.props.refId, page);
     };
 
     rowRenderer = (index) => {
