@@ -18,6 +18,7 @@ import virtool.utils
 PROJECTION = [
     "_id",
     "remotes_from",
+    "cloned_from",
     "created_at",
     "data_type",
     "imported_from",
