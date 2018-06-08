@@ -222,7 +222,9 @@ async def init_job_manager(app):
         capture_exception
     )
 
-    app["job_manager"].start()
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+    await scheduler.spawn(app["job_manager"].run())
 
 
 async def init_file_manager(app):
@@ -282,11 +284,6 @@ async def on_shutdown(app):
     """
     await app["dispatcher"].close()
     await app["client"].close()
-
-    job_manager = app.get("job_manager", None)
-
-    if job_manager is not None:
-        await job_manager.close()
 
     file_manager = app.get("file_manager", None)
 

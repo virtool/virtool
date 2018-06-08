@@ -28,42 +28,34 @@ class Manager:
         #: A dict to store all the tracked job objects in.
         self._jobs_dict = dict()
 
-        self._run_task = None
-
-        #: The main loop
-        self._stop = False
-        self.started = False
-
     def __iter__(self):
         return iter(self._jobs_dict.keys())
 
-    def start(self):
-        self.started = True
-        self._run_task = asyncio.ensure_future(self.run(), loop=self.loop)
-
     async def run(self):
-        while True:
-            to_delete = list()
+        try:
+            while True:
+                to_delete = list()
 
-            if len(self._jobs_dict):
-                available = get_available_resources(self.settings, self._jobs_dict)
+                if len(self._jobs_dict):
+                    available = get_available_resources(self.settings, self._jobs_dict)
 
-                for job_id, job in self._jobs_dict.items():
-                    if not self._stop and not job.started:
-                        if job.proc <= available["proc"] and job.mem <= available["mem"]:
-                            job.start()
-                            break
+                    for job_id, job in self._jobs_dict.items():
+                        if not job.started:
+                            if job.proc <= available["proc"] and job.mem <= available["mem"]:
+                                job.start()
+                                break
 
-                    if job.finished:
-                        to_delete.append(job.id)
+                        if job.finished:
+                            to_delete.append(job.id)
 
-            for job_id in to_delete:
-                del self._jobs_dict[job_id]
+                for job_id in to_delete:
+                    del self._jobs_dict[job_id]
 
-            await asyncio.sleep(0.1, loop=self.loop)
+                await asyncio.sleep(0.1, loop=self.loop)
 
-            if self._stop and len(self._jobs_dict) == 0:
-                break
+        except asyncio.CancelledError:
+            for job in self._jobs_dict.values():
+                await job.cancel()
 
     async def new(self, task_name, task_args, user_id, job_id=None):
 
@@ -111,14 +103,6 @@ class Manager:
 
     async def cancel(self, job_id):
         await self._jobs_dict[job_id].cancel()
-
-    async def close(self):
-        self._stop = True
-
-        for job in self._jobs_dict.values():
-            await job.cancel()
-
-        self.executor.shutdown(wait=True)
 
 
 def get_available_resources(settings, jobs):
