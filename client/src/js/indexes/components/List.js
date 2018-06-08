@@ -57,6 +57,8 @@ class IndexesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
+        this.firstReady = false;
+
         let noIndexes;
         let alert;
 
