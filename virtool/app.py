@@ -6,10 +6,11 @@ import sys
 
 import aiofiles
 import aiojobs.aiohttp
-from motor import motor_asyncio
 import pymongo
 import pymongo.errors
 from aiohttp import client, web
+from motor import motor_asyncio
+from urllib.parse import quote_plus
 
 import virtool.app_auth
 import virtool.app_dispatcher
@@ -137,30 +138,31 @@ async def init_db(app):
         if settings["db_use_ssl"]:
             string += "?ssl=true"
 
-        client = motor_asyncio.AsyncIOMotorClient(
+        db_client = motor_asyncio.AsyncIOMotorClient(
             string,
             serverSelectionTimeoutMS=6000,
             io_loop=app.loop
-            
-    try:
-        await client.database_names()
-    except pymongo.errors.ServerSelectionTimeoutError:
-        raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(host, port)
         )
 
     else:
-        client = motor_asyncio.AsyncIOMotorClient(
+        db_client = motor_asyncio.AsyncIOMotorClient(
             db_host,
             db_port,
             serverSelectionTimeoutMS=6000,
             io_loop=app.loop
         )
-        
-    app["db"] = virtool.db.iface.DB(client[name], app["dispatcher"].dispatch, app.loop)
+
+    try:
+        await db_client.database_names()
+    except pymongo.errors.ServerSelectionTimeoutError:
+        raise virtool.errors.MongoConnectionError(
+            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
+        )
+
+    app["db"] = virtool.db.iface.DB(db_client[app["db_name"]], app["dispatcher"].dispatch, app.loop)
 
     await app["db"].connect()
-    
+
 
 async def init_check_db(app):
     logger.info("Starting database checks. Do not interrupt. This may take several minutes.")

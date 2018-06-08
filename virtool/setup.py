@@ -1,15 +1,14 @@
 import copy
-import logging
 import os
 import sys
 
 import motor.motor_asyncio
 import logging
-import pymongo.errors
+from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 from aiohttp import web
-from cerberus import Validator
 from mako.template import Template
 from cerberus import Validator
+from urllib.parse import quote_plus
 
 import virtool.app_settings
 import virtool.users
@@ -224,9 +223,11 @@ async def setup_user(req):
 
     data = v.document
 
+    print(data)
+
     req.app["setup"].update({
         "first_user_id": data["user_id"],
-        "first_user_password": virtool.user.hash_password(data["password"])
+        "first_user_password": virtool.users.hash_password(data["password"])
     })
 
     return web.HTTPFound("/setup")
@@ -364,8 +365,10 @@ async def save_and_reload(req):
 
     db = client[data["db_name"]]
 
+    user_id = req.app["setup"]["first_user_id"]
+
     await db.users.insert_one({
-        "_id": req.app["setup"]["first_user_id"],
+        "_id": user_id,
         # A list of group _ids the user is associated with.
         "administrator": True,
         "groups": list(),

@@ -48,7 +48,7 @@ class Manager:
             if len(self._jobs_dict):
                 available = get_available_resources(self.settings, self._jobs_dict)
 
-                for job_id, job in self._jobs_dict.values():
+                for job_id, job in self._jobs_dict.items():
                     if not self._stop and not job.started:
                         if job.proc <= available["proc"] and job.mem <= available["mem"]:
                             job.start()
@@ -57,8 +57,8 @@ class Manager:
                     if job.finished:
                         to_delete.append(job.id)
 
-                for job_id in to_delete:
-                    del self._jobs_dict[job_id]
+            for job_id in to_delete:
+                del self._jobs_dict[job_id]
 
             await asyncio.sleep(0.1, loop=self.loop)
 

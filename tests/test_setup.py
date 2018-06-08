@@ -42,21 +42,19 @@ def mock_setup():
     }
 
 
-class TestUnavailable:
+async def test_unavailable(spawn_client):
+    client = await spawn_client(setup_mode=True)
 
-    async def test(self, spawn_client):
-        client = await spawn_client(setup_mode=True)
+    resp = await client.get("/api/otus")
 
-        resp = await client.get("/api/otus")
+    assert resp.status == 503
 
-        assert resp.status == 503
+    assert await resp.json() == {
+        "id": "requires_setup",
+        "message": "Server is not configured"
+    }
 
-        assert await resp.json() == {
-            "id": "requires_setup",
-            "message": "Server is not configured"
-        }
-
-        assert resp.headers["Location"] == "/setup"
+    assert resp.headers["Location"] == "/setup"
 
 
 @pytest.mark.parametrize("url", ["/otus", "/hosts", "/foobar"])
@@ -150,7 +148,7 @@ class TestGet:
 
 
 @pytest.mark.parametrize("error", [None, "db_connection_error", "db_not_empty_error"])
-async def test_db(error, spawn_client, test_db_name, mock_setup):
+async def test_db(error, mocker, spawn_client, test_db_name, mock_setup):
     client = await spawn_client(setup_mode=True)
 
     update = {
@@ -191,27 +189,6 @@ async def test_db(error, spawn_client, test_db_name, mock_setup):
         assert client.app["setup"] == {
             **mock_setup,
             **update
-
-        mocker.patch("virtool.users.hash_password", return_value="hashed")
-
-        resp = await client.post_form("/setup/user", update)
-
-        assert resp.status == 200
-
-        mock_setup.update({
-            "first_user_id": "baz",
-            "first_user_password": "hashed"
-        })
-
-        assert client.app["setup"] == mock_setup
-
-    async def test_no_match(self, spawn_client, mock_setup):
-        client = await spawn_client(setup_mode=True)
-
-        update = {
-            "user_id": "baz",
-            "password": "foobar",
-            "password_confirm": "hello_world"
         }
 
 
@@ -224,7 +201,9 @@ async def test_user(mocker, spawn_client, mock_setup):
         "password_confirm": "foobar"
     }
 
-    mocker.patch("virtool.user.hash_password", return_value="hashed")
+    assert client.app["setup"] == mock_setup
+
+    mocker.patch("virtool.users.hash_password", return_value="hashed")
 
     resp = await client.post_form("/setup/user", update)
 
@@ -290,6 +269,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     client = await spawn_client(setup_mode=True)
 
     m_reload = mocker.patch("virtool.utils.reload", new=make_mocked_coro())
+
     connection = motor.motor_asyncio.AsyncIOMotorClient(
         io_loop=client.app.loop,
         host="localhost",
