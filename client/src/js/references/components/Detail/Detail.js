@@ -2,10 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
-import { find } from "lodash-es";
+import { find, get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, ProgressBar } from "../../../base";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, ProgressBar, NotFound } from "../../../base";
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import { findIndexes } from "../../../indexes/actions";
@@ -82,6 +82,10 @@ class ReferenceDetail extends React.Component {
     }
 
     render = () => {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
             return <LoadingPlaceholder />;
@@ -213,6 +217,7 @@ class ReferenceDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
     isAdmin: state.account.administrator,
