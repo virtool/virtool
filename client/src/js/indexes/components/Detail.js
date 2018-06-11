@@ -3,11 +3,11 @@ import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
-
+import { get } from "lodash-es";
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
 import { getIndex, getIndexHistory } from "../actions";
-import { LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
+import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 
 class IndexDetail extends React.Component {
 
@@ -17,6 +17,10 @@ class IndexDetail extends React.Component {
     }
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
@@ -74,6 +78,7 @@ class IndexDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_INDEX_ERROR", null),
     detail: state.indexes.detail
 });
 
