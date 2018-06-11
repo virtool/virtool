@@ -685,11 +685,24 @@ async def create_sequence(req):
 
 
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
-    "host": {"type": "string"},
-    "definition": {"type": "string"},
-    "segment": {"type": "string"},
-    "sequence": {"type": "string"},
-    "schema": {"type": "list"}
+    "accession": {
+        "type": "string",
+        "empty": False
+    },
+    "host": {
+        "type": "string"
+    },
+    "definition": {
+        "type": "string",
+        "empty": False
+    },
+    "segment": {
+        "type": "string"
+    },
+    "sequence": {
+        "type": "string",
+        "empty": False
+    }
 })
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
