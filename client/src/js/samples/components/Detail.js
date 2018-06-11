@@ -1,5 +1,5 @@
 import React from "react";
-import { includes } from "lodash-es";
+import { includes, get } from "lodash-es";
 import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -12,7 +12,7 @@ import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 import { getSample, showRemoveSample, hideSampleModal } from "../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
@@ -26,6 +26,10 @@ class SampleDetail extends React.Component {
     }
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder margin="130px" />;
@@ -126,6 +130,7 @@ class SampleDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_SAMPLE_ERROR", null),
     detail: state.samples.detail,
     canModify: getCanModify(state)
 });
