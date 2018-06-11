@@ -1,4 +1,5 @@
 import asyncio
+import json.decoder
 import os
 
 import pymongo
@@ -745,7 +746,21 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
 
-    import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
+    try:
+        import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
+    except json.decoder.JSONDecodeError as err:
+        return await virtool.db.processes.update(db, process_id, errors=[{
+            "id": "json_error",
+            "message": str(err).split("JSONDecodeError: ")[1]
+        }])
+    except OSError as err:
+        if "Not a gzipped file" in str(err):
+            return await virtool.db.processes.update(db, process_id, errors=[{
+                "id": "not_gzipped",
+                "message": "Not a gzipped file"
+            }])
+        else:
+            raise
 
     try:
         data_type = import_data["data_type"]
