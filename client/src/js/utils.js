@@ -238,7 +238,7 @@ export const checkUserRefPermission = (props, permission) => {
 };
 
 export const getUpdatedScrollListState = (nextProps, prevState) => {
-    if (nextProps.page === 1) {
+    if (prevState.masterList === null || nextProps.page === 1) {
         return {
             masterList: nextProps.documents,
             list: nextProps.documents,
@@ -258,6 +258,5 @@ export const getUpdatedScrollListState = (nextProps, prevState) => {
             list: nextProps.documents
         };
     }
-
     return null;
 };

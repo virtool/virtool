@@ -1,8 +1,8 @@
 import React from "react";
 import Gauge from "react-svg-gauge";
-import { map, mean } from "lodash-es";
+import { map, mean, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Flex, FlexItem, LoadingPlaceholder } from "../../base";
+import { Flex, FlexItem, LoadingPlaceholder, NotFound } from "../../base";
 
 import { getResources } from "../actions";
 
@@ -15,11 +15,30 @@ class JobsResources extends React.Component {
         this.timer = window.setInterval(this.props.onGet, 800);
     }
 
+    componentDidUpdate (prevProps) {
+        if (!prevProps.error && this.props.error) {
+            window.clearInterval(this.timer);
+        }
+
+        if (prevProps.error && !this.props.error) {
+            window.setInterval(this.props.onGet, 800);
+        }
+    }
+
     componentWillUnmount () {
         window.clearInterval(this.timer);
     }
 
     render () {
+        if (this.props.error) {
+            return (
+                <NotFound
+                    status={this.props.error.status}
+                    message={this.props.error.message}
+                />
+            );
+        }
+
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
@@ -92,6 +111,7 @@ class JobsResources extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_RESOURCES_ERROR", null),
     resources: state.jobs.resources
 });
 

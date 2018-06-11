@@ -3,10 +3,10 @@ import Moment from "moment";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 import { push } from "react-router-redux";
-
+import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar, ViewHeader } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar, ViewHeader, NotFound } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
 
@@ -48,6 +48,10 @@ class JobDetail extends React.Component {
     }
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
@@ -113,6 +117,7 @@ class JobDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_JOB_ERROR", null),
     detail: state.jobs.detail
 });
 
