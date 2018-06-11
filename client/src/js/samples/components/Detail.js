@@ -58,6 +58,7 @@ class SampleDetail extends React.Component {
                             bsStyle="warning"
                             name="pencil-alt"
                             tip="Edit Sample"
+                            tipPlacement="left"
                             onClick={this.props.showEdit}
                         />
                     </small>
@@ -70,6 +71,7 @@ class SampleDetail extends React.Component {
                         bsStyle="danger"
                         name="trash"
                         tip="Remove Sample"
+                        tipPlacement="left"
                         onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />
                 </small>
