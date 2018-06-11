@@ -64,14 +64,15 @@ class ReferenceDetail extends React.Component {
         this.props.onFindIndexes(this.props.match.params.refId, 1);
     }
 
-    componentDidUpdate () {
-        if (this.props.detail === null) {
+    componentDidUpdate (prevProps) {
+        if (prevProps.detail === null) {
             return;
         }
 
-        const progress = getProgress(this.props.detail, this.props.processes);
+        const oldProgress = getProgress(prevProps.detail, prevProps.processes);
+        const newProgress = getProgress(this.props.detail, this.props.processes);
 
-        if (progress === 100) {
+        if (oldProgress !== 100 && newProgress === 100) {
             this.props.onGetReference(this.props.match.params.refId);
         }
     }
