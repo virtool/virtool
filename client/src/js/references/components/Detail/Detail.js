@@ -5,7 +5,16 @@ import { push } from "react-router-redux";
 import { find, get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, ProgressBar, NotFound } from "../../../base";
+import {
+    LoadingPlaceholder,
+    Icon,
+    ViewHeader,
+    Flex,
+    FlexItem,
+    RelativeTime,
+    ProgressBar,
+    NotFound
+} from "../../../base";
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import { findIndexes } from "../../../indexes/actions";

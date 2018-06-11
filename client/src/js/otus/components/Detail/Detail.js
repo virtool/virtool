@@ -37,7 +37,7 @@ class OTUDetail extends React.Component {
     }
 
     render = () => {
-        
+
         if (this.props.error) {
             return <NotFound />;
         }
