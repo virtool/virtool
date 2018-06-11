@@ -1,13 +1,13 @@
 import React from "react";
 import Numeral from "numeral";
-import { map } from "lodash-es";
+import { map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader, NotFound } from "../../base";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
@@ -33,6 +33,10 @@ class SubtractionDetail extends React.Component {
     };
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
@@ -145,6 +149,7 @@ class SubtractionDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_SUBTRACTION_ERROR", null),
     canModify: state.account.permissions.modify_subtraction,
     detail: state.subtraction.detail
 });
