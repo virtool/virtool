@@ -1,9 +1,9 @@
 import React from "react";
-import { map, sortBy } from "lodash-es";
+import { map, sortBy, get } from "lodash-es";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { IDRow, ListGroupItem, LoadingPlaceholder, ViewHeader } from "../../base";
+import { IDRow, ListGroupItem, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
 import { getHmm } from "../actions";
 
 const HMMTaxonomy = ({ counts }) => {
@@ -30,6 +30,10 @@ class HMMDetail extends React.Component {
     }
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder margin="130px" />;
@@ -133,6 +137,7 @@ class HMMDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_HMM_ERROR", null),
     detail: state.hmms.detail
 });
 
