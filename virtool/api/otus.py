@@ -176,9 +176,9 @@ async def edit(req):
         }
     })
 
-    new = await virtool.db.otus.join(db, otu_id, document)
+    await virtool.db.otus.update_sequence_segments(db, old, document)
 
-    await virtool.db.otus.update_sequence_segments(db, old, new)
+    new = await virtool.db.otus.join(db, otu_id, document)
 
     issues = await virtool.db.otus.update_verification(db, new)
 
