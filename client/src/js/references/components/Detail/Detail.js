@@ -2,9 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
+import { find } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime } from "../../../base";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, ProgressBar } from "../../../base";
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import { findIndexes } from "../../../indexes/actions";
@@ -43,12 +44,36 @@ const ReferenceSettings = ({ isRemote }) => (
     </div>
 );
 
+const getProgress = (detail, processes) => {
+    let progress = 0;
+
+    if (detail.process.id && processes.length) {
+        const process = find(processes, ["id", detail.process.id]);
+        progress = process.progress;
+        progress *= 100;
+    }
+
+    return progress;
+};
+
 class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
         this.props.onOTUFirstPage(this.props.match.params.refId, 1);
         this.props.onFindIndexes(this.props.match.params.refId, 1);
+    }
+
+    componentDidUpdate () {
+        if (this.props.detail === null) {
+            return;
+        }
+
+        const progress = getProgress(this.props.detail, this.props.processes);
+
+        if (progress === 100) {
+            this.props.onGetReference(this.props.match.params.refId);
+        }
     }
 
     handleSelect = (key) => {
@@ -124,22 +149,38 @@ class ReferenceDetail extends React.Component {
             );
         }
 
+        const referenceHeader = (
+            <ViewHeader title={`${name} - References`}>
+                <Flex alignItems="flex-end">
+                    <FlexItem grow={1}>
+                        <Flex>
+                            <strong>{name}</strong>
+                        </Flex>
+                    </FlexItem>
+                    {headerIcon}
+                    {exportButton}
+                </Flex>
+                <div className="text-muted" style={{fontSize: "12px"}}>
+                    Created <RelativeTime time={created_at} /> by {user.id}
+                </div>
+            </ViewHeader>
+        );
+
+        const progress = getProgress(this.props.detail, this.props.processes);
+
+        if (progress !== 100) {
+            return (
+                <div>
+                    {referenceHeader}
+                    <ProgressBar bsStyle="success" now={progress} />
+                    <ReferenceManage match={this.props.match} />
+                </div>
+            );
+        }
+
         return (
             <div className="detail-container">
-                <ViewHeader title={`${name} - References`}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <Flex>
-                                <strong>{name}</strong>
-                            </Flex>
-                        </FlexItem>
-                        {headerIcon}
-                        {exportButton}
-                    </Flex>
-                    <div className="text-muted" style={{fontSize: "12px"}}>
-                        Created <RelativeTime time={created_at} /> by {user.id}
-                    </div>
-                </ViewHeader>
+                {referenceHeader}
 
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/refs/${id}/manage`}>
@@ -176,7 +217,8 @@ const mapStateToProps = state => ({
     isAdmin: state.account.administrator,
     userId: state.account.id,
     userGroups: state.account.groups,
-    refDetail: state.references.detail
+    refDetail: state.references.detail,
+    processes: state.processes.documents
 });
 
 const mapDispatchToProps = dispatch => ({

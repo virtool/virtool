@@ -103,6 +103,10 @@ const Remote = ({ updates, release, remotesFrom }) => {
 
     const installed = ready.pop();
 
+    if (!installed) {
+        return null;
+    }
+
     return (
         <Panel>
             <Panel.Heading>
