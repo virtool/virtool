@@ -119,6 +119,7 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
     assert seen_sequence_ids == {"KX269872"}
 
 
+@pytest.mark.parametrize("strict", [True, False])
 def test_detect_duplicates(strict, test_merged_otu):
     otu_list = [test_merged_otu, test_merged_otu]
 
@@ -174,12 +175,9 @@ def test_detect_duplicates(strict, test_merged_otu):
         ]
 
 
-@pytest.mark.parametrize("require_id", [True, False])
 @pytest.mark.parametrize("require_meta", [True, False])
-def test_get_import_schema(mocker, require_id, require_meta):
-    m = mocker.patch("virtool.references.get_otu_schema", return_value="otu_schema")
-
-    assert virtool.references.get_import_schema(require_id, require_meta) == {
+def test_get_import_schema(require_meta):
+    assert virtool.references.get_import_schema(require_meta) == {
         "data_type": {
             "type": "string",
             "required": require_meta
@@ -190,21 +188,13 @@ def test_get_import_schema(mocker, require_id, require_meta):
         },
         "data": {
             "type": "list",
-            "required": True,
-            "schema": {
-                "type": "dict",
-                "schema": "otu_schema"
-            }
+            "required": True
         }
     }
 
-    m.assert_called_with(require_id)
-
 
 @pytest.mark.parametrize("require_id", [True, False])
-def test_get_isolate_schema(mocker, require_id):
-    m = mocker.patch("virtool.references.get_sequence_schema", return_value="sequence_schema")
-
+def test_get_isolate_schema(require_id):
     assert virtool.references.get_isolate_schema(require_id) == {
         "id": {
             "type": "string",
@@ -224,20 +214,13 @@ def test_get_isolate_schema(mocker, require_id):
         },
         "sequences": {
             "type": "list",
-            "schema": {
-                "type": "dict",
-                "schema": "sequence_schema"
-            }
+            "required": True
         }
     }
 
-    m.assert_called_with(require_id)
-
 
 @pytest.mark.parametrize("require_id", [True, False])
-def test_get_otu_schema(mocker, require_id):
-    m = mocker.patch("virtool.references.get_isolate_schema", return_value="isolate_schema")
-
+def test_get_otu_schema(require_id):
     assert virtool.references.get_otu_schema(require_id) == {
         "_id": {
             "type": "string",
@@ -252,12 +235,9 @@ def test_get_otu_schema(mocker, require_id):
         },
         "isolates": {
             "type": "list",
-            "required": True,
-            "schema": "isolate_schema"
+            "required": True
         }
     }
-
-    m.assert_called_with(require_id)
 
 
 def test_get_owner_user():

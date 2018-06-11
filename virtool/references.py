@@ -13,28 +13,40 @@ RIGHTS = [
 
 
 def check_import_data(import_data, strict=True, verify=True):
+    errors = detect_duplicates(import_data["data"])
 
-    errors = validate_import_data(import_data, strict)
+    v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
 
-    errors += detect_duplicates(import_data["data"])
+    v.validate(import_data)
 
-    verification = dict()
-
-    if verify:
-        for otu in import_data["data"]:
-            result = virtool.otus.verify(otu)
-
-            if result:
-                verification[otu["_id"]] = result
-
-    if verification:
+    if v.errors:
         errors.append({
-            "id": "otu verification",
-            "message": "Some OTUs failed verification",
-            "issues": verification
+            "id": "file",
+            "issues": v.errors
         })
 
-    return errors or None
+    otus = dict()
+
+    for otu in import_data["data"]:
+        verification = None
+
+        if verify:
+            verification = virtool.otus.verify(otu)
+
+        validation = validate_otu(otu, strict)
+
+        issues = dict()
+
+        if verification:
+            issues["verification"] = verification
+
+        if validation:
+            issues["validation"] = validation
+
+        if issues:
+            otus[otu["_id"]] = issues
+
+    return errors
 
 
 def detect_duplicate_abbreviation(joined, duplicates, seen):
@@ -109,8 +121,8 @@ def detect_duplicates(otus, strict=True):
     for joined in otus:
         detect_duplicate_abbreviation(
             joined,
-            seen_abbreviations,
-            duplicate_abbreviations
+            duplicate_abbreviations,
+            seen_abbreviations
         )
 
         detect_duplicate_name(
@@ -177,7 +189,7 @@ def detect_duplicates(otus, strict=True):
     return errors
 
 
-def get_import_schema(require_id=True, require_meta=True):
+def get_import_schema(require_meta=True):
     return {
         "data_type": {
             "type": "string",
@@ -189,42 +201,32 @@ def get_import_schema(require_id=True, require_meta=True):
         },
         "data": {
             "type": "list",
-            "required": True,
-            "schema": {
-                "type": "dict",
-                "schema": get_otu_schema(require_id)
-            }
+            "required": True
         }
     }
 
 
 def get_isolate_schema(require_id):
     return {
-        "type": "dict",
-        "schema": {
-            "id": {
-                "type": "string",
-                "required": require_id
-            },
-            "source_type": {
-                "type": "string",
-                "required": True
-            },
-            "source_name": {
-                "type": "string",
-                "required": True
-            },
-            "default": {
-                "type": "boolean",
-                "required": True
-            },
-            "sequences": {
-                "type": "list",
-                "schema": {
-                    "type": "dict",
-                    "schema": get_sequence_schema(require_id)
-                }
-            }
+        "id": {
+            "type": "string",
+            "required": require_id
+        },
+        "source_type": {
+            "type": "string",
+            "required": True
+        },
+        "source_name": {
+            "type": "string",
+            "required": True
+        },
+        "default": {
+            "type": "boolean",
+            "required": True
+        },
+        "sequences": {
+            "type": "list",
+            "required": True
         }
     }
 
@@ -244,8 +246,7 @@ def get_otu_schema(require_id):
         },
         "isolates": {
             "type": "list",
-            "required": True,
-            "schema": get_isolate_schema(require_id)
+            "required": True
         }
     }
 
@@ -297,17 +298,32 @@ def load_reference_file(path):
             return json.load(gzip_file)
 
 
-def validate_import_data(import_data, strict):
+def validate_otu(otu, strict):
+    report = {
+        "otu": None,
+        "isolates": dict(),
+        "sequences": dict()
+    }
 
-    schema = get_import_schema(require_id=strict, require_meta=strict)
+    otu_validator = Validator(get_otu_schema(strict), allow_unknown=True)
 
-    v = Validator(schema, allow_unknown=True)
+    if not otu_validator.validate(otu):
+        report["otu"] = otu_validator.errors
 
-    if not v.validate(import_data):
-        return [{
-            "id": "missing fields",
-            "message": "Some fields are missing",
-            "missing": v.errors
-        }]
+    report["isolates"] = dict()
 
-    return list()
+    if "isolates" in otu:
+        isolate_validator = Validator(get_isolate_schema(strict), allow_unknown=True)
+        sequence_validator = Validator(get_sequence_schema(strict), allow_unknown=True)
+
+        for isolate in otu["isolates"]:
+            if not isolate_validator.validate(isolate):
+                report["isolates"][isolate["id"]] = isolate_validator.errors
+
+            if "sequences" in isolate:
+                for sequence in isolate["sequences"]:
+                    if not sequence_validator.validate(sequence):
+                        report["sequences"][sequence["_id"]] = isolate_validator.errors
+
+    if any(value for value in report.values()):
+        return report
