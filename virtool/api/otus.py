@@ -178,6 +178,8 @@ async def edit(req):
 
     new = await virtool.db.otus.join(db, otu_id, document)
 
+    await virtool.db.otus.update_sequence_segments(db, old, new)
+
     issues = await virtool.db.otus.update_verification(db, new)
 
     description = virtool.history.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
