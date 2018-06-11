@@ -148,15 +148,13 @@ class Schema extends React.Component {
                         block
                     >
                         Add Segment
-                    </Button>) : null}
+                    </Button>
+                ) : null}
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
                         {(provided) => (
-                            <div
-                                ref={provided.innerRef}
-                                style={{padding: 8, overflow: "auto"}}
-                            >
+                            <div ref={provided.innerRef}>
                                 {segments}
                                 {provided.placeholder}
                             </div>
