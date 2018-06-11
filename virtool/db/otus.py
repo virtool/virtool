@@ -312,3 +312,22 @@ async def update_last_indexed_version(db, id_list, version):
     })
 
     return result
+
+
+async def update_sequence_segments(db, old, new):
+    if old is None or new is None:
+        return
+
+    old_names = {s["name"] for s in old["schema"]}
+    new_names = {s["name"] for s in new["schema"]}
+
+    if old_names == new_names:
+        return
+
+    to_unset = list(old_names - new_names)
+
+    await db.sequences.update_many({"otu_id": old["_id"], "segment": {"$in": to_unset}}, {
+        "$unset": {
+            "segment": ""
+        }
+    })
