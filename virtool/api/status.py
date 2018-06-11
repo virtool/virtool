@@ -41,8 +41,7 @@ async def upgrade_hmm(req):
 
     process = await virtool.db.processes.register(
         db,
-        "install_hmms",
-        file_size=document["latest_release"]["size"]
+        "install_hmms"
     )
 
     document = await db.status.find_one_and_update({"_id": "hmm"}, {

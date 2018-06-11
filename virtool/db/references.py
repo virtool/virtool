@@ -1,4 +1,5 @@
 import asyncio
+import json.decoder
 import os
 
 import pymongo
@@ -81,8 +82,8 @@ async def add_group_or_user(db, ref_id, field, data):
 
 async def check_for_remote_update(app, ref_id):
     """
-    Check the the GitHub repository identified by the passed `slug` for a release newer than the provided `version`. If
-    a newer release is found, update the reference identified by the passed `ref_id` and return the release.
+    Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
+    reference identified by the passed `ref_id` and return the release.
 
     :param app: the application object
     :type app: :class:`aiohttp.Application`
@@ -90,11 +91,13 @@ async def check_for_remote_update(app, ref_id):
     :param ref_id: the id of the reference to update
     :type ref_id: str
 
-    :return: the latest release if newer than the passed version
+    :return: the latest release
     :rtype: Coroutine[dict]
 
     """
     db = app["db"]
+
+    last_checked = virtool.utils.timestamp()
 
     document = await db.references.find_one(ref_id, [
         "remotes_from",
@@ -117,7 +120,7 @@ async def check_for_remote_update(app, ref_id):
     except virtool.errors.GitHubError as err:
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
-                "remotes_from.last_checked": virtool.utils.timestamp(),
+                "remotes_from.last_checked": last_checked,
                 "remotes_from.errors": [str(err)]
             }
         })
@@ -130,8 +133,15 @@ async def check_for_remote_update(app, ref_id):
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
                 "release": release,
-                "remotes_from.last_checked": virtool.utils.timestamp(),
-                "remotes_from.errors": None
+                "remotes_from.errors": None,
+                "remotes_from.last_checked": last_checked
+            }
+        })
+
+    else:
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "remotes_from.last_checked": last_checked
             }
         })
 
@@ -737,7 +747,21 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
     db = app["db"]
 
-    import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
+    try:
+        import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
+    except json.decoder.JSONDecodeError as err:
+        return await virtool.db.processes.update(db, process_id, errors=[{
+            "id": "json_error",
+            "message": str(err).split("JSONDecodeError: ")[1]
+        }])
+    except OSError as err:
+        if "Not a gzipped file" in str(err):
+            return await virtool.db.processes.update(db, process_id, errors=[{
+                "id": "not_gzipped",
+                "message": "Not a gzipped file"
+            }])
+        else:
+            raise
 
     try:
         data_type = import_data["data_type"]
@@ -758,22 +782,18 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
 
-    otus = import_data["data"]
+    errors = virtool.references.check_import_data(
+        import_data,
+        strict=False,
+        verify=True
+    )
 
-    duplicates = virtool.references.detect_duplicates(otus)
-
-    if duplicates:
-        errors = [
-            {
-                "id": "duplicates",
-                "message": "Duplicates found.",
-                "duplicates": duplicates
-            }
-        ]
-
-        await virtool.db.processes.update(db, process_id, errors=errors)
+    if errors:
+        return await virtool.db.processes.update(db, process_id, errors=errors)
 
     await virtool.db.processes.update(db, process_id, 0.2, "import_otus")
+
+    otus = import_data["data"]
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -824,6 +844,15 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         process_id,
         progress_tracker.add
     )
+
+    errors = virtool.references.check_import_data(
+        import_data,
+        strict=True,
+        verify=True
+    )
+
+    if errors:
+        return await virtool.db.processes.update(db, process_id, errors=errors)
 
     await virtool.db.processes.update(db, process_id, progress=0.4, step="import")
 

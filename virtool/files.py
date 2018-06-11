@@ -83,7 +83,11 @@ class Manager:
 
                 for filename in dir_list:
                     if filename not in db_list:
-                        await self.loop.run_in_executor(self.executor, os.remove, os.path.join(self.files_path, filename))
+                        await self.loop.run_in_executor(
+                            self.executor,
+                            os.remove,
+                            os.path.join(self.files_path, filename)
+                        )
 
                 db_created_list = await self.db.files.find({"created": True}).distinct("_id")
 

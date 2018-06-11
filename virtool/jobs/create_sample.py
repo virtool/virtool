@@ -88,15 +88,15 @@ class CreateSample(virtool.jobs.job.Job):
         input_paths = [os.path.join(self.settings.get("data_path"), "files", file_id) for file_id in self.files]
 
         command = [
-            "skewer",
-            "-m", "pe" if self.paired else "any",
-            "-l", "50",
-            "-q", "20",
-            "-Q", "25",
-            "-t", str(self.settings.get("create_sample_proc")),
-            "-o", os.path.join(self.sample_path, "reads"),
-            "--quiet",
-        ] + input_paths
+                      "skewer",
+                      "-m", "pe" if self.paired else "any",
+                      "-l", "50",
+                      "-q", "20",
+                      "-Q", "25",
+                      "-t", str(self.settings.get("create_sample_proc")),
+                      "-o", os.path.join(self.sample_path, "reads"),
+                      "--quiet",
+                  ] + input_paths
 
         # Prevents an error from skewer when called inside a subprocess.
         env = dict(os.environ, LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu")
@@ -260,7 +260,6 @@ class CreateSample(virtool.jobs.job.Job):
                 "imported": False
             }
         })
-
 
     @virtool.jobs.job.stage_method
     async def clean_watch(self):

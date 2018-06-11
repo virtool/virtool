@@ -77,7 +77,7 @@ def mock_blast_server(monkeypatch, loop, test_server):
 
     server = loop.run_until_complete(test_server(app))
 
-    monkeypatch.setattr("virtool.bio.BLAST_CGI_URL", "http://{}:{}/blast".format(server.host, server.port))
+    monkeypatch.setattr("virtool.bio.BLAST_URL", "http://{}:{}/blast".format(server.host, server.port))
 
     return server
 

@@ -1,119 +1,272 @@
 import pytest
 
-import virtool.db.references
 import virtool.references
 
 
-class TestDuplicates:
+@pytest.mark.parametrize("empty", [True, False])
+@pytest.mark.parametrize("in_seen", [True, False])
+def test_detect_duplicate_abbreviation(in_seen, empty, test_otu):
+    seen = set()
+    duplicates = set()
 
-    def test_detect_duplicates(self, test_otu_list):
-        """
-        Test that a valid virus list returns no duplicates or errors.
+    if in_seen:
+        seen.add("PVF")
 
-        """
-        assert virtool.references.detect_duplicates(test_otu_list) is None
+    if empty:
+        test_otu["abbreviation"] = ""
 
-    def test_empty_abbreviations(self, test_otu_list):
-        """
-        Ensure that abbreviations with value "" are not counted as duplicates.
+    virtool.references.detect_duplicate_abbreviation(test_otu, duplicates, seen)
 
-        """
-        test_otu_list[0]["abbreviation"] = ""
-        test_otu_list[1]["abbreviation"] = ""
+    if in_seen or not empty:
+        assert seen == {"PVF"}
+    else:
+        assert seen == set()
 
-        result = virtool.references.detect_duplicates(test_otu_list)
+    if in_seen and not empty:
+        assert duplicates == {"PVF"}
+    else:
+        assert duplicates == set()
 
-        assert result is None
 
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_otu_ids(self, multiple, test_otu_list):
-        test_otu_list[0]["_id"] = "067jz0t3"
+@pytest.mark.parametrize("seen", [False, True])
+def test_detect_duplicate_ids(seen, test_otu):
+    duplicate_ids = set()
+    seen_ids = set()
 
-        if multiple:
-            test_otu_list[3]["_id"] = "067jz213"
+    if seen:
+        seen_ids.add("6116cba1")
 
-        duplicates = virtool.references.detect_duplicates(test_otu_list)
+    virtool.references.detect_duplicate_ids(test_otu, duplicate_ids, seen_ids)
 
-        assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
+    assert duplicate_ids == ({"6116cba1"} if seen else set())
+    assert seen_ids == {"6116cba1"}
 
-        expected = {"067jz0t3"}
 
-        if multiple:
-            expected.add("067jz213")
+@pytest.mark.parametrize("has_dups", [True, False])
+def test_detect_duplicate_isolate_ids(has_dups, test_otu):
+    extra_isolate = dict(test_otu["isolates"][0])
 
-        assert set(duplicates["_id"]) == expected
+    if not has_dups:
+        extra_isolate["id"] = "foobar"
 
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_abbreviations(self, multiple, test_otu_list):
-        """
-        Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
-        are detected.
+    test_otu["isolates"].append(extra_isolate)
 
-        """
-        test_otu_list[0]["abbreviation"] = "TST"
+    duplicate_isolate_ids = dict()
 
-        if multiple:
-            test_otu_list[3]["abbreviation"] = "EXV"
+    virtool.references.detect_duplicate_isolate_ids(test_otu, duplicate_isolate_ids)
 
-        duplicates = virtool.references.detect_duplicates(test_otu_list)
+    if has_dups:
+        assert duplicate_isolate_ids == {
+            test_otu["_id"]: {
+                "name": "Prunus virus F",
+                "duplicates": ["cab8b360"]
+            }
+        }
+    else:
+        assert duplicate_isolate_ids == dict()
 
-        for key in ["isolate_id", "name", "_id", "sequence_id"]:
-            assert duplicates[key] == []
 
-        expected = {"TST"}
+@pytest.mark.parametrize("seen", [True, False])
+@pytest.mark.parametrize("transform", [None, "lower", "upper"])
+def test_detect_duplicate_name(seen, transform, test_otu):
+    seen_names = set()
 
-        if multiple:
-            expected.add("EXV")
+    if seen:
+        seen_names.add("prunus virus f")
 
-        assert set(duplicates["abbreviation"]) == expected
+    if transform:
+        transform_func = getattr(test_otu["name"], transform)
+        transform_func()
 
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_names(self, multiple, test_otu_list):
-        """
-        Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
-        detected.
+    duplicates = set()
 
-        """
-        # Add a duplicate virus name to the list.
-        test_otu_list[1]["name"] = "Prunus virus F"
+    virtool.references.detect_duplicate_name(test_otu, duplicates, seen_names)
 
-        if multiple:
-            test_otu_list[3]["name"] = "Example virus"
+    if seen:
+        assert duplicates == {test_otu["name"]}
+    else:
+        assert duplicates == set()
 
-        duplicates = virtool.references.detect_duplicates(test_otu_list)
+    assert seen_names == {"prunus virus f"}
 
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
 
-        expected = {"prunus virus f"}
+@pytest.mark.parametrize("intra", [True, False])
+@pytest.mark.parametrize("seen", [True, False])
+def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
+    seen_sequence_ids = set()
 
-        if multiple:
-            expected.add("example virus")
-
-        assert set(duplicates["name"]) == expected
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_sequence_ids(self, multiple, test_otu_list):
-        """
-        Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
-        multiple occurrences are detected.
-
-        """
-        test_otu_list[0]["isolates"][0]["sequences"].append(
-            dict(test_otu_list[0]["isolates"][0]["sequences"][0])
+    if intra:
+        test_merged_otu["isolates"][0]["sequences"].append(
+            test_merged_otu["isolates"][0]["sequences"][0]
         )
 
-        if multiple:
-            test_otu_list[1]["isolates"][0]["sequences"].append(
-                dict(test_otu_list[1]["isolates"][0]["sequences"][0])
-            )
+    if seen:
+        seen_sequence_ids.add("KX269872")
 
-        duplicates = virtool.references.detect_duplicates(test_otu_list)
+    duplicate_sequence_ids = set()
 
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
+    virtool.references.detect_duplicate_sequence_ids(
+        test_merged_otu,
+        duplicate_sequence_ids,
+        seen_sequence_ids
+    )
 
-        expected = {test_otu_list[0]["isolates"][0]["sequences"][0]["_id"]}
+    if intra or seen:
+        assert duplicate_sequence_ids == {"KX269872"}
+    else:
+        assert duplicate_sequence_ids == set()
 
-        if multiple:
-            expected.add(test_otu_list[1]["isolates"][0]["sequences"][0]["_id"])
+    assert seen_sequence_ids == {"KX269872"}
 
-        assert set(duplicates["sequence_id"]) == expected
+
+@pytest.mark.parametrize("strict", [True, False])
+def test_detect_duplicates(strict, test_merged_otu):
+    otu_list = [test_merged_otu, test_merged_otu]
+
+    otu_list[0]["isolates"].append(otu_list[0]["isolates"][0])
+
+    result = virtool.references.detect_duplicates(otu_list, strict=strict)
+
+    if strict:
+        assert result == [
+            {
+                'duplicates': ['PVF'],
+                'id': 'duplicate_abbreviations',
+                'message': 'Duplicate OTU abbreviations found'
+            },
+            {
+                'duplicates': ['6116cba1'],
+                'id': 'duplicate_ids',
+                'message': 'Duplicate OTU ids found'
+            },
+            {
+                'duplicates': {
+                    '6116cba1': {
+                        'duplicates': ['cab8b360'],
+                        'name': 'Prunus virus F'
+                    }
+                },
+                'id': 'duplicate_isolate_ids',
+                'message': 'Duplicate isolate ids found in some OTUs'
+            },
+            {
+                'duplicates': ['Prunus virus F'],
+                'id': 'duplicate_names',
+                'message': 'Duplicate OTU names found'
+            },
+            {
+                'duplicates': {'KX269872'},
+                'id': 'duplicate_sequence_ids',
+                'message': 'Duplicate sequence ids found'
+            }
+        ]
+    else:
+        assert result == [
+            {
+                "duplicates": ["PVF"],
+                "id": "duplicate_abbreviations",
+                "message": "Duplicate OTU abbreviations found"
+            },
+            {
+                "duplicates": ["Prunus virus F"],
+                "id": "duplicate_names",
+                "message": "Duplicate OTU names found"
+            }
+        ]
+
+
+@pytest.mark.parametrize("require_meta", [True, False])
+def test_get_import_schema(require_meta):
+    assert virtool.references.get_import_schema(require_meta) == {
+        "data_type": {
+            "type": "string",
+            "required": require_meta
+        },
+        "organism": {
+            "type": "string",
+            "required": require_meta
+        },
+        "data": {
+            "type": "list",
+            "required": True
+        }
+    }
+
+
+@pytest.mark.parametrize("require_id", [True, False])
+def test_get_isolate_schema(require_id):
+    assert virtool.references.get_isolate_schema(require_id) == {
+        "id": {
+            "type": "string",
+            "required": require_id
+        },
+        "source_type": {
+            "type": "string",
+            "required": True
+        },
+        "source_name": {
+            "type": "string",
+            "required": True
+        },
+        "default": {
+            "type": "boolean",
+            "required": True
+        },
+        "sequences": {
+            "type": "list",
+            "required": True
+        }
+    }
+
+
+@pytest.mark.parametrize("require_id", [True, False])
+def test_get_otu_schema(require_id):
+    assert virtool.references.get_otu_schema(require_id) == {
+        "_id": {
+            "type": "string",
+            "required": require_id
+        },
+        "abbreviation": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string",
+            "required": True
+        },
+        "isolates": {
+            "type": "list",
+            "required": True
+        }
+    }
+
+
+def test_get_owner_user():
+    assert virtool.references.get_owner_user("fred") == {
+        "id": "fred",
+        "build": True,
+        "modify": True,
+        "modify_otu": True,
+        "remove": True
+    }
+
+
+@pytest.mark.parametrize("require_id", [True, False])
+def test_get_sequence_schema(require_id):
+    assert virtool.references.get_sequence_schema(require_id) == {
+        "_id": {
+            "type": "string",
+            "required": require_id
+        },
+        "accession": {
+            "type": "string",
+            "required": True
+        },
+        "definition": {
+            "type": "string",
+            "required": True
+        },
+        "sequence": {
+            "type": "string",
+            "required": True
+        }
+    }

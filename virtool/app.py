@@ -122,7 +122,7 @@ async def init_db(app):
 
     """
     settings = app["settings"]
-
+    
     app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
     db_host = settings.get("db_host", "localhost")

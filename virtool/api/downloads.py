@@ -117,7 +117,6 @@ async def download_reference(req):
     )
 
 
-
 @routes.get("/download/sequences/{sequence_id}")
 async def download_sequence(req):
     """

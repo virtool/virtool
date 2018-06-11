@@ -306,7 +306,7 @@ async def create(req):
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
     remote_from = data.get("remote_from", None)
-    release_id = data.get("release_id", None)
+    release_id = data.get("release_id", None) or 7917374
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
@@ -368,8 +368,6 @@ async def create(req):
         ))
 
     elif remote_from:
-        release_id = 7917374
-
         release = await virtool.github.get_release(
             settings,
             req.app["client"],
@@ -465,7 +463,7 @@ async def edit(req):
     if not await db.references.count({"_id": ref_id}):
         return not_found()
 
-    update = data
+    ref_update = data
 
     internal_control_id = data.get("internal_control", None)
 
@@ -473,12 +471,12 @@ async def edit(req):
         if not await db.otus.find_one({"_id": internal_control_id, "reference.id": ref_id}):
             return not_found("Internal control not found")
 
-        update["internal_control"] = {
-            "id": update["internal_control"]
+        ref_update["internal_control"] = {
+            "id": ref_update["internal_control"]
         }
 
     document = await db.references.find_one_and_update({"_id": ref_id}, {
-        "$set": update
+        "$set": ref_update
     }, projection=virtool.db.references.PROJECTION)
 
     document = virtool.utils.base_processor(document)

@@ -16,22 +16,18 @@ async def get(req):
                 "url": "/api/account",
                 "doc": "https://docs.virtool.ca/web-api/account.html"
             },
-
             "jobs": {
                 "url": "/api/jobs",
                 "doc": "https://docs.virtool.ca/web-api/jobs.html"
             },
-
             "samples": {
                 "url": "/api/samples",
                 "doc": "https://docs.virtool.ca/web-api/samples.html"
             },
-
             "analyses": {
                 "url": "/api/analyses",
                 "doc": "https://docs.virtool.ca/web-api/analyses.html"
             },
-
             "otus": {
                 "url": "/api/otus",
                 "doc": "https://docs.virtool.ca/web-api/otus.html"

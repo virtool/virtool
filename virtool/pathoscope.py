@@ -174,7 +174,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
     # EM iterations
     for i in range(max_iter):
         pi_old = pi
-        theta_sum = [0 for k in genomes]
+        theta_sum = [0 for _ in genomes]
 
         # E Step
         for j in nu:
@@ -196,7 +196,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
 
             # Avoid dividing by 0 at all times.
             if x_sum == 0:
-                x_norm = [0.0 for k in x_tmp]
+                x_norm = [0.0 for _ in x_tmp]
             else:
                 # Normalize new xs.
                 x_norm = [1. * k / x_sum for k in x_tmp]

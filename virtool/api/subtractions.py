@@ -31,7 +31,13 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["_id"]))
 
-    data = await paginate(db.subtraction, db_query, req.query, sort="_id", projection=virtool.db.subtractions.PROJECTION)
+    data = await paginate(
+        db.subtraction,
+        db_query,
+        req.query,
+        sort="_id",
+        projection=virtool.db.subtractions.PROJECTION
+    )
 
     data.update({
         "host_count": host_count,

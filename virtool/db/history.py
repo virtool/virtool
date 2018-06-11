@@ -116,7 +116,7 @@ async def add(db, method_name, old, new, description, user_id):
     return document
 
 
-async def find(db, req_query, base_query=None, unbuilt=False):
+async def find(db, req_query, base_query=None):
     data = await paginate(
         db.history,
         {},
