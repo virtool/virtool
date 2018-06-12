@@ -85,3 +85,7 @@ export const editGroup = ({ refId, groupId, update }) => (
 export const removeGroup = ({ refId, groupId }) => (
     Request.delete(`/api/refs/${refId}/groups/${groupId}`)
 );
+
+export const checkUpdates = ({ refId }) => (
+    Request.get(`/api/refs/${refId}/update`)
+);
