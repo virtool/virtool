@@ -186,7 +186,7 @@ def test_get_import_schema(require_meta):
             "type": "string",
             "required": require_meta
         },
-        "data": {
+        "otus": {
             "type": "list",
             "required": True
         }

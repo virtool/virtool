@@ -793,7 +793,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, 0.2, "import_otus")
 
-    otus = import_data["data"]
+    otus = import_data["otus"]
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -856,7 +856,7 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
 
     await virtool.db.processes.update(db, process_id, progress=0.4, step="import")
 
-    otus = import_data["data"]
+    otus = import_data["otus"]
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -1073,14 +1073,14 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
     progress_tracker = virtool.processes.ProgressTracker(
         db,
         process_id,
-        len(update_data["data"]),
+        len(update_data["otus"]),
         factor=0.2,
         initial=0.4
     )
 
     updated_list = list()
 
-    for otu in update_data["data"]:
+    for otu in update_data["otus"]:
         old_or_id = await update_joined_otu(
             db,
             otu,
@@ -1121,7 +1121,7 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
-    otu_ids_in_update = {otu["_id"] for otu in update_data["data"]}
+    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
 
     to_delete = await db.otus.distinct("_id", {
         "reference.id": ref_id,

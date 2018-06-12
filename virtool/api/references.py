@@ -278,7 +278,7 @@ async def find_indexes(req):
     },
     "remote_from": {
         "type": "string",
-        "allowed": ["virtool/virtool-database"],
+        "allowed": ["virtool/ref-plant-viruses"],
         "excludes": [
             "clone_from",
             "import_from"
@@ -306,7 +306,7 @@ async def create(req):
     clone_from = data.get("clone_from", None)
     import_from = data.get("import_from", None)
     remote_from = data.get("remote_from", None)
-    release_id = data.get("release_id", None) or 7917374
+    release_id = data.get("release_id", None) or 11447367
 
     if clone_from:
         manifest = await virtool.db.references.get_manifest(db, clone_from)
