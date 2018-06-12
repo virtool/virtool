@@ -5,6 +5,7 @@ import { wsUpdateIndex } from "./indexes/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateProcess } from "./processes/actions";
 import { wsUpdateStatus } from "./status/actions";
+import { wsUpdateSubtraction } from "./subtraction/actions";
 
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
@@ -13,7 +14,8 @@ const documentUpdaters = {
     jobs: wsUpdateJob,
     processes: wsUpdateProcess,
     samples: wsUpdateSample,
-    status: wsUpdateStatus
+    status: wsUpdateStatus,
+    subtraction: wsUpdateSubtraction
 };
 
 const documentRemovers = {

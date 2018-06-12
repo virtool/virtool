@@ -1,9 +1,16 @@
 import {
+    WS_UPDATE_SUBTRACTION,
     GET_SUBTRACTION,
     UPDATE_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION
 } from "../actionTypes";
+
+
+export const wsUpdateSubtraction = (data) => ({
+    type: WS_UPDATE_SUBTRACTION,
+    data
+});
 
 /**
  * Returns action that can trigger an API call to retrieve a subtraction.
