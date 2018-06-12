@@ -65,12 +65,12 @@ export class JobEntry extends React.Component {
             );
         }
 
-        let progressStyle;
+        let progressStyle = "success";
 
         const progressValue = this.props.progress * 100;
 
         if (this.props.state === "running") {
-            progressStyle = "success";
+            progressStyle = "primary";
         }
 
         if (this.props.state === "error" || this.props.state === "cancelled") {

@@ -31,7 +31,7 @@ export function* wsUpdateJob (action) {
     const detail = yield select(state => state.jobs.detail);
 
     if (detail !== null && detail.id === action.data.id) {
-        yield getJob({id: detail.id});
+        yield getJob({jobId: detail.id});
     }
 }
 

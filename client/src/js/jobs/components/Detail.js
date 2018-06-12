@@ -8,7 +8,7 @@ import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
 import TaskArgs from "./TaskArgs";
-//import JobError from "./Error";
+import JobError from "./Error";
 
 import JobSteps from "./Steps";
 
@@ -61,18 +61,18 @@ class JobDetail extends React.Component {
 
         const detail = this.props.detail;
 
-/*        const latest = detail.status[detail.status.length - 1];
+        const latest = detail.status[detail.status.length - 1];
 
-        let progressStyle = "primary";
+        let progressStyle = "success";
 
         if (latest.state === "running") {
-            progressStyle = "success";
+            progressStyle = "primary";
         }
 
         if (latest.state === "error" || latest.state === "cancelled") {
             progressStyle = "danger";
         }
-*/
+
         const taskName = getTaskDisplayName(detail.task);
 
         return (
@@ -84,11 +84,11 @@ class JobDetail extends React.Component {
                                 <strong>
                                     {taskName}
                                 </strong>
-                                {/*<FlexItem grow={1} pad={7}>
+                                <FlexItem grow={1} pad={7}>
                                     <small className={`text-strong text-capitalize text-${progressStyle}`}>
                                         {latest.state}
                                     </small>
-        </FlexItem>*/}
+                                </FlexItem>
                             </Flex>
                         </FlexItem>
 
@@ -101,11 +101,9 @@ class JobDetail extends React.Component {
                     </Flex>
                 </ViewHeader>
 
-                {/*<ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />*/}
-
-                {/*<JobError error={latest.error} />*/}
-
                 <JobSteps steps={detail.status} />
+
+                <JobError error={latest.error} />
 
                 <JobTable {...detail} />
 

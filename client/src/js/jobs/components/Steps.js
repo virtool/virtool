@@ -6,7 +6,7 @@ export default class JobSteps extends React.Component {
 
     render () {
 
-        const stepComponents = map(this.props.steps, (step, index) => 
+        const stepComponents = map(this.props.steps, (step, index) =>
             <JobStep
                 key={index}
                 step={step}

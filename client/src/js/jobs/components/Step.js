@@ -1,5 +1,6 @@
 import React from "react";
-import { Flex, FlexItem, Icon, ClipLoader } from "../../base";
+import { ClipLoader } from "halogenium";
+import { Icon } from "../../base";
 import { getTaskDisplayName } from "../../utils";
 
 const JobStep = ({ step, isDone }) => {
@@ -11,8 +12,8 @@ const JobStep = ({ step, isDone }) => {
     switch (step.state) {
 
         case "running":
-            hasBar = (step.progress === 100) ? false : true;
-            stateIcon = isDone ? "check" : "spinner";
+            hasBar = isDone;
+            stateIcon = isDone ? "check" : "";
             entryStyle = isDone ? "success" : "primary";
             break;
 
@@ -35,14 +36,18 @@ const JobStep = ({ step, isDone }) => {
 
     const stepEntry = (
         <div className="step-entry">
-            <Icon name={stateIcon} bsStyle={entryStyle} />
-            <div
-                className={hasBar ? "step-entry-bar" : "step-entry-nobar"}
-                style={{ borderColor: isDone ? "green" : "blue" }}
-            />
+            <div className="step-entry-icon">
+                {stateIcon.length
+                    ? <Icon name={stateIcon} bsStyle={entryStyle} />
+                    : <ClipLoader size="12px" color="#07689d" />
+                }
+            </div>
             <div className="step-entry-content">
                 {getTaskDisplayName(step.stage)}
             </div>
+            <div
+                className={hasBar ? `step-entry-bar-${entryStyle}` : "step-entry-nobar"}
+            />
         </div>
     );
 
