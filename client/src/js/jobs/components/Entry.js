@@ -49,7 +49,7 @@ export class JobEntry extends React.Component {
             icon = (
                 <Icon
                     bsStyle="danger"
-                    name="cancel-circle"
+                    name="ban"
                     onClick={this.handleCancel}
                     pullRight
                 />
