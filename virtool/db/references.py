@@ -389,7 +389,9 @@ async def get_latest_build(db, ref_id):
     latest_build = await db.indexes.find_one({
         "reference.id": ref_id,
         "ready": True
-    }, projection=["created_at", "version", "user"], sort=[("index.version", pymongo.DESCENDING)])
+    }, projection=["created_at", "version", "user"], sort=[("version", pymongo.DESCENDING)])
+
+    print(latest_build)
 
     if latest_build is None:
         return None
