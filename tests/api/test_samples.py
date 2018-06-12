@@ -641,7 +641,7 @@ class TestAnalyze:
         client = await spawn_client(authorize=True, job_manager=True)
 
         test_analysis = {
-            "id": "test_analysis",
+            "_id": "test_analysis",
             "ready": False,
             "created_at": "'2015-10-06T20:00:00Z'",
             "job": {
@@ -691,6 +691,8 @@ class TestAnalyze:
             assert resp.status == 201
 
             assert resp.headers["Location"] == "/api/analyses/test_analysis"
+
+            test_analysis["id"] = test_analysis.pop("_id")
 
             assert await resp.json() == test_analysis
 
