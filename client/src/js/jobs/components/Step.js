@@ -24,6 +24,7 @@ const JobStep = ({ step, isDone }) => {
             break;
 
         case "error":
+        case "cancelled":
             hasBar = false;
             stateIcon = "times";
             entryStyle = "danger";

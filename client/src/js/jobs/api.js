@@ -14,7 +14,7 @@ export const get = ({ jobId }) => (
 );
 
 export const cancel = ({ jobId }) => (
-    Request.post(`/api/jobs/${jobId}/cancel`)
+    Request.put(`/api/jobs/${jobId}/cancel`)
 );
 
 export const remove = ({ jobId }) => (
