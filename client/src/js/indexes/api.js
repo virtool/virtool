@@ -8,6 +8,11 @@ export const get = ({ indexId }) => (
     Request.get(`/api/indexes/${indexId}`)
 );
 
+export const listReady = () => (
+    Request.get(`/api/indexes`)
+        .query({ready: true})
+);
+
 export const getUnbuilt = ({ refId }) => (
     Request.get(`/api/refs/${refId}/history?unbuilt=true`)
 );

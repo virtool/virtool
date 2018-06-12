@@ -10,7 +10,7 @@ import {
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    GET_REFERENCE
+    GET_REFERENCE, LIST_READY_INDEXES
 } from "../actionTypes";
 
 export function* watchIndexes () {
@@ -20,6 +20,7 @@ export function* watchIndexes () {
     yield takeLatest(GET_UNBUILT.REQUESTED, getUnbuilt);
     yield takeEvery(CREATE_INDEX.REQUESTED, createIndex);
     yield takeLatest(GET_INDEX_HISTORY.REQUESTED, getIndexHistory);
+    yield takeLatest(LIST_READY_INDEXES.REQUESTED, listReadyIndexes);
 }
 
 export function* wsUpdateIndex (action) {
@@ -37,6 +38,10 @@ export function* getIndex (action) {
 
 export function* getUnbuilt (action) {
     yield apiCall(indexesAPI.getUnbuilt, action, GET_UNBUILT);
+}
+
+export function* listReadyIndexes (action) {
+    yield apiCall(indexesAPI.listReady, action, LIST_READY_INDEXES);
 }
 
 export function* createIndex (action) {

@@ -4,7 +4,8 @@ import {
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
-    GET_INDEX_HISTORY
+    GET_INDEX_HISTORY,
+    LIST_READY_INDEXES
 } from "../actionTypes";
 
 /**
@@ -31,12 +32,21 @@ export const findIndexes = (refId, page) => ({
     page
 });
 
+/**
+ * Returns action that can trigger an API call for getting all ready OTU indexes.
+ *
+ * @func
+ * @returns {object}
+ */
+export const listReadyIndexes = () => ({
+    type: LIST_READY_INDEXES.REQUESTED
+});
 
 /**
  * Returns action that can trigger an API call for getting specific OTU index.
  *
  * @func
- * @param indexVersion {string} the version number of the index.
+ * @param indexId {string} the unique index id.
  * @returns {object}
  */
 export const getIndex = (indexId) => ({
@@ -71,7 +81,7 @@ export const createIndex = (refId) => ({
  * Returns action that can trigger an API call for getting a specific page in the index version history.
  *
  * @func
- * @param indexVersion {string} the version number of the index.
+ * @param indexId {string} the unique index id.
  * @param page {number} the page to retrieve from the list of changes.
  * @returns {object}
  */
