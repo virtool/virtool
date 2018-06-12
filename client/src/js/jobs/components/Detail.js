@@ -1,43 +1,14 @@
 import React from "react";
-import Moment from "moment";
 import { connect } from "react-redux";
-import { Table } from "react-bootstrap";
 import { push } from "react-router-redux";
+import { Table } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, RelativeTime } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
-
 import JobSteps from "./Steps";
-
-const JobTable = ({id, mem, proc, status, user}) => (
-    <Table bordered>
-        <tbody>
-            <tr>
-                <th className="col-xs-4">Cores</th>
-                <td className="col-xs-8">{proc}</td>
-            </tr>
-            <tr>
-                <th>Memory</th>
-                <td>{mem} GB</td>
-            </tr>
-            <tr>
-                <th>Started By</th>
-                <td>{user.id}</td>
-            </tr>
-            <tr>
-                <th>Started At</th>
-                <td>{Moment(status[0].timestamp).format("YY/MM/DD")}</td>
-            </tr>
-            <tr>
-                <th>Unique ID</th>
-                <td>{id}</td>
-            </tr>
-        </tbody>
-    </Table>
-);
 
 class JobDetail extends React.Component {
 
@@ -99,19 +70,29 @@ class JobDetail extends React.Component {
                             onClick={this.handleClick}
                         />
                     </Flex>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Started <RelativeTime time={detail.status[0].timestamp} /> by {detail.user.id}
+                    </div>
                 </ViewHeader>
 
-                <JobSteps steps={detail.status} />
-
-                <JobError error={latest.error} />
-
-                <JobTable {...detail} />
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-4">Cores / Memory</th>
+                            <td className="col-xs-8">{detail.proc} CPUs / {detail.mem} GB</td>
+                        </tr>
+                    </tbody>
+                </Table>
 
                 <h4>
                     <strong>Task Arguments</strong>
                 </h4>
 
                 <TaskArgs taskType={detail.task} taskArgs={detail.args} />
+
+                <JobSteps steps={detail.status} />
+
+                <JobError error={latest.error} />
 
             </div>
         );
