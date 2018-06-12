@@ -6,9 +6,11 @@ import { push } from "react-router-redux";
 import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar, ViewHeader, NotFound } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
 import TaskArgs from "./TaskArgs";
-import JobError from "./Error";
+//import JobError from "./Error";
+
+import JobSteps from "./Steps";
 
 const JobTable = ({id, mem, proc, status, user}) => (
     <Table bordered>
@@ -59,7 +61,7 @@ class JobDetail extends React.Component {
 
         const detail = this.props.detail;
 
-        const latest = detail.status[detail.status.length - 1];
+/*        const latest = detail.status[detail.status.length - 1];
 
         let progressStyle = "primary";
 
@@ -70,7 +72,7 @@ class JobDetail extends React.Component {
         if (latest.state === "error" || latest.state === "cancelled") {
             progressStyle = "danger";
         }
-
+*/
         const taskName = getTaskDisplayName(detail.task);
 
         return (
@@ -82,11 +84,11 @@ class JobDetail extends React.Component {
                                 <strong>
                                     {taskName}
                                 </strong>
-                                <FlexItem grow={1} pad={7}>
+                                {/*<FlexItem grow={1} pad={7}>
                                     <small className={`text-strong text-capitalize text-${progressStyle}`}>
                                         {latest.state}
                                     </small>
-                                </FlexItem>
+        </FlexItem>*/}
                             </Flex>
                         </FlexItem>
 
@@ -99,9 +101,11 @@ class JobDetail extends React.Component {
                     </Flex>
                 </ViewHeader>
 
-                <ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />
+                {/*<ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />*/}
 
-                <JobError error={latest.error} />
+                {/*<JobError error={latest.error} />*/}
+
+                <JobSteps steps={detail.status} />
 
                 <JobTable {...detail} />
 
