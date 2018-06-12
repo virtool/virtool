@@ -118,7 +118,7 @@ export default class ReadSelector extends React.PureComponent {
                                     />
                                     <InputGroup.Button>
                                         <Button type="button" tip="Clear" onClick={this.reset}>
-                                            <Icon name="reset" />
+                                            <Icon name="redo" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>

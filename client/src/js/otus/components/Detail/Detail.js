@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem, Breadcrumb } from "react-bootstrap";
-
+import { get } from "lodash-es";
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
 import EditOTU from "./EditOTU";
@@ -13,7 +13,7 @@ import RemoveOTU from "./RemoveOTU";
 import Schema from "./Schema";
 import { getReference } from "../../../references/actions";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../../base";
 import { checkUserRefPermission } from "../../../utils";
 
 const OTUSection = ({ hasModifyOTU, match }) => (
@@ -37,6 +37,10 @@ class OTUDetail extends React.Component {
     }
 
     render = () => {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.otuDetail === null
             || this.props.otuDetail.id !== this.props.match.params.otuId
@@ -174,6 +178,7 @@ class OTUDetail extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    error: get(state, "errors.GET_OTU_ERROR", null),
     otuDetail: state.otus.detail,
     isAdmin: state.account.administrator,
     userId: state.account.id,

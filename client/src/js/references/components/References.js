@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "react-router-dom";
+import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 
 import OTUDetail from "../../otus/components/Detail/Detail";
@@ -29,6 +29,7 @@ const References = (props) => {
         <div className="container">
             <Switch>
                 <Route path="/refs" component={ReferenceList} exact />
+                <Redirect from="/refs/settings/*" to="/refs/settings" />
                 <Route path="/refs/settings" component={ReferenceSettings} />
                 <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
                 <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />

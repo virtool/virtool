@@ -14,7 +14,9 @@ const JobError = ({ error }) => {
     );
 
     // Only show a colon and exception detail after the exception name if there is detail present.
-    const details = error.details.length ? <span>: {error.details}</span> : null;
+    const details = error.details.length
+        ? <span style={{display: "inline-block", wordBreak: "break-word"}}>: {error.details}</span>
+        : null;
 
     // Content replicates format of Python exceptions shown in Python console.
     return (
