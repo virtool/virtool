@@ -93,13 +93,13 @@ async def download_reference(req):
 
     scope = req.query.get("scope", "built")
 
-    if scope not in ["built", "unbuilt", "unverified"]:
+    if scope not in ["built", "remote", "unbuilt", "unverified"]:
         scope = "built"
 
     otu_list = await virtool.db.references.export(db, ref_id, scope)
 
     data = {
-        "data": otu_list,
+        "otus": otu_list,
         "data_type": document["data_type"],
         "organism": document["organism"]
     }

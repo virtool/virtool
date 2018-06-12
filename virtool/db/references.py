@@ -683,7 +683,7 @@ async def export(db, ref_id, scope):
         "reference.id": ref_id
     }
 
-    if scope == "built":
+    if scope == "built" or scope == "remote":
         query["last_indexed_version"] = {"$ne": None}
 
         async for document in db.otus.find(query):
@@ -705,7 +705,7 @@ async def export(db, ref_id, scope):
             current = await virtool.db.otus.join(db, document["_id"], document)
             otu_list.append(current)
 
-    return otu_list
+    return virtool.references.clean_export_list(otu_list, scope == "remote")
 
 
 async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
@@ -956,20 +956,17 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
             "id": remote_id
         }
 
-    used_isolate_ids = set()
-
     for isolate in otu["isolates"]:
-        if not remote:
-            isolate_id = virtool.utils.random_alphanumeric(3, excluded=used_isolate_ids)
-            used_isolate_ids.add(isolate_id)
-            isolate["id"] = isolate_id
-
         for sequence in isolate.pop("sequences"):
-            remote_sequence_id = sequence.pop("_id")
+            try:
+                remote_sequence_id = sequence["remote"]["id"]
+                sequence.pop("_id")
+            except KeyError:
+                remote_sequence_id = sequence.pop("_id")
 
             all_sequences.append({
                 **sequence,
-                "accession": sequence.pop("accession", None) or remote_sequence_id,
+                "accession": sequence["accession"],
                 "isolate_id": isolate["id"],
                 "reference": {
                     "id": ref_id

@@ -4,11 +4,32 @@ from cerberus import Validator
 
 import virtool.otus
 
+ISOLATE_KEYS = [
+    "id",
+    "source_type",
+    "source_name",
+    "default"
+]
+
+OTU_KEYS = [
+    "_id",
+    "name",
+    "abbreviation"
+]
+
 RIGHTS = [
     "build",
     "modify",
     "modify_otu",
     "remove"
+]
+
+SEQUENCE_KEYS = [
+    "_id",
+    "accession",
+    "definition",
+    "host",
+    "sequence"
 ]
 
 
@@ -47,6 +68,41 @@ def check_import_data(import_data, strict=True, verify=True):
             otus[otu["_id"]] = issues
 
     return errors
+
+
+def clean_export_list(otus, remote):
+    cleaned = list()
+
+    for otu in otus:
+        cleaned_otu = {key: otu[key] for key in OTU_KEYS}
+
+        if remote:
+            try:
+                cleaned_otu["_id"] = otu["remote"]["id"]
+            except KeyError:
+                pass
+
+        cleaned_otu["isolates"] = list()
+
+        for isolate in otu["isolates"]:
+            cleaned_isolate = {key: isolate[key] for key in ISOLATE_KEYS}
+            cleaned_isolate["sequences"] = list()
+
+            for sequence in isolate["sequences"]:
+                cleaned_sequence = {key: sequence[key] for key in SEQUENCE_KEYS}
+
+                try:
+                    cleaned_sequence["_id"] = sequence["remote"]["id"]
+                except KeyError:
+                    pass
+
+                cleaned_isolate["sequences"].append(cleaned_sequence)
+
+            cleaned_otu["isolates"].append(cleaned_isolate)
+
+        cleaned.append(cleaned_otu)
+
+    return cleaned
 
 
 def detect_duplicate_abbreviation(joined, duplicates, seen):
