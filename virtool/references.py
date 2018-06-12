@@ -13,7 +13,7 @@ RIGHTS = [
 
 
 def check_import_data(import_data, strict=True, verify=True):
-    errors = detect_duplicates(import_data["data"])
+    errors = detect_duplicates(import_data["otus"])
 
     v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
 
@@ -27,7 +27,7 @@ def check_import_data(import_data, strict=True, verify=True):
 
     otus = dict()
 
-    for otu in import_data["data"]:
+    for otu in import_data["otus"]:
         verification = None
 
         if verify:
@@ -199,7 +199,7 @@ def get_import_schema(require_meta=True):
             "type": "string",
             "required": require_meta
         },
-        "data": {
+        "otus": {
             "type": "list",
             "required": True
         }
