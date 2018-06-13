@@ -223,8 +223,6 @@ async def setup_user(req):
 
     data = v.document
 
-    print(data)
-
     req.app["setup"].update({
         "first_user_id": data["user_id"],
         "first_user_password": virtool.users.hash_password(data["password"])

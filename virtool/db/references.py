@@ -391,8 +391,6 @@ async def get_latest_build(db, ref_id):
         "ready": True
     }, projection=["created_at", "version", "user"], sort=[("version", pymongo.DESCENDING)])
 
-    print(latest_build)
-
     if latest_build is None:
         return None
 
