@@ -79,6 +79,7 @@ export const REMOVE_REFERENCE_USER = createRequestActionType("REMOVE_REFERENCE_U
 export const ADD_REFERENCE_GROUP = createRequestActionType("ADD_REFERENCE_GROUP");
 export const EDIT_REFERENCE_GROUP = createRequestActionType("EDIT_REFERENCE_GROUP");
 export const REMOVE_REFERENCE_GROUP = createRequestActionType("REMOVE_REFERENCE_GROUP");
+export const CHECK_REMOTE_UPDATES = createRequestActionType("CHECK_REMOTE_UPDATES");
 
 // Processes
 export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";

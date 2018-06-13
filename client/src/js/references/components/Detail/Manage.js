@@ -6,8 +6,9 @@ import { Badge, ListGroup, Panel, Table, Well } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link} from "react-router-dom";
 import RemoveReference from "./RemoveReference";
-import { Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, RelativeTime } from "../../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, NoneFound, RelativeTime, LoadingPlaceholder } from "../../../base";
 import { checkUserRefPermission } from "../../../utils";
+import { checkUpdates } from "../../actions";
 
 const Contributors = ({ contributors }) => {
 
@@ -49,9 +50,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ installed, lastChecked, release }) => {
-
-    const updateAvailable = Semver.gt(Semver.coerce(release.name), Semver.coerce(installed.name));
+const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending }) => {
 
     let updateStats;
 
@@ -88,7 +87,11 @@ const Release = ({ installed, lastChecked, release }) => {
                 </span>
                 {updateStats}
                 <span className="pull-right text-muted">
-                    Last checked <RelativeTime time={lastChecked} />
+                    Last checked <RelativeTime time={lastChecked} />&nbsp;&nbsp;
+                    {isPending
+                        ? <div style={{display: "inline-block"}}><LoadingPlaceholder margin="0" size="14px" /></div>
+                        : <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />
+                    }
                 </span>
             </div>
 
@@ -97,7 +100,7 @@ const Release = ({ installed, lastChecked, release }) => {
     );
 };
 
-const Remote = ({ updates, release, remotesFrom }) => {
+const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending }) => {
 
     const ready = filter(updates, {ready: true});
 
@@ -106,6 +109,8 @@ const Remote = ({ updates, release, remotesFrom }) => {
     if (!installed) {
         return null;
     }
+
+    const updateAvailable = Semver.gt(Semver.coerce(release.name), Semver.coerce(installed.name));
 
     return (
         <Panel>
@@ -128,9 +133,11 @@ const Remote = ({ updates, release, remotesFrom }) => {
                     <span> / Published <RelativeTime time={installed.published_at} /></span>
                 </ListGroupItem>
                 <Release
-                    installed={installed}
-                    lastChecked={remotesFrom.last_checked}
+                    lastChecked={release.last_checked}
                     release={release}
+                    updateAvailable={updateAvailable}
+                    onCheckUpdates={onCheckUpdates}
+                    isPending={isPending}
                 />
             </ListGroup>
         </Panel>
@@ -156,6 +163,10 @@ const Clone = ({ source }) => (
 
 class ReferenceManage extends React.Component {
 
+    handleCheckUpdates = () => {
+        this.props.onCheckUpdates(this.props.detail.id);
+    };
+
     render () {
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
@@ -173,7 +184,8 @@ class ReferenceManage extends React.Component {
             release,
             remotes_from,
             cloned_from,
-            updates
+            updates,
+            checkPending
         } = this.props.detail;
 
         let remote;
@@ -185,6 +197,8 @@ class ReferenceManage extends React.Component {
                     release={release}
                     remotesFrom={remotes_from}
                     updates={updates}
+                    onCheckUpdates={this.handleCheckUpdates}
+                    isPending={checkPending}
                 />
             );
         }
@@ -255,4 +269,10 @@ const mapStateToProps = state => ({
     userGroups: state.account.groups
 });
 
-export default connect(mapStateToProps)(ReferenceManage);
+const mapDispatchToProps = dispatch => ({
+    onCheckUpdates: (refId) => {
+        dispatch(checkUpdates(refId));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceManage);
