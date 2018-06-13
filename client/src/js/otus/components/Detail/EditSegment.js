@@ -38,7 +38,9 @@ class EditSegment extends React.Component {
         });
     }
 
-    handleSubmit = () => {
+    handleSubmit = (e) => {
+        e.preventDefault();
+
         const takenName = find(this.props.schema, ["name", this.state.newEntry.name]);
 
         if (takenName && (takenName.name !== this.props.curSeg.name)) {
@@ -74,17 +76,19 @@ class EditSegment extends React.Component {
                 <Modal.Header closeButton>
                     Edit Segment
                 </Modal.Header>
-                <Modal.Body>
-                    <SegmentForm
-                        onChange={this.handleChange}
-                        newEntry={this.state.newEntry}
-                    />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit} >
-                        Save
-                    </Button>
-                </Modal.Footer>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <SegmentForm
+                            onChange={this.handleChange}
+                            newEntry={this.state.newEntry}
+                        />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button bsStyle="primary" icon="floppy" type="submit" >
+                            Save
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }
