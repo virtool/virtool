@@ -133,7 +133,7 @@ const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending }) =>
                     <span> / Published <RelativeTime time={installed.published_at} /></span>
                 </ListGroupItem>
                 <Release
-                    lastChecked={remotesFrom.last_checked}
+                    lastChecked={release.last_checked}
                     release={release}
                     updateAvailable={updateAvailable}
                     onCheckUpdates={onCheckUpdates}
