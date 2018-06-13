@@ -15,3 +15,7 @@ export const install = () => (
 export const get = ({ hmmId }) => (
     Request.get(`/api/hmms/${hmmId}`)
 );
+
+export const purge = () => (
+    Request.delete("/api/hmms")
+);

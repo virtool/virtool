@@ -88,9 +88,15 @@ const Sidebar = () => (
         <Route path="/hmm">
             <Nav className="sidebar">
                 <SidebarItem
+                    exclude={["/hmm/settings"]}
                     title="Browse"
                     link="/hmm"
                     icon="th-list"
+                />
+                <SidebarItem
+                    title="Settings"
+                    link="/hmm/settings"
+                    icon="cogs"
                 />
             </Nav>
         </Route>
