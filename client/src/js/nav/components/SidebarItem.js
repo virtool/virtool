@@ -5,8 +5,6 @@ import { Icon } from "../../base";
 
 function excludePaths (paths = []) {
     return function (match, location) {
-        console.log(match, location);
-
         if (includes(paths, location.pathname)) {
             return false;
         }
