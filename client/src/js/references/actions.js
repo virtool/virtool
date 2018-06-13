@@ -15,6 +15,7 @@ import {
     EDIT_REFERENCE_GROUP,
     REMOVE_REFERENCE_GROUP,
     CHECK_REMOTE_UPDATES
+    UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
 
 export const listReferences = simpleActionCreator(LIST_REFERENCES);
@@ -109,4 +110,10 @@ export const removeReferenceGroup = (refId, groupId) => ({
 export const checkUpdates = (refId) => ({
     type: CHECK_REMOTE_UPDATES.REQUESTED,
     refId
+});
+
+export const updateRemoteReference = (refId, releaseId) => ({
+    type: UPDATE_REMOTE_REFERENCE.REQUESTED,
+    refId,
+    releaseId
 });

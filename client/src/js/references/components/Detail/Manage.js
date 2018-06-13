@@ -2,13 +2,22 @@ import React from "react";
 import Semver from "semver";
 import Marked from "marked";
 import { filter, map, replace, sortBy } from "lodash-es";
-import { Badge, ListGroup, Panel, Table, Well } from "react-bootstrap";
+import { Badge, ListGroup, Panel, Table, Well, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link} from "react-router-dom";
 import RemoveReference from "./RemoveReference";
-import { Flex, FlexItem, Icon, ListGroupItem, NoneFound, RelativeTime, LoadingPlaceholder } from "../../../base";
+import {
+    Flex,
+    FlexItem,
+    Icon,
+    ListGroupItem,
+    LoadingPlaceholder,
+    NoneFound,
+    RelativeTime,
+    Button
+} from "../../../base";
 import { checkUserRefPermission } from "../../../utils";
-import { checkUpdates } from "../../actions";
+import { checkUpdates, updateRemoteReference } from "../../actions";
 
 const Contributors = ({ contributors }) => {
 
@@ -50,7 +59,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending }) => {
+const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending, onInstall }) => {
 
     let updateStats;
 
@@ -96,11 +105,16 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
             </div>
 
             {updateDetail}
+            <Row style={{margin: "0"}}>
+                <Button icon="download" bsStyle="primary" onClick={onInstall} pullRight>
+                    Install
+                </Button>
+            </Row>
         </ListGroupItem>
     );
 };
 
-const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending }) => {
+const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onInstall }) => {
 
     const ready = filter(updates, {ready: true});
 
@@ -138,6 +152,7 @@ const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending }) =>
                     updateAvailable={updateAvailable}
                     onCheckUpdates={onCheckUpdates}
                     isPending={isPending}
+                    onInstall={onInstall}
                 />
             </ListGroup>
         </Panel>
@@ -165,6 +180,10 @@ class ReferenceManage extends React.Component {
 
     handleCheckUpdates = () => {
         this.props.onCheckUpdates(this.props.detail.id);
+    };
+
+    handleUpdateRemote = () => {
+        this.props.onUpdate(this.props.detail.id, "latest");
     };
 
     render () {
@@ -199,6 +218,7 @@ class ReferenceManage extends React.Component {
                     updates={updates}
                     onCheckUpdates={this.handleCheckUpdates}
                     isPending={checkPending}
+                    onInstall={this.handleUpdateRemote}
                 />
             );
         }
@@ -270,9 +290,15 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
+  
     onCheckUpdates: (refId) => {
         dispatch(checkUpdates(refId));
+    },
+    
+    onUpdate: (refId, releaseId) => {
+        dispatch(updateRemoteReference(refId, releaseId));
     }
+    
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ReferenceManage);
