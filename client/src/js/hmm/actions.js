@@ -1,5 +1,5 @@
 import { simpleActionCreator } from "../utils";
-import { GET_HMM, INSTALL_HMMS, FETCH_HMMS, FIND_HMMS } from "../actionTypes";
+import { GET_HMM, INSTALL_HMMS, FETCH_HMMS, FIND_HMMS, PURGE_HMMS } from "../actionTypes";
 
 /**
  * Returns action for fetching available HMMs.
@@ -33,3 +33,12 @@ export const getHmm = (hmmId) => ({
  * @returns {object}
  */
 export const installHMMs = simpleActionCreator(INSTALL_HMMS.REQUESTED);
+
+/**
+ * Returns action that can trigger an API call for purging all HMMs. In other words, removing unreferenced HMM profiles
+ * and deleting the profiles.hmm file.
+ *
+ * @func
+ * @returns {object}
+ */
+export const purgeHMMs = simpleActionCreator(PURGE_HMMS.REQUESTED);

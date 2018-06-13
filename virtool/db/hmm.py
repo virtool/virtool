@@ -123,13 +123,7 @@ async def install_official(app, process_id):
         async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
             annotations = json.loads(await f.read())
 
-        await delete_unreferenced_hmms(db)
-
-        await db.hmm.update_many({}, {
-            "$set": {
-                "hidden": True
-            }
-        })
+        await purge(db)
 
         progress_tracker = virtool.processes.ProgressTracker(
             db,
@@ -150,3 +144,13 @@ async def install_official(app, process_id):
         })
 
         await virtool.db.processes.update(db, process_id, progress=1)
+
+
+async def purge(db):
+    await delete_unreferenced_hmms(db)
+
+    await db.hmm.update_many({}, {
+        "$set": {
+            "hidden": True
+        }
+    })

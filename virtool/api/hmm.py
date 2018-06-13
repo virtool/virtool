@@ -1,9 +1,11 @@
+import os
+
 import virtool.db.status
 import virtool.http.routes
 import virtool.db.hmm
 import virtool.hmm
 import virtool.utils
-from virtool.api.utils import compose_regex_query, json_response, not_found, paginate
+from virtool.api.utils import compose_regex_query, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -50,3 +52,35 @@ async def get(req):
         return not_found()
 
     return json_response(virtool.utils.base_processor(document))
+
+
+@routes.delete("/api/hmms")
+async def purge(req):
+    """
+    Delete all unreferenced HMMs and hide the rest.
+
+    """
+    db = req.app["db"]
+
+    await virtool.db.hmm.purge(db)
+
+    hmm_path = os.path.join(req.app["settings"]["data_path"], "hmm/profiles.hmm")
+
+    try:
+        await req.app["run_in_thread"](virtool.utils.rm, hmm_path)
+    except FileNotFoundError:
+        pass
+
+    await db.status.update_one({"_id": "hmm"}, {
+        "$set": {
+            "installed": False,
+            "process": None,
+            "release": None,
+            "version": None
+        }
+
+    })
+
+    await virtool.db.status.fetch_and_update_hmm_release(req.app)
+
+    return no_content()

@@ -123,6 +123,7 @@ export const FETCH_HMMS = "FETCH_HMMS";
 export const FIND_HMMS = createRequestActionType("FIND_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
 export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
+export const PURGE_HMMS = createRequestActionType("PURGE_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";

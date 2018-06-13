@@ -3,7 +3,7 @@ import { takeLatest, throttle } from "redux-saga/effects";
 
 import * as hmmsAPI from "./api";
 import { apiCall, apiFind } from "../sagaUtils";
-import { FIND_HMMS, INSTALL_HMMS, GET_HMM, FETCH_HMMS } from "../actionTypes";
+import {FIND_HMMS, INSTALL_HMMS, GET_HMM, FETCH_HMMS, PURGE_HMMS} from "../actionTypes";
 
 export function* watchHmms () {
     yield throttle(300, LOCATION_CHANGE, findHmms);
@@ -11,6 +11,7 @@ export function* watchHmms () {
     yield takeLatest(FETCH_HMMS, fetchHmms);
     yield takeLatest(GET_HMM.REQUESTED, getHmm);
     yield throttle(500, INSTALL_HMMS.REQUESTED, installHmms);
+    yield takeLatest(PURGE_HMMS.REQUESTED, purgeHmms);
 }
 
 export function* fetchHmms () {
@@ -31,4 +32,8 @@ export function* installHmms () {
 
 export function* getHmm (action) {
     yield apiCall(hmmsAPI.get, action, GET_HMM);
+}
+
+export function* purgeHmms (action) {
+    yield apiCall(hmmsAPI.purge, action, PURGE_HMMS);
 }
