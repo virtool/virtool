@@ -113,7 +113,7 @@ async def get_current_id_and_version(db, ref_id):
 
     """
     document = await db.indexes.find_one(
-        {"reference.id": ref_id, "has_files": True, "ready": True},
+        {"reference.id": ref_id, "ready": True},
         sort=[("version", pymongo.DESCENDING)],
         projection=["_id", "version"]
     )
