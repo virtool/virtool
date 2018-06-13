@@ -10,16 +10,12 @@ import { Icon, IDRow } from "../../../base";
 import { followDownload } from "../../../utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 
-const IsolateTable = ({ id, isDefault, isolateName, sourceName, sourceType }) => (
+const IsolateTable = ({ id, isDefault, sourceName, sourceType }) => (
     <Table bordered>
         <tbody>
             <tr>
-                <th className="col-md-3">Name</th>
-                <td className="col-md-9">{isolateName}</td>
-            </tr>
-            <tr>
-                <th>Source Type</th>
-                <td>{capitalize(sourceType)}</td>
+                <th className="col-md-3">Source Type</th>
+                <td className="col-md-9">{capitalize(sourceType)}</td>
             </tr>
             <tr>
                 <th>Source Name</th>
@@ -128,9 +124,8 @@ export class IsolateDetail extends React.Component {
                         <IsolateTable
                             id={isolate.id}
                             isDefault={isolate.default}
-                            isolateName={isolate.name}
-                            sourceName={isolate.sourceName}
-                            sourceType={isolate.sourceType}
+                            sourceName={isolate.source_name}
+                            sourceType={isolate.source_type}
                         />
 
                         <IsolateSequences hasModifyOTU={this.props.hasModifyOTU} />
