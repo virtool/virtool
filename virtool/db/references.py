@@ -120,6 +120,7 @@ async def check_for_remote_update(app, ref_id):
     except virtool.errors.GitHubError as err:
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
+                "release.last_checked": last_checked,
                 "remotes_from.last_checked": last_checked,
                 "remotes_from.errors": [str(err)]
             }
@@ -129,6 +130,8 @@ async def check_for_remote_update(app, ref_id):
 
     if release:
         release = virtool.github.format_release(release)
+
+        release["last_checked"] = last_checked
 
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
@@ -141,6 +144,7 @@ async def check_for_remote_update(app, ref_id):
     else:
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
+                "release.last_checked": last_checked,
                 "remotes_from.last_checked": last_checked
             }
         })
@@ -632,7 +636,7 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
             "slug": remote_from
         },
         # The latest available release on GitHub.
-        "release": release,
+        "release": dict(release, last_checked=created_at),
         # The update history for the reference. We put the release being installed as the first history item.
         "updates": [create_update_subdocument(created_at, release, user_id)]
     })
