@@ -130,7 +130,7 @@ class CloneReference extends React.Component {
     render () {
 
         return (
-            <React.Fragment>
+            <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Alert bsStyle="info">
                         <strong>
@@ -155,14 +155,13 @@ class CloneReference extends React.Component {
                             icon="save"
                             type="submit"
                             bsStyle="primary"
-                            onClick={this.handleSubmit}
                             disabled={!this.props.refDocuments.length}
                         >
                             Clone
                         </Button>
                     </ButtonToolbar>
                 </Modal.Footer>
-            </React.Fragment>
+            </form>
         );
     }
 

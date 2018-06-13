@@ -115,7 +115,7 @@ class ImportReference extends React.Component {
         }
 
         return (
-            <React.Fragment>
+            <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Alert bsStyle="info">
                         <strong>
@@ -145,14 +145,13 @@ class ImportReference extends React.Component {
                             icon="save"
                             type="submit"
                             bsStyle="primary"
-                            onClick={this.handleSubmit}
                             disabled={progress !== 100 && progress !== 0}
                         >
                             Import
                         </Button>
                     </ButtonToolbar>
                 </Modal.Footer>
-            </React.Fragment>
+            </form>
         );
     }
 

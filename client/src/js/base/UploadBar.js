@@ -22,7 +22,7 @@ export class UploadBar extends React.Component {
                     { message }
                 </Dropzone>
 
-                <Button icon="folder-open" onClick={() => this.dropzone.open()} />
+                <Button type="button" icon="folder-open" onClick={() => this.dropzone.open()} />
             </div>
         );
     }

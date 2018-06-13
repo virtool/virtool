@@ -34,7 +34,8 @@ class AddSegment extends React.Component {
         });
     }
 
-    handleSubmit = () => {
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
 
@@ -59,17 +60,19 @@ class AddSegment extends React.Component {
                 <Modal.Header closeButton>
                     Add Segment
                 </Modal.Header>
-                <Modal.Body>
-                    <SegmentForm
-                        onChange={this.handleChange}
-                        newEntry={this.state.newEntry}
-                    />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" onClick={this.handleSubmit} >
-                        Save
-                    </Button>
-                </Modal.Footer>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <SegmentForm
+                            onChange={this.handleChange}
+                            newEntry={this.state.newEntry}
+                        />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button bsStyle="primary" type="submit" >
+                            Save
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }
