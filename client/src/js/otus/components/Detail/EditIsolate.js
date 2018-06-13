@@ -66,8 +66,8 @@ class EditIsolate extends React.Component {
 
 const mapStateToProps = state => ({
     show: state.otus.editIsolate,
-    allowedSourceTypes: state.settings.data.allowed_source_types,
-    restrictSourceTypes: state.settings.data.restrict_source_types
+    allowedSourceTypes: state.references.detail.source_types,
+    restrictSourceTypes: state.references.detail.restrict_source_types
 });
 
 const mapDispatchToProps = dispatch => ({
