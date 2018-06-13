@@ -13,7 +13,7 @@ import { clearError } from "../../errors/actions";
 const getInitialState = () => ({
     name: "",
     description: "",
-    dataType: "",
+    dataType: "Genome",
     organism: "",
     isPublic: false,
     errorName: "",

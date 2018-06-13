@@ -59,7 +59,7 @@ const getInitialState = (refId, refArray) => {
         reference: "",
         name: "",
         description: "",
-        dataType: "",
+        dataType: "Genome",
         organism: "",
         isPublic: false,
         errorName: "",

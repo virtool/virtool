@@ -9,12 +9,12 @@ export default class ReferenceForm extends React.Component {
 
         const acceptedDataTypes = [
             "",
-            "genome"
+            "Genome"
         ];
 
         const dataOptions = map(acceptedDataTypes, (type) =>
-            <option key={type} value={type} className="text-capitalize">
-                {type || "None"}
+            <option key={type} value={type} className="text-capitalize" hidden={!type.length}>
+                {type}
             </option>
         );
 
@@ -73,12 +73,9 @@ export default class ReferenceForm extends React.Component {
                         <InputError
                             label="Organism"
                             name="organism"
-                            type="select"
                             value={this.props.state.organism}
                             onChange={this.props.onChange}
-                        >
-                            {dataOptions}
-                        </InputError>
+                        />
                     </Col>
                 </Row>
                 <Row>
