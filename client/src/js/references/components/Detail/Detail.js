@@ -56,6 +56,10 @@ const ReferenceSettings = ({ isRemote }) => (
 const getProgress = (detail, processes) => {
     let progress = 0;
 
+    if (!detail || !detail.process) {
+        return 100;
+    }
+
     if (detail.process.id && processes.length) {
         const process = find(processes, ["id", detail.process.id]);
         progress = process.progress;
