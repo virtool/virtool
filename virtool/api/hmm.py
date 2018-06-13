@@ -60,13 +60,27 @@ async def purge(req):
     Delete all unreferenced HMMs and hide the rest.
 
     """
+    db = req.app["db"]
+
     await virtool.db.hmm.purge(db)
 
     hmm_path = os.path.join(req.app["settings"]["data_path"], "hmm/profiles.hmm")
 
     try:
-        await virtool.utils.rm(hmm_path)
+        await req.app["run_in_thread"](virtool.utils.rm, hmm_path)
     except FileNotFoundError:
         pass
+
+    await db.status.update_one({"_id": "hmm"}, {
+        "$set": {
+            "installed": False,
+            "process": None,
+            "release": None,
+            "version": None
+        }
+
+    })
+
+    await virtool.db.status.fetch_and_update_hmm_release(req.app)
 
     return no_content()

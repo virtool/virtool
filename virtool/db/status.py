@@ -25,7 +25,7 @@ async def fetch_and_update_hmm_release(app):
 
     etag = None
 
-    existing = await virtool.db.utils.get_one_field(db.status, "latest_release", "hmm")
+    existing = await virtool.db.utils.get_one_field(db.status, "release", "hmm")
 
     if existing:
         etag = existing.get("etag", None)
@@ -35,7 +35,7 @@ async def fetch_and_update_hmm_release(app):
     if release:
         return await db.status.find_one_and_update({"_id": "hmm"}, {
             "$set": {
-                "latest_release": virtool.github.format_release(release)
+                "release": virtool.github.format_release(release)
             }
         }, upsert=True)
 
