@@ -39,7 +39,7 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
     :type slug: str
 
     :param etag: an ETag for the resource to be used with the `If-None-Match` header
-    :type etag: str
+    :type etag: Union[None, str]
 
     :param release_id: the id of the GitHub release to get
     :type release_id: Union[int,str]
