@@ -951,6 +951,9 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
         }
     })
 
+    if "schema" not in otu:
+        otu["schema"] = list()
+
     remote_id = otu.pop("_id")
 
     if remote:
