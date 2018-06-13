@@ -1,5 +1,6 @@
 import os
 
+import virtool.db.processes
 import virtool.db.status
 import virtool.http.routes
 import virtool.db.hmm
@@ -41,9 +42,41 @@ async def find(req):
 
 
 @routes.get("/api/hmms/release")
-async def fetch_release(req):
+async def get_release(req):
     release = await virtool.db.status.fetch_and_update_hmm_release(req.app)
     return json_response(release)
+
+
+@routes.post("/api/hmm/updates")
+async def install_hmm(req):
+    """
+    Install the latest official HMM database from GitHub.
+
+    """
+    release_id = req["data"].get("release_id", "latest")
+
+    db = req.app["db"]
+
+    process = await virtool.db.processes.register(
+        db,
+        "install_hmms"
+    )
+
+    document = await db.status.find_one_and_update({"_id": "hmm"}, {
+        "$set": {
+            "process": {
+                "id": process["id"]
+            }
+        }
+    })
+
+    await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install_official(
+        req.app,
+        process["id"],
+        release_id
+    ))
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.get("/api/hmms/{hmm_id}")

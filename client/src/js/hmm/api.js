@@ -9,7 +9,7 @@ export const nextPage = ({ page }) => (
 );
 
 export const install = () => (
-    Request.post("/api/status/hmm")
+    Request.post("/api/hmm/updates")
 );
 
 export const get = ({ hmmId }) => (
