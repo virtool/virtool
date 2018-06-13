@@ -88,37 +88,39 @@ class CreateOTU extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create OTU
                 </Modal.Header>
-                <Modal.Body>
-                    <Row>
-                        <Col md={8}>
-                            <InputError
-                                label="Name"
-                                name="name"
-                                value={this.state.name}
-                                onChange={this.handleChange}
-                                error={this.state.errorName}
-                            />
-                        </Col>
-                        <Col md={4}>
-                            <InputError
-                                label="Abbreviation"
-                                name="abbreviation"
-                                value={this.state.abbreviation}
-                                onChange={this.handleChange}
-                                error={this.state.errorAbbreviation}
-                            />
-                        </Col>
-                    </Row>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <Row>
+                            <Col md={8}>
+                                <InputError
+                                    label="Name"
+                                    name="name"
+                                    value={this.state.name}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorName}
+                                />
+                            </Col>
+                            <Col md={4}>
+                                <InputError
+                                    label="Abbreviation"
+                                    name="abbreviation"
+                                    value={this.state.abbreviation}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorAbbreviation}
+                                />
+                            </Col>
+                        </Row>
 
-                </Modal.Body>
+                    </Modal.Body>
 
-                <Modal.Footer>
-                    <ButtonToolbar className="pull-right">
-                        <Button icon="floppy" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
-                            Save
-                        </Button>
-                    </ButtonToolbar>
-                </Modal.Footer>
+                    <Modal.Footer>
+                        <ButtonToolbar className="pull-right">
+                            <Button icon="floppy" type="submit" bsStyle="primary">
+                                Save
+                            </Button>
+                        </ButtonToolbar>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }
