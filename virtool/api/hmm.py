@@ -40,6 +40,12 @@ async def find(req):
     return json_response(data)
 
 
+@routes.get("/api/hmms/release")
+async def fetch_release(req):
+    release = await virtool.db.status.fetch_and_update_hmm_release(req.app)
+    return json_response(release)
+
+
 @routes.get("/api/hmms/{hmm_id}")
 async def get(req):
     """
