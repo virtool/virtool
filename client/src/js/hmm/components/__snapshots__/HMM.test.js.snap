@@ -12,6 +12,10 @@ exports[`<HMM /> renders correctly 1`] = `
     />
     <Route
       component={[Function]}
+      path="/hmm/settings"
+    />
+    <Route
+      component={[Function]}
       path="/hmm/:hmmId"
     />
   </Switch>
