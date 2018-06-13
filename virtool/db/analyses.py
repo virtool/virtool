@@ -43,7 +43,7 @@ async def format_analysis(db, settings, document):
     if algorithm == "nuvs":
         return await format_nuvs(db, settings, document)
 
-    if algorithm == "pathoscope":
+    if algorithm and "pathoscope" in algorithm:
         return await format_pathoscope(db, document)
 
     raise ValueError("Could not determine analysis algorithm")

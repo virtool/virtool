@@ -56,7 +56,7 @@ const ReferenceSettings = ({ isRemote }) => (
 const getProgress = (detail, processes) => {
     let progress = 0;
 
-    if (!detail.process) {
+    if (!detail || !detail.process) {
         return 100;
     }
 
