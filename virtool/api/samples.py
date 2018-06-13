@@ -351,6 +351,8 @@ async def analyze(req):
         data["algorithm"]
     )
 
+    document = virtool.utils.base_processor(document)
+
     return json_response(
         document,
         status=201,

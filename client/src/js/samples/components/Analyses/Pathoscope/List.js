@@ -42,7 +42,7 @@ export default class PathoscopeList extends React.Component {
             height,
             width
         };
-    }
+    };
 
     render () {
 

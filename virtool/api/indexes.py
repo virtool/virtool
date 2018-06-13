@@ -19,9 +19,51 @@ async def find(req):
     """
     db = req.app["db"]
 
-    data = await virtool.db.indexes.find(db, req.query)
+    ready = req.query.get("ready", False)
 
-    return json_response(data)
+    if not ready:
+        data = await virtool.db.indexes.find(db, req.query)
+        return json_response(data)
+
+    pipeline = [
+        {
+            "$match": {
+                "ready": True
+            }
+        },
+        {
+            "$sort": {
+                "version": -1
+            }
+        },
+        {
+            "$group": {
+                "_id": "$reference.id",
+                "index": {
+                    "$first": "$_id"
+                },
+                "version": {
+                    "$first": "$version"
+                }
+            }
+        }
+    ]
+
+    ready_indexes = list()
+
+    async for agg in db.indexes.aggregate(pipeline):
+        reference_name = await virtool.db.utils.get_one_field(db.references, "name", agg["_id"])
+
+        ready_indexes.append({
+            "id": agg["index"],
+            "version": agg["version"],
+            "reference": {
+                "id": agg["_id"],
+                "name": reference_name
+            }
+        })
+
+    return json_response(ready_indexes)
 
 
 @routes.get("/api/indexes/{index_id}")

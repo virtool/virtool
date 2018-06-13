@@ -14,7 +14,7 @@ import {
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS
+    GET_ANALYSIS_PROGRESS, LIST_READY_INDEXES
 } from "../actionTypes";
 
 export const initialState = {
@@ -28,7 +28,8 @@ export const initialState = {
     showRemove: false,
     editError: false,
     reservedFiles: [],
-    readyHosts: null
+    readyHosts: null,
+    readyIndexes: null
 };
 
 export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
@@ -68,6 +69,9 @@ export default function samplesReducer (state = initialState, action) {
 
         case GET_SAMPLE.SUCCEEDED:
             return {...state, detail: action.data};
+
+        case LIST_READY_INDEXES.SUCCEEDED:
+            return {...state, readyIndexes: action.data};
 
         case UPDATE_SAMPLE.SUCCEEDED: {
             if (state.documents === null) {

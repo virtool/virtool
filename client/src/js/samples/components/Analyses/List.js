@@ -8,7 +8,7 @@ import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import { analyze } from "../../actions";
 import { getCanModify } from "../../selectors";
-import { findIndexes } from "../../../indexes/actions";
+import {listReadyIndexes} from "../../../indexes/actions";
 import { fetchHmms } from "../../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 
@@ -42,13 +42,13 @@ class AnalysesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFindIndexes();
         this.props.onFetchHMMs();
+        this.props.onListReadyIndexes();
     }
 
     render () {
 
-        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexArray === null) {
+        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexes === null) {
             return <LoadingPlaceholder margin="37px" />;
         }
 
@@ -109,7 +109,7 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    indexArray: state.indexes.documents,
+    indexes: state.samples.readyIndexes,
     hmms: state.hmms,
     canModify: getCanModify(state)
 });
@@ -124,8 +124,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(fetchHmms());
     },
 
-    onFindIndexes: () => {
-        dispatch(findIndexes());
+    onListReadyIndexes: () => {
+        dispatch(listReadyIndexes());
     }
 
 });
