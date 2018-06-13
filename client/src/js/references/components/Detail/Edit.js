@@ -88,17 +88,19 @@ export class EditReference extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Reference
                 </Modal.Header>
-                <Modal.Body>
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
-                </Modal.Body>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                    </Modal.Body>
 
-                <Modal.Footer>
-                    <ButtonToolbar className="pull-right">
-                        <Button icon="save" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
-                            Save
-                        </Button>
-                    </ButtonToolbar>
-                </Modal.Footer>
+                    <Modal.Footer>
+                        <ButtonToolbar className="pull-right">
+                            <Button icon="save" type="submit" bsStyle="primary">
+                                Save
+                            </Button>
+                        </ButtonToolbar>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }

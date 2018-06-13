@@ -65,7 +65,7 @@ export class CreateReference extends React.Component {
     render () {
 
         return (
-            <React.Fragment>
+            <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Alert bsStyle="info">
                         <strong>
@@ -81,12 +81,12 @@ export class CreateReference extends React.Component {
 
                 <Modal.Footer>
                     <ButtonToolbar className="pull-right">
-                        <Button icon="save" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
+                        <Button type="submit" icon="save" bsStyle="primary">
                             Save
                         </Button>
                     </ButtonToolbar>
                 </Modal.Footer>
-            </React.Fragment>
+            </form>
         );
     }
 }
