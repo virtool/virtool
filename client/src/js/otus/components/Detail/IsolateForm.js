@@ -12,10 +12,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { map, toLower } from "lodash-es";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
-import { InputError } from "../../../base";
+import { InputError, Button } from "../../../base";
 
 export default class IsolateForm extends React.Component {
 
@@ -72,27 +72,34 @@ export default class IsolateForm extends React.Component {
 
         return (
             <form onSubmit={this.props.onSubmit}>
-                <Row>
-                    <Col md={6}>
-                        {sourceTypeInput}
-                    </Col>
-                    <Col md={6}>
-                        <InputError
-                            label="Source Name"
-                            value={this.props.sourceName}
-                            onChange={this.changeSourceName}
-                            disabled={this.props.sourceType === "unknown"}
-                            spellCheck="off"
-                        />
-                    </Col>
-                    <Col md={12}>
-                        <InputError
-                            label="Isolate Name"
-                            value={formatIsolateName(this.props)}
-                            readOnly
-                        />
-                    </Col>
-                </Row>
+                <Modal.Body>
+                    <Row>
+                        <Col md={6}>
+                            {sourceTypeInput}
+                        </Col>
+                        <Col md={6}>
+                            <InputError
+                                label="Source Name"
+                                value={this.props.sourceName}
+                                onChange={this.changeSourceName}
+                                disabled={this.props.sourceType === "unknown"}
+                                spellCheck="off"
+                            />
+                        </Col>
+                        <Col md={12}>
+                            <InputError
+                                label="Isolate Name"
+                                value={formatIsolateName(this.props)}
+                                readOnly
+                            />
+                        </Col>
+                    </Row>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button type="submit" bsStyle="primary" icon="floppy">
+                        Save
+                    </Button>
+                </Modal.Footer>
             </form>
         );
     }

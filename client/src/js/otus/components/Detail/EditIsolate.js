@@ -11,9 +11,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
-
 import { editIsolate, hideOTUModal } from "../../actions";
-import { Button } from "../../../base";
 import IsolateForm from "./IsolateForm";
 
 const getInitialState = props => ({
@@ -36,7 +34,9 @@ class EditIsolate extends React.Component {
         this.setState(update);
     };
 
-    handleSubmit = () => {
+    handleSubmit = (e) => {
+        e.preventDefault();
+
         this.props.onSave(
             this.props.otuId,
             this.props.isolateId,
@@ -51,21 +51,14 @@ class EditIsolate extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Isolate
                 </Modal.Header>
-                <Modal.Body>
-                    <IsolateForm
-                        sourceType={this.state.sourceType}
-                        sourceName={this.state.sourceName}
-                        allowedSourceTypes={this.props.allowedSourceTypes}
-                        restrictSourceTypes={this.props.restrictSourceTypes}
-                        onChange={this.handleChange}
-                        onSubmit={this.handleSubmit}
-                    />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit}>
-                        Save
-                    </Button>
-                </Modal.Footer>
+                <IsolateForm
+                    sourceType={this.state.sourceType}
+                    sourceName={this.state.sourceName}
+                    allowedSourceTypes={this.props.allowedSourceTypes}
+                    restrictSourceTypes={this.props.restrictSourceTypes}
+                    onChange={this.handleChange}
+                    onSubmit={this.handleSubmit}
+                />
             </Modal>
         );
     }
