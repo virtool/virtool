@@ -97,7 +97,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.get("/api/refs/{ref_id}/update")
+@routes.get("/api/refs/{ref_id}/release")
 async def get_update(req):
     """
     Get the latest update from GitHub and return it. Also updates the reference document. This is the only way of doing
