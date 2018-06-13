@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Nav } from "react-bootstrap";
-import { SidebarItem } from "./SidebarItem";
+import SidebarItem from "./SidebarItem";
 import { startsWith } from "lodash-es";
 
 const isHomeActive = (location) => {
@@ -27,37 +27,85 @@ const Sidebar = (props) => {
         case "Jobs":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="Browse" link="/jobs" icon="th-list" />
-                    <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
-                    <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" />
+                    <SidebarItem
+                        exclude={["/jobs/resources", "/jobs/settings"]}
+                        title="Browse"
+                        link="/jobs"
+                        icon="th-list"
+                    />
+                    <SidebarItem
+                        title="Resources"
+                        link="/jobs/resources"
+                        icon="tachometer-alt"
+                    />
+                    <SidebarItem
+                        title="Settings"
+                        link="/jobs/settings"
+                        icon="cogs"
+                    />
                 </Nav>
             );
         case "Samples":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="Browse" link="/samples" icon="th-list" />
-                    <SidebarItem title="Files" link="/samples/files" icon="folder-open" />
-                    <SidebarItem title="Settings" link="/samples/settings" icon="cogs" />
+                    <SidebarItem
+                        exclude={["/samples/files", "/samples/settings"]}
+                        title="Browse"
+                        link="/samples"
+                        icon="th-list"
+                    />
+                    <SidebarItem
+                        title="Files"
+                        link="/samples/files"
+                        icon="folder-open"
+                    />
+                    <SidebarItem
+                        title="Settings"
+                        link="/samples/settings"
+                        icon="cogs"
+                    />
                 </Nav>
             );
         case "References":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="Browse" link="/refs" icon="th-list" />
-                    <SidebarItem title="Settings" link="/refs/settings" icon="cogs" />
+                    <SidebarItem
+                        exclude={["/refs/settings"]}
+                        title="Browse"
+                        link="/refs"
+                        icon="th-list"
+                    />
+                    <SidebarItem
+                        title="Settings"
+                        link="/refs/settings"
+                        icon="cogs"
+                    />
                 </Nav>
             );
         case "Subtraction":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="Browse" link="/subtraction" icon="th-list" />
-                    <SidebarItem title="Files" link="/subtraction/files" icon="folder-open" />
+                    <SidebarItem
+                        exclude={["/subtraction/files"]}
+                        title="Browse"
+                        link="/subtraction"
+                        icon="th-list"
+                    />
+                    <SidebarItem
+                        title="Files"
+                        link="/subtraction/files"
+                        icon="folder-open"
+                    />
                 </Nav>
             );
         case "HMM":
             return (
                 <Nav className="sidebar">
-                    <SidebarItem title="Browse" link="/hmm" icon="th-list" />
+                    <SidebarItem
+                        title="Browse"
+                        link="/hmm"
+                        icon="th-list"
+                    />
                 </Nav>
             );
         default:
