@@ -174,8 +174,6 @@ def format_otu(joined, issues=False, most_recent_change=None):
     if issues is False:
         issues = verify(joined)
 
-    print("ISSUES")
-
     formatted["issues"] = issues
 
     return formatted
