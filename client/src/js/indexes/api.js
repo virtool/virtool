@@ -9,7 +9,7 @@ export const get = ({ indexId }) => (
 );
 
 export const listReady = () => (
-    Request.get(`/api/indexes`)
+    Request.get("/api/indexes")
         .query({ready: true})
 );
 

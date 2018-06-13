@@ -107,7 +107,7 @@ class Sequence extends React.Component {
                 <div>
                     <Flex alignItems="center">
                         <FlexItem grow={0} shrink={0}>
-                            <Label>{id}</Label>
+                            <Label>{accession}</Label>
                         </FlexItem>
                         <FlexItem className="sequence-header-definition" grow={1} shrink={1} pad={5}>
                             {this.props.definition}
@@ -123,10 +123,6 @@ class Sequence extends React.Component {
                                 <tr>
                                     <th>Accession</th>
                                     <td>{accession}</td>
-                                </tr>
-                                <tr>
-                                    <th>Unique ID</th>
-                                    <td>{id}</td>
                                 </tr>
                                 <tr>
                                     <th>Host</th>
