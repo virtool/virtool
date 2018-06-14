@@ -91,6 +91,8 @@ class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
+        this.props.onOTUFirstPage(this.props.match.params.refId, 1);
+        this.props.onFindIndexes(this.props.match.params.refId, 1);
     }
 
     componentDidUpdate (prevProps) {
