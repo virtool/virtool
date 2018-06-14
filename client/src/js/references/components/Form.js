@@ -9,7 +9,7 @@ export default class ReferenceForm extends React.Component {
 
         const acceptedDataTypes = [
             "",
-            "Genome"
+            "genome"
         ];
 
         const dataOptions = map(acceptedDataTypes, (type) =>
