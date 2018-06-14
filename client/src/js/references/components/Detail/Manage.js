@@ -1,7 +1,6 @@
 import React from "react";
-import Semver from "semver";
 import Marked from "marked";
-import { filter, map, replace, sortBy } from "lodash-es";
+import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup, Panel, Table, Well, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link} from "react-router-dom";
@@ -59,7 +58,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ release, onCheckUpdates, isPending }) => {
+const Release = ({ release, onCheckUpdates, isPending, isUpdating }) => {
 
     let updateStats;
 
@@ -101,7 +100,7 @@ const Release = ({ release, onCheckUpdates, isPending }) => {
             </div>
 
             {updateDetail}
-            {updateAvailable ? (
+            {release.newer ? (
                 <Row style={{margin: "0"}}>
                     <Button
                         icon={isUpdating ? null : "download"}
@@ -128,30 +127,7 @@ const Release = ({ release, onCheckUpdates, isPending }) => {
     );
 };
 
-const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending }) => {
-
-    const ready = filter(updates, {ready: true});
-
-    const installed = ready.pop();
-
-    if (!installed) {
-        return null;
-    }
-
-    const updateAvailable = Semver.gt(Semver.coerce(release.name), Semver.coerce(installed.name));
-
-const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onInstall, isUpdating }) => {
-
-    const ready = filter(updates, {ready: true});
-
-    const installed = ready.pop();
-
-    if (!installed) {
-        return null;
-    }
-
-    const updateAvailable = Semver.gt(Semver.coerce(release.name), Semver.coerce(installed.name));
-
+const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending, isUpdating }) => {
     return (
         <Panel>
             <Panel.Heading>
