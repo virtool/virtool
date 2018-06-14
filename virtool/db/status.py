@@ -25,7 +25,14 @@ async def fetch_and_update_hmm_release(app):
 
     etag = None
 
-    existing = await virtool.db.utils.get_one_field(db.status, "release", "hmm")
+    document = await db.status.find_one("hmm", ["release", "updates"])
+
+    existing = document.get("release", None)
+
+    try:
+        installed = document["updates"][-1]
+    except (IndexError, KeyError):
+        installed = None
 
     if existing:
         etag = existing.get("etag", None)
@@ -33,13 +40,22 @@ async def fetch_and_update_hmm_release(app):
     release = await virtool.github.get_release(settings, session, "virtool/virtool-hmm", etag)
 
     if release:
-        return await db.status.find_one_and_update({"_id": "hmm"}, {
-            "$set": {
-                "release": virtool.github.format_release(release)
-            }
-        }, upsert=True)
+        release = virtool.github.format_release(release)
+    else:
+        release = existing
 
-    return await db.status.find_one("hmm")
+    release["newer"] = bool(
+        installed and
+        semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+    )
+
+    await db.status.update_one({"_id": "hmm"}, {
+        "$set": {
+            "release": release
+        }
+    }, upsert=True)
+
+    return release
 
 
 async def fetch_and_update_software_releases(db, settings, session, server_version):
