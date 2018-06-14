@@ -3,6 +3,7 @@ import json.decoder
 import os
 
 import pymongo
+import semver
 
 import virtool.db.history
 import virtool.db.otus
@@ -78,78 +79,6 @@ async def add_group_or_user(db, ref_id, field, data):
     })
 
     return subdocument
-
-
-async def check_for_remote_update(app, ref_id):
-    """
-    Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
-    reference identified by the passed `ref_id` and return the release.
-
-    :param app: the application object
-    :type app: :class:`aiohttp.Application`
-
-    :param ref_id: the id of the reference to update
-    :type ref_id: str
-
-    :return: the latest release
-    :rtype: Coroutine[dict]
-
-    """
-    db = app["db"]
-
-    last_checked = virtool.utils.timestamp()
-
-    document = await db.references.find_one(ref_id, [
-        "remotes_from",
-        "release",
-        "updates"
-    ])
-
-    try:
-        etag = document["release"]["etag"]
-    except KeyError:
-        etag = None
-
-    try:
-        release = await virtool.github.get_release(
-            app["settings"],
-            app["client"],
-            document["remotes_from"]["slug"],
-            etag
-        )
-    except virtool.errors.GitHubError as err:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release.last_checked": last_checked,
-                "remotes_from.last_checked": last_checked,
-                "remotes_from.errors": [str(err)]
-            }
-        })
-
-        return document.get("release", None)
-
-    if release:
-        release = virtool.github.format_release(release)
-
-        release["last_checked"] = last_checked
-
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release": release,
-                "remotes_from.errors": None,
-                "remotes_from.last_checked": last_checked
-            }
-        })
-
-    else:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release.last_checked": last_checked,
-                "remotes_from.last_checked": last_checked
-            }
-        })
-
-    return document.get("release", None)
 
 
 async def check_source_type(db, ref_id, source_type):
@@ -303,6 +232,82 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
             return subdocument
 
 
+async def fetch_and_update_release(app, ref_id):
+    """
+    Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
+    reference identified by the passed `ref_id` and return the release.
+
+    :param app: the application object
+    :type app: :class:`aiohttp.Application`
+
+    :param ref_id: the id of the reference to update
+    :type ref_id: str
+
+    :return: the latest release
+    :rtype: Coroutine[dict]
+
+    """
+    db = app["db"]
+
+    retrieved_at = virtool.utils.timestamp()
+
+    document = await db.references.find_one(ref_id, [
+        "remotes_from",
+        "release",
+        "updates"
+    ])
+
+    try:
+        etag = document["release"]["etag"]
+    except (KeyError, TypeError):
+        etag = None
+
+    try:
+        release = await virtool.github.get_release(
+            app["settings"],
+            app["client"],
+            document["remotes_from"]["slug"],
+            etag
+        )
+    except virtool.errors.GitHubError as err:
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "release.retrieved_at": retrieved_at,
+                "remotes_from.errors": [str(err)]
+            }
+        })
+
+        return document.get("release", None)
+
+    if release:
+        release = virtool.github.format_release(release)
+    else:
+        release = document.get("release", None)
+
+    if release:
+        release["retrieved_at"] = retrieved_at
+
+        newest = document["updates"][-1]
+
+        release["newer"] = bool(newest and semver.compare(release["name"].lstrip("v"), newest["name"].lstrip("v")) == 1)
+
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "release": release,
+                "remotes_from.errors": None
+            }
+        })
+
+    else:
+        await db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "release.retrieved_at": retrieved_at
+            }
+        })
+
+    return document.get("release", None)
+
+
 async def get_computed(db, ref_id, internal_control_id):
     """
     Get all computed data for the specified reference.
@@ -422,6 +427,15 @@ async def get_manifest(db, ref_id):
         manifest[document["_id"]] = document["version"]
 
     return manifest
+
+
+async def get_newest_update(db, ref_id):
+    updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
+
+    if len(updates):
+        return None
+
+    return updates[-1]
 
 
 async def get_otu_count(db, ref_id):
@@ -630,11 +644,10 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
         # Connection information for the GitHub remote repo.
         "remotes_from": {
             "errors": [],
-            "last_checked": created_at,
             "slug": remote_from
         },
         # The latest available release on GitHub.
-        "release": dict(release, last_checked=created_at),
+        "release": dict(release, retrieved_at=created_at),
         # The update history for the reference. We put the release being installed as the first history item.
         "updates": [create_update_subdocument(created_at, release, user_id)]
     })
@@ -994,7 +1007,7 @@ async def refresh_remotes(app):
     try:
         while True:
             for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
-                await check_for_remote_update(
+                await fetch_and_update_release(
                     app,
                     ref_id
                 )
