@@ -163,7 +163,7 @@ class Groups extends React.Component {
         if (!memberComponents.length) {
             memberComponents = (
                 <div className="text-center">
-                    <Icon name="info" /> No members found.
+                    <Icon name="info-circle" /> No members found.
                 </div>
             );
         }
@@ -241,7 +241,7 @@ class Groups extends React.Component {
                             </Panel>
 
                             <Button
-                                icon="remove"
+                                icon="trash"
                                 bsStyle="danger"
                                 onClick={() => this.props.onRemove(activeGroup.id)}
                                 block

@@ -25,7 +25,7 @@ const MemberEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, per
                     {add
                         ? (
                             <Icon
-                                name="plus-circle"
+                                name="check"
                                 bsStyle="success"
                                 tip="Selected Member"
                                 pullRight

@@ -74,7 +74,7 @@ class IndexesList extends React.Component {
                 const button = hasBuildPermission ? (
                     <FlexItem pad={20}>
                         <LinkContainer to={{state: {rebuild: true}}}>
-                            <Button bsStyle="warning" icon="hammer" pullRight>
+                            <Button bsStyle="warning" icon="wrench" pullRight>
                                 Rebuild
                             </Button>
                         </LinkContainer>

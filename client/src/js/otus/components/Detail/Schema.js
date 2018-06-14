@@ -142,12 +142,12 @@ class Schema extends React.Component {
                 {this.props.hasModifyOTU && !this.props.isRemote ? (
                     <Button
                         bsStyle="primary"
-                        icon="new-entry"
+                        icon="plus-square"
                         onClick={this.handleAddNew}
                         style={{marginBottom: "10px"}}
                         block
                     >
-                        Add Segment
+                        &nbsp;Add Segment
                     </Button>
                 ) : null}
 

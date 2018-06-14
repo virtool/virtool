@@ -32,7 +32,7 @@ class RemoveSegment extends React.Component {
                 <Modal.Footer>
                     <Button
                         bsStyle="danger"
-                        icon="checkmark"
+                        icon="check"
                         onClick={this.handleSubmit}
                     >
                         Confirm

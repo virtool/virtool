@@ -25,7 +25,7 @@ class RemoveSequence extends React.Component {
                 <Modal.Footer>
                     <Button
                         bsStyle="danger"
-                        icon="checkmark"
+                        icon="check"
                         onClick={this.handleConfirm}
                     >
                         Confirm

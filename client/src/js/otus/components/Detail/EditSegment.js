@@ -84,7 +84,7 @@ class EditSegment extends React.Component {
                         />
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button bsStyle="primary" icon="floppy" type="submit" >
+                        <Button bsStyle="primary" icon="save" type="submit" >
                             Save
                         </Button>
                     </Modal.Footer>

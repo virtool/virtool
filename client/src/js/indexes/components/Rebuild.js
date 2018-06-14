@@ -75,7 +75,7 @@ class RebuildIndex extends React.Component {
                         {errorDisplay}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="hammer">
+                        <Button type="submit" bsStyle="primary" icon="wrench">
                             Start
                         </Button>
                     </Modal.Footer>

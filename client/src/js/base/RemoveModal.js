@@ -23,7 +23,7 @@ export const RemoveModal = ({ name, noun, show, onConfirm, onHide }) => (
             Are you sure you want to remove <strong>{name}</strong>?
         </Modal.Body>
         <Modal.Footer>
-            <Button bsStyle="danger" icon="checkmark" onClick={onConfirm}>
+            <Button bsStyle="danger" icon="check" onClick={onConfirm}>
                 Confirm
             </Button>
         </Modal.Footer>
