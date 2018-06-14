@@ -41,6 +41,13 @@ async def find(req):
 
     data.update(await db.status.find_one("hmm", {"_id": False}))
 
+    updates = data.pop("updates")
+
+    if len(updates):
+        data["installed"] = updates[-1]
+    else:
+        data["installed"] = None
+
     return json_response(data)
 
 
@@ -52,8 +59,16 @@ async def get_release(req):
 
 @routes.get("/api/hmms/updates")
 async def list_updates(req):
+    """
+    List all updates applied to the HMM collection.
+
+    """
     db = req.app["db"]
+
     updates = await virtool.db.utils.get_one_field(db.status, "updates", "hmm")
+
+    if updates:
+        updates.reverse()
 
     return json_response(updates or list())
 
@@ -70,6 +85,8 @@ async def install(req):
 
     """
     release_id = req["data"]["release_id"]
+
+    print(release_id)
 
     db = req.app["db"]
 

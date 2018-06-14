@@ -173,7 +173,7 @@ async def install(app, process_id, release_id, user_id):
 
         logger.debug("Inserted {} annotations".format(len(annotations)))
 
-        for key in ["etag", "content_type", "last_checked"]:
+        for key in ["etag", "content_type", "retrieved_at"]:
             try:
                 del release[key]
             except KeyError:
