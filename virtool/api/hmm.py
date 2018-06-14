@@ -39,14 +39,16 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data.update(await db.status.find_one("hmm", {"_id": False}))
+    status = await db.status.find_one("hmm")
 
-    updates = data.pop("updates")
+    updates = status.pop("updates")
 
     if len(updates):
-        data["installed"] = updates[-1]
+        status["installed"] = updates[-1]
     else:
-        data["installed"] = None
+        status["installed"] = None
+
+    data["status"] = virtool.utils.base_processor(status)
 
     return json_response(data)
 
