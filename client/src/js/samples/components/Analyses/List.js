@@ -70,7 +70,7 @@ class AnalysesList extends React.Component {
             hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
-                        <Icon name="info" />
+                        <Icon name="info-circle" />
                         <FlexItem pad={5}>
                             <span>The HMM data is not installed. </span>
                             <Link to="/hmm">Install HMMs</Link>

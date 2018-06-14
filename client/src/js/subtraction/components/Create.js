@@ -128,7 +128,7 @@ class CreateSubtraction extends React.Component {
         } else {
             fileComponents = (
                 <ListGroupItem className="text-center">
-                    <Icon name="info" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
+                    <Icon name="info-circle" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
                 </ListGroupItem>
             );
         }
