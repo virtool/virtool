@@ -141,8 +141,8 @@ const ReferenceItem = (props) => {
 
     if (props.process && props.processes.length) {
         const process = find(props.processes, ["id", props.process.id]);
-        progress = process.progress;
-        step = process.step;
+        progress = process ? process.progress : 1;
+        step = process ? process.step : "None";
         progress *= 100;
     } else {
         step = "None";

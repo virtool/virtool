@@ -59,7 +59,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending, onInstall }) => {
+const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending, onInstall, isUpdating }) => {
 
     let updateStats;
 
@@ -105,16 +105,34 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
             </div>
 
             {updateDetail}
-            <Row style={{margin: "0"}}>
-                <Button icon="download" bsStyle="primary" onClick={onInstall} pullRight>
-                    Install
-                </Button>
-            </Row>
+            {updateAvailable ? (
+                <Row style={{margin: "0"}}>
+                    <Button
+                        icon={isUpdating ? null : "download"}
+                        bsStyle="primary"
+                        onClick={onInstall}
+                        disabled={isUpdating}
+                        pullRight
+                    >
+                        {isUpdating
+                            ? (
+                                <div>
+                                    <LoadingPlaceholder
+                                        margin="0"
+                                        size="14px"
+                                        color="#edf7f6"
+                                        style={{display: "inline-block"}}
+                                    /> Installing...
+                                </div>
+                            ) : "Install"}
+                    </Button>
+                </Row>
+            ) : null}
         </ListGroupItem>
     );
 };
 
-const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onInstall }) => {
+const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onInstall, isUpdating }) => {
 
     const ready = filter(updates, {ready: true});
 
@@ -153,6 +171,7 @@ const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onIn
                     onCheckUpdates={onCheckUpdates}
                     isPending={isPending}
                     onInstall={onInstall}
+                    isUpdating={isUpdating}
                 />
             </ListGroup>
         </Panel>
@@ -183,7 +202,7 @@ class ReferenceManage extends React.Component {
     };
 
     handleUpdateRemote = () => {
-        this.props.onUpdate(this.props.detail.id, "latest");
+        this.props.onUpdate(this.props.detail.id);
     };
 
     render () {
@@ -219,6 +238,7 @@ class ReferenceManage extends React.Component {
                     onCheckUpdates={this.handleCheckUpdates}
                     isPending={checkPending}
                     onInstall={this.handleUpdateRemote}
+                    isUpdating={this.props.isUpdating}
                 />
             );
         }
@@ -290,15 +310,15 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  
+
     onCheckUpdates: (refId) => {
         dispatch(checkUpdates(refId));
     },
-    
-    onUpdate: (refId, releaseId) => {
-        dispatch(updateRemoteReference(refId, releaseId));
+
+    onUpdate: (refId) => {
+        dispatch(updateRemoteReference(refId));
     }
-    
+
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ReferenceManage);

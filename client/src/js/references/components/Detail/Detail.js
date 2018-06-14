@@ -4,7 +4,7 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "react-router-redux";
 import { find, get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
+import { Badge, Nav, NavItem, Dropdown, MenuItem, ProgressBar as BSProgressBar } from "react-bootstrap";
 import {
     LoadingPlaceholder,
     Icon,
@@ -21,7 +21,7 @@ import { findIndexes } from "../../../indexes/actions";
 import { fetchOTUs } from "../../../otus/actions";
 import { getReference } from "../../actions";
 import EditReference from "./Edit";
-import ReferenceManage from "./Manage";
+import Manage from "./Manage";
 import ReferenceUsers from "./Users";
 import ReferenceGroups from "./Groups";
 import ReferenceOTUs from "../../../otus/components/List";
@@ -44,6 +44,10 @@ class CustomToggle extends React.Component {
     }
 }
 
+const ReferenceManage = (props) => (
+    <Manage {...props} />
+);
+
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
@@ -52,6 +56,20 @@ const ReferenceSettings = ({ isRemote }) => (
         <ReferenceGroups />
     </div>
 );
+
+const isRemoteUpdate = (detail, processes) => {
+    if (!detail || !detail.process || !processes.length) {
+        return false;
+    }
+
+    const process = find(processes, ["id", detail.process.id]);
+
+    if (!process) {
+        return false;
+    }
+
+    return process.type === "update_remote_reference";
+};
 
 const getProgress = (detail, processes) => {
     let progress = 0;
@@ -62,7 +80,7 @@ const getProgress = (detail, processes) => {
 
     if (detail.process.id && processes.length) {
         const process = find(processes, ["id", detail.process.id]);
-        progress = process.progress;
+        progress = process ? process.progress : 1;
         progress *= 100;
     }
 
@@ -73,8 +91,6 @@ class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
-        this.props.onOTUFirstPage(this.props.match.params.refId, 1);
-        this.props.onFindIndexes(this.props.match.params.refId, 1);
     }
 
     componentDidUpdate (prevProps) {
@@ -87,6 +103,8 @@ class ReferenceDetail extends React.Component {
 
         if (oldProgress !== 100 && newProgress === 100) {
             this.props.onGetReference(this.props.match.params.refId);
+            this.props.onOTUFirstPage(this.props.match.params.refId, 1);
+            this.props.onFindIndexes(this.props.match.params.refId, 1);
         }
     }
 
@@ -185,13 +203,19 @@ class ReferenceDetail extends React.Component {
         );
 
         const progress = getProgress(this.props.detail, this.props.processes);
+        const isUpdatingRemote = isRemoteUpdate(this.props.detail, this.props.processes);
 
-        if (progress !== 100) {
+        if (this.props.processes.length && progress !== 100) {
             return (
                 <div>
                     {referenceHeader}
-                    <ProgressBar bsStyle="success" now={progress} />
-                    <ReferenceManage match={this.props.match} />
+                    {isUpdatingRemote ? (
+                        <BSProgressBar>
+                            <BSProgressBar bsStyle="warning" now={50} />
+                            <BSProgressBar bsStyle="success" now={progress / 2} />
+                        </BSProgressBar>
+                    ) : <ProgressBar bsStyle="warning" now={progress} />}
+                    <ReferenceManage match={this.props.match} isUpdating={isUpdatingRemote} />
                 </div>
             );
         }
@@ -217,7 +241,10 @@ class ReferenceDetail extends React.Component {
 
                 <Switch>
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
-                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                    <Route
+                        path="/refs/:refId/manage"
+                        render={({ match }) => <ReferenceManage match={match} isUpdating={isUpdatingRemote} />}
+                    />
                     <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
                     <Route path="/refs/:refId/indexes" component={ReferenceIndexList} />
                     <Route path="/refs/:refId/settings" render={() => <ReferenceSettings isRemote={remotes_from} />} />
