@@ -207,7 +207,7 @@ async def organize_status(db, server_version):
     try:
         await db.status.insert_one({
             "_id": "hmm",
-            "installed": False,
+            "ready": False,
             "updates": list(),
             "release": None
         })
