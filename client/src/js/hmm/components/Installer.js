@@ -69,12 +69,10 @@ class HMMInstall extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    const status = state.hmms.status;
-    const processId = get(status, "process.id");
+    const processId = get(state, "process.id");
     const process = find(state.process, {id: processId});
 
     return {
-        ...status,
         process
     };
 };
