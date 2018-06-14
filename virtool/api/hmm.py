@@ -1,10 +1,13 @@
 import os
 
+import aiojobs.aiohttp
+
+import virtool.db.hmm
 import virtool.db.processes
 import virtool.db.status
-import virtool.http.routes
-import virtool.db.hmm
+import virtool.db.utils
 import virtool.hmm
+import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, no_content, not_found, paginate
 
@@ -36,7 +39,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data["status"] = await db.status.find_one("hmm", {"_id": False})
+    data.update(await db.status.find_one("hmm", {"_id": False}))
 
     return json_response(data)
 
@@ -47,13 +50,26 @@ async def get_release(req):
     return json_response(release)
 
 
-@routes.post("/api/hmm/updates")
-async def install_hmm(req):
+@routes.get("/api/hmms/updates")
+async def list_updates(req):
+    db = req.app["db"]
+    updates = await virtool.db.utils.get_one_field(db.status, "updates", "hmm")
+
+    return json_response(updates or list())
+
+
+@routes.post("/api/hmms/updates", schema={
+    "release_id": {
+        "type": "string",
+        "default": "latest"
+    }
+})
+async def install(req):
     """
     Install the latest official HMM database from GitHub.
 
     """
-    release_id = req["data"].get("release_id", "latest")
+    release_id = req["data"]["release_id"]
 
     db = req.app["db"]
 
@@ -70,10 +86,11 @@ async def install_hmm(req):
         }
     })
 
-    await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install_official(
+    await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install(
         req.app,
         process["id"],
-        release_id
+        release_id,
+        req["client"].user_id
     ))
 
     return json_response(virtool.utils.base_processor(document))
@@ -110,14 +127,12 @@ async def purge(req):
     except FileNotFoundError:
         pass
 
-    await db.status.update_one({"_id": "hmm"}, {
+    await db.status.find_one_and_update({"_id": "hmm"}, {
         "$set": {
-            "installed": False,
             "process": None,
-            "release": None,
-            "version": None
+            "ready": False,
+            "updates": list()
         }
-
     })
 
     await virtool.db.status.fetch_and_update_hmm_release(req.app)
