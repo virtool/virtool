@@ -22,7 +22,7 @@ def format_release(release):
         "etag": release["etag"],
         "filename": asset["name"],
         "size": asset["size"],
-        "browser_url": release["url"],
+        "html_url": release["html_url"],
         "download_url": asset["browser_download_url"],
         "published_at": release["published_at"],
         "content_type": asset["content_type"]

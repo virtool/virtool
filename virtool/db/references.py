@@ -646,7 +646,6 @@ def create_update_subdocument(created_at, release, user_id):
     update = dict(release)
 
     update["created_at"] = created_at
-    update["github_url"] = update.pop("browser_url")
     update["user"] = {
         "id": user_id
     }
