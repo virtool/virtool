@@ -18,7 +18,7 @@ import {
     ADD_REFERENCE_GROUP,
     EDIT_REFERENCE_GROUP,
     REMOVE_REFERENCE_GROUP,
-    CHECK_REMOTE_UPDATES
+    CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
 
@@ -123,7 +123,7 @@ export function* updateRemoteReference (action) {
     yield apiCall(referenceAPI.updateRemote, action, UPDATE_REMOTE_REFERENCE);
     yield getReference({
         type: GET_REFERENCE.REQUESTED,
-        referenceId: action.referenceId
+        referenceId: action.refId
     });
 }
 

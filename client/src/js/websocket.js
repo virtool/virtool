@@ -3,9 +3,14 @@ import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } fr
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsUpdateIndex } from "./indexes/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
-import { wsUpdateProcess } from "./processes/actions";
+import { wsUpdateProcess, wsInsertProcess } from "./processes/actions";
+import { wsUpdateReference } from "./references/actions";
 import { wsUpdateStatus } from "./status/actions";
 import { wsUpdateSubtraction } from "./subtraction/actions";
+
+const documentInserters = {
+    processes: wsInsertProcess
+};
 
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
@@ -13,6 +18,7 @@ const documentUpdaters = {
     indexes: wsUpdateIndex,
     jobs: wsUpdateJob,
     processes: wsUpdateProcess,
+    references: wsUpdateReference,
     samples: wsUpdateSample,
     status: wsUpdateStatus,
     subtraction: wsUpdateSubtraction
@@ -37,6 +43,10 @@ export default function WSConnection (dispatch) {
         const operation = message.operation;
 
         window.console.log(`${iface}.${operation}`);
+
+        if (operation === "insert" && documentInserters[iface]) {
+            return dispatch(documentInserters[iface](message.data));
+        }
 
         if (operation === "update" && documentUpdaters[iface]) {
             return dispatch(documentUpdaters[iface](message.data));

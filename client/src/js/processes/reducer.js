@@ -1,5 +1,5 @@
 import { map } from "lodash-es";
-import { WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
+import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
 
 export const initialState = {
     documents: [],
@@ -25,6 +25,9 @@ export const updateProcesses = (state, action) => {
 export default function processReducer (state = initialState, action) {
 
     switch (action.type) {
+
+        case WS_INSERT_PROCESS:
+            return {...state, documents: [...state.documents, action.data]};
 
         case WS_UPDATE_PROCESS:
             return updateProcesses(state, action);
