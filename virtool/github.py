@@ -1,5 +1,9 @@
+import logging
+
 import virtool.errors
 import virtool.http.proxy
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.github.com/repos"
 
@@ -56,6 +60,12 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
         headers["If-None-Match"] = etag
 
     async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
+        logger.debug("Fetched release: {}/{} ({})".format(
+            slug,
+            release_id,
+            resp.status
+        ))
+
         if resp.status == 200:
             data = await resp.json()
 
