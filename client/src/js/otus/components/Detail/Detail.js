@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Label, Nav, NavItem, Breadcrumb } from "react-bootstrap";
+import { Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
@@ -119,16 +119,6 @@ class OTUDetail extends React.Component {
                                 </FlexItem>
                             </Flex>
                         </FlexItem>
-
-                        {this.props.otuDetail.modified ? (
-                            <small>
-                                <Label bsStyle="warning" className="with-icon">
-                                    <Icon name="flag" />
-                                    Modified
-                                </Label>
-                            </small>
-                        ) : null}
-
                         {iconButtons}
                     </Flex>
                 </h3>
