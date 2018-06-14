@@ -8,7 +8,7 @@ import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import CreateSubtraction from "./Create";
 import SubtractionItem from "./Item";
 import { Alert, Button, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 
 const SubtractionList = (props) => {
 
@@ -31,7 +31,7 @@ const SubtractionList = (props) => {
 
     if (!props.ready_host_count) {
         alert = (
-            <Alert bsStyle="warning" icon="notification">
+            <Alert bsStyle="warning" icon="info-circle">
                 <strong>
                     A host genome must be added before samples can be created and analyzed.
                 </strong>
@@ -79,7 +79,7 @@ const SubtractionList = (props) => {
 const mapStateToProps = (state) => ({
     ...state.subtraction,
     term: getFindTerm(),
-    canModify: state.account.permissions.modify_subtraction
+    canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction")
 });
 
 const mapDispatchToProps = (dispatch) => ({
