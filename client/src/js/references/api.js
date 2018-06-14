@@ -89,3 +89,8 @@ export const removeGroup = ({ refId, groupId }) => (
 export const checkUpdates = ({ refId }) => (
     Request.get(`/api/refs/${refId}/update`)
 );
+
+export const updateRemote = ({ refId }) => (
+    Request.post(`/api/refs/${refId}/updates`)
+        .send({})
+);

@@ -65,6 +65,7 @@ export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
 // Refs
+export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
 export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
@@ -80,8 +81,10 @@ export const ADD_REFERENCE_GROUP = createRequestActionType("ADD_REFERENCE_GROUP"
 export const EDIT_REFERENCE_GROUP = createRequestActionType("EDIT_REFERENCE_GROUP");
 export const REMOVE_REFERENCE_GROUP = createRequestActionType("REMOVE_REFERENCE_GROUP");
 export const CHECK_REMOTE_UPDATES = createRequestActionType("CHECK_REMOTE_UPDATES");
+export const UPDATE_REMOTE_REFERENCE = createRequestActionType("UPDATE_REMOTE_REFERENCE");
 
 // Processes
+export const WS_INSERT_PROCESS = "WS_INSERT_PROCESS";
 export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
 export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
 export const GET_PROCESS = createRequestActionType("GET_PROCESS");

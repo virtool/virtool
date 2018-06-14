@@ -1,5 +1,6 @@
 import { simpleActionCreator } from "../utils";
 import {
+    WS_UPDATE_REFERENCE,
     LIST_REFERENCES,
     GET_REFERENCE,
     CREATE_REFERENCE,
@@ -14,8 +15,14 @@ import {
     ADD_REFERENCE_GROUP,
     EDIT_REFERENCE_GROUP,
     REMOVE_REFERENCE_GROUP,
-    CHECK_REMOTE_UPDATES
+    CHECK_REMOTE_UPDATES,
+    UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
+
+export const wsUpdateReference = (data) => ({
+    type: WS_UPDATE_REFERENCE,
+    data
+});
 
 export const listReferences = simpleActionCreator(LIST_REFERENCES);
 
@@ -108,5 +115,10 @@ export const removeReferenceGroup = (refId, groupId) => ({
 
 export const checkUpdates = (refId) => ({
     type: CHECK_REMOTE_UPDATES.REQUESTED,
+    refId
+});
+
+export const updateRemoteReference = (refId) => ({
+    type: UPDATE_REMOTE_REFERENCE.REQUESTED,
     refId
 });

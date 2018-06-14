@@ -18,7 +18,8 @@ import {
     ADD_REFERENCE_GROUP,
     EDIT_REFERENCE_GROUP,
     REMOVE_REFERENCE_GROUP,
-    CHECK_REMOTE_UPDATES
+    CHECK_REMOTE_UPDATES,
+    UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
 
 export function* listReferences (action) {
@@ -118,6 +119,14 @@ export function* checkRemoteUpdates (action) {
     yield apiCall(referenceAPI.checkUpdates, action, CHECK_REMOTE_UPDATES);
 }
 
+export function* updateRemoteReference (action) {
+    yield apiCall(referenceAPI.updateRemote, action, UPDATE_REMOTE_REFERENCE);
+    yield getReference({
+        type: GET_REFERENCE.REQUESTED,
+        referenceId: action.refId
+    });
+}
+
 export function* watchReferences () {
     yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
     yield takeEvery(EDIT_REFERENCE.REQUESTED, editReference);
@@ -134,4 +143,5 @@ export function* watchReferences () {
     yield takeEvery(EDIT_REFERENCE_GROUP.REQUESTED, editRefGroup);
     yield takeEvery(REMOVE_REFERENCE_GROUP.REQUESTED, removeRefGroup);
     yield takeEvery(CHECK_REMOTE_UPDATES.REQUESTED, checkRemoteUpdates);
+    yield takeEvery(UPDATE_REMOTE_REFERENCE.REQUESTED, updateRemoteReference);
 }

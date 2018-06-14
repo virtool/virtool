@@ -1,9 +1,11 @@
 import {
+    WS_UPDATE_REFERENCE,
     LIST_REFERENCES,
     GET_REFERENCE,
     REMOVE_REFERENCE,
     UPLOAD,
-    CHECK_REMOTE_UPDATES
+    CHECK_REMOTE_UPDATES,
+    UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
 
 const initialState = {
@@ -15,6 +17,9 @@ const initialState = {
 export default function referenceReducer (state = initialState, action) {
 
     switch (action.type) {
+
+        case WS_UPDATE_REFERENCE:
+            return {...state, detail: {...state.detail, process: action.data.process, release: action.data.release}};
 
         case LIST_REFERENCES.SUCCEEDED:
             return {...state, ...action.data};
@@ -36,6 +41,10 @@ export default function referenceReducer (state = initialState, action) {
 
         case CHECK_REMOTE_UPDATES.SUCCEEDED:
             return {...state, detail: {...state.detail, checkPending: false, release: action.data}};
+
+        case UPDATE_REMOTE_REFERENCE.SUCCEEDED:
+            return {...state, detail: {...state.detail, release: action.data}};
+
         default:
             return state;
     }
