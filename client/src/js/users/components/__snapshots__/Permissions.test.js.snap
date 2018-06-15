@@ -61,7 +61,7 @@ exports[`<UserPermissions /> renders correctly 1`] = `
           <Icon
             faStyle="fas"
             fixedWidth={false}
-            name="close"
+            name="times"
             pullRight={true}
           />
         </ListGroupItem>
