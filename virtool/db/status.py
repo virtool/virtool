@@ -45,8 +45,10 @@ async def fetch_and_update_hmm_release(app):
         release = existing
 
     release["newer"] = bool(
-        installed and
-        semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+        release is None or (
+            installed and
+            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+        )
     )
 
     await db.status.update_one({"_id": "hmm"}, {
