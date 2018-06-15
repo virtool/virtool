@@ -99,7 +99,8 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
-                    hasHmm={this.props.hmms.total_count && this.props.hmms.file_exists}
+                    hasHmm={!!this.props.hmms.total_count && this.props.hmms.status.installed}
+                    refIndexes={this.props.indexes}
                 />
             </div>
         );
