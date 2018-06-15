@@ -6,10 +6,11 @@ import virtool.db.hmm
 import virtool.db.processes
 import virtool.db.status
 import virtool.db.utils
+import virtool.github
 import virtool.hmm
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import compose_regex_query, json_response, no_content, not_found, paginate
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -20,7 +21,6 @@ async def find(req):
     Find HMM annotation documents.
 
     """
-
     db = req.app["db"]
 
     term = req.query.get("find", None)
@@ -52,13 +52,13 @@ async def get_status(req):
     return json_response(status)
 
 
-@routes.get("/api/hmms/release")
+@routes.get("/api/hmms/status/release")
 async def get_release(req):
     release = await virtool.db.status.fetch_and_update_hmm_release(req.app)
     return json_response(release)
 
 
-@routes.get("/api/hmms/updates")
+@routes.get("/api/hmms/status/updates")
 async def list_updates(req):
     """
     List all updates applied to the HMM collection.
@@ -74,7 +74,7 @@ async def list_updates(req):
     return json_response(updates or list())
 
 
-@routes.post("/api/hmms/updates", schema={
+@routes.post("/api/hmms/status/updates", schema={
     "release_id": {
         "type": "string",
         "default": "latest"
