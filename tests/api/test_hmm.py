@@ -1,4 +1,5 @@
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 
 @pytest.fixture
@@ -50,11 +51,13 @@ def hmm_document():
     }
 
 
-async def test_find(spawn_client, hmm_document):
+async def test_find(mocker, spawn_client, hmm_document):
     """
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
+    m = mocker.patch("virtool.db.status.get_hmm_status", make_mocked_coro({"id": "hmm"}))
+
     client = await spawn_client(authorize=True)
 
     hmm_document["hidden"] = False
@@ -86,8 +89,12 @@ async def test_find(spawn_client, hmm_document):
                 }
             }
         ],
-        "status": None
+        "status": {
+            "id": "hmm"
+        }
     }
+
+    m.assert_called_with(client.db)
 
 
 class TestGet:
