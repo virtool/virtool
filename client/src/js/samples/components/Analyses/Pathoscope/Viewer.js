@@ -80,7 +80,7 @@ const PathoscopeViewer = (props) => {
     }
 
     return (
-        <Alert bsStyle="info" className="text-center" icon="notification">
+        <Alert bsStyle="info" className="text-center" icon="info-circle">
             No OTU sequences found in sample
         </Alert>
     );

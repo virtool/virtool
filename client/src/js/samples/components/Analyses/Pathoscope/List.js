@@ -110,7 +110,7 @@ export default class PathoscopeList extends React.Component {
         return (
             <Panel className="text-center">
                 <Panel.Body>
-                    <Icon name="info" /> No hits found.
+                    <Icon name="info-circle" /> No hits found.
                 </Panel.Body>
             </Panel>
         );

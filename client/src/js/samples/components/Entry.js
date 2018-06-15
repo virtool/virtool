@@ -23,7 +23,7 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
 
 const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
     <Flex>
-        <SampleEntryLabel icon="filing" label="Import" ready={imported || true} />&nbsp;
+        <SampleEntryLabel icon="archive" label="Import" ready={imported || true} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
     </Flex>
@@ -71,7 +71,7 @@ class SampleEntry extends React.Component {
                                     Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                                 </span>
                                 <span className="hidden-md hidden-lg">
-                                    <Icon name="meter" /> <RelativeTime time={this.props.created_at} />
+                                    <Icon name="clock" /> <RelativeTime time={this.props.created_at} />
                                 </span>
                             </Col>
 

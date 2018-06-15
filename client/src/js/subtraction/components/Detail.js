@@ -10,6 +10,7 @@ import { getSubtraction } from "../actions";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader, NotFound } from "../../base";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
+import { checkAdminOrPermission } from "../../utils";
 
 const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
@@ -150,7 +151,7 @@ class SubtractionDetail extends React.Component {
 
 const mapStateToProps = (state) => ({
     error: get(state, "errors.GET_SUBTRACTION_ERROR", null),
-    canModify: state.account.permissions.modify_subtraction,
+    canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction"),
     detail: state.subtraction.detail
 });
 

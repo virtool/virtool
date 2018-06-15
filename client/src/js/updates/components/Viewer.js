@@ -63,7 +63,7 @@ const Releases = ({ onShowModal, releases }) => {
     return (
         <Panel>
             <Panel.Body>
-                <Icon bsStyle="success" name="checkmark" />
+                <Icon bsStyle="success" name="check" />
                 <strong className="text-success"> Software is up-to-date</strong>
             </Panel.Body>
         </Panel>

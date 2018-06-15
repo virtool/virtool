@@ -3,7 +3,7 @@
 exports[`<RemoveModal /> Modal.Footer renders a confirmation button 1`] = `
 <Button
   bsStyle="danger"
-  icon="checkmark"
+  icon="check"
   pullRight={false}
   tipPlacement="top"
 >
@@ -59,7 +59,7 @@ exports[`<RemoveModal /> renders a bootstrap Modal component when [show=true] 1`
   >
     <Button
       bsStyle="danger"
-      icon="checkmark"
+      icon="check"
       pullRight={false}
       tipPlacement="top"
     >
@@ -117,7 +117,7 @@ exports[`<RemoveModal /> renders correctly 1`] = `
   >
     <Button
       bsStyle="danger"
-      icon="checkmark"
+      icon="check"
       pullRight={false}
       tipPlacement="top"
     >

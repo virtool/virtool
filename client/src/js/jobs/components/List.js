@@ -64,16 +64,9 @@ export class JobsList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-
-    const { cancel_job, remove_job } = state.account.permissions;
-
-    return {
-        ...state.jobs,
-        canCancel: cancel_job,
-        canRemove: remove_job
-    };
-};
+const mapStateToProps = (state) => ({
+    ...state.jobs
+});
 
 const mapDispatchToProps = (dispatch) => ({
 

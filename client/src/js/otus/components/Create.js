@@ -115,7 +115,7 @@ class CreateOTU extends React.Component {
 
                     <Modal.Footer>
                         <ButtonToolbar className="pull-right">
-                            <Button icon="floppy" type="submit" bsStyle="primary">
+                            <Button icon="save" type="submit" bsStyle="primary">
                                 Save
                             </Button>
                         </ButtonToolbar>

@@ -108,7 +108,7 @@ class EditOTU extends React.Component {
                         </Row>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="floppy">
+                        <Button type="submit" bsStyle="primary" icon="save">
                             Save
                         </Button>
                     </Modal.Footer>

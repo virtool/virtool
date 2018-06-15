@@ -83,7 +83,7 @@ export default class ReadSelector extends React.PureComponent {
         if (!fileComponents.length) {
             fileComponents = (
                 <ListGroupItem className="text-center">
-                    <Icon name="info" /> No read files found. <Link to="samples/files">Upload some</Link>.
+                    <Icon name="info-circle" /> No read files found. <Link to="samples/files">Upload some</Link>.
                 </ListGroupItem>
             );
         }

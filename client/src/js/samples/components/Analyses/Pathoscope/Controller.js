@@ -125,7 +125,9 @@ export default class PathoscopeController extends React.Component {
                                 <InputGroup>
                                     <InputGroup.Button>
                                         <Button title="Sort Direction" onClick={this.toggleSortDescending}>
-                                            <Icon name={this.state.sortDescending ? "sort-desc" : "sort-asc"} />
+                                            <Icon
+                                                name={this.state.sortDescending ? "sort-amount-down" : "sort-amount-up"}
+                                            />
                                         </Button>
                                     </InputGroup.Button>
                                     <FormControl
@@ -141,7 +143,7 @@ export default class PathoscopeController extends React.Component {
                             </FormGroup>
 
                             <Button
-                                icon="shrink"
+                                icon="compress"
                                 title="Collapse"
                                 onClick={this.collapseAll}
                                 className="hidden-xs"
@@ -149,7 +151,7 @@ export default class PathoscopeController extends React.Component {
                             />
 
                             <Button
-                                icon="pie"
+                                icon="chart-pie"
                                 title="Change Weight Format"
                                 active={!this.state.showReads}
                                 className="hidden-xs"

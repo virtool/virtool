@@ -19,7 +19,7 @@ import CreateOTU from "./Create";
 import { checkUserRefPermission, getUpdatedScrollListState } from "../../utils";
 import { fetchOTUs } from "../actions";
 
-const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
+const OTUItem = ({ refId, abbreviation, id, name, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
         <ListGroupItem bsStyle={verified ? null : "warning"}>
             <Row>
@@ -31,11 +31,6 @@ const OTUItem = ({ refId, abbreviation, id, name, modified, verified }) => (
                 </Col>
                 <Col xsHidden md={4}>
                     {abbreviation}
-                </Col>
-                <Col xs={1} md={1}>
-                    <span className="pull-right">
-                        {modified ? <Icon bsStyle="warning" name="flag" /> : null}
-                    </span>
                 </Col>
                 {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
             </Row>
@@ -90,7 +85,7 @@ class OTUsList extends React.Component {
             alert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
-                        <Icon name="info" />
+                        <Icon name="info-circle" />
                         <FlexItem pad={5}>
                             <span>The OTU database has changed. </span>
                             <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>

@@ -26,12 +26,12 @@ const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }
     let iconStyle;
 
     if (proxyTestSucceeded) {
-        iconName = "checkmark";
+        iconName = "check";
         iconStyle = "success";
     }
 
     if (proxyTestFailed) {
-        iconName = "blocked";
+        iconName = "ban";
         iconStyle = "danger";
     }
 

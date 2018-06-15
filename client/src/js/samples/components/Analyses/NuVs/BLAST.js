@@ -125,7 +125,7 @@ const NuVsBLAST = (props) => {
         <Alert bsStyle="warning">
             <Flex alignItems="center">
                 <FlexItem>
-                    <Icon name="info" />
+                    <Icon name="info-circle" />
                 </FlexItem>
                 <FlexItem grow={1} pad={5}>
                     This sequence has no BLAST information attached to it.
