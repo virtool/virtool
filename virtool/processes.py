@@ -10,11 +10,6 @@ FIRST_STEPS = {
     "install_hmms": ""
 }
 
-UNIQUES = [
-    "update_software",
-    "install_hmms"
-]
-
 
 class ProgressTracker:
 
