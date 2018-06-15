@@ -66,18 +66,15 @@ async def list_updates(req):
     """
     db = req.app["db"]
 
-    updates = await virtool.db.utils.get_one_field(db.status, "updates", "hmm")
+    updates = await virtool.db.utils.get_one_field(db.status, "updates", "hmm") or list()
+    updates.reverse()
 
-    if updates:
-        updates.reverse()
-
-    return json_response(updates or list())
+    return json_response(updates)
 
 
 @routes.post("/api/hmms/status/updates", schema={
     "release_id": {
-        "type": "string",
-        "default": "latest"
+        "type": "string"
     }
 })
 async def install(req):
