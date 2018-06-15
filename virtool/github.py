@@ -2,6 +2,7 @@ import logging
 
 import virtool.errors
 import virtool.http.proxy
+import virtool.utils
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +11,19 @@ BASE_URL = "https://api.github.com/repos"
 HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
+
+
+def create_update_subdocument(release, ready, user_id):
+    update = {k: release[k] for k in release if k not in ["download_url", "etag", "content_type", "retrieved_at"]}
+
+    return {
+        **update,
+        "created_at": virtool.utils.timestamp(),
+        "ready": ready,
+        "user": {
+            "id": user_id
+        }
+    }
 
 
 def format_release(release):
