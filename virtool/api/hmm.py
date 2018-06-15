@@ -168,8 +168,8 @@ async def purge(req):
 
     await db.status.find_one_and_update({"_id": "hmm"}, {
         "$set": {
+            "installed": None,
             "process": None,
-            "ready": False,
             "updates": list()
         }
     })
