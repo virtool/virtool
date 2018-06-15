@@ -60,10 +60,12 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
         headers["If-None-Match"] = etag
 
     async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
-        logger.debug("Fetched release: {}/{} ({})".format(
+        logger.debug("Fetched release: {}/{} ({} - {}/{})".format(
             slug,
             release_id,
-            resp.status
+            resp.status,
+            resp.headers["X-RateLimit-Remaining"],
+            resp.headers["X-RateLimit-Limit"]
         ))
 
         if resp.status == 200:
