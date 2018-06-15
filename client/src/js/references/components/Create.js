@@ -10,7 +10,7 @@ import { Button } from "../../base";
 const getInitialState = () => ({
     name: "",
     description: "",
-    dataType: "Genome",
+    dataType: "genome",
     organism: "",
     isPublic: false,
     errorName: "",
