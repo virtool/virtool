@@ -39,18 +39,17 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    status = await db.status.find_one("hmm")
-
-    updates = status.pop("updates")
-
-    if len(updates):
-        status["installed"] = updates[-1]
-    else:
-        status["installed"] = None
-
-    data["status"] = virtool.utils.base_processor(status)
+    data["status"] = await virtool.db.status.get_hmm_status(db)
 
     return json_response(data)
+
+
+@routes.get("/api/hmms/status")
+async def get_status(req):
+    db = req.app["db"]
+    status = await virtool.db.status.get_hmm_status(db)
+
+    return json_response(status)
 
 
 @routes.get("/api/hmms/release")

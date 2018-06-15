@@ -11,6 +11,18 @@ import virtool.utils
 VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
 
 
+async def get_hmm_status(db):
+    status = await db.status.find_one("hmm")
+
+    status = virtool.utils.base_processor(status)
+
+    status["updating"] = len(status["updates"]) > 1 and status["updates"][-1]["ready"]
+
+    del status["updates"]
+
+    return status
+
+
 async def fetch_and_update_hmm_release(app):
     """
     Return the HMM install status document or create one if none exists.
