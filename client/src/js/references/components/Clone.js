@@ -7,36 +7,41 @@ import { Button, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
 
-const ReferenceSelect = ({ references, onSelect, selected }) => (
-    <div>
-        <label className="control-label">Source Reference</label>
-        {references.length
-            ? (
-                <ListGroup style={{maxHeight: "84px", overflowY: "auto"}}>
-                    {map(references, reference =>
-                        <ListGroupItem
-                            key={reference.id}
-                            onClick={() => onSelect(reference.id)}
-                            active={selected === reference.id}
-                        >
-                            <Col xs={5}>
-                                <strong>{reference.name}</strong>
-                            </Col>
-                            <Col xs={6}>
-                                <span className="text-muted" style={{fontSize: "10px"}}>
-                                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
-                                </span>
-                            </Col>
-                            <Col xs={1}>
-                                <Badge>{reference.otu_count}</Badge>
-                            </Col>
-                        </ListGroupItem>
-                    )}
-                </ListGroup>
-            ) : <NoneFound noun="source references" />
-        }
-    </div>
-);
+const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {
+
+    const errorStyle = hasError ? {border: "1px solid #d44b40"} : {border: "1px solid transparent"};
+
+    return (
+        <div>
+            <label className="control-label">Source Reference</label>
+            {references.length
+                ? (
+                    <ListGroup style={{maxHeight: "85px", overflowY: "auto", marginBottom: "3px", ...errorStyle}}>
+                        {map(references, reference =>
+                            <ListGroupItem
+                                key={reference.id}
+                                onClick={() => onSelect(reference.id)}
+                                active={selected === reference.id}
+                            >
+                                <Col xs={5}>
+                                    <strong>{reference.name}</strong>
+                                </Col>
+                                <Col xs={6}>
+                                    <span className="text-muted" style={{fontSize: "10px"}}>
+                                        Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
+                                    </span>
+                                </Col>
+                                <Col xs={1}>
+                                    <Badge>{reference.otu_count}</Badge>
+                                </Col>
+                            </ListGroupItem>
+                        )}
+                    </ListGroup>
+                ) : <NoneFound noun="source references" />
+            }
+        </div>
+    );
+};
 
 const getInitialState = (refId, refArray) => {
 
@@ -51,7 +56,8 @@ const getInitialState = (refId, refArray) => {
             organism: originalRef.organism,
             isPublic: originalRef.public,
             errorName: "",
-            errorDataType: ""
+            errorDataType: "",
+            errorSelect: ""
         };
     }
 
@@ -63,7 +69,8 @@ const getInitialState = (refId, refArray) => {
         organism: "",
         isPublic: false,
         errorName: "",
-        errorDataType: ""
+        errorDataType: "",
+        errorSelect: ""
     };
 };
 
@@ -86,7 +93,8 @@ class CloneReference extends React.Component {
             });
         } else if (name === "reference") {
             this.setState({
-                [name]: value
+                [name]: value,
+                errorSelect: ""
             });
         } else {
             this.setState({
@@ -103,24 +111,25 @@ class CloneReference extends React.Component {
         e.preventDefault();
 
         if (!this.state.name.length) {
-            this.setState({ errorName: "Required Field" });
+            return this.setState({ errorName: "Required Field" });
         }
 
         if (!this.state.dataType.length) {
-            this.setState({ errorDataType: "Required Field" });
+            return this.setState({ errorDataType: "Required Field" });
         }
 
-        if (this.state.name.length && this.state.dataType.length) {
-            this.props.onSubmit(
-                this.state.name,
-                this.state.description,
-                this.state.dataType,
-                this.state.organism,
-                this.state.isPublic,
-                this.state.reference
-            );
+        if (!this.state.reference.length) {
+            return this.setState({ errorSelect: "Please select a source reference" });
         }
 
+        this.props.onSubmit(
+            this.state.name,
+            this.state.description,
+            this.state.dataType,
+            this.state.organism,
+            this.state.isPublic,
+            this.state.reference
+        );
     };
 
     toggleCheck = () => {
@@ -141,6 +150,7 @@ class CloneReference extends React.Component {
                         references={this.props.refDocuments}
                         onSelect={this.handleSelect}
                         selected={this.state.reference}
+                        hasError={this.state.errorSelect}
                     />
                     <ReferenceForm
                         state={this.state}
