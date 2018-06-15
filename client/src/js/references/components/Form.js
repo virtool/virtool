@@ -20,12 +20,12 @@ export default class ReferenceForm extends React.Component {
 
         let extraComponent;
 
-        if (this.props.state.errorFileNumber != null || this.props.state.errorNoRef) {
+        if (this.props.state.errorFile != null || this.props.state.errorSelect != null) {
             extraComponent = (
-                <Col xs={9}>
+                <Col xs={12}>
                     <div className="input-form-error">
                         <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
-                            {this.props.state.errorFileNumber || this.props.state.errorNoRef}
+                            {this.props.state.errorFile || this.props.state.errorSelect}
                         </span>
                     </div>
                 </Col>
@@ -34,6 +34,9 @@ export default class ReferenceForm extends React.Component {
 
         return (
             <div>
+                <Row>
+                    {extraComponent}
+                </Row>
                 <Row>
                     <Col xs={12}>
                         <InputError
@@ -86,7 +89,6 @@ export default class ReferenceForm extends React.Component {
                             onClick={this.props.toggle}
                         />
                     </Col>
-                    {extraComponent}
                 </Row>
             </div>
         );

@@ -18,9 +18,8 @@ const getInitialState = () => ({
     isPublic: false,
     errorName: "",
     errorDataType: "",
-    errorFileNumber: "",
-    localId: "",
-    file: null
+    errorFile: "",
+    localId: ""
 });
 
 class ImportReference extends React.Component {
@@ -58,11 +57,11 @@ class ImportReference extends React.Component {
 
         if (file.length > 1) {
             return this.setState({
-                errorFileNumber: "Only one file can be uploaded at a time"
+                errorFile: "Only one file can be uploaded at a time"
             });
         }
 
-        this.setState({ errorFileNumber: "" });
+        this.setState({ errorFile: "" });
 
         const localId = createRandomString();
         this.setState({ localId });
@@ -73,23 +72,25 @@ class ImportReference extends React.Component {
         e.preventDefault();
 
         if (!this.state.name.length) {
-            this.setState({ errorName: "Required Field" });
+            return this.setState({ errorName: "Required Field" });
         }
 
         if (!this.state.dataType.length) {
-            this.setState({ errorDataType: "Required Field" });
+            return this.setState({ errorDataType: "Required Field" });
         }
 
-        if (this.state.name.length && this.state.dataType.length) {
-            this.props.onSubmit(
-                this.state.name,
-                this.state.description,
-                this.state.dataType,
-                this.state.organism,
-                this.state.isPublic,
-                this.props.importId
-            );
+        if (!this.state.localId.length) {
+            return this.setState({ errorFile: "A reference file must be uploaded" });
         }
+
+        this.props.onSubmit(
+            this.state.name,
+            this.state.description,
+            this.state.dataType,
+            this.state.organism,
+            this.state.isPublic,
+            this.props.importId
+        );
 
     };
 
@@ -114,6 +115,11 @@ class ImportReference extends React.Component {
             message = `Upload complete: ${uploadedFile.name}`;
         }
 
+        const fileErrorStyle = {
+            border: this.state.errorFile.length ? "1px solid #d44b40" : "1px solid transparent",
+            marginBottom: "3px"
+        };
+
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
@@ -122,15 +128,16 @@ class ImportReference extends React.Component {
                             Create a reference from a file previously exported from another Virtool reference.
                         </strong>
                     </Alert>
-                    <UploadBar
-                        onDrop={this.handleDrop}
-                        message={message}
-                    />
                     <ProgressBar
-                        bsStyle={progress === 100 ? "primary" : "success"}
+                        bsStyle={progress === 100 ? "success" : "warning"}
                         now={progress}
                         affixed
                         style={{marginBottom: "10px"}}
+                    />
+                    <UploadBar
+                        onDrop={this.handleDrop}
+                        message={message}
+                        style={fileErrorStyle}
                     />
                     <ReferenceForm
                         state={this.state}
