@@ -55,7 +55,7 @@ async def delete_unreferenced_hmms(db):
     logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
-async def install(app, process_id, release_id, user_id):
+async def install(app, process_id, release, user_id):
     """
     Runs a background Task that:
 
@@ -75,29 +75,14 @@ async def install(app, process_id, release_id, user_id):
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
+    :param release: the release to install
+    :type release: dict
+
     :param process_id: the id for the process document
     :type process_id: str
 
     """
     db = app["db"]
-    session = app["client"]
-    settings = app["settings"]
-
-    release = await virtool.db.utils.get_one_field(db.status, "release", "hmm")
-
-    etag = None
-
-    # If passed release_id does not match stored release, fetch the correct one from GitHub.
-    if release_id != release["id"]:
-        release = await virtool.github.get_release(
-            settings,
-            session,
-            "virtool/virtool-hmm",
-            etag,
-            release_id
-        )
-
-        release = virtool.github.format_release(release)
 
     await virtool.db.processes.update(db, process_id, 0, step="download")
 
@@ -173,25 +158,15 @@ async def install(app, process_id, release_id, user_id):
 
         logger.debug("Inserted {} annotations".format(len(annotations)))
 
-        for key in ["etag", "content_type", "retrieved_at"]:
-            try:
-                del release[key]
-            except KeyError:
-                pass
+        try:
+            release_id = int(release["id"])
+        except TypeError:
+            release_id = release["id"]
 
-        release.update({
-            "ready": True,
-            "user": {
-                "id": user_id
-            }
-        })
-
-        await db.status.update_one({"_id": "hmm"}, {
+        await db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
             "$set": {
-                "ready": True
-            },
-            "$push": {
-                "updates": release
+                "installed": virtool.github.create_update_subdocument(release, True, user_id),
+                "updates.$.ready": True
             }
         })
 

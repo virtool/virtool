@@ -82,11 +82,14 @@ async def install(req):
     Install the latest official HMM database from GitHub.
 
     """
-    release_id = req["data"]["release_id"]
-
-    print(release_id)
-
     db = req.app["db"]
+
+    user_id = req["client"].user_id
+
+    if await db.status.count({"_id": "hmm", "updates.ready": False}):
+        return conflict("Install already in progress")
+
+    release_id = req["data"].get("release_id", None)
 
     process = await virtool.db.processes.register(
         db,
@@ -101,14 +104,35 @@ async def install(req):
         }
     })
 
+    release = document.get("release", None)
+
+    if not release or not release_id or release_id != release["id"]:
+        release = await virtool.github.get_release(
+            req.app["settings"],
+            req.app["client"],
+            "virtool/virtool-hmm",
+            None,
+            release_id
+        )
+
+        release = virtool.github.format_release(release)
+
+    update = virtool.github.create_update_subdocument(release, False, user_id)
+
+    await db.status.update_one({"_id": "hmm"}, {
+        "$push": {
+            "updates": update
+        }
+    })
+
     await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install(
         req.app,
         process["id"],
-        release_id,
-        req["client"].user_id
+        release,
+        user_id
     ))
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(update)
 
 
 @routes.get("/api/hmms/{hmm_id}")
