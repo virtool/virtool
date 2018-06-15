@@ -1,15 +1,24 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Button, ViewHeader } from "../../base";
+import { Button, ViewHeader, Alert } from "../../base";
 import { purgeHMMs } from "../actions";
 
 export const HMMSettings = ({ onPurge }) => (
     <div>
-        <ViewHeader title="HMM Settings" />
+        <ViewHeader title="Settings - HMMs">
+            <strong>HMM Settings</strong>
+        </ViewHeader>
 
-        <Button onClick={onPurge}>
-            Purge
-        </Button>
+        <Alert bsStyle="danger">
+            <div style={{ textAlign: "right" }}>
+                <span style={{ float: "left", marginTop: "7px" }}>
+                    Delete all HMM profile annotations and data files.
+                </span>
+                <Button bsStyle="danger" onClick={onPurge}>
+                    Purge
+                </Button>
+            </div>
+        </Alert>
     </div>
 );
 
