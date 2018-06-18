@@ -1029,6 +1029,9 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     old = await virtool.db.otus.join(db, {"reference.id": ref_id, "remote.id": remote_id})
 
     if old:
+        if not virtool.references.check_will_change(old, otu):
+            return None
+
         sequence_updates = list()
 
         for isolate in otu["isolates"]:
@@ -1105,7 +1108,12 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
         progress_tracker.add
     )
 
-    await virtool.db.processes.update(db, process_id, progress=0.4, step="update")
+    await virtool.db.processes.update(
+        db,
+        process_id,
+        progress=0.4,
+        step="update"
+    )
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -1126,11 +1134,17 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
             user_id
         )
 
-        updated_list.append(old_or_id)
+        if old_or_id is not None:
+            updated_list.append(old_or_id)
 
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
+    await virtool.db.processes.update(
+        db,
+        process_id,
+        progress=0.6,
+        step="create_history"
+    )
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
