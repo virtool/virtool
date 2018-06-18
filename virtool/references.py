@@ -98,9 +98,12 @@ def clean_export_list(otus, remote):
 
 def clean_otu(otu, otu_keys=OTU_KEYS, sequence_keys=SEQUENCE_KEYS):
 
-    cleaned_otu = {key: otu[key] for key in otu_keys}
+    cleaned = {key: otu.get(key, None) for key in otu_keys}
 
-    cleaned_otu["isolates"] = list()
+    cleaned.update({
+        "isolates": list(),
+        "schema": otu.get("schema", list())
+    })
 
     for isolate in otu["isolates"]:
         cleaned_isolate = {key: isolate[key] for key in ISOLATE_KEYS}
@@ -110,9 +113,9 @@ def clean_otu(otu, otu_keys=OTU_KEYS, sequence_keys=SEQUENCE_KEYS):
             cleaned_sequence = {key: sequence[key] for key in sequence_keys}
             cleaned_isolate["sequences"].append(cleaned_sequence)
 
-        cleaned_otu["isolates"].append(cleaned_isolate)
+        cleaned["isolates"].append(cleaned_isolate)
 
-    return cleaned_otu
+    return cleaned
 
 
 def detect_duplicate_abbreviation(joined, duplicates, seen):
