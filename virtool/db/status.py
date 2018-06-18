@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import aiohttp
@@ -129,3 +130,12 @@ async def fetch_and_update_software_releases(db, settings, session, server_versi
     }, upsert=True)
 
     return document
+
+
+async def refresh(app):
+    try:
+        while True:
+            await fetch_and_update_hmm_release(app)
+            await asyncio.sleep(600, loop=app.loop)
+    except asyncio.CancelledError:
+        pass
