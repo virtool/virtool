@@ -857,7 +857,12 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     if errors:
         return await virtool.db.processes.update(db, process_id, errors=errors)
 
-    await virtool.db.processes.update(db, process_id, progress=0.4, step="import")
+    await virtool.db.processes.update(
+        db,
+        process_id,
+        progress=0.4,
+        step="import"
+    )
 
     otus = import_data["otus"]
 
@@ -883,7 +888,12 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         inserted_otu_ids.append(otu_id)
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, progress=0.7, step="create_history")
+    await virtool.db.processes.update(
+        db,
+        process_id,
+        progress=0.7,
+        step="create_history"
+    )
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -1018,20 +1028,20 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
 
         for isolate in otu["isolates"]:
             for sequence in isolate.pop("sequences"):
-                sequence_update = {
-                    "id": sequence["_id"],
+                sequence_updates.append({
+                    "accession": sequence["accession"],
                     "definition": sequence["definition"],
                     "host": sequence["host"],
-                    "sequence": sequence["sequence"]
-                }
-
-                # Only update the accession if there is an explicit accession field. Don't coerce the _id field.
-                try:
-                    sequence_update["accession"] = sequence["accession"]
-                except KeyError:
-                    pass
-
-                sequence_updates.append(sequence_update)
+                    "sequence": sequence["sequence"],
+                    "otu_id": old["_id"],
+                    "isolate_id": isolate["id"],
+                    "reference": {
+                        "id": ref_id
+                    },
+                    "remote": {
+                        "id": sequence["_id"]
+                    }
+                })
 
         await db.otus.update_one({"reference.id": ref_id, "remote.id": remote_id}, {
             "$inc": {
@@ -1044,6 +1054,14 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                 "isolates": otu["isolates"]
             }
         })
+
+        for sequence_update in sequence_updates:
+            update_result = await db.sequences.update_one({"remote.id": sequence_update["remote"]["id"]}, {
+                "$set": sequence_update
+            })
+
+            if not update_result.matched_count:
+                await db.sequences.insert_one(sequence_update)
 
         return old
 
@@ -1128,8 +1146,10 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
+    # The remote ids in the update otus.
     otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
 
+    # Delete OTUs with remote ids that were not in the update.
     to_delete = await db.otus.distinct("_id", {
         "reference.id": ref_id,
         "remote.id": {
@@ -1137,7 +1157,12 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
         }
     })
 
-    await virtool.db.processes.update(db, process_id, progress=0.8, step="clean")
+    await virtool.db.processes.update(
+        db,
+        process_id,
+        progress=0.8,
+        step="clean"
+    )
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
