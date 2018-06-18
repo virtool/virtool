@@ -8,7 +8,6 @@ import {
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    GET_REFERENCE,
     LIST_READY_INDEXES
 } from "../actionTypes";
 
@@ -25,8 +24,12 @@ export function* watchIndexes () {
 export function* wsUpdateIndex (action) {
     const refId = yield select(state => state.references.detail.id);
 
-    if (refId === action.data.reference.id) {
-        yield findIndexes({ refId: action.data.reference.id, page: 1 });
+    if (refId === action.data.reference.id && action.data.has_files) {
+        yield put({
+            type: FIND_INDEXES.REQUESTED,
+            refId: action.data.reference.id,
+            page: 1
+        });
     }
 }
 
