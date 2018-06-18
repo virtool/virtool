@@ -230,8 +230,9 @@ describe("Sample Action Creators:", () => {
         it("returns action to analyze sample", () => {
             const sampleId = "testid";
             const algorithm = "algorithm";
+            const refId = "123abc"
             const created_at = new Date().toISOString();
-            const result = analyze(sampleId, algorithm);
+            const result = analyze(sampleId, refId, algorithm);
             const expected = {
                 type: "ANALYZE_REQUESTED",
                 algorithm,
@@ -241,6 +242,7 @@ describe("Sample Action Creators:", () => {
                     ready: false,
                     placeholder: true
                 },
+                refId,
                 sampleId
             };
 
