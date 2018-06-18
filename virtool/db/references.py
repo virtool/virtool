@@ -649,24 +649,10 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
         # The latest available release on GitHub.
         "release": dict(release, retrieved_at=created_at),
         # The update history for the reference. We put the release being installed as the first history item.
-        "updates": [create_update_subdocument(created_at, release, user_id)]
+        "updates": [virtool.github.create_update_subdocument(release, False, user_id, created_at)],
     })
 
     return document
-
-
-def create_update_subdocument(created_at, release, user_id):
-    update = dict(release)
-
-    update["created_at"] = created_at
-    update["user"] = {
-        "id": user_id
-    }
-
-    for key in ["etag", "download_url", "content_type"]:
-        update.pop(key)
-
-    return update
 
 
 async def download_and_parse_release(app, url, process_id, progress_handler):
@@ -909,6 +895,8 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     for otu_id in inserted_otu_ids:
         await insert_change(db, otu_id, "remote", user_id)
         await progress_tracker.add(1)
+
+    update = virtool.github.create_update_subdocument(release, True, user_id)
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {

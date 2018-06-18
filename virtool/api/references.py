@@ -162,10 +162,11 @@ async def update(req):
     else:
         release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
-    update_subdocument = virtool.db.references.create_update_subdocument(
-        created_at,
+    update_subdocument = virtool.github.create_update_subdocument(
         release,
-        user_id
+        False,
+        user_id,
+        created_at
     )
 
     await db.references.update_one({"_id": ref_id}, {
