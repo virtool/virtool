@@ -222,7 +222,7 @@ export const getAnalysisProgress = (progress) => ({
  * @param algorithm {string} algorithm type
  * @returns {object}
  */
-export const analyze = (sampleId, algorithm) => {
+export const analyze = (sampleId, refId, algorithm) => {
     const createdAt = new Date();
 
     const placeholder = {
@@ -236,6 +236,7 @@ export const analyze = (sampleId, algorithm) => {
         type: ANALYZE.REQUESTED,
         algorithm,
         placeholder,
+        refId,
         sampleId
     };
 };

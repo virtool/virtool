@@ -57,9 +57,9 @@ export const getAnalysis = (analysisId, onProgress, onSuccess, onFailure) => (
         .catch(err => onFailure(err))
 );
 
-export const analyze = ({ sampleId, algorithm }) => (
+export const analyze = ({ sampleId, refId, algorithm }) => (
     Request.post(`/api/samples/${sampleId}/analyses`)
-        .send({algorithm})
+        .send({ algorithm, ref_id: refId })
 );
 
 export const blastNuvs = ({ analysisId, sequenceIndex}) => (

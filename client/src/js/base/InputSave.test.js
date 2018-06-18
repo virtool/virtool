@@ -81,35 +81,9 @@ describe("<InputSave />", () => {
     describe("handleChange:", () => {
         let spy;
         let mockEvent;
-        
-        it("should update state on input change", () => {
-            props = {
-                onSave: jest.fn(),
-                onChange: jest.fn(),
-                initialValue: "test",
-                disabled: false
-            };
-            mockEvent = {
-                target: {
-                    value: "new_value"
-                }
-            };
-            wrapper = mount(<InputSave {...props} />);
-    
-            spy = jest.spyOn(wrapper.instance(), "handleChange");
-            wrapper.instance().forceUpdate();
 
-            expect(wrapper.state('value')).toEqual(props.initialValue);
-
-            wrapper.find(FormControl).simulate('change', mockEvent);
-            
-            expect(spy).toHaveBeenCalled();
-            expect(props.onChange).toHaveBeenCalled();
-
-            expect(wrapper.state('value')).toEqual(mockEvent.target.value);
-
-            spy.mockReset();
-            spy.mockRestore();
+        afterEach(() => {
+            spy.restore();
         });
 
         it("should not update state if [props.disabled=true]", () => {
@@ -126,20 +100,17 @@ describe("<InputSave />", () => {
             };
             wrapper = mount(<InputSave {...props} />);
     
-            spy = jest.spyOn(wrapper.instance(), "handleChange");
+            spy = sinon.spy(wrapper.instance(), "handleChange");
             wrapper.instance().forceUpdate();
 
             expect(wrapper.state('value')).toEqual(props.initialValue);
 
             wrapper.find(FormControl).simulate('change');
             
-            expect(spy).toHaveBeenCalled();
+            expect(spy.calledOnce).toBe(true);
             expect(props.onChange).toHaveBeenCalled();
 
             expect(wrapper.state('value')).not.toEqual(mockEvent.target.value);
-
-            spy.mockReset();
-            spy.mockRestore();
         });
 
     });
@@ -211,41 +182,23 @@ describe("<InputSave />", () => {
             };
             wrapper = mount(<InputSave {...props} />);
 
-            spyHandler = jest.spyOn(wrapper.instance(), "handleSubmit");
-            spyBlur = jest.spyOn(wrapper.instance(), "blur");
+            spyHandler = sinon.spy(wrapper.instance(), "handleSubmit");
+            spyBlur = sinon.spy(wrapper.instance(), "blur");
 
             wrapper.instance().forceUpdate();
         });
 
         afterEach(() => {
-            spyHandler.mockReset();
-            spyBlur.mockReset();
-            spyHandler.mockRestore();
-            spyBlur.mockRestore();
+            spyHandler.restore();
+            spyBlur.restore();
         });
 
         it("when there is no change in value, click/enter triggers submit handler and blur", () => {
             
             wrapper.find(Button).simulate('submit');
 
-            expect(spyHandler).toHaveBeenCalled();
-            expect(spyBlur).toHaveBeenCalled();
-        });
-        
-        it("when there is a change in value, click/enter triggers form submit, handler, setState, onSave, blur", () => {
-
-            expect(wrapper.state('pending')).toBe(false);
-            
-            const update = { initialValue: "new_value" };
-            wrapper.setProps(update);
-            wrapper.instance().state.value = "initial_value";
-
-            wrapper.find(Button).simulate('submit');
-            
-            expect(spyHandler).toHaveBeenCalled();
-            expect(props.onSave).toHaveBeenCalled();
-            expect(spyBlur).toHaveBeenCalled();
-            expect(wrapper.state('pending')).toBe(true);
+            expect(spyHandler.calledOnce).toBe(true);
+            expect(spyBlur.calledOnce).toBe(true);
         });
 
     });

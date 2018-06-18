@@ -55,7 +55,7 @@ export class JobsList extends React.Component {
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
                     list={this.state.masterList}
-                    loadNextPage={this.onNextPage}
+                    loadNextPage={this.props.onNextPage}
                     page={this.state.page}
                     rowRenderer={this.rowRenderer}
                 />

@@ -24,7 +24,7 @@ const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
         ridText = " with RID ";
 
         ridLink = (
-            <a target="_blank" href={ridRoot + rid}>
+            <a target="_blank" href={ridRoot + rid} rel="noopener noreferrer">
                 {rid} <sup><Icon name="new-tab" /></sup>
             </a>
         );
@@ -60,7 +60,7 @@ const BLASTResults = ({ hits }) => {
     const components = map(hits, (hit, index) =>
         <tr key={index}>
             <td>
-                <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
+                <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`} rel="noopener noreferrer">
                     {hit.accession}
                 </a>
             </td>
