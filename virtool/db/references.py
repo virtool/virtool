@@ -1048,7 +1048,12 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                     }
                 })
 
-        await db.otus.update_one({"reference.id": ref_id, "remote.id": remote_id}, {
+        otu_query = {
+            "reference.id": ref_id,
+            "remote.id": remote_id
+        }
+
+        await db.otus.update_one(otu_query, {
             "$inc": {
                 "version": 1
             },
@@ -1061,7 +1066,9 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
         })
 
         for sequence_update in sequence_updates:
-            update_result = await db.sequences.update_one({"remote.id": sequence_update["remote"]["id"]}, {
+            remote_sequence_id = sequence_update["remote"]["id"]
+
+            update_result = await db.sequences.update_one({"reference.id": ref_id, "remote.id": remote_sequence_id}, {
                 "$set": sequence_update
             })
 
