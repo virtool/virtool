@@ -1,23 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { map } from "lodash-es";
+import { map, find, filter } from "lodash-es";
 import { Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../../base";
+import { getTaskDisplayName } from "../../../utils";
 
 const IndexSelect = ({ indexes, onSelect, selected }) => (
     <div>
         <label className="control-label">References</label>
         {indexes.length
             ? (
-                <ListGroup style={{maxHeight: "84px", overflowY: "auto"}}>
+                <ListGroup style={{maxHeight: "165px", overflowY: "auto"}}>
                     {map(indexes, index =>
                         <ListGroupItem
                             key={index.id}
-                            onClick={() => onSelect(index.id)}
-                            active={selected === index.id}
+                            onClick={() => onSelect({ id: index.id, refId: index.reference.id })}
                         >
                             <Col xs={1}>
-                                <Checkbox checked={selected === index.id} />
+                                <Checkbox checked={!!find(selected, ["id", index.id])} />
                             </Col>
                             <Col xs={8}>
                                 <strong>{index.reference.name}</strong>
@@ -34,7 +34,8 @@ const IndexSelect = ({ indexes, onSelect, selected }) => (
 );
 
 const getInitialState = () => ({
-    algorithm: "pathoscope_bowtie"
+    algorithm: "pathoscope_bowtie",
+    selected: []
 });
 
 export default class CreateAnalysis extends React.Component {
@@ -50,43 +51,67 @@ export default class CreateAnalysis extends React.Component {
         onSubmit: PropTypes.func,
         onHide: PropTypes.func,
         hasHmm: PropTypes.bool,
-        refIndexes: PropTypes.array
+        refIndexes: PropTypes.array,
+        selected: PropTypes.array
+    };
+
+    handleSelect = (newEntry) => {
+        let newSelected = this.state.selected.slice();
+
+        if (find(this.state.selected, ["id", newEntry.id])) {
+            newSelected = filter(newSelected, entry => entry.id !== newEntry.id);
+        } else {
+            newSelected = [...newSelected, {...newEntry}];
+        }
+
+        this.setState({selected: newSelected});
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onSubmit(this.props.id, this.state.algorithm);
+        this.props.onSubmit(this.props.id, this.state.selected, this.state.algorithm);
         this.props.onHide();
     };
 
-    render = () => (
-        <Modal show={this.props.show} onHide={this.props.onHide} onExited={() => this.setState(getInitialState())}>
-            <Modal.Header>
-                New Analysis
-            </Modal.Header>
-            <form onSubmit={this.handleSubmit}>
-                <Modal.Body>
-                    <AlgorithmSelect
-                        value={this.state.algorithm}
-                        onChange={(e) => this.setState({algorithm: e.target.value})}
-                        hasHmm={this.props.hasHmm}
-                    />
-                    <IndexSelect
-                        indexes={this.props.refIndexes}
-                        onSelect={this.handleSelect}
-                        selected={this.state.index}
-                    />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button
-                        type="submit"
-                        bsStyle="primary"
-                        icon="play"
-                    >
-                        Start
-                    </Button>
-                </Modal.Footer>
-            </form>
-        </Modal>
-    );
+    render () {
+
+        const jobMessage = this.state.selected.length ?
+            (
+                <div style={{float: "left"}}>
+                    Start {this.state.selected.length} {getTaskDisplayName(this.state.algorithm)} jobs.
+                </div>
+            ) : null;
+
+        return (
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={() => this.setState(getInitialState())}>
+                <Modal.Header>
+                    New Analysis
+                </Modal.Header>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <AlgorithmSelect
+                            value={this.state.algorithm}
+                            onChange={(e) => this.setState({algorithm: e.target.value})}
+                            hasHmm={this.props.hasHmm}
+                        />
+                        <IndexSelect
+                            indexes={this.props.refIndexes}
+                            onSelect={this.handleSelect}
+                            selected={this.state.selected}
+                        />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        {jobMessage}
+                        <Button
+                            type="submit"
+                            bsStyle="primary"
+                            icon="play"
+                        >
+                            Start
+                        </Button>
+                    </Modal.Footer>
+                </form>
+            </Modal>
+        );
+    }
 }

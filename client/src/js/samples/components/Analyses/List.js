@@ -117,8 +117,10 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onAnalyze: (sampleId, algorithm) => {
-        dispatch(analyze(sampleId, algorithm));
+    onAnalyze: (sampleId, references, algorithm) => {
+        map(references, (entry) =>
+            dispatch(analyze(sampleId, entry.refId, algorithm))
+        );
     },
 
     onFetchHMMs: () => {
