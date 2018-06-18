@@ -1026,7 +1026,7 @@ async def refresh_remotes(app):
 async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     remote_id = otu["_id"]
 
-    old = await virtool.db.otus.join(db, {"remote.id": remote_id})
+    old = await virtool.db.otus.join(db, {"reference.id": ref_id, "remote.id": remote_id})
 
     if old:
         sequence_updates = list()
