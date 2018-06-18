@@ -68,7 +68,7 @@ export default class NuVsORF extends React.Component {
 
         if (hmm) {
             label = (
-                <a target="_blank" href={`/hmm/${hmm.hit}`} className="text-capitalize">
+                <a target="_blank" href={`/hmm/${hmm.hit}`} className="text-capitalize" rel="noopener noreferrer">
                     {hmm.names[0]}
                 </a>
             );

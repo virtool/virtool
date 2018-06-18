@@ -42,7 +42,7 @@ class HMMDetail extends React.Component {
         const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) =>
             <tr key={index}>
                 <td>
-                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`} target="_blank">
+                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`} target="_blank" rel="noopener noreferrer">
                         {accession}
                     </a>
                 </td>
