@@ -52,7 +52,7 @@ async def find(req):
         db_query,
         req.query,
         sort="name",
-        processor=virtool.db.references.processor,
+        processor=virtool.utils.base_processor,
         projection=virtool.db.references.PROJECTION
     )
 
@@ -94,7 +94,7 @@ async def get(req):
 
     document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
-    return json_response(virtool.db.references.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.get("/api/refs/{ref_id}/release")
