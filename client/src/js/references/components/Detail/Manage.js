@@ -58,7 +58,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ release, onCheckUpdates, isPending, isUpdating }) => {
+const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) => {
 
     let updateStats;
 
@@ -117,7 +117,7 @@ const Release = ({ release, onCheckUpdates, isPending, isUpdating }) => {
                                         size="14px"
                                         color="#edf7f6"
                                         style={{display: "inline-block"}}
-                                    /> Installing...
+                                    /> Installing
                                 </div>
                             ) : "Install"}
                     </Button>
@@ -127,38 +127,36 @@ const Release = ({ release, onCheckUpdates, isPending, isUpdating }) => {
     );
 };
 
-const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending, isUpdating }) => {
-    return (
-        <Panel>
-            <Panel.Heading>
-                <Flex>
-                    <FlexItem grow={1}>
-                        Remote Reference
-                    </FlexItem>
-                    <FlexItem>
-                        <a href={`https://github.com/${slug}`} target="_blank">
-                            <Icon faStyle="fab" name="github" /> {slug}
-                        </a>
-                    </FlexItem>
-                </Flex>
-            </Panel.Heading>
-            <ListGroup>
-                <ListGroupItem>
-                    <Icon name="hdd" /> <strong>Installed Version</strong>
-                    <span> / {installed.name}</span>
-                    <span> / Published <RelativeTime time={installed.published_at} /></span>
-                </ListGroupItem>
-                <Release
-                    release={release}
-                    onCheckUpdates={onCheckUpdates}
-                    isPending={isPending}
-                    onInstall={onInstall}
-                    isUpdating={isUpdating}
-                />
-            </ListGroup>
-        </Panel>
-    );
-};
+const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending, isUpdating }) => (
+    <Panel>
+        <Panel.Heading>
+            <Flex>
+                <FlexItem grow={1}>
+                    Remote Reference
+                </FlexItem>
+                <FlexItem>
+                    <a href={`https://github.com/${slug}`} target="_blank">
+                        <Icon faStyle="fab" name="github" /> {slug}
+                    </a>
+                </FlexItem>
+            </Flex>
+        </Panel.Heading>
+        <ListGroup>
+            <ListGroupItem>
+                <Icon name="hdd" /> <strong>Installed Version</strong>
+                <span> / {installed.name}</span>
+                <span> / Published <RelativeTime time={installed.published_at} /></span>
+            </ListGroupItem>
+            <Release
+                release={release}
+                onCheckUpdates={onCheckUpdates}
+                isPending={isPending}
+                onInstall={onInstall}
+                isUpdating={isUpdating}
+            />
+        </ListGroup>
+    </Panel>
+);
 
 const Clone = ({ source }) => (
     <Panel>
