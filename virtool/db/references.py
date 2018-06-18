@@ -252,9 +252,9 @@ async def fetch_and_update_release(app, ref_id):
     retrieved_at = virtool.utils.timestamp()
 
     document = await db.references.find_one(ref_id, [
-        "remotes_from",
+        "installed",
         "release",
-        "updates"
+        "remotes_from"
     ])
 
     try:
@@ -1207,11 +1207,16 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
+    update = virtool.github.create_update_subdocument(release, True, user_id)
+
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
+            "installed": update,
             "updates.$.ready": True,
             "updating": False
         }
     })
+
+    await fetch_and_update_release(app, ref_id)
 
     await virtool.db.processes.update(db, process_id, progress=1)
