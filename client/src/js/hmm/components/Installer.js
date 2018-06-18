@@ -12,8 +12,7 @@ class HMMInstall extends React.Component {
         if (this.props.process && !this.props.process.error) {
 
             const progress = this.getProgress(this.props);
-
-            let step = replace(this.props.process.step, "_", " ");
+            const step = replace(this.props.process.step, "_", " ");
 
             return (
                 <Panel>

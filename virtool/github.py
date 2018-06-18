@@ -13,12 +13,12 @@ HEADERS = {
 }
 
 
-def create_update_subdocument(release, ready, user_id):
+def create_update_subdocument(release, ready, user_id, created_at=None):
     update = {k: release[k] for k in release if k not in ["download_url", "etag", "content_type", "retrieved_at"]}
 
     return {
         **update,
-        "created_at": virtool.utils.timestamp(),
+        "created_at": created_at or virtool.utils.timestamp(),
         "ready": ready,
         "user": {
             "id": user_id
