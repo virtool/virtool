@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { map, find, filter } from "lodash-es";
+import { map, find, reject } from "lodash-es";
 import { Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../../base";
 import { getTaskDisplayName } from "../../../utils";
@@ -59,7 +59,7 @@ export default class CreateAnalysis extends React.Component {
         let newSelected = this.state.selected.slice();
 
         if (find(this.state.selected, ["id", newEntry.id])) {
-            newSelected = filter(newSelected, entry => entry.id !== newEntry.id);
+            newSelected = reject(newSelected, ["id", newEntry.id]);
         } else {
             newSelected = [...newSelected, {...newEntry}];
         }
