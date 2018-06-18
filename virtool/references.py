@@ -96,7 +96,10 @@ def clean_export_list(otus, remote):
     return cleaned
 
 
-def clean_otu(otu, otu_keys=OTU_KEYS, sequence_keys=SEQUENCE_KEYS):
+def clean_otu(otu, otu_keys=None, sequence_keys=None):
+
+    otu_keys = otu_keys or OTU_KEYS
+    sequence_keys = sequence_keys or SEQUENCE_KEYS
 
     cleaned = {key: otu.get(key, None) for key in otu_keys}
 
