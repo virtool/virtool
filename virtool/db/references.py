@@ -287,9 +287,12 @@ async def fetch_and_update_release(app, ref_id):
     if release:
         release["retrieved_at"] = retrieved_at
 
-        newest = document["updates"][-1]
+        installed = document["installed"]
 
-        release["newer"] = bool(newest and semver.compare(release["name"].lstrip("v"), newest["name"].lstrip("v")) == 1)
+        release["newer"] = bool(
+            installed and
+            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+        )
 
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
@@ -916,6 +919,8 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
             "updating": False
         }
     })
+
+    await fetch_and_update_release(app, ref_id)
 
     await virtool.db.processes.update(db, process_id, progress=1)
 
