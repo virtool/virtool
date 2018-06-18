@@ -60,7 +60,11 @@ const BLASTResults = ({ hits }) => {
     const components = map(hits, (hit, index) =>
         <tr key={index}>
             <td>
-                <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`} rel="noopener noreferrer">
+                <a
+                    target="_blank"
+                    href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}
+                    rel="noopener noreferrer"
+                >
                     {hit.accession}
                 </a>
             </td>

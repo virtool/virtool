@@ -135,7 +135,7 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
                     Remote Reference
                 </FlexItem>
                 <FlexItem>
-                    <a href={`https://github.com/${slug}`} target="_blank">
+                    <a href={`https://github.com/${slug}`} target="_blank" rel="noopener noreferrer">
                         <Icon faStyle="fab" name="github" /> {slug}
                     </a>
                 </FlexItem>
