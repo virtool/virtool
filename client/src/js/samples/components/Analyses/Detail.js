@@ -1,8 +1,9 @@
 import React from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
+import { get } from "lodash-es";
 import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
-import {IDRow, LoadingPlaceholder, RelativeTime} from "../../../base";
+import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../../base";
 
 import { getAnalysis, clearAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -20,6 +21,10 @@ class AnalysisDetail extends React.Component {
     }
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return (
@@ -103,6 +108,7 @@ class AnalysisDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_ANALYSIS_ERROR", null),
     detail: state.samples.analysisDetail,
     progress: state.samples.getAnalysisProgress,
     quality: state.samples.detail.quality

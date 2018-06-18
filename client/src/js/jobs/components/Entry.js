@@ -70,7 +70,7 @@ export class JobEntry extends React.Component {
         const progressValue = this.props.progress * 100;
 
         if (this.props.state === "running") {
-            progressStyle = "primary";
+            progressStyle = "warning";
         }
 
         if (this.props.state === "error" || this.props.state === "cancelled") {
