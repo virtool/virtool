@@ -176,7 +176,8 @@ async def update(req):
         "$set": {
             "process": {
                 "id": process["id"]
-            }
+            },
+            "updating": True
         }
     })
 

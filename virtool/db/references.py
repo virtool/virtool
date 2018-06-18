@@ -650,6 +650,7 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
         "release": dict(release, retrieved_at=created_at),
         # The update history for the reference. We put the release being installed as the first history item.
         "updates": [virtool.github.create_update_subdocument(release, False, user_id, created_at)],
+        "installed": None
     })
 
     return document
@@ -900,7 +901,9 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "updates.$.ready": True
+            "installed": update,
+            "updates.$.ready": True,
+            "updating": False
         }
     })
 
@@ -1155,7 +1158,8 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "updates.$.ready": True
+            "updates.$.ready": True,
+            "updating": False
         }
     })
 
