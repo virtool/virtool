@@ -1,3 +1,4 @@
+import dictdiffer
 import gzip
 import json
 from cerberus import Validator
@@ -12,7 +13,6 @@ ISOLATE_KEYS = [
 ]
 
 OTU_KEYS = [
-    "_id",
     "name",
     "abbreviation"
 ]
@@ -25,7 +25,6 @@ RIGHTS = [
 ]
 
 SEQUENCE_KEYS = [
-    "_id",
     "accession",
     "definition",
     "host",
@@ -70,39 +69,56 @@ def check_import_data(import_data, strict=True, verify=True):
     return errors
 
 
+def check_will_change(old, imported):
+    result = dictdiffer.diff(
+        clean_otu(old),
+        clean_otu(imported)
+    )
+
+    return bool(list(result))
+
+
 def clean_export_list(otus, remote):
     cleaned = list()
 
-    for otu in otus:
-        cleaned_otu = {key: otu[key] for key in OTU_KEYS}
+    otu_keys = OTU_KEYS + ["_id"]
+    sequence_keys = SEQUENCE_KEYS + ["_id"]
 
+    for otu in otus:
         if remote:
             try:
-                cleaned_otu["_id"] = otu["remote"]["id"]
+                otu["_id"] = otu["remote"]["id"]
             except KeyError:
                 pass
 
-        cleaned_otu["isolates"] = list()
-
-        for isolate in otu["isolates"]:
-            cleaned_isolate = {key: isolate[key] for key in ISOLATE_KEYS}
-            cleaned_isolate["sequences"] = list()
-
-            for sequence in isolate["sequences"]:
-                cleaned_sequence = {key: sequence[key] for key in SEQUENCE_KEYS}
-
-                try:
-                    cleaned_sequence["_id"] = sequence["remote"]["id"]
-                except KeyError:
-                    pass
-
-                cleaned_isolate["sequences"].append(cleaned_sequence)
-
-            cleaned_otu["isolates"].append(cleaned_isolate)
-
-        cleaned.append(cleaned_otu)
+        cleaned.append(clean_otu(otu, otu_keys, sequence_keys))
 
     return cleaned
+
+
+def clean_otu(otu, otu_keys=OTU_KEYS, sequence_keys=SEQUENCE_KEYS):
+
+    cleaned_otu = {key: otu[key] for key in otu_keys}
+
+    cleaned_otu["isolates"] = list()
+
+    for isolate in otu["isolates"]:
+        cleaned_isolate = {key: isolate[key] for key in ISOLATE_KEYS}
+        cleaned_isolate["sequences"] = list()
+
+        for sequence in isolate["sequences"]:
+            cleaned_sequence = {key: sequence[key] for key in sequence_keys}
+
+            try:
+                cleaned_sequence["_id"] = sequence["remote"]["id"]
+            except KeyError:
+                pass
+
+            cleaned_isolate["sequences"].append(cleaned_sequence)
+
+        cleaned_otu["isolates"].append(cleaned_isolate)
+
+    return cleaned_otu
 
 
 def detect_duplicate_abbreviation(joined, duplicates, seen):
