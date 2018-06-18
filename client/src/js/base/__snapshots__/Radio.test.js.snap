@@ -114,6 +114,12 @@ exports[`<Radio /> Icon subcomponent is clickable 1`] = `
         "calls": Array [
           Array [],
         ],
+        "results": Array [
+          Object {
+            "isThrow": false,
+            "value": undefined,
+          },
+        ],
       }
     }
     pullRight={false}
