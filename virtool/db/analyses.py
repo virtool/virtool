@@ -1,4 +1,5 @@
 import aiofiles
+import asyncio
 import json
 
 import virtool.analyses
@@ -57,16 +58,16 @@ async def format_nuvs(db, settings, document):
             json_string = await f.read()
             document["results"] = dict(document, results=json.loads(json_string))
 
+    hit_ids = list({h["hit"] for s in document["results"] for o in s["orfs"] for h in o["hits"]})
+
+    hmms = await db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"]).to_list(None)
+
+    hmms = {hmm.pop("_id"): hmm for hmm in hmms}
+
     for sequence in document["results"]:
         for orf in sequence["orfs"]:
             for hit in orf["hits"]:
-                hmm = await db.hmm.find_one({"_id": hit["hit"]}, [
-                    "cluster",
-                    "families",
-                    "names"
-                ])
-
-                hit.update(hmm)
+                hit.update(hmms[hit["hit"]])
 
     return document
 
@@ -74,36 +75,35 @@ async def format_nuvs(db, settings, document):
 async def format_pathoscope(db, document):
     formatted = dict()
 
+    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["diagnosis"]}
+
+    patched_otus = await asyncio.gather(*[
+          virtool.db.history.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
+    ])
+
+    patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}
+
     for hit in document["diagnosis"]:
 
         otu_id = hit["otu"]["id"]
-        version = hit["otu"]["version"]
 
-        otu = formatted.get(otu_id, None)
+        otu_document = patched_otus[otu_id]
 
-        if otu is None:
-            # Get the otu entry (patched to correct version).
-            _, otu_document, _ = await virtool.db.history.patch_to_version(
-                db,
-                otu_id,
-                version
-            )
+        max_ref_length = 0
 
-            max_ref_length = 0
+        for isolate in otu_document["isolates"]:
+            max_ref_length = max(max_ref_length, max([len(s["sequence"]) for s in isolate["sequences"]]))
 
-            for isolate in otu_document["isolates"]:
-                max_ref_length = max(max_ref_length, max([len(s["sequence"]) for s in isolate["sequences"]]))
+        otu = {
+            "id": otu_id,
+            "name": otu_document["name"],
+            "version": otu_document["version"],
+            "abbreviation": otu_document["abbreviation"],
+            "isolates": otu_document["isolates"],
+            "length": max_ref_length
+        }
 
-            otu = {
-                "id": otu_id,
-                "name": otu_document["name"],
-                "version": otu_document["version"],
-                "abbreviation": otu_document["abbreviation"],
-                "isolates": otu_document["isolates"],
-                "length": max_ref_length
-            }
-
-            formatted[otu_id] = otu
+        formatted[otu_id] = otu
 
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
@@ -139,8 +139,7 @@ async def format_pathoscope(db, document):
                 sequence["id"] = sequence.pop("_id")
 
                 if "align" in sequence:
-                    coordinates = virtool.analyses.coverage_to_coordinates(sequence["align"])
-                    sequence["align"] = virtool.analyses.smooth_coverage_coordinates(coordinates, tolerance=0.05)
+                    sequence["align"] = virtool.analyses.coverage_to_coordinates(sequence["align"])
 
                 del sequence["sequence"]
 
