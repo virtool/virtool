@@ -74,7 +74,7 @@ async def list_updates(req):
 
 @routes.post("/api/hmms/status/updates", schema={
     "release_id": {
-        "type": "string"
+        "type": ["integer", "string"]
     }
 })
 async def install(req):
