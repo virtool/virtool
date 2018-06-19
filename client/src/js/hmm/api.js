@@ -9,7 +9,8 @@ export const nextPage = ({ page }) => (
 );
 
 export const install = () => (
-    Request.post("/api/hmm/updates")
+    Request.post("/api/hmms/status/updates")
+        .send({ release_id: "8460302" })
 );
 
 export const get = ({ hmmId }) => (
