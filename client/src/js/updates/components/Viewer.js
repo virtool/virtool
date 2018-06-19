@@ -1,35 +1,12 @@
-import {capitalize, map} from "lodash-es";
 import React from "react";
-import {Col, Panel, Row} from "react-bootstrap";
+import {Col, Row} from "react-bootstrap";
 import {connect} from "react-redux";
 import {updateSetting} from "../../administration/actions";
-import {LoadingPlaceholder, Radio} from "../../base";
+import {LoadingPlaceholder} from "../../base";
 
-import InstallModal from "./Install";
 import Channels from "./Channels";
 import Releases from "./Releases";
 import { getSoftwareUpdates } from "../actions";
-
-
-class ChannelButton extends React.Component {
-
-    handleClick = () => {
-        this.props.onClick(this.props.channel);
-    };
-
-    render () {
-
-        const { channel, checked } = this.props;
-
-        return (
-            <Radio
-                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
-                checked={checked}
-                onClick={this.handleClick}
-            />
-        );
-    }
-}
 
 class SoftwareUpdateViewer extends React.Component {
 
@@ -38,21 +15,12 @@ class SoftwareUpdateViewer extends React.Component {
     }
 
     render () {
-
-        if (this.props.updates === null) {
+        if (this.props.releases === null) {
             return <LoadingPlaceholder />;
         }
-        const radioComponents = map(["stable", "beta", "alpha"], channel =>
-            <ChannelButton
-                key={channel}
-                channel={channel}
-                checked={channel === this.props.channel}
-                onClick={this.props.onSetSoftwareChannel}
-            />
-        );
 
         return (
-            <div>
+            <div className="settings-container">
                 <Row>
                     <Col xs={12}>
                         <h5>
@@ -66,15 +34,14 @@ class SoftwareUpdateViewer extends React.Component {
                         <Channels />
                     </Col>
                 </Row>
-
-                {releases.length ? <InstallModal releases={releases} /> : null}
             </div>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
-    channel: state.settings.data.software_channel
+    channel: state.settings.data.software_channel,
+    releases: state.updates.releases
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -85,10 +52,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onSetSoftwareChannel: (value) => {
         dispatch(updateSetting("software_channel", value));
-    },
-
-    onShowModal: () => {
-        dispatch(showInstallModal());
     }
 
 });

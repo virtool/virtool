@@ -8,6 +8,7 @@ import {
 } from "../actionTypes";
 
 export const initialState = {
+    process: null,
     releases: null,
     showInstallModal: false
 };
