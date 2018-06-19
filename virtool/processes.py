@@ -6,8 +6,8 @@ FIRST_STEPS = {
     "import_reference": "load_file",
     "remote_reference": "download",
     "update_remote_reference": "download",
-    "update_software": "",
-    "install_hmms": ""
+    "update_software": "download",
+    "install_hmms": "download"
 }
 
 
