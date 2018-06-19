@@ -1,6 +1,5 @@
 import aiofiles
 import asyncio
-import datetime
 import json
 
 import virtool.analyses
@@ -59,16 +58,16 @@ async def format_nuvs(db, settings, document):
             json_string = await f.read()
             document["results"] = dict(document, results=json.loads(json_string))
 
+    hit_ids = list({h["hit"] for s in document["results"] for o in s["orfs"] for h in o["hits"]})
+
+    hmms = await db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"]).to_list(None)
+
+    hmms = {hmm.pop("_id"): hmm for hmm in hmms}
+
     for sequence in document["results"]:
         for orf in sequence["orfs"]:
             for hit in orf["hits"]:
-                hmm = await db.hmm.find_one({"_id": hit["hit"]}, [
-                    "cluster",
-                    "families",
-                    "names"
-                ])
-
-                hit.update(hmm)
+                hit.update(hmms[hit["hit"]])
 
     return document
 
