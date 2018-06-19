@@ -8,7 +8,7 @@ import {
 } from "../actionTypes";
 
 function* getSoftwareUpdates (action) {
-    yield apiCall(updatesAPI.getSoftware, action, GET_SOFTWARE_UPDATES);
+    yield apiCall(updatesAPI.get, action, GET_SOFTWARE_UPDATES);
 }
 
 function* setSoftwareChannel (action) {
@@ -18,7 +18,7 @@ function* setSoftwareChannel (action) {
 }
 
 function* installSoftwareUpdates (action) {
-    yield apiCall(updatesAPI.installSoftwareUpdates, action, INSTALL_SOFTWARE_UPDATES);
+    yield apiCall(updatesAPI.install, action, INSTALL_SOFTWARE_UPDATES);
 }
 
 export function* watchUpdates () {

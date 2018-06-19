@@ -22,7 +22,7 @@ describe("Updates Action Creators:", () => {
         expect(result).toEqual(expected);
     });
 
-    it("installSoftwareUpdates: returns simple action", () => {
+    it("install: returns simple action", () => {
         const result = installSoftwareUpdates();
         const expected = {
             type: "INSTALL_SOFTWARE_UPDATES_REQUESTED"
