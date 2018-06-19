@@ -74,7 +74,7 @@ async def list_updates(req):
 
 @routes.post("/api/hmms/status/updates", schema={
     "release_id": {
-        "type": "string"
+        "type": ["integer", "string"]
     }
 })
 async def install(req):
@@ -112,7 +112,7 @@ async def install(req):
             req.app["client"],
             "virtool/virtool-hmm",
             None,
-            release_id
+            release_id or "latest"
         )
 
         release = virtool.github.format_release(release)
