@@ -11,14 +11,6 @@ import { Button } from "../../base";
 import { ReleaseMarkdown } from "./Release";
 import { byteSize } from "../../utils";
 
-const installSteps = [
-    "block_jobs",
-    "download",
-    "decompress",
-    "check_tree",
-    "copy_files"
-];
-
 const attemptReload = () => {
     Request.get(`${window.location.origin}/api`)
         .end((err, res) => {
