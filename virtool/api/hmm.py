@@ -39,7 +39,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data["status"] = await virtool.db.status.get_hmm_status(db)
+    data["status"] = await virtool.db.hmm.get_hmm_status(db)
 
     return json_response(data)
 
@@ -47,14 +47,14 @@ async def find(req):
 @routes.get("/api/hmms/status")
 async def get_status(req):
     db = req.app["db"]
-    status = await virtool.db.status.get_hmm_status(db)
+    status = await virtool.db.hmm.get_hmm_status(db)
 
     return json_response(status)
 
 
 @routes.get("/api/hmms/status/release")
 async def get_release(req):
-    release = await virtool.db.status.fetch_and_update_hmm_release(req.app)
+    release = await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
     return json_response(release)
 
 
@@ -174,6 +174,6 @@ async def purge(req):
         }
     })
 
-    await virtool.db.status.fetch_and_update_hmm_release(req.app)
+    await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
 
     return no_content()
