@@ -112,7 +112,7 @@ async def install(req):
             req.app["client"],
             "virtool/virtool-hmm",
             None,
-            release_id
+            release_id or "latest"
         )
 
         release = virtool.github.format_release(release)
