@@ -8,19 +8,6 @@ import { Button, Flex, FlexItem } from "../../base";
 
 class HMMInstall extends React.Component {
 
-    componentDidUpdate () {
-
-        const process = this.getProcess();
-
-        if (!process) {
-            return;
-        }
-
-        if (!this.props.installed && process.progress === 1) {
-            this.props.onRefresh();
-        }
-    }
-
     handleInstall = () => {
         this.props.onInstall(this.props.releaseId);
     };

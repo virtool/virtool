@@ -32,9 +32,9 @@ export const getHmm = (hmmId) => ({
  * @func
  * @returns {object}
  */
-export const installHMMs = (release_id) => ({
+export const installHMMs = (releaseId) => ({
     type: INSTALL_HMMS.REQUESTED,
-    release_id
+    release_id: releaseId
 });
 
 /**

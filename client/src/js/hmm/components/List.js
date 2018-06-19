@@ -5,7 +5,7 @@ import { push } from "react-router-redux";
 
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
-import { Icon, LoadingPlaceholder, ViewHeader, ScrollList } from "../../base";
+import { Icon, LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
 import { createFindURL, getFindTerm, getUpdatedScrollListState } from "../../utils";
 import { findHmms } from "../actions";
 
@@ -22,6 +22,12 @@ class HMMList extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
         return getUpdatedScrollListState(nextProps, prevState);
+    }
+
+    componentDidUpdate (prevProps) {
+        if (prevProps.status && !prevProps.status.installed && this.props.status.installed) {
+            this.props.loadNextPage(1);
+        }
     }
 
     rowRenderer = (index) => (
@@ -56,15 +62,17 @@ class HMMList extends React.Component {
                         </InputGroup>
                     </FormGroup>
 
-                    <ScrollList
-                        hasNextPage={this.props.page < this.props.page_count}
-                        isNextPageLoading={this.props.isLoading}
-                        isLoadError={this.props.errorLoad}
-                        list={this.state.masterList}
-                        loadNextPage={this.props.loadNextPage}
-                        page={this.state.page}
-                        rowRenderer={this.rowRenderer}
-                    />
+                    {this.props.documents.length ? (
+                        <ScrollList
+                            hasNextPage={this.props.page < this.props.page_count}
+                            isNextPageLoading={this.props.isLoading}
+                            isLoadError={this.props.errorLoad}
+                            list={this.state.masterList}
+                            loadNextPage={this.props.loadNextPage}
+                            page={this.state.page}
+                            rowRenderer={this.rowRenderer}
+                        />
+                    ) : <NoneFound noun="HMMs" />}
                 </div>
             );
         }
