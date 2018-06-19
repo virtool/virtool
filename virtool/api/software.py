@@ -50,7 +50,8 @@ async def install(req):
 
     await db.status.update_one({"_id": "software"}, {
         "$set": {
-            "process": process
+            "process": process,
+            "updating": True
         }
     })
 
