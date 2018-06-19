@@ -5,12 +5,7 @@ import virtool.utils
 
 async def register(db, process_type):
 
-    if process_type in virtool.processes.UNIQUES:
-        await db.processes.delete_many({"type": process_type})
-        process_id = process_type
-
-    else:
-        process_id = await virtool.db.utils.get_new_id(db.processes)
+    process_id = await virtool.db.utils.get_new_id(db.processes)
 
     document = {
         "_id": process_id,

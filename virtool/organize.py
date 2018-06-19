@@ -207,9 +207,10 @@ async def organize_status(db, server_version):
     try:
         await db.status.insert_one({
             "_id": "hmm",
-            "installed": False,
-            "version": None,
-            "latest_release": None
+            "installed": None,
+            "process": None,
+            "updates": list(),
+            "release": None
         })
     except pymongo.errors.DuplicateKeyError:
         pass

@@ -18,6 +18,7 @@ import virtool.app_routes
 import virtool.app_settings
 import virtool.db.iface
 import virtool.db.references
+import virtool.db.status
 import virtool.errors
 import virtool.files
 import virtool.http.errors
@@ -41,9 +42,10 @@ async def init_http_client(app):
     app["client"] = client.ClientSession(loop=app.loop, headers=headers)
 
 
-async def init_remotes(app):
+async def init_refresh(app):
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
     await scheduler.spawn(virtool.db.references.refresh_remotes(app))
+    await scheduler.spawn(virtool.db.status.refresh(app))
 
 
 async def init_version(app):
@@ -122,7 +124,7 @@ async def init_db(app):
 
     """
     settings = app["settings"]
-    
+
     app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
     db_host = settings.get("db_host", "localhost")
@@ -353,7 +355,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         if not disable_file_manager:
             app.on_startup.append(init_file_manager)
 
-        app.on_startup.append(init_remotes)
+        app.on_startup.append(init_refresh)
 
         app.on_shutdown.append(on_shutdown)
 

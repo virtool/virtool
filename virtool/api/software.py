@@ -1,5 +1,4 @@
 import asyncio
-import aiojobs.aiohttp
 
 import virtool.db.hmm
 import virtool.db.processes
@@ -12,55 +11,7 @@ from virtool.api.utils import json_response, not_found
 routes = virtool.http.routes.Routes()
 
 
-def status_processor(document):
-    document["id"] = document.pop("_id")
-    return document
-
-
-@routes.get("/api/status")
-async def list_status(req):
-    status_documents = await req.app["db"].status.find().to_list(None)
-    return json_response([status_processor(d) for d in status_documents])
-
-
-@routes.get("/api/status/hmm")
-async def get_hmm(req):
-    document = await virtool.db.status.fetch_and_update_hmm_release(req.app)
-    return json_response(virtool.utils.base_processor(document))
-
-
-@routes.post("/api/status/hmm")
-async def upgrade_hmm(req):
-    """
-    Install the latest official HMM database from GitHub.
-
-    """
-    db = req.app["db"]
-
-    document = await virtool.db.status.fetch_and_update_hmm_release(req.app)
-
-    process = await virtool.db.processes.register(
-        db,
-        "install_hmms"
-    )
-
-    document = await db.status.find_one_and_update({"_id": "hmm"}, {
-        "$set": {
-            "process": {
-                "id": process["id"]
-            }
-        }
-    })
-
-    await aiojobs.aiohttp.spawn(req, virtool.db.hmm.install_official(
-        req.app,
-        process["id"]
-    ))
-
-    return json_response(virtool.utils.base_processor(document))
-
-
-@routes.get("/api/status/software")
+@routes.get("/api/software")
 async def get_software(req):
     db = req.app["db"]
     settings = req.app["settings"]
@@ -76,7 +27,7 @@ async def get_software(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/status/software", admin=True)
+@routes.post("/api/software", admin=True)
 async def upgrade_software(req):
     db = req.app["db"]
     settings = req.app["settings"]

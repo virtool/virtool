@@ -1,7 +1,6 @@
 import React from "react";
-import Semver from "semver";
 import Marked from "marked";
-import { filter, map, replace, sortBy } from "lodash-es";
+import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup, Panel, Table, Well, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link} from "react-router-dom";
@@ -59,11 +58,11 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="index builds" noListGroup />;
 };
 
-const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPending, onInstall, isUpdating }) => {
+const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) => {
 
     let updateStats;
 
-    if (updateAvailable) {
+    if (release.newer) {
         updateStats = (
             <span> / {release.name} / Published <RelativeTime time={release.published_at} /></span>
         );
@@ -71,15 +70,11 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
 
     let updateDetail;
 
-    if (updateAvailable) {
-        const html = replace(
-            Marked(release.body),
-            /([0-9] +)/g,
-            "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
-        );
+    if (release.newer) {
+        const html = Marked(release.body);
 
         updateDetail = (
-            <Well style={{marginTop: "10px"}}>
+            <Well className="markdown-container" style={{marginTop: "10px"}}>
                 <div dangerouslySetInnerHTML={{__html: html}} />
             </Well>
         );
@@ -88,15 +83,15 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
     return (
         <ListGroupItem>
             <div>
-                <span className={updateAvailable ? "text-primary" : "text-success"}>
-                    <Icon name={updateAvailable ? "arrow-alt-circle-up" : "check"} />
+                <span className={release.newer ? "text-primary" : "text-success"}>
+                    <Icon name={release.newer ? "arrow-alt-circle-up" : "check"} />
                     <strong>
-                        &nbsp;{updateAvailable ? "Update Available" : "Up-to-date"}
+                        &nbsp;{release.newer ? "Update Available" : "Up-to-date"}
                     </strong>
                 </span>
                 {updateStats}
                 <span className="pull-right text-muted">
-                    Last checked <RelativeTime time={lastChecked} />&nbsp;&nbsp;
+                    Last checked <RelativeTime time={release.retrieved_at} />&nbsp;&nbsp;
                     {isPending
                         ? <div style={{display: "inline-block"}}><LoadingPlaceholder margin="0" size="14px" /></div>
                         : <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />
@@ -105,7 +100,7 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
             </div>
 
             {updateDetail}
-            {updateAvailable ? (
+            {release.newer ? (
                 <Row style={{margin: "0"}}>
                     <Button
                         icon={isUpdating ? null : "download"}
@@ -122,7 +117,7 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
                                         size="14px"
                                         color="#edf7f6"
                                         style={{display: "inline-block"}}
-                                    /> Installing...
+                                    /> Installing
                                 </div>
                             ) : "Install"}
                     </Button>
@@ -132,51 +127,36 @@ const Release = ({ lastChecked, release, updateAvailable, onCheckUpdates, isPend
     );
 };
 
-const Remote = ({ updates, release, remotesFrom, onCheckUpdates, isPending, onInstall, isUpdating }) => {
-
-    const ready = filter(updates, {ready: true});
-
-    const installed = ready.pop();
-
-    if (!installed) {
-        return null;
-    }
-
-    const updateAvailable = Semver.gt(Semver.coerce(release.name), Semver.coerce(installed.name));
-
-    return (
-        <Panel>
-            <Panel.Heading>
-                <Flex>
-                    <FlexItem grow={1}>
-                        Remote Reference
-                    </FlexItem>
-                    <FlexItem>
-                        <a href={`https://github.com/${remotesFrom.slug}`} target="_blank" rel="noopener noreferrer">
-                            <Icon faStyle="fab" name="github" /> {remotesFrom.slug}
-                        </a>
-                    </FlexItem>
-                </Flex>
-            </Panel.Heading>
-            <ListGroup>
-                <ListGroupItem>
-                    <Icon name="hdd" /> <strong>Installed Version</strong>
-                    <span> / {installed.name}</span>
-                    <span> / Published <RelativeTime time={installed.published_at} /></span>
-                </ListGroupItem>
-                <Release
-                    lastChecked={release.last_checked}
-                    release={release}
-                    updateAvailable={updateAvailable}
-                    onCheckUpdates={onCheckUpdates}
-                    isPending={isPending}
-                    onInstall={onInstall}
-                    isUpdating={isUpdating}
-                />
-            </ListGroup>
-        </Panel>
-    );
-};
+const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending, isUpdating }) => (
+    <Panel>
+        <Panel.Heading>
+            <Flex>
+                <FlexItem grow={1}>
+                    Remote Reference
+                </FlexItem>
+                <FlexItem>
+                    <a href={`https://github.com/${slug}`} target="_blank" rel="noopener noreferrer">
+                        <Icon faStyle="fab" name="github" /> {slug}
+                    </a>
+                </FlexItem>
+            </Flex>
+        </Panel.Heading>
+        <ListGroup>
+            <ListGroupItem>
+                <Icon name="hdd" /> <strong>Installed Version</strong>
+                <span> / {installed.name}</span>
+                <span> / Published <RelativeTime time={installed.published_at} /></span>
+            </ListGroupItem>
+            <Release
+                release={release}
+                onCheckUpdates={onCheckUpdates}
+                isPending={isPending}
+                onInstall={onInstall}
+                isUpdating={isUpdating}
+            />
+        </ListGroup>
+    </Panel>
+);
 
 const Clone = ({ source }) => (
     <Panel>
@@ -213,17 +193,17 @@ class ReferenceManage extends React.Component {
 
         const {
             id,
+            checkPending,
+            cloned_from,
             contributors,
             data_type,
             description,
+            installed,
             internal_control,
             latest_build,
             organism,
             release,
-            remotes_from,
-            cloned_from,
-            updates,
-            checkPending
+            remotes_from
         } = this.props.detail;
 
         let remote;
@@ -232,9 +212,9 @@ class ReferenceManage extends React.Component {
         if (remotes_from) {
             remote = (
                 <Remote
+                    installed={installed}
                     release={release}
-                    remotesFrom={remotes_from}
-                    updates={updates}
+                    slug={remotes_from.slug}
                     onCheckUpdates={this.handleCheckUpdates}
                     isPending={checkPending}
                     onInstall={this.handleUpdateRemote}

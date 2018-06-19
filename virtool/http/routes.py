@@ -66,9 +66,9 @@ def protect(route_decorator, admin, permission, public, schema):
                 try:
                     data = await req.json()
                 except (json.decoder.JSONDecodeError, UnicodeDecodeError):
-                    data = None
+                    data = dict()
 
-                if schema and data is not None:
+                if schema:
                     v = Validator(schema, purge_unknown=True)
 
                     if not v.validate(data):

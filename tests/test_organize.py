@@ -287,9 +287,10 @@ async def test_organize_status(has_software, has_software_update, has_version, t
     assert await test_motor.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
         {
             "_id": "hmm",
-            "installed": False,
-            "latest_release": None,
-            "version": None
+            "installed": None,
+            "process": None,
+            "release": None,
+            "updates": list()
         },
         {
             "_id": "software",

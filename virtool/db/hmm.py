@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 
@@ -6,11 +7,14 @@ import aiofiles
 
 import virtool.db.processes
 import virtool.db.status
+import virtool.db.utils
 import virtool.github
 import virtool.hmm
 import virtool.http.utils
 import virtool.processes
 import virtool.utils
+
+logger = logging.getLogger(__name__)
 
 PROJECTION = [
     "_id",
@@ -46,10 +50,12 @@ async def delete_unreferenced_hmms(db):
 
     referenced_ids = list(set(a["_id"] for a in agg))
 
-    await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+    delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+
+    logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
-async def install_official(app, process_id):
+async def install(app, process_id, release, user_id):
     """
     Runs a background Task that:
 
@@ -69,15 +75,14 @@ async def install_official(app, process_id):
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
+    :param release: the release to install
+    :type release: dict
+
     :param process_id: the id for the process document
     :type process_id: str
 
     """
     db = app["db"]
-
-    document = await virtool.db.status.fetch_and_update_hmm_release(app)
-
-    release = document["latest_release"]
 
     await virtool.db.processes.update(db, process_id, 0, step="download")
 
@@ -85,8 +90,7 @@ async def install_official(app, process_id):
         db,
         process_id,
         release["size"],
-        0.5,
-        initial=0
+        0.4
     )
 
     with virtool.utils.get_temp_dir() as tempdir:
@@ -102,7 +106,12 @@ async def install_official(app, process_id):
             progress_tracker.add
         )
 
-        await virtool.db.processes.update(db, process_id, progress=0.5, step="decompress")
+        await virtool.db.processes.update(
+            db,
+            process_id,
+            progress=0.4,
+            step="unpack"
+        )
 
         await app["run_in_thread"](
             virtool.utils.decompress_tgz,
@@ -110,7 +119,12 @@ async def install_official(app, process_id):
             temp_path
         )
 
-        await virtool.db.processes.update(db, process_id, progress=0.7, step="install_profiles")
+        await virtool.db.processes.update(
+            db,
+            process_id,
+            progress=0.6,
+            step="install_profiles"
+        )
 
         decompressed_path = os.path.join(temp_path, "hmm")
 
@@ -118,7 +132,12 @@ async def install_official(app, process_id):
 
         await app["run_in_thread"](shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
-        await virtool.db.processes.update(db, process_id, progress=0.8, step="import_annotations")
+        await virtool.db.processes.update(
+            db,
+            process_id,
+            progress=0.8,
+            step="import_annotations"
+        )
 
         async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
             annotations = json.loads(await f.read())
@@ -129,21 +148,37 @@ async def install_official(app, process_id):
             db,
             process_id,
             len(annotations),
-            increment=0.05,
-            factor=0.2
+            factor=0.2,
+            initial=0.8
         )
 
         for annotation in annotations:
             await db.hmm.insert_one(dict(annotation, hidden=False))
             await progress_tracker.add(1)
 
-        await db.status.update_one({"_id": "hmm"}, {
+        logger.debug("Inserted {} annotations".format(len(annotations)))
+
+        try:
+            release_id = int(release["id"])
+        except TypeError:
+            release_id = release["id"]
+
+        await db.status.update_one({"_id": "hmm", "updates.id": release_id}, {
             "$set": {
-                "installed": True
+                "installed": virtool.github.create_update_subdocument(release, True, user_id),
+                "updates.$.ready": True
             }
         })
 
-        await virtool.db.processes.update(db, process_id, progress=1)
+        logger.debug("Update HMM status")
+
+        await virtool.db.processes.update(
+            db,
+            process_id,
+            progress=1
+        )
+
+        logger.debug("Finished HMM install process")
 
 
 async def purge(db):

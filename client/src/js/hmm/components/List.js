@@ -36,7 +36,7 @@ class HMMList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        if (this.props.status.installed) {
+        if (this.props.ready) {
             return (
                 <div>
                     <ViewHeader title="HMMs" totalCount={this.props.found_count} />
