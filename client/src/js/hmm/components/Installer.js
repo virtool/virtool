@@ -92,7 +92,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
 
     onInstall: (releaseId) => {
-        dispatch(installHMMs(`${releaseId}`));
+        dispatch(installHMMs(releaseId));
     },
 
     onRefresh: () => {
