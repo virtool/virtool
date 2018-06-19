@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ViewHeader /> renders correctly 1`] = `
+exports[`<ViewHeader /> renders correctly an html <head><title> element 1`] = `
 <h3
   className="view-header"
 >
@@ -8,7 +8,9 @@ exports[`<ViewHeader /> renders correctly 1`] = `
     defer={true}
     encodeSpecialCharacters={true}
   >
-    <title />
+    <title>
+      tester
+    </title>
   </HelmetWrapper>
 </h3>
 `;

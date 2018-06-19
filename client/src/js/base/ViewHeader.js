@@ -31,7 +31,7 @@ export const ViewHeader = ({ title, totalCount, children }) => (
 );
 
 ViewHeader.propTypes = {
-    title: PropTypes.string,
+    title: PropTypes.string.isRequired,
     totalCount: PropTypes.number,
     children: PropTypes.node
 };
