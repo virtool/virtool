@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Jumbotron } from "react-bootstrap";
 
 /**
@@ -18,3 +19,8 @@ export const NotFound = ({ status, message }) => (
         </h1>
     </Jumbotron>
 );
+
+NotFound.propTypes = {
+    status: PropTypes.number,
+    message: PropTypes.string
+};
