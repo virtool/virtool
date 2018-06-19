@@ -30,6 +30,7 @@ more-itertools==4.1.0
 motor==1.2.1
 multidict==4.2.0
 nose==1.3.7
+numpy==1.14.5
 packaging==16.8
 pluggy==0.6.0
 psutil==5.4.3
@@ -54,4 +55,5 @@ setproctitle==1.1.10
 six==1.11.0
 urllib3==1.22
 uvloop==0.9.1
+visvalingamwyatt==0.1.2
 yarl==1.1.1
