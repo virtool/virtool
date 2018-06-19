@@ -8,7 +8,7 @@ import { Button, Flex, FlexItem } from "../../base";
 
 class HMMInstall extends React.Component {
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate () {
 
         const process = this.getProcess();
 
