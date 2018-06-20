@@ -1,9 +1,5 @@
 import reducer, { initialState as reducerInitialState } from "./reducer";
-import {
-    WS_UPDATE_STATUS,
-    SHOW_INSTALL_MODAL,
-    HIDE_INSTALL_MODAL
-} from "../actionTypes";
+import { WS_UPDATE_STATUS } from "../actionTypes";
 
 describe("Updates Reducer", () => {
 
@@ -43,7 +39,7 @@ describe("Updates Reducer", () => {
             result = reducer(state, action);
             expected = {
                 ...state,
-                software: action.data
+                ...action.data
             };
 
             expect(result).toEqual(expected);
@@ -67,45 +63,20 @@ describe("Updates Reducer", () => {
 
     it("should handle GET_SOFTWARE_UPDATES_SUCCEEDED", () => {
         state = {};
+
         action = {
             type: "GET_SOFTWARE_UPDATES_SUCCEEDED",
-            data: {}
+            data: {
+                id: "test"
+            }
         };
+
         result = reducer(state, action);
+
         expected = {
-            ...state,
-            software: action.data
+            id: "test"
         };
 
         expect(result).toEqual(expected);
     });
-
-    it("should handle SHOW_INSTALL_MODAL", () => {
-        state = {};
-        action = {
-            type: "SHOW_INSTALL_MODAL"
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            showInstallModal: true
-        };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle HIDE_INSTALL_MODAL", () => {
-        state = {};
-        action = {
-            type: "HIDE_INSTALL_MODAL"
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            showInstallModal: false
-        };
-
-        expect(result).toEqual(expected);
-    });
-
 });

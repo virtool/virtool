@@ -3,8 +3,6 @@ import {
     WS_UPDATE_PROCESS,
     WS_UPDATE_STATUS,
     GET_SOFTWARE_UPDATES,
-    SHOW_INSTALL_MODAL,
-    HIDE_INSTALL_MODAL
 } from "../actionTypes";
 
 export const initialState = {
@@ -33,12 +31,6 @@ export default function updatesReducer (state = initialState, action) {
 
         case GET_SOFTWARE_UPDATES.SUCCEEDED:
             return {...state, ...action.data};
-
-        case SHOW_INSTALL_MODAL:
-            return {...state, showInstallModal: true};
-
-        case HIDE_INSTALL_MODAL:
-            return {...state, showInstallModal: false};
 
         default:
             return state;
