@@ -4,7 +4,7 @@ import { ListGroup, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
-import Install from "./Install"
+import Install from "./Install";
 import Release from "./Release";
 import { Button, Flex, FlexItem, Icon } from "../../base";
 
@@ -20,7 +20,7 @@ export const Releases = ({ onShowInstall, releases }) => {
                     <Flex alignItems="center">
                         <FlexItem grow={1} shrink={0}>
                             <strong className="text-warning">
-                                <Icon name="arrow-alt-circle-up"/> Update{releases.length === 1 ? "" : "s"} Available
+                                <Icon name="arrow-alt-circle-up" /> Update{releases.length === 1 ? "" : "s"} Available
                             </strong>
                         </FlexItem>
                         <FlexItem grow={0} shrink={0} pad={15}>

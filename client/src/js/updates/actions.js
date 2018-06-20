@@ -1,10 +1,5 @@
 import { simpleActionCreator } from "../utils";
-import {
-    GET_SOFTWARE_UPDATES,
-    INSTALL_SOFTWARE_UPDATES,
-    SHOW_INSTALL_MODAL,
-    HIDE_INSTALL_MODAL
-} from "../actionTypes";
+import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES } from "../actionTypes";
 
 /**
  * Returns action that can trigger an API call for retrieving software udpates.
