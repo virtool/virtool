@@ -19,12 +19,10 @@ export class AddReference extends React.Component {
         };
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        if (nextProps.show !== prevState.show) {
-            return { show: nextProps.show };
+    componentDidUpdate (prevProps) {
+        if (this.props.show !== prevProps.show) {
+            this.setState({ show: this.props.show });
         }
-
-        return null;
     }
 
     checkActive = (current) => () => (
