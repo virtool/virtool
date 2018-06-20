@@ -16,7 +16,7 @@ const NotificationIcon = ({ visible }) => {
                         tip="Software Update"
                         tipPlacement="left"
                     />
-                    </LinkContainer>
+                </LinkContainer>
             </NavItem>
         );
     }
