@@ -37,6 +37,28 @@ describe("<ProgressBar />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("adds custom eventListener in componentDidUpdate when there is a change in 'now' props", () => {
+        const spyCDU = sinon.spy(ProgressBar.prototype, "componentDidUpdate");
+        wrapper = mount(<ProgressBar bsStyle="primary" now={50} />);
+        const spyAddListener = sinon.spy(wrapper.find('div').at(1).instance(), "addEventListener");
+
+        expect(spyCDU.called).toBe(false);
+        expect(spyAddListener.called).toBe(false);
+
+        // No change in now props; event listener should not be added
+        wrapper.setProps({ bsStyle: "danger", now: 50 });
+
+        expect(spyAddListener.called).toBe(false);
+
+        // Change in now props; add event listener
+        wrapper.setProps({ bsStyle: "warning", now: 100 });
+
+        expect(spyAddListener.calledOnce).toBe(true);
+
+        spyCDU.restore();
+        spyAddListener.restore();
+    });
+
     it("calls onTransitionend() when props.now changes", () => {
         // Calls callback onMoved function if it exists
         props = {
@@ -86,6 +108,35 @@ describe("<ProgressBar />", () => {
             wrapper = shallow(<AutoProgressBar />);
 
             expect(wrapper).toMatchSnapshot();
+        });
+
+        it("getDerivedStateFromProps", () => {
+            let nextProps = { active: true };
+            let prevState = { active: false };
+            let result = AutoProgressBar.getDerivedStateFromProps(nextProps, prevState);
+            let expected = { fill: 10, active: nextProps.active };
+
+            expect(result).toEqual(expected);
+
+            nextProps = { active: false };
+            prevState = { active: true };
+            result = AutoProgressBar.getDerivedStateFromProps(nextProps, prevState);
+            expected = { fill: 100, active: nextProps.active };
+
+            expect(result).toEqual(expected);
+        });
+
+        it("componentDidUpdate should call stop() if active state goes from true to false", () => {
+            wrapper = mount(<AutoProgressBar active={true} />);
+            const spy = sinon.spy(wrapper.instance(), "stop");
+
+            expect(spy.called).toBe(false);
+
+            wrapper.setProps({ active: false });
+
+            expect(spy.calledOnce).toBe(true);
+
+            spy.restore();
         });
 
         it("renders a ProgressBar component if [state.fill>0], <div> otherwise", () => {
