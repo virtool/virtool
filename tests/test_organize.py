@@ -284,6 +284,24 @@ async def test_organize_status(has_software, has_software_update, has_version, t
 
     await virtool.organize.organize_status(test_motor, "v3.0.0")
 
+    result = await test_motor.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
+
+    import pprint
+    pprint.pprint(result)
+
+    expected_software = {
+        "_id": "software",
+        "process": None,
+        "updating": False,
+        "version": "v3.0.0"
+    }
+
+    if not has_software:
+        expected_software.update({
+            "installed": None,
+            "releases": list()
+        })
+
     assert await test_motor.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
         {
             "_id": "hmm",
@@ -292,11 +310,7 @@ async def test_organize_status(has_software, has_software_update, has_version, t
             "release": None,
             "updates": list()
         },
-        {
-            "_id": "software",
-            "process": None,
-            "version": "v3.0.0"
-        }
+        expected_software
     ]
 
 

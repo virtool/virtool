@@ -39,7 +39,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    data["status"] = await virtool.db.hmm.get_hmm_status(db)
+    data["status"] = await virtool.db.hmm.get_status(db)
 
     return json_response(data)
 
@@ -47,7 +47,7 @@ async def find(req):
 @routes.get("/api/hmms/status")
 async def get_status(req):
     db = req.app["db"]
-    status = await virtool.db.hmm.get_hmm_status(db)
+    status = await virtool.db.hmm.get_status(db)
 
     return json_response(status)
 

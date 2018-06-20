@@ -57,6 +57,67 @@ async def delete_unreferenced_hmms(db):
     logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
+async def fetch_and_update_hmm_release(app):
+    """
+    Return the HMM install status document or create one if none exists.
+
+    :param app: the app object
+    :type app: :class:`aiohttp.web.Application`
+
+    """
+    db = app["db"]
+    settings = app["settings"]
+    session = app["client"]
+
+    etag = None
+
+    document = await db.status.find_one("hmm", ["release", "updates"])
+
+    existing = document.get("release", None)
+
+    try:
+        installed = document["updates"][-1]
+    except (IndexError, KeyError):
+        installed = None
+
+    if existing:
+        etag = existing.get("etag", None)
+
+    release = await virtool.github.get_release(settings, session, "virtool/virtool-hmm", etag)
+
+    if release:
+        release = virtool.github.format_release(release)
+    else:
+        release = existing
+
+    release["newer"] = bool(
+        release is None or (
+            installed and
+            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+        )
+    )
+
+    await db.status.update_one({"_id": "hmm"}, {
+        "$set": {
+            "release": release
+        }
+    }, upsert=True)
+
+    return release
+
+
+async def get_status(db):
+    status = await db.status.find_one("hmm")
+
+    status = virtool.utils.base_processor(status)
+
+    status["updating"] = len(status["updates"]) > 1 and status["updates"][-1]["ready"]
+
+    del status["updates"]
+
+    return status
+
+
 async def install(app, process_id, release, user_id):
     """
     Runs a background Task that:
@@ -191,67 +252,6 @@ async def purge(db):
             "hidden": True
         }
     })
-
-
-async def get_hmm_status(db):
-    status = await db.status.find_one("hmm")
-
-    status = virtool.utils.base_processor(status)
-
-    status["updating"] = len(status["updates"]) > 1 and status["updates"][-1]["ready"]
-
-    del status["updates"]
-
-    return status
-
-
-async def fetch_and_update_hmm_release(app):
-    """
-    Return the HMM install status document or create one if none exists.
-
-    :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
-
-    """
-    db = app["db"]
-    settings = app["settings"]
-    session = app["client"]
-
-    etag = None
-
-    document = await db.status.find_one("hmm", ["release", "updates"])
-
-    existing = document.get("release", None)
-
-    try:
-        installed = document["updates"][-1]
-    except (IndexError, KeyError):
-        installed = None
-
-    if existing:
-        etag = existing.get("etag", None)
-
-    release = await virtool.github.get_release(settings, session, "virtool/virtool-hmm", etag)
-
-    if release:
-        release = virtool.github.format_release(release)
-    else:
-        release = existing
-
-    release["newer"] = bool(
-        release is None or (
-            installed and
-            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
-        )
-    )
-
-    await db.status.update_one({"_id": "hmm"}, {
-        "$set": {
-            "release": release
-        }
-    }, upsert=True)
-
-    return release
 
 
 async def refresh(app):
