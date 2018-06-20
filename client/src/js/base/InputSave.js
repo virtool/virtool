@@ -105,7 +105,6 @@ export class InputSave extends React.Component {
                     min: this.props.min,
                     max: this.props.max
                 });
-
                 this.blur();
             });
         }
