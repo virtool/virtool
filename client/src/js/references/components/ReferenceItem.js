@@ -40,9 +40,9 @@ const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, prog
         );
     } else if (origin.method === "Cloned from") {
         originData = (
-            <a href={`/refs/${origin.data.id}`} rel="noopener noreferrer">
+            <Link to={`/refs/${origin.data.id}`}>
                 {origin.data.name}
-            </a>
+            </Link>
         );
     } else {
         originData = origin.data;
@@ -55,9 +55,9 @@ const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, prog
                     <tr>
                         <th>Latest Build</th>
                         <td>
-                            <a href={`/refs/${id}/indexes/${latest_build.id}`} rel="noopener noreferrer">
+                            <Link to={`/refs/${id}/indexes/${latest_build.id}`}>
                                 Index {latest_build.version}
-                            </a>
+                            </Link>
                             <div className="text-muted" style={{fontSize: "12px"}}>
                                 Created <RelativeTime time={latest_build.created_at} /> by {latest_build.user.id}
                             </div>
