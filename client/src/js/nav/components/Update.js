@@ -8,16 +8,16 @@ const NotificationIcon = ({ visible }) => {
 
     if (visible) {
         return (
-            <LinkContainer to="/administration/updates">
-                <NavItem>
+            <NavItem>
+                <LinkContainer to="/administration/updates">
                     <Icon
                         className="icon-pulse"
                         name="arrow-alt-circle-up"
                         tip="Software Update"
                         tipPlacement="left"
                     />
-                </NavItem>
-            </LinkContainer>
+                    </LinkContainer>
+            </NavItem>
         );
     }
 
@@ -25,7 +25,7 @@ const NotificationIcon = ({ visible }) => {
 };
 
 const mapStateToProps = (state) => ({
-    visible: !!(state.account.administrator && state.updates.software && state.updates.software.releases.length)
+    visible: !!(state.account.administrator && state.updates.releases && state.updates.releases.length)
 });
 
 export default connect(mapStateToProps)(NotificationIcon);
