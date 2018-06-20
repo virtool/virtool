@@ -31,7 +31,7 @@ async def list_releases(req):
 
 @routes.get("/api/software/updates")
 async def list_updates(req):
-    updates = virtool.db.utils.get_one_field(req.app["db"].status, "updates" "software")
+    updates = virtool.db.utils.get_one_field(req.app["db"].status, "updates", "software")
     return json_response(updates)
 
 
