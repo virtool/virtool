@@ -16,6 +16,7 @@ import virtool.app_auth
 import virtool.app_dispatcher
 import virtool.app_routes
 import virtool.app_settings
+import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
 import virtool.db.status
@@ -45,7 +46,7 @@ async def init_http_client(app):
 async def init_refresh(app):
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
     await scheduler.spawn(virtool.db.references.refresh_remotes(app))
-    await scheduler.spawn(virtool.db.status.refresh(app))
+    await scheduler.spawn(virtool.db.hmm.refresh(app))
 
 
 async def init_version(app):

@@ -197,12 +197,23 @@ async def organize_status(db, server_version):
         }
     })
 
-    await db.status.update_one({"_id": "software"}, {
-        "$set": {
+    try:
+        await db.status.insert_one({
+            "_id": "software",
+            "installed": None,
             "process": None,
-            "version": server_version
-        }
-    }, upsert=True)
+            "releases": list(),
+            "updating": False,
+            "version": server_version,
+        })
+    except pymongo.errors.DuplicateKeyError:
+        await db.status.update_one({"_id": "software"}, {
+            "$set": {
+                "process": None,
+                "updating": False,
+                "version": server_version
+            }
+        })
 
     try:
         await db.status.insert_one({

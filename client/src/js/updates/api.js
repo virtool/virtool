@@ -1,9 +1,9 @@
 import Request from "superagent";
 
-export const getSoftware = () => (
+export const get = () => (
     Request.get("/api/software")
 );
 
-export const installSoftwareUpdates = () => (
-    Request.post("/api/software")
+export const install = () => (
+    Request.post("/api/software/updates")
 );

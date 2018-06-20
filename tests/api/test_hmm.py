@@ -56,7 +56,7 @@ async def test_find(mocker, spawn_client, hmm_document):
     Check that a request with no URL parameters returns a list of HMM annotation documents.
 
     """
-    m = mocker.patch("virtool.db.status.get_hmm_status", make_mocked_coro({"id": "hmm"}))
+    m = mocker.patch("virtool.db.hmm.get_status", make_mocked_coro({"id": "hmm"}))
 
     client = await spawn_client(authorize=True)
 

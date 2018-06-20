@@ -3,13 +3,15 @@ import virtool.processes
 import virtool.utils
 
 
-async def register(db, process_type):
+async def register(db, process_type, file_size=None):
 
     process_id = await virtool.db.utils.get_new_id(db.processes)
 
     document = {
         "_id": process_id,
+        "count": 0,
         "created_at": virtool.utils.timestamp(),
+        "file_size": file_size,
         "progress": 0,
         "step": virtool.processes.FIRST_STEPS[process_type],
         "type": process_type
@@ -20,19 +22,18 @@ async def register(db, process_type):
     return virtool.utils.base_processor(document)
 
 
-async def update(db, process_id, progress=None, step=None, file_step=None, file_progress=None, file_size=None,
-                 errors=None):
+async def update(db, process_id, count=None, progress=None, step=None, file_progress=None, file_size=None, errors=None):
 
     update_dict = dict()
+
+    if count is not None:
+        update_dict["count"] = count
 
     if progress is not None:
         update_dict["progress"] = progress
 
     if step:
         update_dict["step"] = step
-
-    if file_step is not None:
-        update_dict["file_step"] = file_step
 
     if file_progress:
         update_dict["file_progress"] = file_progress

@@ -5,7 +5,7 @@ import pytest
 import tarfile
 
 import virtool.errors
-import virtool.status
+import virtool.software
 
 
 @pytest.mark.parametrize("missing_path,p_result", [(None, True), ("run", False), ("VERSION", False)])
@@ -36,7 +36,7 @@ def test_check_tree(missing_path, p_result, missing_client, c_result, tmpdir):
         for filename in client_files_to_write:
             client_dir.join(filename).write("foobar")
 
-    result = virtool.status.check_software_files(str(tmpdir))
+    result = virtool.software.check_software_files(str(tmpdir))
 
     assert result == (p_result and c_result)
 
@@ -63,7 +63,7 @@ async def test_copy_software_files(tmpdir):
 
     dest_path = str(dest_dir)
 
-    virtool.status.copy_software_files(os.path.join(decomp_path, "virtool"), dest_path)
+    virtool.software.copy_software_files(os.path.join(decomp_path, "virtool"), dest_path)
 
     assert set(os.listdir(dest_path)) == {"run", "client", "VERSION", "install.sh"}
 

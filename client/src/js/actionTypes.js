@@ -194,5 +194,3 @@ export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
 export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
-export const SHOW_INSTALL_MODAL = "SHOW_INSTALL_MODAL";
-export const HIDE_INSTALL_MODAL = "HIDE_INSTALL_MODAL";
