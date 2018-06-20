@@ -28,28 +28,6 @@ describe("HMM Reducer", () => {
 
     describe("should handle WS_UPDATE_STATUS", () => {
 
-        it("when [action.data.id='hmm_install']", () => {
-            state = {};
-            action = {
-                type: "WS_UPDATE_STATUS",
-                data: {
-                    id: "hmm_install",
-                    process: "process",
-                    ready: true,
-                    download_size: 100
-                }
-            };
-            result = reducer(state, action);
-            expected = {
-                ...state,
-                process: action.data.process,
-                ready: action.data.ready,
-                size: action.data.download_size
-            };
-
-            expect(result).toEqual(expected);
-        });
-
         it("otherwise return state", () => {
             state = {};
             action = {

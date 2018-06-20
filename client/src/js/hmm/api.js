@@ -8,8 +8,9 @@ export const nextPage = ({ page }) => (
     Request.get(`/api/hmms?page=${page}`)
 );
 
-export const install = () => (
-    Request.post("/api/hmm/updates")
+export const install = ({ release_id }) => (
+    Request.post("/api/hmms/status/updates")
+        .send({ release_id })
 );
 
 export const get = ({ hmmId }) => (

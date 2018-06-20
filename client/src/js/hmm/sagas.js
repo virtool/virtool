@@ -1,5 +1,5 @@
 import { LOCATION_CHANGE } from "react-router-redux";
-import { takeLatest, throttle } from "redux-saga/effects";
+import { takeLatest, throttle, put } from "redux-saga/effects";
 
 import * as hmmsAPI from "./api";
 import { apiCall, apiFind } from "../sagaUtils";
@@ -26,8 +26,12 @@ export function* listHmms (action) {
     yield apiCall(hmmsAPI.nextPage, action, FIND_HMMS);
 }
 
-export function* installHmms () {
-    yield apiCall(hmmsAPI.install, {}, INSTALL_HMMS);
+export function* installHmms (action) {
+    yield apiCall(hmmsAPI.install, action, INSTALL_HMMS);
+    yield put({
+        type: FIND_HMMS.REQUESTED,
+        page: 1
+    });
 }
 
 export function* getHmm (action) {

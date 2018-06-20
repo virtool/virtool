@@ -32,7 +32,10 @@ export const getHmm = (hmmId) => ({
  * @func
  * @returns {object}
  */
-export const installHMMs = simpleActionCreator(INSTALL_HMMS.REQUESTED);
+export const installHMMs = (releaseId) => ({
+    type: INSTALL_HMMS.REQUESTED,
+    release_id: releaseId
+});
 
 /**
  * Returns action that can trigger an API call for purging all HMMs. In other words, removing unreferenced HMM profiles

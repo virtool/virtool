@@ -11,12 +11,15 @@ export default function hmmsReducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_UPDATE_STATUS:
-            if (action.data.id === "hmm_install") {
+            if (action.data.id === "hmm") {
                 return {
                     ...state,
-                    process: action.data.process,
-                    ready: action.data.ready,
-                    size: action.data.download_size
+                    status: {
+                        ...state.status,
+                        installed: action.data.installed,
+                        process: action.data.process,
+                        release: action.data.release
+                    }
                 };
             }
 

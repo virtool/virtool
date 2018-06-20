@@ -8,11 +8,26 @@ import { Button, Flex, FlexItem } from "../../base";
 
 class HMMInstall extends React.Component {
 
-    render () {
-        if (this.props.process && !this.props.process.error) {
+    handleInstall = () => {
+        this.props.onInstall(this.props.releaseId);
+    };
 
-            const progress = this.getProgress(this.props);
-            const step = replace(this.props.process.step, "_", " ");
+    getProcess = () => {
+        if (this.props.processId && this.props.processes.length) {
+            const process = find(this.props.processes, ["id", this.props.processId]);
+            return process || null;
+        }
+    };
+
+    render () {
+
+        if (this.props.processId && !this.props.installed) {
+
+            const process = this.getProcess();
+            const progress = process.progress * 100;
+            const step = replace(process.step, "_", " ");
+
+            const barStyle = progress === 100 ? "success" : "warning";
 
             return (
                 <Panel>
@@ -21,7 +36,7 @@ class HMMInstall extends React.Component {
                             <Col xs={10} xsOffset={1} md={6} mdOffset={3}>
                                 <div className="text-center">
                                     <p><strong>Installing</strong></p>
-                                    <ProgressBar now={progress} />
+                                    <ProgressBar bsStyle={barStyle} now={progress} />
                                     <p>
                                         <small className="text-muted text-capitalize">
                                             {step}
@@ -56,7 +71,7 @@ class HMMInstall extends React.Component {
                                 <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
                             </p>
 
-                            <Button icon="download" onClick={this.props.onInstall}>
+                            <Button icon="download" onClick={this.handleInstall}>
                                 Install Official
                             </Button>
                         </FlexItem>
@@ -67,19 +82,17 @@ class HMMInstall extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    const processId = get(state, "process.id");
-    const process = find(state.process, {id: processId});
-
-    return {
-        process
-    };
-};
+const mapStateToProps = (state) => ({
+    processId: get(state.hmms.status, "process.id"),
+    releaseId: get(state.hmms.status, "release.id"),
+    installed: !!state.hmms.status.installed,
+    processes: state.processes.documents
+});
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onInstall: () => {
-        dispatch(installHMMs());
+    onInstall: (releaseId) => {
+        dispatch(installHMMs(releaseId));
     },
 
     onRefresh: () => {
