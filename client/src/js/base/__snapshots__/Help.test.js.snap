@@ -80,7 +80,6 @@ exports[`<Help /> renders even when title and pullRight props are missing 1`] = 
       bsClass="popover"
       id="help-popover"
       placement="right"
-      title={undefined}
     >
       <div
         class="test_div"
