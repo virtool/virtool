@@ -46,7 +46,11 @@ async def install(req):
     except IndexError:
         return not_found("Could not find latest uninstalled release")
 
-    process = await virtool.db.processes.register(db, "update_software")
+    process = await virtool.db.processes.register(
+        db,
+        "update_software",
+        file_size=latest_release["size"]
+    )
 
     await db.status.update_one({"_id": "software"}, {
         "$set": {

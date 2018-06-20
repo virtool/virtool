@@ -36,7 +36,13 @@ class ProgressTracker:
         self.progress = self.initial + round(self.count / self.total * self.factor, 2)
 
         if self.progress - self.last_reported >= self.increment:
-            await virtool.db.processes.update(self.db, self.process_id, progress=self.progress)
+            await virtool.db.processes.update(
+                self.db,
+                self.process_id,
+                count=self.count,
+                progress=self.progress
+            )
+
             self.last_reported = self.progress
 
         return self.progress

@@ -143,7 +143,7 @@ async def install(app, release, process_id):
         await app["run_in_thread"](
             virtool.software.copy_software_files,
             decompressed_path,
-            "/home/igboyes/temp_install"# virtool.software.INSTALL_PATH
+            "/home/igboyes/temp_install" # virtool.software.INSTALL_PATH
         )
 
         await virtool.db.processes.update(

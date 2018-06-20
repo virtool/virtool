@@ -9,7 +9,7 @@ import { push } from "react-router-redux";
 import { installSoftwareUpdates } from "../actions";
 import { Button } from "../../base";
 import { ReleaseMarkdown } from "./Release";
-import {routerLocationHasState} from "../../utils";
+import {byteSize, routerLocationHasState} from "../../utils";
 
 const attemptReload = () => {
     Request.get(`${window.location.origin}/api`)
@@ -41,7 +41,7 @@ const mergeBody = (releases) => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-const Process = ({ progress, step, updating }) => {
+const Process = ({ count, progress, size, step, updating }) => {
 
     if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
@@ -56,12 +56,20 @@ const Process = ({ progress, step, updating }) => {
         );
     }
 
+    let ratio;
+
+    if (step === "download") {
+        ratio = ` (${byteSize(count)} of ${byteSize(size)})`;
+
+
+    }
+
     return (
         <Modal.Body>
             <ProgressBar now={progress * 100} />
             <p className="text-center">
                 <small>
-                    <span className="text-capitalize">{step}</span>
+                    <span className="text-capitalize">{step}</span>{ratio}
                 </small>
             </p>
         </Modal.Body>
@@ -89,7 +97,7 @@ const SoftwareInstall = ({ onHide, onInstall, process, releases, show, updating 
             </div>
         );
     } else {
-        content = <Process {...process} updating={updating} />;
+        content = <Process {...process} size={releases[0].size} updating={updating} />;
     }
 
     return (
