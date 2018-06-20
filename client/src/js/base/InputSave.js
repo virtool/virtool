@@ -38,16 +38,13 @@ export class InputSave extends React.Component {
         autoComplete: true
     };
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        // If the initialValue has changed. Remove the pending state on the component. This will remove the spinner on
-        // the save button and enable the Input component again.
-        if (nextProps.initialValue !== prevState.value) {
-            return {
+    componentDidUpdate (prevProps) {
+        if (this.props.initialValue !== prevProps.initialValue) {
+            this.setState({
                 pending: false,
-                value: nextProps.initialValue
-            };
+                value: this.props.initialValue
+            });
         }
-        return null;
     }
 
     /**
