@@ -114,6 +114,10 @@ async def init_dispatcher(app):
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
 
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+    await scheduler.spawn(app["dispatcher"].run())
+
 
 async def init_db(app):
     """
@@ -287,7 +291,6 @@ async def on_shutdown(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    await app["dispatcher"].close()
     await app["client"].close()
 
     app["process_executor"].shutdown(wait=True)
