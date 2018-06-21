@@ -66,14 +66,15 @@ class Manager:
         self.watcher.watch(self.files_path, FLAGS, alias="files")
         self.watcher.watch(self.watch_path, aionotify.Flags.CLOSE_WRITE, alias="watch")
 
-        self._watch_task = None
-        self._clean_task = None
-
-    def start(self):
-        self._watch_task = asyncio.ensure_future(self.watch(), loop=self.loop)
+    async def run(self):
+        coros = [
+            self.watch()
+        ]
 
         if self.clean_interval is not None:
-            self._clean_task = asyncio.ensure_future(self.clean(), loop=self.loop)
+            coros.append(self.clean())
+
+        return await asyncio.gather(*coros)
 
     async def clean(self):
         try:
@@ -133,8 +134,6 @@ class Manager:
         except asyncio.CancelledError:
             pass
 
-        self.watcher.close()
-
         logging.debug("Stopped file manager")
 
     async def handle_watch_close(self, filename):
@@ -184,13 +183,3 @@ class Manager:
 
     async def handle_file_deletion(self, filename):
         await self.db.files.delete_one({"_id": filename})
-
-    async def close(self):
-        self._clean_task.cancel()
-        self._watch_task.cancel()
-
-        while not (self._clean_task.done() and self._watch_task.done()):
-            await asyncio.sleep(0.1, loop=self.loop)
-
-        await self._clean_task
-        await self._watch_task
