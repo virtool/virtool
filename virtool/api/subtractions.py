@@ -162,6 +162,7 @@ async def edit(req):
 @routes.delete("/api/subtractions/{subtraction_id}", permission="modify_subtraction")
 async def remove(req):
     db = req.app["db"]
+    settings = req.app["settings"]
 
     subtraction_id = req.match_info["subtraction_id"]
 
@@ -173,7 +174,7 @@ async def remove(req):
     if delete_result.deleted_count == 0:
         return not_found()
 
-    index_path = virtool.subtractions.calculate_index_path(req["settings"], subtraction_id)
+    index_path = virtool.subtractions.calculate_index_path(settings, subtraction_id)
 
     await req.loop.run_in_executor(None, shutil.rmtree, index_path, True)
 
