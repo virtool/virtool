@@ -92,13 +92,38 @@ async def get(req):
 
 
 @routes.post("/api/samples", permission="create_sample", schema={
-    "name": {"type": "string", "minlength": 1, "required": True},
-    "host": {"type": "string"},
-    "isolate": {"type": "string"},
-    "group": {"type": "string"},
-    "locale": {"type": "string"},
-    "subtraction": {"type": "string", "required": True},
-    "files": {"type": "list", "minlength": 1, "maxlength": 2, "required": True}
+    "name": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    },
+    "host": {
+        "type": "string"
+    },
+    "isolate": {
+        "type": "string"
+    },
+    "group": {
+        "type": "string"
+    },
+    "locale": {
+        "type": "string"
+    },
+    "srna": {
+        "type": "boolean",
+        "coerce": virtool.utils.to_bool,
+        "default": False
+    },
+    "subtraction": {
+        "type": "string",
+        "required": True
+    },
+    "files": {
+        "type": "list",
+        "minlength": 1,
+        "maxlength": 2,
+        "required": True
+    }
 })
 async def create(req):
     db = req.app["db"]
@@ -154,10 +179,11 @@ async def create(req):
         "analyzed": False,
         "hold": True,
         "archived": False,
-        "group_read": settings.get("sample_group_read"),
-        "group_write": settings.get("sample_group_write"),
-        "all_read": settings.get("sample_all_read"),
-        "all_write": settings.get("sample_all_write"),
+        "group_read": settings["sample_group_read"],
+        "group_write": settings["sample_group_write"],
+        "all_read": settings["sample_all_read"],
+        "all_write": settings["sample_all_write"],
+        "srna": data["srna"],
         "subtraction": {
             "id": data["subtraction"]
         },
@@ -172,7 +198,8 @@ async def create(req):
 
     task_args = {
         "sample_id": sample_id,
-        "files": document["files"]
+        "files": document["files"],
+        "srna": data["srna"]
     }
 
     await req.app["job_manager"].new("create_sample", task_args, document["user"]["id"])
