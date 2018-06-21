@@ -26,14 +26,13 @@ export default class TaskField extends React.PureComponent {
         onInvalid: PropTypes.func
     };
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        if (nextProps.value !== prevState.value) {
-            return {
-                value: nextProps.value,
+    componentDidUpdate (prevProps) {
+        if (this.props.value !== prevProps.value) {
+            this.setState({
+                value: this.props.value,
                 pending: false
-            };
+            });
         }
-        return null;
     }
 
     handleBlur = () => {

@@ -8,7 +8,7 @@ import { Checkbox, Icon, InputError } from "../../../base";
 
 const HTTPCheckboxLabel = () => (
     <span>
-        Enable <a rel="noopener noreferrer" href="https://docs.virtool.ca/web-api.html" target="_blank">API</a>
+        Enable <a rel="noopener noreferrer" href="https://www.virtool.ca/docs/api/" target="_blank">API</a>
     </span>
 );
 
