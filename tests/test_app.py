@@ -1,9 +1,11 @@
 import concurrent.futures
+
+import aiojobs.aiohttp
 from aiohttp import web
 
 import virtool.app
-import virtool.app_settings
 import virtool.app_dispatcher
+import virtool.app_settings
 import virtool.jobs.manager
 
 
@@ -56,15 +58,3 @@ class TestInitSettings:
         await virtool.app.init_settings(app)
 
         assert app["settings"].stub.called
-
-
-async def test_init_dispatcher(loop):
-    """
-    Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
-
-    """
-    app = web.Application(loop=loop)
-
-    await virtool.app.init_dispatcher(app)
-
-    assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)

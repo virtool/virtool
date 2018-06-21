@@ -111,7 +111,7 @@ async def blast(req):
 
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
-    aiojobs.aiohttp.spawn(req, virtool.bio.wait_for_blast_result(
+    await aiojobs.aiohttp.spawn(req, virtool.bio.wait_for_blast_result(
         db,
         req.app["settings"],
         analysis_id,

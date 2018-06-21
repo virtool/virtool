@@ -1,6 +1,8 @@
 import asyncio
 import concurrent.futures
 import os
+
+import aiojobs
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -14,9 +16,15 @@ def test_manager_instance(loop, test_motor, tmpdir):
 
     executor = concurrent.futures.ThreadPoolExecutor()
 
+    scheduler = loop.run_until_complete(aiojobs.create_scheduler())
+
     manager = virtool.files.Manager(loop, executor, test_motor, files_path, watch_path)
 
-    return manager
+    loop.run_until_complete(scheduler.spawn(manager.run()))
+
+    yield manager
+
+    loop.run_until_complete(scheduler.close())
 
 
 @pytest.fixture
@@ -24,11 +32,7 @@ def patched_test_manager_instance(monkeypatch, test_manager_instance):
     for key in ["handle_watch_close", "handle_file_close", "handle_file_creation", "handle_file_deletion"]:
         monkeypatch.setattr(test_manager_instance, key, make_mocked_coro())
 
-    test_manager_instance.start()
-
-    yield test_manager_instance
-
-    test_manager_instance.loop.run_until_complete(test_manager_instance.close())
+    return test_manager_instance
 
 
 def touch(path):
@@ -151,12 +155,19 @@ async def test_handle_file_creation(has_document, test_motor, test_manager_insta
 
     await test_manager_instance.handle_file_creation(filename)
 
+    asyncio.sleep(1)
+
     document = await test_motor.files.find_one()
+
+    import pprint
+    pprint.pprint(document)
 
     if has_document:
         assert document == {
             "_id": "foobar-test.fq",
-            "created": True
+            "created": True,
+            "ready": True,
+            "size": 11
         }
     else:
         assert document is None
@@ -180,11 +191,14 @@ async def test_handle_file_close(has_document, test_motor, test_manager_instance
 
     await test_manager_instance.handle_file_close(filename)
 
+    asyncio.sleep(1)
+
     document = await test_motor.files.find_one()
 
     if has_document:
         assert document == {
             "_id": filename,
+            "created": True,
             "ready": True,
             "size": 11
         }
@@ -203,5 +217,7 @@ async def test_handle_file_deletion(test_motor, test_manager_instance):
     })
 
     await test_manager_instance.handle_file_deletion(filename)
+
+    asyncio.sleep(1)
 
     assert not await test_motor.files.count()

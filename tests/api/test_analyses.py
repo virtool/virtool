@@ -132,35 +132,11 @@ async def test_blast(error, mocker, spawn_client, static_time):
 
         await client.db.analyses.insert_one(analysis_document)
 
-    m_format_analysis = make_mocked_coro({
-        "_id": "foobar",
-        "algorithm": "nuvs",
-        "ready": True,
-        "results": [
-            {"index": 3, "sequence": "ATAGAGATTAGAT"},
-            {"index": 5, "sequence": "GGAGTTAGATTGG"},
-            {"index": 8, "sequence": "ACCAATAGACATT"}
-        ]
-    })
+    m_initialize_ncbi_blast = mocker.patch("virtool.bio.initialize_ncbi_blast", make_mocked_coro(("FOOBAR1337", 23)))
 
-    # Do a bunch of mocking in virtool.bio module.
-    m_initialize_ncbi_blast = make_mocked_coro(return_value=("FOOBAR1337", 23))
-    mocker.patch("virtool.bio.initialize_ncbi_blast", new=m_initialize_ncbi_blast)
+    m_check_rid = mocker.patch("virtool.bio.check_rid", make_mocked_coro(return_value=False))
 
-    m_check_rid = make_mocked_coro(return_value=False)
-    mocker.patch("virtool.bio.check_rid", new=m_check_rid)
-
-    stub = mocker.stub(name="wait_for_blast_result")
-
-    # Use this func to make sure that wait_for_blast_result() is awaited.
-    async def nothing():
-        pass
-
-    async def wait_for_blast_result(*args, **kwargs):
-        await nothing()
-        return stub(*args, **kwargs)
-
-    mocker.patch("virtool.bio.wait_for_blast_result", new=wait_for_blast_result)
+    m_wait_for_blast_result = mocker.patch("virtool.bio.wait_for_blast_result", make_mocked_coro())
 
     await client.put("/api/analyses/foobar/5/blast", {})
 
@@ -214,10 +190,7 @@ async def test_blast(error, mocker, spawn_client, static_time):
         assert m_initialize_ncbi_blast.call_args[0] == ({}, "GGAGTTAGATTGG")
         assert m_check_rid.call_args[0] == ({}, "FOOBAR1337")
 
-        expected_format_arg = deepcopy(analysis_document)
-        expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at=static_time)
-
-        assert stub.call_args[0] == (
+        m_wait_for_blast_result.assert_called_with(
             client.db,
             {},
             "foobar",
