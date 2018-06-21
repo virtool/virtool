@@ -1,5 +1,5 @@
 import React from "react";
-import { map, sortBy } from "lodash-es";
+import { map, sortBy, forEach } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -118,7 +118,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
 
     onAnalyze: (sampleId, references, algorithm) => {
-        map(references, (entry) =>
+        forEach(references, (entry) =>
             dispatch(analyze(sampleId, entry.refId, algorithm))
         );
     },

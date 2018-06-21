@@ -47,6 +47,7 @@ export default class CreateAnalysis extends React.Component {
 
     static propTypes = {
         show: PropTypes.bool,
+        samples: PropTypes.array,
         id: PropTypes.string,
         onSubmit: PropTypes.func,
         onHide: PropTypes.func,
@@ -75,10 +76,14 @@ export default class CreateAnalysis extends React.Component {
 
     render () {
 
-        const jobMessage = this.state.selected.length ?
+        const jobMessage = this.props.samples
+            ? `Start ${this.state.selected.length} ${getTaskDisplayName(this.state.algorithm)} job(s)
+             each on ${this.props.samples.length} sample(s).`
+            : `Start ${this.state.selected.length} ${getTaskDisplayName(this.state.algorithm)} job(s).`;
+        const jobSummary = this.state.selected.length ?
             (
                 <div style={{float: "left"}}>
-                    Start {this.state.selected.length} {getTaskDisplayName(this.state.algorithm)} jobs.
+                    {jobMessage}
                 </div>
             ) : null;
 
@@ -101,7 +106,7 @@ export default class CreateAnalysis extends React.Component {
                         />
                     </Modal.Body>
                     <Modal.Footer>
-                        {jobMessage}
+                        {jobSummary}
                         <Button
                             type="submit"
                             bsStyle="primary"
