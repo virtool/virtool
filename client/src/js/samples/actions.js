@@ -101,16 +101,18 @@ export const getSample = (sampleId) => ({
  * @param isolate {string} the originating isolate
  * @param host {string} the exact host
  * @param locale {string} location in which the sample was collected
+ * @param srna {boolean} does the sample contain sRNA reads
  * @param subtraction {string} name of the associated subtraction host genome
  * @param files {object} file ids of one or two files
  * @returns {object}
  */
-export const createSample = (name, isolate, host, locale, subtraction, files) => ({
+export const createSample = (name, isolate, host, locale, srna, subtraction, files) => ({
     type: CREATE_SAMPLE.REQUESTED,
     name,
     isolate,
     host,
     locale,
+    srna,
     subtraction,
     files
 });
