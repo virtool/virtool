@@ -4,6 +4,8 @@ Provides request handlers for managing and viewing analyses.
 """
 import asyncio
 
+import aiojobs.aiohttp
+
 import virtool.analyses
 import virtool.bio
 import virtool.db.analyses
@@ -109,13 +111,13 @@ async def blast(req):
 
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
-    asyncio.ensure_future(virtool.bio.wait_for_blast_result(
+    aiojobs.aiohttp.spawn(req, virtool.bio.wait_for_blast_result(
         db,
         req.app["settings"],
         analysis_id,
         sequence_index,
         rid
-    ), loop=req.app.loop)
+    ))
 
     headers = {
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
