@@ -401,7 +401,7 @@ def parse_blast_content(content, rid):
     output["hits"] = list()
 
     for hit in result["hits"]:
-        cleaned = {key: hit["description"][0][key] for key in ["taxid", "title", "accession"]}
+        cleaned = {key: hit["description"][0].get(key, "") for key in ["taxid", "title", "accession"]}
 
         cleaned["len"] = hit["len"]
         cleaned["name"] = hit["description"][0]["sciname"]
