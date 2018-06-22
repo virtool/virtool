@@ -16,12 +16,17 @@ FILE_EXTENSION_FILTER = (
     ".fastq"
 )
 
-FLAGS = (
+FILES_FLAGS = (
     aionotify.Flags.CLOSE_WRITE |
     aionotify.Flags.CREATE |
     aionotify.Flags.DELETE |
     aionotify.Flags.MOVED_TO |
     aionotify.Flags.MOVED_FROM
+)
+
+WATCH_FLAGS = (
+    aionotify.Flags.CLOSE_WRITE |
+    aionotify.Flags.MOVED_TO
 )
 
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
@@ -63,8 +68,8 @@ class Manager:
 
         self.watcher = aionotify.Watcher()
 
-        self.watcher.watch(self.files_path, FLAGS, alias="files")
-        self.watcher.watch(self.watch_path, aionotify.Flags.CLOSE_WRITE, alias="watch")
+        self.watcher.watch(self.files_path, FILES_FLAGS, alias="files")
+        self.watcher.watch(self.watch_path, WATCH_FLAGS, alias="watch")
 
     async def run(self):
         coros = [
@@ -115,13 +120,14 @@ class Manager:
                 event = await self.watcher.get_event()
 
                 alias = event.alias
-                event_type = get_event_type(event)
                 filename = event.name
 
-                if alias == "watch" and event_type == "close":
-                    await self.handle_watch_close(filename)
+                if alias == "watch":
+                    await self.handle_watch(filename)
 
                 elif alias == "files":
+                    event_type = get_event_type(event)
+
                     if event_type == "delete":
                         await self.handle_file_deletion(filename)
 
