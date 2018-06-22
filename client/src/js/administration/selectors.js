@@ -1,13 +1,9 @@
 import { createSelector } from "reselect";
-import { endsWith, flatMap, keys, map, max, pick } from "lodash-es";
+import { flatMap, keys, map, minBy, pick } from "lodash-es";
 
 import { taskDisplayNames } from "../utils";
 
-const getMaximumTaskLimit = (limits, type) => (
-    max(map(limits, (value, key) =>
-        endsWith(key, type) ? value : 0
-    ))
-);
+export const readOnlyFields = ["create_subtraction", "build_index"];
 
 const taskLimitKeys = flatMap(keys(taskDisplayNames), name => [`${name}_proc`, `${name}_mem`]);
 
@@ -34,8 +30,14 @@ export const maxResourcesSelector = createSelector(
 
 export const minResourcesSelector = createSelector(
     [taskSpecificLimitSelector],
-    (limits) => ({
-        minProc: getMaximumTaskLimit(limits, "proc"),
-        minMem: getMaximumTaskLimit(limits, "mem")
-    })
+    limits => {
+        const lockFields = map(readOnlyFields, name => (
+            { proc: limits[`${name}_proc`], mem: limits[`${name}_mem`] }
+        ));
+
+        const minProc = minBy(lockFields, "proc").proc;
+        const minMem = minBy(lockFields, "mem").mem;
+
+        return { minProc, minMem };
+    }
 );

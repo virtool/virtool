@@ -41,10 +41,6 @@ class Resources extends React.Component {
         };
     }
 
-    componentDidMount () {
-        this.props.onGet();
-    }
-
     static getDerivedStateFromProps (nextProps, prevState) {
         if (nextProps.mem !== prevState.mem) {
             return { errorMem: false };
@@ -55,6 +51,27 @@ class Resources extends React.Component {
         }
 
         return null;
+    }
+
+    componentDidMount () {
+        this.props.onGet();
+    }
+
+    componentDidUpdate (prevProps, prevState) {
+
+        // If computing resources are lower than server set defaults,
+        // overwrite mem and proc values to resource values
+        if (!prevProps.resources && this.props.resources) {
+            if (this.props.maxMem < prevState.mem) {
+                console.log("overwrite default mem");
+                this.props.onUpdate({ name: "mem", value: this.props.maxMem });
+            }
+            if (this.props.maxProc < prevState.proc) {
+                console.log("overwrite default proc");
+                this.props.onUpdate({ name: "proc", value: this.props.maxProc});
+            }
+        }
+
     }
 
     handleChange = (e) => {
@@ -79,7 +96,6 @@ class Resources extends React.Component {
 
     setError = (e, value) => {
         e.preventDefault();
-
         this.setState({
             [`error${upperFirst(e.target.name)}`]: value
         });
@@ -139,9 +155,7 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.maxProc < this.props.proc
-                                        ? this.props.maxProc
-                                        : this.props.proc}
+                                    initialValue={this.props.maxProc}
                                     error={errorMessageProc}
                                     noMargin
                                     withButton
@@ -156,9 +170,7 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.maxMem < this.props.mem
-                                        ? this.props.maxMem
-                                        : this.props.mem}
+                                    initialValue={this.props.maxMem}
                                     error={errorMessageMem}
                                     noMargin
                                     withButton
@@ -191,6 +203,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => ({
 
     onUpdate: (e) => {
+        console.log("update: ", e.name, e.value);
         dispatch(updateSetting(e.name, toNumber(e.value)));
     },
 
