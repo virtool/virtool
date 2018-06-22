@@ -39,8 +39,8 @@ const TaskLimits = (props) => {
             mem={props.limits[taskPrefix].mem}
             inst={props.limits[taskPrefix].inst}
             onChangeLimit={props.onChangeLimit}
-            procLowerLimit={props.minProc}
-            memLowerLimit={props.minMem}
+            minProc={props.minProc}
+            minMem={props.minMem}
             resourceProc={props.resourceProc}
             resourceMem={props.resourceMem}
             readOnlyFields={readOnlyFields}

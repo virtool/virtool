@@ -29,8 +29,7 @@ export default function settingsReducer (state = initialState, action) {
             return {
                 ...state,
                 data: {
-                    ...state.data,
-                    updateError: {status: action.status, message: action.message}
+                    ...state.data
                 },
                 ...proxyTestClear
             };

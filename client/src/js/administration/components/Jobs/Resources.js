@@ -1,12 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
-import { toNumber, upperFirst } from "lodash-es";
+import { toNumber, upperFirst, forEach, endsWith, isEmpty, get } from "lodash-es";
 
 import { Alert, Flex, FlexItem, InputError, LoadingPlaceholder } from "../../../base";
 import { getResources } from "../../../jobs/actions";
-import { maxResourcesSelector, minResourcesSelector } from "../../selectors";
+import { maxResourcesSelector, minResourcesSelector, checkTaskUpperLimits } from "../../selectors";
 import { updateSetting } from "../../actions";
+import { clearError } from "../../../errors/actions";
 
 const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
@@ -58,24 +59,29 @@ class Resources extends React.Component {
     }
 
     componentDidUpdate (prevProps, prevState) {
-
         // If computing resources are lower than server set defaults,
-        // overwrite mem and proc values to resource values
-        if (!prevProps.resources && this.props.resources) {
+        // overwrite mem and proc values to resource values maximums
+        if (!prevProps.overResourceMax && this.props.overResourceMax) {
+
+            forEach(this.props.overResourceMax, (value, key) => {
+                const type = endsWith(key, "proc") ? "Proc" : "Mem";
+                this.props.onUpdate({ name: key, value: this.props[`max${type}`]});
+            });
+        }
+
+        if (!isEmpty(prevProps.overResourceMax) && isEmpty(this.props.overResourceMax)) {
             if (this.props.maxMem < prevState.mem) {
-                console.log("overwrite default mem");
                 this.props.onUpdate({ name: "mem", value: this.props.maxMem });
             }
             if (this.props.maxProc < prevState.proc) {
-                console.log("overwrite default proc");
                 this.props.onUpdate({ name: "proc", value: this.props.maxProc});
             }
         }
-
     }
 
     handleChange = (e) => {
         this.setError(e, false);
+        this.props.onClearError("UPDATE_SETTINGS_ERROR");
     };
 
     handleInvalid = (e) => {
@@ -155,7 +161,7 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.maxProc}
+                                    initialValue={this.props.proc}
                                     error={errorMessageProc}
                                     noMargin
                                     withButton
@@ -170,7 +176,7 @@ class Resources extends React.Component {
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={this.props.maxMem}
+                                    initialValue={this.props.mem}
                                     error={errorMessageMem}
                                     noMargin
                                     withButton
@@ -188,6 +194,9 @@ const mapStateToProps = (state) => {
     const { maxProc, maxMem } = maxResourcesSelector(state);
     const { minProc, minMem } = minResourcesSelector(state);
 
+    const overResourceMax = checkTaskUpperLimits(state);
+    const error = get(state, "errors.UPDATE_SETTINGS_ERROR.message", "");
+
     return {
         proc: state.settings.data.proc,
         mem: state.settings.data.mem,
@@ -196,19 +205,23 @@ const mapStateToProps = (state) => {
         maxProc,
         maxMem,
         resources: state.jobs.resources,
-        error: state.settings.data.updateError
+        error,
+        overResourceMax
     };
 };
 
 const mapDispatchToProps = (dispatch) => ({
 
     onUpdate: (e) => {
-        console.log("update: ", e.name, e.value);
         dispatch(updateSetting(e.name, toNumber(e.value)));
     },
 
     onGet: () => {
         dispatch(getResources());
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

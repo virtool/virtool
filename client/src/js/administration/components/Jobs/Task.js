@@ -54,8 +54,8 @@ class Task extends React.Component {
             mem,
             proc,
             taskPrefix,
-            procLowerLimit,
-            memLowerLimit,
+            minProc,
+            minMem,
             resourceProc,
             resourceMem,
             readOnlyFields
@@ -88,11 +88,11 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="proc"
-                            value={resourceProc < proc ? resourceProc : proc}
+                            value={proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
-                            lowerLimit={procLowerLimit}
+                            lowerLimit={minProc}
                             upperLimit={resourceProc}
                             onInvalid={this.handleInvalid}
                         />
@@ -100,11 +100,11 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="mem"
-                            value={resourceMem < mem ? resourceMem : mem}
+                            value={mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
-                            lowerLimit={memLowerLimit}
+                            lowerLimit={minMem}
                             upperLimit={resourceMem}
                             onInvalid={this.handleInvalid}
                         />
@@ -135,8 +135,8 @@ Task.propTypes = {
     mem: PropTypes.number,
     inst: PropTypes.number,
     onChangeLimit: PropTypes.func,
-    procLowerLimit: PropTypes.number,
-    memLowerLimit: PropTypes.number,
+    minProc: PropTypes.number,
+    minMem: PropTypes.number,
     resourceProc: PropTypes.number,
     resourceMem: PropTypes.number,
     readOnlyFields: PropTypes.array
