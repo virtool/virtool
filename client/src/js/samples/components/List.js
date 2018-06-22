@@ -18,7 +18,7 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
-                    <Icon name="times" onClick={clearAll} tip="Clear All" />
+                    <Icon name="times fa-fw" onClick={clearAll} tip="Clear All" />
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
@@ -30,8 +30,8 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
 
         <Button
             tip="Analyze"
-            icon="play"
-            bsStyle="primary"
+            icon="chart-area fa-fw"
+            bsStyle="success"
             onClick={showModal}
         />
     </div>
