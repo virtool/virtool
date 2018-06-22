@@ -2,7 +2,7 @@ import React from "react";
 import { includes, map, remove } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
-import { ListGroupItem, Checkbox } from "../../base";
+import { ListGroupItem, Checkbox, NoneFound } from "../../base";
 
 import { editUser, listUsers } from "../actions";
 
@@ -60,6 +60,10 @@ const UserGroups = ({ accountUserId, allGroups, memberGroups, EditGroup, userId,
             onListUsers={list}
         />
     );
+
+    if (!groupComponents.length) {
+        return <NoneFound noun="groups" />;
+    }
 
     return (
         <Panel>

@@ -29,7 +29,7 @@ const SubtractionList = (props) => {
 
     let alert;
 
-    if (!props.ready_host_count) {
+    if (!props.ready_host_count && !props.total_count) {
         alert = (
             <Alert bsStyle="warning" icon="info-circle">
                 <strong>
