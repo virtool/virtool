@@ -31,12 +31,14 @@ WATCH_FLAGS = (
 
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
 TYPE_NAME_DICT = {
+    "CLOSE_WRITE": "close",
     "CREATE": "create",
-    "MOVED_TO": "move",
     "DELETE": "delete",
     "MOVED_FROM": "delete",
-    "CLOSE_WRITE": "close"
+    "MOVED_TO": "close"
 }
+
+logger = logging.getLogger(__name__)
 
 
 def get_event_type(event):
@@ -113,39 +115,50 @@ class Manager:
             pass
 
     async def watch(self):
+        logging.debug("Started file manager")
+
         await self.watcher.setup(self.loop)
 
         try:
             while True:
                 event = await self.watcher.get_event()
-
-                alias = event.alias
                 filename = event.name
 
-                if alias == "watch":
+                if event.alias == "watch":
                     await self.handle_watch(filename)
 
-                elif alias == "files":
+                else:
                     event_type = get_event_type(event)
 
+                    print(event_type)
+
                     if event_type == "delete":
-                        await self.handle_file_deletion(filename)
+                        await self.handle_delete(filename)
 
                     elif event_type == "create":
-                        await self.handle_file_creation(filename)
+                        await self.handle_create(filename)
 
                     elif event_type == "close":
-                        await self.handle_file_close(filename)
+                        await self.handle_close(filename)
 
         except asyncio.CancelledError:
             pass
 
         logging.debug("Stopped file manager")
 
-    async def handle_watch_close(self, filename):
+    async def handle_watch(self, filename):
+        """
+        Handle the writing or moving of a file to the watch path.
+
+        :param filename: the name of the written or moved file
+        :type filename: str
+
+        """
         path = os.path.join(self.watch_path, filename)
 
-        if has_read_extension(filename):
+        is_read_file = has_read_extension(filename)
+
+        if is_read_file:
             document = await virtool.db.files.create(self.db, filename, "reads")
 
             await self.loop.run_in_executor(
@@ -155,37 +168,69 @@ class Manager:
                 os.path.join(self.files_path, document["id"])
             )
 
+            logging.debug("Retrieved file from watch path: " + filename)
+
         await self.loop.run_in_executor(
             self.executor,
             os.remove,
             path
         )
 
-    async def handle_file_close(self, filename):
+        if not is_read_file:
+            logging.debug("Removed invalid read file from watch path: " + filename)
+
+    async def handle_close(self, filename):
+        """
+        Handle the finish of a write or move to the files directory. Remove the file immediately if it doesn't have a
+        corresponding database entry.
+
+        :param filename: the name of the file in the files path
+        :type filename: str
+
+        """
         path = os.path.join(self.files_path, filename)
 
-        file_entry = dict(virtool.utils.file_stats(path), filename=filename)
-
-        document = await self.db.files.find_one_and_update({"_id": filename}, {
+        update_result = await self.db.files.update_one({"_id": filename}, {
             "$set": {
-                "size": file_entry["size"],
+                "size": virtool.utils.file_stats(path),
                 "ready": True
             }
-        }, projection=virtool.db.files.PROJECTION)
+        })
 
-        if not document:
+        if not update_result.matched_count:
             await self.loop.run_in_executor(
                 self.executor,
                 os.remove,
                 path
             )
 
-    async def handle_file_creation(self, filename):
+            logging.debug("Removed untracked file from files path: " + filename)
+
+        else:
+            logging.debug("Marked file as ready: " + filename)
+
+    async def handle_create(self, filename):
+        """
+        If a file is created in the files path, set the `created` flag on its corresponding database entry.
+
+        :param filename: the name of the file in the files path
+        :type filename: str
+
+        """
         await self.db.files.update_one({"_id": filename}, {
             "$set": {
                 "created": True
             }
         })
 
-    async def handle_file_deletion(self, filename):
+        logging.debug("File was created in files path: " + filename)
+
+    async def handle_delete(self, filename):
+        """
+        If a file is deleted from the files path, remove its corresponding database entry.
+
+        :param filename: the name of the file in the files path
+        :type filename: str
+
+        """
         await self.db.files.delete_one({"_id": filename})

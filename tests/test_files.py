@@ -10,7 +10,7 @@ import virtool.files
 
 
 @pytest.fixture
-def test_manager_instance(loop, test_motor, tmpdir):
+def test_manager_instance(loop, test_dbi, tmpdir):
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
@@ -18,7 +18,7 @@ def test_manager_instance(loop, test_motor, tmpdir):
 
     scheduler = loop.run_until_complete(aiojobs.create_scheduler())
 
-    manager = virtool.files.Manager(loop, executor, test_motor, files_path, watch_path)
+    manager = virtool.files.Manager(loop, executor, test_dbi, files_path, watch_path)
 
     loop.run_until_complete(scheduler.spawn(manager.run()))
 
@@ -29,7 +29,7 @@ def test_manager_instance(loop, test_motor, tmpdir):
 
 @pytest.fixture
 def patched_test_manager_instance(monkeypatch, test_manager_instance):
-    for key in ["handle_watch_close", "handle_file_close", "handle_file_creation", "handle_file_deletion"]:
+    for key in ["handle_watch", "handle_close", "handle_create", "handle_delete"]:
         monkeypatch.setattr(test_manager_instance, key, make_mocked_coro())
 
     return test_manager_instance
@@ -51,21 +51,27 @@ def touch(path):
     ("test.gz", False)
 ])
 def test_has_read_extension(filename,expected):
+    """
+    Test that read extensions can be detected reliably.
+
+    """
     assert virtool.files.has_read_extension(filename) == expected
 
 
 @pytest.mark.parametrize("called", [True, False])
 async def test_detect_watch(called, patched_test_manager_instance):
+
+    # handle_watch should not be called if file is written in files_path, only if in watch_path
     path = patched_test_manager_instance.watch_path if called else patched_test_manager_instance.files_path
 
     touch(os.path.join(path, "test.fq"))
 
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(0.3)
 
     if called:
-        patched_test_manager_instance.handle_watch_close.assert_called_with("test.fq")
+        patched_test_manager_instance.handle_watch.assert_called_with("test.fq")
     else:
-        assert patched_test_manager_instance.handle_watch_close.called is False
+        assert not patched_test_manager_instance.handle_watch.called
 
 
 @pytest.mark.parametrize("called", [True, False])
@@ -84,140 +90,126 @@ async def test_detect_create_close_and_delete(called, patched_test_manager_insta
     await asyncio.sleep(0.1)
 
     if called:
-        patched_test_manager_instance.handle_file_creation.assert_called_with("test.fq")
-        patched_test_manager_instance.handle_file_close.assert_called_with("test.fq")
+        patched_test_manager_instance.handle_create.assert_called_with("test.fq")
+        patched_test_manager_instance.handle_close.assert_called_with("test.fq")
     else:
-        assert patched_test_manager_instance.handle_file_creation.called is False
-        assert patched_test_manager_instance.handle_file_close.called is False
+        assert patched_test_manager_instance.handle_create.called is False
+        assert patched_test_manager_instance.handle_close.called is False
 
     os.remove(file_path)
 
     await asyncio.sleep(0.1)
 
     if called:
-        patched_test_manager_instance.handle_file_deletion.assert_called_with("test.fq")
+        patched_test_manager_instance.handle_delete.assert_called_with("test.fq")
     else:
-        assert patched_test_manager_instance.handle_file_deletion.called is False
+        assert patched_test_manager_instance.handle_delete.called is False
 
 
 @pytest.mark.parametrize("has_ext", [True, False])
-async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test_manager_instance):
+async def test_handle_watch(has_ext, mocker, test_dbi, test_manager_instance):
 
-    mocker.patch("virtool.db.utils.get_new_id", make_mocked_coro("foobar"))
+    m_copy = mocker.patch("shutil.copy")
 
-    mocker.patch("virtool.files.has_read_extension", return_value=has_ext)
+    m_create = mocker.patch("virtool.db.files.create", make_mocked_coro({"id": "foobar-test.fq"}))
 
-    filename = "test.fq" if has_ext else "test.txt"
+    m_has_ready_extension = mocker.patch("virtool.files.has_read_extension", return_value=has_ext)
 
-    touch(os.path.join(test_manager_instance.watch_path, filename))
+    m_remove = mocker.patch("os.remove")
 
-    await test_manager_instance.handle_watch_close(filename)
+    filename = "test.fq"
 
-    await asyncio.sleep(0.1)
+    path = os.path.join(test_manager_instance.watch_path, filename)
+
+    await test_manager_instance.handle_watch(filename)
+
+    m_has_ready_extension.assert_called_with(filename)
 
     if has_ext:
-        # Check if a new file document was created if the file had a valid extension.
-        assert await test_motor.files.find_one() == {
-            "_id": "foobar-test.fq",
-            "name": "test.fq",
-            "type": "reads",
-            "user": None,
-            "uploaded_at": static_time,
-            "expires_at": None,
-            "reserved": False,
+        m_create.assert_called_with(
+            test_dbi,
+            filename,
+            "reads"
+        )
 
-            # Both of these keys should be ``False`` as the ``CLOSE_WRITE`` and ``CREATE`` flags are not being
-            # listened for in the ``test_manager_instance``.
-            "created": False,
-            "ready": False
-        }
+        m_copy.assert_called_with(
+            path,
+            os.path.join(test_manager_instance.files_path, "foobar-test.fq")
+        )
 
-    # Make sure the watched file was moved to the files directory ONLY if it had a valid extension.
-    assert os.listdir(test_manager_instance.files_path) == (["foobar-test.fq"] if has_ext else [])
-
-    # Make sure watched file was removed, whether it had a valid extension or not.
-    assert os.listdir(test_manager_instance.watch_path) == []
+    m_remove.assert_called_with(path)
 
 
-@pytest.mark.parametrize("has_document", [True, False])
-async def test_handle_file_creation(has_document, test_motor, test_manager_instance):
+@pytest.mark.parametrize("tracked", [True, False])
+async def test_handle_create(tracked, test_dbi, test_manager_instance):
     filename = "foobar-test.fq"
 
-    path = os.path.join(test_manager_instance.files_path, filename)
-
-    touch(path)
-
-    if has_document:
-        await test_motor.files.insert({
-            "_id": "foobar-test.fq",
-            "created": False
+    if tracked:
+        await test_dbi.files.insert_one({
+            "_id": filename
         })
 
-    await test_manager_instance.handle_file_creation(filename)
+    await test_manager_instance.handle_create(filename)
 
-    asyncio.sleep(1)
+    document = await test_dbi.files.find_one()
 
-    document = await test_motor.files.find_one()
-
-    import pprint
-    pprint.pprint(document)
-
-    if has_document:
+    if tracked:
         assert document == {
-            "_id": "foobar-test.fq",
-            "created": True,
-            "ready": True,
-            "size": 11
+            "_id": filename,
+            "created": True
         }
     else:
         assert document is None
+        assert await test_dbi.files.count() == 0
 
-    assert os.listdir(test_manager_instance.files_path) == [filename]
 
+@pytest.mark.parametrize("tracked", [True, False])
+async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
+    """
+    When a file is
 
-@pytest.mark.parametrize("has_document", [True, False])
-async def test_handle_file_close(has_document, test_motor, test_manager_instance):
+    """
+    m_file_status = mocker.patch("virtool.utils.file_stats", return_value=245)
+    m_remove = mocker.patch("os.remove")
+
     filename = "foobar-test.fq"
+
+    if tracked:
+        await test_dbi.files.insert_one({
+            "_id": filename
+        })
+
+    await test_manager_instance.handle_close(filename)
+
+    document = await test_dbi.files.find_one()
 
     path = os.path.join(test_manager_instance.files_path, filename)
 
-    touch(path)
-
-    if has_document:
-        await test_motor.files.insert({
-            "_id": filename,
-            "ready": False
-        })
-
-    await test_manager_instance.handle_file_close(filename)
-
-    asyncio.sleep(1)
-
-    document = await test_motor.files.find_one()
-
-    if has_document:
+    if tracked:
         assert document == {
             "_id": filename,
-            "created": True,
             "ready": True,
-            "size": 11
+            "size": 245
         }
+
+        m_file_status.assert_called_with(path)
+
     else:
         assert document is None
-        assert os.listdir(test_manager_instance.files_path) == []
+        m_remove.assert_called_with(path)
 
 
-async def test_handle_file_deletion(test_motor, test_manager_instance):
+async def test_handle_delete(test_motor, test_manager_instance):
+    """
+    Test the the correspond database document for a file is deleted when the file is deleted.
+
+    """
     filename = "foobar-test.fq"
 
     await test_motor.files.insert({
-        "_id": filename,
-        "created": True,
-        "ready": True
+        "_id": filename
     })
 
-    await test_manager_instance.handle_file_deletion(filename)
-
-    asyncio.sleep(1)
+    await test_manager_instance.handle_delete(filename)
 
     assert not await test_motor.files.count()
