@@ -12,7 +12,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
-                    <Icon name="search" />
+                    <Icon name="search fa-fw" />
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
@@ -27,7 +27,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
             <LinkContainer to={{state: {create: true}}}>
                 <Button
                     tip="Create"
-                    icon="plus-square"
+                    icon="plus-square fa-fw"
                     bsStyle="primary"
                 />
             </LinkContainer>

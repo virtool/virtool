@@ -52,37 +52,5 @@ describe("<Settings />", () => {
             expect(spyDispatch.calledWith(expected)).toBe(true);
         });
 
-        it("'Skip Dialog' checkbox", () => {
-            expect(wrapper.find(Checkbox).at(1).exists()).toBe(true);
-
-            const checkboxWrapper = wrapper.find(Checkbox).at(1).shallow();
-            checkboxWrapper.simulate('click');
-
-            expected = {
-                skip_quick_analyze_dialog: !initialState.account.settings.skip_quick_analyze_dialog
-            };
-
-            expect(spyDispatch.calledWith(expected)).toBe(true);
-        });
-
-        it("selecting an algorithm from 'Quick Analyze' dropdown", () => {
-            const mockEvent = {
-                target: {
-                    value: "test_algorithm_option"
-                }
-            };
-
-            expect(wrapper.find(AlgorithmSelect).exists()).toBe(true);
-
-            const algorithmWrapper = wrapper.find(AlgorithmSelect).shallow();
-            algorithmWrapper.simulate('change', mockEvent);
-
-            expected = {
-                "quick_analyze_algorithm": mockEvent.target.value
-            };
-
-            expect(spyDispatch.calledWith(expected)).toBe(true);
-        });
-
     });
 });

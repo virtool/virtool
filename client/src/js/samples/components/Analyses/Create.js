@@ -62,6 +62,7 @@ export default class CreateAnalysis extends React.Component {
 
     static propTypes = {
         show: PropTypes.bool,
+        samples: PropTypes.array,
         id: PropTypes.string,
         onSubmit: PropTypes.func,
         onHide: PropTypes.func,
@@ -95,10 +96,16 @@ export default class CreateAnalysis extends React.Component {
 
     render () {
 
-        const jobMessage = this.state.selected.length ?
+        const { selected, algorithm } = this.state;
+
+        const jobMessage = this.props.samples
+            ? `Start ${selected.length} ${getTaskDisplayName(algorithm)} ${(selected.length > 1) ? "jobs" : "job"}
+             on ${this.props.samples.length} ${(this.props.samples.length > 1) ? "samples" : "sample"}.`
+            : `Start ${selected.length} ${getTaskDisplayName(algorithm)} ${(selected.length > 1) ? "jobs" : "job"}.`;
+        const jobSummary = selected.length ?
             (
                 <div style={{float: "left"}}>
-                    Start {this.state.selected.length} {getTaskDisplayName(this.state.algorithm)} jobs.
+                    {jobMessage}
                 </div>
             ) : null;
 
@@ -110,19 +117,19 @@ export default class CreateAnalysis extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <AlgorithmSelect
-                            value={this.state.algorithm}
+                            value={algorithm}
                             onChange={(e) => this.setState({algorithm: e.target.value})}
                             hasHmm={this.props.hasHmm}
                         />
                         <IndexSelect
                             indexes={this.props.refIndexes}
                             onSelect={this.handleSelect}
-                            selected={this.state.selected}
+                            selected={selected}
                             error={this.state.errorRef}
                         />
                     </Modal.Body>
                     <Modal.Footer>
-                        {jobMessage}
+                        {jobSummary}
                         <Button
                             type="submit"
                             bsStyle="primary"
