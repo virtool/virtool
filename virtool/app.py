@@ -114,6 +114,10 @@ async def init_dispatcher(app):
     """
     app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
 
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+    await scheduler.spawn(app["dispatcher"].run())
+
 
 async def init_db(app):
     """
@@ -251,7 +255,9 @@ async def init_file_manager(app):
             clean_interval=20
         )
 
-        app["file_manager"].start()
+        scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+        await scheduler.spawn(app["file_manager"].run())
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
@@ -285,13 +291,7 @@ async def on_shutdown(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    await app["dispatcher"].close()
     await app["client"].close()
-
-    file_manager = app.get("file_manager", None)
-
-    if file_manager is not None:
-        await file_manager.close()
 
     app["process_executor"].shutdown(wait=True)
 

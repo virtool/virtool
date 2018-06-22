@@ -32,9 +32,8 @@ class Dispatcher:
         #: A dict of all active connections.
         self.connections = list()
         self.alive = True
-        self._ping_task = asyncio.ensure_future(self.ping_connections(), loop=loop)
 
-    async def ping_connections(self):
+    async def run(self):
         to_remove = list()
 
         try:
@@ -54,7 +53,8 @@ class Dispatcher:
                 await asyncio.sleep(5, loop=self.loop)
 
         except asyncio.CancelledError:
-            pass
+            for connection in self.connections:
+                await connection.close()
 
     def add_connection(self, connection):
         """
@@ -140,12 +140,3 @@ class Dispatcher:
 
         for connection in connections_to_remove:
             self.remove_connection(connection)
-
-    async def close(self):
-        self.alive = False
-
-        if self._ping_task is not None:
-            self._ping_task.cancel()
-
-        for connection in self.connections:
-            await connection.close()

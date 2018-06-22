@@ -428,31 +428,39 @@ async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
     document.
 
     """
-    ready = False
-    interval = 3
+    try:
+        ready = False
+        interval = 3
 
-    while not ready:
-        await asyncio.sleep(interval)
+        while not ready:
+            await asyncio.sleep(interval)
 
-        # Do this before checking RID for more accurate time.
-        last_checked_at = virtool.utils.timestamp()
+            # Do this before checking RID for more accurate time.
+            last_checked_at = virtool.utils.timestamp()
 
-        ready = await check_rid(settings, rid)
+            ready = await check_rid(settings, rid)
 
-        update = {
-            "interval": interval,
-            "last_checked_at": last_checked_at,
-            "ready": ready,
-            "rid": rid
-        }
+            update = {
+                "interval": interval,
+                "last_checked_at": last_checked_at,
+                "ready": ready,
+                "rid": rid
+            }
 
-        interval += 5
+            interval += 5
 
-        if update["ready"]:
-            update["result"] = await get_ncbi_blast_result(settings, rid)
+            if update["ready"]:
+                update["result"] = await get_ncbi_blast_result(settings, rid)
 
+            await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
+                "$set": {
+                    "results.$.blast": update
+                }
+            })
+    except asyncio.CancelledError:
+        # Remove the BLAST record from the sequence if the server is shutdown.
         await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
             "$set": {
-                "results.$.blast": update
+                "results.$.blast": None
             }
         })
