@@ -13,20 +13,20 @@ const JobStep = ({ step, isDone }) => {
 
         case "running":
             hasBar = isDone;
-            stateIcon = isDone ? "check" : "";
+            stateIcon = isDone ? "check fa-fw" : "";
             entryStyle = isDone ? "success" : "primary";
             break;
 
         case "complete":
             hasBar = false;
-            stateIcon = "check";
+            stateIcon = "check fa-fw";
             entryStyle = "success";
             break;
 
         case "error":
         case "cancelled":
             hasBar = false;
-            stateIcon = "times";
+            stateIcon = "times fa-fw";
             entryStyle = "danger";
             break;
 
@@ -40,7 +40,7 @@ const JobStep = ({ step, isDone }) => {
             <div className="step-entry-icon">
                 {stateIcon.length
                     ? <Icon name={stateIcon} bsStyle={entryStyle} />
-                    : <ClipLoader size="12px" color="#07689d" />
+                    : <div><ClipLoader size="14px" color="#07689d" style={{padding: "3px 2px"}} /></div>
                 }
             </div>
             <div className="step-entry-content">
