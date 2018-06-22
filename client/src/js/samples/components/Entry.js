@@ -83,6 +83,7 @@ class SampleEntry extends React.Component {
                                         tipPlacement="left"
                                         bsStyle="success"
                                         onClick={this.handleQuickAnalyze}
+                                        style={{fontSize: "17px", zIndex: 10000}}
                                         pullRight
                                     />
                                 )}

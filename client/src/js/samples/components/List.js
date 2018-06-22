@@ -145,7 +145,7 @@ export class SamplesList extends React.Component {
             index={index}
             id={this.state.masterList[index].id}
             userId={this.state.masterList[index].user.id}
-            isChecked={this.state.selected[index].check}
+            isChecked={this.state.selected[index] ? this.state.selected[index].check : false}
             onSelect={this.onSelect}
             isHidden={!!filter(this.state.selected, ["check", true]).length}
             quickAnalyze={this.handleQuickAnalyze}
