@@ -40,7 +40,7 @@ const JobStep = ({ step, isDone }) => {
             <div className="step-entry-icon">
                 {stateIcon.length
                     ? <Icon name={stateIcon} bsStyle={entryStyle} />
-                    : <div><ClipLoader size="14px" color="#07689d" style={{padding: "3px 2px"}} /></div>
+                    : <ClipLoader size="14px" color="#07689d" style={{padding: "0 1.5px"}} />
                 }
             </div>
             <div className="step-entry-content">
