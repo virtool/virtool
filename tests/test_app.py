@@ -1,6 +1,5 @@
 import concurrent.futures
 
-import aiojobs.aiohttp
 from aiohttp import web
 
 import virtool.app

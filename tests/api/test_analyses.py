@@ -1,5 +1,4 @@
 import pytest
-from copy import deepcopy
 from aiohttp.test_utils import make_mocked_coro
 
 

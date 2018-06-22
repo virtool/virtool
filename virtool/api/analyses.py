@@ -2,8 +2,6 @@
 Provides request handlers for managing and viewing analyses.
 
 """
-import asyncio
-
 import aiojobs.aiohttp
 
 import virtool.analyses
