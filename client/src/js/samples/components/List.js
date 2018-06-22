@@ -166,7 +166,7 @@ export class SamplesList extends React.Component {
         }
 
         const multiSelect = filter(this.state.selected, ["check", true]);
-        const message = `Selected ${multiSelect.length} sample(s) to analyze`;
+        const message = `Selected ${multiSelect.length} ${(multiSelect.length > 1) ? "samples" : "sample"} to analyze`;
 
         return (
             <div>

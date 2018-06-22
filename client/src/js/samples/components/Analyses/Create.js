@@ -76,11 +76,13 @@ export default class CreateAnalysis extends React.Component {
 
     render () {
 
+        const { selected, algorithm } = this.state;
+
         const jobMessage = this.props.samples
-            ? `Start ${this.state.selected.length} ${getTaskDisplayName(this.state.algorithm)} job(s)
-             each on ${this.props.samples.length} sample(s).`
-            : `Start ${this.state.selected.length} ${getTaskDisplayName(this.state.algorithm)} job(s).`;
-        const jobSummary = this.state.selected.length ?
+            ? `Start ${selected.length} ${getTaskDisplayName(algorithm)} ${(selected.length > 1) ? "jobs" : "job"}
+             on ${this.props.samples.length} ${(this.props.samples.length > 1) ? "samples" : "sample"}.`
+            : `Start ${selected.length} ${getTaskDisplayName(algorithm)} ${(selected.length > 1) ? "jobs" : "job"}.`;
+        const jobSummary = selected.length ?
             (
                 <div style={{float: "left"}}>
                     {jobMessage}
@@ -95,14 +97,14 @@ export default class CreateAnalysis extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <AlgorithmSelect
-                            value={this.state.algorithm}
+                            value={algorithm}
                             onChange={(e) => this.setState({algorithm: e.target.value})}
                             hasHmm={this.props.hasHmm}
                         />
                         <IndexSelect
                             indexes={this.props.refIndexes}
                             onSelect={this.handleSelect}
-                            selected={this.state.selected}
+                            selected={selected}
                         />
                     </Modal.Body>
                     <Modal.Footer>
