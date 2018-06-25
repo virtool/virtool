@@ -3,7 +3,7 @@ import { keys } from "lodash-es";
 import { Helmet } from "react-helmet";
 import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "react-router-redux";
-import { Switch, Route, withRouter } from "react-router-dom";
+import { Switch, Route, withRouter, Redirect } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
 import Sidebar from "./nav/components/Sidebar";
@@ -27,7 +27,7 @@ const Inner = (props) => {
                 <NavBar />
 
                 <Switch>
-                    <Route path="/" component={Welcome} exact />
+                    <Redirect from="/" to="/home" exact />
                     <Route path="/home" component={Welcome} />
                     <Route path="/jobs" component={Jobs} />
                     <Route path="/samples" component={Samples} />

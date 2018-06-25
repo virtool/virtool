@@ -142,11 +142,13 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
             </Flex>
         </Panel.Heading>
         <ListGroup>
-            <ListGroupItem>
-                <Icon name="hdd" /> <strong>Installed Version</strong>
-                <span> / {installed.name}</span>
-                <span> / Published <RelativeTime time={installed.published_at} /></span>
-            </ListGroupItem>
+            {installed ? (
+                <ListGroupItem>
+                    <Icon name="hdd" /> <strong>Installed Version</strong>
+                    <span> / {installed.name}</span>
+                    <span> / Published <RelativeTime time={installed.published_at} /></span>
+                </ListGroupItem>
+            ) : null}
             <Release
                 release={release}
                 onCheckUpdates={onCheckUpdates}

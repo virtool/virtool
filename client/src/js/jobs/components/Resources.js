@@ -3,7 +3,6 @@ import Gauge from "react-svg-gauge";
 import { map, mean, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Flex, FlexItem, LoadingPlaceholder, NotFound } from "../../base";
-
 import { getResources } from "../actions";
 
 const color = "#d44b40";
@@ -55,7 +54,7 @@ class JobsResources extends React.Component {
             />
         );
 
-        const used = (this.props.resources.mem.total - this.props.resources.mem.available) / 1000000000;
+        const used = (this.props.resources.mem.total - this.props.resources.mem.available) / Math.pow(1024, 3);
 
         const minMaxLabelStyle = {
             fontSize: "14px",
@@ -100,7 +99,7 @@ class JobsResources extends React.Component {
                     value={Math.round(used)}
                     label=""
                     minMaxLabelStyle={minMaxLabelStyle}
-                    max={Math.round(this.props.resources.mem.total / 1000000000)}
+                    max={Math.floor(this.props.resources.mem.total / Math.pow(1024, 3))}
                     width={200}
                     height={160}
                 />
