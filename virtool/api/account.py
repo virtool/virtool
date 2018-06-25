@@ -1,5 +1,3 @@
-from cerberus import Validator
-
 import virtool.db.account
 import virtool.db.users
 import virtool.db.utils
@@ -45,7 +43,20 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.patch("/api/account")
+@routes.patch("/api/account", schema={
+    "email": {
+        "type": "string",
+        "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    },
+    "old_password": {
+        "type": "string"
+    },
+    "password": {
+        "type": "string",
+        "dependencies": "old_password"
+    }
+
+})
 async def edit(req):
     """
     Edit the user account.
@@ -55,20 +66,10 @@ async def edit(req):
     data = await req.json()
     user_id = req["client"].user_id
 
-    minlength = req.app["settings"]["minimum_password_length"]
-
-    v = Validator({
-        "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"},
-        "old_password": {"type": "string"},
-        "password": {"type": "string", "minlength": minlength, "dependencies": "old_password"}
-    })
-
-    if not v.validate(data):
-        return invalid_input(v.errors)
-
-    data = v.document
-
     password = data.get("password", None)
+
+    if password is not None and len(password) < req.app["settings"]["minimum_password_length"]:
+        raise bad_request("Password does not meet minimum length requirement")
 
     update = dict()
 
