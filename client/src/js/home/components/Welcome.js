@@ -45,7 +45,7 @@ class Welcome extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    version: get(state.updates.software, "version")
+    version: get(state.updates, "version")
 });
 
 const mapDispatchToProps = (dispatch) => ({
