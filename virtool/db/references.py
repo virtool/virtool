@@ -115,13 +115,13 @@ async def check_source_type(db, ref_id, source_type):
 
 
 async def cleanup_removed(db, process_id, ref_id, user_id):
-    await virtool.db.processes.update(db, process_id, 0, step="delete_indexes")
+    await virtool.db.processes.update(db, process_id, progress=0, step="delete_indexes")
 
     await db.indexes.delete_many({
         "reference.id": ref_id
     })
 
-    await virtool.db.processes.update(db, process_id, 0.5, step="delete_otus")
+    await virtool.db.processes.update(db, process_id, progress=0.5, step="delete_otus")
 
     otu_count = await db.otus.count({"reference.id": ref_id})
 
@@ -733,7 +733,7 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
 
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, 0.6, "create_history")
+    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -747,7 +747,7 @@ async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
         await insert_change(db, otu_id, "clone", user_id)
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, 1)
+    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
@@ -786,7 +786,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
         }
     })
 
-    await virtool.db.processes.update(db, process_id, 0.1, "validate_documents")
+    await virtool.db.processes.update(db, process_id, progress=0.1, step="validate_documents")
 
     errors = virtool.references.check_import_data(
         import_data,
@@ -797,7 +797,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
     if errors:
         return await virtool.db.processes.update(db, process_id, errors=errors)
 
-    await virtool.db.processes.update(db, process_id, 0.2, "import_otus")
+    await virtool.db.processes.update(db, process_id, progress=0.2, step="import_otus")
 
     otus = import_data["otus"]
 
@@ -816,7 +816,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
         inserted_otu_ids.append(otu_id)
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, 0.6, "create_history")
+    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
 
     progress_tracker = virtool.processes.ProgressTracker(
         db,
@@ -830,7 +830,7 @@ async def finish_import(app, path, ref_id, created_at, process_id, user_id):
         await insert_change(db, otu_id, "import", user_id)
         await progress_tracker.add(1)
 
-    await virtool.db.processes.update(db, process_id, 1)
+    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
