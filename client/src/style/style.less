@@ -32,7 +32,8 @@
 @state-info-bg: lighten(@brand-info, 30%);
 
 // Bootstrap small-screen breakpoint variable
-@screen-sm: 992px;
+@screen-sm: 868px;
+@grid-float-breakpoint: 868px;
 
 // Bootstrap container sizes
 @container-sm: 100vw;
@@ -132,14 +133,23 @@ td.sequence-cell > textarea {
   background-color: #edf7f6;
 }
 
-@media (max-width: @grid-float-breakpoint) {
-  .navbar-collapse {
+@media (max-width: @grid-float-breakpoint - 1) {
+  &.collapsing {
     position: absolute;
     right: 0;
     margin-top: 0 !important;
-    background-color: #60af98;
     max-width: 150px;
     min-width: 150px;
+    background-color: #60af98;
+  }
+
+  &.in {
+    position: absolute;
+    right: 0;
+    margin-top: 0 !important;
+    max-width: 150px;
+    min-width: 150px;
+    background-color: #60af98;
   }
 }
 
