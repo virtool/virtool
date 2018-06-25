@@ -81,6 +81,46 @@ async def add_group_or_user(db, ref_id, field, data):
     return subdocument
 
 
+async def check_right(req, reference, right):
+    """
+
+    :param req: the request to check rights for
+    :param reference: the reference document
+    :param right:
+    :return:
+    """
+    if req["client"].administrator:
+        return True
+
+    user_id = req["client"].user_id
+
+    try:
+        groups = reference["groups"]
+        public = reference["public"]
+        users = reference["users"]
+    except (KeyError, TypeError):
+        reference = await req.app["db"].references.find_one(reference, ["groups", "public", "users"])
+        groups = reference["groups"]
+        public = reference["public"]
+        users = reference["users"]
+
+    if public and right == "read":
+        return True
+
+    for user in users:
+        if user["id"] == user_id:
+            if user[right]:
+                return True
+
+            break
+
+    for group in groups:
+        if group[right] and group["id"] in req["client"].groups:
+            return True
+
+    return False
+
+
 async def check_source_type(db, ref_id, source_type):
     """
     Check if the provided `source_type` is valid based on the current reference source type configuration.
