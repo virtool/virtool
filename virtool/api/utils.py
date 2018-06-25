@@ -35,21 +35,6 @@ def dumps(obj):
     return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
 
 
-async def unpack_request(req):
-    """
-    A shortcut for pulling the app database reference and the request JSON body from a :class:`~aiohttp.web.Request`
-    object.
-
-    :param req: a request
-    :type req: :class:`~aiohttp.web.Request`
-
-    :return: the app DB connection and the request JSON body
-    :rtype: Coroutine[tuple]
-
-    """
-    return req.app["db"], await req.json()
-
-
 def compose_regex_query(term, fields):
     if not isinstance(fields, (list, tuple)):
         raise TypeError("Type of 'fields' must be one of 'list' or 'tuple'")
