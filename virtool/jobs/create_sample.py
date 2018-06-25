@@ -100,8 +100,16 @@ class CreateSample(virtool.jobs.job.Job):
             "-Q", "25",
             "-t", str(self.settings.get("create_sample_proc")),
             "-o", os.path.join(self.sample_path, "reads"),
-            "--quiet",
-        ] + input_paths
+            "--quiet"
+        ]
+
+        # Trim reads to max length of 23 if the sample is sRNA.
+        if self.task_args["srna"]:
+            command += [
+                "-L", "23"
+            ]
+
+        command += input_paths
 
         # Prevents an error from skewer when called inside a subprocess.
         env = dict(os.environ, LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu")
