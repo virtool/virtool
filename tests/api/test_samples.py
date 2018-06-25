@@ -296,6 +296,7 @@ class TestCreate:
             "group_write": True,
             "all_read": True,
             "all_write": True,
+            "srna": False,
             "user": {
                 "id": "test"
             },
@@ -322,7 +323,8 @@ class TestCreate:
             "create_sample",
             {
                 "files": ["test.fq"],
-                "sample_id": test_random_alphanumeric.last_choice
+                "sample_id": test_random_alphanumeric.last_choice,
+                "srna": False
             },
             "test"
         )
