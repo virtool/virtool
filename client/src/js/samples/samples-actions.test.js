@@ -39,7 +39,7 @@ import {
 } from "../actionTypes";
 
 describe("Sample Action Creators:", () => {
-    
+
     it("wsUpdateSample: returns action for sample update via websocket", () => {
         const update = {};
         const result = wsUpdateSample(update);
@@ -109,15 +109,17 @@ describe("Sample Action Creators:", () => {
         const isolate = "isolate";
         const host = "host";
         const locale = "locale";
+        const srna = false;
         const subtraction = "subtraction";
         const files = {};
-        const result = createSample(name, isolate, host, locale, subtraction, files);
+        const result = createSample(name, isolate, host, locale, srna, subtraction, files);
         const expected = {
             type: "CREATE_SAMPLE_REQUESTED",
             name,
             isolate,
             host,
             locale,
+            srna,
             subtraction,
             files
         };
