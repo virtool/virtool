@@ -9,6 +9,24 @@ SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
+class MockRequest:
+
+    def __init__(self):
+        self.app = dict()
+        self._state = dict()
+
+    def __getitem__(self, key):
+        return self._state.get(key)
+
+    def __setitem__(self, key, value):
+        self._state[key] = value
+
+
+@pytest.fixture
+def mock_req():
+    return MockRequest()
+
+
 @pytest.fixture(scope="session")
 def md_proxy():
     def func(data_dict=None):
