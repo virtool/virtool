@@ -20,13 +20,14 @@ export const get = ({ sampleId }) => (
     Request.get(`/api/samples/${sampleId}`)
 );
 
-export const create = ({ name, isolate, host, locale, subtraction, files }) => (
+export const create = ({ name, isolate, host, locale, srna, subtraction, files }) => (
     Request.post("/api/samples")
         .send({
             name,
             isolate,
             host,
             locale,
+            srna,
             subtraction,
             files
         })
