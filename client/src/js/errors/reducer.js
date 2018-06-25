@@ -30,7 +30,8 @@ import {
     GET_HMM,
     GET_INDEX,
     GET_SUBTRACTION,
-    GET_RESOURCES
+    GET_RESOURCES,
+    UPDATE_SETTINGS
 } from "../actionTypes";
 
 /**
@@ -109,8 +110,6 @@ export default function errorsReducer (state = null, action) {
             case CREATE_USER.FAILED:
             case EDIT_USER.FAILED:
             case CREATE_GROUP.FAILED:
-                return {...state, [errorName]: errorPayload};
-
             case GET_JOB.FAILED:
             case GET_RESOURCES.FAILED:
             case GET_SAMPLE.FAILED:
@@ -120,6 +119,7 @@ export default function errorsReducer (state = null, action) {
             case GET_HMM.FAILED:
             case GET_INDEX.FAILED:
             case GET_SUBTRACTION.FAILED:
+            case UPDATE_SETTINGS.FAILED:
                 return {...state, [errorName]: errorPayload};
 
             default:

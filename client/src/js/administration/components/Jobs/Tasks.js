@@ -5,6 +5,7 @@ import { Row, Col, ListGroup, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, Icon } from "../../../base";
+import { readOnlyFields, maxResourcesSelector, minResourcesSelector } from "../../selectors";
 import Task from "./Task";
 
 const taskNames = [
@@ -38,10 +39,11 @@ const TaskLimits = (props) => {
             mem={props.limits[taskPrefix].mem}
             inst={props.limits[taskPrefix].inst}
             onChangeLimit={props.onChangeLimit}
-            procLowerLimit={1}
-            memLowerLimit={1}
-            currentLimitProc={props.resourceProc}
-            currentLimitMem={props.resourceMem}
+            minProc={props.minProc}
+            minMem={props.minMem}
+            resourceProc={props.resourceProc}
+            resourceMem={props.resourceMem}
+            readOnlyFields={readOnlyFields}
         />
     );
 
@@ -64,9 +66,9 @@ const TaskLimits = (props) => {
                 <ListGroup>
                     <ListGroupItem key="title">
                         <Row>
-                            <Col md={6}>CPU</Col>
-                            <Col md={6}>Memory (GB)</Col>
-                            <Col md={6}>Instances</Col>
+                            <Col md={4}>CPU</Col>
+                            <Col md={4}>Memory (GB)</Col>
+                            <Col md={4}>Instances</Col>
                         </Row>
                     </ListGroupItem>
                     {taskComponents}
@@ -87,11 +89,18 @@ const mapStateToProps = (state) => {
         };
     });
 
+    const { maxProc, maxMem } = maxResourcesSelector(state);
+    const { minProc, minMem } = minResourcesSelector(state);
+
     const settings = {
         procLowerLimit: state.settings.data.rebuild_index_proc,
         memLowerLimit: state.settings.data.rebuild_index_mem,
         resourceProc: state.settings.data.proc,
-        resourceMem: state.settings.data.mem
+        resourceMem: state.settings.data.mem,
+        maxProc,
+        maxMem,
+        minProc,
+        minMem
     };
 
     return {limits, ...settings};

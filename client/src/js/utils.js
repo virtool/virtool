@@ -186,7 +186,7 @@ export const taskDisplayNames = {
     nuvs: "NuVs",
     pathoscope_bowtie: "PathoscopeBowtie",
     pathoscope_snap: "PathoscopeSNAP",
-    rebuild_index: "Rebuild Index"
+    build_index: "Build Index"
 };
 
 /**

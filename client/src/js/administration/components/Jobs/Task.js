@@ -12,8 +12,6 @@ const getInitialState = () => ({
     zeroError: false
 });
 
-const readOnlyFields = ["create_subtraction", "rebuild_index"];
-
 class Task extends React.Component {
 
     constructor (props) {
@@ -51,7 +49,17 @@ class Task extends React.Component {
 
     render () {
 
-        const { inst, mem, proc, taskPrefix, currentLimitProc, currentLimitMem } = this.props;
+        const {
+            inst,
+            mem,
+            proc,
+            taskPrefix,
+            minProc,
+            minMem,
+            resourceProc,
+            resourceMem,
+            readOnlyFields
+        } = this.props;
 
         const readOnly = includes(readOnlyFields, taskPrefix);
 
@@ -80,24 +88,24 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="proc"
-                            value={currentLimitProc < proc ? currentLimitProc : proc}
+                            value={proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
-                            lowerLimit={this.props.procLowerLimit}
-                            upperLimit={currentLimitProc}
+                            lowerLimit={minProc}
+                            upperLimit={resourceProc}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
                     <Col md={4}>
                         <TaskField
                             name="mem"
-                            value={currentLimitMem < mem ? currentLimitMem : mem}
+                            value={mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
-                            lowerLimit={this.props.memLowerLimit}
-                            upperLimit={currentLimitMem}
+                            lowerLimit={minMem}
+                            upperLimit={resourceMem}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
@@ -127,10 +135,11 @@ Task.propTypes = {
     mem: PropTypes.number,
     inst: PropTypes.number,
     onChangeLimit: PropTypes.func,
-    procLowerLimit: PropTypes.number,
-    memLowerLimit: PropTypes.number,
-    currentLimitProc: PropTypes.number,
-    currentLimitMem: PropTypes.number
+    minProc: PropTypes.number,
+    minMem: PropTypes.number,
+    resourceProc: PropTypes.number,
+    resourceMem: PropTypes.number,
+    readOnlyFields: PropTypes.array
 };
 
 export default Task;
