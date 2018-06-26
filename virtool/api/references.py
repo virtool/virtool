@@ -105,7 +105,11 @@ async def get_release(req):
     so without waiting for an automatic refresh every 10 minutes.
 
     """
+    db = req.app["db"]
     ref_id = req.match_info["ref_id"]
+
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
 
     release = await virtool.db.references.fetch_and_update_release(req.app, ref_id)
 
@@ -121,9 +125,12 @@ async def list_updates(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
 
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
+
     updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
 
-    if updates:
+    if updates is not None:
         updates.reverse()
 
     return json_response(updates or list())
