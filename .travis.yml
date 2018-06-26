@@ -22,7 +22,7 @@ matrix:
         directories:
         - client/node_modules
       env:
-      - TRAVIS_NODE_VERSION="6"
+      - TRAVIS_NODE_VERSION="8"
       before_install:
       - pip install codacy-coverage
       - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
