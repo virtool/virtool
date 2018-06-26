@@ -103,7 +103,7 @@ async def create(req):
 
     ref_id = req.match_info["ref_id"]
 
-    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+    reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
         return not_found()

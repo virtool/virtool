@@ -142,7 +142,7 @@ async def update(req):
 
     ref_id = req.match_info["ref_id"]
 
-    document = await db.references.find_one(ref_id, ["groups", "public", "users"])
+    document = await db.references.find_one(ref_id, ["groups", "users"])
 
     if document is None:
         return not_found()
@@ -313,10 +313,6 @@ async def find_indexes(req):
         "type": "string",
         "default": ""
     },
-    "public": {
-        "type": "boolean",
-        "default": False
-    },
     "release_id": {
         "type": "string"
     }
@@ -342,7 +338,6 @@ async def create(req):
             data["name"],
             clone_from,
             data["description"],
-            data["public"],
             user_id
         )
 
@@ -372,7 +367,6 @@ async def create(req):
             settings,
             data["name"],
             data["description"],
-            data["public"],
             import_from,
             user_id
         )
@@ -405,7 +399,6 @@ async def create(req):
         document = await virtool.db.references.create_remote(
             db,
             settings,
-            True,
             release,
             remote_from,
             user_id
@@ -434,7 +427,6 @@ async def create(req):
             data["organism"],
             data["description"],
             data["data_type"],
-            data["public"],
             user_id=req["client"].user_id
         )
 
@@ -463,9 +455,6 @@ async def create(req):
     "organism": {
         "type": "string"
     },
-    "public": {
-        "type": "boolean"
-    },
     "internal_control": {
         "type": "string"
     },
@@ -485,7 +474,7 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+    reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
         return not_found()
@@ -526,7 +515,7 @@ async def remove(req):
 
     ref_id = req.match_info["ref_id"]
 
-    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+    reference = await db.references.find_one(ref_id, ["groups", "users"])
 
     if reference is None:
         return not_found()
@@ -578,7 +567,7 @@ async def get_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "public", "users"])
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
     if document is None:
         return not_found()
@@ -603,7 +592,7 @@ async def add_group(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
-    document = await db.references.find_one(ref_id, ["groups", "public", "users"])
+    document = await db.references.find_one(ref_id, ["groups", "users"])
 
     if document is None:
         return not_found()

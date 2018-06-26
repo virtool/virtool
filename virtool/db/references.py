@@ -29,7 +29,6 @@ PROJECTION = [
     "name",
     "organism",
     "process",
-    "public",
     "release",
     "remotes_from",
     "unbuilt_count",
@@ -96,16 +95,11 @@ async def check_right(req, reference, right):
 
     try:
         groups = reference["groups"]
-        public = reference["public"]
         users = reference["users"]
     except (KeyError, TypeError):
-        reference = await req.app["db"].references.find_one(reference, ["groups", "public", "users"])
+        reference = await req.app["db"].references.find_one(reference, ["groups", "users"])
         groups = reference["groups"]
-        public = reference["public"]
         users = reference["users"]
-
-    if public and right == "read":
-        return True
 
     for user in users:
         if user["id"] == user_id:
@@ -520,7 +514,7 @@ async def get_unbuilt_count(db, ref_id):
     })
 
 
-async def create_clone(db, settings, name, clone_from, description, public, user_id):
+async def create_clone(db, settings, name, clone_from, description, user_id):
 
     source = await db.references.find_one(clone_from)
 
@@ -533,7 +527,6 @@ async def create_clone(db, settings, name, clone_from, description, public, user
         source["organism"],
         description,
         source["data_type"],
-        public,
         created_at=virtool.utils.timestamp(),
         user_id=user_id
     )
@@ -546,7 +539,7 @@ async def create_clone(db, settings, name, clone_from, description, public, user
     return document
 
 
-async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
+async def create_document(db, settings, name, organism, description, data_type, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
     if ref_id and await db.references.count({"_id": ref_id}):
@@ -571,7 +564,6 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "description": description,
         "name": name,
         "organism": organism,
-        "public": public,
         "internal_control": None,
         "restrict_source_types": False,
         "source_types": settings["default_source_types"],
@@ -583,7 +575,7 @@ async def create_document(db, settings, name, organism, description, data_type, 
     return document
 
 
-async def create_import(db, settings, name, description, public, import_from, user_id):
+async def create_import(db, settings, name, description, import_from, user_id):
     """
     Import a previously exported Virtool reference.
 
@@ -598,9 +590,6 @@ async def create_import(db, settings, name, description, public, import_from, us
 
     :param description: a description for the new reference
     :type description: str
-
-    :param public: is the reference public on creation
-    :type public: bool
 
     :param import_from: the uploaded file to import from
     :type import_from: str
@@ -621,7 +610,6 @@ async def create_import(db, settings, name, description, public, import_from, us
         None,
         description,
         None,
-        public,
         created_at=created_at,
         user_id=user_id
     )
@@ -668,7 +656,7 @@ async def create_original(db, settings):
     return document
 
 
-async def create_remote(db, settings, public, release, remote_from, user_id):
+async def create_remote(db, settings, release, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
@@ -678,7 +666,6 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
         None,
         "The official plant virus reference from the Virtool developers",
         None,
-        public,
         created_at=created_at,
         user_id=user_id
     )
