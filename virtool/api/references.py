@@ -15,7 +15,8 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, json_response,\
+    no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -141,8 +142,13 @@ async def update(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    document = await db.references.find_one(ref_id, ["groups", "public", "users"])
+
+    if document is None:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, document, "modify"):
+        return insufficient_rights()
 
     user_id = req["client"].user_id
 
@@ -479,8 +485,13 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+
+    if reference is None:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, reference, "modify"):
+        return insufficient_rights()
 
     ref_update = data
 
@@ -514,6 +525,14 @@ async def remove(req):
     db = req.app["db"]
 
     ref_id = req.match_info["ref_id"]
+
+    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+
+    if reference is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, reference, "remove"):
+        return insufficient_rights()
 
     user_id = req["client"].user_id
 
@@ -559,14 +578,18 @@ async def get_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups"])
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "public", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document, "modify"):
+        return insufficient_rights()
 
     if document is not None:
         for group in document.get("groups", list()):
             if group["id"] == group_id:
                 return json_response(group)
-
-    return not_found()
 
 
 @routes.post("/api/refs/{ref_id}/groups", schema={
@@ -579,6 +602,14 @@ async def add_group(req):
     db = req.app["db"]
     data = req["data"]
     ref_id = req.match_info["ref_id"]
+
+    document = await db.references.find_one(ref_id, ["groups", "public", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document, "modify"):
+        return insufficient_rights()
 
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
@@ -654,6 +685,9 @@ async def edit_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
     user_id = req.match_info["user_id"]
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, user_id, "users", data)
 

@@ -12,7 +12,7 @@ import virtool.otus
 import virtool.references
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, conflict, json_response, no_content, not_found
+from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 SCHEMA_VALIDATOR = {
     "type": "list",
@@ -81,8 +81,15 @@ async def get(req):
 
 
 @routes.post("/api/refs/{ref_id}/otus", schema={
-    "name": {"type": "string", "required": True, "minlength": 1},
-    "abbreviation": {"type": "string", "default": ""},
+    "name": {
+        "type": "string",
+        "required": True,
+        "empty": False
+    },
+    "abbreviation": {
+        "type": "string",
+        "default": ""
+    },
     "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
@@ -95,6 +102,14 @@ async def create(req):
     data = req["data"]
 
     ref_id = req.match_info["ref_id"]
+
+    reference = await db.references.find_one(ref_id, ["groups", "public", "users"])
+
+    if reference is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, reference, "modify_otu"):
+        return insufficient_rights()
 
     # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
     message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
@@ -147,6 +162,9 @@ async def edit(req):
         return not_found()
 
     ref_id = old["reference"]["id"]
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify_otu"):
+        return insufficient_rights()
 
     name, abbreviation, schema = virtool.otus.evaluate_changes(data, old)
 
@@ -205,6 +223,11 @@ async def remove(req):
     db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]
+
+    reference = await virtool.db.utils.get_one_field(db.otus, "reference", otu_id)
+
+    if not await virtool.db.references.check_right(req, reference["id"], "modify_otu"):
+        return insufficient_rights()
 
     removed = await virtool.db.otus.remove(
         db,
@@ -282,6 +305,9 @@ async def add_isolate(req):
 
     if not document:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
 
     isolates = deepcopy(document["isolates"])
 
@@ -364,6 +390,9 @@ async def edit_isolate(req):
     if not document:
         return not_found()
 
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
+
     isolates = deepcopy(document["isolates"])
 
     isolate = virtool.otus.find_isolate(isolates, isolate_id)
@@ -438,6 +467,9 @@ async def set_as_default(req):
     if not document:
         return not_found()
 
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
+
     isolates = deepcopy(document["isolates"])
 
     isolate = virtool.otus.find_isolate(isolates, isolate_id)
@@ -511,6 +543,9 @@ async def remove_isolate(req):
 
     if not document:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
 
     isolates = deepcopy(document["isolates"])
 
@@ -636,7 +671,10 @@ async def create_sequence(req):
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("otu or isolate not found")
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
 
     segment = data.get("segment", None)
 
@@ -719,6 +757,9 @@ async def edit_sequence(req):
     if not document:
         return not_found()
 
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
+
     old = await virtool.db.otus.join(db, otu_id, document)
 
     segment = data.get("segment", None)
@@ -779,6 +820,9 @@ async def remove_sequence(req):
 
     if not old:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, old["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
 
     isolate = virtool.otus.find_isolate(old["isolates"], isolate_id)
 

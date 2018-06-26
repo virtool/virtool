@@ -261,9 +261,6 @@ async def revert(db, change_id):
     """
     change = await db.history.find_one({"_id": change_id}, ["index"])
 
-    if not change:
-        raise virtool.errors.DatabaseError("Change does not exist")
-
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
         raise virtool.errors.DatabaseError("Change is included in a build an not revertible")
 
