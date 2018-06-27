@@ -112,5 +112,5 @@ matrix:
       script:
       - yarn test --maxWorkers=4 --coverage &> coverage-log.txt
       - rm coverage-log.txt
-      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; cat ./coverage/lcov.info | codacy-coverage;
+      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage;
         fi
