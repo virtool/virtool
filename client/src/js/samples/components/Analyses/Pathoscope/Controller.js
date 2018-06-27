@@ -127,6 +127,7 @@ export default class PathoscopeController extends React.Component {
                                         <Button title="Sort Direction" onClick={this.toggleSortDescending}>
                                             <Icon
                                                 name={this.state.sortDescending ? "sort-amount-down" : "sort-amount-up"}
+                                                tip="Sort List"
                                             />
                                         </Button>
                                     </InputGroup.Button>
@@ -137,7 +138,7 @@ export default class PathoscopeController extends React.Component {
                                     >
                                         <option className="text-primary" value="coverage">Coverage</option>
                                         <option className="text-success" value="pi">Weight</option>
-                                        <option className="text-danger" value="best">Best Hit</option>
+                                        <option className="text-danger" value="maxDepth">Depth</option>
                                     </FormControl>
                                 </InputGroup>
                             </FormGroup>
@@ -145,6 +146,7 @@ export default class PathoscopeController extends React.Component {
                             <Button
                                 icon="compress"
                                 title="Collapse"
+                                tip="Collapse Opened"
                                 onClick={this.collapseAll}
                                 className="hidden-xs"
                                 disabled={this.state.expanded.length === 0}
@@ -153,6 +155,7 @@ export default class PathoscopeController extends React.Component {
                             <Button
                                 icon="chart-pie"
                                 title="Change Weight Format"
+                                tip="Change Weight Format"
                                 active={!this.state.showReads}
                                 className="hidden-xs"
                                 onClick={this.toggleShowReads}
@@ -167,6 +170,7 @@ export default class PathoscopeController extends React.Component {
                             >
                                 <Button
                                     title="Filter"
+                                    tip="Filter Results"
                                     onClick={this.filter}
                                     active={this.state.filterOTUs || this.state.filterIsolates}
                                 >
