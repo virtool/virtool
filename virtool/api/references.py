@@ -183,6 +183,9 @@ async def find_otus(req):
 
     ref_id = req.match_info["ref_id"]
 
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
+
     term = req.query.get("find", None)
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
