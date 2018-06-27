@@ -145,59 +145,30 @@ async def update(req):
     app = req.app
     db = app["db"]
 
-    release_id = req["data"].get("release_id", None)
-
     ref_id = req.match_info["ref_id"]
-
-    document = await db.references.find_one(ref_id, ["groups", "users"])
-
-    if document is None:
-        return not_found()
-
-    if not await virtool.db.references.check_right(req, document, "modify"):
-        return insufficient_rights()
-
+    release_id = req["data"].get("release_id", None)
     user_id = req["client"].user_id
 
-    created_at = virtool.utils.timestamp()
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     process = await virtool.db.processes.register(db, "update_remote_reference")
 
-    if release_id:
-        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
-
-        release = await virtool.github.get_release(
-            app["settings"],
-            app["client"],
-            remotes_from["slug"],
-            release_id=release_id
-        )
-    else:
-        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
-
-    update_subdocument = virtool.github.create_update_subdocument(
-        release,
-        False,
-        user_id,
-        created_at
+    release, update_subdocument = await virtool.db.references.update(
+        req.app,
+        process["id"],
+        ref_id,
+        release_id,
+        user_id
     )
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$push": {
-            "updates": update_subdocument
-        },
-        "$set": {
-            "process": {
-                "id": process["id"]
-            },
-            "updating": True
-        }
-    })
-
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.update_remote(
+    await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_update(
         req.app,
         ref_id,
-        created_at,
+        update_subdocument["created_at"],
         process["id"],
         release,
         user_id

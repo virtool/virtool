@@ -1050,6 +1050,46 @@ async def refresh_remotes(app):
         pass
 
 
+async def update(app, process_id, ref_id, release_id, user_id):
+
+    db = app["db"]
+
+    created_at = virtool.utils.timestamp()
+
+    if release_id:
+        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
+
+        release = await virtool.github.get_release(
+            app["settings"],
+            app["client"],
+            remotes_from["slug"],
+            release_id=release_id
+        )
+    else:
+        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    update_subdocument = virtool.github.create_update_subdocument(
+        release,
+        False,
+        user_id,
+        created_at
+    )
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            "updates": update_subdocument
+        },
+        "$set": {
+            "process": {
+                "id": process_id
+            },
+            "updating": True
+        }
+    })
+
+    return release, update_subdocument
+
+
 async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     remote_id = otu["_id"]
 
@@ -1117,7 +1157,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     )
 
 
-async def update_remote(app, ref_id, created_at, process_id, release, user_id):
+async def finish_update(app, ref_id, created_at, process_id, release, user_id):
     db = app["db"]
 
     progress_tracker = virtool.processes.ProgressTracker(
@@ -1234,11 +1274,9 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
-    update = virtool.github.create_update_subdocument(release, True, user_id)
-
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "installed": update,
+            "installed": virtool.github.create_update_subdocument(release, True, user_id),
             "updates.$.ready": True,
             "updating": False
         }
