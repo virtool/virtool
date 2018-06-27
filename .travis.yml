@@ -105,8 +105,6 @@ matrix:
         yarn: true
         directories:
         - client/node_modules
-      env:
-      - CODACY_PROJECT_TOKEN=$CODACY_PROJECT_TOKEN
       before_script:
       - cd $TRAVIS_BUILD_DIR
       - cd client
