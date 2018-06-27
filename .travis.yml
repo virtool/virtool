@@ -110,4 +110,5 @@ matrix:
       - cd client
       - yarn install
       script:
-      - yarn test-with-coverage --maxWorkers=4
+      - yarn test --maxWorkers=4 --coverage
+      - cat ./coverage/lcov.info | codacy-coverage
