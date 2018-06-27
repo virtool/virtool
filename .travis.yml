@@ -110,5 +110,4 @@ matrix:
       - yarn install
       script:
       - yarn test --maxWorkers=4 --coverage
-      - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then echo NOPR; else echo YESPR; fi'
       - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage; fi'
