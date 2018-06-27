@@ -80,7 +80,8 @@ matrix:
       - tar -tvf virtool.tar.gz
       - cd ..
       after_script:
-      - python-codacy-coverage -r coverage.xml;
+      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml;
+        fi
       deploy:
         - provider: releases
           skip_cleanup: true
@@ -109,6 +110,6 @@ matrix:
       - cd client
       - yarn install
       script:
-      - yarn test --maxWorkers=4 --coverage &> coverage-log.txt
-      - cat ./coverage/lcov.info | codacy-coverage
-      - rm coverage-log.txt
+      - yarn test --maxWorkers=4 --coverage
+      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage;
+        fi
