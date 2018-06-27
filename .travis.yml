@@ -110,7 +110,6 @@ matrix:
       - cd client
       - yarn install
       script:
-      - yarn test --maxWorkers=4 --coverage &> coverage-log.txt
-      - rm coverage-log.txt
+      - yarn test --maxWorkers=4 --coverage
       - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage;
         fi
