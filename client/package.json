@@ -91,8 +91,7 @@
     "dev": "webpack --mode development",
     "test": "jest",
     "test:watch": "yarn test -- --watch",
-    "test:coverage": "yarn test -- --coverage",
-    "test-with-coverage": "yarn test --coverage && cat ./coverage/lcov.info | codacy-coverage"
+    "test:coverage": "yarn test -- --coverage"
   },
   "jest": {
     "transform": {
