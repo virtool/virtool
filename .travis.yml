@@ -105,10 +105,13 @@ matrix:
         yarn: true
         directories:
         - client/node_modules
+      env:
+      - CODACY_PROJECT_TOKEN=$CODACY_PROJECT_TOKEN
       before_script:
       - cd $TRAVIS_BUILD_DIR
       - cd client
       - yarn install
       script:
-      - yarn test --maxWorkers=4 --coverage
+      - yarn test --maxWorkers=4 --coverage > coverage-log.txt
       - cat ./coverage/lcov.info | codacy-coverage
+      - rm coverage-log.txt
