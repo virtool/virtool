@@ -52,11 +52,10 @@ matrix:
       - source ~/.nvm/nvm.sh
       - nvm install $TRAVIS_NODE_VERSION
       - npm install -g yarn
-      - npm install -g webpack@v3.11.0
       - cd $TRAVIS_BUILD_DIR
       - cd client
       - yarn install
-      - webpack --config webpack.production.config.babel.js
+      - ./node_modules/.bin/webpack --config webpack.production.config.babel.js
       - cd $TRAVIS_BUILD_DIR
       before_script:
       - sleep 15
