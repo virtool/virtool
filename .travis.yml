@@ -22,7 +22,7 @@ matrix:
         directories:
         - client/node_modules
       env:
-      - TRAVIS_NODE_VERSION="6"
+      - TRAVIS_NODE_VERSION="8"
       before_install:
       - pip install codacy-coverage
       - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
@@ -52,11 +52,10 @@ matrix:
       - source ~/.nvm/nvm.sh
       - nvm install $TRAVIS_NODE_VERSION
       - npm install -g yarn
-      - npm install -g webpack@v3.11.0
       - cd $TRAVIS_BUILD_DIR
       - cd client
       - yarn install
-      - webpack --config webpack.production.config.babel.js
+      - ./node_modules/.bin/webpack --config webpack.production.config.babel.js
       - cd $TRAVIS_BUILD_DIR
       before_script:
       - sleep 15
@@ -80,8 +79,7 @@ matrix:
       - tar -tvf virtool.tar.gz
       - cd ..
       after_script:
-      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml;
-        fi
+      - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi'
       deploy:
         - provider: releases
           skip_cleanup: true
@@ -100,7 +98,7 @@ matrix:
 
     - language: node_js
       node_js:
-      - '6'
+      - '8'
       cache:
         yarn: true
         directories:
@@ -110,4 +108,5 @@ matrix:
       - cd client
       - yarn install
       script:
-      - yarn test --maxWorkers=4
+      - yarn test --maxWorkers=4 --coverage
+      - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage; fi'
