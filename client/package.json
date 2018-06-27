@@ -17,6 +17,7 @@
     "bluebird": "^3.4.6",
     "classnames": "^2.2.6",
     "clean-webpack-plugin": "^0.1.16",
+    "codacy-coverage": "^3.0.0",
     "css-loader": "^0.28.11",
     "d3-axis": "^1.0.6",
     "d3-dispatch": "^1.0.3",
@@ -90,7 +91,8 @@
     "dev": "webpack --mode development",
     "test": "jest",
     "test:watch": "yarn test -- --watch",
-    "test:coverage": "yarn test -- --coverage"
+    "test:coverage": "yarn test -- --coverage",
+    "test-with-coverage": "yarn test --coverage && cat ./coverage/lcov.info | codacy-coverage"
   },
   "jest": {
     "transform": {
