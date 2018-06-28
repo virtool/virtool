@@ -79,7 +79,7 @@ export default class PathoscopeEntry extends React.Component {
                     <Col xs={6} sm={4} md={2}>
                         <AnalysisValueLabel
                             bsStyle="danger"
-                            label="Max Depth"
+                            label="Depth"
                             value={this.props.maxDepth}
                         />
                     </Col>
