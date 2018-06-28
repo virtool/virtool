@@ -6,7 +6,7 @@ import virtool.otus
 import virtool.history
 
 
-async def test_find(spawn_client, test_changes):
+async def test_find(spawn_client, test_changes, static_time):
     """
     Test that a list of processed change documents are returned with a ``200`` status.
 
@@ -38,7 +38,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -59,7 +59,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -80,7 +80,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -98,7 +98,7 @@ async def test_find(spawn_client, test_changes):
 
 
 @pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, resp_is, spawn_client, test_changes):
+async def test_get(not_found, resp_is, spawn_client, test_changes, static_time):
     """
     Test that a specific history change can be retrieved by its change_id.
 
@@ -130,7 +130,7 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
                 "version": "unbuilt"
             },
             "method_name": "edit",
-            "created_at": "2015-10-06T20:00:00Z",
+            "created_at": static_time.iso,
             "user": {
                 "id": "test"
             },

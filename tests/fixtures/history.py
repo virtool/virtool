@@ -8,7 +8,7 @@ def test_change(static_time):
         "_id": "6116cba1.1",
         "method_name": "edit",
         "description": "Edited Prunus virus E",
-        "created_at": static_time,
+        "created_at": static_time.datetime,
         "diff": [
             ["change", "abbreviation", ["PVF", ""]],
             ["change", "name", ["Prunus virus F", "Prunus virus E"]],

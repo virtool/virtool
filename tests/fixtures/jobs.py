@@ -125,28 +125,28 @@ def test_job(static_time):
         "status": [
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "waiting",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "running",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "running",
                 "stage": "mk_analysis_dir",
                 "progress": 0.091
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "complete",
                 "stage": "import_results",
                 "progress": 1.0

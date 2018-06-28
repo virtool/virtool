@@ -181,7 +181,7 @@ async def test_blast(error, mocker, spawn_client, static_time):
             "rid": "FOOBAR1337",
             "interval": 3,
             "ready": False,
-            "last_checked_at": "2015-10-06T20:00:00Z"
+            "last_checked_at": static_time.iso
         }
 
         assert await resp.json() == blast

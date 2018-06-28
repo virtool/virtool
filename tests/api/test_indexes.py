@@ -30,7 +30,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
     await client.db.indexes.insert_one({
         "_id": "foobar",
         "version": 0,
-        "created_at": static_time,
+        "created_at": static_time.datetime,
         "ready": False,
         "has_files": True,
         "user": {
@@ -82,7 +82,7 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
         assert resp.status == 200
 
         assert await resp.json() == {
-            "created_at": "2015-10-06T20:00:00Z",
+            "created_at": static_time.iso,
             "has_files": True,
             "id": "foobar",
             "version": 0,
@@ -157,7 +157,7 @@ class TestCreate:
         expected = {
             "_id": expected_id,
             "version": 9,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "ready": False,
             "has_files": True,
             "manifest": "manifest",
@@ -185,7 +185,7 @@ class TestCreate:
         assert await client.db.indexes.find_one() == expected
 
         expected["id"] = expected.pop("_id")
-        expected["created_at"] = "2015-10-06T20:00:00Z"
+        expected["created_at"] = static_time.iso
 
         assert await resp.json() == expected
 
@@ -249,7 +249,7 @@ class TestCreate:
         
 
         assert await resp.json() == {
-            "created_at": "2015-10-06T20:00:00Z",
+            "created_at": static_time.iso,
             "has_files": True,
             "id": expected_id,
             "job": {

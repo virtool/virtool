@@ -3,7 +3,7 @@ import pytest
 import virtool.users
 
 
-async def test_get(spawn_client):
+async def test_get(spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     resp = await client.get("/api/account")
@@ -15,7 +15,7 @@ async def test_get(spawn_client):
         "id": "test",
         "administrator": False,
         "identicon": "identicon",
-        "last_password_change": "2015-10-06T20:00:00Z",
+        "last_password_change": static_time.iso,
         "permissions": {p: False for p in virtool.users.PERMISSIONS},
         "primary_group": "technician",
         "settings": {
@@ -97,7 +97,7 @@ async def test_edit(error, spawn_client, resp_is, static_time):
             "groups": [],
             "identicon": "identicon",
             "administrator": False,
-            "last_password_change": "2015-10-06T20:00:00Z",
+            "last_password_change": static_time.iso,
             "primary_group": "technician",
             "settings": {
                 "skip_quick_analyze_dialog": True,
@@ -223,7 +223,7 @@ class TestCreateAPIKey:
             "id": "foobar_0",
             "name": "Foobar",
             "administrator": False,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "user": {
                 "id": "test"
             },
@@ -235,7 +235,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "raw_key",
-            "created_at": "2015-10-06T20:00:00Z"
+            "created_at": static_time.iso
         })
 
         del expected["_id"]
@@ -271,7 +271,7 @@ class TestCreateAPIKey:
             "id": "foobar_1",
             "name": "Foobar",
             "administrator": False,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "user": {
                 "id": "test"
             },
@@ -283,7 +283,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "raw_key",
-            "created_at": "2015-10-06T20:00:00Z"
+            "created_at": static_time.iso
         })
 
         del expected["_id"]
@@ -316,7 +316,7 @@ class TestUpdateAPIKey:
             "id": "foobar_0",
             "name": "Foobar",
             "administrator": False,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "user": {
                 "id": "test"
             },
@@ -345,7 +345,7 @@ class TestUpdateAPIKey:
         del expected["_id"]
         del expected["user"]
 
-        expected["created_at"] = "2015-10-06T20:00:00Z"
+        expected["created_at"] = static_time.iso
 
         assert await resp.json() == expected
 
