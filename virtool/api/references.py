@@ -240,7 +240,7 @@ async def find_indexes(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
     data = await virtool.db.indexes.find(
@@ -455,28 +455,29 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-    if reference is None:
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    if not await virtool.db.references.check_right(req, reference, "modify"):
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
-
-    ref_update = data
 
     internal_control_id = data.get("internal_control", None)
 
-    if internal_control_id:
-        if not await db.otus.find_one({"_id": internal_control_id, "reference.id": ref_id}):
-            return not_found("Internal control not found")
+    if internal_control_id == "":
+        data["internal_control"] = None
 
-        ref_update["internal_control"] = {
-            "id": ref_update["internal_control"]
-        }
+    elif internal_control_id:
+        internal_control = await virtool.db.references.get_internal_control(db, internal_control_id, ref_id)
+
+        if internal_control is None:
+            data["internal_control"] = None
+        else:
+            data["internal_control"] = {
+                "id": internal_control_id
+            }
 
     document = await db.references.find_one_and_update({"_id": ref_id}, {
-        "$set": ref_update
+        "$set": data
     }, projection=virtool.db.references.PROJECTION)
 
     document = virtool.utils.base_processor(document)
@@ -496,24 +497,19 @@ async def remove(req):
 
     ref_id = req.match_info["ref_id"]
 
-    reference = await db.references.find_one(ref_id, ["groups", "users"])
-
-    if reference is None:
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    if not await virtool.db.references.check_right(req, reference, "remove"):
+    if not await virtool.db.references.check_right(req, ref_id, "remove"):
         return insufficient_rights()
 
     user_id = req["client"].user_id
 
-    delete_result = await db.references.delete_one({
+    process = await virtool.db.processes.register(db, "delete_reference")
+
+    await db.references.delete_one({
         "_id": ref_id
     })
-
-    if not delete_result.deleted_count:
-        return not_found()
-
-    process = await virtool.db.processes.register(db, "delete_reference")
 
     await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
         db,

@@ -82,11 +82,8 @@ async def add_group_or_user(db, ref_id, field, data):
 
 async def check_right(req, reference, right):
     """
+    pass
 
-    :param req: the request to check rights for
-    :param reference: the reference document
-    :param right:
-    :return:
     """
     if req["client"].administrator:
         return True
@@ -358,7 +355,7 @@ async def get_computed(db, ref_id, internal_control_id):
     """
     contributors, internal_control, latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_contributors(db, ref_id),
-        get_internal_control(db, internal_control_id),
+        get_internal_control(db, internal_control_id, ref_id),
         get_latest_build(db, ref_id),
         get_otu_count(db, ref_id),
         get_unbuilt_count(db, ref_id)
@@ -390,7 +387,7 @@ async def get_contributors(db, ref_id):
     return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id):
+async def get_internal_control(db, internal_control_id, ref_id):
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
@@ -398,23 +395,26 @@ async def get_internal_control(db, internal_control_id):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param internal_control_id: the id of the otu to create a minimal dict for
-    :type internal_control_id: str
+    :type internal_control_id: Union[None, str]
+
+    :param ref_id: the id of the reference to look for the control OTU in
+    :type ref_id: str
 
     :return: a minimal dict describing the ref internal control
     :rtype: Union[None, dict]
 
     """
-    if internal_control_id is None:
-        return None
-
-    name = await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
+    name = await virtool.db.utils.get_one_field(db.otus, "name", {
+        "_id": internal_control_id,
+        "reference.id": ref_id
+    })
 
     if name is None:
         return None
 
     return {
         "id": internal_control_id,
-        "name": await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
+        "name": name
     }
 
 

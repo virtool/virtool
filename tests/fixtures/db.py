@@ -46,7 +46,7 @@ def test_dbi(test_motor, loop):
 def id_exists(mocker, request):
     mock = mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(request.param))
 
-    setattr(mock, "value", request.param)
+    setattr(mock, "__bool__", lambda x: request.param)
 
     return mock
 

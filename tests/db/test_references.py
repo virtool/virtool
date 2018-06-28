@@ -87,13 +87,12 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 @pytest.mark.parametrize("admin", [True, False])
 @pytest.mark.parametrize("ref", ["baz", {"_id": "baz"}, None])
 @pytest.mark.parametrize("member", [None, "group", "user"])
-@pytest.mark.parametrize("public", [True, False])
 @pytest.mark.parametrize("right,expect", [
     ("read", True),
     ("modify_otu", True),
     ("modify", False)
 ])
-async def test_check_right(admin, expect, member, public, ref, right, mocker, mock_req, test_dbi):
+async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, test_dbi):
     mock_req.app = {
         "db": test_dbi
     }
@@ -118,7 +117,6 @@ async def test_check_right(admin, expect, member, public, ref, right, mocker, mo
                 "modify_otu": True
             }
         ],
-        "public": public,
         "users": [
             {
                 "id": "bar" if member == "user" else "none",
@@ -136,11 +134,11 @@ async def test_check_right(admin, expect, member, public, ref, right, mocker, mo
 
     result = await virtool.db.references.check_right(mock_req, ref, right)
 
-    if admin or (public and right == "read"):
+    if admin:
         assert result is True
         return
 
-    if not admin and member is None and not (right == "read" and public):
+    if not admin and member is None:
         return False
 
     assert result == expect
