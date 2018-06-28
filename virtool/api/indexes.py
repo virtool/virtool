@@ -6,7 +6,7 @@ import virtool.history
 import virtool.http.routes
 import virtool.jobs.build_index
 import virtool.utils
-from virtool.api.utils import json_response, not_found, compose_regex_query, paginate, conflict
+from virtool.api.utils import compose_regex_query, conflict, insufficient_rights, json_response, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -102,6 +102,14 @@ async def create(req):
     db = req.app["db"]
 
     ref_id = req.match_info["ref_id"]
+
+    reference = await db.references.find_one(ref_id, ["groups", "users"])
+
+    if reference is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, reference, "build"):
+        return insufficient_rights()
 
     if await db.indexes.count({"reference.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")

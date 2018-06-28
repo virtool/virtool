@@ -15,7 +15,8 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, json_response, no_content, \
+    not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -104,7 +105,11 @@ async def get_release(req):
     so without waiting for an automatic refresh every 10 minutes.
 
     """
+    db = req.app["db"]
     ref_id = req.match_info["ref_id"]
+
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
 
     release = await virtool.db.references.fetch_and_update_release(req.app, ref_id)
 
@@ -120,9 +125,12 @@ async def list_updates(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
 
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
+
     updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
 
-    if updates:
+    if updates is not None:
         updates.reverse()
 
     return json_response(updates or list())
@@ -137,54 +145,30 @@ async def update(req):
     app = req.app
     db = app["db"]
 
-    release_id = req["data"].get("release_id", None)
-
     ref_id = req.match_info["ref_id"]
-
-    if not await db.references.count({"_id": ref_id}):
-        return not_found()
-
+    release_id = req["data"].get("release_id", None)
     user_id = req["client"].user_id
 
-    created_at = virtool.utils.timestamp()
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     process = await virtool.db.processes.register(db, "update_remote_reference")
 
-    if release_id:
-        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
-
-        release = await virtool.github.get_release(
-            app["settings"],
-            app["client"],
-            remotes_from["slug"],
-            release_id=release_id
-        )
-    else:
-        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
-
-    update_subdocument = virtool.github.create_update_subdocument(
-        release,
-        False,
-        user_id,
-        created_at
+    release, update_subdocument = await virtool.db.references.update(
+        req.app,
+        process["id"],
+        ref_id,
+        release_id,
+        user_id
     )
 
-    await db.references.update_one({"_id": ref_id}, {
-        "$push": {
-            "updates": update_subdocument
-        },
-        "$set": {
-            "process": {
-                "id": process["id"]
-            },
-            "updating": True
-        }
-    })
-
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.update_remote(
+    await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_update(
         req.app,
         ref_id,
-        created_at,
+        update_subdocument["created_at"],
         process["id"],
         release,
         user_id
@@ -198,6 +182,9 @@ async def find_otus(req):
     db = req.app["db"]
 
     ref_id = req.match_info["ref_id"]
+
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
+        return not_found()
 
     term = req.query.get("find", None)
     verified = req.query.get("verified", None)
@@ -253,7 +240,7 @@ async def find_indexes(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
     data = await virtool.db.indexes.find(
@@ -307,10 +294,6 @@ async def find_indexes(req):
         "type": "string",
         "default": ""
     },
-    "public": {
-        "type": "boolean",
-        "default": False
-    },
     "release_id": {
         "type": "string"
     }
@@ -336,7 +319,6 @@ async def create(req):
             data["name"],
             clone_from,
             data["description"],
-            data["public"],
             user_id
         )
 
@@ -366,7 +348,6 @@ async def create(req):
             settings,
             data["name"],
             data["description"],
-            data["public"],
             import_from,
             user_id
         )
@@ -399,7 +380,6 @@ async def create(req):
         document = await virtool.db.references.create_remote(
             db,
             settings,
-            True,
             release,
             remote_from,
             user_id
@@ -428,7 +408,6 @@ async def create(req):
             data["organism"],
             data["description"],
             data["data_type"],
-            data["public"],
             user_id=req["client"].user_id
         )
 
@@ -457,9 +436,6 @@ async def create(req):
     "organism": {
         "type": "string"
     },
-    "public": {
-        "type": "boolean"
-    },
     "internal_control": {
         "type": "string"
     },
@@ -479,23 +455,29 @@ async def edit(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    ref_update = data
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     internal_control_id = data.get("internal_control", None)
 
-    if internal_control_id:
-        if not await db.otus.find_one({"_id": internal_control_id, "reference.id": ref_id}):
-            return not_found("Internal control not found")
+    if internal_control_id == "":
+        data["internal_control"] = None
 
-        ref_update["internal_control"] = {
-            "id": ref_update["internal_control"]
-        }
+    elif internal_control_id:
+        internal_control = await virtool.db.references.get_internal_control(db, internal_control_id, ref_id)
+
+        if internal_control is None:
+            data["internal_control"] = None
+        else:
+            data["internal_control"] = {
+                "id": internal_control_id
+            }
 
     document = await db.references.find_one_and_update({"_id": ref_id}, {
-        "$set": ref_update
+        "$set": data
     }, projection=virtool.db.references.PROJECTION)
 
     document = virtool.utils.base_processor(document)
@@ -515,16 +497,19 @@ async def remove(req):
 
     ref_id = req.match_info["ref_id"]
 
-    user_id = req["client"].user_id
-
-    delete_result = await db.references.delete_one({
-        "_id": ref_id
-    })
-
-    if not delete_result.deleted_count:
+    if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
+    if not await virtool.db.references.check_right(req, ref_id, "remove"):
+        return insufficient_rights()
+
+    user_id = req["client"].user_id
+
     process = await virtool.db.processes.register(db, "delete_reference")
+
+    await db.references.delete_one({
+        "_id": ref_id
+    })
 
     await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
         db,
@@ -559,14 +544,18 @@ async def get_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups"])
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document, "modify"):
+        return insufficient_rights()
 
     if document is not None:
         for group in document.get("groups", list()):
             if group["id"] == group_id:
                 return json_response(group)
-
-    return not_found()
 
 
 @routes.post("/api/refs/{ref_id}/groups", schema={
@@ -580,11 +569,19 @@ async def add_group(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
+    document = await db.references.find_one(ref_id, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document, "modify"):
+        return insufficient_rights()
+
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
     except virtool.errors.DatabaseError as err:
         if "already exists" in str(err):
-            return conflict("Group already exists")
+            return bad_request("Group already exists")
 
         if "does not exist" in str(err):
             return bad_request("Group does not exist")
@@ -612,19 +609,24 @@ async def add_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
+    document = await db.references.find_one(ref_id, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
     except virtool.errors.DatabaseError as err:
         if "already exists" in str(err):
-            return conflict("User already exists")
+            return bad_request("User already exists")
 
         if "does not exist" in str(err):
             return bad_request("User does not exist")
 
         raise
-
-    if subdocument is None:
-        return not_found()
 
     headers = {
         "Location": "/api/refs/{}/users/{}".format(ref_id, subdocument["id"])
@@ -640,10 +642,15 @@ async def edit_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, group_id, "groups", data)
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
-    if subdocument is None:
+    if document is None:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
+    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, group_id, "groups", data)
 
     return json_response(subdocument)
 
@@ -654,6 +661,14 @@ async def edit_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
     user_id = req.match_info["user_id"]
+
+    document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, user_id, "users", data)
 
@@ -669,6 +684,14 @@ async def delete_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
     deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
 
     if not deleted_id:
@@ -682,6 +705,14 @@ async def delete_user(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
     user_id = req.match_info["user_id"]
+
+    document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, user_id, "users")
 

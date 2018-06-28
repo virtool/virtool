@@ -69,7 +69,7 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 
         expected = {
             "id": subdocument_id,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "build": rights,
             "modify": False,
             "modify_otu": False,
@@ -81,6 +81,66 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
             "groups": subdocuments + ([expected] if field == "group" else []),
             "users": subdocuments + ([expected] if field == "user" else [])
         }
+
+
+@pytest.mark.parametrize("admin", [True, False])
+@pytest.mark.parametrize("ref", ["baz", {"_id": "baz"}, None])
+@pytest.mark.parametrize("member", [None, "group", "user"])
+@pytest.mark.parametrize("right,expect", [
+    ("read", True),
+    ("modify_otu", True),
+    ("modify", False)
+])
+async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, test_dbi):
+    mock_req.app = {
+        "db": test_dbi
+    }
+
+    mock_req["client"] = mocker.Mock()
+
+    mock_req["client"].administrator = admin
+
+    mock_req["client"].user_id = "bar"
+
+    mock_req["client"].groups = [
+        "foo"
+    ]
+
+    reference = {
+        "_id": "baz",
+        "groups": [
+            {
+                "id": "foo" if member == "group" else "none",
+                "read": True,
+                "modify": False,
+                "modify_otu": True
+            }
+        ],
+        "users": [
+            {
+                "id": "bar" if member == "user" else "none",
+                "read": True,
+                "modify": False,
+                "modify_otu": True
+            }
+        ]
+    }
+
+    await test_dbi.references.insert_one(reference)
+
+    if ref is None:
+        ref = reference
+
+    result = await virtool.db.references.check_right(mock_req, ref, right)
+
+    if admin:
+        assert result is True
+        return
+
+    if not admin and member is None:
+        return False
+
+    assert result == expect
 
 
 async def test_create_manifest(test_motor, test_otu):

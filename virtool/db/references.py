@@ -29,7 +29,6 @@ PROJECTION = [
     "name",
     "organism",
     "process",
-    "public",
     "release",
     "remotes_from",
     "unbuilt_count",
@@ -79,6 +78,38 @@ async def add_group_or_user(db, ref_id, field, data):
     })
 
     return subdocument
+
+
+async def check_right(req, reference, right):
+    """
+    pass
+
+    """
+    if req["client"].administrator:
+        return True
+
+    user_id = req["client"].user_id
+
+    try:
+        groups = reference["groups"]
+        users = reference["users"]
+    except (KeyError, TypeError):
+        reference = await req.app["db"].references.find_one(reference, ["groups", "users"])
+        groups = reference["groups"]
+        users = reference["users"]
+
+    for user in users:
+        if user["id"] == user_id:
+            if user[right]:
+                return True
+
+            break
+
+    for group in groups:
+        if group[right] and group["id"] in req["client"].groups:
+            return True
+
+    return False
 
 
 async def check_source_type(db, ref_id, source_type):
@@ -324,7 +355,7 @@ async def get_computed(db, ref_id, internal_control_id):
     """
     contributors, internal_control, latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_contributors(db, ref_id),
-        get_internal_control(db, internal_control_id),
+        get_internal_control(db, internal_control_id, ref_id),
         get_latest_build(db, ref_id),
         get_otu_count(db, ref_id),
         get_unbuilt_count(db, ref_id)
@@ -356,7 +387,7 @@ async def get_contributors(db, ref_id):
     return await virtool.db.history.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id):
+async def get_internal_control(db, internal_control_id, ref_id):
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
@@ -364,23 +395,26 @@ async def get_internal_control(db, internal_control_id):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param internal_control_id: the id of the otu to create a minimal dict for
-    :type internal_control_id: str
+    :type internal_control_id: Union[None, str]
+
+    :param ref_id: the id of the reference to look for the control OTU in
+    :type ref_id: str
 
     :return: a minimal dict describing the ref internal control
     :rtype: Union[None, dict]
 
     """
-    if internal_control_id is None:
-        return None
-
-    name = await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
+    name = await virtool.db.utils.get_one_field(db.otus, "name", {
+        "_id": internal_control_id,
+        "reference.id": ref_id
+    })
 
     if name is None:
         return None
 
     return {
         "id": internal_control_id,
-        "name": await virtool.db.utils.get_one_field(db.otus, "name", internal_control_id)
+        "name": name
     }
 
 
@@ -480,7 +514,7 @@ async def get_unbuilt_count(db, ref_id):
     })
 
 
-async def create_clone(db, settings, name, clone_from, description, public, user_id):
+async def create_clone(db, settings, name, clone_from, description, user_id):
 
     source = await db.references.find_one(clone_from)
 
@@ -493,7 +527,6 @@ async def create_clone(db, settings, name, clone_from, description, public, user
         source["organism"],
         description,
         source["data_type"],
-        public,
         created_at=virtool.utils.timestamp(),
         user_id=user_id
     )
@@ -506,7 +539,7 @@ async def create_clone(db, settings, name, clone_from, description, public, user
     return document
 
 
-async def create_document(db, settings, name, organism, description, data_type, public, created_at=None, ref_id=None,
+async def create_document(db, settings, name, organism, description, data_type, created_at=None, ref_id=None,
                           user_id=None, users=None):
 
     if ref_id and await db.references.count({"_id": ref_id}):
@@ -531,7 +564,6 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "description": description,
         "name": name,
         "organism": organism,
-        "public": public,
         "internal_control": None,
         "restrict_source_types": False,
         "source_types": settings["default_source_types"],
@@ -543,7 +575,7 @@ async def create_document(db, settings, name, organism, description, data_type, 
     return document
 
 
-async def create_import(db, settings, name, description, public, import_from, user_id):
+async def create_import(db, settings, name, description, import_from, user_id):
     """
     Import a previously exported Virtool reference.
 
@@ -558,9 +590,6 @@ async def create_import(db, settings, name, description, public, import_from, us
 
     :param description: a description for the new reference
     :type description: str
-
-    :param public: is the reference public on creation
-    :type public: bool
 
     :param import_from: the uploaded file to import from
     :type import_from: str
@@ -581,7 +610,6 @@ async def create_import(db, settings, name, description, public, import_from, us
         None,
         description,
         None,
-        public,
         created_at=created_at,
         user_id=user_id
     )
@@ -617,7 +645,6 @@ async def create_original(db, settings):
         "virus",
         "Created from existing viruses after upgrade to Virtool v3",
         "genome",
-        True,
         created_at=created_at,
         ref_id="original",
         users=users
@@ -628,7 +655,7 @@ async def create_original(db, settings):
     return document
 
 
-async def create_remote(db, settings, public, release, remote_from, user_id):
+async def create_remote(db, settings, release, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
@@ -638,7 +665,6 @@ async def create_remote(db, settings, public, release, remote_from, user_id):
         None,
         "The official plant virus reference from the Virtool developers",
         None,
-        public,
         created_at=created_at,
         user_id=user_id
     )
@@ -1023,6 +1049,46 @@ async def refresh_remotes(app):
         pass
 
 
+async def update(app, process_id, ref_id, release_id, user_id):
+
+    db = app["db"]
+
+    created_at = virtool.utils.timestamp()
+
+    if release_id:
+        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
+
+        release = await virtool.github.get_release(
+            app["settings"],
+            app["client"],
+            remotes_from["slug"],
+            release_id=release_id
+        )
+    else:
+        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    update_subdocument = virtool.github.create_update_subdocument(
+        release,
+        False,
+        user_id,
+        created_at
+    )
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$push": {
+            "updates": update_subdocument
+        },
+        "$set": {
+            "process": {
+                "id": process_id
+            },
+            "updating": True
+        }
+    })
+
+    return release, update_subdocument
+
+
 async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     remote_id = otu["_id"]
 
@@ -1090,7 +1156,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
     )
 
 
-async def update_remote(app, ref_id, created_at, process_id, release, user_id):
+async def finish_update(app, ref_id, created_at, process_id, release, user_id):
     db = app["db"]
 
     progress_tracker = virtool.processes.ProgressTracker(
@@ -1207,11 +1273,9 @@ async def update_remote(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
-    update = virtool.github.create_update_subdocument(release, True, user_id)
-
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "installed": update,
+            "installed": virtool.github.create_update_subdocument(release, True, user_id),
             "updates.$.ready": True,
             "updating": False
         }

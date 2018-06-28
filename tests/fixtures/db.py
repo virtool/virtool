@@ -42,6 +42,15 @@ def test_dbi(test_motor, loop):
     return i
 
 
+@pytest.fixture(params=[True, False])
+def id_exists(mocker, request):
+    mock = mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(request.param))
+
+    setattr(mock, "__bool__", lambda x: request.param)
+
+    return mock
+
+
 @pytest.fixture
 def create_delete_result():
     return MockDeleteResult

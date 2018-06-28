@@ -138,11 +138,14 @@ async def install(app, process_id, release, user_id):
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
+    :param process_id: the id for the process document
+    :type process_id: str
+
     :param release: the release to install
     :type release: dict
 
-    :param process_id: the id for the process document
-    :type process_id: str
+    :param user_id: the id of the user making the request
+    :type user_id: str
 
     """
     db = app["db"]

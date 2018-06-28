@@ -12,6 +12,27 @@ import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found, paginate
 
+QUERY_SCHEMA = {
+    "find": {
+        "type": "string",
+        "default": "",
+        "coerce": str
+    },
+    "page": {
+        "type": "integer",
+        "coerce": int,
+        "default": 1,
+        "min": 1
+    },
+    "per_page": {
+        "type": "integer",
+        "coerce": int,
+        "default": 15,
+        "min": 1,
+        "max": 100
+    }
+}
+
 routes = virtool.http.routes.Routes()
 
 
@@ -23,11 +44,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    v = Validator({
-        "find": {"type": "string", "default": "", "coerce": str},
-        "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
-        "per_page": {"type": "integer", "coerce": int, "default": 15, "min": 1, "max": 100}
-    }, allow_unknown=True)
+    v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
         return invalid_query(v.errors)

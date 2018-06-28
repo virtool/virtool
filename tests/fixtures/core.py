@@ -9,6 +9,30 @@ SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
+class MockRequest:
+
+    def __init__(self):
+        self.app = dict()
+        self._state = dict()
+
+    def __getitem__(self, key):
+        return self._state.get(key)
+
+    def __setitem__(self, key, value):
+        self._state[key] = value
+
+
+class StaticTime:
+
+    datetime = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
+    iso = "2015-10-06T20:00:00Z"
+
+
+@pytest.fixture
+def mock_req():
+    return MockRequest()
+
+
 @pytest.fixture(scope="session")
 def md_proxy():
     def func(data_dict=None):
@@ -68,13 +92,15 @@ def test_random_alphanumeric(mocker):
     return mocker.patch("virtool.utils.random_alphanumeric", new=RandomAlphanumericTester())
 
 
+@pytest.fixture(scope="session")
+def static_time_obj():
+    return StaticTime()
+
+
 @pytest.fixture
-def static_time(mocker):
-    time = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
-
-    mocker.patch("virtool.utils.timestamp", return_value=arrow.Arrow(2015, 10, 6, 20, 0, 0).naive)
-
-    return time
+def static_time(mocker, static_time_obj):
+    mocker.patch("virtool.utils.timestamp", return_value=static_time_obj.datetime)
+    return static_time_obj
 
 
 @pytest.fixture

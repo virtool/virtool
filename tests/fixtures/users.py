@@ -1,5 +1,4 @@
 import pytest
-import datetime
 
 from virtool.users import PERMISSIONS
 
@@ -13,7 +12,7 @@ def bob(no_permissions, static_time):
         "groups": [
             "peasants"
         ],
-        "last_password_change": static_time,
+        "last_password_change": static_time.datetime,
         "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
         "invalidate_sessions": False,
         "password": "hashed_password",
@@ -28,8 +27,8 @@ def bob(no_permissions, static_time):
     }
 
 
-@pytest.fixture(scope="session")
-def create_user():
+@pytest.fixture
+def create_user(static_time):
     def func(name="test", administrator=False, groups=None, permissions=None):
 
         permissions = permissions or list()
@@ -41,7 +40,7 @@ def create_user():
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},
             "groups": groups or list(),
             "invalidate_sessions": False,
-            "last_password_change": datetime.datetime(2015, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc),
+            "last_password_change": static_time.datetime,
             "primary_group": "technician",
             "api_keys": [],
             "settings": {

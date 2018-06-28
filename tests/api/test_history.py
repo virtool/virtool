@@ -6,7 +6,7 @@ import virtool.otus
 import virtool.history
 
 
-async def test_find(spawn_client, test_changes):
+async def test_find(spawn_client, test_changes, static_time):
     """
     Test that a list of processed change documents are returned with a ``200`` status.
 
@@ -38,7 +38,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -59,7 +59,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -80,7 +80,7 @@ async def test_find(spawn_client, test_changes):
                     "version": "unbuilt"
                 },
                 "method_name": "edit",
-                "created_at": "2015-10-06T20:00:00Z",
+                "created_at": static_time.iso,
                 "user": {
                     "id": "test"
                 },
@@ -98,7 +98,7 @@ async def test_find(spawn_client, test_changes):
 
 
 @pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, resp_is, spawn_client, test_changes):
+async def test_get(not_found, resp_is, spawn_client, test_changes, static_time):
     """
     Test that a specific history change can be retrieved by its change_id.
 
@@ -130,7 +130,7 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
                 "version": "unbuilt"
             },
             "method_name": "edit",
-            "created_at": "2015-10-06T20:00:00Z",
+            "created_at": static_time.iso,
             "user": {
                 "id": "test"
             },
@@ -145,9 +145,9 @@ async def test_get(not_found, resp_is, spawn_client, test_changes):
         }
 
 
-@pytest.mark.parametrize("not_found", [False, True])
+@pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("remove", [False, True])
-async def test_remove(not_found, remove, create_mock_history, spawn_client, resp_is):
+async def test_revert(exists, remove, create_mock_history, spawn_client, check_ref_right, resp_is):
     """
     Test that a valid request results in a reversion and a ``204`` response.
 
@@ -156,48 +156,52 @@ async def test_remove(not_found, remove, create_mock_history, spawn_client, resp
 
     await create_mock_history(remove)
 
-    change_id = "foo.1" if not_found else "6116cba1.2"
+    change_id = "6116cba1.2" if exists else "foo.1"
 
     resp = await client.delete("/api/history/" + change_id)
 
-    if not_found:
+    if not exists:
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        assert resp.status == 204
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-        assert await virtool.db.otus.join(client.db, "6116cba1") == {
-            "_id": "6116cba1",
-            "abbreviation": "TST",
-            "imported": True,
-            "isolates": [
-                {
-                    "default": True,
-                    "id": "cab8b360",
-                    "sequences": [
-                        {
-                            "_id": "KX269872",
-                            "definition": "Prunus virus F isolate 8816-s2 "
-                            "segment RNA2 polyprotein 2 gene, "
-                            "complete cds.",
-                            "host": "sweet cherry",
-                            "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "otu_id": "6116cba1",
-                            "segment": None
-                         }
-                    ],
-                    "source_name": "8816-v2",
-                    "source_type": "isolate"
-                }
-            ],
-            "reference": {
-                "id": "hxn167"
-            },
-            "last_indexed_version": 0,
-            "lower_name": "prunus virus f",
-            "name": "Prunus virus F",
-            "verified": False,
-            "schema": [],
-            "version": 1
-        }
+    assert resp.status == 204
+
+    assert await virtool.db.otus.join(client.db, "6116cba1") == {
+        "_id": "6116cba1",
+        "abbreviation": "TST",
+        "imported": True,
+        "isolates": [
+            {
+                "default": True,
+                "id": "cab8b360",
+                "sequences": [
+                    {
+                        "_id": "KX269872",
+                        "definition": "Prunus virus F isolate 8816-s2 "
+                        "segment RNA2 polyprotein 2 gene, "
+                        "complete cds.",
+                        "host": "sweet cherry",
+                        "isolate_id": "cab8b360",
+                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                        "otu_id": "6116cba1",
+                        "segment": None
+                     }
+                ],
+                "source_name": "8816-v2",
+                "source_type": "isolate"
+            }
+        ],
+        "reference": {
+            "id": "hxn167"
+        },
+        "last_indexed_version": 0,
+        "lower_name": "prunus virus f",
+        "name": "Prunus virus F",
+        "verified": False,
+        "schema": [],
+        "version": 1
+    }

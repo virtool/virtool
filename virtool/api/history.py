@@ -1,10 +1,11 @@
 import virtool.db.history
+import virtool.db.references
 import virtool.errors
 import virtool.history
 import virtool.http.routes
 import virtool.otus
 import virtool.utils
-from virtool.api.utils import conflict, json_response, no_content, not_found
+from virtool.api.utils import conflict, insufficient_rights, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -50,15 +51,17 @@ async def revert(req):
 
     change_id = req.match_info["change_id"]
 
+    document = await db.history.find_one(change_id, ["reference"])
+
+    if not document:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+        return insufficient_rights()
+
     try:
         await virtool.db.history.revert(db, change_id)
-    except virtool.errors.DatabaseError as err:
-        err_string = str(err)
-
-        if "Change does not exist" in err_string:
-            return not_found()
-
-        if "Change is already built" in err_string:
-            return conflict("Change is already built")
+    except virtool.errors.DatabaseError:
+        return conflict("Change is already built")
 
     return no_content()

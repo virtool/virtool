@@ -1,6 +1,6 @@
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import json_response
+from virtool.api.utils import json_response, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -21,5 +21,8 @@ async def get(req):
     process_id = req.match_info["process_id"]
 
     document = await db.processes.find_one(process_id)
+
+    if not document:
+        return not_found()
 
     return json_response(virtool.utils.base_processor(document))

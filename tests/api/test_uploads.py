@@ -34,7 +34,7 @@ class TestUpload:
             "type": file_type,
             "ready": False,
             "reserved": False,
-            "uploaded_at": "2015-10-06T20:00:00Z",
+            "uploaded_at": static_time.iso,
             "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
             "user": {
                 "id": "test"

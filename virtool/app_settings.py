@@ -190,7 +190,7 @@ class Settings:
         return self.data.get(key)
 
     def __setitem__(self, key, value):
-        return self.data.set(key, value)
+        self.data[key] = value
 
     def update(self, update_dict):
         self.data.update(update_dict)

@@ -64,8 +64,13 @@ class VTClient:
     async def get(self, url, params=None):
         return await self._client.get(url, params=params)
 
-    async def post(self, url, data):
-        return await self._client.post(url, data=json.dumps(data))
+    async def post(self, url, data=None):
+        payload = None
+
+        if data:
+            payload = json.dumps(data)
+
+        return await self._client.post(url, data=payload)
 
     async def post_form(self, url, data):
         return await self._client.post(url, data=data)

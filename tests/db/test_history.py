@@ -42,7 +42,7 @@ class TestAdd:
                 "version": "unbuilt"
             },
             "method_name": "edit",
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "user": {
                 "id": "test"
             },
@@ -92,7 +92,7 @@ class TestAdd:
 
         test_change.update({
             "description": test_change["description"],
-            "created_at": static_time
+            "created_at": static_time.datetime
         })
 
         assert returned_change == test_change
@@ -137,7 +137,7 @@ class TestAdd:
 
         test_change.update({
             "description": test_change["description"],
-            "created_at": static_time
+            "created_at": static_time.datetime
         })
 
         assert returned_change == test_change
@@ -180,7 +180,7 @@ async def test_get_most_recent_change(exists, test_motor, static_time):
                 "_id": "6116cba1.1",
                 "description": "Description",
                 "method_name": "update",
-                "created_at": static_time - delta,
+                "created_at": static_time.datetime - delta,
                 "user": {
                     "id": "test"
                 },
@@ -197,7 +197,7 @@ async def test_get_most_recent_change(exists, test_motor, static_time):
                 "_id": "6116cba1.2",
                 "description": "Description number 2",
                 "method_name": "update",
-                "created_at": static_time,
+                "created_at": static_time.datetime,
                 "user": {
                     "id": "test"
                 },
@@ -219,7 +219,7 @@ async def test_get_most_recent_change(exists, test_motor, static_time):
             "_id": "6116cba1.2",
             "description": "Description number 2",
             "method_name": "update",
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "user": {
                 "id": "test"
             },

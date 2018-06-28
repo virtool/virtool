@@ -4,7 +4,7 @@ from operator import itemgetter
 from virtool.users import check_password, PERMISSIONS
 
 
-async def test_find(spawn_client, create_user):
+async def test_find(spawn_client, create_user, static_time):
     """
     Test that a ``GET /users`` returns a list of users.
 
@@ -24,7 +24,7 @@ async def test_find(spawn_client, create_user):
         "identicon": "identicon",
         "force_reset": False,
         "groups": [],
-        "last_password_change": "2015-10-06T20:00:00Z",
+        "last_password_change": static_time.iso,
         "permissions": {p: False for p in PERMISSIONS},
         "primary_group": "technician"
     }
@@ -40,7 +40,7 @@ async def test_find(spawn_client, create_user):
 
 
 @pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, spawn_client, create_user, resp_is, no_permissions):
+async def test_get(not_found, spawn_client, create_user, no_permissions, resp_is, static_time):
     """
     Test that a ``GET /api/users`` returns a list of users.
 
@@ -68,7 +68,7 @@ async def test_get(not_found, spawn_client, create_user, resp_is, no_permissions
             "force_reset": False,
             "groups": [],
             "identicon": "identicon",
-            "last_password_change": "2015-10-06T20:00:00Z",
+            "last_password_change": static_time.iso,
             "permissions": no_permissions,
             "primary_group": "technician"
         }
@@ -105,7 +105,7 @@ class TestCreate:
             "id": "bob","administrator": False,
             "force_reset": False,
             "groups": [],
-            "last_password_change": "2015-10-06T20:00:00Z",
+            "last_password_change": static_time.iso,
             "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
             "permissions": create_user()["permissions"],
             "primary_group": ""
@@ -115,7 +115,7 @@ class TestCreate:
 
         expected.update({
             "_id": expected.pop("id"),
-            "last_password_change": static_time
+            "last_password_change": static_time.datetime
         })
 
         assert await client.db.users.find_one("bob", list(expected.keys())) == expected
@@ -227,7 +227,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         assert await resp_is.not_found(resp, "User does not exist")
 
     else:
-        expected = dict(bob, last_password_change=static_time)
+        expected = dict(bob, last_password_change=static_time.datetime)
         expected.update(payload)
 
         expected.pop("password")
@@ -239,7 +239,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
         expected.update({
             "id": expected["_id"],
-            "last_password_change": "2015-10-06T20:00:00Z"
+            "last_password_change": static_time.iso
         })
 
         for key in ["_id", "api_keys", "invalidate_sessions", "settings"]:
