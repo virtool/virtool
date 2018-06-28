@@ -2,7 +2,6 @@ import os
 import sys
 
 import pytest
-from aiohttp.test_utils import make_mocked_request
 
 import virtool.db.references
 import virtool.errors
