@@ -103,13 +103,19 @@ async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
 
 class TestCreate:
 
+    @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
-    async def test(self, abbreviation, mocker, spawn_client, test_merged_otu):
+    async def test(self, exists, abbreviation, mocker, spawn_client, test_merged_otu, check_ref_right, resp_is):
         """
         Test that a valid request results in the creation of a otu document and a ``201`` response.
 
         """
         client = await spawn_client(authorize=True)
+
+        if exists:
+            await client.db.references.insert_one({
+                "_id": "foo"
+            })
 
         # Pass ref exists check.
         mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(True))
@@ -134,6 +140,14 @@ class TestCreate:
             data["abbreviation"] = abbreviation
 
         resp = await client.post("/api/refs/foo/otus", data)
+
+        if not exists:
+            assert await resp_is.not_found(resp)
+            return
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -167,34 +181,14 @@ class TestCreate:
             "test"
         )
 
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that invalid input results in a ``422`` response with error data.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        data = {
-            "otu_name": "Tobacco mosaic otu",
-            "abbreviation": 123
-        }
-
-        resp = await client.post("/api/refs/foo/otus", data)
-
-        assert resp.status == 422
-
-        assert await resp_is.invalid_input(resp, {
-            "abbreviation": ["must be of string type"],
-            "name": ["required field"]
-        })
-
+    @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("message", [
         False,
         "Name already exists",
         "Abbreviation already exists",
         "Name and abbreviation already exist"
     ])
-    async def test_field_exists(self, message, mocker, spawn_client, resp_is):
+    async def test_field_exists(self, exists, message, mocker, spawn_client, check_ref_right, resp_is):
         """
         Test that the request fails with ``409 Conflict`` if the requested otu name already exists.
 
@@ -210,12 +204,25 @@ class TestCreate:
 
         client = await spawn_client(authorize=True)
 
+        if exists:
+            await client.db.references.insert_one({
+                "_id": "foo"
+            })
+
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
         }
 
         resp = await client.post("/api/refs/foo/otus", data)
+
+        if not exists:
+            assert await resp_is.not_found(resp)
+            return
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         # Abbreviation defaults to empty string for OTU creation.
         m_check_name_and_abbreviation.assert_called_with(
@@ -237,79 +244,110 @@ class TestEdit:
     @pytest.mark.parametrize("data, existing_abbreviation, description", [
         # Name, ONLY.
         (
-            {"name": "Tobacco mosaic otu"},
+            {
+                "name": "Tobacco mosaic otu"
+            },
             "TMV",
             "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, BOTH CHANGE.
         (
-            {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
             "PVF",
             "Changed name to Tobacco mosaic otu and changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO NAME CHANGE because old is same as new.
         (
-            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            {
+                "name": "Prunus virus F",
+                "abbreviation": "TMV"
+            },
             "PVF",
             "Changed abbreviation to TMV"
         ),
         # Name and abbreviation, NO ABBR CHANGE because old is same as new.
         (
-            {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
             "TMV",
             "Changed name to Tobacco mosaic otu"
         ),
         # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
         (
-            {"name": "Tobacco mosaic otu", "abbreviation": ""},
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": ""
+            },
             "TMV",
             "Changed name to Tobacco mosaic otu and removed abbreviation TMV"
         ),
         # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
         (
-            {"name": "Tobacco mosaic otu", "abbreviation": "TMV"},
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            },
             "",
             "Changed name to Tobacco mosaic otu and added abbreviation TMV"
         ),
         # Abbreviation, ONLY.
         (
-            {"abbreviation": "TMV"},
+            {
+                "abbreviation": "TMV"
+            },
             "PVF",
             "Changed abbreviation to TMV"
         ),
         # Abbreviation, ONLY because old name is same as new.
         (
-            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            {
+                "name": "Prunus virus F",
+                "abbreviation": "TMV"
+            },
             "PVF",
             "Changed abbreviation to TMV"
         ),
         # Abbreviation, ADDED.
         (
-            {"abbreviation": "TMV"},
+            {
+                "abbreviation": "TMV"
+            },
             "",
             "Added abbreviation TMV"
         ),
         # Abbreviation, REMOVED.
         (
-            {"abbreviation": ""},
+            {
+                "abbreviation": ""
+            },
             "TMV",
             "Removed abbreviation TMV"
         )
     ])
-    async def test(self, data, existing_abbreviation, description, spawn_client, test_otu, test_add_history):
+    async def test(self, data, existing_abbreviation, description, spawn_client, check_ref_right, resp_is, test_otu,
+                   test_add_history):
         """
         Test that changing the name and abbreviation results in changes to the otu document and a new change
         document in history. The that change both fields or one or the other results in the correct changes and
         history record.
 
         """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+        client = await spawn_client(authorize=True)
 
         test_otu["abbreviation"] = existing_abbreviation
 
         await client.db.otus.insert_one(test_otu)
 
         resp = await client.patch("/api/otus/6116cba1", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -383,165 +421,101 @@ class TestEdit:
             "test"
         )
 
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that invalid input results in a ``422`` response with error data.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        data = {
-            "otu_name": "Tobacco mosaic otu",
-            "abbreviation": 123
-        }
-
-        resp = await client.patch("/api/otus/test", data)
-
-        assert resp.status == 422
-
-        assert await resp_is.invalid_input(resp, {
-            "abbreviation": ["must be of string type"]
-        })
-
-    async def test_name_exists(self, spawn_client):
-        """
-        Test that the request fails with ``409 Conflict`` if the requested otu name already exists.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_many([
+    @pytest.mark.parametrize("data,message", [
+        (
             {
-                "_id": "test",
-                "name": "Prunus virus F",
-                "lower_name": "Prunus virus F",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "FBV"
             },
+            "Name already exists"
+        ),
+        (
             {
-                "_id": "conflict",
-                "name": "Tobacco mosaic otu",
-                "lower_name": "tobacco mosaic otu",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
-            }
-        ])
-
-        data = {
-            "name": "Tobacco mosaic otu",
-            "abbreviation": "TMV"
-        }
-
-        resp = await client.patch("/api/otus/test", data)
-
-        assert resp.status == 409
-
-        assert await resp.json() == {
-            "message": "Name already exists"
-        }
-
-    async def test_abbreviation_exists(self, spawn_client):
-        """
-        Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_many([
-            {
-                "_id": "test",
-                "name": "Prunus virus F",
-                "lower_name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
+                "name": "Foobar virus",
+                "abbreviation": "TMV"
             },
+            "Abbreviation already exists"
+        ),
+        (
             {
-                "_id": "conflict",
-                "name": "Tobacco mosaic otu",
-                "lower_name": "tobacco mosaic otu",
-                "abbreviation": "TMV",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
-            }
-        ])
-
-        data = {
-            "abbreviation": "TMV"
-        }
-
-        resp = await client.patch("/api/otus/test", data)
-
-        assert resp.status == 409
-
-        assert await resp.json() == {
-            "message": "Abbreviation already exists"
-        }
-
-    async def test_both_exist(self, spawn_client):
-        """
-        Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_many([
-            {
-                "_id": "test",
-                "name": "Prunus virus F",
-                "lower_name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "TMV"
             },
-            {
-                "_id": "conflict",
-                "name": "Tobacco mosaic otu",
-                "lower_name": "tobacco mosaic otu",
-                "abbreviation": "TMV",
-                "isolates": [],
-                "reference": {
-                    "id": "foo"
-                }
-            }
-        ])
-
-        data = {
-            "name": "Tobacco mosaic otu",
-            "abbreviation": "TMV"
-        }
-
-        resp = await client.patch("/api/otus/test", data)
-
-        assert resp.status == 409
-
-        assert await resp.json() == {
-            "message": "Name and abbreviation already exist"
-        }
-
-    @pytest.mark.parametrize("old_name,old_abbr,data", [
-        ("Tobacco mosaic otu", "TMV", {"name": "Tobacco mosaic otu", "abbreviation": "TMV"}),
-        ("Tobacco mosaic otu", "TMV", {"name": "Tobacco mosaic otu"}),
-        ("Tobacco mosaic otu", "TMV", {"abbreviation": "TMV"})
+            "Name and abbreviation already exist"
+        )
     ])
-    async def test_no_change(self, old_name, old_abbr, data, spawn_client):
+    async def test_field_exists(self, data, message, spawn_client, check_ref_right, resp_is):
+        """
+        Test that the request fails with ``409 Conflict`` if the requested name or abbreviation already exists.
+
+        """
+        client = await spawn_client(authorize=True)
+
+        await client.db.otus.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "isolates": [],
+                "reference": {
+                    "id": "foo"
+                }
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "lower_name": "tobacco mosaic virus",
+                "isolates": [],
+                "reference": {
+                    "id": "foo"
+                }
+            }
+        ])
+
+        resp = await client.patch("/api/otus/test", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
+
+        print(409, message)
+        print(resp.status, await resp.json())
+
+        assert await resp_is.conflict(resp, message)
+
+    @pytest.mark.parametrize("old_name,old_abbreviation,data", [
+        (
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "name": "Tobacco mosaic otu",
+                "abbreviation": "TMV"
+            }
+        ),
+        (
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "name": "Tobacco mosaic otu"
+            }
+        ),
+        (
+            "Tobacco mosaic otu",
+            "TMV",
+            {
+                "abbreviation": "TMV"
+            }
+        )
+    ])
+    async def test_no_change(self, old_name, old_abbreviation, data, spawn_client, check_ref_right, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one({
             "_id": "test",
             "name": old_name,
             "lower_name": "tobacco mosaic otu",
-            "abbreviation": old_abbr,
+            "abbreviation": old_abbreviation,
             "isolates": [],
             "reference": {
                 "id": "foo"
@@ -549,6 +523,10 @@ class TestEdit:
         })
 
         resp = await client.patch("/api/otus/test", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -582,53 +560,63 @@ class TestEdit:
         assert await resp_is.not_found(resp)
 
 
-class TestRemove:
+@pytest.mark.parametrize("abbreviation,description,exists", [
+    (
+        "",
+        "Removed Prunus virus F",
+        True
 
-    @pytest.mark.parametrize("abbreviation,description", [
-        ("", "Removed Prunus virus F"),
-        ("PVF", "Removed Prunus virus F (PVF)")
-    ])
-    async def test(self, abbreviation, description, spawn_client, test_otu, test_add_history):
-        """
-        Test that an existing otu can be removed.
+    ),
+    (
+        "PVF",
+        "Removed Prunus virus F (PVF)",
+        True
+    ),
+    (
+        "",
+        "",
+        False
+    )
+])
+async def test_remove(abbreviation, description, exists, spawn_client, check_ref_right, resp_is, test_otu,
+                      test_add_history):
+    """
+    Test that an existing otu can be removed.
 
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    """
+    client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-        test_otu["abbreviation"] = abbreviation
+    test_otu["abbreviation"] = abbreviation
 
+    if exists:
         await client.db.otus.insert_one(test_otu)
 
-        old = await client.db.otus.find_one("6116cba1")
+    old = await client.db.otus.find_one("6116cba1")
 
-        assert old
+    resp = await client.delete("/api/otus/6116cba1")
 
-        resp = await client.delete("/api/otus/6116cba1")
-
-        assert resp.status == 204
-
-        assert await client.db.otus.find({"_id": "6116cba1"}).count() == 0
-
-        old["isolates"][0]["sequences"] = []
-
-        assert test_add_history.call_args[0][1:] == (
-            "remove",
-            old,
-            None,
-            description,
-            "test"
-        )
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that attempting to remove a non-existent otu results in a ``404`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        resp = await client.delete("/api/otus/6116cba1")
-
+    if not exists:
+        assert old is None
         assert await resp_is.not_found(resp)
+        return
+
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
+
+    assert resp.status == 204
+
+    assert await client.db.otus.find({"_id": "6116cba1"}).count() == 0
+
+    old["isolates"][0]["sequences"] = []
+
+    assert test_add_history.call_args[0][1:] == (
+        "remove",
+        old,
+        None,
+        description,
+        "test"
+    )
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -722,7 +710,8 @@ class TestGetIsolate:
 
 class TestAddIsolate:
 
-    async def test_is_default(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
+    async def test_is_default(self, mocker, spawn_client, check_ref_right, resp_is, test_otu, test_add_history,
+                              test_random_alphanumeric):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
@@ -741,6 +730,10 @@ class TestAddIsolate:
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -787,7 +780,8 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_not_default(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
+    async def test_not_default(self, mocker, spawn_client, check_ref_right, resp_is, test_otu, test_add_history,
+                               test_random_alphanumeric):
         """
         Test that a non-default isolate can be properly added
 
@@ -805,6 +799,10 @@ class TestAddIsolate:
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -851,7 +849,8 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_first(self, mocker, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
+    async def test_first(self, mocker, spawn_client, check_ref_right, resp_is, test_otu, test_add_history,
+                         test_random_alphanumeric):
         """
         Test that the first isolate for a otu is set as the ``default`` otu even if ``default`` is set to ``False``
         in the POST input.
@@ -872,6 +871,10 @@ class TestAddIsolate:
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -907,7 +910,7 @@ class TestAddIsolate:
             "test"
         )
 
-    async def test_force_case(self, mocker, spawn_client, test_otu, test_random_alphanumeric):
+    async def test_force_case(self, mocker, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -925,6 +928,10 @@ class TestAddIsolate:
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -957,7 +964,7 @@ class TestAddIsolate:
             }
         ]
 
-    async def test_empty(self, mocker, spawn_client, test_otu, test_random_alphanumeric):
+    async def test_empty(self, mocker, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric):
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
@@ -970,6 +977,10 @@ class TestAddIsolate:
         mocker.patch("virtool.db.references.check_source_type", make_mocked_coro(True))
 
         resp = await client.post("/api/otus/6116cba1/isolates", {})
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -1022,7 +1033,7 @@ class TestEditIsolate:
         ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
         ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
     ])
-    async def test(self, data, description, spawn_client, test_otu, test_add_history):
+    async def test(self, data, description, spawn_client, check_ref_right, resp_is, test_otu, test_add_history):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
 
@@ -1039,6 +1050,10 @@ class TestEditIsolate:
         await client.db.otus.insert_one(test_otu)
 
         resp = await client.patch("/api/otus/6116cba1/isolates/test", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -1072,7 +1087,7 @@ class TestEditIsolate:
             "test"
         )
 
-    async def test_force_case(self, spawn_client, test_otu):
+    async def test_force_case(self, spawn_client, check_ref_right, resp_is, test_otu):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -1086,6 +1101,10 @@ class TestEditIsolate:
         }
 
         resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -1149,7 +1168,7 @@ class TestEditIsolate:
 
 class TestSetAsDefault:
 
-    async def test(self, spawn_client, test_otu, test_add_history):
+    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history):
         """
         Test changing the default isolate results in the correct changes, history, and response.
 
@@ -1166,6 +1185,10 @@ class TestSetAsDefault:
         await client.db.otus.insert_one(test_otu)
 
         resp = await client.put("/api/otus/6116cba1/isolates/test/default", {})
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -1208,7 +1231,7 @@ class TestSetAsDefault:
             "test"
         )
 
-    async def test_no_change(self, spawn_client, test_otu, test_add_history):
+    async def test_no_change(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
         Specifically no increment in version.
@@ -1226,6 +1249,10 @@ class TestSetAsDefault:
         await client.db.otus.insert_one(test_otu)
 
         resp = await client.put("/api/otus/6116cba1/isolates/cab8b360/default", {})
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -1281,7 +1308,7 @@ class TestSetAsDefault:
 
 class TestRemoveIsolate:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
+    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
         """
         Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
         database.
@@ -1295,6 +1322,10 @@ class TestRemoveIsolate:
         assert await client.db.otus.find({"isolates.id": "cab8b360"}).count() == 1
 
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 204
 
@@ -1353,7 +1384,8 @@ class TestRemoveIsolate:
             "test"
         )
 
-    async def test_change_default(self, spawn_client, test_otu, test_sequence, test_add_history):
+    async def test_change_default(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence,
+                                  test_add_history):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
@@ -1371,6 +1403,10 @@ class TestRemoveIsolate:
         await client.db.sequences.insert_one(test_sequence)
 
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 204
 
@@ -1538,7 +1574,7 @@ class TestGetSequence:
 
 class TestCreateSequence:
 
-    async def test(self, spawn_client, test_otu, test_add_history, test_random_alphanumeric):
+    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1551,6 +1587,10 @@ class TestCreateSequence:
         }
 
         resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -1620,24 +1660,6 @@ class TestCreateSequence:
             "test"
         )
 
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that invalid input results in a ``422`` response with error information.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", {
-            "accession": 2016,
-            "seq": "ATGCGTGTACTG",
-            "definition": "A made up sequence"
-        })
-
-        assert await resp_is.invalid_input(resp, {
-            "accession": ["must be of string type"],
-            "sequence": ["required field"]
-        })
-
     @pytest.mark.parametrize("otu_id, isolate_id", [
         ("6116cba1", "cab8b360"),
         ("6116cba1", "foobar"),
@@ -1661,12 +1683,12 @@ class TestCreateSequence:
 
         resp = await client.post(url, data)
 
-        assert await resp_is.not_found(resp, "otu or isolate not found")
+        assert await resp_is.not_found(resp)
 
 
 class TestEditSequence:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
+    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1679,6 +1701,10 @@ class TestEditSequence:
         }
 
         resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 200
 
@@ -1750,23 +1776,8 @@ class TestEditSequence:
 
         assert await resp_is.bad_request(resp, "Empty Input")
 
-    async def test_invalid_input(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", {
-            "plant": "Grapevine",
-            "sequence": "ATGCGTGTACTG",
-            "definition": 123
-        })
-
-        assert resp.status == 422
-
-        assert await resp_is.invalid_input(resp, {
-            "definition": ["must be of string type"]
-        })
-
     @pytest.mark.parametrize("foobar", ["otu_id", "isolate_id", "sequence_id"])
-    async def test_not_found(self, foobar, spawn_client, test_otu, test_sequence, resp_is):
+    async def test_not_found(self, foobar, spawn_client, resp_is, test_otu, test_sequence):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1789,7 +1800,7 @@ class TestEditSequence:
 
 class TestRemoveSequence:
 
-    async def test(self, spawn_client, test_otu, test_sequence, test_add_history):
+    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
@@ -1798,6 +1809,10 @@ class TestRemoveSequence:
         old = await virtool.db.otus.join(client.db, test_otu["_id"])
 
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         new = await virtool.db.otus.join(client.db, test_otu["_id"])
 
@@ -1820,7 +1835,7 @@ class TestRemoveSequence:
         ("test", "test", "test")
     ])
     async def test_otu_not_found(self, otu_id, isolate_id, sequence_id, test_otu, test_sequence,
-                                   spawn_client, resp_is):
+                                 spawn_client, resp_is):
 
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 

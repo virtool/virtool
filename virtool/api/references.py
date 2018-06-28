@@ -581,7 +581,7 @@ async def add_group(req):
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "groups", data)
     except virtool.errors.DatabaseError as err:
         if "already exists" in str(err):
-            return conflict("Group already exists")
+            return bad_request("Group already exists")
 
         if "does not exist" in str(err):
             return bad_request("Group does not exist")
@@ -609,19 +609,24 @@ async def add_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
 
+    document = await db.references.find_one(ref_id, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
     try:
         subdocument = await virtool.db.references.add_group_or_user(db, ref_id, "users", data)
     except virtool.errors.DatabaseError as err:
         if "already exists" in str(err):
-            return conflict("User already exists")
+            return bad_request("User already exists")
 
         if "does not exist" in str(err):
             return bad_request("User does not exist")
 
         raise
-
-    if subdocument is None:
-        return not_found()
 
     headers = {
         "Location": "/api/refs/{}/users/{}".format(ref_id, subdocument["id"])
@@ -637,10 +642,15 @@ async def edit_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
-    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, group_id, "groups", data)
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
 
-    if subdocument is None:
+    if document is None:
         return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
+    subdocument = await virtool.db.references.edit_group_or_user(db, ref_id, group_id, "groups", data)
 
     return json_response(subdocument)
 
@@ -651,6 +661,11 @@ async def edit_user(req):
     data = req["data"]
     ref_id = req.match_info["ref_id"]
     user_id = req.match_info["user_id"]
+
+    document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
 
     if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
@@ -669,6 +684,14 @@ async def delete_group(req):
     ref_id = req.match_info["ref_id"]
     group_id = req.match_info["group_id"]
 
+    document = await db.references.find_one({"_id": ref_id, "groups.id": group_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
+
     deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
 
     if not deleted_id:
@@ -682,6 +705,14 @@ async def delete_user(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
     user_id = req.match_info["user_id"]
+
+    document = await db.references.find_one({"_id": ref_id, "users.id": user_id}, ["groups", "users"])
+
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify"):
+        return insufficient_rights()
 
     deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, user_id, "users")
 

@@ -70,7 +70,7 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 
         expected = {
             "id": subdocument_id,
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "build": rights,
             "modify": False,
             "modify_otu": False,

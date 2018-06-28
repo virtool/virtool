@@ -176,7 +176,10 @@ async def edit(req):
     message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
-        return json_response({"message": message}, status=409)
+        return json_response({
+            "id": "conflict",
+            "message": message
+        }, status=409)
 
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.
@@ -224,19 +227,19 @@ async def remove(req):
 
     otu_id = req.match_info["otu_id"]
 
-    reference = await virtool.db.utils.get_one_field(db.otus, "reference", otu_id)
+    document = await db.otus.find_one(otu_id, ["reference"])
 
-    if not await virtool.db.references.check_right(req, reference["id"], "modify_otu"):
+    if document is None:
+        return not_found()
+
+    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    removed = await virtool.db.otus.remove(
+    await virtool.db.otus.remove(
         db,
         otu_id,
         req["client"].user_id
     )
-
-    if removed is None:
-        return not_found()
 
     return web.Response(status=204)
 
@@ -754,7 +757,7 @@ async def edit_sequence(req):
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
-    if not document:
+    if not document or not await db.sequences.count({"_id": sequence_id}):
         return not_found()
 
     if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):

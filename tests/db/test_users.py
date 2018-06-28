@@ -56,7 +56,7 @@ async def test_compose_password_update(password, mocker, static_time):
     else:
         assert update == {
             "password": "new_hashed_password",
-            "last_password_change": static_time,
+            "last_password_change": static_time.datetime,
             "invalidate_sessions": True
         }
 
@@ -154,7 +154,7 @@ async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bo
 
     password_update = {
         "password": "new_hashed_password",
-        "last_password_change": static_time,
+        "last_password_change": static_time.datetime,
         "invalidate_sessions": True
     }
 

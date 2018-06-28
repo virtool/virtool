@@ -193,8 +193,7 @@ async def test_create(mocker, spawn_client, test_random_alphanumeric, static_tim
         "name": "Test Viruses",
         "description": "A bunch of viruses used for testing",
         "data_type": "genome",
-        "organism": "virus",
-        "public": True
+        "organism": "virus"
     }
 
     m_get_otu_count = mocker.patch("virtool.db.references.get_otu_count", make_mocked_coro(22))
@@ -299,99 +298,219 @@ async def test_edit(control_exists, control_id, mocker, spawn_client, check_ref_
         return
 
 
-@pytest.mark.parametrize("ref,user,error", [
-    (
-        {
-            "_id": "foo",
-
-        }
-    )
-])
+@pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_add_group_or_user(error, field, mocker, spawn_client, resp_is):
+async def test_add_group_or_user(error, field, spawn_client, check_ref_right, resp_is, static_time):
+    """
+    Test that the group or user is added to the reference when no error condition exists.
+
+    Test for the following error conditions:
+    - 404: ref does not exist
+    - 400_exists: group or user already exists in ref
+    - 400_dne: group or user does not exist
+
+    """
     client = await spawn_client(authorize=True)
 
-    expected = {
-        "id": "test"
+    document = {
+        "_id": "foo",
+        "groups": [],
+        "users": []
     }
 
-    if error == 404:
-        expected = None
+    # Add group and user subdocuments to make sure a 400 is returned complaining about the user or group already
+    # existing in the ref.
+    if error == "400_exists":
+        document["groups"].append({
+            "id": "tech"
+        })
 
-    m_add_group_or_user = mocker.patch("virtool.db.references.add_group_or_user", make_mocked_coro(expected))
+        document["users"].append({
+            "id": "fred"
+        })
 
-    url = "/api/refs/foobar/{}s".format(field)
+    # Add group and user document to their collections unless we want to trigger a 400 complaining about the user or
+    # group already not existing.
+    if error != "400_dne":
+        await client.db.groups.insert_one({
+            "_id": "tech"
+        })
+
+        await client.db.users.insert_one({
+            "_id": "fred"
+        })
+
+    # Don't insert the ref document if we want to trigger a 404.
+    if error != "404":
+        await client.db.references.insert_one(document)
+
+    url = "/api/refs/foo/{}s".format(field)
 
     resp = await client.post(url, {
-        field + "_id": "baz",
+        field + "_id": "tech" if field == "group" else "fred",
         "modify": True
     })
 
-    if error == 404:
+    if error == "404":
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        assert resp.status == 201
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-        assert await resp.json() == expected
+    if error == "400_dne":
+        assert await resp_is.bad_request(resp, "{} does not exist".format(field.capitalize()))
+        return
 
-        m_add_group_or_user.assert_called_with(client.db, "foobar", field + "s", {
-            "modify": True,
-            field + "_id": "baz"
+    if error == "400_exists":
+        assert await resp_is.bad_request(resp, "{} already exists".format(field.capitalize()))
+        return
+
+    assert resp.status == 201
+
+    assert await resp.json() == {
+        "id": "tech" if field == "group" else "fred",
+        "created_at": static_time.iso,
+        "build": False,
+        "modify": True,
+        "modify_otu": False,
+        "remove": False
+    }
+
+
+@pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
+@pytest.mark.parametrize("field", ["group", "user"])
+async def test_edit_group_or_user(error, field, spawn_client, check_ref_right, resp_is):
+    client = await spawn_client(authorize=True)
+
+    document = {
+        "_id": "foo",
+        "groups": [],
+        "users": []
+    }
+
+    if error != "404_field":
+        document["groups"].append({
+            "id": "tech",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": False
         })
 
+        document["users"].append({
+            "id": "fred",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": False
+        })
 
-@pytest.mark.parametrize("error", [None, 404])
-@pytest.mark.parametrize("field", ["group", "user"])
-async def test_edit_group_or_user(error, field, mocker, spawn_client, resp_is):
-    client = await spawn_client(authorize=True, permissions=["create_ref"])
+    if error != "404_ref":
+        await client.db.references.insert_one(document)
 
-    expected = {"id": "test"}
+    subdocument_id = "tech" if field == "group" else "fred"
 
-    if error == 404:
-        expected = None
-
-    m_edit_group_or_user = mocker.patch("virtool.db.references.edit_group_or_user", make_mocked_coro(expected))
-
-    url = "/api/refs/foobar/{}s/baz".format(field)
+    url = "/api/refs/foo/{}s/{}".format(field, subdocument_id)
 
     resp = await client.patch(url, {
         "remove": True
     })
 
-    if error == 404:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        assert resp.status == 200
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-        assert await resp.json() == expected
+    assert resp.status == 200
 
-        m_edit_group_or_user.assert_called_with(client.db, "foobar", "baz", field + "s", {
-            "remove": True
+    assert await resp.json() == {
+        "id": subdocument_id,
+        "build": False,
+        "modify": False,
+        "modify_otu": False,
+        "remove": True
+    }
+
+    assert await client.db.references.find_one() == {
+        "_id": "foo",
+        "groups": [{
+            "id": "tech",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": field == "group"
+        }],
+        "users": [{
+            "id": "fred",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": field == "user"
+        }]
+    }
+
+
+@pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
+@pytest.mark.parametrize("field", ["group", "user"])
+async def test_delete_group_or_user(error, field, spawn_client, check_ref_right, resp_is):
+    client = await spawn_client(authorize=True)
+
+    document = {
+        "_id": "foo",
+        "groups": [],
+        "users": []
+    }
+
+    if error != "404_field":
+        document["groups"].append({
+            "id": "tech",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": False
         })
 
+        document["users"].append({
+            "id": "fred",
+            "build": False,
+            "modify": False,
+            "modify_otu": False,
+            "remove": False
+        })
 
-@pytest.mark.parametrize("error", [None, 404])
-@pytest.mark.parametrize("field", ["group", "user"])
-async def test_delete_group_or_user(error, field, mocker, spawn_client, resp_is):
-    client = await spawn_client(authorize=True, permissions=["create_ref"])
+    if error != "404_ref":
+        await client.db.references.insert_one(document)
 
-    expected = "test"
+    subdocument_id = "tech" if field == "group" else "fred"
 
-    if error == 404:
-        expected = None
-
-    m_edit_group_or_user = mocker.patch("virtool.db.references.delete_group_or_user", make_mocked_coro(expected))
-
-    url = "/api/refs/foobar/{}s/baz".format(field)
+    url = "/api/refs/foo/{}s/{}".format(field, subdocument_id)
 
     resp = await client.delete(url)
 
-    if error == 404:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
+
+    assert resp.status == 204
+
+    if field == "group":
+        expected = {
+            **document,
+            "groups": []
+        }
     else:
-        assert resp.status == 204
+        expected = {
+            **document,
+            "users": []
+        }
 
-        m_edit_group_or_user.assert_called_with(client.db, "foobar", "baz", field + "s")
+    assert await client.db.references.find_one() == expected

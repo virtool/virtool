@@ -121,8 +121,12 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
 
 class TestCreate:
 
-    async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric):
+    async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
         client = await spawn_client(authorize=True)
+
+        await client.db.references.insert_one({
+            "_id": "foo"
+        })
 
         # Insert unbuilt changes to prevent initial check failure.
         await client.db.history.insert_one({
@@ -146,7 +150,12 @@ class TestCreate:
         m_create_manifest = mocker.patch("virtool.db.references.get_manifest", new=make_mocked_coro("manifest"))
 
         # Make API call.
-        resp = await client.post("/api/refs/foo/indexes", {})
+        resp = await client.post("/api/refs/foo/indexes")
+
+        if not check_ref_right:
+            print(resp.status)
+            assert await resp_is.insufficient_rights(resp)
+            return
 
         assert resp.status == 201
 
@@ -202,8 +211,12 @@ class TestCreate:
         )
 
     @pytest.mark.parametrize("error", ["unready", "unverified", "unbuilt"])
-    async def test_checks(self, error, resp_is, spawn_client):
+    async def test_checks(self, error, resp_is, spawn_client, check_ref_right):
         client = await spawn_client(authorize=True)
+
+        await client.db.references.insert_one({
+            "_id": "foo"
+        })
 
         if error == "unready":
             await client.db.indexes.insert_one({
@@ -223,14 +236,21 @@ class TestCreate:
 
         resp = await client.post("/api/refs/foo/indexes", {})
 
+        if not check_ref_right:
+            assert await resp_is.insufficient_rights(resp)
+            return
+
         if error == "unready":
             assert await resp_is.conflict(resp, "Index build already in progress")
+            return
 
         elif error == "unverified":
             assert await resp_is.conflict(resp, "There are unverified otus")
+            return
 
         else:
             assert await resp_is.conflict(resp, "There are no unbuilt changes")
+            return
 
 
 

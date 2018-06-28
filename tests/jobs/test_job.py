@@ -15,7 +15,7 @@ def test_processor(test_db, test_job, static_time):
 
     assert virtool.db.jobs.processor(document) == {
         "id": "4c530449",
-        "created_at": static_time,
+        "created_at": static_time.datetime,
         "args": {
             "algorithm": "nuvs",
             "analysis_id": "e410429b",

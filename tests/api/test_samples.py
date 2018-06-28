@@ -54,9 +54,9 @@ class TestFind:
     async def test(self, find, per_page, page, d_range, meta, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
-        time_1 = arrow.get(static_time).datetime
-        time_2 = arrow.get(static_time).shift(hours=1).datetime
-        time_3 = arrow.get(static_time).shift(hours=2).datetime
+        time_1 = arrow.get(static_time.datetime).datetime
+        time_2 = arrow.get(static_time.datetime).shift(hours=1).datetime
+        time_3 = arrow.get(static_time.datetime).shift(hours=2).datetime
 
         await client.db.samples.insert_many([
             {
@@ -199,7 +199,7 @@ class TestGet:
 
         await client.db.samples.insert_one({
             "_id": "test",
-            "created_at": static_time
+            "created_at": static_time.datetime
         })
 
         resp = await client.get("api/samples/test")
@@ -208,7 +208,7 @@ class TestGet:
 
         assert await resp.json() == {
             "id": "test",
-            "created_at": "2015-10-06T20:00:00Z"
+            "created_at": static_time.iso
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -285,7 +285,7 @@ class TestCreate:
             "group": expected_group,
             "nuvs": False,
             "pathoscope": False,
-            "created_at": "2015-10-06T20:00:00Z",
+            "created_at": static_time.iso,
             "format": "fastq",
             "imported": "ip",
             "quality": None,
@@ -306,7 +306,7 @@ class TestCreate:
 
         expected.update({
             "_id": expected.pop("id"),
-            "created_at": static_time
+            "created_at": static_time.datetime
         })
 
         assert await client.db.samples.find_one() == expected
@@ -336,7 +336,7 @@ class TestCreate:
             "_id": "foobar",
             "name": "Foobar",
             "lower_name": "foobar",
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "nuvs": False,
             "pathoscope": False
         })
@@ -489,7 +489,7 @@ class TestListAnalyses:
 
         await client.db.samples.insert_one({
             "_id": "test",
-            "created_at": static_time,
+            "created_at": static_time.datetime,
             "all_read": True,
             "all_write": True
         })
@@ -498,7 +498,7 @@ class TestListAnalyses:
             {
                 "_id": "test_1",
                 "algorithm": "pathopscope_bowtie",
-                "created_at": static_time,
+                "created_at": static_time.datetime,
                 "ready": True,
                 "job": {
                     "id": "test"
@@ -518,7 +518,7 @@ class TestListAnalyses:
             {
                 "_id": "test_2",
                 "algorithm": "pathopscope_bowtie",
-                "created_at": static_time,
+                "created_at": static_time.datetime,
                 "ready": True,
                 "job": {
                     "id": "test"
@@ -538,7 +538,7 @@ class TestListAnalyses:
             {
                 "_id": "test_3",
                 "algorithm": "pathopscope_bowtie",
-                "created_at": static_time,
+                "created_at": static_time.datetime,
                 "ready": True,
                 "job": {
                     "id": "test"
@@ -643,7 +643,7 @@ class TestAnalyze:
         test_analysis = {
             "_id": "test_analysis",
             "ready": False,
-            "created_at": "'2015-10-06T20:00:00Z'",
+            "created_at": static_time.iso,
             "job": {
                 "id": "baz"
             },
@@ -666,7 +666,7 @@ class TestAnalyze:
         if error != "sample":
             await client.db.samples.insert_one({
                 "_id": "test",
-                "created_at": static_time,
+                "created_at": static_time.datetime,
                 "all_read": True,
                 "all_write": True
             })
