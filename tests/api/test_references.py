@@ -1,6 +1,8 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
+import virtool.db.references
+
 
 async def test_get_release(mocker, spawn_client, id_exists, resp_is):
     client = await spawn_client(authorize=True)
@@ -296,6 +298,44 @@ async def test_edit(control_exists, control_id, mocker, spawn_client, check_ref_
     if not check_ref_right:
         assert await resp_is.insufficient_rights(resp)
         return
+
+    expected_internal_control = None
+
+    if control_id and control_exists:
+        expected_internal_control = {
+            "id": "baz"
+        }
+
+    update = {
+        "description": "This is a test reference.",
+        "name": "Tester"
+    }
+
+    if control_id is not None:
+        update["internal_control"] = expected_internal_control
+
+    m_find_one_and_update.assert_called_with(
+        {
+            "_id": "foo"
+        },
+        {
+            "$set": update
+        },
+        projection=virtool.db.references.PROJECTION
+    )
+
+    m_get_computed.assert_called_with(
+        client.db,
+        "foo",
+        control_id
+    )
+
+    if control_id:
+        m_get_internal_control.assert_called_with(
+            client.db,
+            "baz",
+            "foo"
+        )
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
