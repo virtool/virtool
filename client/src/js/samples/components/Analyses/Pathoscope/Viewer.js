@@ -47,7 +47,7 @@ const PathoscopeViewer = (props) => {
                 }
 
                 const sequences = map(isolate.sequences, sequence => {
-                    const reads = Math.round(sequence.pi * mappedReadCount);
+                    const reads = round(sequence.pi * mappedReadCount);
                     const depth = sequence.align ? max(map(sequence.align, p => p[1])) : 0;
                     const sumDepth = getSumDepth(sequence.align);
 
@@ -56,7 +56,7 @@ const PathoscopeViewer = (props) => {
 
                 const length = sumBy(sequences, "length");
                 const totalSeqDepth = sumBy(sequences, "sumDepth");
-                const meanDepth = Math.round(totalSeqDepth / length);
+                const meanDepth = round(totalSeqDepth / length);
 
                 const coverage = round(calculateIsolateCoverage(isolate, length), 3);
 

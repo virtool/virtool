@@ -124,7 +124,11 @@ export default class PathoscopeController extends React.Component {
                             <FormGroup>
                                 <InputGroup>
                                     <InputGroup.Button>
-                                        <Button title="Sort Direction" onClick={this.toggleSortDescending} tip="Sort List">
+                                        <Button
+                                            title="Sort Direction"
+                                            onClick={this.toggleSortDescending}
+                                            tip="Sort List"
+                                        >
                                             <Icon
                                                 name={this.state.sortDescending ? "sort-amount-down" : "sort-amount-up"}
                                             />
