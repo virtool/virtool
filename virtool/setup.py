@@ -214,19 +214,20 @@ async def setup_db(req):
 async def setup_user(req):
     data = await req.post()
 
-    v = Validator({
-        "user_id": {"type": "string", "required": True},
-        "password": {"type": "string", "required": True}
-    }, allow_unknown=False)
+    if data["password"] != "dummy_password":
+        v = Validator({
+            "user_id": {"type": "string", "required": True},
+            "password": {"type": "string", "required": True}
+        }, allow_unknown=False)
 
-    v.validate(dict(data))
+        v.validate(dict(data))
 
-    data = v.document
+        data = v.document
 
-    req.app["setup"].update({
-        "first_user_id": data["user_id"],
-        "first_user_password": virtool.users.hash_password(data["password"])
-    })
+        req.app["setup"].update({
+            "first_user_id": data["user_id"],
+            "first_user_password": virtool.users.hash_password(data["password"])
+        })
 
     return web.HTTPFound("/setup")
 
