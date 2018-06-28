@@ -5,7 +5,7 @@ import virtool.http.routes
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found
+from virtool.api.utils import bad_request, json_response, no_content, not_found
 
 API_KEY_PROJECTION = {
     "_id": False,

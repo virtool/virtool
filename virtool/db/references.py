@@ -645,7 +645,6 @@ async def create_original(db, settings):
         "virus",
         "Created from existing viruses after upgrade to Virtool v3",
         "genome",
-        True,
         created_at=created_at,
         ref_id="original",
         users=users
