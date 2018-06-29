@@ -17,7 +17,8 @@ export default class PathoscopeController extends React.Component {
             findTerm: "",
             showReads: false,
             sortDescending: true,
-            sortKey: "coverage"
+            sortKey: "coverage",
+            isCrop: false
         };
     }
 
@@ -53,6 +54,12 @@ export default class PathoscopeController extends React.Component {
     toggleSortDescending = () => {
         this.setState({
             sortDescending: !this.state.sortDescending
+        });
+    };
+
+    toggleOutlier = () => {
+        this.setState({
+            isCrop: !this.state.isCrop
         });
     };
 
@@ -158,6 +165,15 @@ export default class PathoscopeController extends React.Component {
                                 onClick={this.toggleShowReads}
                             />
 
+                            <Button
+                                icon="crop"
+                                title="Crop Outlier"
+                                tip="Crop Outlier"
+                                active={this.state.isCrop}
+                                className="hidden-xs"
+                                onClick={this.toggleOutlier}
+                            />
+
                             <Dropdown
                                 id="job-clear-dropdown"
                                 onSelect={this.handleSelect}
@@ -205,6 +221,7 @@ export default class PathoscopeController extends React.Component {
                     expanded={this.state.expanded}
                     toggleIn={this.toggleIn}
                     showReads={this.state.showReads}
+                    isCrop={this.state.isCrop}
                 />
             </div>
         );

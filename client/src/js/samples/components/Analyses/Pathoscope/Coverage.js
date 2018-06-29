@@ -11,16 +11,15 @@ const fillEntries = (alignArray) => {
     const filledEntries = [];
 
     forEach(alignArray, (entry, i) => {
-        if (i === 0) {
-            return;
-        } else if (i === alignArray.length - 1) {
+        if (i === alignArray.length - 1) {
             return filledEntries.push({ key: (alignArray[i][0] - 1), val: entry[1] });
-        }
-        const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
+        } else if (i !== 0) {
+            const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
 
-        forEach(range(numBasesFromLastEntry), (item, j) => {
-            filledEntries.push({ key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] });
-        });
+            forEach(range(numBasesFromLastEntry), (item, j) => {
+                filledEntries.push({ key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] });
+            });
+        }
     });
 
     return filledEntries;
@@ -59,7 +58,7 @@ const removeOutlierByIQR = (values) => {
     return removeOutlierByIQR(slice(values, 0, values.length - 2));
 };
 
-const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isSmooth) => {
+const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
 
     let svg = select(element).append("svg");
 
@@ -103,6 +102,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isSmoot
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
+        // Extend original data so there is a coordinate data point for each base along x-axis
         const filledData = fillEntries(data);
 
         const sortedY = sortBy(filledData, ["val"]);
@@ -111,9 +111,9 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isSmoot
 
         const reorderTrimY = sortBy(trimDataY, ["key"]);
 
-        const dataSmooth = map(reorderTrimY, (entry) => [entry.key, entry.val]);
+        const dataCrop = map(reorderTrimY, (entry) => [entry.key, entry.val]);
 
-        const useData = isSmooth ? dataSmooth : data;
+        const useData = isCrop ? dataCrop : data;
 
         const areaDrawer = area()
             .x(d => x(d[0]))
@@ -156,11 +156,6 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isSmoot
 
 export default class CoverageChart extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {showSmooth: false};
-    }
-
     static propTypes = {
         id: PropTypes.string,
         definition: PropTypes.string,
@@ -168,7 +163,8 @@ export default class CoverageChart extends React.Component {
         data: PropTypes.array,
         length: PropTypes.number,
         title: PropTypes.string,
-        showYAxis: PropTypes.bool
+        showYAxis: PropTypes.bool,
+        isCrop: PropTypes.bool
     };
 
     componentDidMount () {
@@ -176,11 +172,18 @@ export default class CoverageChart extends React.Component {
         this.renderChart();
     }
 
+    shouldComponentUpdate (nextProps) {
+        if (nextProps.isCrop !== this.props.isCrop) {
+            this.renderChart({}, nextProps.isCrop);
+        }
+        return false;
+    }
+
     componentWillUnmount () {
         window.removeEventListener("resize", this.renderChart);
     }
 
-    renderChart = () => {
+    renderChart = (e, isCrop = false) => {
 
         while (this.chartNode.firstChild) {
             this.chartNode.removeChild(this.chartNode.firstChild);
@@ -196,12 +199,11 @@ export default class CoverageChart extends React.Component {
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis,
-            this.state.showSmooth
+            isCrop
         );
     };
 
     handleClick = () => {
-/*
         const svg = select(this.chartNode).select("svg");
 
         formatSvg(svg, "hidden");
@@ -211,9 +213,7 @@ export default class CoverageChart extends React.Component {
 
         getPng({ width, height, url, filename });
 
-        formatSvg(svg, "visible");*/
-
-        this.setState({ showSmooth: !this.state.showSmooth }, this.renderChart());
+        formatSvg(svg, "visible");
     }
 
     render () {
