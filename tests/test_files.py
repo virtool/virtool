@@ -66,7 +66,7 @@ async def test_detect_watch(called, patched_test_manager_instance):
 
     touch(os.path.join(path, "test.fq"))
 
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(1)
 
     if called:
         patched_test_manager_instance.handle_watch.assert_called_with("test.fq")
@@ -87,7 +87,7 @@ async def test_detect_create_close_and_delete(called, patched_test_manager_insta
 
     touch(file_path)
 
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(1)
 
     if called:
         patched_test_manager_instance.handle_create.assert_called_with("test.fq")
