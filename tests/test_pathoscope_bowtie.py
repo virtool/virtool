@@ -250,9 +250,6 @@ async def test_pathoscope(mock_job):
         os.path.join(mock_job.analysis_path, "to_isolates.vta")
     )
 
-    with open(DIAGNOSIS_PATH, "r") as handle:
-        report_dict = json.load(handle)
-
     mock_job.sequence_otu_map = {
         "NC_016509": "foobar",
         "NC_001948": "foobar",

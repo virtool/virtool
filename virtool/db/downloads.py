@@ -64,7 +64,7 @@ async def generate_isolate_fasta(db, otu_id, isolate_id):
     :rtype: Tuple[str, str]
 
     """
-    otu_name, isolate_name = await get_otu_and_isolate_names(db, otu_id, isolate_id)
+    _, isolate_name = await get_otu_and_isolate_names(db, otu_id, isolate_id)
 
     otu = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"])
 

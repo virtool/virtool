@@ -253,54 +253,6 @@ class TestCreate:
             return
 
 
-
-    '''
-    async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric):
-
-        
-
-        # Make sure history is updated to use the build's new index id and version.
-        assert 2 == await client.db.history.count({
-            "index.id": test_random_alphanumeric.history[0],
-            "index.version": 1
-        })
-
-        # Make sure a new index document is inserted.
-        
-
-        assert await resp.json() == {
-            "created_at": static_time.iso,
-            "has_files": True,
-            "id": expected_id,
-            "job": {
-                "id": expected_job_id
-            },
-            "ready": False,
-            "manifest": {},
-            "user": {
-                "id": "test"
-            },
-            "version": 1,
-        }
-
-        # Check that ``job_manager.new`` is called with the expected args and kwargs.
-        assert m.call_args[0] == (
-            "build_index",
-            {
-                "index_id": expected_id,
-                "index_version": 1,
-                "user_id": "test",
-                "otu_manifest": {}
-            },
-            "test"
-        )
-
-        assert m.call_args[1] == {
-            "job_id": expected_job_id
-        }
-    '''
-
-
 @pytest.mark.parametrize("exists", [True, False])
 async def test(exists, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
