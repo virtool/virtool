@@ -10,7 +10,7 @@ export default class File extends React.Component {
     static propTypes = {
         id: PropTypes.string,
         name: PropTypes.string,
-        size: PropTypes.number,
+        size: PropTypes.object,
         file: PropTypes.object,
         uploaded_at: PropTypes.string,
         user: PropTypes.object,
@@ -48,7 +48,7 @@ export default class File extends React.Component {
                         <strong>{name}</strong>
                     </Col>
                     <Col md={2}>
-                        {byteSize(size)}
+                        {byteSize(size.size)}
                     </Col>
                     <Col md={4}>
                         {creation}
