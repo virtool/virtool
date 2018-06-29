@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NoneFound /> renders an info Icon component 1`] = `
+<ListGroup
+  bsClass="list-group"
+>
+  <ListGroupItem
+    bsClass="list-group-item"
+    className="text-center"
+    listItem={false}
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="info-circle"
+      pullRight={false}
+    />
+     No 
+    test
+     found
+  </ListGroupItem>
+</ListGroup>
+`;
+
+exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 1`] = `
+<ListGroup
+  bsClass="list-group"
+>
+  <ListGroupItem
+    bsClass="list-group-item"
+    className="text-center"
+    listItem={false}
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="info-circle"
+      pullRight={false}
+    />
+     No 
+    test
+     found
+  </ListGroupItem>
+</ListGroup>
+`;
+
+exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  className="text-center"
+  listItem={false}
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+    pullRight={false}
+  />
+   No 
+  test
+   found
+</ListGroupItem>
+`;

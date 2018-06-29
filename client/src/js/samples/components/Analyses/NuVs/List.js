@@ -97,8 +97,8 @@ export default class NuVsList extends React.Component {
                         </InputGroup>
                     </FormGroup>
                     <Button
-                        tip="Collpase All"
-                        icon="shrink"
+                        tip="Collapse All"
+                        icon="compress"
                         disabled={this.state.expanded.length === 0}
                         onClick={() => this.setState({expanded: []})}
                     />

@@ -14,13 +14,17 @@ import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
+import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
-import { Pagination } from "./Pagination";
+import { NotFound } from "./NotFound";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveModal } from "./RemoveModal";
 import { Tooltip } from "./Tooltip";
+import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
+
+import { ScrollList } from "./ScrollList";
 
 export {
     Alert,
@@ -41,11 +45,14 @@ export {
     ListGroupItem,
     LoadingPlaceholder,
     NoneFound,
-    Pagination,
+    NotFound,
     ProgressBar,
     Radio,
     RelativeTime,
     RemoveModal,
     Tooltip,
-    ViewHeader
+    UploadBar,
+    ViewHeader,
+    VTLogo,
+    ScrollList
 };

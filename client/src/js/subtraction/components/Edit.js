@@ -34,50 +34,51 @@ class EditSubtraction extends React.Component {
                 <Modal.Header closeButton>
                     Edit Subtraction
                 </Modal.Header>
-                <Modal.Body style={{margin: "0 0 10px 0"}}>
-                    <Row>
-                        <Col md={12}>
-                            <InputError
-                                type="text"
-                                label="Unique Name"
-                                value={this.state.subtractionId}
-                                readOnly
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col md={12}>
-                            <InputError
-                                type="text"
-                                label="Nickname"
-                                value={this.state.nickname}
-                                onChange={(e) => this.setState({nickname: e.target.value})}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col md={12}>
-                            <InputError
-                                type="text"
-                                label="File"
-                                value={this.state.fileId}
-                                readOnly
-                            />
-                        </Col>
-                    </Row>
-                </Modal.Body>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body style={{margin: "0 0 10px 0"}}>
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Unique Name"
+                                    value={this.state.subtractionId}
+                                    readOnly
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Nickname"
+                                    value={this.state.nickname}
+                                    onChange={(e) => this.setState({nickname: e.target.value})}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="File"
+                                    value={this.state.fileId}
+                                    readOnly
+                                />
+                            </Col>
+                        </Row>
+                    </Modal.Body>
 
-                <Modal.Footer className="modal-footer">
-                    <Button
-                        type="submit"
-                        bsStyle="primary"
-                        icon="floppy"
-                        onClick={this.handleSubmit}
-                        pullRight
-                    >
-                        Save
-                    </Button>
-                </Modal.Footer>
+                    <Modal.Footer className="modal-footer">
+                        <Button
+                            type="submit"
+                            bsStyle="primary"
+                            icon="save"
+                            pullRight
+                        >
+                            Save
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }

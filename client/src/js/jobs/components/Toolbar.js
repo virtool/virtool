@@ -4,13 +4,12 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
 import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 
 /**
  * A toolbar component for the jobs list view.
@@ -25,7 +24,7 @@ const JobsToolbar = (props) => {
         removalDropdown = (
             <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
                 <Button onClick={() => props.onClear()} tip="Clear Finished">
-                    <Icon name="remove" />
+                    <Icon name="trash" />
                 </Button>
                 <Dropdown.Toggle />
                 <Dropdown.Menu>
@@ -51,10 +50,6 @@ const JobsToolbar = (props) => {
                 </InputGroup>
             </FormGroup>
 
-            <LinkContainer to="/jobs/resources">
-                <Button icon="meter" tip="Resources" />
-            </LinkContainer>
-
             {removalDropdown}
         </div>
     );
@@ -62,7 +57,7 @@ const JobsToolbar = (props) => {
 
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
-    canRemove: state.account.permissions.remove_job
+    canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job")
 });
 
 const mapDispatchToProps = (dispatch) => ({

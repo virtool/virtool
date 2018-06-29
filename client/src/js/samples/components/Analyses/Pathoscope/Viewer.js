@@ -1,5 +1,5 @@
 import React from "react";
-import { map, max, maxBy, sumBy, reduce, sortBy } from "lodash-es";
+import { map, max, maxBy, sumBy, reduce, sortBy, round } from "lodash-es";
 import PropTypes from "prop-types";
 
 import { Alert } from "../../../../base";
@@ -13,16 +13,32 @@ const calculateIsolateCoverage = (isolate, length) => (
     ), 0)
 );
 
+const getSumDepth = (alignArray) => {
+
+    const sumDepth = reduce(alignArray, (sum, align, i) => {
+        if (i === 0) {
+            return 0;
+        } else if (i === (alignArray.length - 1)) {
+            return sum + align[1];
+        }
+        const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]) - 1;
+        const depthSumBetween = numBasesFromLastEntry * alignArray[i - 1][1];
+        return sum + depthSumBetween + align[1];
+    }, 0);
+
+    return (sumDepth || 0);
+};
+
 const PathoscopeViewer = (props) => {
 
     if (props.diagnosis.length > 0) {
 
         const mappedReadCount = props.read_count;
 
-        const data = map(props.diagnosis, baseVirus => {
-            // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
-            // and coverage. These values will be calculated from the sequences owned by each isolate.
-            let isolates = map(baseVirus.isolates, isolate => {
+        const data = map(props.diagnosis, baseOTU => {
+            // Go through each isolate associated with the OTU, adding properties for weight, best-hit, read count,
+            // mean depth, and coverage. These values will be calculated from the sequences owned by each isolate.
+            let isolates = map(baseOTU.isolates, isolate => {
                 // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
                 let name = formatIsolateName(isolate);
 
@@ -31,14 +47,18 @@ const PathoscopeViewer = (props) => {
                 }
 
                 const sequences = map(isolate.sequences, sequence => {
-                    const reads = Math.round(sequence.pi * mappedReadCount);
+                    const reads = round(sequence.pi * mappedReadCount);
                     const depth = sequence.align ? max(map(sequence.align, p => p[1])) : 0;
-                    return {...sequence, reads, depth};
+                    const sumDepth = getSumDepth(sequence.align);
+
+                    return {...sequence, reads, depth, sumDepth};
                 });
 
                 const length = sumBy(sequences, "length");
+                const totalSeqDepth = sumBy(sequences, "sumDepth");
+                const meanDepth = round(totalSeqDepth / length);
 
-                const coverage = calculateIsolateCoverage(isolate, length);
+                const coverage = round(calculateIsolateCoverage(isolate, length), 3);
 
                 return {
                     ...isolate,
@@ -48,6 +68,7 @@ const PathoscopeViewer = (props) => {
                     best: sumBy(sequences, "best"),
                     reads: sumBy(sequences, "reads"),
                     maxDepth: maxBy(sequences, "depth").depth,
+                    meanDepth,
                     coverage
                 };
             });
@@ -65,7 +86,7 @@ const PathoscopeViewer = (props) => {
             const pi = sumBy(isolates, "pi");
 
             return {
-                ...baseVirus,
+                ...baseOTU,
                 pi,
                 coverage,
                 isolates,
@@ -80,8 +101,8 @@ const PathoscopeViewer = (props) => {
     }
 
     return (
-        <Alert bsStyle="info" className="text-center" icon="notification">
-            No virus sequences found in sample
+        <Alert bsStyle="info" className="text-center" icon="info-circle">
+            No OTU sequences found in sample
         </Alert>
     );
 

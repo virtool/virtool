@@ -55,7 +55,7 @@ export default class File extends React.Component {
                     </Col>
                     <Col md={1}>
                         <Icon
-                            name="remove"
+                            name="trash"
                             bsStyle="danger"
                             style={{fontSize: "17px"}}
                             onClick={this.handleRemove}

@@ -1,10 +1,11 @@
-import motor.motor_asyncio
 import os
-import pytest
 import sys
+
+import motor.motor_asyncio
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-from virtool.user_permissions import PERMISSIONS
+import virtool.users
 
 
 @pytest.fixture
@@ -41,25 +42,23 @@ def mock_setup():
     }
 
 
-class TestUnavailable:
+async def test_unavailable(spawn_client):
+    client = await spawn_client(setup_mode=True)
 
-    async def test(self, spawn_client):
-        client = await spawn_client(setup_mode=True)
+    resp = await client.get("/api/otus")
 
-        resp = await client.get("/api/viruses")
+    assert resp.status == 503
 
-        assert resp.status == 503
+    assert await resp.json() == {
+        "id": "requires_setup",
+        "message": "Server is not configured"
+    }
 
-        assert await resp.json() == {
-            "id": "requires_setup",
-            "message": "Server is not configured"
-        }
-
-        assert resp.headers["Location"] == "/setup"
+    assert resp.headers["Location"] == "/setup"
 
 
-@pytest.mark.parametrize("url", ["/viruses", "/hosts", "/foobar"])
-async def test_redirect(url, spawn_client):
+@pytest.mark.parametrize("url", ["/otus", "/hosts", "/foobar"])
+async def test_setup_redirect(url, spawn_client):
     client = await spawn_client(setup_mode=True)
 
     resp = await client.get(url)
@@ -149,7 +148,7 @@ class TestGet:
 
 
 @pytest.mark.parametrize("error", [None, "db_connection_error", "db_not_empty_error"])
-async def test_db(error, spawn_client, test_db_name, mock_setup):
+async def test_db(error, mocker, spawn_client, test_db_name, mock_setup):
     client = await spawn_client(setup_mode=True)
 
     update = {
@@ -202,7 +201,9 @@ async def test_user(mocker, spawn_client, mock_setup):
         "password_confirm": "foobar"
     }
 
-    mocker.patch("virtool.user.hash_password", return_value="hashed")
+    assert client.app["setup"] == mock_setup
+
+    mocker.patch("virtool.users.hash_password", return_value="hashed")
 
     resp = await client.post_form("/setup/user", update)
 
@@ -268,7 +269,18 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     client = await spawn_client(setup_mode=True)
 
     m_reload = mocker.patch("virtool.utils.reload", new=make_mocked_coro())
-    m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", new=make_mocked_coro())
+
+    connection = motor.motor_asyncio.AsyncIOMotorClient(
+        io_loop=client.app.loop,
+        host="localhost",
+        port=27017,
+        serverSelectionTimeoutMS=1500
+    )
+
+    await connection.drop_database("foobar")
+
+    m_reload = mocker.patch("virtool.utils.reload")
+    m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", make_mocked_coro())
 
     data = tmpdir.mkdir("data")
     watch = tmpdir.mkdir("watch")
@@ -286,19 +298,14 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     await client.get("/setup/save")
 
-    connection = motor.motor_asyncio.AsyncIOMotorClient(
-        io_loop=client.app.loop,
-        host="localhost",
-        port=27017,
-        serverSelectionTimeoutMS=1500
-    )
-
     assert await connection.foobar.users.find_one() == {
         "_id": "fred",
-        "groups": ["administrator"],
+        "identicon": "d0cfc2e5319b82cdc71a33873e826c93d7ee11363f8ac91c4fa3a2cfcd2286e5",
+        "administrator": True,
+        "groups": [],
         "invalidate_sessions": False,
         "password": "hashed",
-        "last_password_change": static_time,
+        "last_password_change": static_time.datetime,
         "force_reset": False,
         "primary_group": "",
         "settings": {
@@ -307,7 +314,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
             "show_ids": False,
             "show_versions": False
         },
-        "permissions": {p: True for p in PERMISSIONS}
+        "permissions": {p: True for p in virtool.users.PERMISSIONS}
     }
 
     await connection.drop_database("foobar")
@@ -315,16 +322,16 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     assert os.path.isdir(str(data))
     assert os.path.isdir(str(watch))
 
-    subdirs = [
+    sub_dirs = [
         "files",
-        "reference/viruses",
-        "reference/subtraction",
+        "references",
+        "subtractions",
         "samples",
         "hmm",
         "logs/jobs"
     ]
 
-    for sub in subdirs:
+    for sub in sub_dirs:
         assert os.path.isdir(os.path.join(str(data), sub))
 
     assert m_reload.called

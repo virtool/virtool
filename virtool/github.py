@@ -1,120 +1,97 @@
-import aiofiles
-import aiohttp
-import tarfile
+import logging
 
 import virtool.errors
-import virtool.proxy
+import virtool.http.proxy
+import virtool.utils
+
+logger = logging.getLogger(__name__)
+
+BASE_URL = "https://api.github.com/repos"
+
+HEADERS = {
+    "Accept": "application/vnd.github.v3+json"
+}
 
 
-def get_headers(server_version):
-    """
-    Return a dict of GitHub-specific headers based on the passed ``server_version``.
+def create_update_subdocument(release, ready, user_id, created_at=None):
+    update = {k: release[k] for k in release if k not in ["download_url", "etag", "content_type", "retrieved_at"]}
 
-    :param server_version: the running server version
-    :type server_version: str
-
-    :return: a headers dict
-    :rtype: dict
-
-    """
     return {
-        "user-agent": "virtool/{}".format(server_version),
-        "Accept": "application/vnd.github.v3+json"
+        **update,
+        "created_at": created_at or virtool.utils.timestamp(),
+        "ready": ready,
+        "user": {
+            "id": user_id
+        }
     }
 
 
-def create_auth(username, token):
-    if username is not None and token is not None:
-        return aiohttp.BasicAuth(login=username, password=token)
+def format_release(release):
+    asset = release["assets"][0]
 
-    return None
+    return {
+        "id": release["id"],
+        "name": release["name"],
+        "body": release["body"],
+        "etag": release["etag"],
+        "filename": asset["name"],
+        "size": asset["size"],
+        "html_url": release["html_url"],
+        "download_url": asset["browser_download_url"],
+        "published_at": release["published_at"],
+        "content_type": asset["content_type"]
+    }
 
 
-async def get(settings, url, server_version, username, token):
+async def get_release(settings, session, slug, etag=None, release_id="latest"):
     """
     GET data from a GitHub API url.
 
-    :param url: the url
-    :type url: str
-
-    :param server_version: the current server version used to build the request header
-    :type server_version: str
-
-    :param username: an optional username to use for authentication
-    :type username: str
-
-    :param token: an optional GitHub personal token to use for auth
-    :type token: str
-
-    :return:
-    """
-    headers = get_headers(server_version)
-
-    auth = create_auth(username, token)
-
-    async with aiohttp.ClientSession(auth=auth) as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
-            if resp.status != 200:
-                raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
-
-            return await resp.json()
-
-
-async def download_asset(settings, url, size, target_path, progress_handler=None):
-    """
-    Download the GitHub release at ``url`` to the location specified by ``target_path``.
-
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
-    :param url: the download URL for the release
-    :type url str
+    :param session: the application HTTP client session
+    :type session: :class:`aiohttp.ClientSession`
 
-    :param size: the size in bytes of the file to be downloaded.
-    :type size: int
+    :param slug: the slug for the GitHub repo
+    :type slug: str
 
-    :param target_path: the path to write the downloaded file to.
-    :type target_path: str
+    :param etag: an ETag for the resource to be used with the `If-None-Match` header
+    :type etag: Union[None, str]
 
-    :param progress_handler: a callable that will be called with the current progress when it changes.
-    :type progress_handler: Callable[[Union[float, int]]]
+    :param release_id: the id of the GitHub release to get
+    :type release_id: Union[int,str]
 
-    """
-    counter = 0
-    last_reported = 0
-
-    async with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, url) as resp:
-            if resp.status != 200:
-                raise virtool.errors.GitHubError("Could not download release asset")
-
-            async with aiofiles.open(target_path, "wb") as handle:
-                while True:
-                    chunk = await resp.content.read(4096)
-
-                    if not chunk:
-                        break
-
-                    await handle.write(chunk)
-
-                    if progress_handler:
-                        counter += len(chunk)
-                        progress = round(counter / size, 2)
-
-                        if progress - last_reported >= 0.01:
-                            last_reported = progress
-                            await progress_handler(progress)
-
-
-def decompress_asset_file(path, target):
-    """
-    Decompress the tar.gz file at ``path`` to the directory ``target``.
-
-    :param path: the path to the tar.gz file.
-    :type path: str
-
-    :param target: the path to directory into which to decompress the tar.gz file.
-    :type target: str
+    :return: the latest release
+    :rtype: Coroutine[dict]
 
     """
-    with tarfile.open(path, "r:gz") as tar:
-        tar.extractall(target)
+    url = "{}/{}/releases/{}".format(BASE_URL, slug, release_id)
+
+    headers = dict(HEADERS)
+
+    if etag:
+        headers["If-None-Match"] = etag
+
+    async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
+        logger.debug("Fetched release: {}/{} ({} - {}/{})".format(
+            slug,
+            release_id,
+            resp.status,
+            resp.headers["X-RateLimit-Remaining"],
+            resp.headers["X-RateLimit-Limit"]
+        ))
+
+        if resp.status == 200:
+            data = await resp.json()
+
+            if len(data["assets"]) == 0:
+                return None
+
+            return dict(data, etag=resp.headers["etag"])
+
+        elif resp.status == 304:
+            return None
+
+        else:
+            raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))

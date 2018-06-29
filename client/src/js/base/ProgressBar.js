@@ -13,7 +13,8 @@ export class AutoProgressBar extends React.Component {
         super(props);
         this.interval = null;
         this.state = {
-            fill: 0
+            fill: 0,
+            active: this.props.active
         };
     }
 
@@ -30,18 +31,25 @@ export class AutoProgressBar extends React.Component {
         interval: 120
     };
 
-    componentWillReceiveProps (nextProps) {
-        if (this.props.active && !nextProps.active) {
-            this.stop();
-            this.setState({
-                fill: 100
-            });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (prevState.active && !nextProps.active) {
+            return { fill: 100, active: nextProps.active };
         }
 
-        if (!this.props.active && nextProps.active) {
-            this.setState({fill: 10}, () => {
-                this.interval = window.setInterval(this.move, this.props.interval);
-            });
+        if (!prevState.active && nextProps.active) {
+            return { fill: 10, active: nextProps.active };
+        }
+
+        return null;
+    }
+
+    componentDidUpdate (prevProps, prevState) {
+        if (this.state.fill !== prevState.fill && this.state.fill === 10) {
+            this.interval = window.setInterval(this.move, this.props.interval);
+        }
+
+        if (!this.props.active && prevState.active) {
+            this.stop();
         }
     }
 
@@ -74,6 +82,7 @@ export class AutoProgressBar extends React.Component {
     };
 
     render () {
+
         if (this.state.fill === 0) {
             return <div className="progress-affixed-empty" />;
         }
@@ -106,9 +115,9 @@ export class ProgressBar extends React.PureComponent {
         now: 0
     };
 
-    componentWillReceiveProps (nextProps) {
+    componentDidUpdate (prevProps) {
         // Listen for the bar move transition to end if the "now" prop is being changed.
-        if (this.props.now !== nextProps.now) {
+        if (prevProps.now !== this.props.now) {
             this.barNode.addEventListener("transitionend", this.onTransitionend);
         }
     }

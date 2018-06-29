@@ -1,18 +1,18 @@
-import aiohttp
 import asyncio
 import io
 import json
-import pymongo
 import re
 import zipfile
 
+import aiohttp
+
+import virtool.analyses
 import virtool.errors
-import virtool.proxy
-import virtool.sample_analysis
+import virtool.http.proxy
+import virtool.jobs.analysis
 import virtool.utils
 
-
-BLAST_CGI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
 
 COMPLEMENT_TABLE = {
@@ -272,6 +272,7 @@ async def initialize_ncbi_blast(settings, sequence):
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param sequence: the nucleotide sequence to BLAST
     :type sequence: str
@@ -296,8 +297,8 @@ async def initialize_ncbi_blast(settings, sequence):
         "QUERY": sequence,
     }
 
-    with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
+    async with aiohttp.ClientSession() as session:
+        async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_URL, params=params, data=data) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 
@@ -334,6 +335,9 @@ async def check_rid(settings, rid):
     :param rid: the RID to check
     :type rid: str
 
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
+
     :return: ``True`` if ready, ``False`` otherwise
     :rtype: Coroutine[bool]
 
@@ -344,8 +348,8 @@ async def check_rid(settings, rid):
         "FORMAT_OBJECT": "SearchInfo"
     }
 
-    with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+    async with aiohttp.ClientSession() as session:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
 
@@ -360,8 +364,8 @@ async def get_ncbi_blast_result(settings, rid):
         "FORMAT_OBJECT": "Alignment"
     }
 
-    with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+    async with aiohttp.ClientSession() as session:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
             return parse_blast_content(await resp.read(), rid)
 
 
@@ -397,7 +401,7 @@ def parse_blast_content(content, rid):
     output["hits"] = list()
 
     for hit in result["hits"]:
-        cleaned = {key: hit["description"][0][key] for key in ["taxid", "title", "accession"]}
+        cleaned = {key: hit["description"][0].get(key, "") for key in ["taxid", "title", "accession"]}
 
         cleaned["len"] = hit["len"]
         cleaned["name"] = hit["description"][0]["sciname"]
@@ -418,41 +422,45 @@ def parse_blast_content(content, rid):
     return output
 
 
-async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_index, rid):
+async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
 
     """
-    ready = False
-    interval = 3
+    try:
+        ready = False
+        interval = 3
 
-    while not ready:
-        await asyncio.sleep(interval)
+        while not ready:
+            await asyncio.sleep(interval)
 
-        # Do this before checking RID for more accurate time.
-        last_checked_at = virtool.utils.timestamp()
+            # Do this before checking RID for more accurate time.
+            last_checked_at = virtool.utils.timestamp()
 
-        ready = await check_rid(settings, rid)
+            ready = await check_rid(settings, rid)
 
-        update = {
-            "interval": interval,
-            "last_checked_at": last_checked_at,
-            "ready": ready,
-            "rid": rid
-        }
-
-        interval += 5
-
-        if update["ready"]:
-            update["result"] = await get_ncbi_blast_result(settings, rid)
-
-        document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
-            "$set": {
-                "results.$.blast": update
+            update = {
+                "interval": interval,
+                "last_checked_at": last_checked_at,
+                "ready": ready,
+                "rid": rid
             }
-        }, return_document=pymongo.ReturnDocument.AFTER)
 
-        formatted = await virtool.sample_analysis.format_analysis(db, document)
+            interval += 5
 
-        await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
+            if update["ready"]:
+                update["result"] = await get_ncbi_blast_result(settings, rid)
+
+            await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
+                "$set": {
+                    "results.$.blast": update
+                }
+            })
+    except asyncio.CancelledError:
+        # Remove the BLAST record from the sequence if the server is shutdown.
+        await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
+            "$set": {
+                "results.$.blast": None
+            }
+        })

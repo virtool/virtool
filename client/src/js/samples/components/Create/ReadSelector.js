@@ -34,11 +34,10 @@ export default class ReadSelector extends React.PureComponent {
         onSelect: PropTypes.func
     };
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.files !== this.props.files) {
-            this.props.onSelect(intersection(this.props.selected, map(nextProps.files, "id")));
+    componentDidUpdate (prevProps) {
+        if (this.props.files !== prevProps.files) {
+            prevProps.onSelect(intersection(prevProps.selected, map(this.props.files, "id")));
         }
-
     }
 
     onSelect = (selectedId) => {
@@ -84,7 +83,7 @@ export default class ReadSelector extends React.PureComponent {
         if (!fileComponents.length) {
             fileComponents = (
                 <ListGroupItem className="text-center">
-                    <Icon name="info" /> No read files found. <Link to="samples/files">Upload some</Link>.
+                    <Icon name="info-circle" /> No read files found. <Link to="samples/files">Upload some</Link>.
                 </ListGroupItem>
             );
         }
@@ -119,7 +118,7 @@ export default class ReadSelector extends React.PureComponent {
                                     />
                                     <InputGroup.Button>
                                         <Button type="button" tip="Clear" onClick={this.reset}>
-                                            <Icon name="reset" />
+                                            <Icon name="redo" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>

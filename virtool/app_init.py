@@ -1,7 +1,7 @@
-import coloredlogs
 import logging.handlers
-
 from argparse import ArgumentParser
+
+import coloredlogs
 
 
 def get_args():

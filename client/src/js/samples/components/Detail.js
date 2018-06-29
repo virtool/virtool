@@ -1,5 +1,5 @@
 import React from "react";
-import { includes } from "lodash-es";
+import { includes, get } from "lodash-es";
 import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -12,7 +12,7 @@ import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 import { getSample, showRemoveSample, hideSampleModal } from "../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
@@ -27,15 +27,19 @@ class SampleDetail extends React.Component {
 
     render () {
 
+        if (this.props.error) {
+            return <NotFound />;
+        }
+
         if (this.props.detail === null) {
-            return <LoadingPlaceholder margin={130} />;
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         if (this.props.detail.imported === "ip") {
             return (
                 <LoadingPlaceholder
                     message="Sample is still being imported."
-                    margin={220}
+                    margin="220px"
                 />
             );
         }
@@ -52,8 +56,9 @@ class SampleDetail extends React.Component {
                     <small style={{paddingLeft: "5px"}}>
                         <Icon
                             bsStyle="warning"
-                            name="pencil"
+                            name="pencil-alt"
                             tip="Edit Sample"
+                            tipPlacement="left"
                             onClick={this.props.showEdit}
                         />
                     </small>
@@ -64,17 +69,20 @@ class SampleDetail extends React.Component {
                 <small style={{paddingLeft: "5px"}}>
                     <Icon
                         bsStyle="danger"
-                        name="remove"
+                        name="trash"
                         tip="Remove Sample"
+                        tipPlacement="left"
                         onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />
                 </small>
             );
         }
 
+        const { created_at, user } = this.props.detail;
+
         return (
             <div>
-                <h3 style={{marginBottom: "20px"}}>
+                <ViewHeader title={`${detail.name} - Samples`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <strong>
@@ -85,7 +93,10 @@ class SampleDetail extends React.Component {
                         {editIcon}
                         {removeIcon}
                     </Flex>
-                </h3>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Created <RelativeTime time={created_at} /> by {user.id}
+                    </div>
+                </ViewHeader>
 
                 <Nav bsStyle="tabs">
                     <LinkContainer to={`/samples/${sampleId}/general`}>
@@ -121,6 +132,7 @@ class SampleDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_SAMPLE_ERROR", null),
     detail: state.samples.detail,
     canModify: getCanModify(state)
 });

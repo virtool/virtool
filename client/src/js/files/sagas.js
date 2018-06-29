@@ -1,8 +1,11 @@
-import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { noop } from "lodash-es";
+import { buffers, END, eventChannel } from "redux-saga";
+import { call, put, select, take, takeEvery, takeLatest } from "redux-saga/effects";
 
 import * as filesAPI from "./api";
 import { putGenericError, setPending, apiCall } from "../sagaUtils";
 import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
+import { uploadProgress } from "./actions";
 
 export function* watchFiles () {
     yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
@@ -31,11 +34,53 @@ export function* removeFile (action) {
 }
 
 export function* upload (action) {
-    try {
-        yield filesAPI.upload(action);
-        yield findFiles(action.fileType);
-    } catch (error) {
-        yield putGenericError(UPLOAD, error);
+
+    const { file, fileType, localId } = action;
+
+    const channel = yield call(createUploadChannel, file, fileType);
+
+    while (true) {
+        const { progress = 0, response, err } = yield take(channel);
+
+        if (err) {
+            return yield putGenericError(UPLOAD, err);
+        }
+
+        if (response) {
+            yield put({type: UPLOAD.SUCCEEDED, data: response.body});
+            return yield findFiles(action);
+        }
+
+        yield put(uploadProgress(localId, progress));
     }
 }
 
+const createUploadChannel = (file, fileType) => (
+    eventChannel(emitter => {
+        const onProgress = (e) => {
+            if (e.lengthComputable) {
+                emitter({progress: e.percent});
+            }
+        };
+
+        const onSuccess = (response) => {
+            emitter({response});
+            emitter(END);
+        };
+
+        const onFailure = (err) => {
+            emitter({err});
+            emitter(END);
+        };
+
+        filesAPI.upload(
+            file,
+            fileType,
+            onProgress,
+            onSuccess,
+            onFailure
+        );
+
+        return noop;
+    }, buffers.sliding(2))
+);

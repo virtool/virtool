@@ -6,16 +6,25 @@ import { LoadingPlaceholder } from "../../base";
 
 export default function RebuildHistory ({ unbuilt, error }) {
 
+    const extraChanges = unbuilt.page_count > 1
+        ? (
+            <ListGroupItem key="last-item">
+                <div style={{textAlign: "right"}}>
+                    + {unbuilt.total_count - unbuilt.per_page} more changes
+                </div>
+            </ListGroupItem>
+        ) : null;
+
     let content;
 
     if (unbuilt === null) {
         content = <LoadingPlaceholder margin="22px" />;
     } else {
-        const historyComponents = map(sortBy(unbuilt.history, "virus.name"), change =>
+        const historyComponents = map(sortBy(unbuilt.documents, "otu.name"), change =>
             <ListGroupItem key={change.id}>
                 <Row>
                     <Col md={5}>
-                        <strong>{change.virus.name}</strong>
+                        <strong>{change.otu.name}</strong>
                     </Col>
                     <Col md={7}>
                         {change.description || "No Description"}
@@ -27,6 +36,7 @@ export default function RebuildHistory ({ unbuilt, error }) {
         content = (
             <ListGroup style={{overflowY: "auto", maxHeight: "700px"}}>
                 {historyComponents}
+                {extraChanges}
             </ListGroup>
         );
     }

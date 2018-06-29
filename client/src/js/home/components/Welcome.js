@@ -2,65 +2,41 @@ import React from "react";
 import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
+import { Icon } from "../../base";
 
-import { getSoftwareUpdates } from "../../updates/actions";
-import { Icon, LoadingPlaceholder } from "../../base";
+const Welcome = (props) => {
+    let version;
 
-class Welcome extends React.Component {
-
-    componentDidMount () {
-        this.props.onGet();
-    }
-
-    render () {
-        let content;
-
-        if (this.props.version) {
-            content = (
-                <Panel>
-                    <Panel.Body>
-                        <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
-                        <p>Viral infection diagnostics using next-generation sequencing</p>
-
-                        <a
-                            className="btn btn-default"
-                            href="http://www.virtool.ca/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <Icon name="vtlogo" /> Website
-                        </a>
-                    </Panel.Body>
-                </Panel>
-            );
-        } else {
-            content = (
-                <Panel>
-                    <Panel.Body>
-                        <LoadingPlaceholder margin={0} />
-                    </Panel.Body>
-                </Panel>
-            );
-        }
-
-        return (
-            <div className="container">
-                {content}
-            </div>
+    if (props.version) {
+        version = (
+            <small className="text-muted">
+                {props.version}
+            </small>
         );
     }
-}
+    return (
+        <div className="container">
+            <Panel>
+                <Panel.Body>
+                    <h3>Virtool {version}</h3>
+                    <p>Viral infection diagnostics using next-generation sequencing</p>
+
+                    <a
+                        className="btn btn-default"
+                        href="http://www.virtool.ca/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Icon name="globe" /> Website
+                    </a>
+                </Panel.Body>
+            </Panel>
+        </div>
+    );
+};
 
 const mapStateToProps = (state) => ({
-    version: get(state.updates.software, "current_version")
+    version: get(state.updates, "version")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGet: () => {
-        dispatch(getSoftwareUpdates());
-    }
-
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Welcome);
+export default connect(mapStateToProps, null)(Welcome);

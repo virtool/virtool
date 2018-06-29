@@ -7,40 +7,40 @@ import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, InputError, RelativeTime } from "../../base";
 
-const getInitialState = () => ({
+const getInitialState = (props) => ({
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
     errorOldPassword: "",
     errorNewPassword: "",
-    errorConfirmPassword: ""
+    errorConfirmPassword: "",
+    error: props.error
 });
 
-class ChangePassword extends React.Component {
+export class ChangePassword extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
-            const minLength = nextProps.settings.minimum_password_length;
-
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
             if (nextProps.error.status === 400) {
-                this.setState({
-                    errorOldPassword: nextProps.error.message
-                });
-            } else {
-                this.setState({
-                    errorOldPassword: `Passwords must contain at least ${minLength} characters`
-                });
+                return {
+                    errorOldPassword: nextProps.error.message,
+                    error: nextProps.error
+                };
             }
         }
 
+        return null;
+    }
+
+    componentDidUpdate (prevProps) {
         // Clears form on successful password change
-        if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
-            this.setState(getInitialState());
+        if (this.props.lastPasswordChange !== prevProps.lastPasswordChange) {
+            return getInitialState(this.props);
         }
     }
 
@@ -64,6 +64,11 @@ class ChangePassword extends React.Component {
             this.setState({ errorOldPassword: "Please provide your old password" });
         }
 
+        if (0 < this.state.oldPassword.length && this.state.oldPassword.length < minLength) {
+            hasError = true;
+            this.setState({ errorOldPassword: `Passwords must contain at least ${minLength} characters` });
+        }
+
         if (this.state.newPassword.length < minLength) {
             hasError = true;
             this.setState({ errorNewPassword: `Passwords must contain at least ${minLength} characters` });
@@ -75,7 +80,7 @@ class ChangePassword extends React.Component {
         }
 
         if (!hasError) {
-            this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
+            this.props.onChangePassword(this.state.oldPassword, this.state.newPassword);
         }
     };
 
@@ -88,50 +93,54 @@ class ChangePassword extends React.Component {
         const hasError = this.state.errorOldPassword || this.state.errorNewPassword || this.state.ConfirmPassword;
 
         return (
-            <Panel bsStyle={hasError ? "danger" : "default"}>
-                <Panel.Heading>Password</Panel.Heading>
-                <Panel.Body>
-                    <form onSubmit={this.onSubmit}>
-                        <InputError
-                            label="Old Password"
-                            type="password"
-                            name="oldPassword"
-                            value={this.state.oldPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorOldPassword}
-                        />
-                        <InputError
-                            label="New password"
-                            type="password"
-                            name="newPassword"
-                            value={this.state.newPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorNewPassword}
-                        />
-                        <InputError
-                            label="Confirm New Password"
-                            type="password"
-                            name="confirmPassword"
-                            value={this.state.confirmPassword}
-                            onChange={this.handleChange}
-                            error={this.state.errorConfirmPassword}
-                        />
+            <Row>
+                <Col md={8} lg={6}>
+                    <Panel bsStyle={hasError ? "danger" : "default"}>
+                        <Panel.Heading>Password</Panel.Heading>
+                        <Panel.Body>
+                            <form onSubmit={this.onSubmit}>
+                                <InputError
+                                    label="Old Password"
+                                    type="password"
+                                    name="oldPassword"
+                                    value={this.state.oldPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorOldPassword}
+                                />
+                                <InputError
+                                    label="New password"
+                                    type="password"
+                                    name="newPassword"
+                                    value={this.state.newPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorNewPassword}
+                                />
+                                <InputError
+                                    label="Confirm New Password"
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={this.state.confirmPassword}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorConfirmPassword}
+                                />
 
-                        <div style={{marginTop: "20px"}}>
-                            <Row>
-                                <Col xs={12} md={6} className="text-muted">
-                                    Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                                </Col>
-                                <Col xs={12} md={6}>
-                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
-                                        Change
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                    </form>
-                </Panel.Body>
-            </Panel>
+                                <div style={{marginTop: "20px"}}>
+                                    <Row>
+                                        <Col xs={12} md={6} className="text-muted">
+                                            Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                                        </Col>
+                                        <Col xs={12} md={6}>
+                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
+                                                Change
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            </form>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+            </Row>
         );
     }
 }

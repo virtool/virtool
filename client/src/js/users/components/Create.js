@@ -26,13 +26,11 @@ export class CreateUser extends React.PureComponent {
         this.state = getInitialState();
     }
 
-    componentWillReceiveProps (nextProps) {
-
-        if (!this.props.error && nextProps.error) {
-            this.setState({
-                errorUserId: nextProps.error
-            });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.errorUserId && nextProps.error) {
+            return { errorUserId: nextProps.error };
         }
+        return null;
     }
 
     handleChange = (e) => {
@@ -144,7 +142,7 @@ export class CreateUser extends React.PureComponent {
                     <Modal.Footer>
                         <ButtonToolbar className="pull-right">
                             <Button bsStyle="primary" type="submit">
-                                <Icon name="floppy" /> Save
+                                <Icon name="save" /> Save
                             </Button>
                         </ButtonToolbar>
                     </Modal.Footer>

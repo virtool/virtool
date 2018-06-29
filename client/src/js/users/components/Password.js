@@ -17,27 +17,29 @@ import { find } from "lodash-es";
 import { editUser } from "../actions";
 import { Alert, Button, Checkbox, InputError, RelativeTime } from "../../base";
 
-const getInitialState = () => ({
+const getInitialState = (props) => ({
     password: "",
     confirm: "",
-    errors: []
+    errors: [],
+    lastPasswordChange: props.last_password_change
 });
 
 class Password extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (this.props.last_password_change !== nextProps.last_password_change) {
-            this.setState(getInitialState());
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (prevState.lastPasswordChange !== nextProps.last_password_change) {
+            return getInitialState(nextProps);
         }
+        return null;
     }
 
     componentWillUnmount () {
-        this.setState(getInitialState());
+        this.setState(getInitialState(this.props));
     }
 
     handleChange = (e) => {
@@ -149,7 +151,7 @@ class Password extends React.Component {
                                     </Button>
 
                                     <Button
-                                        icon="floppy"
+                                        icon="save"
                                         type="submit"
                                         bsStyle="primary"
                                     >

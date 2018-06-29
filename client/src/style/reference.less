@@ -1,0 +1,61 @@
+.card-container {
+  display: grid;
+  grid-auto-rows: 1fr;
+  grid-gap: 0 15px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  @media (min-width: 1420px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+
+.card {
+  box-shadow: 1px 1px 2px 0 #d5d5d5;
+
+  .progress-affixed {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    height: 5px;
+    margin: 0;
+  }
+}
+
+.reference-item {
+  cursor: pointer;
+  transform: scale(1);
+  transition: transform 100ms ease-in;
+
+  &:hover {
+    transform: scale(1.015);
+  }
+}
+
+.reference-remote {
+  align-items: center;
+  border: 2px dashed #23587f;
+  display: flex;
+  justify-content: center;
+
+  span {
+    padding: 50px 0;
+    text-align: center;
+  }
+}
+
+.dropdown-export-reference {
+  display: inline;
+  line-height: 0.5;
+}
+
+.export-ref-dropdown-menu {
+  right: 0;
+  left: auto;
+  min-width: auto;
+}

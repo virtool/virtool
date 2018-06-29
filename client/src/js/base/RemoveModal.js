@@ -9,7 +9,7 @@ import { Button } from "./Button";
  *
  * @func
  * @param name {string} the display name for the item to be removed (eg. Baminivirus)
- * @param noun {string} the type of document being removed (eg. virus)
+ * @param noun {string} the type of document being removed (eg. otu)
  * @param show {boolean} toggle visibility of the modal
  * @param onConfirm {function} a function to call on confirmation
  * @param onHide {function} a function that hides the modal
@@ -23,7 +23,7 @@ export const RemoveModal = ({ name, noun, show, onConfirm, onHide }) => (
             Are you sure you want to remove <strong>{name}</strong>?
         </Modal.Body>
         <Modal.Footer>
-            <Button bsStyle="danger" icon="checkmark" onClick={onConfirm}>
+            <Button bsStyle="danger" icon="check" onClick={onConfirm}>
                 Confirm
             </Button>
         </Modal.Footer>

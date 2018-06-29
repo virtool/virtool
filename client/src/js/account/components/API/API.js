@@ -9,9 +9,9 @@ import CreateAPIKey from "./Create";
 import { getAPIKeys } from "../../actions";
 import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../base/index";
 
-class APIKeys extends React.Component {
+export class APIKeys extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 

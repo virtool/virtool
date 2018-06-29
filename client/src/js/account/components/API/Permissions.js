@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { map, sortBy } from "lodash-es";
 import { ListGroup, Panel } from "react-bootstrap";
 
-import { Icon, ListGroupItem } from "../../../base/index";
+import { ListGroupItem, Checkbox } from "../../../base/index";
 
 export default function APIPermissions ({ style, userPermissions, keyPermissions, onChange }) {
 
@@ -19,7 +19,10 @@ export default function APIPermissions ({ style, userPermissions, keyPermissions
                 disabled={disabled}
             >
                 <code>{permission.name}</code>
-                <Icon name={`checkbox-${permission.allowed ? "checked" : "unchecked"}`} pullRight />
+                <Checkbox
+                    checked={permission.allowed}
+                    pullRight
+                />
             </ListGroupItem>
         );
     });

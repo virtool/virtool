@@ -14,16 +14,12 @@ export const Icon = (props) => {
         props.onClick(e);
     }
 
-    const className = CX(
-        props.className,
-        props.pending ? "i-spinner spinning" : (`i-${props.name}`),
-        props.bsStyle && !props.pending ? `text-${props.bsStyle}` : false,
-        {
-            "pull-right": props.pullRight,
-            "fixed-width": props.fixedWidth,
-            "hoverable pointer": props.onClick
-        }
-    );
+    const className = CX(props.className, `${props.faStyle} fa-${props.name}`, {
+        [`text-${props.bsStyle}`]: props.bsStyle,
+        "pull-right": props.pullRight,
+        "fixed-width": props.fixedWidth,
+        "hoverable pointer": props.onClick
+    });
 
     const style = {...(props.pad ? {marginLeft: "3px"} : {}), ...props.style};
 
@@ -51,8 +47,8 @@ Icon.propTypes = {
     name: PropTypes.string.isRequired,
     tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
     tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    faStyle: PropTypes.string,
     onClick: PropTypes.func,
-    pending: PropTypes.bool,
     bsStyle: PropTypes.string,
     className: PropTypes.string,
     pullRight: PropTypes.bool,
@@ -62,7 +58,7 @@ Icon.propTypes = {
 };
 
 Icon.defaultProps = {
-    pending: false,
+    faStyle: "fas",
     pullRight: false,
     fixedWidth: false
 };

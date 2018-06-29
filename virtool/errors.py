@@ -24,3 +24,11 @@ class NCBIError(Exception):
 
 class ProxyError(Exception):
     pass
+
+
+class InsufficientResourceError(Exception):
+    pass
+
+
+class SubprocessError(Exception):
+    pass

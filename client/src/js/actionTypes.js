@@ -31,6 +31,7 @@ export const CLEAR_ERROR = "CLEAR_ERROR";
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
 export const WS_REMOVE_JOB = "WS_REMOVE_JOB";
 export const FIND_JOBS = createRequestActionType("FIND_JOBS");
+export const FETCH_JOBS = createRequestActionType("FETCH_JOBS");
 export const GET_JOB = createRequestActionType("GET_JOB");
 export const CANCEL_JOB = createRequestActionType("CANCEL_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
@@ -43,6 +44,7 @@ export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
 export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
+export const FETCH_SAMPLES = createRequestActionType("FETCH_SAMPLES");
 export const FIND_READ_FILES = createRequestActionType("FIND_READ_FILES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
@@ -62,16 +64,41 @@ export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
-// Virus
-export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";
-export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
-export const FETCH_VIRUSES = "FETCH_VIRUSES";
-export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
-export const GET_VIRUS = createRequestActionType("GET_VIRUS");
-export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
-export const EDIT_VIRUS = createRequestActionType("EDIT_VIRUS");
-export const REMOVE_VIRUS = createRequestActionType("REMOVE_VIRUS");
-export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
+// Refs
+export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
+export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
+export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
+export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
+export const EDIT_REFERENCE = createRequestActionType("EDIT_REFERENCE");
+export const REMOVE_REFERENCE = createRequestActionType("REMOVE_REFERENCE");
+export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
+export const CLONE_REFERENCE = createRequestActionType("CLONE_REFERENCE");
+export const REMOTE_REFERENCE = createRequestActionType("REMOTE_REFERENCE");
+export const ADD_REFERENCE_USER = createRequestActionType("ADD_REFERENCE_USER");
+export const EDIT_REFERENCE_USER = createRequestActionType("EDIT_REFERENCE_USER");
+export const REMOVE_REFERENCE_USER = createRequestActionType("REMOVE_REFERENCE_USER");
+export const ADD_REFERENCE_GROUP = createRequestActionType("ADD_REFERENCE_GROUP");
+export const EDIT_REFERENCE_GROUP = createRequestActionType("EDIT_REFERENCE_GROUP");
+export const REMOVE_REFERENCE_GROUP = createRequestActionType("REMOVE_REFERENCE_GROUP");
+export const CHECK_REMOTE_UPDATES = createRequestActionType("CHECK_REMOTE_UPDATES");
+export const UPDATE_REMOTE_REFERENCE = createRequestActionType("UPDATE_REMOTE_REFERENCE");
+
+// Processes
+export const WS_INSERT_PROCESS = "WS_INSERT_PROCESS";
+export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
+export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
+export const GET_PROCESS = createRequestActionType("GET_PROCESS");
+
+// OTU
+export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
+export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
+export const FETCH_OTUS = createRequestActionType("FETCH_OTUS");
+export const FIND_OTUS = createRequestActionType("FIND_OTUS");
+export const GET_OTU = createRequestActionType("GET_OTU");
+export const CREATE_OTU = createRequestActionType("CREATE_OTU");
+export const EDIT_OTU = createRequestActionType("EDIT_OTU");
+export const REMOVE_OTU = createRequestActionType("REMOVE_OTU");
+export const GET_OTU_HISTORY = createRequestActionType("GET_OTU_HISTORY");
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
 export const SET_ISOLATE_AS_DEFAULT = createRequestActionType("SET_ISOLATE_AS_DEFAULT");
@@ -84,31 +111,31 @@ export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
 export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
 export const SELECT_ISOLATE = "SELECT_ISOLATE";
 export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
-export const SHOW_EDIT_VIRUS = "SHOW_EDIT_VIRUS";
-export const SHOW_REMOVE_VIRUS = "SHOW_REMOVE_VIRUS";
+export const SHOW_EDIT_OTU = "SHOW_EDIT_OTU";
+export const SHOW_REMOVE_OTU = "SHOW_REMOVE_OTU";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
 export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";
 export const SHOW_REMOVE_ISOLATE = "SHOW_REMOVE_ISOLATE";
 export const SHOW_ADD_SEQUENCE = "SHOW_ADD_SEQUENCE";
 export const SHOW_EDIT_SEQUENCE = "SHOW_EDIT_SEQUENCE";
 export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
-export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
+export const HIDE_OTU_MODAL = "HIDE_OTU_MODAL";
 
 // HMMs
-export const FETCH_HMMS = "FETCH_HHMS";
+export const FETCH_HMMS = "FETCH_HMMS";
 export const FIND_HMMS = createRequestActionType("FIND_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
-export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
+export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
+export const PURGE_HMMS = createRequestActionType("PURGE_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
-
 export const FIND_INDEXES = createRequestActionType("FIND_INDEXES");
 export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
 export const GET_INDEX_HISTORY = createRequestActionType("GET_INDEX_HISTORY");
-export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
+export const LIST_READY_INDEXES = createRequestActionType("LIST_READY_INDEXES");
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
@@ -155,19 +182,15 @@ export const LIST_USERS = createRequestActionType("LIST_USERS");
 export const FILTER_USERS = "FILTER_USERS";
 export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
-export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
-export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
 
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
 export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
-export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSIONS");
+export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSION");
 export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 
 // Updates
-export const WS_UPDATE_STATUS = createRequestActionType("WS_UPDATE_STATUS");
+export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
 export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
-export const SHOW_INSTALL_MODAL = "SHOW_INSTALL_MODAL";
-export const HIDE_INSTALL_MODAL = "HIDE_INSTALL_MODAL";

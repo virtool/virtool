@@ -1,15 +1,16 @@
 import React from "react";
 import Numeral from "numeral";
-import { map } from "lodash-es";
+import { map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../base";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader, NotFound } from "../../base";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
+import { checkAdminOrPermission } from "../../utils";
 
 const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
@@ -33,6 +34,10 @@ class SubtractionDetail extends React.Component {
     };
 
     render () {
+
+        if (this.props.error) {
+            return <NotFound />;
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
@@ -67,7 +72,7 @@ class SubtractionDetail extends React.Component {
 
                 removeIcon = (
                     <Icon
-                        name="remove"
+                        name="trash"
                         bsStyle="danger"
                         onClick={this.props.onShowRemove}
                         style={{paddingLeft: "5px"}}
@@ -78,7 +83,7 @@ class SubtractionDetail extends React.Component {
 
             const editIcon = (
                 <Icon
-                    name="pencil"
+                    name="pencil-alt"
                     bsStyle="warning"
                     onClick={() => this.setState({showEdit: true})}
                     pullRight
@@ -87,7 +92,7 @@ class SubtractionDetail extends React.Component {
 
             return (
                 <div>
-                    <h3 className="view-header">
+                    <ViewHeader title={`${data.id} - Subtraction`}>
                         <Flex alignItems="flex-end">
                             <FlexItem grow={0} shrink={0}>
                                 <strong>{data.id}</strong>
@@ -103,7 +108,7 @@ class SubtractionDetail extends React.Component {
                                 </small>
                             </FlexItem>
                         </Flex>
-                    </h3>
+                    </ViewHeader>
 
                     <Table bordered>
                         <tbody>
@@ -145,7 +150,8 @@ class SubtractionDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    canModify: state.account.permissions.modify_subtraction,
+    error: get(state, "errors.GET_SUBTRACTION_ERROR", null),
+    canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction"),
     detail: state.subtraction.detail
 });
 

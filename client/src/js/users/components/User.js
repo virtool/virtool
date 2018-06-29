@@ -93,7 +93,7 @@ export class UserItem extends React.Component {
         }
 
         return (
-            <LinkContainer to={`/settings/users/${this.props.id}`} style={{paddingLeft: "10px"}}>
+            <LinkContainer to={`/administration/users/${this.props.id}`} style={{paddingLeft: "10px"}}>
                 <ListGroupItem className="spaced">
                     {identifier}
                 </ListGroupItem>
@@ -109,7 +109,7 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
 
     onClose: () => {
-        dispatch(push("/settings/users"));
+        dispatch(push("/administration/users"));
     },
 
     onSetPrimaryGroup: (userId, groupId) => {

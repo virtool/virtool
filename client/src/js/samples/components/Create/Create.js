@@ -26,11 +26,13 @@ const getInitialState = (props) => ({
     host: "",
     isolate: "",
     locale: "",
+    srna: false,
     subtraction: getReadyHosts(props),
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: ""
+    errorFile: "",
+    readyHosts: props.readyHosts
 });
 
 const SampleUserGroup = ({ group, groups, onChange }) => {
@@ -57,16 +59,16 @@ class CreateSample extends React.Component {
         this.state = getInitialState(props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.readyHosts !== this.props.readyHosts) {
-            return this.setState({subtraction: getReadyHosts(nextProps)});
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.readyHosts !== prevState.readyHosts) {
+            return { subtraction: getReadyHosts(nextProps) };
         }
 
-        if (!this.props.error && nextProps.error) {
-            this.setState({
-                errorName: nextProps.error
-            });
+        if (!prevState.errorName && nextProps.error) {
+            return { errorName: nextProps.error };
         }
+
+        return null;
     }
 
     modalEnter = () => {
@@ -188,7 +190,7 @@ class CreateSample extends React.Component {
                     <Modal.Body>
 
                         <Row>
-                            <Col md={6}>
+                            <Col xs={12}>
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
                                     <InputError
@@ -204,12 +206,15 @@ class CreateSample extends React.Component {
                                             onClick={this.autofill}
                                             disabled={!this.state.selected.length}
                                         >
-                                            <Icon name="wand" />
+                                            <Icon name="magic" />
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>
                             </Col>
-                            <Col md={6}>
+                        </Row>
+
+                        <Row>
+                            <Col xs={12} md={6}>
                                 <InputError
                                     name="isolate"
                                     label="Isolate"
@@ -217,10 +222,18 @@ class CreateSample extends React.Component {
                                     onChange={this.handleChange}
                                 />
                             </Col>
+                            <Col xs={12} md={6}>
+                                <InputError
+                                    name="locale"
+                                    label="Locale"
+                                    value={this.state.locale}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
                         </Row>
 
                         <Row>
-                            <Col md={6}>
+                            <Col xs={12} md={6}>
                                 <InputError
                                     name="host"
                                     label="True Host"
@@ -228,6 +241,7 @@ class CreateSample extends React.Component {
                                     onChange={this.handleChange}
                                 />
                             </Col>
+
                             <Col md={6}>
                                 <InputError
                                     name="subtraction"
@@ -243,16 +257,21 @@ class CreateSample extends React.Component {
                         </Row>
 
                         <Row>
-                            <Col md={6}>
+                            <Col xs={12} md={6}>
                                 <InputError
-                                    name="locale"
-                                    label="Locale"
-                                    value={this.state.locale}
+                                    name="srna"
+                                    type="select"
+                                    label="Read Size"
+                                    value={this.state.srna}
                                     onChange={this.handleChange}
-                                />
+                                >
+                                    <option value={false}>Normal</option>
+                                    <option value={true}>sRNA</option>
+                                </InputError>
                             </Col>
+
                             {userGroup}
-                            <Col md={6}>
+                            <Col xs={12} md={6}>
                                 <InputError
                                     type="text"
                                     label="Library Type"
@@ -273,7 +292,7 @@ class CreateSample extends React.Component {
 
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary">
-                            <Icon name="floppy" /> Save
+                            <Icon name="save" /> Save
                         </Button>
                     </Modal.Footer>
                 </form>
@@ -305,8 +324,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(findReadFiles());
     },
 
-    onCreate: ({ name, isolate, host, locale, subtraction, files }) => {
-        dispatch(createSample(name, isolate, host, locale, subtraction, files));
+    onCreate: ({ name, isolate, host, locale, srna, subtraction, files }) => {
+        dispatch(createSample(name, isolate, host, locale, srna, subtraction, files));
     },
 
     onHide: () => {

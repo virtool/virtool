@@ -1,15 +1,27 @@
 import { WS_CLOSED } from "./actionTypes";
 import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
+import { wsUpdateIndex } from "./indexes/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
+import { wsUpdateProcess, wsInsertProcess } from "./processes/actions";
+import { wsUpdateReference } from "./references/actions";
 import { wsUpdateStatus } from "./status/actions";
+import { wsUpdateSubtraction } from "./subtraction/actions";
+
+const documentInserters = {
+    processes: wsInsertProcess
+};
 
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
     files: wsUpdateFile,
+    indexes: wsUpdateIndex,
     jobs: wsUpdateJob,
+    processes: wsUpdateProcess,
+    references: wsUpdateReference,
     samples: wsUpdateSample,
-    status: wsUpdateStatus
+    status: wsUpdateStatus,
+    subtraction: wsUpdateSubtraction
 };
 
 const documentRemovers = {
@@ -32,11 +44,15 @@ export default function WSConnection (dispatch) {
 
         window.console.log(`${iface}.${operation}`);
 
+        if (operation === "insert" && documentInserters[iface]) {
+            return dispatch(documentInserters[iface](message.data));
+        }
+
         if (operation === "update" && documentUpdaters[iface]) {
             return dispatch(documentUpdaters[iface](message.data));
         }
 
-        if (operation === "remove" && documentRemovers[iface]) {
+        if (operation === "delete" && documentRemovers[iface]) {
             return dispatch(documentRemovers[iface](message.data));
         }
     };

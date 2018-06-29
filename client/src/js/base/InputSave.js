@@ -38,13 +38,11 @@ export class InputSave extends React.Component {
         autoComplete: true
     };
 
-    componentWillReceiveProps (nextProps) {
-        // If the initialValue has changed. Remove the pending state on the component. This will remove the spinner on
-        // the save button and enable the Input component again.
-        if (nextProps.initialValue !== this.props.initialValue) {
+    componentDidUpdate (prevProps) {
+        if (this.props.initialValue !== prevProps.initialValue) {
             this.setState({
                 pending: false,
-                value: nextProps.initialValue
+                value: this.props.initialValue
             });
         }
     }
@@ -71,7 +69,7 @@ export class InputSave extends React.Component {
     /**
      * Handle the data from a change in the input element. Updates state to reflect what is being typed by the user.
      *
-     * @param event {event} - the change event from the FormControl
+     * @param e {event} - the change event from the FormControl
      */
     handleChange = (e) => {
         if (!this.props.disabled) {
@@ -147,14 +145,13 @@ export class InputSave extends React.Component {
                             value={this.state.value}
                             disabled={this.props.disabled}
                             style={{marginBottom: "0"}}
-                        >
-                        </FormControl>
+                        />
                     </FlexItem>
                     <Button
                         type="submit"
                         bsStyle="primary"
                         disabled={this.props.disabled}
-                        icon="floppy"
+                        icon="save"
                         ref={(button) => this.buttonNode = button}
                     />
                 </Flex>

@@ -1,19 +1,14 @@
-import { concat, find, reject } from "lodash-es";
 import {
-    WS_UPDATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
-    CREATE_INDEX,
-    GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR
+    GET_INDEX_HISTORY
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     modified_count: 0,
-    total_virus_count: 0,
-    error: false,
+    total_otu_count: 0,
     detail: null,
     history: null,
     unbuilt: null,
@@ -24,17 +19,14 @@ export default function indexesReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case WS_UPDATE_INDEX:
-            return {
-                ...state,
-                documents: concat(
-                    reject(state.documents, {index_id: action.index_id}),
-                    {...find(state.documents, {index_id: action.index_id}), ...action.data}
-                )
-            };
+        case FIND_INDEXES.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
 
         case FIND_INDEXES.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FIND_INDEXES.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case GET_INDEX.REQUESTED:
             return {...state, detail: null};
@@ -45,17 +37,14 @@ export default function indexesReducer (state = initialState, action) {
         case GET_UNBUILT.SUCCEEDED:
             return {...state, unbuilt: action.data};
 
-        case CREATE_INDEX.FAILED:
-            return {...state, error: true};
-
         case GET_INDEX_HISTORY.REQUESTED:
-            return {...state, history: null};
+            return {...state, isLoading: true, errorLoad: false};
 
         case GET_INDEX_HISTORY.SUCCEEDED:
-            return {...state, history: action.data};
+            return {...state, history: action.data, isLoading: false, errorLoad: false};
 
-        case CLEAR_INDEX_ERROR:
-            return {...state, error: false};
+        case GET_INDEX_HISTORY.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         default:
             return state;

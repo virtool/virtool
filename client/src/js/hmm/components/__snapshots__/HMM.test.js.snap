@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HMM /> renders correctly 1`] = `
+<div
+  className="container"
+>
+  <Switch>
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/hmm"
+    />
+    <Route
+      component={[Function]}
+      path="/hmm/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/hmm/:hmmId"
+    />
+  </Switch>
+</div>
+`;

@@ -1,21 +1,26 @@
 import Request from "superagent";
 
-export const find = () => (
+export const find = ({ refId, page }) => (
+    Request.get(`/api/refs/${refId}/indexes?page=${page}`)
+);
+
+export const get = ({ indexId }) => (
+    Request.get(`/api/indexes/${indexId}`)
+);
+
+export const listReady = () => (
     Request.get("/api/indexes")
+        .query({ready: true})
 );
 
-export const get = ({ indexVersion }) => (
-    Request.get(`/api/indexes/${indexVersion}`)
+export const getUnbuilt = ({ refId }) => (
+    Request.get(`/api/refs/${refId}/history?unbuilt=true`)
 );
 
-export const getUnbuilt = () => (
-    Request.get("/api/indexes/unbuilt")
+export const create = ({ refId }) => (
+    Request.post(`/api/refs/${refId}/indexes`)
 );
 
-export const create = () => (
-    Request.post("/api/indexes")
-);
-
-export const getHistory = ({ indexVersion, page = 1 }) => (
-    Request.get(`/api/indexes/${indexVersion}/history?page=${page}`)
+export const getHistory = ({ indexId, page = 1 }) => (
+    Request.get(`/api/indexes/${indexId}/history?page=${page}`)
 );

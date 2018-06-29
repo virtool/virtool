@@ -9,12 +9,13 @@ import { toScientificNotation } from "../../../../utils";
 export default class PathoscopeIsolate extends React.Component {
 
     static propTypes = {
-        virusId: PropTypes.string,
+        otuId: PropTypes.string,
         name: PropTypes.string,
         pi: PropTypes.number,
         best: PropTypes.number,
         coverage: PropTypes.number,
         maxDepth: PropTypes.number,
+        meanDepth: PropTypes.number,
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,
@@ -34,7 +35,7 @@ export default class PathoscopeIsolate extends React.Component {
     };
 
     handleScroll = (e) => {
-        this.props.setScroll(this.props.virusId, e.target.scrollLeft);
+        this.props.setScroll(this.props.otuId, e.target.scrollLeft);
     };
 
     render () {
@@ -78,7 +79,7 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <strong className="small text-danger">
-                                {toScientificNotation(this.props.best)}
+                                {toScientificNotation(this.props.meanDepth)}
                             </strong>
                         </FlexItem>
                         <FlexItem pad={5}>

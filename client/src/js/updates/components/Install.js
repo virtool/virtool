@@ -1,23 +1,15 @@
 import React from "react";
 import Request from "superagent";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
-import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import { ClipLoader } from "halogenium";
+import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
-import { installSoftwareUpdates, hideInstallModal } from "../actions";
+import { installSoftwareUpdates } from "../actions";
 import { Button } from "../../base";
 import { ReleaseMarkdown } from "./Release";
-import { byteSize } from "../../utils";
-
-const installSteps = [
-    "block_jobs",
-    "download",
-    "decompress",
-    "check_tree",
-    "copy_files"
-];
+import {byteSize, routerLocationHasState} from "../../utils";
 
 const attemptReload = () => {
     Request.get(`${window.location.origin}/api`)
@@ -49,9 +41,9 @@ const mergeBody = (releases) => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-const Process = ({ complete, progress, size, step }) => {
+const Process = ({ count, progress, size, step, updating }) => {
 
-    if (complete && !window.reloadInterval) {
+    if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
             window.reloadInterval = window.setInterval(attemptReload, 1000);
         }, 3000);
@@ -64,83 +56,66 @@ const Process = ({ complete, progress, size, step }) => {
         );
     }
 
-    const stepIndex = installSteps.indexOf(step);
-
-    const now = (stepIndex + 1) / 5 + (progress * 0.2);
-
-    const text = replace(step, "_", " ");
-
     let ratio;
 
     if (step === "download") {
-        ratio = `ed ${byteSize(progress * size)} of ${byteSize(size)}`;
+        ratio = ` (${byteSize(count)} of ${byteSize(size)})`;
+
+
     }
 
     return (
         <Modal.Body>
-            <ProgressBar now={now * 100} />
+            <ProgressBar now={progress * 100} />
             <p className="text-center">
                 <small>
-                    <span className="text-capitalize">{text}</span>{ratio}
+                    <span className="text-capitalize">{step}</span>{ratio}
                 </small>
             </p>
         </Modal.Body>
     );
 };
 
-class SoftwareInstallModal extends React.Component {
+const SoftwareInstall = ({ onHide, onInstall, process, releases, show, updating }) => {
 
-    constructor (props) {
-        super(props);
-    }
+    const mergedBody = mergeBody(releases);
 
-    static propTypes = {
-        show: PropTypes.bool,
-        process: PropTypes.object,
-        releases: PropTypes.arrayOf(PropTypes.object),
-        onInstall: PropTypes.func,
-        onHide: PropTypes.func
-    };
+    let content;
 
-    render () {
+    if (process === null) {
+        content = (
+            <div>
+                <Modal.Body>
+                    <ReleaseMarkdown body={mergedBody} noMargin />
+                </Modal.Body>
 
-        const mergedBody = mergeBody(this.props.releases);
-
-        let content;
-
-        if (this.props.process === null) {
-            content = (
-                <div>
-                    <Modal.Body>
-                        <ReleaseMarkdown body={mergedBody} noMargin />
-                    </Modal.Body>
-
-                    <Modal.Footer>
-                        <Button bsStyle="primary" icon="download" onClick={this.props.onInstall}>
-                            Install
-                        </Button>
-                    </Modal.Footer>
-                </div>
-            );
-        } else {
-            content = <Process {...this.props.process} />;
-        }
-
-        return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Software Update <Label>{this.props.releases[0].name}</Label>
-                </Modal.Header>
-
-                {content}
-            </Modal>
+                <Modal.Footer>
+                    <Button bsStyle="primary" icon="download" onClick={onInstall}>
+                        Install
+                    </Button>
+                </Modal.Footer>
+            </div>
         );
+    } else {
+        content = <Process {...process} size={releases[0].size} updating={updating} />;
     }
-}
+
+    return (
+        <Modal show={show} onHide={onHide}>
+            <Modal.Header onHide={onHide} closeButton>
+                Software Update <Label>{releases[0].name}</Label>
+            </Modal.Header>
+
+            {content}
+        </Modal>
+    );
+};
 
 const mapStateToProps = (state) => ({
-    show: state.updates.showInstallModal,
-    process: state.updates.software.process
+    show: routerLocationHasState(state, "install", true),
+    process: state.updates.process,
+    releases: state.updates.releases,
+    updating: state.updates.updating
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -150,9 +125,9 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onHide: () => {
-        dispatch(hideInstallModal());
+        dispatch(push({state: {install: false}}));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SoftwareInstallModal);
+export default connect(mapStateToProps, mapDispatchToProps)(SoftwareInstall);

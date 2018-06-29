@@ -4,9 +4,9 @@ import pytest
 import collections
 import multiprocessing
 
-import virtool.job
-import virtool.job_dummy
-import virtool.job_manager
+import virtool.jobs.job
+import virtool.jobs.dummy
+import virtool.jobs.manager
 
 
 class MockQueue:
@@ -48,7 +48,7 @@ class MockSettings:
             "db_name": "test",
             "db_host": "localhost",
             "db_port": 27017,
-            "rebuild_index_inst": 2,
+            "build_index_inst": 2,
             "proc": 4,
             "mem": 8
         }
@@ -69,11 +69,10 @@ class MockSettings:
 @pytest.fixture
 def test_job_manager(mocker, loop, test_motor):
 
-    manager = virtool.job_manager.Manager(
+    manager = virtool.jobs.manager.Manager(
         loop,
         test_motor,
         MockSettings(),
-        mocker.stub(name="dispatch"),
         mocker.stub(name="capture_exception")
     )
 
@@ -99,7 +98,7 @@ def mock_job_class(monkeypatch, mocker):
     mock_class = mocker.Mock(name="RebuildIndex", return_value=mock_obj)
 
     monkeypatch.setattr("virtool.job_classes.TASK_CLASSES", {
-        "rebuild_index": mock_class
+        "build_index": mock_class
     })
 
     return mock_class, mock_obj
@@ -114,7 +113,7 @@ def test_job(static_time):
         },
         "proc": 10,
         "mem": 16,
-        "task": "rebuild_index",
+        "task": "build_index",
         "args": {
             "name": None,
             "username": "igboyes",
@@ -126,28 +125,28 @@ def test_job(static_time):
         "status": [
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "waiting",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "running",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "running",
                 "stage": "mk_analysis_dir",
                 "progress": 0.091
             },
             {
                 "error": None,
-                "timestamp": static_time,
+                "timestamp": static_time.datetime,
                 "state": "complete",
                 "stage": "import_results",
                 "progress": 1.0
@@ -178,6 +177,6 @@ def test_task_inst(test_task_class):
     proc = 1
     mem = 1
 
-    job = virtool.job_dummy.DummyJob(job_id, settings, queue, task, task_args, proc, mem)
+    job = virtool.jobs.dummy.DummyJob(job_id, settings, queue, task, task_args, proc, mem)
 
     return job

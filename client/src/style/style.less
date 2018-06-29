@@ -3,7 +3,6 @@
 
 // Import CSS for custom font and icons
 @import "./roboto.css";
-@import "./font.css";
 
 // Import extra NPM module CSS
 @import "./typeahead.css";
@@ -14,10 +13,13 @@
 @import "./graphics.less";
 @import "./print.less";
 @import "./progress.less";
+@import "./reference.less";
+@import "./notifications.less";
 @import "./upload.less";
 @import "./tabs.less";
 @import "./animation.less";
 @import "./markdown.less";
+@import "./jobs.less";
 
 // Bootstrap color variables
 @brand-primary: lighten(#05486c, 10%);
@@ -30,7 +32,19 @@
 @state-info-bg: lighten(@brand-info, 30%);
 
 // Bootstrap small-screen breakpoint variable
-@screen-sm: 992px;
+@screen-sm: 868px;
+@grid-float-breakpoint: 868px;
+
+// Bootstrap container sizes
+@container-sm: 100vw;
+@container-md: 100vw;
+@container-lg: 100vw;
+
+// Bootstrap collapse menu button color
+@navbar-default-toggle-hover-bg: #60af98;
+
+// Sidebar menu button hover color
+@nav-link-hover-bg: #c1e4db;
 
 // Bootstrap border-radius variable
 @border-radius-base: 0;
@@ -53,14 +67,21 @@
 @state-danger-text: darken(@brand-danger, 12%);
 @state-danger-border: @brand-danger;
 
+@breadcrumb-bg: none;
+@breadcrumb-padding-horizontal: 0;
+@breadcrumb-padding-vertical: 3px;
+
 body {
+  height: calc(100vh - 40px);
   padding-top: 65px;
   font-family: 'Roboto', sans-serif;
   overflow-y: scroll;
 }
 
-body.modal-open nav.navbar-fixed-top {
-  margin-left: -15px;
+// Overrides bootstrap modal shifting containers
+body.modal-open {
+  overflow: scroll !important;
+  padding-right: 0 !important;
 }
 
 td.sequence-cell {
@@ -75,8 +96,108 @@ td.sequence-cell > textarea {
   border: none;
 }
 
+.container {
+  width: 100vw;
+  max-width: 100%;
+  padding-left: 11rem;
+  padding-right: 35px;
+}
+
+.container-noside {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+}
+
+.container-noside ~ .sidebar {
+  display: none
+}
+
+.navbar-fixed-top > .container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  padding: 0 35px;
+}
+
 .navbar {
   box-shadow: 0px 2px 2px 0 #d5d5d5;
+}
+
+.navbar-default .navbar-toggle {
+  border-color: transparent;
+}
+
+.navbar-default .navbar-toggle .icon-bar {
+  background-color: #edf7f6;
+}
+
+@media (max-width: @grid-float-breakpoint - 1) {
+  &.collapsing {
+    position: absolute;
+    right: 0;
+    margin-top: 0 !important;
+    max-width: 150px;
+    min-width: 150px;
+    background-color: #60af98;
+  }
+
+  &.in {
+    position: absolute;
+    right: 0;
+    margin-top: 0 !important;
+    max-width: 150px;
+    min-width: 150px;
+    background-color: #60af98;
+  }
+}
+
+.sidebar {
+  position: fixed;
+  top: 45px;
+  left: 0;
+  bottom: 0;
+  padding-top: 4rem;
+  min-width: 8.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-item {
+  color: #333333;
+  cursor: pointer;
+  padding-bottom: 1.6rem;
+  text-align: center;
+  width: 100%;
+  opacity: 0.7;
+
+  &.active {
+    opacity: 1;
+    color: #07689d;
+  }
+
+  &:focus {
+    text-decoration: none;
+  }
+
+  &:hover {
+    opacity: 1;
+    text-decoration: none;
+    color: #07689d;
+  }
+}
+
+.sidebar-item > a {
+  color: #05486c;
+  padding: 10px 0 !important;
+}
+
+.not-found.jumbotron {
+  background-color: #60af98;
+  text-align: center;
+  margin: 0;
 }
 
 .text-em {
@@ -187,7 +308,7 @@ div.hoverable:hover {
 
   &.spaced {
     margin-bottom: 10px;
-    box-shadow: 2px 2px 2px 0 #d5d5d5;
+    box-shadow: 1px 1px 2px 0 #d5d5d5;
   }
 
 
@@ -211,7 +332,6 @@ div.hoverable:hover {
 }
 
 .split-dropdown {
-  z-index: 1030;
   display: flex;
 }
 
@@ -312,11 +432,11 @@ i.hoverable:hover {
   border-right: 1px solid #CCC;
 }
 
-i.vtlogo {
-  font-size: 30px;
+.vtlogo {
+  float: left;
+  max-width: 30px;
+  margin: 8px 8px 0 0;
 }
-
-
 
 .disable-select {
   -moz-user-select: none;
@@ -504,6 +624,10 @@ table.cluster-table thead,
 table.cluster-table tbody tr {
   display: table;
   table-layout: fixed;
+}
+
+table.ref-meta-table {
+  max-width: 300px;
 }
 
 .sample-label {
@@ -723,4 +847,20 @@ ul.tight-list > li {
     flex: 1 0 auto;
     padding-left: 5px;
   }
+}
+
+.settings-container {
+  max-width: 1150px;
+}
+
+// Prevents user text selection highlight
+.no-select {
+  -webkit-user-select: none;
+  -khtml-user-drag: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -moz-user-select: -moz-none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
 }

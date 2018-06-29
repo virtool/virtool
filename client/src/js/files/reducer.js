@@ -1,3 +1,8 @@
+/**
+ * Exports a reducer for managing uploaded files.
+ *
+ * @module files/reducer
+ */
 import { every, map, reject } from "lodash-es";
 
 import {
@@ -14,7 +19,7 @@ import {
  * @const
  * @type {object}
  */
-const initialState = {
+export const initialState = {
     documents: null,
     fileType: null,
     found_count: 0,
@@ -32,33 +37,50 @@ const initialState = {
  * @param state {object}
  * @returns {object}
  */
-const checkUploadsComplete = (state) => ({
+export const checkUploadsComplete = (state) => ({
     ...state,
     uploadsComplete: every(state.uploads, {progress: 100})
 });
 
+/**
+ * A reducer for managing uploaded files.
+ *
+ * @param state {object}
+ * @param action {object}
+ * @returns {object}
+ */
 export default function fileReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case FIND_FILES.REQUESTED:
             return {
-                ...initialState,
+                ...state,
                 showUploadOverlay: state.showUploadOverlay,
                 uploads: state.uploads,
-                uploadsComplete: state.uploadsComplete
+                uploadsComplete: state.uploadsComplete,
+                isLoading: true,
+                errorLoad: false
+            };
+
+        case FIND_FILES.FAILED:
+            return {
+                ...state,
+                isLoading: false,
+                errorLoad: true
             };
 
         case FIND_FILES.SUCCEEDED:
-            return {...state, ...action.data, fileType: action.fileType };
+            return {...state, ...action.data, fileType: action.fileType, isLoading: false, errorLoad: false };
 
         case REMOVE_FILE.SUCCEEDED:
             return {...state, documents: reject(state.documents, {id: action.data.file_id})};
 
         case UPLOAD.REQUESTED: {
             const { name, size, type } = action.file;
+            const fileType = action.fileType;
             const newState = {...state,
-                uploads: state.uploads.concat([{localId: action.localId, progress: 0, name, size, type}]),
+                uploads: state.uploads.concat([{localId: action.localId, progress: 0, name, size, type, fileType}]),
                 showUploadOverlay: true
             };
 

@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ViewHeader /> renders correctly 1`] = `
+<h3
+  className="view-header"
+>
+  <HelmetWrapper
+    defer={true}
+    encodeSpecialCharacters={true}
+  >
+    <title />
+  </HelmetWrapper>
+</h3>
+`;

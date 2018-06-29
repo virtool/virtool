@@ -4,6 +4,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 
+import { ViewHeader } from "../../base";
 import { getAccount } from "../actions";
 import AccountGeneral from "./General";
 import AccountSettings from "./Settings";
@@ -11,17 +12,17 @@ import APIKeys from "./API/API";
 
 class Account extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet();
     }
 
     render () {
-        return (
-            <div className="container">
-                <h3 className="view-header">
-                    <strong>Account</strong>
-                </h3>
 
+        return (
+            <div className="container-noside">
+                <ViewHeader title="Account">
+                    <strong>Account</strong>
+                </ViewHeader>
                 <Nav bsStyle="tabs">
                     <LinkContainer to="/account/general">
                         <NavItem>General</NavItem>

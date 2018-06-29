@@ -1,6 +1,7 @@
+import copy
 import os
 import sys
-import copy
+
 import motor.motor_asyncio
 import logging
 from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
@@ -10,10 +11,9 @@ from cerberus import Validator
 from urllib.parse import quote_plus
 
 import virtool.app_settings
-import virtool.user
-import virtool.user_permissions
+import virtool.users
 import virtool.utils
-from virtool.handlers.utils import json_response
+from virtool.api.utils import json_response
 
 DATA_ERRORS = {
     "data_not_found_error": False,
@@ -214,19 +214,20 @@ async def setup_db(req):
 async def setup_user(req):
     data = await req.post()
 
-    v = Validator({
-        "user_id": {"type": "string", "required": True},
-        "password": {"type": "string", "required": True}
-    }, allow_unknown=False)
+    if data["password"] != "dummy_password":
+        v = Validator({
+            "user_id": {"type": "string", "required": True},
+            "password": {"type": "string", "required": True}
+        }, allow_unknown=False)
 
-    v.validate(dict(data))
+        v.validate(dict(data))
 
-    data = v.document
+        data = v.document
 
-    req.app["setup"].update({
-        "first_user_id": data["user_id"],
-        "first_user_password": virtool.user.hash_password(data["password"])
-    })
+        req.app["setup"].update({
+            "first_user_id": data["user_id"],
+            "first_user_password": virtool.users.hash_password(data["password"])
+        })
 
     return web.HTTPFound("/setup")
 
@@ -363,17 +364,21 @@ async def save_and_reload(req):
 
     db = client[data["db_name"]]
 
+    user_id = req.app["setup"]["first_user_id"]
+
     await db.users.insert_one({
-        "_id": req.app["setup"]["first_user_id"],
+        "_id": user_id,
         # A list of group _ids the user is associated with.
-        "groups": ["administrator"],
+        "administrator": True,
+        "groups": list(),
+        "identicon": virtool.users.calculate_identicon(user_id),
         "settings": {
             "skip_quick_analyze_dialog": True,
             "show_ids": False,
             "show_versions": False,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
-        "permissions": {p: True for p in virtool.user_permissions.PERMISSIONS},
+        "permissions": {p: True for p in virtool.users.PERMISSIONS},
         "password": req.app["setup"]["first_user_password"],
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
@@ -385,10 +390,10 @@ async def save_and_reload(req):
         "invalidate_sessions": False
     })
 
-    subdirs = [
+    sub_dirs = [
         "files",
-        "reference/viruses",
-        "reference/subtraction",
+        "references",
+        "subtractions",
         "samples",
         "hmm",
         "logs/jobs"
@@ -402,7 +407,7 @@ async def save_and_reload(req):
         except FileExistsError:
             pass
 
-    for subdir in subdirs:
+    for subdir in sub_dirs:
         os.makedirs(os.path.join(data_path, subdir))
 
     settings_dict = {key: data[key] for key in [

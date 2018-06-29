@@ -1,13 +1,13 @@
 import base64
+
 from aiohttp import web
 
-import virtool.user
-import virtool.utils
 import virtool.errors
-from virtool.handlers.utils import bad_request
+import virtool.users
+import virtool.utils
+from virtool.api.utils import bad_request
 
-
-AUTHORIZATION_PROJECTION = ["user", "groups", "permissions"]
+AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
 
 
 class Client:
@@ -17,6 +17,7 @@ class Client:
         self.ip = ip
         self.user_agent = user_agent
 
+        self.administrator = None
         self.authorized = False
         self.user_id = None
         self.groups = None
@@ -25,6 +26,7 @@ class Client:
         self.session_id = None
 
     def authorize(self, document, is_api):
+        self.administrator = document["administrator"]
         self.authorized = True
         self.user_id = document["user"]["id"]
         self.groups = document["groups"]
@@ -55,7 +57,7 @@ async def middleware(req, handler):
                 return bad_request("Malformed Authorization header")
 
             document = await req.app["db"].keys.find_one({
-                "_id": virtool.user.hash_api_key(key),
+                "_id": virtool.users.hash_api_key(key),
                 "user.id": user_id
             }, AUTHORIZATION_PROJECTION)
 

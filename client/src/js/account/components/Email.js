@@ -14,17 +14,18 @@ const getInitialState = (email) => ({
 
 const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
 
-class Email extends React.Component {
+export class Email extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = getInitialState(this.props.email);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error === "Invalid input") {
-            this.setState({ error: "Please provide a valid email address" });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.error === "Invalid input" && !prevState.error.length) {
+            return { error: "Please provide a valid email address" };
         }
+        return null;
     }
 
     handleChange = (e) => {
@@ -64,30 +65,34 @@ class Email extends React.Component {
     render () {
 
         return (
-            <Panel bsStyle={this.state.error ? "danger" : "default"}>
-                <Panel.Heading>Email</Panel.Heading>
-                <Panel.Body>
-                    <form onSubmit={this.onSubmit}>
-                        <InputError
-                            label="Email address"
-                            value={this.state.email}
-                            onChange={this.handleChange}
-                            onBlur={this.handleBlur}
-                            error={this.state.error}
-                        />
+            <Row>
+                <Col md={8} lg={6}>
+                    <Panel bsStyle={this.state.error ? "danger" : "default"}>
+                        <Panel.Heading>Email</Panel.Heading>
+                        <Panel.Body>
+                            <form onSubmit={this.onSubmit}>
+                                <InputError
+                                    label="Email address"
+                                    value={this.state.email}
+                                    onChange={this.handleChange}
+                                    onBlur={this.handleBlur}
+                                    error={this.state.error}
+                                />
 
-                        <div style={{marginTop: "20px"}}>
-                            <Row>
-                                <Col xs={24} md={12}>
-                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
-                                        Save
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                    </form>
-                </Panel.Body>
-            </Panel>
+                                <div style={{marginTop: "20px"}}>
+                                    <Row>
+                                        <Col xs={24} md={12}>
+                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
+                                                Save
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            </form>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+            </Row>
         );
     }
 }

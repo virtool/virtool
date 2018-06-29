@@ -1,0 +1,140 @@
+import React from "react";
+import { find, map, filter, differenceWith, isEqual } from "lodash-es";
+import { connect } from "react-redux";
+import { Badge, ListGroup } from "react-bootstrap";
+
+import AddSequence from "./AddSequence";
+import EditSequence from "./EditSequence";
+import RemoveSequence from "./RemoveSequence";
+import Sequence from "./Sequence";
+import { Flex, Icon, NoneFound } from "../../../base";
+import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
+import { formatIsolateName } from "../../../utils";
+
+const getInitialState = (props) => {
+    const originalSchema = map(props.schema, "name");
+    const sequencesWithSegment = filter(props.sequences, "segment");
+    const segmentsInUse = map(sequencesWithSegment, "segment");
+    const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
+
+    return {
+        schema: remainingSchema,
+        sequences: props.sequences
+    };
+};
+
+class IsolateSequences extends React.Component {
+
+    constructor (props) {
+        super(props);
+
+        this.state = getInitialState(this.props);
+    }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (prevState.sequences !== nextProps.sequences) {
+            return getInitialState(nextProps);
+        }
+        return null;
+    }
+
+    render () {
+        let sequenceComponents;
+
+        if (this.props.sequences.length) {
+            sequenceComponents = map(this.props.sequences, sequence =>
+                <Sequence
+                    key={sequence.id}
+                    active={sequence.accession === this.props.activeSequenceId}
+                    canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                    showEditSequence={this.props.showEditSequence}
+                    showRemoveSequence={this.props.showRemoveSequence}
+                    {...sequence}
+                />
+            );
+        } else {
+            sequenceComponents = <NoneFound noun="sequences" noListGroup />;
+        }
+
+        return (
+            <div>
+                <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                    <strong style={{flex: "0 1 auto"}}>Sequences</strong>
+                    <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
+                        <Badge>{this.props.sequences.length}</Badge>
+                    </span>
+                    {this.props.hasModifyOTU && !this.props.isRemote ? (
+                        <Icon
+                            name="plus-square"
+                            bsStyle="primary"
+                            tip="Add Sequence"
+                            tipPlacement="left"
+                            onClick={this.props.showAddSequence}
+                            pullRight
+                        />
+                    ) : null}
+                </Flex>
+
+                <ListGroup>
+                    {sequenceComponents}
+                </ListGroup>
+
+                <AddSequence schema={this.state.schema} />
+
+                <EditSequence
+                    otuId={this.props.otuId}
+                    isolateId={this.props.activeIsolateId}
+                    schema={this.state.schema}
+                />
+
+                <RemoveSequence
+                    otuId={this.props.otuId}
+                    isolateId={this.props.activeIsolateId}
+                    isolateName={this.props.isolateName}
+                    schema={this.state.schema}
+                />
+            </div>
+        );
+    }
+}
+
+const mapStateToProps = (state) => {
+    let sequences = null;
+    let activeIsolate = null;
+
+    const activeIsolateId = state.otus.activeIsolateId;
+    const schema = state.otus.detail.schema;
+
+    if (state.otus.detail.isolates.length) {
+        activeIsolate = find(state.otus.detail.isolates, {id: activeIsolateId});
+        sequences = activeIsolate.sequences;
+    }
+
+    return {
+        activeIsolateId,
+        sequences,
+        schema,
+        otuId: state.otus.detail.id,
+        editing: state.otus.editSequence,
+        isolateName: formatIsolateName(activeIsolate),
+        isRemote: state.references.detail.remotes_from
+    };
+};
+
+const mapDispatchToProps = (dispatch) => ({
+
+    showAddSequence: () => {
+        dispatch(showAddSequence());
+    },
+
+    showEditSequence: (sequenceId) => {
+        dispatch(showEditSequence(sequenceId));
+    },
+
+    showRemoveSequence: (sequenceId) => {
+        dispatch(showRemoveSequence(sequenceId));
+    }
+
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateSequences);

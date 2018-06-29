@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { createFindURL, getFindTerm } from "../../utils";
+import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
@@ -12,7 +12,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
-                    <Icon name="search" />
+                    <Icon name="search fa-fw" />
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
@@ -23,15 +23,11 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
             </InputGroup>
         </FormGroup>
 
-        <LinkContainer to="/samples/files">
-            <Button tip="Read Files" icon="folder-open" />
-        </LinkContainer>
-
         {canCreate ? (
             <LinkContainer to={{state: {create: true}}}>
                 <Button
-                    tip="Create Sample"
-                    icon="new-entry"
+                    tip="Create"
+                    icon="plus-square fa-fw"
                     bsStyle="primary"
                 />
             </LinkContainer>
@@ -41,7 +37,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
 
 const mapStateToProps = (state) => ({
     term: getFindTerm(),
-    canCreate: state.account.permissions.create_sample
+    canCreate: checkAdminOrPermission(state.account.administrator, state.account.permissions, "create_sample")
 });
 
 const mapDispatchToProps = (dispatch) => ({

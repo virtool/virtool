@@ -1,9 +1,9 @@
 import React from "react";
-import { map, sortBy } from "lodash-es";
+import { map, sortBy, get } from "lodash-es";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { IDRow, ListGroupItem, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
 import { getHmm } from "../actions";
 
 const HMMTaxonomy = ({ counts }) => {
@@ -31,14 +31,22 @@ class HMMDetail extends React.Component {
 
     render () {
 
+        if (this.props.error) {
+            return <NotFound />;
+        }
+
         if (this.props.detail === null) {
-            return <LoadingPlaceholder maring="130px" />;
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) =>
             <tr key={index}>
                 <td>
-                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`} target="_blank">
+                    <a
+                        href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         {accession}
                     </a>
                 </td>
@@ -55,9 +63,9 @@ class HMMDetail extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
+                <ViewHeader title={`${this.props.detail.names[0]} - HMMs`}>
                     <strong>{this.props.detail.names[0]}</strong>
-                </h3>
+                </ViewHeader>
 
                 <Table bordered>
                     <tbody>
@@ -133,6 +141,7 @@ class HMMDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_HMM_ERROR", null),
     detail: state.hmms.detail
 });
 

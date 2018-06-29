@@ -1,8 +1,8 @@
-import virtool.user_permissions
+import virtool.users
 
 
 def is_permission_dict(field, value, error):
-    if any(key not in virtool.user_permissions.PERMISSIONS for key in value):
+    if any(key not in virtool.users.PERMISSIONS for key in value):
         error(field, "Keys must be valid permissions")
 
 

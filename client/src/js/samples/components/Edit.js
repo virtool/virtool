@@ -22,10 +22,11 @@ class EditSample extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
-            this.setState({ error: nextProps.error });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
+            return { error: nextProps.error };
         }
+        return null;
     }
 
     handleChange = (e) => {
@@ -95,7 +96,7 @@ class EditSample extends React.Component {
 
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="floppy">
+                        <Button type="submit" bsStyle="primary" icon="save">
                             Save
                         </Button>
                     </Modal.Footer>

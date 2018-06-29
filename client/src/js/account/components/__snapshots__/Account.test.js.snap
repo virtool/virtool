@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Account /> renders correctly 1`] = `
+<div
+  className="container-noside"
+>
+  <ViewHeader
+    title="Account"
+  >
+    <strong>
+      Account
+    </strong>
+  </ViewHeader>
+  <Nav
+    bsClass="nav"
+    bsStyle="tabs"
+    justified={false}
+    pullLeft={false}
+    pullRight={false}
+    stacked={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/account/general"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        General
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/account/settings"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Settings
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/account/api"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        API
+      </NavItem>
+    </LinkContainer>
+  </Nav>
+  <Switch>
+    <Redirect
+      exact={true}
+      from="/account"
+      push={false}
+      to="/account/general"
+    />
+    <Route
+      component={[Function]}
+      path="/account/general"
+    />
+    <Route
+      component={[Function]}
+      path="/account/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/account/api"
+    />
+  </Switch>
+</div>
+`;

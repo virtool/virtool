@@ -17,15 +17,16 @@ class RebuildIndex extends React.Component {
         this.state = { error: "" };
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
-            this.setState({ error: nextProps.error });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.error && nextProps.error) {
+            return { error: nextProps.error };
         }
+        return null;
     }
 
-    modalEntered = () => {
-        this.props.onGetUnbuilt();
-    };
+    componentDidMount () {
+        this.props.onGetUnbuilt(this.props.refId);
+    }
 
     handleHide = () => {
         this.setState({ error: "" });
@@ -39,7 +40,7 @@ class RebuildIndex extends React.Component {
 
     save = (e) => {
         e.preventDefault();
-        this.props.onRebuild();
+        this.props.onRebuild(this.props.refId);
     };
 
     render () {
@@ -57,14 +58,14 @@ class RebuildIndex extends React.Component {
                     <span className="input-error-message">{this.state.error}</span>
                     <br />
                     <span className="input-error-message">
-                        Please modify the unverified viruses before rebuilding the index
+                        Please modify the unverified OTUs before rebuilding the index
                     </span>
                 </div>
             )
             : null;
 
         return (
-            <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.handleHide}>
+            <Modal bsSize="large" show={this.props.show} onHide={this.handleHide}>
                 <Modal.Header onHide={this.handleHide} closeButton>
                     Rebuild Index
                 </Modal.Header>
@@ -74,7 +75,7 @@ class RebuildIndex extends React.Component {
                         {errorDisplay}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="hammer">
+                        <Button type="submit" bsStyle="primary" icon="wrench">
                             Start
                         </Button>
                     </Modal.Footer>
@@ -87,17 +88,18 @@ class RebuildIndex extends React.Component {
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "rebuild", true),
     unbuilt: state.indexes.unbuilt,
-    error: get(state, "errors.CREATE_INDEX_ERROR.message", "")
+    error: get(state, "errors.CREATE_INDEX_ERROR.message", ""),
+    refId: state.references.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGetUnbuilt: () => {
-        dispatch(getUnbuilt());
+    onGetUnbuilt: (refId) => {
+        dispatch(getUnbuilt(refId));
     },
 
-    onRebuild: () => {
-        dispatch(createIndex());
+    onRebuild: (refId) => {
+        dispatch(createIndex(refId));
     },
 
     onHide: () => {

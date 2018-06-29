@@ -4,8 +4,12 @@ export const find = () => (
     Request.get(`/api/samples${window.location.search}`)
 );
 
+export const fetch = ({ page }) => (
+    Request.get(`/api/samples?page=${page}`)
+);
+
 export const findReadyHosts = () => (
-    Request.get("/api/subtraction")
+    Request.get("/api/subtractions")
         .query({
             ready: true,
             is_host: true
@@ -16,13 +20,14 @@ export const get = ({ sampleId }) => (
     Request.get(`/api/samples/${sampleId}`)
 );
 
-export const create = ({ name, isolate, host, locale, subtraction, files }) => (
+export const create = ({ name, isolate, host, locale, srna, subtraction, files }) => (
     Request.post("/api/samples")
         .send({
             name,
             isolate,
             host,
             locale,
+            srna,
             subtraction,
             files
         })
@@ -53,9 +58,9 @@ export const getAnalysis = (analysisId, onProgress, onSuccess, onFailure) => (
         .catch(err => onFailure(err))
 );
 
-export const analyze = ({ sampleId, algorithm }) => (
+export const analyze = ({ sampleId, refId, algorithm }) => (
     Request.post(`/api/samples/${sampleId}/analyses`)
-        .send({algorithm})
+        .send({ algorithm, ref_id: refId })
 );
 
 export const blastNuvs = ({ analysisId, sequenceIndex}) => (

@@ -1,41 +1,14 @@
 import React from "react";
-import Moment from "moment";
 import { connect } from "react-redux";
-import { Table } from "react-bootstrap";
 import { push } from "react-router-redux";
-
+import { Table } from "react-bootstrap";
+import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, RelativeTime } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
-
-const JobTable = ({id, mem, proc, status, user}) => (
-    <Table bordered>
-        <tbody>
-            <tr>
-                <th>Cores</th>
-                <td>{proc}</td>
-            </tr>
-            <tr>
-                <th>Memory</th>
-                <td>{mem} GB</td>
-            </tr>
-            <tr>
-                <th>Started By</th>
-                <td>{user.id}</td>
-            </tr>
-            <tr>
-                <th>Started At</th>
-                <td>{Moment(status[0].timestamp).format("YY/MM/DD")}</td>
-            </tr>
-            <tr>
-                <th>Unique ID</th>
-                <td>{id}</td>
-            </tr>
-        </tbody>
-    </Table>
-);
+import JobSteps from "./Steps";
 
 class JobDetail extends React.Component {
 
@@ -49,6 +22,10 @@ class JobDetail extends React.Component {
 
     render () {
 
+        if (this.props.error) {
+            return <NotFound />;
+        }
+
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
@@ -57,24 +34,26 @@ class JobDetail extends React.Component {
 
         const latest = detail.status[detail.status.length - 1];
 
-        let progressStyle = "primary";
+        let progressStyle = "success";
 
         if (latest.state === "running") {
-            progressStyle = "success";
+            progressStyle = "primary";
         }
 
         if (latest.state === "error" || latest.state === "cancelled") {
             progressStyle = "danger";
         }
 
+        const taskName = getTaskDisplayName(detail.task);
+
         return (
             <div>
-                <h3 style={{marginBottom: "20px"}}>
+                <ViewHeader title={`${taskName} - Jobs`}>
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <Flex alignItems="center">
                                 <strong>
-                                    {getTaskDisplayName(detail.task)}
+                                    {taskName}
                                 </strong>
                                 <FlexItem grow={1} pad={7}>
                                     <small className={`text-strong text-capitalize text-${progressStyle}`}>
@@ -86,18 +65,24 @@ class JobDetail extends React.Component {
 
                         <Icon
                             bsStyle="danger"
-                            name="remove"
+                            name="trash"
                             style={{fontSize: "18px"}}
                             onClick={this.handleClick}
                         />
                     </Flex>
-                </h3>
+                    <div className="text-muted" style={{fontSize: "12px"}}>
+                        Started <RelativeTime time={detail.status[0].timestamp} /> by {detail.user.id}
+                    </div>
+                </ViewHeader>
 
-                <ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />
-
-                <JobError error={latest.error} />
-
-                <JobTable {...detail} />
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-4">Cores / Memory</th>
+                            <td className="col-xs-8">{detail.proc} CPUs / {detail.mem} GB</td>
+                        </tr>
+                    </tbody>
+                </Table>
 
                 <h4>
                     <strong>Task Arguments</strong>
@@ -105,12 +90,17 @@ class JobDetail extends React.Component {
 
                 <TaskArgs taskType={detail.task} taskArgs={detail.args} />
 
+                <JobSteps steps={detail.status} />
+
+                <JobError error={latest.error} />
+
             </div>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
+    error: get(state, "errors.GET_JOB_ERROR", null),
     detail: state.jobs.detail
 });
 

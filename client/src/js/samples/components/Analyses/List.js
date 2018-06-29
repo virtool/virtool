@@ -1,5 +1,5 @@
 import React from "react";
-import { map, sortBy } from "lodash-es";
+import { map, sortBy, forEach } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -8,7 +8,7 @@ import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import { analyze } from "../../actions";
 import { getCanModify } from "../../selectors";
-import { findIndexes } from "../../../indexes/actions";
+import {listReadyIndexes} from "../../../indexes/actions";
 import { fetchHmms } from "../../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 
@@ -23,7 +23,7 @@ const AnalysesToolbar = ({ onClick, isDisabled }) => (
             </InputGroup>
         </FormGroup>
         <Button
-            icon="new-entry"
+            icon="plus-square"
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}
@@ -41,14 +41,14 @@ class AnalysesList extends React.Component {
         };
     }
 
-    componentWillMount () {
-        this.props.onFindIndexes();
+    componentDidMount () {
         this.props.onFetchHMMs();
+        this.props.onListReadyIndexes();
     }
 
     render () {
 
-        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexArray === null) {
+        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexes === null) {
             return <LoadingPlaceholder margin="37px" />;
         }
 
@@ -64,63 +64,13 @@ class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
-        let alertMessage;
-        let isBlocked = false;
-
-        if (this.props.modifiedCount) {
-            alertMessage = (
-                <div>
-                    <span>Note: The virus database has changed. </span>
-                    <Link to="/viruses/indexes">Rebuild the index</Link>
-                    <span> to use the latest changes.</span>
-                </div>
-            );
-        }
-
-        if (this.props.indexArray) {
-            const readyIndexes = map(this.props.indexArray, ["ready", true]);
-
-            if (!readyIndexes.length) {
-                alertMessage = (
-                    <div>
-                        <span>
-                            A virus database index build is in progress.
-                        </span>
-                    </div>
-                );
-
-                isBlocked = true;
-            }
-        } else {
-            alertMessage = (
-                <div>
-                    <span>A virus database is not found. </span>
-                    <Link to="/viruses/indexes">Add a database</Link>
-                    <span> to use in analyses.</span>
-                </div>
-            );
-
-            isBlocked = true;
-        }
-
-
-        let indexAlert;
-
-        if (alertMessage) {
-            indexAlert = (
-                <Alert bsStyle="warning" icon="info">
-                    {alertMessage}
-                </Alert>
-            );
-        }
-
         let hmmAlert;
 
-        if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
+        if (!this.props.hmms.status.installed) {
             hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
-                        <Icon name="info" />
+                        <Icon name="info-circle" />
                         <FlexItem pad={5}>
                             <span>The HMM data is not installed. </span>
                             <Link to="/hmm">Install HMMs</Link>
@@ -134,12 +84,10 @@ class AnalysesList extends React.Component {
         return (
             <div>
                 {hmmAlert}
-                {indexAlert}
 
                 {this.props.canModify ?
                     <AnalysesToolbar
                         onClick={() => this.setState({show: true})}
-                        isDisabled={isBlocked}
                     /> : null}
 
                 <ListGroup>
@@ -151,7 +99,8 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
-                    hasHmm={this.props.hmms.total_count && this.props.hmms.file_exists}
+                    hasHmm={!!this.props.hmms.status.installed}
+                    refIndexes={this.props.indexes}
                 />
             </div>
         );
@@ -161,24 +110,25 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    modifiedCount: state.indexes.modified_virus_count,
-    indexArray: state.indexes.documents,
+    indexes: state.samples.readyIndexes,
     hmms: state.hmms,
     canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onAnalyze: (sampleId, algorithm) => {
-        dispatch(analyze(sampleId, algorithm));
+    onAnalyze: (sampleId, references, algorithm) => {
+        forEach(references, (entry) =>
+            dispatch(analyze(sampleId, entry.refId, algorithm))
+        );
     },
 
     onFetchHMMs: () => {
         dispatch(fetchHmms());
     },
 
-    onFindIndexes: () => {
-        dispatch(findIndexes());
+    onListReadyIndexes: () => {
+        dispatch(listReadyIndexes());
     }
 
 });

@@ -1,11 +1,9 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
+import { Badge, Panel, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-
-
-import { Flex, FlexItem, RelativeTime } from "../../base";
+import { Flex, FlexItem } from "../../base";
 
 const PanelBadgeHeader = ({ title, count }) => (
     <Flex alignItems="center">
@@ -18,9 +16,9 @@ const PanelBadgeHeader = ({ title, count }) => (
     </Flex>
 );
 
-const IndexVirusEntry = ({ changeCount, id, name}) => (
+const IndexOTUEntry = ({ refId, changeCount, id, name}) => (
     <ListGroupItem>
-        <Link to={`/viruses/${id}`}>
+        <Link to={`/refs/${refId}/otus/${id}`}>
             {name}
         </Link>
         <Badge>
@@ -31,64 +29,42 @@ const IndexVirusEntry = ({ changeCount, id, name}) => (
 
 const IndexGeneral = ({ detail }) => {
 
+    const refId = detail.reference.id;
+
     const contributors = map(detail.contributors, contributor =>
         <ListGroupItem key={contributor.id}>
             {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s" : ""}`}</Badge>
         </ListGroupItem>
     );
 
-    const viruses = map(detail.viruses, virus =>
-        <IndexVirusEntry
-            key={virus.id}
-            name={virus.name}
-            id={virus.id}
-            changeCount={virus.change_count}
+    const otus = map(detail.otus, otu =>
+        <IndexOTUEntry
+            key={otu.id}
+            refId={refId}
+            name={otu.name}
+            id={otu.id}
+            changeCount={otu.change_count}
         />
     );
 
     return (
         <div>
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th>Change Count</th>
-                        <td>{detail.change_count}</td>
-                    </tr>
-                    <tr>
-                        <th>Created</th>
-                        <td><RelativeTime time={detail.created_at} /></td>
-                    </tr>
-                    <tr>
-                        <th>Created By</th>
-                        <td>{detail.user.id}</td>
-                    </tr>
-                    <tr>
-                        <th>Unique ID</th>
-                        <td>{detail.id}</td>
-                    </tr>
-                </tbody>
-            </Table>
-
             <Panel>
                 <Panel.Heading>
                     <PanelBadgeHeader title="Contributors" count={contributors.length} />
                 </Panel.Heading>
-                <Panel.Body>
-                    <ListGroup>
-                        {contributors}
-                    </ListGroup>
-                </Panel.Body>
+                <ListGroup>
+                    {contributors}
+                </ListGroup>
             </Panel>
 
             <Panel>
                 <Panel.Heading>
-                    <PanelBadgeHeader title="Viruses" count={viruses.length} />
+                    <PanelBadgeHeader title="OTUs" count={otus.length} />
                 </Panel.Heading>
-                <Panel.Body>
-                    <ListGroup>
-                        {viruses}
-                    </ListGroup>
-                </Panel.Body>
+                <ListGroup>
+                    {otus}
+                </ListGroup>
             </Panel>
         </div>
     );

@@ -20,6 +20,7 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
+    FETCH_SAMPLES,
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
@@ -42,6 +43,7 @@ export function* watchSamples () {
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
+    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
@@ -63,6 +65,10 @@ export function* wsUpdateAnalysis (action) {
 
 export function* findSamples (action) {
     yield apiFind("/samples", samplesAPI.find, action, FIND_SAMPLES);
+}
+
+export function* fetchSamples (action) {
+    yield apiCall(samplesAPI.fetch, action, FETCH_SAMPLES);
 }
 
 export function* findReadFiles () {

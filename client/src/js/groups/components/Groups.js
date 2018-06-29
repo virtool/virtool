@@ -7,7 +7,7 @@ import { push } from "react-router-redux";
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
 import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
-import {routerLocationHasState} from "../../utils";
+import { routerLocationHasState } from "../../utils";
 
 class Group extends React.Component {
 
@@ -38,34 +38,40 @@ class Groups extends React.Component {
             createGroupId: "",
             spaceError: false,
             submitted: false,
-            error: ""
+            error: "",
+            groups: props.groups
         };
     }
 
-    componentWillMount () {
+    componentDidMount () {
         if (this.props.groups === null) {
             this.props.onList();
-        } else {
+        } else if (this.props.groups.length) {
             this.setState({
                 activeId: this.props.groups[0].id
             });
         }
     }
 
-    componentWillReceiveProps (nextProps) {
-        const state = {};
+    static getDerivedStateFromProps (nextProps, prevState) {
+        // If there are no groups, skip update
+        if (!nextProps.groups.length) {
+            return null;
+        }
+
+        const newState = {};
+
+        if (!some(nextProps.groups, {id: prevState.activeId}) || (prevState.groups === null && nextProps.groups)) {
+            newState.activeId = nextProps.groups[0].id;
+        }
 
         // What to do if the active group was removed OR the active group id in state if onList response is incoming.
-        if (!some(nextProps.groups, {id: this.state.activeId}) || (this.props.groups === null && nextProps.groups)) {
-            state.activeId = nextProps.groups[0].id;
+        if (nextProps.groups.length > prevState.groups.length) {
+            newState.activeId = difference(nextProps.groups, prevState.groups)[0].id;
+            newState.createGroupId = "";
         }
 
-        if (this.props.groups !== null && nextProps.groups.length > this.props.groups.length) {
-            state.activeId = difference(nextProps.groups, this.props.groups)[0].id;
-            state.createGroupId = "";
-        }
-
-        this.setState(state);
+        return newState;
     }
 
     handleModalExited = () => {
@@ -124,23 +130,40 @@ class Groups extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const groupComponents = map(sortBy(this.props.groups, "id"), group =>
-            <Group key={group.id} {...group} active={this.state.activeId === group.id} onSelect={this.handleSelect} />
-        );
+        let groupComponents = [];
+
+        if (this.props.groups.length) {
+            groupComponents = map(sortBy(this.props.groups, "id"), group =>
+                <Group
+                    key={group.id}
+                    {...group}
+                    active={this.state.activeId === group.id}
+                    onSelect={this.handleSelect}
+                />
+            );
+        }
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
-        const members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+        let members = [];
 
-        let memberComponents = map(members, member =>
-            <Label key={member.id} style={{marginRight: "5px"}}>
-                {member.id}
-            </Label>
-        );
+        if (activeGroup) {
+            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+        }
+
+        let memberComponents = [];
+
+        if (members.length) {
+            memberComponents = map(members, member =>
+                <Label key={member.id} style={{marginRight: "5px"}}>
+                    {member.id}
+                </Label>
+            );
+        }
 
         if (!memberComponents.length) {
             memberComponents = (
                 <div className="text-center">
-                    <Icon name="info" /> No members found.
+                    <Icon name="info-circle" /> No members found.
                 </div>
             );
         }
@@ -155,21 +178,23 @@ class Groups extends React.Component {
             error = "Group names may not contain spaces";
         }
 
-        const permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
-            const readOnly = activeGroup.id === "administrator";
+        let permissionComponents = [];
 
-            result.push(
-                <ListGroupItem
-                    key={key}
-                    onClick={readOnly ? null : () => this.props.onSetPermission(activeGroup.id, key, !value)}
-                    disabled={readOnly}
-                >
-                    <code>{key}</code> <Icon name={`checkbox-${value ? "checked" : "unchecked"}`} pullRight />
-                </ListGroupItem>
-            );
+        if (activeGroup) {
+            permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
 
-            return result;
-        }, []);
+                result.push(
+                    <ListGroupItem
+                        key={key}
+                        onClick={() => this.props.onSetPermission(activeGroup.id, key, !value)}
+                    >
+                        <code>{key}</code> <Icon faStyle="far" name={value ? "check-square" : "square"} pullRight />
+                    </ListGroupItem>
+                );
+
+                return result;
+            }, []);
+        }
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -203,11 +228,9 @@ class Groups extends React.Component {
                         <Col md={7}>
                             <Panel>
                                 <Panel.Heading>Permissions</Panel.Heading>
-                                <Panel.Body>
-                                    <ListGroup style={{marginBottom: "10px"}}>
-                                        {permissionComponents}
-                                    </ListGroup>
-                                </Panel.Body>
+                                <ListGroup>
+                                    {permissionComponents}
+                                </ListGroup>
                             </Panel>
 
                             <Panel>
@@ -218,9 +241,8 @@ class Groups extends React.Component {
                             </Panel>
 
                             <Button
-                                icon="remove"
+                                icon="trash"
                                 bsStyle="danger"
-                                disabled={activeGroup.id === "administrator"}
                                 onClick={() => this.props.onRemove(activeGroup.id)}
                                 block
                             >

@@ -5,7 +5,19 @@
  * @author igboyes
  */
 import Numeral from "numeral";
-import { capitalize, get, replace, sampleSize, split, startCase } from "lodash-es";
+import {
+    capitalize,
+    get,
+    replace,
+    sampleSize,
+    split,
+    startCase,
+    filter,
+    find,
+    differenceWith,
+    isEqual,
+    isEmpty
+} from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -23,6 +35,14 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  */
 export const byteSize = bytes => (
     Numeral(bytes).format("0.0 b")
+);
+
+/*
+ * Deep comparison of two arrays of objects.
+ * Returns true if contents are identical.
+ */
+export const isArrayEqual = (x, y) => (
+    isEmpty(differenceWith(x, y, isEqual))
 );
 
 /**
@@ -166,7 +186,7 @@ export const taskDisplayNames = {
     nuvs: "NuVs",
     pathoscope_bowtie: "PathoscopeBowtie",
     pathoscope_snap: "PathoscopeSNAP",
-    rebuild_index: "Rebuild Index"
+    build_index: "Build Index"
 };
 
 /**
@@ -183,4 +203,60 @@ export const toScientificNotation = (number) => {
     }
 
     return Numeral(number).format("0.000");
+};
+
+export const checkAdminOrPermission = (isAdmin, permissions, permission) => (
+    isAdmin || permissions[permission]
+);
+
+export const checkUserRefPermission = (props, permission) => {
+    const { isAdmin, userId, userGroups } = props;
+    const refUsers = props.detail.users;
+    const refGroups = props.detail.groups;
+
+    if (isAdmin) {
+        return true;
+    }
+
+    const userExists = find(refUsers, ["id", userId]);
+
+    const groupsExist = filter(refGroups, refGroup => {
+        const result = filter(userGroups, group => group === refGroup.id);
+        return result;
+    });
+
+    if (userExists && userExists[permission]) {
+        return true;
+    }
+
+    if (groupsExist.length) {
+        const hasBuildPermission = filter(groupsExist, group => group[permission]);
+        return !!hasBuildPermission.length;
+    }
+
+    return false;
+};
+
+export const getUpdatedScrollListState = (nextProps, prevState) => {
+    if (prevState.masterList === null || nextProps.page === 1) {
+        return {
+            masterList: nextProps.documents,
+            list: nextProps.documents,
+            page: nextProps.page
+        };
+    }
+
+    if (prevState.page !== nextProps.page) {
+        return {
+            masterList: prevState.masterList.concat(nextProps.documents),
+            list: nextProps.documents,
+            page: nextProps.page
+        };
+    } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
+        return {
+            masterList: nextProps.documents,
+            list: nextProps.documents
+        };
+    }
+    return null;
 };

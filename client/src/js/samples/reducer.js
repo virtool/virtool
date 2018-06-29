@@ -1,4 +1,4 @@
-import { filter, map, reject } from "lodash-es";
+import { filter, map, reject, isEqual } from "lodash-es";
 import {
     FIND_SAMPLES,
     GET_SAMPLE,
@@ -13,10 +13,11 @@ import {
     CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS, GET_ANALYSIS_PROGRESS
+    REMOVE_ANALYSIS,
+    GET_ANALYSIS_PROGRESS, LIST_READY_INDEXES
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     detail: null,
     analyses: null,
@@ -27,10 +28,11 @@ const initialState = {
     showRemove: false,
     editError: false,
     reservedFiles: [],
-    readyHosts: null
+    readyHosts: null,
+    readyIndexes: null
 };
 
-const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
+export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
 
     if (analysisDetail && analysisDetail.id === analysisId) {
@@ -68,8 +70,11 @@ export default function samplesReducer (state = initialState, action) {
         case GET_SAMPLE.SUCCEEDED:
             return {...state, detail: action.data};
 
+        case LIST_READY_INDEXES.SUCCEEDED:
+            return {...state, readyIndexes: action.data};
+
         case UPDATE_SAMPLE.SUCCEEDED: {
-            if (state.list === null) {
+            if (state.documents === null) {
                 return state;
             }
 
@@ -116,7 +121,7 @@ export default function samplesReducer (state = initialState, action) {
 
             if (analyses !== null) {
                 analyses = map(analyses, analysis => {
-                    if (analysis === action.placeholder) {
+                    if (isEqual(analysis, action.placeholder)) {
                         return action.data;
                     }
 
@@ -131,7 +136,7 @@ export default function samplesReducer (state = initialState, action) {
             return {
                 ...state,
                 analyses: state.analyses === null ? null : filter(state.analyses,
-                    analysis => analysis !== action.placeholder
+                    analysis => !isEqual(analysis, action.placeholder)
                 )
             };
 

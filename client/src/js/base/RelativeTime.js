@@ -12,6 +12,7 @@ export class RelativeTime extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
+            time: this.props.time,
             timeString: this.getTimeString()
         };
     }
@@ -24,20 +25,20 @@ export class RelativeTime extends React.Component {
         this.interval = window.setInterval(this.update, 8000);
     }
 
-    componentWillReceiveProps (nextProps) {
-        this.setState({time: nextProps.time});
+    static getDerivedStateFromProps (nextProps) {
+        return { time: nextProps.time };
     }
 
     shouldComponentUpdate (nextProps, nextState) {
         // Check if the time string changed. Only re-render if it has.
-        return nextState !== this.state || nextProps !== this.props;
+        return nextState.timeString !== this.state.timeString || nextProps.time !== this.props.time;
     }
 
     componentDidUpdate (prevProps) {
         // If the component gets a new timestamp, the time string must be immediately updated. When the component
         // updates, check the old and new props to see if the timestamp changes. Force a time string update, if props
         // did change.
-        if (prevProps !== this.props) {
+        if (prevProps.time !== this.props.time) {
             this.update();
         }
     }

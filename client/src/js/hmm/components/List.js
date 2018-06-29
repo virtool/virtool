@@ -1,70 +1,94 @@
 import React from "react";
-import { map } from "lodash-es";
-import { FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
-import { Icon, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
-import { createFindURL, getFindTerm } from "../../utils";
+import { Icon, LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
+import { createFindURL, getFindTerm, getUpdatedScrollListState } from "../../utils";
+import { findHmms } from "../actions";
 
-const HMMList = (props) => {
+class HMMList extends React.Component {
 
-    if (props.documents === null) {
-        return <LoadingPlaceholder />;
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
     }
 
-    let rowComponents;
-
-    if (props.documents.length) {
-        rowComponents = map(props.documents, document =>
-            <HMMItem key={document.id} {...document} />
-        );
-    } else {
-        rowComponents = <NoneFound noun="profiles" noListGroup />;
+    static getDerivedStateFromProps (nextProps, prevState) {
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
-    return (
-        <div>
-            <ViewHeader
-                title="HMMs"
-                page={props.page}
-                count={props.documents.length}
-                foundCount={props.found_count}
-                totalCount={props.total_count}
-            />
+    componentDidUpdate (prevProps) {
+        if (prevProps.status && !prevProps.status.installed && this.props.status.installed) {
+            this.props.loadNextPage(1);
+        }
+    }
 
-            {props.file_exists ? null : <HMMInstaller />}
-
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search" />
-                    </InputGroup.Addon>
-
-                    <FormControl
-                        type="text"
-                        placeholder="Definition, cluster, family"
-                        onChange={(e) => props.onFind({find: e.target.value})}
-                        value={props.term}
-                    />
-                </InputGroup>
-            </FormGroup>
-
-            <ListGroup>
-                {rowComponents}
-            </ListGroup>
-
-            <Pagination
-                documentCount={props.documents.length}
-                page={props.page}
-                pageCount={props.page_count}
-                onPage={(page) => props.onFind({page})}
-            />
-        </div>
+    rowRenderer = (index) => (
+        <HMMItem
+            key={this.state.masterList[index].id}
+            {...this.state.masterList[index]}
+        />
     );
-};
+
+    render () {
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
+        if (this.props.status.installed && this.props.status.installed.ready) {
+            return (
+                <div>
+                    <ViewHeader title="HMMs" totalCount={this.props.found_count} />
+
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" />
+                            </InputGroup.Addon>
+
+                            <FormControl
+                                type="text"
+                                placeholder="Definition, cluster, family"
+                                onChange={(e) => this.props.onFind({find: e.target.value})}
+                                value={this.props.term}
+                            />
+                        </InputGroup>
+                    </FormGroup>
+
+                    {this.props.documents.length ? (
+                        <ScrollList
+                            hasNextPage={this.props.page < this.props.page_count}
+                            isNextPageLoading={this.props.isLoading}
+                            isLoadError={this.props.errorLoad}
+                            list={this.state.masterList}
+                            loadNextPage={this.props.loadNextPage}
+                            page={this.state.page}
+                            rowRenderer={this.rowRenderer}
+                        />
+                    ) : <NoneFound noun="HMMs" />}
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                <h3 className="view-header">
+                    <strong>
+                        HMMs
+                    </strong>
+                </h3>
+                <HMMInstaller />
+            </div>
+        );
+    }
+}
 
 const mapStateToProps = (state) => ({
     ...state.hmms,
@@ -76,6 +100,10 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: ({find, page}) => {
         const url = createFindURL({find, page});
         dispatch(push(url.pathname + url.search));
+    },
+
+    loadNextPage: (page) => {
+        dispatch(findHmms(page));
     }
 
 });

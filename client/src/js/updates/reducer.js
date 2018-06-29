@@ -1,14 +1,9 @@
-import {
-    WS_UPDATE_STATUS,
-    GET_SOFTWARE_UPDATES,
-    GET_DATABASE_UPDATES,
-    SHOW_INSTALL_MODAL,
-    HIDE_INSTALL_MODAL
-} from "../actionTypes";
+import { get } from "lodash-es";
+import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../actionTypes";
 
-const initialState = {
-    software: null,
-    database: null,
+export const initialState = {
+    process: null,
+    releases: null,
     showInstallModal: false
 };
 
@@ -16,24 +11,22 @@ export default function updatesReducer (state = initialState, action) {
 
     switch (action.type) {
 
+        case WS_UPDATE_PROCESS:
+            if (action.data.id === get(state, "process.id")) {
+                return {...state, process: action.data};
+            }
+
+            return state;
+
         case WS_UPDATE_STATUS:
-            if (action.data.id === "software_update") {
-                return {...state, software: action.data};
+            if (action.data.id === "software") {
+                return {...state, ...action.data};
             }
 
             return state;
 
         case GET_SOFTWARE_UPDATES.SUCCEEDED:
-            return {...state, software: action.data};
-
-        case GET_DATABASE_UPDATES.SUCCEEDED:
-            return {...state, database: action.data};
-
-        case SHOW_INSTALL_MODAL:
-            return {...state, showInstallModal: true};
-
-        case HIDE_INSTALL_MODAL:
-            return {...state, showInstallModal: false};
+            return {...state, ...action.data};
 
         default:
             return state;

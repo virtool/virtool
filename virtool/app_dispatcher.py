@@ -1,7 +1,7 @@
 import asyncio
 from copy import deepcopy
 
-import virtool.handlers.utils
+import virtool.api.utils
 
 
 async def default_writer(connection, message):
@@ -12,13 +12,13 @@ class Connection:
 
     def __init__(self, ws, session):
         self._ws = ws
-        self.ping = self._ws.ping()
+        self.ping = self._ws.ping
         self.user_id = session.user_id
         self.groups = session.groups
         self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=virtool.handlers.utils.dumps)
+        await self._ws.send_json(message, dumps=virtool.api.utils.dumps)
 
     async def close(self):
         await self._ws.close()
@@ -32,9 +32,8 @@ class Dispatcher:
         #: A dict of all active connections.
         self.connections = list()
         self.alive = True
-        self._ping_task = asyncio.ensure_future(self.ping_connections(), loop=loop)
 
-    async def ping_connections(self):
+    async def run(self):
         to_remove = list()
 
         try:
@@ -46,7 +45,7 @@ class Dispatcher:
 
                 for connection in self.connections:
                     try:
-                        connection.ping()
+                        await connection.ping()
                     except RuntimeError as err:
                         if "unable to perform operation on <TCPTransport closed=True" in str(err):
                             to_remove.append(connection)
@@ -54,7 +53,8 @@ class Dispatcher:
                 await asyncio.sleep(5, loop=self.loop)
 
         except asyncio.CancelledError:
-            pass
+            for connection in self.connections:
+                await connection.close()
 
     def add_connection(self, connection):
         """
@@ -135,17 +135,8 @@ class Dispatcher:
             try:
                 await writer(connection, deepcopy(message))
             except RuntimeError as err:
-                if "unable to perform operation on <TCPTransport closed=True" in str(err):
+                if "RuntimeError: unable to perform operation on <TCPTransport" in str(err):
                     connections_to_remove.append(connection)
 
         for connection in connections_to_remove:
             self.remove_connection(connection)
-
-    async def close(self):
-        self.alive = False
-
-        if self._ping_task is not None:
-            self._ping_task.cancel()
-
-        for connection in self.connections:
-            await connection.close()

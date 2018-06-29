@@ -1,12 +1,13 @@
-import arrow
 import datetime
 import os
-import pymongo
 import shutil
 import sys
-
+import tarfile
+import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
+
+import arrow
 
 
 def base_processor(document):
@@ -94,9 +95,9 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     """
     excluded = excluded or list()
 
-    characters = digits + ascii_letters if mixed_case else ascii_lowercase
+    characters = digits + (ascii_letters if mixed_case else ascii_lowercase)
 
-    candidate = "".join([choice(characters) for i in range(length)])
+    candidate = "".join([choice(characters) for _ in range(length)])
 
     if candidate not in excluded:
         return candidate
@@ -112,21 +113,6 @@ def average_list(list1, list2):
         raise TypeError("Both arguments must be lists of the same length")
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
-
-
-async def get_new_id(collection, excluded=None):
-    """
-    Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
-    in ``excluded``.
-
-    """
-    excluded = excluded or list()
-
-    excluded += await collection.distinct("_id")
-
-    excluded = list(set(excluded))
-
-    return random_alphanumeric(length=8, excluded=excluded)
 
 
 def coerce_list(obj):
@@ -169,7 +155,7 @@ async def reload(app):
     raise SystemError("Could not determine executable type")
 
 
-async def update_status_process(db, dispatch, _id, progress, step=None, error=None):
+async def update_status_process(db, _id, progress, step=None, error=None):
     """
     Update the process field in a status document. These fields are used to track long-running asynchronous processes
     such as software updates or data imports.
@@ -178,9 +164,6 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param dispatch: a reference to the dispatcher's dispatch method
-    :type dispatch: func
 
     :param _id: the database _id for the status document
     :type _id: str
@@ -210,11 +193,25 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
 
     document = await db.status.find_one_and_update({"_id": _id}, {
         "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
+    })
 
-    document = base_processor(document)
+    return base_processor(document)
 
-    await dispatch("status", "update", document)
 
-    return document
+def get_temp_dir():
+    return tempfile.TemporaryDirectory()
 
+
+def decompress_tgz(path, target):
+    """
+    Decompress the tar.gz file at ``path`` to the directory ``target``.
+
+    :param path: the path to the tar.gz file.
+    :type path: str
+
+    :param target: the path to directory into which to decompress the tar.gz file.
+    :type target: str
+
+    """
+    with tarfile.open(path, "r:gz") as tar:
+        tar.extractall(target)

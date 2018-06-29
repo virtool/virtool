@@ -8,30 +8,32 @@ import { Icon, RelativeTime, ListGroupItem } from "../../base";
 export default class IndexEntry extends React.PureComponent {
 
     static propTypes = {
+        id: PropTypes.string,
         ready: PropTypes.bool,
+        refId: PropTypes.string,
         showReady: PropTypes.bool,
         created_at: PropTypes.string,
         version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-        modification_count: PropTypes.number,
-        modified_virus_count: PropTypes.number
+        change_count: PropTypes.number,
+        modified_otu_count: PropTypes.number
     };
 
     render () {
 
-        let ready;
+        let stateIcon;
 
         // Decide what icon/text should be shown at the right end of the index document. If the index is building a
         // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
         // content is shown at the right.
         if (this.props.showReady) {
             if (this.props.ready) {
-                ready = (
+                stateIcon = (
                     <span className="pull-right">
-                        <Icon name="checkmark" bsStyle="success" /> <strong>Active</strong>
+                        <Icon name="check" bsStyle="success" /> <strong>Active</strong>
                     </span>
                 );
             } else {
-                ready = (
+                stateIcon = (
                     <div className="pull-right" >
                         <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} />
                         <strong> Building</strong>
@@ -43,24 +45,25 @@ export default class IndexEntry extends React.PureComponent {
         // The description of
         let changeDescription;
 
-        if (this.props.modification_count !== null) {
+        if (this.props.change_count !== null) {
             // Text to show if no changes occurred since the last index build. Technically, should never be shown
             // because the rebuild button is not shown if no changes have been made.
             changeDescription = "No changes";
 
-            // This should always test true in practice. Shows the number of changes and the number of viruses
+            // This should always test true in practice. Shows the number of changes and the number of OTUs
             // affected.
-            if (this.props.modification_count > 0) {
+            if (this.props.change_count > 0) {
                 changeDescription = (
                     <span>
-                        {this.props.modification_count} changes made in {this.props.modified_virus_count} viruses
+                        {this.props.change_count} {" changes made in "}
+                        {this.props.modified_otu_count} {this.props.modified_otu_count === 1 ? "OTU" : "OTUs"}
                     </span>
                 );
             }
         }
 
         return (
-            <LinkContainer to={`/viruses/indexes/${this.props.version}`} className="spaced">
+            <LinkContainer to={`/refs/${this.props.refId}/indexes/${this.props.id}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>
@@ -75,7 +78,7 @@ export default class IndexEntry extends React.PureComponent {
                             {changeDescription}
                         </Col>
                         <Col md={2}>
-                            {ready}
+                            {stateIcon}
                         </Col>
                     </Row>
                 </ListGroupItem>

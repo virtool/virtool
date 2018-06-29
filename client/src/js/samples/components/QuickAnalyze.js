@@ -98,7 +98,7 @@ class QuickAnalyze extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="new-entry">
+                        <Button type="submit" bsStyle="primary" icon="plus-square">
                             Create
                         </Button>
                     </Modal.Footer>

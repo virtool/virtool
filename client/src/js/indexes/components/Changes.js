@@ -1,21 +1,46 @@
 import React from "react";
-import { map } from "lodash-es";
-import { Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
+import { Row, Col, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 
-
 import { getIndexHistory } from "../actions";
-import { LoadingPlaceholder, Pagination } from "../../base";
+import { LoadingPlaceholder, ScrollList } from "../../base";
+import { getUpdatedScrollListState } from "../../utils";
 
 class IndexChanges extends React.Component {
 
-    componentWillMount () {
-        this.props.onGet(this.props.match.params.indexVersion, 1);
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.history ? this.props.history.documents : [],
+            list: this.props.history ? this.props.history.documents : [],
+            page: this.props.history ? this.props.history.page : 1
+        };
+    }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (nextProps.history === null) {
+            return null;
+        }
+
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     handlePage = (page) => {
-        this.props.onGet(this.props.match.params.indexVersion, page);
-    }
+        this.props.onGet(this.props.detail.id, page);
+    };
+
+    rowRenderer = (index) => (
+        <ListGroupItem key={this.state.masterList[index].id} className="spaced">
+            <Row>
+                <Col xs={12} md={6}>
+                    <strong>{this.state.masterList[index].otu.name}</strong>
+                </Col>
+                <Col xs={12} md={6}>
+                    {this.state.masterList[index].description}
+                </Col>
+            </Row>
+        </ListGroupItem>
+    );
 
     render () {
 
@@ -23,35 +48,17 @@ class IndexChanges extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const history = this.props.history;
-
-        const changeComponents = map(history.documents, change =>
-            <ListGroupItem key={change.id} className="spaced">
-                <Row>
-                    <Col xs={12} md={6}>
-                        <strong>{change.virus.name}</strong>
-                    </Col>
-                    <Col xs={12} md={6}>
-                        {change.description}
-                    </Col>
-                </Row>
-            </ListGroupItem>
-        );
-
         return (
             <div>
-                <ListGroup>
-                    {changeComponents}
-                </ListGroup>
-
-                <div className="text-center">
-                    <Pagination
-                        documentCount={history.documents.length}
-                        onPage={this.handlePage}
-                        page={history.page}
-                        pageCount={history.page_count}
-                    />
-                </div>
+                <ScrollList
+                    hasNextPage={this.props.history.page < this.props.history.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
+                    list={this.state.masterList}
+                    loadNextPage={this.handlePage}
+                    page={this.state.page}
+                    rowRenderer={this.rowRenderer}
+                />
             </div>
         );
     }
@@ -59,13 +66,15 @@ class IndexChanges extends React.Component {
 
 const mapStateToProps = (state) => ({
     detail: state.indexes.detail,
-    history: state.indexes.history
+    history: state.indexes.history,
+    isLoading: state.indexes.isLoading,
+    errorLoad: state.indexes.errorLoad
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGet: (indexVersion, page) => {
-        dispatch(getIndexHistory(indexVersion, page));
+    onGet: (indexId, page) => {
+        dispatch(getIndexHistory(indexId, page));
     }
 
 });

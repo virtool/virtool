@@ -3,11 +3,21 @@ import { select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as jobsAPI from "./api";
 import { apiCall, apiFind, setPending } from "../sagaUtils";
-import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../actionTypes";
+import {
+    WS_UPDATE_JOB,
+    FIND_JOBS,
+    FETCH_JOBS,
+    GET_JOB,
+    CANCEL_JOB,
+    REMOVE_JOB,
+    CLEAR_JOBS,
+    GET_RESOURCES
+} from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
     yield throttle(300, LOCATION_CHANGE, findJobs);
+    yield takeLatest(FETCH_JOBS.REQUESTED, fetchJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
@@ -21,12 +31,16 @@ export function* wsUpdateJob (action) {
     const detail = yield select(state => state.jobs.detail);
 
     if (detail !== null && detail.id === action.data.id) {
-        yield getJob({id: detail.id});
+        yield getJob({jobId: detail.id});
     }
 }
 
 export function* findJobs (action) {
     yield apiFind("/jobs", jobsAPI.find, action, FIND_JOBS);
+}
+
+export function* fetchJobs (action) {
+    yield apiCall(jobsAPI.fetch, action, FETCH_JOBS);
 }
 
 export function* getJobWithPending (action) {

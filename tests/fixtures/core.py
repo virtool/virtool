@@ -3,13 +3,43 @@ import os
 import pytest
 import shutil
 import sys
-import types
-from aiohttp.test_utils import make_mocked_coro
-
-import virtool.app_dispatcher
+import multidict
 
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
+
+
+class MockRequest:
+
+    def __init__(self):
+        self.app = dict()
+        self._state = dict()
+
+    def __getitem__(self, key):
+        return self._state.get(key)
+
+    def __setitem__(self, key, value):
+        self._state[key] = value
+
+
+class StaticTime:
+
+    datetime = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
+    iso = "2015-10-06T20:00:00Z"
+
+
+@pytest.fixture
+def mock_req():
+    return MockRequest()
+
+
+@pytest.fixture(scope="session")
+def md_proxy():
+    def func(data_dict=None):
+        md = multidict.MultiDict(data_dict or dict())
+        return multidict.MultiDictProxy(md)
+
+    return func
 
 
 @pytest.fixture
@@ -18,7 +48,7 @@ def test_files_path():
 
 
 @pytest.fixture
-def test_random_alphanumeric(monkeypatch):
+def test_random_alphanumeric(mocker):
     class RandomAlphanumericTester:
 
         def __init__(self):
@@ -59,46 +89,18 @@ def test_random_alphanumeric(monkeypatch):
         def next_choice(self):
             return self.choices[-1]
 
-    tester = RandomAlphanumericTester()
-
-    monkeypatch.setattr("virtool.utils.random_alphanumeric", tester)
-
-    return tester
+    return mocker.patch("virtool.utils.random_alphanumeric", new=RandomAlphanumericTester())
 
 
-@pytest.fixture
-def static_time(monkeypatch):
-    time = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
-
-    monkeypatch.setattr("virtool.utils.timestamp", lambda: time)
-
-    return time
+@pytest.fixture(scope="session")
+def static_time_obj():
+    return StaticTime()
 
 
 @pytest.fixture
-def test_dispatch(loop, mocker, monkeypatch):
-
-    m = mocker.Mock(spec=virtool.app_dispatcher.Dispatcher(loop))
-
-    setattr(m, "close", make_mocked_coro())
-
-    m.connections = list()
-
-    m.dispatch_stub = mocker.stub(name="dispatch")
-
-    async def dispatch(self, *args, **kwargs):
-        self.dispatch_stub(*args, **kwargs)
-
-    dispatch.stub = m.dispatch_stub
-
-    m.dispatch = types.MethodType(dispatch, m)
-
-    mock_class = mocker.Mock()
-    mock_class.return_value = m
-
-    monkeypatch.setattr("virtool.app_dispatcher.Dispatcher", mock_class)
-
-    return m.dispatch
+def static_time(mocker, static_time_obj):
+    mocker.patch("virtool.utils.timestamp", return_value=static_time_obj.datetime)
+    return static_time_obj
 
 
 @pytest.fixture

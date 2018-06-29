@@ -1,5 +1,4 @@
 import React from "react";
-import Moment from "moment";
 import Numeral from "numeral";
 import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
@@ -22,60 +21,47 @@ const SampleDetailGeneral = (props) => (
                 )}
 
                 <IDRow id={props.id} />
-
-                <tr>
-                    <th>Created</th>
-                    <td>{Moment(props.created_at).calendar()}</td>
-                </tr>
-                <tr>
-                    <th>Created By</th>
-                    <td>{props.userId}</td>
-                </tr>
             </tbody>
         </table>
 
         <Panel>
             <Panel.Heading>Library</Panel.Heading>
-            <Panel.Body>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className="col-xs-4">Read Count</th>
-                            <td className="col-xs-8">{props.count}</td>
-                        </tr>
-                        <tr>
-                            <th>Length Range</th>
-                            <td>{props.lengthRange}</td>
-                        </tr>
-                        <tr>
-                            <th>GC Content</th>
-                            <td>{props.gc}</td>
-                        </tr>
-                        <tr>
-                            <th>Paired</th>
-                            <td>{props.paired ? "Yes" : "No"}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-            </Panel.Body>
+            <Table bordered>
+                <tbody>
+                    <tr>
+                        <th className="col-xs-4">Read Count</th>
+                        <td className="col-xs-8">{props.count}</td>
+                    </tr>
+                    <tr>
+                        <th>Length Range</th>
+                        <td>{props.lengthRange}</td>
+                    </tr>
+                    <tr>
+                        <th>GC Content</th>
+                        <td>{props.gc}</td>
+                    </tr>
+                    <tr>
+                        <th>Paired</th>
+                        <td>{props.paired ? "Yes" : "No"}</td>
+                    </tr>
+                </tbody>
+            </Table>
         </Panel>
 
         <Panel>
             <Panel.Heading>Files</Panel.Heading>
-            <Panel.Body>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className="col-xs-4">Original Files</th>
-                            <td className="col-xs-8">{props.files.join(", ")}</td>
-                        </tr>
-                        <tr>
-                            <th>Encoding</th>
-                            <td>{props.encoding}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-            </Panel.Body>
+            <Table bordered>
+                <tbody>
+                    <tr>
+                        <th className="col-xs-4">Original Files</th>
+                        <td className="col-xs-8">{props.files.join(", ")}</td>
+                    </tr>
+                    <tr>
+                        <th>Encoding</th>
+                        <td>{props.encoding}</td>
+                    </tr>
+                </tbody>
+            </Table>
         </Panel>
 
         <EditSample />

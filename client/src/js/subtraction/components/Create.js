@@ -51,12 +51,11 @@ class CreateSubtraction extends React.Component {
         this.state = getInitialState();
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (!this.props.error && nextProps.error) {
-            this.setState({
-                errorSubtractionId: nextProps.error
-            });
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.errorSubtractionId && nextProps.error) {
+            return { errorSubtractionId: nextProps.error };
         }
+        return null;
     }
 
     handleChange = (e) => {
@@ -129,7 +128,7 @@ class CreateSubtraction extends React.Component {
         } else {
             fileComponents = (
                 <ListGroupItem className="text-center">
-                    <Icon name="info" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
+                    <Icon name="info-circle" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
                 </ListGroupItem>
             );
         }

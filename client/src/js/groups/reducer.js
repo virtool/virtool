@@ -1,13 +1,13 @@
 import { reject, sortBy, unionBy } from "lodash-es";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     list: null,
     pending: false,
     createError: false
 };
 
-const updateGroup = (state, update) => ({
+export const updateGroup = (state, update) => ({
     ...state,
     pending: false,
     list: sortBy(unionBy([update], state.list, "id"), "id")

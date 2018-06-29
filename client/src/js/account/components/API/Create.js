@@ -16,7 +16,8 @@ const getInitialState = (props) => ({
     permissions: mapValues(props.permissions, () => false),
     submitted: false,
     copied: false,
-    error: ""
+    error: "",
+    show: false
 });
 
 export class CreateAPIKey extends React.Component {
@@ -24,6 +25,13 @@ export class CreateAPIKey extends React.Component {
     constructor (props) {
         super(props);
         this.state = getInitialState(props);
+    }
+
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (!prevState.show && nextProps.newKey) {
+            return { show: true };
+        }
+        return null;
     }
 
     handleModalExited = () => {
@@ -54,7 +62,7 @@ export class CreateAPIKey extends React.Component {
     render () {
         let content;
 
-        if (this.props.newKey) {
+        if (this.state.show) {
             content = (
                 <Modal.Body className="text-center">
                     <Row>
@@ -90,7 +98,7 @@ export class CreateAPIKey extends React.Component {
                     </Row>
 
                     <small className={CX("text-primary", {invisible: !this.state.copied})}>
-                        <Icon name="checkmark" /> Copied
+                        <Icon name="check" /> Copied
                     </small>
                 </Modal.Body>
             );
@@ -115,7 +123,7 @@ export class CreateAPIKey extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <Button type="submit" icon="floppy" bsStyle="primary">
+                        <Button type="submit" icon="save" bsStyle="primary">
                             Save
                         </Button>
                     </Modal.Footer>
