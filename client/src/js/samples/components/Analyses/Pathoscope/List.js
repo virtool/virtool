@@ -19,7 +19,8 @@ export default class PathoscopeList extends React.Component {
         expanded: PropTypes.arrayOf(PropTypes.string),
         showReads: PropTypes.bool,
         toggleIn: PropTypes.func,
-        data: PropTypes.arrayOf(PropTypes.object).isRequired
+        data: PropTypes.arrayOf(PropTypes.object).isRequired,
+        isCrop: PropTypes.bool
     };
 
     setScroll = (otuId, scrollLeft) => {
@@ -76,6 +77,7 @@ export default class PathoscopeList extends React.Component {
                                 {...isolate}
                                 setScroll={this.setScroll}
                                 showReads={this.props.showReads}
+                                isCrop={this.props.isCrop}
                             />
                         );
                     });
