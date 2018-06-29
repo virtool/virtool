@@ -1,12 +1,65 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { map, sortBy, slice, reduce, forEach, range } from "lodash-es";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
 
-const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
+const fillEntries = (alignArray) => {
+    const filledEntries = [];
+
+    forEach(alignArray, (entry, i) => {
+        if (i === 0) {
+            return;
+        } else if (i === alignArray.length - 1) {
+            return filledEntries.push({ key: (alignArray[i][0] - 1), val: entry[1] });
+        }
+        const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
+
+        forEach(range(numBasesFromLastEntry), (item, j) => {
+            filledEntries.push({ key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] });
+        });
+    });
+
+    return filledEntries;
+};
+
+const getQuartileValue = (values, quartile) => {
+    const index = (values.length * quartile) / 4;
+
+    // Length is even (index is integer)
+    if (index % 1 === 0) {
+        return values[index].val;
+    }
+
+    const lowerIndex = Math.floor(index);
+    const upperIndex = Math.ceil(index);
+
+    // Get average value between two indexes if length is odd (index is float)
+    return (values[lowerIndex].val + values[upperIndex].val) / 2;
+};
+
+const removeOutlierByIQR = (values) => {
+
+    const q1 = getQuartileValue(values, 1);
+    const q3 = getQuartileValue(values, 3);
+    const total = reduce(values, (sum, entry) => sum + entry.val, 0);
+    const mean = total / values.length;
+
+    const IQR = (q3 - q1);
+    const outlierDifference = 1.5 * IQR;
+
+    // Largest value not an outlier
+    if ((values[values.length - 1].val - mean) <= outlierDifference) {
+        return values;
+    }
+
+    return removeOutlierByIQR(slice(values, 0, values.length - 2));
+};
+
+const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isSmooth) => {
 
     let svg = select(element).append("svg");
 
@@ -50,13 +103,25 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
+        const filledData = fillEntries(data);
+
+        const sortedY = sortBy(filledData, ["val"]);
+
+        const trimDataY = removeOutlierByIQR(sortedY);
+
+        const reorderTrimY = sortBy(trimDataY, ["key"]);
+
+        const dataSmooth = map(reorderTrimY, (entry) => [entry.key, entry.val]);
+
+        const useData = isSmooth ? dataSmooth : data;
+
         const areaDrawer = area()
             .x(d => x(d[0]))
             .y0(d => y(d[1]))
             .y1(height);
 
         svg.append("path")
-            .datum(data)
+            .datum(useData)
             .attr("class", "depth-area")
             .attr("d", areaDrawer);
     }
@@ -90,6 +155,11 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 };
 
 export default class CoverageChart extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = {showSmooth: false};
+    }
 
     static propTypes = {
         id: PropTypes.string,
@@ -125,12 +195,13 @@ export default class CoverageChart extends React.Component {
             { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
-            this.props.showYAxis
+            this.props.showYAxis,
+            this.state.showSmooth
         );
     };
 
     handleClick = () => {
-
+/*
         const svg = select(this.chartNode).select("svg");
 
         formatSvg(svg, "hidden");
@@ -140,7 +211,9 @@ export default class CoverageChart extends React.Component {
 
         getPng({ width, height, url, filename });
 
-        formatSvg(svg, "visible");
+        formatSvg(svg, "visible");*/
+
+        this.setState({ showSmooth: !this.state.showSmooth }, this.renderChart());
     }
 
     render () {
