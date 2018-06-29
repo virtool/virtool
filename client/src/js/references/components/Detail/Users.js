@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
 import { map, filter, some, reduce } from "lodash-es";
 
 import MemberEntry from "./MemberEntry";
+import MemberSetting from "./MemberSetting";
 import AddReferenceMember from "./AddMember";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../../base";
+import { LoadingPlaceholder, NoneFound } from "../../../base";
 import { addReferenceUser, editReferenceUser, removeReferenceUser } from "../../../references/actions";
 import { listUsers } from "../../../users/actions";
 
@@ -119,43 +119,11 @@ class ReferenceUsers extends React.Component {
 
         return (
             <div>
-                <Row>
-                    <Col xs={6} md={6}>
-                        <Flex alignItems="center">
-                            <FlexItem grow={1} >
-                                <h5><strong>Users</strong></h5>
-                            </FlexItem>
-                            <FlexItem>
-                                <Icon
-                                    name="plus-square"
-                                    bsStyle="primary"
-                                    tip="Add Member"
-                                    onClick={this.add}
-                                />
-                            </FlexItem>
-                        </Flex>
-                    </Col>
-
-                    <Col smHidden md={6} />
-                </Row>
-                <Row>
-                    <Col xs={12} md={6} mdPush={6}>
-                        <Panel>
-                            <Panel.Body>
-                                Edit permissions for, add, or remove individual users that can access this reference.
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col xs={12} md={6} mdPull={6}>
-                        <Panel>
-                            <Panel.Body>
-                                {listComponents}
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col smHidden md={6} />
-                </Row>
-
+                <MemberSetting
+                    noun="users"
+                    listComponents={listComponents}
+                    onAdd={this.add}
+                />
                 <AddReferenceMember
                     show={this.state.showAdd}
                     list={otherUsers}
