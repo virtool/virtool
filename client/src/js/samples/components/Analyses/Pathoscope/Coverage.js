@@ -169,7 +169,7 @@ export default class CoverageChart extends React.Component {
 
     componentDidMount () {
         window.addEventListener("resize", this.renderChart);
-        this.renderChart();
+        this.renderChart({}, this.props.isCrop);
     }
 
     shouldComponentUpdate (nextProps) {

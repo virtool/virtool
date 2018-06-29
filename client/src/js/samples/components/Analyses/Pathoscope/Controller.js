@@ -167,8 +167,8 @@ export default class PathoscopeController extends React.Component {
 
                             <Button
                                 icon="crop"
-                                title="Crop Outlier"
-                                tip="Crop Outlier"
+                                title="Crop Outliers"
+                                tip="Crop Outliers"
                                 active={this.state.isCrop}
                                 className="hidden-xs"
                                 onClick={this.toggleOutlier}
