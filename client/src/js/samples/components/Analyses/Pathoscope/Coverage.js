@@ -28,7 +28,6 @@ const fillEntries = (alignArray) => {
 const getQuartileValue = (values, quartile) => {
     const index = (values.length * quartile) / 4;
 
-    // Length is even (index is integer)
     if (index % 1 === 0) {
         return values[index].val;
     }
@@ -36,7 +35,6 @@ const getQuartileValue = (values, quartile) => {
     const lowerIndex = Math.floor(index);
     const upperIndex = Math.ceil(index);
 
-    // Get average value between two indexes if length is odd (index is float)
     return (values[lowerIndex].val + values[upperIndex].val) / 2;
 };
 
@@ -55,7 +53,7 @@ const removeOutlierByIQR = (values) => {
         return values;
     }
 
-    return removeOutlierByIQR(slice(values, 0, values.length - 2));
+    return removeOutlierByIQR(slice(values, 0, values.length - 1));
 };
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
