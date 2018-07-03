@@ -9,7 +9,7 @@ import virtool.http.routes
 import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
-from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query, \
+from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
     json_response, no_content, not_found, paginate
 
 QUERY_SCHEMA = {
@@ -151,7 +151,7 @@ async def create(req):
     name_error_message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"])
 
     if name_error_message:
-        return conflict(name_error_message)
+        return bad_request(name_error_message)
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count({"_id": data["subtraction"], "is_host": True}):

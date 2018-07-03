@@ -41,7 +41,7 @@ async def get(req):
 
     read, write = virtool.samples.get_sample_rights(sample, req["client"])
 
-    if not read or not write:
+    if not read:
         return insufficient_rights()
 
     if document["ready"]:
@@ -141,4 +141,4 @@ async def blast(req):
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
     }
 
-    return json_response(blast_data, headers=headers, status=200)
+    return json_response(blast_data, headers=headers, status=201)

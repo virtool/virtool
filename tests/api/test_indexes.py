@@ -210,7 +210,7 @@ class TestCreate:
             job_id=expected_job_id
         )
 
-    @pytest.mark.parametrize("error", ["unready", "unverified", "unbuilt"])
+    @pytest.mark.parametrize("error", [None, "400_unbuilt", "400_unverified", "409_running"])
     async def test_checks(self, error, resp_is, spawn_client, check_ref_right):
         client = await spawn_client(authorize=True)
 
@@ -218,7 +218,7 @@ class TestCreate:
             "_id": "foo"
         })
 
-        if error == "unready":
+        if error == "409_running":
             await client.db.indexes.insert_one({
                 "ready": False,
                 "reference": {
@@ -226,7 +226,7 @@ class TestCreate:
                 }
             })
 
-        if error == "unverified":
+        if error == "400_unverified":
             await client.db.otus.insert_one({
                 "verified": False,
                 "reference": {
@@ -240,16 +240,16 @@ class TestCreate:
             assert await resp_is.insufficient_rights(resp)
             return
 
-        if error == "unready":
+        if error == "400_unverified":
+            assert await resp_is.bad_request(resp, "There are unverified OTUs")
+            return
+
+        if error == "400_unbuilt":
+            assert await resp_is.bad_request(resp, "There are no unbuilt changes")
+            return
+
+        if error == "409_running":
             assert await resp_is.conflict(resp, "Index build already in progress")
-            return
-
-        elif error == "unverified":
-            assert await resp_is.conflict(resp, "There are unverified otus")
-            return
-
-        else:
-            assert await resp_is.conflict(resp, "There are no unbuilt changes")
             return
 
 

@@ -27,25 +27,6 @@ async def test_get(spawn_client, static_time):
     }
 
 
-async def test_get_settings(spawn_client):
-    """
-    Test that a ``GET /account/settings`` returns the settings for the session user.
-
-    """
-    client = await spawn_client(authorize=True)
-
-    resp = await client.get("/api/account/settings")
-
-    assert resp.status == 200
-
-    assert await resp.json() == {
-        "skip_quick_analyze_dialog": True,
-        "show_ids": True,
-        "show_versions": True,
-        "quick_analyze_algorithm": "pathoscope_bowtie"
-    }
-
-
 @pytest.mark.parametrize("error", [
     None,
     "email_error",
@@ -108,6 +89,25 @@ async def test_edit(error, spawn_client, resp_is, static_time):
             "email": "dev@virtool.ca",
             "id": "test"
         }
+
+
+async def test_get_settings(spawn_client):
+    """
+    Test that a ``GET /account/settings`` returns the settings for the session user.
+
+    """
+    client = await spawn_client(authorize=True)
+
+    resp = await client.get("/api/account/settings")
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "skip_quick_analyze_dialog": True,
+        "show_ids": True,
+        "show_versions": True,
+        "quick_analyze_algorithm": "pathoscope_bowtie"
+    }
 
 
 @pytest.mark.parametrize("invalid_input", [False, True])

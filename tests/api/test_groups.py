@@ -66,7 +66,7 @@ class TestCreate:
 
     async def test_exists(self, spawn_client, resp_is, all_permissions):
         """
-        Test that a 409 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
+        Test that a 400 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
         ``group_id`` already exists.
 
         """
@@ -81,7 +81,7 @@ class TestCreate:
             "group_id": "test"
         })
 
-        assert await resp_is.conflict(resp, "Group already exists")
+        assert await resp_is.bad_request(resp, "Group already exists")
 
     async def test_missing(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
