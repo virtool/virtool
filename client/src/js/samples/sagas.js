@@ -104,32 +104,17 @@ export function* getSample (action) {
 }
 
 export function* createSample (action) {
-    yield setPending(apiCustomCall(samplesAPI.create, action, CREATE_SAMPLE));
-
-    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
-        try {
-            const response = yield apiMethod(action);
-            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
-            yield put(push({state: {create: false}}));
-        } catch (error) {
-            yield putGenericError(actionType, error);
-        }
-    }
+    const extraFunc = { closeModal: put(push({state: {create: false}})) };
+    yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE, {}, extraFunc));
 }
 
 export function* updateSample (action) {
-    yield setPending(apiCustomCall(samplesAPI.update, action, UPDATE_SAMPLE));
+    const extraFunc = {
+        refetchSample: call(getSample, action),
+        closeModal: call(pushHistoryState, {editSample: false})
+    };
 
-    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
-        try {
-            const response = yield apiMethod(action);
-            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
-            yield getSample(action);
-            yield pushHistoryState({editSample: false});
-        } catch (error) {
-            yield putGenericError(actionType, error);
-        }
-    }
+    yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
 }
 
 export function* updateSampleRights (action) {
@@ -189,27 +174,14 @@ export function* getAnalysis (action) {
 }
 
 export function* analyze (action) {
-    try {
-        const response = yield samplesAPI.analyze(action);
-        yield put({type: ANALYZE.SUCCEEDED, data: response.body, placeholder: action.placeholder});
-        yield pushHistoryState({quickAnalyze: false});
-    } catch (error) {
-        yield putGenericError(ANALYZE, error);
-    }
+    yield apiCall(samplesAPI.analyze, action, ANALYZE, {placeholder: action.placeholder});
 }
 
 export function* blastNuvs (action) {
-    try {
-        const response = yield samplesAPI.blastNuvs(action);
-        yield put({
-            type: BLAST_NUVS.SUCCEEDED,
-            analysisId: action.analysisId,
-            sequenceIndex: action.sequenceIndex,
-            data: response.body
-        });
-    } catch (error) {
-        yield putGenericError(BLAST_NUVS, error);
-    }
+    yield apiCall(samplesAPI.blastNuvs, action, BLAST_NUVS, {
+        analysisId: action.analysisId,
+        sequenceIndex: action.sequenceIndex
+    });
 }
 
 export function* removeAnalysis (action) {

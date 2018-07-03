@@ -50,17 +50,8 @@ export function* getOTUHistory (action) {
 }
 
 export function* createOTU (action) {
-    yield setPending(apiCustomCall(otusAPI.create, action, CREATE_OTU));
-
-    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
-        try {
-            const response = yield apiMethod(action);
-            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
-            yield put(push({state: {createOTU: false}}));
-        } catch (error) {
-            yield putGenericError(actionType, error);
-        }
-    }
+    const extraFunc = { closeModal: put(push({state: {createOTU: false}})) };
+    yield setPending(apiCall(otusAPI.create, action, CREATE_OTU, {}, extraFunc));
 }
 
 export function* editOTU (action) {

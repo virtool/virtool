@@ -2,6 +2,7 @@ import { put, takeEvery, takeLatest, select } from "redux-saga/effects";
 import * as indexesAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import {
+    GET_REFERENCE,
     WS_UPDATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
@@ -29,6 +30,10 @@ export function* wsUpdateIndex (action) {
             type: FIND_INDEXES.REQUESTED,
             refId: action.data.reference.id,
             page: 1
+        });
+        yield put({
+            type: GET_REFERENCE.REQUESTED,
+            referenceId: action.data.reference.id
         });
     }
 }

@@ -3,7 +3,7 @@
  *
  * @module sagaUtils
  */
-import { put } from "redux-saga/effects";
+import { put, all } from "redux-saga/effects";
 import { push } from "react-router-redux";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import { matchPath } from "react-router-dom";
@@ -21,10 +21,11 @@ import { matchPath } from "react-router-dom";
  * @param actionType {object} a request-style action type
  * @param extra {object} extra properties to assign to the SUCCEEDED action
  */
-export function* apiCall (apiMethod, action, actionType, extra = {}) {
+export function* apiCall (apiMethod, action, actionType, extra = {}, extraFunctions = {}) {
     try {
         const response = yield apiMethod(action);
         yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+        yield all(extraFunctions);
     } catch (error) {
         yield putGenericError(actionType, error);
     }
