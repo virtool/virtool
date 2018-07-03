@@ -676,7 +676,9 @@ async def create_sequence(req):
     if not document:
         return not_found()
 
-    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+    ref_id = document["reference"]["id"]
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
     segment = data.get("segment", None)
@@ -689,6 +691,9 @@ async def create_sequence(req):
         "otu_id": otu_id,
         "isolate_id": isolate_id,
         "host": data.get("host", ""),
+        "reference": {
+            "id": ref_id
+        },
         "segment": segment
     })
 

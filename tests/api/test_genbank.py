@@ -1,25 +1,31 @@
+import aiohttp.client
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-@pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, mocker, resp_is, spawn_client):
+@pytest.mark.parametrize("error", [False, True])
+async def test_get(error, mocker, resp_is, spawn_client):
     client = await spawn_client(authorize=True)
 
-    m_search = mocker.patch("virtool.genbank.search", new=make_mocked_coro(None if not_found else "foobar"))
-    m_fetch = mocker.patch("virtool.genbank.fetch", new=make_mocked_coro({"accession": "baz"}))
+    expected = {
+        "accession": "baz"
+    }
+
+    m_fetch = mocker.patch("virtool.genbank.fetch", make_mocked_coro(None if error else expected))
 
     resp = await client.get("/api/genbank/NC_016574.1")
 
-    assert m_search.call_args[0][0] == client.app["settings"]
-    assert m_search.call_args[0][2] == "NC_016574.1"
-
-    if not_found:
+    if error:
         await resp_is.not_found(resp)
+        return
 
-    else:
-        assert m_fetch.call_args[0][0] == client.app["settings"]
-        assert m_fetch.call_args[0][2] == "foobar"
+    m_fetch.assert_called_with(
+        client.app["settings"],
+        mocker.ANY,
+        "NC_016574.1"
+    )
 
-        assert resp.status == 200
-        assert await resp.json() == {"accession": "baz"}
+    assert isinstance(m_fetch.call_args[0][1], aiohttp.client.ClientSession)
+
+    assert resp.status == 200
+    assert await resp.json() == expected
