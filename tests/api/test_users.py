@@ -165,7 +165,7 @@ class TestCreate:
 
         resp = await client.post("/api/users", data)
 
-        assert await resp_is.conflict(resp, "User already exists")
+        assert await resp_is.bad_request(resp, "User already exists")
 
 
 @pytest.mark.parametrize("data", [
@@ -213,7 +213,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     if "primary_group" in data:
         if error == "group_dne":
-            assert await resp_is.not_found(resp, "Group does not exist")
+            assert await resp_is.bad_request(resp, "Primary group does not exist")
 
         elif error == "not_group_member":
             assert await resp_is.conflict(resp, "User is not member of group")

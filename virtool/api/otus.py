@@ -111,13 +111,18 @@ async def create(req):
     if not await virtool.db.references.check_right(req, reference, "modify_otu"):
         return insufficient_rights()
 
-    # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
+    # Check if either the name or abbreviation are already in use. Send a ``400`` if they are.
     message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
 
     if message:
-        return conflict(message)
+        return bad_request(message)
 
-    joined = await virtool.db.otus.create(db, ref_id, data["name"], data["abbreviation"])
+    joined = await virtool.db.otus.create(
+        db,
+        ref_id,
+        data["name"],
+        data["abbreviation"]
+    )
 
     description = virtool.history.compose_create_description(joined)
 
@@ -140,8 +145,13 @@ async def create(req):
 
 
 @routes.patch("/api/otus/{otu_id}", schema={
-    "name": {"type": "string", "minlength": 1},
-    "abbreviation": {"type": "string"},
+    "name": {
+        "type": "string",
+        "empty": False
+    },
+    "abbreviation": {
+        "type": "string"
+    },
     "schema": SCHEMA_VALIDATOR
 })
 async def edit(req):
@@ -176,10 +186,7 @@ async def edit(req):
     message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
-        return json_response({
-            "id": "conflict",
-            "message": message
-        }, status=409)
+        return bad_request(message)
 
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.
@@ -324,7 +331,7 @@ async def add_isolate(req):
     data["source_type"] = data["source_type"].lower()
 
     if not await virtool.db.references.check_source_type(db, document["reference"]["id"], data["source_type"]):
-        return conflict("Source type is not allowed")
+        return bad_request("Source type is not allowed")
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     if isolates and data["default"]:
@@ -400,15 +407,12 @@ async def edit_isolate(req):
 
     isolate = virtool.otus.find_isolate(isolates, isolate_id)
 
-    if not isolate:
-        return not_found()
-
     # All source types are stored in lower case.
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
 
         if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
-            return conflict("Not an allowed source type")
+            return bad_request("Source type is not allowed")
 
     old_isolate_name = virtool.otus.format_isolate_name(isolate)
 
@@ -451,10 +455,7 @@ async def edit_isolate(req):
             return json_response(isolate, status=200)
 
 
-@routes.put("/api/otus/{otu_id}/isolates/{isolate_id}/default", schema={
-    "source_type": {"type": "string"},
-    "source_name": {"type": "string"}
-})
+@routes.put("/api/otus/{otu_id}/isolates/{isolate_id}/default")
 async def set_as_default(req):
     """
     Set an isolate as default.
@@ -476,9 +477,6 @@ async def set_as_default(req):
     isolates = deepcopy(document["isolates"])
 
     isolate = virtool.otus.find_isolate(isolates, isolate_id)
-
-    if not isolate:
-        return not_found()
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     for existing_isolate in isolates:
@@ -541,8 +539,9 @@ async def remove_isolate(req):
     db = req.app["db"]
 
     otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one(otu_id)
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
@@ -552,13 +551,8 @@ async def remove_isolate(req):
 
     isolates = deepcopy(document["isolates"])
 
-    isolate_id = req.match_info["isolate_id"]
-
     # Get any isolates that have the isolate id to be removed (only one should match!).
     isolate_to_remove = virtool.otus.find_isolate(isolates, isolate_id)
-
-    if not isolate_to_remove:
-        return not_found()
 
     # Remove the isolate from the otu' isolate list.
     isolates.remove(isolate_to_remove)
@@ -684,7 +678,7 @@ async def create_sequence(req):
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found")
+        return bad_request("Segment does not exist")
 
     # Update POST data to make sequence document.
     data.update({
@@ -755,9 +749,6 @@ async def create_sequence(req):
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
 
-    if not len(data):
-        return bad_request("Empty Input")
-
     otu_id, isolate_id, sequence_id = (req.match_info[key] for key in ["otu_id", "isolate_id", "sequence_id"])
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
@@ -773,14 +764,11 @@ async def edit_sequence(req):
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found")
+        return not_found("Segment does not exist")
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
     })
-
-    if not updated_sequence:
-        return not_found()
 
     document = await db.otus.find_one_and_update({"_id": otu_id}, {
         "$set": {
@@ -824,10 +812,7 @@ async def remove_sequence(req):
     if not await db.sequences.count({"_id": sequence_id}):
         return not_found()
 
-    old = await virtool.db.otus.join(db, otu_id)
-
-    if not old:
-        return not_found()
+    old = await virtool.db.otus.join(db, {"_id": otu_id, "isolates.id": isolate_id})
 
     if not await virtool.db.references.check_right(req, old["reference"]["id"], "modify_otu"):
         return insufficient_rights()

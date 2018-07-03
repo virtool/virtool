@@ -34,6 +34,16 @@ async def get(req):
     if document is None:
         return not_found()
 
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
+
+    if not sample:
+        return bad_request("Parent sample does not exist")
+
+    read, _ = virtool.samples.get_sample_rights(sample, req["client"])
+
+    if not read:
+        return insufficient_rights()
+
     if document["ready"]:
         document = await virtool.db.analyses.format_analysis(db, req.app["settings"], document)
 
@@ -58,7 +68,7 @@ async def remove(req):
     sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
 
     if not sample:
-        return not_found("Sample not found")
+        return bad_request("Parent sample does not exist")
 
     read, write = virtool.samples.get_sample_rights(sample, req["client"])
 
@@ -86,13 +96,13 @@ async def blast(req):
     analysis_id = req.match_info["analysis_id"]
     sequence_index = int(req.match_info["sequence_index"])
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "algorithm", "results"])
+    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "algorithm", "results", "sample"])
 
     if not document:
         return not_found("Analysis not found")
 
     if document["algorithm"] != "nuvs":
-        return bad_request("Not a NuVs analysis")
+        return conflict("Not a NuVs analysis")
 
     if not document["ready"]:
         return conflict("Analysis is still running")
@@ -101,6 +111,16 @@ async def blast(req):
 
     if sequence is None:
         return not_found("Sequence not found")
+
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
+
+    if not sample:
+        return bad_request("Parent sample does not exist")
+
+    _, write = virtool.samples.get_sample_rights(sample, req["client"])
+
+    if not write:
+        return insufficient_rights()
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
@@ -121,4 +141,4 @@ async def blast(req):
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
     }
 
-    return json_response(blast_data, headers=headers, status=200)
+    return json_response(blast_data, headers=headers, status=201)

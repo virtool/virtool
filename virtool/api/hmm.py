@@ -72,7 +72,7 @@ async def list_updates(req):
     return json_response(updates)
 
 
-@routes.post("/api/hmms/status/updates", schema={
+@routes.post("/api/hmms/status/updates", permission="modify_hmm", schema={
     "release_id": {
         "type": ["integer", "string"]
     }
@@ -149,7 +149,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.delete("/api/hmms")
+@routes.delete("/api/hmms", permission="modify_hmm")
 async def purge(req):
     """
     Delete all unreferenced HMMs and hide the rest.
