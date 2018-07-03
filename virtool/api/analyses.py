@@ -117,7 +117,7 @@ async def blast(req):
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    read, write = virtool.samples.get_sample_rights(sample, req["client"])
+    _, write = virtool.samples.get_sample_rights(sample, req["client"])
 
     if not write:
         return insufficient_rights()
