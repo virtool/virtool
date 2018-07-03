@@ -1,26 +1,11 @@
 import React from "react";
-import { capitalize, forEach, map, some } from "lodash-es";
+import { capitalize, forEach, map } from "lodash-es";
 import { connect } from "react-redux";
 
 import File from "./File";
 import { findFiles, removeFile, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
-import { createRandomString, checkAdminOrPermission, isArrayEqual } from "../../utils";
-
-const checkArrayIncludes = (l, s) => {
-
-    const longer = l.slice();
-    const shorter = s.slice();
-
-    map(shorter, element => {
-        if (!some(longer, element)) {
-            longer.push(element);
-        }
-        return element;
-    });
-
-    return longer;
-};
+import { createRandomString, checkAdminOrPermission, getUpdatedScrollListState } from "../../utils";
 
 class FileManager extends React.Component {
 
@@ -34,28 +19,7 @@ class FileManager extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-
-        if (nextProps.page === 1) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        }
-
-        if (prevState.page < nextProps.page) {
-            return {
-                masterList: checkArrayIncludes(prevState.masterList, nextProps.documents),
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
-            return {
-                masterList: checkArrayIncludes(prevState.masterList, nextProps.documents),
-                list: nextProps.documents
-            };
-        }
-        return null;
+        return getUpdatedScrollListState(nextProps, prevState);
     }
 
     handleRemove = (fileId) => {

@@ -10,9 +10,9 @@
  */
 
 import React from "react";
-import { find, map, get } from "lodash-es";
+import { find, map, get, upperFirst } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
@@ -31,6 +31,8 @@ const getInitialState = (props) => {
             sequence: sequence.sequence,
             segment: sequence.segment,
             autofillPending: false,
+            errorDefinition: "",
+            errorSequence: "",
             error: props.error
         };
     }
@@ -41,6 +43,8 @@ const getInitialState = (props) => {
         sequence: "",
         segment: "",
         autofillPending: false,
+        errorDefinition: "",
+        errorSequence: "",
         error: ""
     };
 };
@@ -53,7 +57,7 @@ class EditSequence extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
+        if (prevState.error !== nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
@@ -61,10 +65,11 @@ class EditSequence extends React.Component {
 
     handleChange = (e) => {
         const { name, value } = e.target;
+        const error = `error${upperFirst(name)}`;
 
         this.setState({
             [name]: value,
-            error: ""
+            [error]: ""
         });
 
         if (this.props.error) {
@@ -86,6 +91,14 @@ class EditSequence extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
+
+        if (!this.state.definition.length) {
+            return this.setState({ errorDefinition: "Minimum length is 1" });
+        }
+
+        if (!this.state.sequence.length) {
+            return this.setState({ errorSequence: "Minimum length is 1" });
+        }
 
         this.props.onSave(
             this.props.otuId,
@@ -131,7 +144,6 @@ class EditSequence extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         {overlay}
-
                         <Row>
                             <Col xs={12} md={6}>
                                 <InputError
@@ -158,26 +170,23 @@ class EditSequence extends React.Component {
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        name="host"
-                                        value={this.state.host}
-                                        onChange={this.handleChange}
-                                    />
-                                </FormGroup>
+                                <InputError
+                                    label="Host"
+                                    name="host"
+                                    value={this.state.host}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Definition</ControlLabel>
-                                    <FormControl
-                                        name="definition"
-                                        value={this.state.definition}
-                                        onChange={this.handleChange}
-                                    />
-                                </FormGroup>
+                                <InputError
+                                    label="Definition"
+                                    name="definition"
+                                    value={this.state.definition}
+                                    onChange={this.handleChange}
+                                    error={this.state.errorDefinition}
+                                />
                             </Col>
                         </Row>
                         <Row>
@@ -186,6 +195,7 @@ class EditSequence extends React.Component {
                                     name="sequence"
                                     sequence={this.state.sequence}
                                     onChange={this.handleChange}
+                                    error={this.state.errorSequence}
                                 />
                             </Col>
                         </Row>

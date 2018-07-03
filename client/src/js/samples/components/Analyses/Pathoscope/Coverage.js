@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { map, sortBy, slice, reduce, forEach, range } from "lodash-es";
+import { map, sortBy, slice, reduce, forEach, range, concat } from "lodash-es";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
@@ -8,7 +8,7 @@ import { axisBottom, axisLeft } from "d3-axis";
 import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
 
 const fillEntries = (alignArray) => {
-    const filledEntries = [];
+    let filledEntries = [];
 
     forEach(alignArray, (entry, i) => {
         if (i === alignArray.length - 1) {
@@ -16,9 +16,11 @@ const fillEntries = (alignArray) => {
         } else if (i !== 0) {
             const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
 
-            forEach(range(numBasesFromLastEntry), (item, j) => {
-                filledEntries.push({ key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] });
-            });
+            const fill = map(range(numBasesFromLastEntry), (item, j) => (
+                { key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] }
+            ));
+
+            filledEntries = concat(filledEntries, fill);
         }
     });
 

@@ -21,12 +21,7 @@ export function* wsUpdateFile () {
 }
 
 export function* findFiles (action) {
-    try {
-        const response = yield filesAPI.find(action);
-        yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType: action.fileType});
-    } catch (error) {
-        yield putGenericError(FIND_FILES, error);
-    }
+    yield apiCall(filesAPI.find, action, FIND_FILES, {fileType: action.fileType});
 }
 
 export function* removeFile (action) {
