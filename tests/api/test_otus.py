@@ -1605,6 +1605,9 @@ class TestCreateSequence:
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
+            "reference": {
+                "id": "hxn167"
+            },
             "sequence": "ATGCGTGTACTG",
             "segment": None,
 
@@ -1643,6 +1646,9 @@ class TestCreateSequence:
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
+            "reference": {
+                "id": "hxn167"
+            },
             "sequence": "ATGCGTGTACTG",
             "segment": None
         }]
@@ -1652,7 +1658,8 @@ class TestCreateSequence:
             "version": 1
         })
 
-        assert test_add_history.call_args[0][1:] == (
+        test_add_history.assert_called_with(
+            client.db,
             "create_sequence",
             old,
             new,

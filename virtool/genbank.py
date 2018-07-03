@@ -11,9 +11,9 @@ TOOL = "virtool"
 FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
-async def fetch(settings, session, gi):
+async def fetch(settings, session, accession):
     """
-    Fetch the Genbank record for the passed `gi`.
+    Fetch the Genbank record for the passed `accession`.
 
     :param settings: the application settings object
     :type settings: :class:`virtool.app_settings.Settings`
@@ -21,8 +21,8 @@ async def fetch(settings, session, gi):
     :param session: an aiohttp client session
     :type session: :class:`aiohttp.ClientSession`
 
-    :param gi: the GI to fetch
-    :type gi: Union[int,str]
+    :param accession: the accession to fetch
+    :type accession: Union[int,str]
 
     :return: parsed Genbank data
     :rtype: dict
@@ -31,7 +31,7 @@ async def fetch(settings, session, gi):
     params = {
         "db": "nuccore",
         "email": EMAIL,
-        "id": gi,
+        "id": accession,
         "retmode": "text",
         "rettype": "gb",
         "tool": TOOL
