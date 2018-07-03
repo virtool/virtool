@@ -25,12 +25,16 @@ class CreateOTU extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
+        console.log("prevState: ", prevState.error, ", nextProps: ", nextProps.error);
+        if (prevState.error !== nextProps.error) {
             if (nextProps.error === "Name already exists") {
                 return { errorName: nextProps.error };
             } else if (nextProps.error === "Abbreviation already exists") {
                 return { errorAbbreviation: nextProps.error };
+            } else if (!nextProps.error.length) {
+                return { error: "" };
             }
+
             return {
                 errorName: "Name already exists",
                 errorAbbreviation: "Abbrevation already exists"
@@ -74,6 +78,8 @@ class CreateOTU extends React.Component {
                 errorName: "Required Field"
             });
         }
+
+        console.log("submit: ", this.state.name, this.state.abbreviation);
 
         if (!this.state.errorName || !this.state.errorAbbreviation) {
             this.props.onSubmit(this.props.refId, this.state.name, this.state.abbreviation);
@@ -135,8 +141,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, abbreviation) => {
-        dispatch(createOTU(name, abbreviation));
+    onSubmit: (refId, name, abbreviation) => {
+        dispatch(createOTU(refId, name, abbreviation));
     },
 
     onHide: ({ location }) => {
