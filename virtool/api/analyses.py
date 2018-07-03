@@ -39,7 +39,7 @@ async def get(req):
     if not sample:
         return bad_request("Parent sample does not exist")
 
-    read, write = virtool.samples.get_sample_rights(sample, req["client"])
+    read, _ = virtool.samples.get_sample_rights(sample, req["client"])
 
     if not read:
         return insufficient_rights()
