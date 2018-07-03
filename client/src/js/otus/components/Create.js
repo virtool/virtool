@@ -9,38 +9,36 @@ import { InputError, Button } from "../../base";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
 
-const getInitialState = (props) => ({
+const getInitialState = () => ({
     name: "",
     abbreviation: "",
     errorName: "",
     errorAbbreviation: "",
-    error: props.error
+    error: ""
 });
 
 class CreateOTU extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = getInitialState();
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        console.log("prevState: ", prevState.error, ", nextProps: ", nextProps.error);
         if (prevState.error !== nextProps.error) {
             if (nextProps.error === "Name already exists") {
-                return { errorName: nextProps.error };
+                return { errorName: nextProps.error, error: nextProps.error };
             } else if (nextProps.error === "Abbreviation already exists") {
-                return { errorAbbreviation: nextProps.error };
+                return { errorAbbreviation: nextProps.error, error: nextProps.error };
             } else if (!nextProps.error.length) {
                 return { error: "" };
             }
-
             return {
                 errorName: "Name already exists",
-                errorAbbreviation: "Abbrevation already exists"
+                errorAbbreviation: "Abbrevation already exists",
+                error: nextProps.error
             };
         }
-
         return null;
     }
 
@@ -63,7 +61,7 @@ class CreateOTU extends React.Component {
     };
 
     handleModalExited = () => {
-        this.setState(getInitialState(this.props));
+        this.setState(getInitialState());
 
         if (this.props.error) {
             this.props.onClearError("CREATE_OTU_ERROR");
@@ -78,8 +76,6 @@ class CreateOTU extends React.Component {
                 errorName: "Required Field"
             });
         }
-
-        console.log("submit: ", this.state.name, this.state.abbreviation);
 
         if (!this.state.errorName || !this.state.errorAbbreviation) {
             this.props.onSubmit(this.props.refId, this.state.name, this.state.abbreviation);
