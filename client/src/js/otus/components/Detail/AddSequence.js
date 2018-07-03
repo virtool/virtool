@@ -20,7 +20,7 @@ import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
-const getInitialState = (props) => ({
+const getInitialState = () => ({
     id: "",
     definition: "",
     host: "",
@@ -31,18 +31,23 @@ const getInitialState = (props) => ({
     errorSegment: "",
     errorDefinition: "",
     errorSequence: "",
-    error: props.error
+    error: null
 });
 
 class AddSequence extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {show: false, ...getInitialState(this.props)};
+        this.state = {show: false, ...getInitialState()};
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
+        if (prevState.error !== nextProps.error) {
+
+            if (!nextProps.error) {
+                return { error: null };
+            }
+
             let error = "";
 
             if (nextProps.error.status === 422) {
@@ -51,12 +56,13 @@ class AddSequence extends React.Component {
                 return {
                     errorId: prevState.id ? "" : error,
                     errorDefinition: prevState.definition ? "" : error,
-                    errorSequence: prevState.sequence ? "" : error
+                    errorSequence: prevState.sequence ? "" : error,
+                    error: nextProps.error
                 };
             } else if (nextProps.error.status === 404) {
-                return { errorSegment: nextProps.error.message };
+                return { errorSegment: nextProps.error.message, error: nextProps.error };
             }
-            return { errorId: nextProps.error.message };
+            return { errorId: nextProps.error.message, error: nextProps.error };
         }
 
         return null;
@@ -105,7 +111,7 @@ class AddSequence extends React.Component {
     };
 
     handleModalExited = () => {
-        this.setState(getInitialState(this.props));
+        this.setState(getInitialState());
         if (this.props.error) {
             this.props.onClearError("ADD_SEQUENCE_ERROR");
         }
