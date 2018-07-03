@@ -23,11 +23,9 @@ async def get(req):
     settings = req.app["settings"]
 
     async with aiohttp.ClientSession() as session:
-        gi = await virtool.genbank.search(settings, session, accession)
+        data = await virtool.genbank.fetch(settings, session, accession)
 
-        if not gi:
+        if data is None:
             return not_found()
-
-        data = await virtool.genbank.fetch(settings, session, gi)
 
         return json_response(data)
