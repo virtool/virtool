@@ -311,6 +311,7 @@ async def create(req):
     release_id = data.get("release_id", None) or 11447367
 
     if clone_from:
+
         manifest = await virtool.db.references.get_manifest(db, clone_from)
 
         document = await virtool.db.references.create_clone(
@@ -549,9 +550,6 @@ async def get_group(req):
     if document is None:
         return not_found()
 
-    if not await virtool.db.references.check_right(req, document, "modify"):
-        return insufficient_rights()
-
     if document is not None:
         for group in document.get("groups", list()):
             if group["id"] == group_id:
@@ -587,9 +585,6 @@ async def add_group(req):
             return bad_request("Group does not exist")
 
         raise
-
-    if subdocument is None:
-        return not_found()
 
     headers = {
         "Location": "/api/refs/{}/groups/{}".format(ref_id, subdocument["id"])
@@ -693,9 +688,6 @@ async def delete_group(req):
         return insufficient_rights()
 
     deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
-
-    if not deleted_id:
-        return not_found()
 
     return no_content()
 

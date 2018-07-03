@@ -6,7 +6,7 @@ import virtool.http.routes
 import virtool.samples
 import virtool.subtractions
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -83,14 +83,14 @@ async def create(req):
     subtraction_id = data["subtraction_id"]
 
     if await db.subtraction.count({"_id": subtraction_id}):
-        return conflict("Subtraction name already exists.")
+        return bad_request("Subtraction name already exists")
 
     file_id = data["file_id"]
 
     file = await db.files.find_one(file_id, ["name"])
 
     if file is None:
-        return not_found("File not found")
+        return bad_request("File does not exist")
 
     job_id = await virtool.db.utils.get_new_id(db.jobs)
 

@@ -34,10 +34,10 @@ async def download_isolate(req):
         filename, fasta = await virtool.db.downloads.generate_isolate_fasta(db, otu_id, isolate_id)
     except virtool.errors.DatabaseError as err:
         if "OTU does not exist" in str(err):
-            return not_found("OTU does not exist")
+            return not_found("OTU not found")
 
         if "Isolate does not exist" in str(err):
-            return not_found("Isolate does not exist")
+            return not_found("Isolate not found")
 
         raise
 
@@ -60,10 +60,10 @@ async def download_otu(req):
         filename, fasta = await virtool.db.downloads.generate_otu_fasta(db, otu_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return not_found("Sequence does not exist")
+            return not_found("Sequence not found")
 
         if "OTU does not exist" in str(err):
-            return not_found("OTU does not exist")
+            return not_found("OTU not found")
 
         raise
 
@@ -131,13 +131,13 @@ async def download_sequence(req):
         filename, fasta = await virtool.db.downloads.generate_sequence_fasta(db, sequence_id)
     except virtool.errors.DatabaseError as err:
         if "Sequence does not exist" in str(err):
-            return not_found("Sequence does not exist")
+            return not_found("Sequence not found")
 
         if "Isolate does not exist" in str(err):
-            return not_found("Isolate does not exist")
+            return not_found("Isolate not found")
 
         if "OTU does not exist" in str(err):
-            return not_found("OTU does not exist")
+            return not_found("OTU not found")
 
         raise
 

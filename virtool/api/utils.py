@@ -86,6 +86,24 @@ def no_content():
     return web.Response(status=204)
 
 
+def bad_gateway(message="Bad gateway"):
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the JSON body
+    ``{"message": "Bad gatway"}``.
+
+    :param message: text to send instead of 'Bad gateway'
+    :type message: str
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return json_response({
+        "id": "bad_gateway",
+        "message": message
+    }, status=502)
+
+
 def bad_request(message="Bad request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body

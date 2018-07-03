@@ -6,7 +6,8 @@ import virtool.history
 import virtool.http.routes
 import virtool.jobs.build_index
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, insufficient_rights, json_response, not_found, paginate
+from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, json_response,\
+    not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -115,10 +116,10 @@ async def create(req):
         return conflict("Index build already in progress")
 
     if await db.otus.count({"reference.id": ref_id, "verified": False}):
-        return conflict("There are unverified otus")
+        return bad_request("There are unverified OTUs")
 
     if not await db.history.count({"reference.id": ref_id, "index.id": "unbuilt"}):
-        return conflict("There are no unbuilt changes")
+        return bad_request("There are no unbuilt changes")
 
     index_id = await virtool.db.utils.get_new_id(db.indexes)
 

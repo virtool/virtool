@@ -38,7 +38,22 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@routes.post("/api/users", admin=True)
+@routes.post("/api/users", admin=True, schema={
+    "user_id": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    },
+    "password": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    },
+    "force_reset": {
+        "type": "boolean",
+        "default": True
+    }
+})
 async def create(req):
     """
     Add a new user to the user database.
@@ -46,22 +61,17 @@ async def create(req):
     """
     db = req.app["db"]
     data = await req.json()
+    settings = req.app["settings"]
 
-    v = Validator({
-        "user_id": {"type": "string", "minlength": 1, "required": True},
-        "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"], "required": True},
-        "force_reset": {"type": "boolean", "default": True}
-    }, purge_unknown=True)
-
-    if not v.validate(data):
-        return invalid_input(v.errors)
+    if len(data["password"]) < settings["minimum_password_length"]:
+        return bad_request("Password does not meet length requirement")
 
     user_id = data["user_id"]
 
     try:
         document = await virtool.db.users.create(db, user_id, data["password"], data["force_reset"])
     except virtool.errors.DatabaseError:
-        return conflict("User already exists")
+        return bad_request("User already exists")
 
     headers = {
         "Location": "/api/users/" + user_id
@@ -74,23 +84,39 @@ async def create(req):
     )
 
 
-@routes.patch("/api/users/{user_id}", admin=True)
+@routes.patch("/api/users/{user_id}", admin=True, schema={
+    "administrator": {
+        "type": "boolean"
+    },
+    "force_reset": {
+        "type": "boolean"
+    },
+    "groups": {
+        "type": "list"
+    },
+    "password": {
+        "type": "string"
+    },
+    "primary_group": {
+        "type": "string"
+    }
+})
 async def edit(req):
     db = req.app["db"]
     data = await req.json()
+    settings = req.app["settings"]
+
+    if "password" in data and len(data["password"]) < settings["minimum_password_length"]:
+        return bad_request("Password does not meet length requirement")
 
     groups = await db.groups.distinct("_id")
 
-    v = Validator({
-        "administrator": {"type": "boolean"},
-        "force_reset": {"type": "boolean"},
-        "groups": {"type": "list", "allowed": groups},
-        "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"]},
-        "primary_group": {"type": "string"}
-    }, purge_unknown=True)
+    if "groups" in data:
+        missing = [g for g in data["groups"] if g not in groups]
+        return bad_request("Groups do not exist: " + ", ".join(missing))
 
-    if not v.validate(data):
-        return invalid_input(v.errors)
+    if "primary_group" in data and data["primary_group"] not in groups:
+        return bad_request("Primary group does not exist")
 
     user_id = req.match_info["user_id"]
 
@@ -103,9 +129,6 @@ async def edit(req):
     except virtool.errors.DatabaseError as err:
         if "User does not exist" in str(err):
             return not_found("User does not exist")
-
-        if "Non-existent group" in str(err):
-            return not_found("Group does not exist")
 
         if "User is not member of group" in str(err):
             return conflict("User is not member of group")

@@ -155,11 +155,11 @@ async def create(req):
 
     # Make sure a subtraction host was submitted and it exists.
     if not await db.subtraction.count({"_id": data["subtraction"], "is_host": True}):
-        return not_found("Subtraction not found")
+        return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
     if not await virtool.db.utils.ids_exist(db.files, data["files"]):
-        return not_found("File id does not exist")
+        return bad_request("File does not exist")
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
@@ -173,7 +173,7 @@ async def create(req):
 
         if force_choice_error_message:
             if "not found" in force_choice_error_message:
-                return not_found(force_choice_error_message)
+                return bad_request(force_choice_error_message)
 
             return bad_request(force_choice_error_message)
 
@@ -250,7 +250,7 @@ async def edit(req):
     message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
 
     if message:
-        return conflict(message)
+        return bad_request(message)
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
@@ -293,7 +293,7 @@ async def set_rights(req):
         existing_group_ids = await db.groups.distinct("_id") + ["none"]
 
         if group not in existing_group_ids:
-            return not_found("Group does not exist")
+            return bad_request("Group does not exist")
 
     # Update the sample document with the new rights.
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
@@ -382,8 +382,11 @@ async def analyze(req):
 
         raise
 
+    if not await db.references.count({"_id": ref_id}):
+        return bad_request("Reference does not exist")
+
     if not await db.indexes.count({"reference.id": ref_id, "ready": True}):
-        return not_found("Ready index not found")
+        return bad_request("No ready index")
 
     # Generate a unique _id for the analysis entry
     document = await virtool.db.analyses.new(

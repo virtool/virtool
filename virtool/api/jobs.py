@@ -6,7 +6,7 @@ import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.resources
 import virtool.utils
-from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -71,7 +71,7 @@ async def cancel(req):
         return not_found()
 
     if not virtool.jobs.utils.is_running_or_waiting(document):
-        return bad_request("Not cancellable")
+        return conflict("Not cancellable")
 
     await req.app["job_manager"].cancel(job_id)
 
@@ -115,10 +115,7 @@ async def remove(req):
         return not_found()
 
     if virtool.jobs.utils.is_running_or_waiting(document):
-        return json_response({
-            "id": "conflict",
-            "message": "Job is running or waiting and cannot be removed"
-        }, status=409)
+        return conflict("Job is running or waiting and cannot be removed")
 
     # Removed the documents associated with the job ids from the database.
     await db.jobs.delete_one({"_id": job_id})

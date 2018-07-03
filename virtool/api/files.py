@@ -57,7 +57,7 @@ async def remove(req):
     virtool.utils.rm(file_path)
 
     if delete_result.deleted_count == 0:
-        return not_found("Document does not exist")
+        return not_found()
 
     return json_response({
         "file_id": file_id,

@@ -165,9 +165,9 @@ async def remove_samples(db, settings, id_list):
 async def validate_force_choice_group(db, data):
     try:
         if not await db.groups.count({"_id": data["group"]}):
-            return "Group not found"
+            return "Group does not exist"
 
     except KeyError:
-        return "Server requires a 'group' field for sample creation"
+        return "Group value required for sample creation"
 
     return None

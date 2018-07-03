@@ -35,10 +35,10 @@ async def get(req):
 
     document = await db.history.find_one(change_id, virtool.db.history.PROJECTION)
 
-    if not document:
-        return not_found()
+    if document:
+        return json_response(virtool.utils.base_processor(document))
 
-    return json_response(virtool.utils.base_processor(document))
+    return not_found()
 
 
 @routes.delete("/api/history/{change_id}")
