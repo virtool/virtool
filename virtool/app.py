@@ -296,8 +296,8 @@ async def on_shutdown(app):
     app["process_executor"].shutdown(wait=True)
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, force_version=None,
-               ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, disable_refreshing=False,
+               force_version=None, ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
     """
     Creates the Virtool application.
 
@@ -356,7 +356,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         if not disable_file_manager:
             app.on_startup.append(init_file_manager)
 
-        app.on_startup.append(init_refresh)
+        if not disable_refreshing:
+            app.on_startup.append(init_refresh)
 
         app.on_shutdown.append(on_shutdown)
 
