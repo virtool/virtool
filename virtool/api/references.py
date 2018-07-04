@@ -369,12 +369,22 @@ async def create(req):
         ))
 
     elif remote_from:
-        release = await virtool.github.get_release(
-            settings,
-            req.app["client"],
-            remote_from,
-            release_id=release_id
-        )
+        try:
+            release = await virtool.github.get_release(
+                settings,
+                req.app["client"],
+                remote_from,
+                release_id=release_id
+            )
+
+        except virtool.errors.GitHubError as err:
+            if "Not Found" in str(err):
+                return bad_gateway("Could not retrieve latest GitHub release")
+
+            raise
+
+        except aiohttp.client_exceptions.ClientConnectorError:
+            return bad_gateway("Could not reach GitHub")
 
         release = virtool.github.format_release(release)
 
