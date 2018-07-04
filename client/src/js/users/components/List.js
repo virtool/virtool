@@ -22,7 +22,12 @@ export const UsersList = (props) => {
     const users = sortBy(filter(props.users, user => user.id.match(re)), "id");
 
     const userComponents = map(users, user =>
-        <UserItem key={user.id} {...user} active={user.id === props.match.params.activeId} />
+        <UserItem
+            key={user.id}
+            {...user}
+            active={user.id === props.match.params.activeId}
+            isAdmin={user.administrator}
+        />
     );
 
     return (

@@ -1,9 +1,10 @@
 import { push } from "react-router-redux";
-import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
+import { takeEvery, takeLatest, throttle, put, select } from "redux-saga/effects";
 
 import { apiCall, setPending } from "../sagaUtils";
 import * as usersAPI from "./api";
 import {
+    GET_ACCOUNT,
     LIST_USERS,
     CREATE_USER,
     EDIT_USER
@@ -23,6 +24,13 @@ function* createUser (action) {
 
 function* editUser (action) {
     yield setPending(apiCall(usersAPI.edit, action, EDIT_USER));
+
+    const activeUserId = yield select(state => state.users.activeId);
+
+    if (activeUserId === action.userId) {
+        yield put({ type: LIST_USERS.REQUESTED });
+        yield put({ type: GET_ACCOUNT.REQUESTED });
+    }
 }
 
 export function* watchUsers () {
