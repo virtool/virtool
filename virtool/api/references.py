@@ -312,6 +312,9 @@ async def create(req):
 
     if clone_from:
 
+        if not await db.references.count({"_id": clone_from}):
+            return bad_request("Source reference does not exist")
+
         manifest = await virtool.db.references.get_manifest(db, clone_from)
 
         document = await virtool.db.references.create_clone(
