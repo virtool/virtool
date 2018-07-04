@@ -19,7 +19,8 @@ export default class PathoscopeIsolate extends React.Component {
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,
-        showReads: PropTypes.bool
+        showReads: PropTypes.bool,
+        isCrop: PropTypes.bool
     };
 
     componentDidMount () {
@@ -60,6 +61,7 @@ export default class PathoscopeIsolate extends React.Component {
                 yMax={this.props.maxDepth}
                 showYAxis={i === 0}
                 isolateComponent={this}
+                isCrop={this.props.isCrop}
             />
         );
 

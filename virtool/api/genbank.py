@@ -3,11 +3,12 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import aiohttp
+import aiohttp.web
 
 import virtool.genbank
 import virtool.http.proxy
 import virtool.http.routes
-from virtool.api.utils import json_response, not_found
+from virtool.api.utils import bad_gateway, json_response, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -20,14 +21,16 @@ async def get(req):
 
     """
     accession = req.match_info["accession"]
+    session = req.app["client"]
     settings = req.app["settings"]
 
-    async with aiohttp.ClientSession() as session:
-        gi = await virtool.genbank.search(settings, session, accession)
+    try:
+        data = await virtool.genbank.fetch(settings, session, accession)
 
-        if not gi:
+        if data is None:
             return not_found()
 
-        data = await virtool.genbank.fetch(settings, session, gi)
-
         return json_response(data)
+
+    except aiohttp.client_exceptions.ClientConnectorError:
+        return bad_gateway("Could not reach Genbank")

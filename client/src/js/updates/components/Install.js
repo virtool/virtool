@@ -60,8 +60,6 @@ const Process = ({ count, progress, size, step, updating }) => {
 
     if (step === "download") {
         ratio = ` (${byteSize(count)} of ${byteSize(size)})`;
-
-
     }
 
     return (

@@ -61,10 +61,13 @@ class CreateSample extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
         if (nextProps.readyHosts !== prevState.readyHosts) {
-            return { subtraction: getReadyHosts(nextProps) };
+            return {
+                subtraction: getReadyHosts(nextProps),
+                readyHosts: nextProps.readyHosts
+            };
         }
 
-        if (!prevState.errorName && nextProps.error) {
+        if (!prevState.errorName.length && !!nextProps.error) {
             return { errorName: nextProps.error };
         }
 
@@ -78,13 +81,13 @@ class CreateSample extends React.Component {
 
     handleHide = () => {
         this.props.onHide();
-        if (this.state.error) {
-            this.props.onClearError("UPDATE_SAMPLE_ERROR");
-        }
     };
 
     handleModalExited = () => {
         this.setState(getInitialState(this.props));
+        if (this.props.error.length) {
+            this.props.onClearError("CREATE_SAMPLE_ERROR");
+        }
     };
 
     handleChange = (e) => {
@@ -97,10 +100,6 @@ class CreateSample extends React.Component {
                 [name]: e.target.value,
                 [errorType]: ""
             });
-
-            if (this.state.errorName) {
-                this.props.onClearError("CREATE_SAMPLE_ERROR");
-            }
         } else {
             this.setState({
                 [name]: e.target.value

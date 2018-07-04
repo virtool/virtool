@@ -6,7 +6,7 @@ import virtool.http.routes
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import conflict, json_response, not_found, no_content
+from virtool.api.utils import bad_request, json_response, not_found, no_content
 
 routes = virtool.http.routes.Routes()
 
@@ -44,7 +44,7 @@ async def create(req):
     try:
         await db.groups.insert_one(document)
     except pymongo.errors.DuplicateKeyError:
-        return conflict("Group already exists")
+        return bad_request("Group already exists")
 
     headers = {
         "Location": "/api/groups/" + data["group_id"]

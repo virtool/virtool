@@ -1,5 +1,5 @@
 import React from "react";
-import { difference, filter, find, includes, map, some, sortBy, transform, get } from "lodash-es";
+import { difference, filter, find, includes, map, sortBy, transform, get, toLower } from "lodash-es";
 import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
@@ -39,7 +39,7 @@ class Groups extends React.Component {
             spaceError: false,
             submitted: false,
             error: "",
-            groups: props.groups
+            groups: this.props.groups
         };
     }
 
@@ -54,24 +54,30 @@ class Groups extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        // If there are no groups, skip update
+
         if (!nextProps.groups.length) {
-            return null;
+            return {
+                activeId: "",
+                groups: nextProps.groups
+            };
         }
 
-        const newState = {};
-
-        if (!some(nextProps.groups, {id: prevState.activeId}) || (prevState.groups === null && nextProps.groups)) {
-            newState.activeId = nextProps.groups[0].id;
+        if (prevState.groups.length < nextProps.groups.length) {
+            return {
+                activeId: toLower(prevState.createGroupId),
+                createGroupId: "",
+                groups: nextProps.groups
+            };
         }
 
-        // What to do if the active group was removed OR the active group id in state if onList response is incoming.
-        if (nextProps.groups.length > prevState.groups.length) {
-            newState.activeId = difference(nextProps.groups, prevState.groups)[0].id;
-            newState.createGroupId = "";
+        if (nextProps.groups.length < prevState.groups.length) {
+            return {
+                activeId: difference(nextProps.groups, prevState.groups)[0].id,
+                createGroupId: ""
+            };
         }
 
-        return newState;
+        return null;
     }
 
     handleModalExited = () => {
@@ -96,6 +102,7 @@ class Groups extends React.Component {
     };
 
     handleChange = (e) => {
+
         this.setState({
             createGroupId: e.target.value,
             spaceError: this.state.spaceError && includes(e.target.value, " "),
@@ -120,7 +127,11 @@ class Groups extends React.Component {
                 spaceError: true
             });
         } else {
-            this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
+            this.setState({
+                spaceError: false,
+                submitted: true,
+                error: ""
+            }, () => this.props.onCreate(this.state.createGroupId));
         }
     };
 

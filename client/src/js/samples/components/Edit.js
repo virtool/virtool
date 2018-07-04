@@ -23,7 +23,7 @@ class EditSample extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
+        if (prevState.error !== nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
@@ -36,13 +36,20 @@ class EditSample extends React.Component {
             error: ""
         });
 
-        if (this.state.error) {
+        if (this.props.error) {
             this.props.onClearError("UPDATE_SAMPLE_ERROR");
         }
     };
 
     handleModalEnter = () => {
         this.setState(getInitialState(this.props));
+    };
+
+    handleModalHide = () => {
+        if (this.props.error) {
+            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+        }
+        this.props.onHide();
     };
 
     handleSubmit = (e) => {
@@ -60,7 +67,7 @@ class EditSample extends React.Component {
     render () {
 
         return (
-            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleModalHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sample
                 </Modal.Header>

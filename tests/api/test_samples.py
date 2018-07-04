@@ -221,8 +221,7 @@ class TestGet:
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, mocker, spawn_client, static_time,
-                   test_random_alphanumeric):
+    async def test_create(self, group_setting, mocker, spawn_client, static_time, test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
 
@@ -313,13 +312,13 @@ class TestCreate:
         assert await client.db.samples.find_one() == expected
 
         # Check call to file.reserve.
-        assert m_reserve.call_args[0] == (
+        m_reserve.assert_called_with(
             client.db,
             ["test.fq"]
         )
 
         # Check call to job_manager.new.
-        assert m_new.call_args[0] == (
+        m_new.assert_called_with(
             "create_sample",
             {
                 "files": ["test.fq"],
@@ -349,9 +348,9 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.conflict(resp, "Sample name is already in use")
+        assert await resp_is.bad_request(resp, "Sample name is already in use")
 
-    async def test_force_choice(self, mocker, spawn_client, static_time, resp_is):
+    async def test_force_choice(self, mocker, spawn_client, resp_is):
         """
         Test that when ``force_choice`` is enabled, a request with no group field passed results in an error.
         response.
@@ -367,7 +366,7 @@ class TestCreate:
             "is_host": True
         })
 
-        mocker.patch("virtool.db.utils.ids_exist", new=make_mocked_coro(True))
+        mocker.patch("virtool.db.utils.ids_exist", make_mocked_coro(True))
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -375,7 +374,7 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.bad_request(resp, "Server requires a 'group' field for sample creation")
+        assert await resp_is.bad_request(resp, "Group value required for sample creation")
 
     async def test_group_dne(self, mocker, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -388,7 +387,7 @@ class TestCreate:
             "is_host": True
         })
 
-        mocker.patch("virtool.db.utils.ids_exist", new=make_mocked_coro(True))
+        mocker.patch("virtool.db.utils.ids_exist", make_mocked_coro(True))
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -397,7 +396,7 @@ class TestCreate:
             "group": "foobar"
         })
 
-        assert await resp_is.not_found(resp, "Group not found")
+        assert await resp_is.bad_request(resp, "Group does not exist")
 
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
@@ -417,7 +416,7 @@ class TestCreate:
                 "is_host": False
             })
 
-        assert await resp_is.not_found(resp, "Subtraction not found")
+        assert await resp_is.bad_request(resp, "Subtraction does not exist")
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(self, one_exists, spawn_client, resp_is):
@@ -445,7 +444,7 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.not_found(resp, "File id does not exist")
+        assert await resp_is.bad_request(resp, "File does not exist")
 
 
 class TestRemove:
@@ -634,92 +633,89 @@ class TestListAnalyses:
         assert await resp_is.not_found(resp)
 
 
-class TestAnalyze:
+@pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])
+async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
+    mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-    @pytest.mark.parametrize("error", [None, "sample", "no_index", "no_ready_index"])
-    async def test(self, error, mocker, spawn_client, static_time, resp_is):
-        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
+    client = await spawn_client(authorize=True, job_manager=True)
 
-        client = await spawn_client(authorize=True, job_manager=True)
+    test_analysis = {
+        "_id": "test_analysis",
+        "ready": False,
+        "created_at": static_time.iso,
+        "job": {
+            "id": "baz"
+        },
+        "algorithm": "pathoscope_bowtie",
+        "reference": {
+            "id": "foo"
+        },
+        "sample": {
+            "id": "test"
+        },
+        "index": {
+            "id": "foobar",
+            "version": 3
+        },
+        "user": {
+            "id": "test",
+        }
+    }
 
-        test_analysis = {
-            "_id": "test_analysis",
-            "ready": False,
-            "created_at": static_time.iso,
-            "job": {
-                "id": "baz"
-            },
-            "algorithm": "pathoscope_bowtie",
+    if error != "400_reference":
+        await client.db.references.insert_one({
+            "_id": "foo"
+        })
+
+    if error != "400_index":
+        await client.db.indexes.insert_one({
+            "_id": "test",
             "reference": {
                 "id": "foo"
             },
-            "sample": {
-                "id": "test"
-            },
-            "index": {
-                "id": "foobar",
-                "version": 3
-            },
-            "user": {
-                "id": "test",
-            }
-        }
-
-        if error != "sample":
-            await client.db.samples.insert_one({
-                "_id": "test",
-                "created_at": static_time.datetime,
-                "all_read": True,
-                "all_write": True
-            })
-
-        if error != "no_index":
-            await client.db.indexes.insert_one({
-                "_id": "test",
-                "reference": {
-                    "id": "foo"
-                },
-                "ready": error != "no_ready_index"
-            })
-
-        m_new = mocker.patch("virtool.db.analyses.new", new=make_mocked_coro(test_analysis))
-
-        resp = await client.post("/api/samples/test/analyses", data={
-            "algorithm": "pathoscope_bowtie",
-            "ref_id": "foo"
+            "ready": error != "400_ready_index"
         })
 
-        if error is None:
-            assert resp.status == 201
-
-            assert resp.headers["Location"] == "/api/analyses/test_analysis"
-
-            test_analysis["id"] = test_analysis.pop("_id")
-
-            assert await resp.json() == test_analysis
-
-            m_new.assert_called_with(
-                client.db,
-                client.app["job_manager"],
-                "test",
-                "foo",
-                "test",
-                "pathoscope_bowtie"
-            )
-
-        elif error == "sample":
-            assert await resp_is.not_found(resp)
-
-        else:
-            assert await resp_is.not_found(resp, "Ready index not found")
-
-    async def test_invalid_input(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.post("/api/samples/test/analyses", data={
-            "foobar": True
+    if error != "404":
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "created_at": static_time.datetime,
+            "all_read": True,
+            "all_write": True
         })
 
-        assert await resp_is.invalid_input(resp, {
-            "algorithm": ["required field"], "ref_id": ["required field"]
-        })
+    m_new = mocker.patch("virtool.db.analyses.new", new=make_mocked_coro(test_analysis))
+
+    resp = await client.post("/api/samples/test/analyses", data={
+        "algorithm": "pathoscope_bowtie",
+        "ref_id": "foo"
+    })
+
+    if error == "400_reference":
+        assert await resp_is.bad_request(resp, "Reference does not exist")
+        return
+
+    if error == "400_index" or error == "400_ready_index":
+        assert await resp_is.bad_request(resp, "No ready index")
+        return
+
+    if error == "404":
+        assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 201
+
+    assert resp.headers["Location"] == "/api/analyses/test_analysis"
+
+    test_analysis["id"] = test_analysis.pop("_id")
+
+    assert await resp.json() == test_analysis
+
+    m_new.assert_called_with(
+        client.db,
+        client.app["job_manager"],
+        "test",
+        "foo",
+        "test",
+        "pathoscope_bowtie"
+    )

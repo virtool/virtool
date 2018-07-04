@@ -6,6 +6,7 @@ import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
+import { getReference } from "../../references/actions";
 import { getIndex, getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 
@@ -13,6 +14,7 @@ class IndexDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetIndex(this.props.match.params.indexId);
+        this.props.onGetReference(this.props.match.params.refId);
         this.props.onGetChanges(this.props.match.params.indexId, 1);
     }
 
@@ -22,7 +24,7 @@ class IndexDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null) {
+        if (this.props.detail === null || this.props.refDetail === null) {
             return <LoadingPlaceholder />;
         }
 
@@ -35,10 +37,24 @@ class IndexDetail extends React.Component {
             <div>
                 <Breadcrumb>
                     <Breadcrumb.Item>
+                        <LinkContainer to="/refs/">
+                            <span>
+                                References
+                            </span>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>
+                        <LinkContainer to={`/refs/${refId}`}>
+                            <span>
+                                {this.props.refDetail.name}
+                            </span>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}/indexes`}>
-                            <div>
+                            <span>
                                 Indexes
-                            </div>
+                            </span>
                         </LinkContainer>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item active>
@@ -79,7 +95,8 @@ class IndexDetail extends React.Component {
 
 const mapStateToProps = (state) => ({
     error: get(state, "errors.GET_INDEX_ERROR", null),
-    detail: state.indexes.detail
+    detail: state.indexes.detail,
+    refDetail: state.references.detail
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -90,6 +107,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onGetChanges: (indexId, page) => {
         dispatch(getIndexHistory(indexId, page));
+    },
+
+    onGetReference: (refId) => {
+        dispatch(getReference(refId));
     }
 
 });

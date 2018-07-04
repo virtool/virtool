@@ -246,9 +246,6 @@ async def update_api_key(req):
             {"id": key_id, "user.id": user_id}
         )
 
-        if key_permissions is None:
-            return not_found()
-
         key_permissions.update(permissions)
 
         update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])

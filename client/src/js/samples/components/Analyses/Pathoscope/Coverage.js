@@ -1,12 +1,64 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { map, sortBy, slice, reduce, forEach, range, concat } from "lodash-es";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
 
-const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
+const fillEntries = (alignArray) => {
+    let filledEntries = [];
+
+    forEach(alignArray, (entry, i) => {
+        if (i === alignArray.length - 1) {
+            return filledEntries.push({ key: (alignArray[i][0] - 1), val: entry[1] });
+        } else if (i !== 0) {
+            const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
+
+            const fill = map(range(numBasesFromLastEntry), (item, j) => (
+                { key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] }
+            ));
+
+            filledEntries = concat(filledEntries, fill);
+        }
+    });
+
+    return filledEntries;
+};
+
+const getQuartileValue = (values, quartile) => {
+    const index = (values.length * quartile) / 4;
+
+    if (index % 1 === 0) {
+        return values[index].val;
+    }
+
+    const lowerIndex = Math.floor(index);
+    const upperIndex = Math.ceil(index);
+
+    return (values[lowerIndex].val + values[upperIndex].val) / 2;
+};
+
+const removeOutlierByIQR = (values) => {
+
+    const q1 = getQuartileValue(values, 1);
+    const q3 = getQuartileValue(values, 3);
+    const total = reduce(values, (sum, entry) => sum + entry.val, 0);
+    const mean = total / values.length;
+
+    const IQR = (q3 - q1);
+    const outlierDifference = 1.5 * IQR;
+
+    // Largest value not an outlier
+    if ((values[values.length - 1].val - mean) <= outlierDifference) {
+        return values;
+    }
+
+    return removeOutlierByIQR(slice(values, 0, values.length - 1));
+};
+
+const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
 
     let svg = select(element).append("svg");
 
@@ -50,13 +102,26 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
+        // Extend original data so there is a coordinate data point for each base along x-axis
+        const filledData = fillEntries(data);
+
+        const sortedY = sortBy(filledData, ["val"]);
+
+        const trimDataY = removeOutlierByIQR(sortedY);
+
+        const reorderTrimY = sortBy(trimDataY, ["key"]);
+
+        const dataCrop = map(reorderTrimY, (entry) => [entry.key, entry.val]);
+
+        const useData = isCrop ? dataCrop : data;
+
         const areaDrawer = area()
             .x(d => x(d[0]))
             .y0(d => y(d[1]))
             .y1(height);
 
         svg.append("path")
-            .datum(data)
+            .datum(useData)
             .attr("class", "depth-area")
             .attr("d", areaDrawer);
     }
@@ -98,19 +163,27 @@ export default class CoverageChart extends React.Component {
         data: PropTypes.array,
         length: PropTypes.number,
         title: PropTypes.string,
-        showYAxis: PropTypes.bool
+        showYAxis: PropTypes.bool,
+        isCrop: PropTypes.bool
     };
 
     componentDidMount () {
         window.addEventListener("resize", this.renderChart);
-        this.renderChart();
+        this.renderChart({}, this.props.isCrop);
+    }
+
+    shouldComponentUpdate (nextProps) {
+        if (nextProps.isCrop !== this.props.isCrop) {
+            this.renderChart({}, nextProps.isCrop);
+        }
+        return false;
     }
 
     componentWillUnmount () {
         window.removeEventListener("resize", this.renderChart);
     }
 
-    renderChart = () => {
+    renderChart = (e, isCrop = false) => {
 
         while (this.chartNode.firstChild) {
             this.chartNode.removeChild(this.chartNode.firstChild);
@@ -125,12 +198,12 @@ export default class CoverageChart extends React.Component {
             { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
-            this.props.showYAxis
+            this.props.showYAxis,
+            isCrop
         );
     };
 
     handleClick = () => {
-
         const svg = select(this.chartNode).select("svg");
 
         formatSvg(svg, "hidden");

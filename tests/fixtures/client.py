@@ -26,6 +26,7 @@ class VTClient:
             self._test_db_name,
             disable_job_manager=not job_manager,
             disable_file_manager=not file_manager,
+            disable_refreshing=True,
             ignore_settings=True,
             skip_db_checks=True,
             skip_setup=not setup_mode,

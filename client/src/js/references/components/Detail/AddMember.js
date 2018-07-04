@@ -33,7 +33,9 @@ export default class AddReferenceMember extends React.Component {
             return;
         }
 
-        this.props.onAdd({...this.state});
+        const idType = (this.props.noun === "users") ? "user_id" : "group_id";
+
+        this.props.onAdd({...this.state}, idType);
     }
 
     handleExited = () => {

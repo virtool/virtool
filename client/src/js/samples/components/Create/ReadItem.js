@@ -10,7 +10,7 @@ export default class ReadItem extends React.PureComponent {
     static propTypes = {
         id: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
-        size: PropTypes.number.isRequired,
+        size: PropTypes.object.isRequired,
         onSelect: PropTypes.func.isRequired,
         selected: PropTypes.bool
     };
@@ -30,7 +30,7 @@ export default class ReadItem extends React.PureComponent {
                     <Icon name="file" /> {this.props.name}
                 </Col>
                 <Col md={4}>
-                    {byteSize(this.props.size)}
+                    {byteSize(this.props.size.size)}
                 </Col>
             </Row>
         </ListGroupItem>

@@ -92,7 +92,9 @@ export default class ReadSelector extends React.PureComponent {
 
         const errorMessage = (
             <div className={inputErrorClassName}>
-                {error ? error : "None"}
+                <div className="input-error-message">
+                    {error ? error : "None"}
+                </div>
             </div>
         );
 

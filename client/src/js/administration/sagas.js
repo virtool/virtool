@@ -1,8 +1,8 @@
-import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as settingsAPI from "./api";
 import * as otusAPI from "../otus/api";
-import { apiCall, setPending, putGenericError } from "../sagaUtils";
+import { apiCall, setPending } from "../sagaUtils";
 import {GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY} from "../actionTypes";
 
 export function* watchSettings () {
@@ -17,19 +17,7 @@ function* getSettings (action) {
 }
 
 function* updateSettings (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield settingsAPI.update(action);
-            yield put({
-                type: UPDATE_SETTINGS.SUCCEEDED,
-                settings: response.body,
-                key: action.key,
-                update: action.update
-            });
-        } catch (error) {
-            yield putGenericError(UPDATE_SETTINGS, error);
-        }
-    }(action));
+    yield setPending(apiCall(settingsAPI.update, action, UPDATE_SETTINGS, {update: action.update}));
 }
 
 function* testProxy () {

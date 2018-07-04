@@ -96,10 +96,24 @@ class OTUDetail extends React.Component {
 
                 <Breadcrumb>
                     <Breadcrumb.Item>
+                        <LinkContainer to="/refs/">
+                            <span>
+                                References
+                            </span>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>
+                        <LinkContainer to={`/refs/${refId}`}>
+                            <span>
+                                {this.props.detail.name}
+                            </span>
+                        </LinkContainer>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}/otus`}>
-                            <div>
+                            <span>
                                 OTUs
-                            </div>
+                            </span>
                         </LinkContainer>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item active>{this.props.otuDetail.name}</Breadcrumb.Item>

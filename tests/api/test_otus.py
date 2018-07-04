@@ -181,14 +181,14 @@ class TestCreate:
             "test"
         )
 
-    @pytest.mark.parametrize("exists", [True, False])
-    @pytest.mark.parametrize("message", [
-        False,
-        "Name already exists",
-        "Abbreviation already exists",
-        "Name and abbreviation already exist"
+    @pytest.mark.parametrize("error,message", [
+        (None, None),
+        ("400_name_exists", "Name already exists"),
+        ("400_abbr_exists", "Abbreviation already exists"),
+        ("400_both_exist", "Name and abbreviation already exist"),
+        ("404", None)
     ])
-    async def test_field_exists(self, exists, message, mocker, spawn_client, check_ref_right, resp_is):
+    async def test_field_exists(self, error, message, mocker, spawn_client, check_ref_right, resp_is):
         """
         Test that the request fails with ``409 Conflict`` if the requested otu name already exists.
 
@@ -204,7 +204,7 @@ class TestCreate:
 
         client = await spawn_client(authorize=True)
 
-        if exists:
+        if error != "404":
             await client.db.references.insert_one({
                 "_id": "foo"
             })
@@ -216,7 +216,7 @@ class TestCreate:
 
         resp = await client.post("/api/refs/foo/otus", data)
 
-        if not exists:
+        if error == "404":
             assert await resp_is.not_found(resp)
             return
 
@@ -232,11 +232,11 @@ class TestCreate:
             "TMV"
         )
 
-        if message:
-            assert await resp_is.conflict(resp, message)
+        if error:
+            assert await resp_is.bad_request(resp, message)
+            return
 
-        else:
-            assert resp.status == 201
+        assert resp.status == 201
 
 
 class TestEdit:
@@ -479,10 +479,7 @@ class TestEdit:
             assert await resp_is.insufficient_rights(resp)
             return
 
-        print(409, message)
-        print(resp.status, await resp.json())
-
-        assert await resp_is.conflict(resp, message)
+        assert await resp_is.bad_request(resp, message)
 
     @pytest.mark.parametrize("old_name,old_abbreviation,data", [
         (
@@ -1605,6 +1602,9 @@ class TestCreateSequence:
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
+            "reference": {
+                "id": "hxn167"
+            },
             "sequence": "ATGCGTGTACTG",
             "segment": None,
 
@@ -1643,6 +1643,9 @@ class TestCreateSequence:
             "otu_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
+            "reference": {
+                "id": "hxn167"
+            },
             "sequence": "ATGCGTGTACTG",
             "segment": None
         }]
@@ -1652,7 +1655,8 @@ class TestCreateSequence:
             "version": 1
         })
 
-        assert test_add_history.call_args[0][1:] == (
+        test_add_history.assert_called_with(
+            client.db,
             "create_sequence",
             old,
             new,
@@ -1766,15 +1770,6 @@ class TestEditSequence:
             "Edited sequence KX269872 in Isolate 8816-v2",
             "test"
         )
-
-    async def test_empty_input(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", {})
-
-        assert resp.status == 400
-
-        assert await resp_is.bad_request(resp, "Empty Input")
 
     @pytest.mark.parametrize("foobar", ["otu_id", "isolate_id", "sequence_id"])
     async def test_not_found(self, foobar, spawn_client, resp_is, test_otu, test_sequence):

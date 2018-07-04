@@ -22,8 +22,7 @@ import { fetchOTUs } from "../../../otus/actions";
 import { getReference } from "../../actions";
 import EditReference from "./Edit";
 import Manage from "./Manage";
-import ReferenceUsers from "./Users";
-import ReferenceGroups from "./Groups";
+import ReferenceMembers from "./Members";
 import ReferenceOTUs from "../../../otus/components/List";
 import ReferenceIndexList from "../../../indexes/components/List";
 import SourceTypes from "../../../administration/components/General/SourceTypes";
@@ -52,8 +51,8 @@ const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
         <InternalControl />
-        <ReferenceUsers />
-        <ReferenceGroups />
+        <ReferenceMembers noun="users" />
+        <ReferenceMembers noun="groups" />
     </div>
 );
 
