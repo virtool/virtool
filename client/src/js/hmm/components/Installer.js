@@ -4,7 +4,8 @@ import { Col, Panel, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { installHMMs, fetchHmms } from "../actions";
-import { Button, Flex, FlexItem } from "../../base";
+import { Button, Flex, FlexItem, Alert } from "../../base";
+import { checkAdminOrPermission } from "../../utils";
 
 class HMMInstall extends React.Component {
 
@@ -50,6 +51,18 @@ class HMMInstall extends React.Component {
             );
         }
 
+        const installOption = this.props.canInstall
+            ? (
+                <Button icon="download" onClick={this.handleInstall}>
+                    Install Official
+                </Button>
+            ) : (
+                <Alert bsStyle="warning" icon="exclamation-circle">
+                    <strong>You do not have permission to install HMMs.</strong>
+                    <span> Contact an administrator.</span>
+                </Alert>
+            );
+
         return (
             <Panel>
                 <Panel.Body>
@@ -71,9 +84,7 @@ class HMMInstall extends React.Component {
                                 <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
                             </p>
 
-                            <Button icon="download" onClick={this.handleInstall}>
-                                Install Official
-                            </Button>
+                            {installOption}
                         </FlexItem>
                     </Flex>
                 </Panel.Body>
@@ -86,7 +97,8 @@ const mapStateToProps = (state) => ({
     processId: get(state.hmms.status, "process.id"),
     releaseId: get(state.hmms.status, "release.id"),
     installed: !!state.hmms.status.installed,
-    processes: state.processes.documents
+    processes: state.processes.documents,
+    canInstall: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_hmm")
 });
 
 const mapDispatchToProps = (dispatch) => ({
