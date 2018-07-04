@@ -27,10 +27,10 @@ async def get(req):
     try:
         data = await virtool.genbank.fetch(settings, session, accession)
 
-            if data is None:
-                return not_found()
+        if data is None:
+            return not_found()
 
-            return json_response(data)
+        return json_response(data)
 
     except aiohttp.client_exceptions.ClientConnectorError:
         return bad_gateway("Could not reach NCBI")
