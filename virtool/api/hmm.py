@@ -1,16 +1,19 @@
 import os
 
+import aiohttp.client_exceptions
 import aiojobs.aiohttp
 
 import virtool.db.hmm
 import virtool.db.processes
 import virtool.db.status
 import virtool.db.utils
+import virtool.errors
 import virtool.github
 import virtool.hmm
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, conflict, json_response, no_content,\
+    not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -100,6 +103,22 @@ async def install(req):
 
     release = document.get("release", None)
 
+    if not release:
+        try:
+            release = await virtool.github.get_release(
+                req.app["settings"],
+                req.app["client"],
+                "virtool/virtool-hmm"
+            )
+
+        except aiohttp.client_exceptions.ClientConnectorError:
+            return bad_gateway("Could not reach GitHub")
+
+        except virtool.errors.GitHubError as err:
+            if "Not Found" in str(err):
+                return bad_gateway("GitHub repository not found")
+
+            raise
 
         release = virtool.github.format_release(release)
 
