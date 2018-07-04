@@ -17,7 +17,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { ListGroupItem } from "react-bootstrap";
 
 import { editUser } from "../actions";
-import { Flex, FlexItem, Identicon, InputError } from "../../base";
+import { Flex, FlexItem, Identicon, InputError, Icon } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
@@ -27,6 +27,10 @@ export class UserItem extends React.Component {
 
     handleSetPrimaryGroup = (e) => {
         this.props.onSetPrimaryGroup(this.props.id, e.target.value);
+    };
+
+    toggleAdmin = (e) => {
+        this.props.onSetUserRole(this.props.id, (e.target.value === "Administrator"));
     };
 
     render () {
@@ -47,6 +51,9 @@ export class UserItem extends React.Component {
                 <FlexItem pad={10}>
                     {this.props.id}
                 </FlexItem>
+                <FlexItem pad={10}>
+                    {this.props.isAdmin ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                </FlexItem>
                 <FlexItem grow={1} shrink={1}>
                     {closeButton}
                 </FlexItem>
@@ -59,6 +66,8 @@ export class UserItem extends React.Component {
                     {capitalize(group)}
                 </option>
             );
+
+            const currentRole = this.props.isAdmin ? "Administrator" : "Limited";
 
             return (
                 <div className="list-group-item spaced" style={{paddingLeft: "10px"}}>
@@ -87,6 +96,20 @@ export class UserItem extends React.Component {
                             <small className="text-muted">Change group membership to modify permissions</small>
                         </Flex>
                         <UserPermissions permissions={this.props.permissions} />
+
+                        {this.props.canSetRole ? (
+                            <React.Fragment>
+                                <label>User Role</label>
+                                <InputError
+                                    type="select"
+                                    value={currentRole}
+                                    onChange={this.toggleAdmin}
+                                >
+                                    <option key="admin" value="Administrator">Administrator</option>
+                                    <option key="limit" value="Limited">Limited</option>
+                                </InputError>
+                            </React.Fragment>
+                        ) : null}
                     </div>
                 </div>
             );
@@ -102,10 +125,6 @@ export class UserItem extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
-    users: state.users.list
-});
-
 const mapDispatchToProps = dispatch => ({
 
     onClose: () => {
@@ -114,8 +133,12 @@ const mapDispatchToProps = dispatch => ({
 
     onSetPrimaryGroup: (userId, groupId) => {
         dispatch(editUser(userId, {primary_group: groupId}));
+    },
+
+    onSetUserRole: (userId, isAdmin) => {
+        dispatch(editUser(userId, {administrator: isAdmin}));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(UserItem);
+export default connect(null, mapDispatchToProps)(UserItem);

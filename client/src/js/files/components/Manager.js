@@ -41,6 +41,7 @@ class FileManager extends React.Component {
                 key={this.state.masterList[index].id}
                 {...this.state.masterList[index]}
                 onRemove={this.handleRemove}
+                canRemove={this.props.canRemove}
             />
         )
     );
@@ -77,7 +78,7 @@ class FileManager extends React.Component {
             toolbar = (
                 <Alert bsStyle="warning" icon="warning">
                     <strong>You do not have permission to upload files.</strong>
-                    <span>Contact an administrator.</span>
+                    <span> Contact an administrator.</span>
                 </Alert>
             );
         }
@@ -116,7 +117,8 @@ const mapStateToProps = (state) => {
         page,
         page_count,
         total_count,
-        canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file")
+        canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file"),
+        canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_file")
     };
 };
 

@@ -31,7 +31,8 @@ import {
     GET_INDEX,
     GET_SUBTRACTION,
     GET_RESOURCES,
-    UPDATE_SETTINGS
+    UPDATE_SETTINGS,
+    LIST_USERS
 } from "../actionTypes";
 
 /**
@@ -120,6 +121,7 @@ export default function errorsReducer (state = null, action) {
             case GET_INDEX.FAILED:
             case GET_SUBTRACTION.FAILED:
             case UPDATE_SETTINGS.FAILED:
+            case LIST_USERS.FAILED:
                 return {...state, [errorName]: errorPayload};
 
             default:

@@ -99,13 +99,15 @@ class SubtractionDetail extends React.Component {
                             </FlexItem>
                             <FlexItem grow={1} shrink={0}>
                                 {this.props.canModify ? (
-                                    <small>
-                                        {removeIcon}
-                                    </small>
+                                    <React.Fragment>
+                                        <small>
+                                            {removeIcon}
+                                        </small>
+                                        <small>
+                                            {editIcon}
+                                        </small>
+                                    </React.Fragment>
                                 ) : null}
-                                <small>
-                                    {editIcon}
-                                </small>
                             </FlexItem>
                         </Flex>
                     </ViewHeader>

@@ -20,7 +20,9 @@ export class JobEntry extends React.Component {
         user: PropTypes.object.isRequired,
         onNavigate: PropTypes.func,
         onCancel: PropTypes.func,
-        onRemove: PropTypes.func
+        onRemove: PropTypes.func,
+        canRemove: PropTypes.bool,
+        canCancel: PropTypes.bool
     };
 
     handleCancel = (e) => {
@@ -40,12 +42,9 @@ export class JobEntry extends React.Component {
 
     render () {
 
-        const canCancel = true;
-        const canRemove = true;
-
         let icon;
 
-        if ((this.props.state === "waiting" || this.props.state === "running") && canCancel) {
+        if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
             icon = (
                 <Icon
                     bsStyle="danger"
@@ -54,7 +53,7 @@ export class JobEntry extends React.Component {
                     pullRight
                 />
             );
-        } else if (canRemove) {
+        } else if (this.props.canRemove) {
             icon = (
                 <Icon
                     bsStyle="danger"
