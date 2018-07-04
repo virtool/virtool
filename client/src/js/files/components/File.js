@@ -14,7 +14,8 @@ export default class File extends React.Component {
         file: PropTypes.object,
         uploaded_at: PropTypes.string,
         user: PropTypes.object,
-        onRemove: PropTypes.func
+        onRemove: PropTypes.func,
+        canRemove: PropTypes.bool
     };
 
     handleRemove = () => {
@@ -23,7 +24,7 @@ export default class File extends React.Component {
 
     render () {
 
-        const { name, size, uploaded_at, user } = this.props;
+        const { name, size, uploaded_at, user, canRemove } = this.props;
 
         let creation;
 
@@ -54,13 +55,15 @@ export default class File extends React.Component {
                         {creation}
                     </Col>
                     <Col md={1}>
-                        <Icon
-                            name="trash"
-                            bsStyle="danger"
-                            style={{fontSize: "17px"}}
-                            onClick={this.handleRemove}
-                            pullRight
-                        />
+                        {canRemove ? (
+                            <Icon
+                                name="trash"
+                                bsStyle="danger"
+                                style={{fontSize: "17px"}}
+                                onClick={this.handleRemove}
+                                pullRight
+                            />
+                        ) : null}
                     </Col>
                 </Row>
             </ListGroupItem>
