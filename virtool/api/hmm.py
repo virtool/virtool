@@ -72,11 +72,7 @@ async def list_updates(req):
     return json_response(updates)
 
 
-@routes.post("/api/hmms/status/updates", permission="modify_hmm", schema={
-    "release_id": {
-        "type": ["integer", "string"]
-    }
-})
+@routes.post("/api/hmms/status/updates", permission="modify_hmm")
 async def install(req):
     """
     Install the latest official HMM database from GitHub.
@@ -88,8 +84,6 @@ async def install(req):
 
     if await db.status.count({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
-
-    release_id = req["data"].get("release_id", None)
 
     process = await virtool.db.processes.register(
         db,
@@ -106,14 +100,6 @@ async def install(req):
 
     release = document.get("release", None)
 
-    if not release or not release_id or release_id != release["id"]:
-        release = await virtool.github.get_release(
-            req.app["settings"],
-            req.app["client"],
-            "virtool/virtool-hmm",
-            None,
-            release_id or "latest"
-        )
 
         release = virtool.github.format_release(release)
 
