@@ -129,7 +129,7 @@ class Resources extends React.Component {
 
         if (this.props.error) {
             alert = (
-                <Alert bsStyle="danger" icon="warning">
+                <Alert bsStyle="danger" icon="exclamation-circle">
                     Resource Limit values cannot be lower than corresponding Task-specific Limits.
                 </Alert>
             );
