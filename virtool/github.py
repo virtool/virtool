@@ -74,29 +74,25 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
     if etag:
         headers["If-None-Match"] = etag
 
-    try:
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
-            logger.debug("Fetched release: {}/{} ({} - {}/{})".format(
-                slug,
-                release_id,
-                resp.status,
-                resp.headers["X-RateLimit-Remaining"],
-                resp.headers["X-RateLimit-Limit"]
-            ))
+    async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
+        logger.debug("Fetched release: {}/{} ({} - {}/{})".format(
+            slug,
+            release_id,
+            resp.status,
+            resp.headers["X-RateLimit-Remaining"],
+            resp.headers["X-RateLimit-Limit"]
+        ))
 
-            if resp.status == 200:
-                data = await resp.json()
+        if resp.status == 200:
+            data = await resp.json()
 
-                if len(data["assets"]) == 0:
-                    return None
-
-                return dict(data, etag=resp.headers["etag"])
-
-            elif resp.status == 304:
+            if len(data["assets"]) == 0:
                 return None
 
-            else:
-                raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
+            return dict(data, etag=resp.headers["etag"])
 
-    except aiohttp.client_exceptions.ClientConnectorError:
-        raise virtool.errors.GitHubError("Could not reach GitHub")
+        elif resp.status == 304:
+            return None
+
+        else:
+            raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
