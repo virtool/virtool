@@ -27,6 +27,7 @@ export const UsersList = (props) => {
             {...user}
             active={user.id === props.match.params.activeId}
             isAdmin={user.administrator}
+            canSetRole={(props.activeUser !== user.id && props.activeUserIsAdmin)}
         />
     );
 
@@ -41,6 +42,8 @@ export const UsersList = (props) => {
 
 const mapStateToProps = state => ({
     users: state.users.list,
+    activeUser: state.account.id,
+    activeUserIsAdmin: state.account.administrator,
     filter: state.users.filter
 });
 

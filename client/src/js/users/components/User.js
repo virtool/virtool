@@ -97,15 +97,19 @@ export class UserItem extends React.Component {
                         </Flex>
                         <UserPermissions permissions={this.props.permissions} />
 
-                        <label>User Role</label>
-                        <InputError
-                            type="select"
-                            value={currentRole}
-                            onChange={this.toggleAdmin}
-                        >
-                            <option key="admin" value="Administrator">Administrator</option>
-                            <option key="limit" value="Limited">Limited</option>
-                        </InputError>
+                        {this.props.canSetRole ? (
+                            <React.Fragment>
+                                <label>User Role</label>
+                                <InputError
+                                    type="select"
+                                    value={currentRole}
+                                    onChange={this.toggleAdmin}
+                                >
+                                    <option key="admin" value="Administrator">Administrator</option>
+                                    <option key="limit" value="Limited">Limited</option>
+                                </InputError>
+                            </React.Fragment>
+                        ) : null}
                     </div>
                 </div>
             );
