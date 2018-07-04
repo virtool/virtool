@@ -103,7 +103,7 @@ class IndexesList extends React.Component {
 
         } else {
             alert = (
-                <Alert bsStyle="warning" icon="warning">
+                <Alert bsStyle="warning" icon="exclamation-circle">
                     At least one OTU must be added to the database before an index can be built.
                 </Alert>
             );

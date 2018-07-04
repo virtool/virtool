@@ -76,7 +76,7 @@ class FileManager extends React.Component {
             );
         } else {
             toolbar = (
-                <Alert bsStyle="warning" icon="warning">
+                <Alert bsStyle="warning" icon="exclamation-circle">
                     <strong>You do not have permission to upload files.</strong>
                     <span> Contact an administrator.</span>
                 </Alert>
