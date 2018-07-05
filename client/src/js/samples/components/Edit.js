@@ -8,10 +8,11 @@ import { editSample } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, InputError } from "../../base";
 
-const getInitialState = ({ name, isolate, host }) => ({
+const getInitialState = ({ name, isolate, host, locale }) => ({
     name: name || "",
     isolate: isolate || "",
     host: host || "",
+    locale: locale || "",
     error: ""
 });
 
@@ -61,7 +62,7 @@ class EditSample extends React.Component {
             });
         }
 
-        this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host"]));
+        this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host", "locale"]));
     };
 
     render () {
@@ -83,6 +84,9 @@ class EditSample extends React.Component {
                                     error={this.state.error}
                                 />
                             </Col>
+                        </Row>
+
+                        <Row>
                             <Col xs={12} md={6}>
                                 <InputError
                                     label="Isolate"
@@ -96,6 +100,17 @@ class EditSample extends React.Component {
                                     label="Host"
                                     name="host"
                                     value={this.state.host}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col xs={12} md={6}>
+                                <InputError
+                                    name="locale"
+                                    label="Locale"
+                                    value={this.state.locale}
                                     onChange={this.handleChange}
                                 />
                             </Col>

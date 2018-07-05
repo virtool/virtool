@@ -7,7 +7,7 @@ import { connect } from "react-redux";
 import EditSample from "./Edit";
 import { IDRow } from "../../base";
 
-const cellNames = ["name", "host", "isolate"];
+const cellNames = ["name", "host", "isolate", "locale"];
 
 const SampleDetailGeneral = (props) => (
     <div>
