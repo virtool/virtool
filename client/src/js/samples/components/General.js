@@ -3,7 +3,7 @@ import Numeral from "numeral";
 import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
-
+import { Link } from "react-router-dom";
 import EditSample from "./Edit";
 import { IDRow } from "../../base";
 
@@ -33,6 +33,10 @@ const SampleDetailGeneral = (props) => (
                         <td className="col-xs-8">{props.count}</td>
                     </tr>
                     <tr>
+                        <th>Read Size</th>
+                        <td>{props.srna ? "sRNA" : "Normal"}</td>
+                    </tr>
+                    <tr>
                         <th>Length Range</th>
                         <td>{props.lengthRange}</td>
                     </tr>
@@ -59,6 +63,22 @@ const SampleDetailGeneral = (props) => (
                     <tr>
                         <th>Encoding</th>
                         <td>{props.encoding}</td>
+                    </tr>
+                </tbody>
+            </Table>
+        </Panel>
+
+        <Panel>
+            <Panel.Heading>Subtraction</Panel.Heading>
+            <Table bordered>
+                <tbody>
+                    <tr>
+                        <th className="col-xs-4">Host</th>
+                        <td className="col-xs-8">
+                            <Link to={`/subtraction/${props.subtraction.id}`}>
+                                {props.subtraction.id}
+                            </Link>
+                        </td>
                     </tr>
                 </tbody>
             </Table>
