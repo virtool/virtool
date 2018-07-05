@@ -880,12 +880,19 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         increment=0.1
     )
 
-    import_data = await download_and_parse_release(
-        app,
-        release["download_url"],
-        process_id,
-        progress_tracker.add
-    )
+    try:
+        import_data = await download_and_parse_release(
+            app,
+            release["download_url"],
+            process_id,
+            progress_tracker.add
+        )
+    except aiohttp.client_exceptions.ClientConnectorError:
+        return await virtool.db.processes.update(
+            db,
+            process_id,
+            errors=["Could not download reference data"]
+        )
 
     errors = virtool.references.check_import_data(
         import_data,
