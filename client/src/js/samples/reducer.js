@@ -1,6 +1,7 @@
 import { filter, map, reject, isEqual } from "lodash-es";
 import {
     FIND_SAMPLES,
+    FETCH_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
     REMOVE_SAMPLE,
@@ -54,6 +55,15 @@ export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
 export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
+
+        case FETCH_SAMPLES.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
+        case FETCH_SAMPLES.SUCCEEDED:
+            return {...state, ...action.data, isLoading: false, errorLoad: false};
+
+        case FETCH_SAMPLES.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case FIND_SAMPLES.SUCCEEDED:
             return {...state, ...action.data};
