@@ -48,7 +48,7 @@ const ReferenceList = (props) => {
                 {officialRemote}
             </div>
 
-            {officialRemote ? null: noRefs}
+            {officialRemote ? null : noRefs}
 
             {props.routerStateExists ? <AddReference /> : null}
         </div>

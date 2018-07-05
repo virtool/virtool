@@ -41,7 +41,6 @@ class AnalysisDetail extends React.Component {
         }
 
         const detail = this.props.detail;
-
         let content;
 
         if (!detail.ready) {
@@ -87,8 +86,12 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <IDRow id={detail.id} />
                         <tr>
-                            <th>Library Read Count</th>
+                            <th>Mapped Reads</th>
                             <td>{Numeral(detail.read_count).format()}</td>
+                        </tr>
+                        <tr>
+                            <th>Library Read Count</th>
+                            <td>{Numeral(this.props.quality.count).format()}</td>
                         </tr>
                         <tr>
                             <th>Created</th>
