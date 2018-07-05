@@ -57,7 +57,18 @@ async def get_status(req):
 
 @routes.get("/api/hmms/status/release")
 async def get_release(req):
-    release = await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+    try:
+        release = await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+
+    except virtool.errors.GitHubError as err:
+        if "404" in str(err):
+            return bad_gateway("GitHub repository does not exist")
+
+        raise
+
+    except aiohttp.client_exceptions.ClientConnectorError:
+        return bad_gateway("Could not reach GitHub")
+
     return json_response(release)
 
 
