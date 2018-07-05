@@ -1067,23 +1067,11 @@ async def refresh_remotes(app):
         pass
 
 
-async def update(app, process_id, ref_id, release_id, user_id):
+async def update(app, process_id, ref_id, release, user_id):
 
     db = app["db"]
 
     created_at = virtool.utils.timestamp()
-
-    if release_id:
-        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
-
-        release = await virtool.github.get_release(
-            app["settings"],
-            app["client"],
-            remotes_from["slug"],
-            release_id=release_id
-        )
-    else:
-        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
     update_subdocument = virtool.github.create_update_subdocument(
         release,
