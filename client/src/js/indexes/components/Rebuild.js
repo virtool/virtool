@@ -58,11 +58,11 @@ class RebuildIndex extends React.Component {
                     <span className="input-error-message">{this.state.error}</span>
                     <br />
                     {this.state.error === "There are unverified OTUs"
-                    ? (
-                        <span className="input-error-message">
-                            Please modify the unverified OTUs before rebuilding the index
-                        </span>
-                    ) : null}
+                        ? (
+                            <span className="input-error-message">
+                                Please modify the unverified OTUs before rebuilding the index
+                            </span>
+                        ) : null}
                 </div>
             )
             : null;
