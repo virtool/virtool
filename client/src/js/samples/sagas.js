@@ -32,6 +32,7 @@ export const getSampleDetailId = (state) => get(state, "samples.detail.id", null
 
 export function* watchSamples () {
     yield throttle(200, LOCATION_CHANGE, findSamples);
+    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
     yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
     yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
@@ -42,7 +43,6 @@ export function* watchSamples () {
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
-    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);

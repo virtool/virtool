@@ -67,6 +67,10 @@ export class SamplesList extends React.Component {
     static getDerivedStateFromProps (nextProps, prevState) {
         const newState = getUpdatedScrollListState(nextProps, prevState);
 
+        if (!newState) {
+            return null;
+        }
+
         if (newState.masterList
             && newState.masterList.length
             && (!prevState.masterList || !prevState.masterList.length)) {
@@ -187,7 +191,7 @@ export class SamplesList extends React.Component {
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
                     list={this.state.masterList}
-                    loadNextPage={this.onNextPage}
+                    loadNextPage={this.props.onNextPage}
                     page={this.state.page}
                     rowRenderer={this.rowRenderer}
                 />

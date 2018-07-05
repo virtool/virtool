@@ -245,7 +245,6 @@ export const getUpdatedScrollListState = (nextProps, prevState) => {
             page: nextProps.page
         };
     }
-
     if (prevState.page !== nextProps.page) {
         return {
             masterList: prevState.masterList.concat(nextProps.documents),
