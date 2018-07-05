@@ -84,13 +84,15 @@ export default class PathoscopeEntry extends React.Component {
                         />
                     </Col>
                     <Col xs={6} sm={4} md={2}>
-                        <Flex alignItems="center" style={{height: "21px"}}>
-                            <AnalysisValueLabel
-                                bsStyle="primary"
-                                label="Coverage"
-                                value={this.props.coverage}
-                            />
-                            <FlexItem pad={30}>
+                        <Flex justifyContent="space-between">
+                            <FlexItem>
+                                <AnalysisValueLabel
+                                    bsStyle="primary"
+                                    label="Coverage"
+                                    value={this.props.coverage}
+                                />
+                            </FlexItem>
+                            <FlexItem>
                                 {closeButton}
                             </FlexItem>
                         </Flex>
