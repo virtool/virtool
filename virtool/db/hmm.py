@@ -89,7 +89,7 @@ async def fetch_and_update_hmm_release(app, ignore_errors=False):
         release = await virtool.github.get_release(
             settings,
             session,
-            "virtool/virtool-hmm",
+            settings["hmm_slug"],
             etag
         )
 

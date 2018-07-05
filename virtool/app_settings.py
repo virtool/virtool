@@ -62,6 +62,12 @@ SCHEMA = {
     "sample_all_write": get_default_boolean(False),
     "sample_unique_names": get_default_boolean(True),
 
+    # HMM
+    "hmm_slug": {
+        "type": "string",
+        "default": "virtool/virtool-hmm"
+    },
+
     # MongoDB
     "db_name": {"type": "string", "default": "virtool"},
     "db_host": {"type": "string", "default": "localhost"},
