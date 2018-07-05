@@ -7,7 +7,7 @@ class TestFind:
     @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
         (None, None, None, range(0, 3), {
             "page": 1,
-            "per_page": 15,
+            "per_page": 25,
             "page_count": 1,
             "found_count": 3,
             "total_count": 3
@@ -31,21 +31,21 @@ class TestFind:
         # Test ``find`` query param and ``found_count`` response field.
         ("gv", None, None, range(1, 3), {
             "page": 1,
-            "per_page": 15,
+            "per_page": 25,
             "page_count": 1,
             "found_count": 2,
             "total_count": 3
         }),
         ("sp", None, None, range(0, 1), {
             "page": 1,
-            "per_page": 15,
+            "per_page": 25,
             "page_count": 1,
             "found_count": 1,
             "total_count": 3
         }),
         ("fred", None, None, [0, 2], {
             "page": 1,
-            "per_page": 15,
+            "per_page": 25,
             "page_count": 1,
             "found_count": 2,
             "total_count": 3

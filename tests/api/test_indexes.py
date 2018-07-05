@@ -351,7 +351,7 @@ async def test(exists, spawn_client, resp_is):
             "found_count": 4,
             "page": 1,
             "page_count": 1,
-            "per_page": 15,
+            "per_page": 25,
             "total_count": 6,
             "documents": [
                 {
