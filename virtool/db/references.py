@@ -1,3 +1,4 @@
+import aiohttp.client_exceptions
 import asyncio
 import json.decoder
 import os
@@ -263,16 +264,22 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
             return subdocument
 
 
-async def fetch_and_update_release(app, ref_id):
+async def fetch_and_update_release(app, ref_id, ignore_errors=False):
     """
     Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
     reference identified by the passed `ref_id` and return the release.
+
+    Exceptions can be ignored during the GitHub request. Error information will still be written to the reference
+    document.
 
     :param app: the application object
     :type app: :class:`aiohttp.Application`
 
     :param ref_id: the id of the reference to update
     :type ref_id: str
+
+    :param ignore_errors: ignore exceptions raised during GitHub request
+    :type ignore_errors:
 
     :return: the latest release
     :rtype: Coroutine[dict]
@@ -300,15 +307,18 @@ async def fetch_and_update_release(app, ref_id):
             document["remotes_from"]["slug"],
             etag
         )
-    except virtool.errors.GitHubError as err:
+
+    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
         await db.references.update_one({"_id": ref_id}, {
             "$set": {
-                "release.retrieved_at": retrieved_at,
-                "remotes_from.errors": [str(err)]
+                "errors": [str(err)]
             }
         })
 
-        return document.get("release", None)
+        if ignore_errors:
+            return document.get("release", None)
+
+        raise
 
     if release:
         release = virtool.github.format_release(release)

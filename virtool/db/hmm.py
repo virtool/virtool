@@ -5,11 +5,13 @@ import os
 import shutil
 
 import aiofiles
+import aiohttp.client_exceptions
 import semver
 
 import virtool.db.processes
 import virtool.db.status
 import virtool.db.utils
+import virtool.errors
 import virtool.github
 import virtool.hmm
 import virtool.http.utils
@@ -57,53 +59,69 @@ async def delete_unreferenced_hmms(db):
     logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
-async def fetch_and_update_hmm_release(app):
+async def fetch_and_update_hmm_release(app, ignore_errors=False):
     """
     Return the HMM install status document or create one if none exists.
 
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
+    :param ignore_errors: ignore possible errors when making GitHub request
+    :type ignore_errors: bool
+
     """
     db = app["db"]
     settings = app["settings"]
     session = app["client"]
 
-    etag = None
+    document = await db.status.find_one("hmm", ["release", "installed"])
 
-    document = await db.status.find_one("hmm", ["release", "updates"])
+    release = document.get("release", None)
 
-    existing = document.get("release", None)
+    installed = bool(document.get("installed", False))
 
     try:
-        installed = document["updates"][-1]
-    except (IndexError, KeyError):
-        installed = None
+        etag = release["etag"]
+    except (KeyError, TypeError):
+        etag = None
 
-    if existing:
-        etag = existing.get("etag", None)
-
-    release = await virtool.github.get_release(settings, session, "virtool/virtool-hmm", etag)
-
-    if release:
-        release = virtool.github.format_release(release)
-    else:
-        release = existing
-
-    release["newer"] = bool(
-        release is None or (
-            installed and
-            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+    try:
+        release = await virtool.github.get_release(
+            settings,
+            session,
+            "virtool/virtool-hmm",
+            etag
         )
-    )
 
-    await db.status.update_one({"_id": "hmm"}, {
-        "$set": {
-            "release": release
-        }
-    }, upsert=True)
+        if release:
+            release = virtool.github.format_release(release)
 
-    return release
+            release["newer"] = bool(
+                release is None or (
+                    installed and
+                    semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+                )
+            )
+
+        await db.status.update_one({"_id": "hmm"}, {
+            "$set": {
+                "release": release
+            }
+        }, upsert=True)
+
+        return release
+
+    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+        await db.status.update_one({"_id": "hmm"}, {
+            "$set": {
+                "errors": [str(err)]
+            }
+        })
+
+        if ignore_errors:
+            return document.get("release", None)
+
+        raise
 
 
 async def get_status(db):
