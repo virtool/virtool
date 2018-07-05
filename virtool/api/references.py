@@ -387,8 +387,11 @@ async def create(req):
                 release_id=release_id
             )
 
+        except aiohttp.client_exceptions.ClientConnectionError:
+            return bad_gateway("Could not reach GitHub")
+
         except virtool.errors.GitHubError as err:
-            if "Not Found" in str(err):
+            if "404" in str(err):
                 return bad_gateway("Could not retrieve latest GitHub release")
 
             raise
