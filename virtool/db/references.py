@@ -1058,7 +1058,8 @@ async def refresh_remotes(app):
             for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
                 await fetch_and_update_release(
                     app,
-                    ref_id
+                    ref_id,
+                    ignore_errors=True
                 )
 
             await asyncio.sleep(600, loop=app.loop)
