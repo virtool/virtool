@@ -28,8 +28,7 @@ const reducer = (state = initialState, action) => {
     switch (action.type) {
 
         case LIST_USERS.SUCCEEDED: {
-            const activeData = action.data[0];
-            return {...state, list: action.data, activeId: activeData.id, activeData};
+            return {...state, list: action.data};
         }
 
         case FILTER_USERS: {

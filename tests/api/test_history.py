@@ -27,7 +27,7 @@ async def test_find(spawn_client, test_changes, static_time):
         "found_count": 3,
         "page": 1,
         "page_count": 1,
-        "per_page": 15,
+        "per_page": 25,
         "total_count": 3,
         "documents": sorted([
             {

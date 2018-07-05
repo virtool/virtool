@@ -31,9 +31,7 @@ export class APIKeys extends React.Component {
         );
 
         if (!keyComponents.length) {
-            keyComponents = (
-                <NoneFound noun="API keys" />
-            );
+            keyComponents = <NoneFound noun="API keys" />;
         }
 
         return (

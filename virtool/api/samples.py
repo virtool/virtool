@@ -261,7 +261,7 @@ async def edit(req):
     return json_response(processed)
 
 
-@routes.post("/api/samples/rights", schema={
+@routes.patch("/api/samples/{sample_id}/rights", schema={
     "group": {"type": "string"},
     "all_read": {"type": "boolean"},
     "all_write": {"type": "boolean"},

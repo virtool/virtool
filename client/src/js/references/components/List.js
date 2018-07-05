@@ -6,8 +6,8 @@ import AddReference from "./AddReference";
 import ReferenceItem from "./ReferenceItem";
 import ReferenceToolbar from "./Toolbar";
 import { remoteReference } from "../actions";
-import { ViewHeader, LoadingPlaceholder } from "../../base";
-
+import { ViewHeader, LoadingPlaceholder, NoneFound } from "../../base";
+import { checkAdminOrPermission } from "../../utils";
 
 const ReferenceList = (props) => {
 
@@ -16,14 +16,17 @@ const ReferenceList = (props) => {
     }
 
     let referenceComponents = [];
+    let noRefs;
 
     if (props.documents.length) {
         referenceComponents = map(props.documents, document =>
             <ReferenceItem key={document.id} {...document} />
         );
+    } else {
+        noRefs = <NoneFound noun="References" />;
     }
 
-    referenceComponents.push(
+    const officialRemote = (!props.installOfficial && props.canCreateRef) ? (
         <Panel key="remote" className="card reference-remote">
             <span>
                 <p>Official Remote Reference</p>
@@ -32,17 +35,20 @@ const ReferenceList = (props) => {
                 </Button>
             </span>
         </Panel>
-    );
+    ) : null;
 
     return (
         <div>
             <ViewHeader title="References" totalCount={props.total_count} />
 
-            <ReferenceToolbar />
+            <ReferenceToolbar canCreate={props.canCreateRef} />
 
             <div className="card-container">
                 {referenceComponents}
+                {officialRemote}
             </div>
+
+            {officialRemote ? null : noRefs}
 
             {props.routerStateExists ? <AddReference /> : null}
         </div>
@@ -52,7 +58,8 @@ const ReferenceList = (props) => {
 const mapStateToProps = state => ({
     ...state.references,
     account: state.account,
-    routerStateExists: !!state.router.location.state
+    routerStateExists: !!state.router.location.state,
+    canCreateRef: checkAdminOrPermission(state.account.administrator, state.account.permissions, "create_ref")
 });
 
 const mapDispatchToProps = dipatch => ({

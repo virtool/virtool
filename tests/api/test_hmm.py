@@ -23,7 +23,7 @@ async def test_find(mocker, spawn_client, hmm_document):
         "found_count": 1,
         "page": 1,
         "page_count": 1,
-        "per_page": 15,
+        "per_page": 25,
         "documents": [
             {
                 "names": [

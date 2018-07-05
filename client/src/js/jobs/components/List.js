@@ -5,7 +5,7 @@ import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { fetchJobs } from "../actions";
-import { getUpdatedScrollListState } from "../../utils";
+import { getUpdatedScrollListState, checkAdminOrPermission } from "../../utils";
 
 export class JobsList extends React.Component {
 
@@ -27,7 +27,12 @@ export class JobsList extends React.Component {
     }
 
     rowRenderer = (index) => (
-        <Job key={this.state.masterList[index].id} {...this.state.masterList[index]} />
+        <Job
+            key={this.state.masterList[index].id}
+            {...this.state.masterList[index]}
+            canRemove={this.props.canRemove}
+            canCancel={this.props.canCancel}
+        />
     );
 
     render () {
@@ -65,7 +70,9 @@ export class JobsList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    ...state.jobs
+    ...state.jobs,
+    canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job"),
+    canCancel: checkAdminOrPermission(state.account.administrator, state.account.permissions, "cancel_job")
 });
 
 const mapDispatchToProps = (dispatch) => ({

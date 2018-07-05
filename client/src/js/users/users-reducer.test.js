@@ -48,9 +48,7 @@ describe("Users Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            list: action.data,
-            activeId: action.data[0].id,
-            activeData: action.data[0]
+            list: action.data
         };
 
         expect(result).toEqual(expected);

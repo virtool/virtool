@@ -218,7 +218,7 @@ async def paginate(collection, db_query, url_query, sort=None, projection=None, 
                    processor=virtool.utils.base_processor, reverse=False):
 
     page = int(url_query.get("page", 1))
-    per_page = int(url_query.get("per_page", 15))
+    per_page = int(url_query.get("per_page", 25))
 
     base_query = base_query or {}
 

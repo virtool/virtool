@@ -1,3 +1,4 @@
+import { find } from "lodash-es";
 import {
     WS_UPDATE_REFERENCE,
     LIST_REFERENCES,
@@ -14,6 +15,15 @@ const initialState = {
     history: null
 };
 
+const checkHasOfficialRemote = (list) => {
+    const hasOfficialRemote = find(
+        list,
+        ["remotes_from", {slug: "virtool/ref-plant-viruses"}]
+    );
+
+    return !!hasOfficialRemote;
+};
+
 export default function referenceReducer (state = initialState, action) {
 
     switch (action.type) {
@@ -22,7 +32,7 @@ export default function referenceReducer (state = initialState, action) {
             return {...state, detail: {...state.detail, process: action.data.process, release: action.data.release}};
 
         case LIST_REFERENCES.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, ...action.data, installOfficial: checkHasOfficialRemote(action.data.documents)};
 
         case GET_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};

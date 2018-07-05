@@ -11,18 +11,14 @@ class IndexChanges extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            masterList: this.props.history ? this.props.history.documents : [],
-            list: this.props.history ? this.props.history.documents : [],
+            masterList: this.props.history ? this.props.history.documents : null,
+            list: this.props.history ? this.props.history.documents : null,
             page: this.props.history ? this.props.history.page : 1
         };
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (nextProps.history === null) {
-            return null;
-        }
-
-        return getUpdatedScrollListState(nextProps, prevState);
+        return getUpdatedScrollListState(nextProps.history, prevState);
     }
 
     handlePage = (page) => {
@@ -44,7 +40,7 @@ class IndexChanges extends React.Component {
 
     render () {
 
-        if (this.props.history === null || this.props.detail === null) {
+        if (this.props.history === null || this.props.history.documents === null || this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
 

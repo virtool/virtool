@@ -1,6 +1,5 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Button } from "react-bootstrap";
 import { LoadingPlaceholder } from "./index";
 
 export class ScrollList extends React.Component {
@@ -27,34 +26,13 @@ export class ScrollList extends React.Component {
         }
     };
 
-    loadMore = () => {
-        this.props.loadNextPage(this.props.page + 1);
-    };
-
     render () {
-        const { list, rowRenderer, isNextPageLoading, hasNextPage, errorLoad } = this.props;
-
-        let loadMoreButton;
-
-        const contentHeight = (document.body.clientHeight < window.innerHeight)
-            ? document.body.clientHeight : document.body.scrollHeight;
-
-        // List is shorter than UI page (therefore no scrollbars to auto-load) or
-        // request for next page failed.
-        if ((contentHeight <= (window.innerHeight + window.scrollY) && (hasNextPage && !isNextPageLoading))
-            || errorLoad) {
-            loadMoreButton = (
-                <Button bsStyle="primary" onClick={this.loadMore} block>
-                    Load More
-                </Button>
-            );
-        }
+        const { list, rowRenderer, isNextPageLoading, hasNextPage } = this.props;
 
         return (
             <div>
                 {map(list, (item, index) => rowRenderer(index))}
                 {(isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null}
-                {loadMoreButton || null}
             </div>
         );
     }

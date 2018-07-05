@@ -15,7 +15,6 @@ import {
     FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
-    REFRESH_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
@@ -29,21 +28,21 @@ import {
 } from "../actionTypes";
 
 export const getAnalysisDetailId = (state) => get(state, "samples.analysisDetail.id", null);
+export const getSampleDetailId = (state) => get(state, "samples.detail.id", null);
 
 export function* watchSamples () {
     yield throttle(200, LOCATION_CHANGE, findSamples);
-    yield takeEvery(WS_UPDATE_SAMPLE, wsSample);
+    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
+    yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
     yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
-    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
-    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
@@ -55,11 +54,21 @@ export function* wsSample () {
     yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
 }
 
+export function* wsUpdateSample (action) {
+    yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
+
+    const currentSampleId = yield select(getSampleDetailId);
+
+    if (currentSampleId === action.update.id) {
+        yield getSample({ sampleId: currentSampleId });
+    }
+}
+
 export function* wsUpdateAnalysis (action) {
     const currentAnalysisId = yield select(getAnalysisDetailId);
 
     if (currentAnalysisId === action.update.id) {
-        yield getAnalysis({analysisId: currentAnalysisId});
+        yield getAnalysis({ analysisId: currentAnalysisId });
     }
 }
 

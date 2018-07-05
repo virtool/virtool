@@ -14,10 +14,11 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Route, Switch } from "react-router-dom";
 import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
-
+import { get } from "lodash-es";
 import { listUsers, filterUsers } from "../actions";
 import { listGroups } from "../../groups/actions";
-import { Button, Icon, LoadingPlaceholder } from "../../base";
+import { clearError } from "../../errors/actions";
+import { Button, Icon, LoadingPlaceholder, Alert } from "../../base";
 import UsersList from "./List";
 import CreateUser from "./Create";
 import Groups from "../../groups/components/Groups";
@@ -28,7 +29,8 @@ export class ManageUsers extends React.Component {
         super(props);
 
         this.state = {
-            filter: ""
+            filter: "",
+            error: ""
         };
     }
 
@@ -42,6 +44,19 @@ export class ManageUsers extends React.Component {
         }
     }
 
+    static getDerivedStateFromProps (nextProps, prevState) {
+        if (prevState.error !== nextProps.error) {
+            return { error: nextProps.error };
+        }
+        return null;
+    }
+
+    componentWillUnmount () {
+        if (this.props.error.length) {
+            this.props.onClearError("LIST_USERS_ERROR");
+        }
+    }
+
     handleFilter = (e) => {
         this.props.onFilter(e.target.value);
     }
@@ -51,6 +66,15 @@ export class ManageUsers extends React.Component {
     }
 
     render () {
+
+        if (this.state.error.length) {
+            return (
+                <Alert bsStyle="warning" icon="warning">
+                    <strong>You do not have permission to manage users.</strong>
+                    <span> Contact an administrator.</span>
+                </Alert>
+            );
+        }
 
         if (this.props.users === null || this.props.groups === null) {
             return <LoadingPlaceholder margin="220px" />;
@@ -101,7 +125,8 @@ export class ManageUsers extends React.Component {
 const mapStateToProps = state => ({
     users: state.users.list,
     groups: state.groups.list,
-    filter: state.users.filter
+    filter: state.users.filter,
+    error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -116,6 +141,10 @@ const mapDispatchToProps = dispatch => ({
 
     onFilter: (term) => {
         dispatch(filterUsers(term));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

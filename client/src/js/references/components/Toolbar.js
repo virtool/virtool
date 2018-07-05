@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Icon, Button } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-const ReferenceToolbar = ({ onFind, term }) => (
+const ReferenceToolbar = ({ onFind, term, canCreate }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -23,11 +23,13 @@ const ReferenceToolbar = ({ onFind, term }) => (
             </div>
         </div>
 
-        <Link to={{state: {newReference: true, createReference: true}}}>
-            <Button bsStyle="primary" tip="Create">
-                <Icon name="plus-square" />
-            </Button>
-        </Link>
+        {canCreate ? (
+            <Link to={{state: {newReference: true, createReference: true}}}>
+                <Button bsStyle="primary" tip="Create">
+                    <Icon name="plus-square" />
+                </Button>
+            </Link>
+        ) : null}
     </div>
 );
 
