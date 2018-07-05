@@ -113,12 +113,17 @@ async def edit(req):
 
     if "groups" in data:
         missing = [g for g in data["groups"] if g not in groups]
-        return bad_request("Groups do not exist: " + ", ".join(missing))
+
+        if missing:
+            return bad_request("Groups do not exist: " + ", ".join(missing))
 
     if "primary_group" in data and data["primary_group"] not in groups:
         return bad_request("Primary group does not exist")
 
     user_id = req.match_info["user_id"]
+
+    if "administrator" in data and user_id == req["client"].user_id:
+        return bad_request("Users cannot modify their own administrative status")
 
     try:
         document = await virtool.db.users.edit(
