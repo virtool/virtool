@@ -103,24 +103,8 @@ async def install(req):
 
     release = document.get("release", None)
 
-    if not release:
-        try:
-            release = await virtool.github.get_release(
-                req.app["settings"],
-                req.app["client"],
-                "virtool/virtool-hmm"
-            )
-
-        except aiohttp.client_exceptions.ClientConnectorError:
-            return bad_gateway("Could not reach GitHub")
-
-        except virtool.errors.GitHubError as err:
-            if "Not Found" in str(err):
-                return bad_gateway("GitHub repository not found")
-
-            raise
-
-        release = virtool.github.format_release(release)
+    if release is None:
+        return bad_request("Target release does not exist")
 
     update = virtool.github.create_update_subdocument(release, False, user_id)
 
