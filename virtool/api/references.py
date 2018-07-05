@@ -136,17 +136,12 @@ async def list_updates(req):
     return json_response(updates or list())
 
 
-@routes.post("/api/refs/{ref_id}/updates", schema={
-    "release_id": {
-        "type": "string"
-    }
-})
+@routes.post("/api/refs/{ref_id}/updates")
 async def update(req):
     app = req.app
     db = app["db"]
 
     ref_id = req.match_info["ref_id"]
-    release_id = req["data"].get("release_id", None)
     user_id = req["client"].user_id
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
@@ -157,11 +152,16 @@ async def update(req):
 
     process = await virtool.db.processes.register(db, "update_remote_reference")
 
+    release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    if release is None:
+        return bad_request("Target release does not exist")
+
     release, update_subdocument = await virtool.db.references.update(
         req.app,
         process["id"],
         ref_id,
-        release_id,
+        release,
         user_id
     )
 
