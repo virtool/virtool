@@ -3,7 +3,6 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import aiohttp
-import aiohttp.client_exceptions
 
 import virtool.genbank
 import virtool.http.proxy
@@ -32,5 +31,5 @@ async def get(req):
 
         return json_response(data)
 
-    except aiohttp.client_exceptions.ClientConnectorError:
+    except aiohttp.ClientConnectorError:
         return bad_gateway("Could not reach NCBI")

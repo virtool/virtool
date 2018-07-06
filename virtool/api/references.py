@@ -1,8 +1,8 @@
 import asyncio
 import os
 
+import aiohttp
 import aiojobs.aiohttp
-import aiohttp.client_exceptions
 
 import virtool.db.history
 import virtool.db.indexes
@@ -16,7 +16,7 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, insufficient_rights, json_response,\
+from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, insufficient_rights, json_response, \
     no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
@@ -114,7 +114,7 @@ async def get_release(req):
 
     try:
         release = await virtool.db.references.fetch_and_update_release(req.app, ref_id)
-    except aiohttp.client_exceptions.ClientConnectorError:
+    except aiohttp.ClientConnectorError:
         return bad_gateway("Could not reach GitHub")
 
     if release is None:
@@ -387,7 +387,7 @@ async def create(req):
                 release_id=release_id
             )
 
-        except aiohttp.client_exceptions.ClientConnectionError:
+        except aiohttp.ClientConnectionError:
             return bad_gateway("Could not reach GitHub")
 
         except virtool.errors.GitHubError as err:
@@ -396,7 +396,7 @@ async def create(req):
 
             raise
 
-        except aiohttp.client_exceptions.ClientConnectorError:
+        except aiohttp.ClientConnectorError:
             return bad_gateway("Could not reach GitHub")
 
         release = virtool.github.format_release(release)

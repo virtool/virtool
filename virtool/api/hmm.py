@@ -1,6 +1,6 @@
 import os
 
-import aiohttp.client_exceptions
+import aiohttp
 import aiojobs.aiohttp
 
 import virtool.db.hmm
@@ -12,7 +12,7 @@ import virtool.github
 import virtool.hmm
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, conflict, json_response, no_content,\
+from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, conflict, json_response, no_content, \
     not_found, paginate
 
 routes = virtool.http.routes.Routes()
@@ -66,7 +66,7 @@ async def get_release(req):
 
         raise
 
-    except aiohttp.client_exceptions.ClientConnectorError:
+    except aiohttp.ClientConnectorError:
         return bad_gateway("Could not reach GitHub")
 
     if release is None:

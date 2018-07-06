@@ -1,8 +1,8 @@
-import aiohttp.client_exceptions
 import asyncio
 import json.decoder
 import os
 
+import aiohttp
 import pymongo
 import semver
 
@@ -317,7 +317,7 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
         if updated:
             updated = virtool.github.format_release(updated)
 
-    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError) as err:
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach GitHub"]
 
@@ -885,7 +885,7 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
             process_id,
             progress_tracker.add
         )
-    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError):
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
         return await virtool.db.processes.update(
             db,
             process_id,
@@ -1176,7 +1176,7 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
             process_id,
             progress_tracker.add
         )
-    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError):
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
         return await virtool.db.processes.update(
             db,
             process_id,
