@@ -71,10 +71,7 @@ export class SamplesList extends React.Component {
             return null;
         }
 
-        if (newState.masterList
-            && newState.masterList.length
-            && (!prevState.masterList || !prevState.masterList.length)) {
-
+        if (newState.masterList && newState.masterList.length) {
             const newSelected = createSelection(newState.masterList);
 
             return {
