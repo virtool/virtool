@@ -314,7 +314,8 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
             etag
         )
 
-        updated = virtool.github.format_release(updated)
+        if updated:
+            updated = virtool.github.format_release(updated)
 
     except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
         if "ClientConnectorError" in str(err):
