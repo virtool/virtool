@@ -16,6 +16,7 @@ export default class PathoscopeIsolate extends React.Component {
         coverage: PropTypes.string,
         maxDepth: PropTypes.number,
         meanDepth: PropTypes.number,
+        medianDepth: PropTypes.number,
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,
@@ -67,6 +68,9 @@ export default class PathoscopeIsolate extends React.Component {
         );
 
         const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
+        const avgDepth = this.props.showMedian
+            ? toScientificNotation(this.props.medianDepth)
+            : toScientificNotation(this.props.meanDepth);
 
         return (
             <div>
@@ -82,7 +86,7 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <strong className="small text-danger">
-                                {toScientificNotation(this.props.meanDepth)}
+                                {avgDepth}
                             </strong>
                         </FlexItem>
                         <FlexItem pad={5}>
