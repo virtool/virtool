@@ -54,7 +54,6 @@ const getInitialState = (refId, refArray) => {
             description: originalRef.description,
             dataType: originalRef.data_type || "",
             organism: originalRef.organism,
-            isPublic: originalRef.public,
             errorName: "",
             errorDataType: "",
             errorSelect: ""
@@ -67,7 +66,6 @@ const getInitialState = (refId, refArray) => {
         description: "",
         dataType: "genome",
         organism: "",
-        isPublic: false,
         errorName: "",
         errorDataType: "",
         errorSelect: ""
@@ -127,13 +125,8 @@ class CloneReference extends React.Component {
             this.state.description,
             this.state.dataType,
             this.state.organism,
-            this.state.isPublic,
             this.state.reference
         );
-    };
-
-    toggleCheck = () => {
-        this.setState({ isPublic: !this.state.isPublic });
     };
 
     render () {
@@ -155,7 +148,6 @@ class CloneReference extends React.Component {
                     <ReferenceForm
                         state={this.state}
                         onChange={this.handleChange}
-                        toggle={this.toggleCheck}
                     />
                 </Modal.Body>
 
@@ -184,8 +176,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, description, dataType, organism, isPublic, refId) => {
-        dispatch(cloneReference(name, description, dataType, organism, isPublic, refId));
+    onSubmit: (name, description, dataType, organism, refId) => {
+        dispatch(cloneReference(name, description, dataType, organism, refId));
     },
 
     onClearError: (error) => {

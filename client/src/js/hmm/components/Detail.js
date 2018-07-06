@@ -103,20 +103,18 @@ class HMMDetail extends React.Component {
                 </h5>
 
                 <Panel>
-                    <Panel.Body style={{height: "408px"}}>
-                        <Table className="cluster-table">
-                            <thead>
-                                <tr>
-                                    <th>Accession</th>
-                                    <th>Name</th>
-                                    <th>Organism</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {clusterMembers}
-                            </tbody>
-                        </Table>
-                    </Panel.Body>
+                    <Table className="cluster-table">
+                        <thead>
+                            <tr>
+                                <th>Accession</th>
+                                <th>Name</th>
+                                <th>Organism</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {clusterMembers}
+                        </tbody>
+                    </Table>
                 </Panel>
 
                 <Row>

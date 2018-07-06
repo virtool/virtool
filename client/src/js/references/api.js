@@ -9,14 +9,13 @@ export const get = ({ referenceId }) => (
     Request.get(`/api/refs/${referenceId}`)
 );
 
-export const create = ({ name, description, dataType, organism, isPublic }) => (
+export const create = ({ name, description, dataType, organism }) => (
     Request.post("/api/refs")
         .send({
             name,
             description,
             data_type: dataType,
-            organism,
-            public: isPublic
+            organism
         })
 );
 
@@ -25,26 +24,24 @@ export const edit = ({ referenceId, update }) => (
         .send(update)
 );
 
-export const importReference = ({ name, description, dataType, organism, isPublic, fileId }) => (
+export const importReference = ({ name, description, dataType, organism, fileId }) => (
     Request.post("/api/refs")
         .send({
             name,
             description,
             data_type: dataType,
             organism,
-            public: isPublic,
             import_from: fileId
         })
 );
 
-export const cloneReference = ({ name, description, dataType, organism, isPublic, refId }) => (
+export const cloneReference = ({ name, description, dataType, organism, refId }) => (
     Request.post("/api/refs")
         .send({
             name,
             description,
             data_type: dataType,
             organism,
-            public: isPublic,
             clone_from: refId
         })
 );

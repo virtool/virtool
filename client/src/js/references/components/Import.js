@@ -15,7 +15,6 @@ const getInitialState = () => ({
     description: "",
     dataType: "genome",
     organism: "",
-    isPublic: false,
     errorName: "",
     errorDataType: "",
     errorFile: "",
@@ -88,14 +87,9 @@ class ImportReference extends React.Component {
             this.state.description,
             this.state.dataType,
             this.state.organism,
-            this.state.isPublic,
             this.props.importId
         );
 
-    };
-
-    toggleCheck = () => {
-        this.setState({ isPublic: !this.state.isPublic });
     };
 
     render () {
@@ -171,8 +165,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, description, dataType, organism, isPublic, fileId) => {
-        dispatch(importReference(name, description, dataType, organism, isPublic, fileId));
+    onSubmit: (name, description, dataType, organism, fileId) => {
+        dispatch(importReference(name, description, dataType, organism, fileId));
     },
 
     onDrop: (fileType, file, localId) => {
