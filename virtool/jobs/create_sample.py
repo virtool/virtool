@@ -87,15 +87,10 @@ class CreateSample(virtool.jobs.job.Job):
         """
         input_paths = [os.path.join(self.settings.get("data_path"), "files", file_id) for file_id in self.files]
 
-        min_length = 50
-
-        if self.task_args["srna"]:
-            min_length = 20
-
         command = [
             "skewer",
             "-m", "pe" if self.paired else "any",
-            "-l", str(min_length),
+            "-l", "20" if self.task_args["srna"] else "50",
             "-q", "20",
             "-Q", "25",
             "-t", str(self.settings.get("create_sample_proc")),
@@ -106,7 +101,8 @@ class CreateSample(virtool.jobs.job.Job):
         # Trim reads to max length of 23 if the sample is sRNA.
         if self.task_args["srna"]:
             command += [
-                "-L", "23"
+                "-L", "23",
+                "-e"
             ]
 
         command += input_paths
