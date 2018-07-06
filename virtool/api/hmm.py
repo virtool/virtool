@@ -58,7 +58,7 @@ async def get_status(req):
 @routes.get("/api/hmms/status/release")
 async def get_release(req):
     try:
-        release = await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+        release = await virtool.db.hmm.fetch_and_update_release(req.app)
 
     except virtool.errors.GitHubError as err:
         if "404" in str(err):
@@ -174,6 +174,6 @@ async def purge(req):
         }
     })
 
-    await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+    await virtool.db.hmm.fetch_and_update_release(req.app)
 
     return no_content()

@@ -295,35 +295,39 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
         "remotes_from"
     ])
 
+    release = document.get("release", None)
+
     try:
-        etag = document["release"]["etag"]
+        etag = release["etag"]
     except (KeyError, TypeError):
         etag = None
 
+    # Variables that will be used when trying to fetch release from GitHub.
+    errors = list()
+    updated = None
+
     try:
-        release = await virtool.github.get_release(
+        updated = await virtool.github.get_release(
             app["settings"],
             app["client"],
             document["remotes_from"]["slug"],
             etag
         )
 
+        updated = virtool.github.format_release(updated)
+
     except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "errors": [str(err)]
-            }
-        })
+        if "ClientConnectorError" in str(err):
+            errors = ["Could not reach GitHub"]
 
-        if ignore_errors:
-            return document.get("release", None)
+        if "404" in str(err):
+            errors = ["GitHub repository or release does not exist"]
 
-        raise
+        if errors and not ignore_errors:
+            raise
 
-    if release:
-        release = virtool.github.format_release(release)
-    else:
-        release = document.get("release", None)
+    if updated:
+        release = updated
 
     if release:
         release["retrieved_at"] = retrieved_at
@@ -335,21 +339,14 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
             semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
         )
 
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release": release,
-                "remotes_from.errors": None
-            }
-        })
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "errors": errors,
+            "release": release
+        }
+    })
 
-    else:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release.retrieved_at": retrieved_at
-            }
-        })
-
-    return document.get("release", None)
+    return release
 
 
 async def get_computed(db, ref_id, internal_control_id):

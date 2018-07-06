@@ -59,7 +59,7 @@ async def delete_unreferenced_hmms(db):
     logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
-async def fetch_and_update_hmm_release(app, ignore_errors=False):
+async def fetch_and_update_release(app, ignore_errors=False):
     """
     Return the HMM install status document or create one if none exists.
 
@@ -85,15 +85,19 @@ async def fetch_and_update_hmm_release(app, ignore_errors=False):
     except (KeyError, TypeError):
         etag = None
 
+    errors = list()
+
     try:
-        release = await virtool.github.get_release(
+        updated = await virtool.github.get_release(
             settings,
             session,
             settings["hmm_slug"],
             etag
         )
 
-        if release:
+        # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
+        # has not changed and `None` is returned from `get_release()`.
+        if updated:
             release = virtool.github.format_release(release)
 
             release["newer"] = bool(
@@ -103,8 +107,12 @@ async def fetch_and_update_hmm_release(app, ignore_errors=False):
                 )
             )
 
+        release["retrieved_at"] = virtool.utils.timestamp()
+
+        # The `errors` list is emptied and the
         await db.status.update_one({"_id": "hmm"}, {
             "$set": {
+                "errors": errors,
                 "release": release
             }
         }, upsert=True)
@@ -112,16 +120,22 @@ async def fetch_and_update_hmm_release(app, ignore_errors=False):
         return release
 
     except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+        if "ClientConnectorError" in str(err):
+            errors = ["Could not reach GitHub"]
+
+        if "404" in str(err):
+            errors = ["GitHub repository or release does not exist"]
+
+        if errors and not ignore_errors:
+            raise
+
         await db.status.update_one({"_id": "hmm"}, {
             "$set": {
-                "errors": [str(err)]
+                "errors": errors
             }
         })
 
-        if ignore_errors:
-            return document.get("release", None)
-
-        raise
+        return release
 
 
 async def get_status(db):
@@ -278,7 +292,7 @@ async def purge(db):
 async def refresh(app):
     try:
         while True:
-            await fetch_and_update_hmm_release(app)
+            await fetch_and_update_release(app)
             await asyncio.sleep(600, loop=app.loop)
     except asyncio.CancelledError:
         pass
