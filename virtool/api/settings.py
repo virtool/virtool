@@ -1,7 +1,6 @@
 import os
 
 import aiohttp
-import aiohttp.client_exceptions
 
 import virtool.app_settings
 import virtool.http.routes
@@ -107,7 +106,7 @@ async def check_proxy(req):
 
                         return json_response(dict(body, message="Could not reach internet"), status=400)
 
-                except aiohttp.client_exceptions.ClientProxyConnectionError:
+                except aiohttp.ClientProxyConnectionError:
                     return json_response(dict(body, message="Could not connect to proxy"), status=400)
 
     return json_response(dict(body, message="Proxy use is not enabled"), status=400)

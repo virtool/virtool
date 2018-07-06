@@ -1,5 +1,6 @@
-import aiohttp
 import os
+
+import aiohttp
 from aiohttp import web
 
 import virtool.errors
@@ -73,7 +74,7 @@ async def middleware(req, handler):
             "message": str(err)
         }, status=500)
 
-    except aiohttp.client_exceptions.ClientProxyConnectionError:
+    except aiohttp.ClientProxyConnectionError:
         return json_response({
             "id": "proxy_error",
             "message": "Could not connect to proxy"

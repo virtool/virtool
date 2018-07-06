@@ -75,9 +75,17 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
     )
 
 
-@pytest.mark.parametrize("release_id", ["bar", None])
-async def test_update(release_id, mocker, spawn_client, check_ref_right, id_exists, resp_is):
+@pytest.mark.parametrize("error", [None, "400"])
+async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, resp_is):
     client = await spawn_client(authorize=True)
+
+    if error != "400":
+        await client.db.references.insert_one({
+            "_id": "foo",
+            "release": {
+                "id": "bar"
+            }
+        })
 
     m_finish_update = mocker.patch("virtool.db.references.finish_update", make_mocked_coro())
 
@@ -101,12 +109,7 @@ async def test_update(release_id, mocker, spawn_client, check_ref_right, id_exis
         ))
     )
 
-    if release_id:
-        resp = await client.post("/api/refs/foo/updates", {
-            "release_id": release_id
-        })
-    else:
-        resp = await client.post("/api/refs/foo/updates")
+    resp = await client.post("/api/refs/foo/updates")
 
     id_exists.assert_called_with(
         client.db.references,
@@ -121,6 +124,10 @@ async def test_update(release_id, mocker, spawn_client, check_ref_right, id_exis
         assert await resp_is.insufficient_rights(resp)
         return
 
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Target release does not exist")
+        return
+
     m_register.assert_called_with(
         client.db,
         "update_remote_reference"
@@ -130,7 +137,9 @@ async def test_update(release_id, mocker, spawn_client, check_ref_right, id_exis
         client.app,
         "process",
         "foo",
-        release_id,
+        {
+            "id": "bar"
+        },
         "test"
     )
 

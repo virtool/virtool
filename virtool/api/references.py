@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+import aiohttp
 import aiojobs.aiohttp
 
 import virtool.db.history
@@ -15,8 +16,8 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
-from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, json_response, no_content, \
-    not_found, paginate
+from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, insufficient_rights, json_response, \
+    no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -111,7 +112,13 @@ async def get_release(req):
     if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    release = await virtool.db.references.fetch_and_update_release(req.app, ref_id)
+    try:
+        release = await virtool.db.references.fetch_and_update_release(req.app, ref_id)
+    except aiohttp.ClientConnectorError:
+        return bad_gateway("Could not reach GitHub")
+
+    if release is None:
+        return bad_gateway("Release repository does not exist on GitHub")
 
     return json_response(release)
 
@@ -136,17 +143,12 @@ async def list_updates(req):
     return json_response(updates or list())
 
 
-@routes.post("/api/refs/{ref_id}/updates", schema={
-    "release_id": {
-        "type": "string"
-    }
-})
+@routes.post("/api/refs/{ref_id}/updates")
 async def update(req):
     app = req.app
     db = app["db"]
 
     ref_id = req.match_info["ref_id"]
-    release_id = req["data"].get("release_id", None)
     user_id = req["client"].user_id
 
     if not await virtool.db.utils.id_exists(db.references, ref_id):
@@ -155,13 +157,18 @@ async def update(req):
     if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
+    release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
+
+    if release is None:
+        return bad_request("Target release does not exist")
+
     process = await virtool.db.processes.register(db, "update_remote_reference")
 
     release, update_subdocument = await virtool.db.references.update(
         req.app,
         process["id"],
         ref_id,
-        release_id,
+        release,
         user_id
     )
 
@@ -312,6 +319,9 @@ async def create(req):
 
     if clone_from:
 
+        if not await db.references.count({"_id": clone_from}):
+            return bad_request("Source reference does not exist")
+
         manifest = await virtool.db.references.get_manifest(db, clone_from)
 
         document = await virtool.db.references.create_clone(
@@ -369,12 +379,25 @@ async def create(req):
         ))
 
     elif remote_from:
-        release = await virtool.github.get_release(
-            settings,
-            req.app["client"],
-            remote_from,
-            release_id=release_id
-        )
+        try:
+            release = await virtool.github.get_release(
+                settings,
+                req.app["client"],
+                remote_from,
+                release_id=release_id
+            )
+
+        except aiohttp.ClientConnectionError:
+            return bad_gateway("Could not reach GitHub")
+
+        except virtool.errors.GitHubError as err:
+            if "404" in str(err):
+                return bad_gateway("Could not retrieve latest GitHub release")
+
+            raise
+
+        except aiohttp.ClientConnectorError:
+            return bad_gateway("Could not reach GitHub")
 
         release = virtool.github.format_release(release)
 
