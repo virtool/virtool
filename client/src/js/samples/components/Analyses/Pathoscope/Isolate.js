@@ -13,13 +13,14 @@ export default class PathoscopeIsolate extends React.Component {
         name: PropTypes.string,
         pi: PropTypes.number,
         best: PropTypes.number,
-        coverage: PropTypes.number,
+        coverage: PropTypes.string,
         maxDepth: PropTypes.number,
         meanDepth: PropTypes.number,
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,
         showReads: PropTypes.bool,
+        showMedian: PropTypes.bool,
         isCrop: PropTypes.bool
     };
 
@@ -86,7 +87,7 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <strong className="small text-primary">
-                                {toScientificNotation(this.props.coverage)}
+                                {toScientificNotation(parseFloat(this.props.coverage))}
                             </strong>
                         </FlexItem>
                     </Flex>
