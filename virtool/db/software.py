@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 
 import aiohttp
@@ -13,6 +14,8 @@ import virtool.http.utils
 import virtool.processes
 import virtool.software
 import virtool.utils
+
+logger = logging.getLogger(__name__)
 
 VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
 
@@ -39,8 +42,11 @@ async def fetch_and_update_software_releases(app):
         async with virtool.http.proxy.ProxyRequest(settings, session.get, VIRTOOL_RELEASES_URL) as resp:
             data = await resp.text()
             data = json.loads(data)
+
+        logger.debug("Retrieved software releases from www.virtool.ca")
     except aiohttp.ClientConnectionError:
         # Return any existing release list or `None`.
+        logger.debug("Could not retrieve software releases")
         return await virtool.db.utils.get_one_field(db.status, "releases", "software")
 
     data = data["software"]
