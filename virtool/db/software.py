@@ -163,6 +163,21 @@ async def install(app, release, process_id):
         await virtool.utils.reload(app)
 
 
+async def refresh(app):
+    """
+    To be run in job scheduler. Automatically checks for software releases every 12 hours.
+
+    :param app: the application object
+
+    """
+    try:
+        while True:
+            await fetch_and_update_software_releases(app)
+            await asyncio.sleep(43200, loop=app.loop)
+    except asyncio.CancelledError:
+        pass
+
+
 async def update_software_process(db, progress, step=None):
     """
     Update the process field in the software update document. Used to keep track of the current progress of the update
