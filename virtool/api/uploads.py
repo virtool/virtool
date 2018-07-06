@@ -7,6 +7,8 @@ import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found
 
+CHUNK_SIZE = 32768
+
 FILE_TYPES = [
     "reference",
     "reads",
@@ -51,7 +53,7 @@ async def upload(req):
 
     with open(file_path, "wb") as handle:
         while True:
-            chunk = await file.read_chunk()
+            chunk = await file.read_chunk(CHUNK_SIZE)
             if not chunk:
                 break
             size += len(chunk)
