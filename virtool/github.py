@@ -1,5 +1,4 @@
 import logging
-import aiohttp.client_exceptions
 
 import virtool.errors
 import virtool.http.proxy
