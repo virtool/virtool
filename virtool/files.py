@@ -190,9 +190,11 @@ class Manager:
         """
         path = os.path.join(self.files_path, filename)
 
+        size = virtool.utils.file_stats(path)["size"]
+
         update_result = await self.db.files.update_one({"_id": filename}, {
             "$set": {
-                "size": virtool.utils.file_stats(path),
+                "size": size,
                 "ready": True
             }
         })

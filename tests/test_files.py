@@ -169,7 +169,8 @@ async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
     When a file is
 
     """
-    m_file_status = mocker.patch("virtool.utils.file_stats", return_value=245)
+    m_file_status = mocker.patch("virtool.utils.file_stats", return_value={"modify": "foobar", "size": 245})
+
     m_remove = mocker.patch("os.remove")
 
     filename = "foobar-test.fq"
