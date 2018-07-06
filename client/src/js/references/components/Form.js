@@ -1,7 +1,7 @@
 import React from "react";
 import { map } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
-import { InputError, Checkbox } from "../../base";
+import { InputError } from "../../base";
 
 export default class ReferenceForm extends React.Component {
 
@@ -78,15 +78,6 @@ export default class ReferenceForm extends React.Component {
                             name="organism"
                             value={this.props.state.organism}
                             onChange={this.props.onChange}
-                        />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col xs={3}>
-                        <Checkbox
-                            label="Public"
-                            checked={this.props.state.isPublic}
-                            onClick={this.props.toggle}
                         />
                     </Col>
                 </Row>

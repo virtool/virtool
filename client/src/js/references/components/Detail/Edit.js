@@ -14,7 +14,6 @@ const getInitialState = (detail) => ({
     description: detail.description,
     dataType: detail.data_type,
     organism: detail.organism,
-    isPublic: detail.public,
     errorName: "",
     errorDataType: ""
 });
@@ -68,17 +67,12 @@ export class EditReference extends React.Component {
                     description: this.state.description,
                     data_type: this.state.dataType,
                     organism: this.state.organism,
-                    public: this.state.isPublic,
                     internal_control: this.state.internalControl
                 }
             );
             this.props.onHide(window.location);
         }
 
-    };
-
-    toggleCheck = () => {
-        this.setState({ isPublic: !this.state.isPublic });
     };
 
     render () {
@@ -90,7 +84,7 @@ export class EditReference extends React.Component {
                 </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                        <ReferenceForm state={this.state} onChange={this.handleChange} />
                     </Modal.Body>
 
                     <Modal.Footer>

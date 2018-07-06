@@ -12,7 +12,6 @@ const getInitialState = () => ({
     description: "",
     dataType: "genome",
     organism: "",
-    isPublic: false,
     errorName: "",
     errorDataType: ""
 });
@@ -51,15 +50,10 @@ export class CreateReference extends React.Component {
                 this.state.name,
                 this.state.description,
                 this.state.dataType,
-                this.state.organism,
-                this.state.isPublic
+                this.state.organism
             );
         }
 
-    };
-
-    toggleCheck = () => {
-        this.setState({ isPublic: !this.state.isPublic });
     };
 
     render () {
@@ -75,7 +69,6 @@ export class CreateReference extends React.Component {
                     <ReferenceForm
                         state={this.state}
                         onChange={this.handleChange}
-                        toggle={this.toggleCheck}
                     />
                 </Modal.Body>
 
@@ -93,8 +86,8 @@ export class CreateReference extends React.Component {
 
 const mapDispatchToProps = dispatch => ({
 
-    onSubmit: (name, description, dataType, organism, isPublic) => {
-        dispatch(createReference(name, description, dataType, organism, isPublic));
+    onSubmit: (name, description, dataType, organism) => {
+        dispatch(createReference(name, description, dataType, organism));
     },
 
     onClearError: (error) => {
