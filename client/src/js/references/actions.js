@@ -31,13 +31,12 @@ export const getReference = (referenceId) => ({
     referenceId
 });
 
-export const createReference = (name, description, dataType, organism, isPublic) => ({
+export const createReference = (name, description, dataType, organism) => ({
     type: CREATE_REFERENCE.REQUESTED,
     name,
     description,
     dataType,
-    organism,
-    isPublic
+    organism
 });
 
 export const editReference = (referenceId, update) => ({
@@ -46,23 +45,21 @@ export const editReference = (referenceId, update) => ({
     update
 });
 
-export const importReference = (name, description, dataType, organism, isPublic, fileId) => ({
+export const importReference = (name, description, dataType, organism, fileId) => ({
     type: IMPORT_REFERENCE.REQUESTED,
     name,
     description,
     dataType,
     organism,
-    isPublic,
     fileId
 });
 
-export const cloneReference = (name, description, dataType, organism, isPublic, refId) => ({
+export const cloneReference = (name, description, dataType, organism, refId) => ({
     type: CLONE_REFERENCE.REQUESTED,
     name,
     description,
     dataType,
     organism,
-    isPublic,
     refId
 });
 
