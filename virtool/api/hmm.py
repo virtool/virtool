@@ -69,6 +69,9 @@ async def get_release(req):
     except aiohttp.client_exceptions.ClientConnectorError:
         return bad_gateway("Could not reach GitHub")
 
+    if release is None:
+        return not_found("Release not found")
+
     return json_response(release)
 
 
