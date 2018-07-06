@@ -1,62 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { map, sortBy, slice, reduce, forEach, range, concat } from "lodash-es";
+import { map, sortBy } from "lodash-es";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
-
-const fillEntries = (alignArray) => {
-    let filledEntries = [];
-
-    forEach(alignArray, (entry, i) => {
-        if (i === alignArray.length - 1) {
-            return filledEntries.push({ key: (alignArray[i][0] - 1), val: entry[1] });
-        } else if (i !== 0) {
-            const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
-
-            const fill = map(range(numBasesFromLastEntry), (item, j) => (
-                { key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] }
-            ));
-
-            filledEntries = concat(filledEntries, fill);
-        }
-    });
-
-    return filledEntries;
-};
-
-const getQuartileValue = (values, quartile) => {
-    const index = (values.length * quartile) / 4;
-
-    if (index % 1 === 0) {
-        return values[index].val;
-    }
-
-    const lowerIndex = Math.floor(index);
-    const upperIndex = Math.ceil(index);
-
-    return (values[lowerIndex].val + values[upperIndex].val) / 2;
-};
-
-const removeOutlierByIQR = (values) => {
-
-    const q1 = getQuartileValue(values, 1);
-    const q3 = getQuartileValue(values, 3);
-    const total = reduce(values, (sum, entry) => sum + entry.val, 0);
-    const mean = total / values.length;
-
-    const IQR = (q3 - q1);
-    const outlierDifference = 1.5 * IQR;
-
-    // Largest value not an outlier
-    if ((values[values.length - 1].val - mean) <= outlierDifference) {
-        return values;
-    }
-
-    return removeOutlierByIQR(slice(values, 0, values.length - 1));
-};
+import { fillEntries, removeOutlierByIQR } from "../../../chartUtils";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
 
