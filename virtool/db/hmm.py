@@ -197,12 +197,20 @@ async def install(app, process_id, release, user_id):
 
         path = os.path.join(temp_path, "hmm.tar.gz")
 
-        await virtool.http.utils.download_file(
-            app,
-            release["download_url"],
-            path,
-            progress_tracker.add
-        )
+        try:
+            await virtool.http.utils.download_file(
+                app,
+                release["download_url"],
+                path,
+                progress_tracker.add
+            )
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            await virtool.db.processes.update(
+                db,
+                process_id,
+                errors=["Could not download HMM data"],
+                step="unpack"
+            )
 
         await virtool.db.processes.update(
             db,

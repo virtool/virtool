@@ -23,7 +23,7 @@ async def download_file(app, url, target_path, progress_handler=None):
     """
     async with virtool.http.proxy.ProxyRequest(app["settings"], app["client"].get, url) as resp:
         if resp.status != 200:
-            return None
+            raise virtool.errors.GitHubError("Could not download file")
 
         async with aiofiles.open(target_path, "wb") as handle:
             while True:
