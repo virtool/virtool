@@ -157,12 +157,12 @@ async def update(req):
     if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
-    process = await virtool.db.processes.register(db, "update_remote_reference")
-
     release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
     if release is None:
         return bad_request("Target release does not exist")
+
+    process = await virtool.db.processes.register(db, "update_remote_reference")
 
     release, update_subdocument = await virtool.db.references.update(
         req.app,
