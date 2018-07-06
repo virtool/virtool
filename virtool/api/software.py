@@ -18,6 +18,8 @@ routes = virtool.http.routes.Routes()
 async def get(req):
     db = req.app["db"]
 
+    await virtool.db.software.fetch_and_update_software_releases(req.app)
+
     document = await db.status.find_one("software")
 
     return json_response(virtool.utils.base_processor(document))
