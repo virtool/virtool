@@ -1,10 +1,10 @@
 import React from "react";
-import { map, max, maxBy, sumBy, reduce, sortBy, round } from "lodash-es";
+import { map, max, maxBy, sumBy, reduce, sortBy, round, concat } from "lodash-es";
 import PropTypes from "prop-types";
 
 import { Alert } from "../../../../base";
 import { formatIsolateName } from "../../../../utils";
-
+import { fillEntries } from "../../../chartUtils";
 import PathoscopeController from "./Controller";
 
 const calculateIsolateCoverage = (isolate, length) => (
@@ -14,11 +14,8 @@ const calculateIsolateCoverage = (isolate, length) => (
 );
 
 const getSumDepth = (alignArray) => {
-
     const sumDepth = reduce(alignArray, (sum, align, i) => {
-        if (i === 0) {
-            return 0;
-        } else if (i === (alignArray.length - 1)) {
+        if (i === (alignArray.length - 1) || i === 0) {
             return sum + align[1];
         }
         const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]) - 1;
@@ -27,6 +24,18 @@ const getSumDepth = (alignArray) => {
     }, 0);
 
     return (sumDepth || 0);
+};
+
+const getMedianDepth = (alignArray) => {
+    const midIndex = (alignArray.length - 1) / 2;
+
+    if (midIndex % 1 === 0) {
+        return alignArray[midIndex].val;
+    }
+    const lowerIndex = Math.floor(midIndex);
+    const upperIndex = Math.ceil(midIndex);
+
+    return (alignArray[lowerIndex].val + alignArray[upperIndex].val) / 2;
 };
 
 const PathoscopeViewer = (props) => {
@@ -51,14 +60,28 @@ const PathoscopeViewer = (props) => {
                     const depth = sequence.align ? max(map(sequence.align, p => p[1])) : 0;
                     const sumDepth = getSumDepth(sequence.align);
 
-                    return {...sequence, reads, depth, sumDepth};
+                    const seqFilledData = sequence.align ? fillEntries(sequence.align) : null;
+
+                    return {...sequence, reads, depth, sumDepth, seqFilledData};
                 });
 
                 const length = sumBy(sequences, "length");
                 const totalSeqDepth = sumBy(sequences, "sumDepth");
                 const meanDepth = round(totalSeqDepth / length);
+                const coverage = calculateIsolateCoverage(isolate, length).toFixed(3);
+                let medianDepth = 0;
 
-                const coverage = round(calculateIsolateCoverage(isolate, length), 3);
+                let totalFilledDataUnsorted;
+                let totalFilledDataSorted;
+
+                if (totalSeqDepth) {
+                    totalFilledDataUnsorted = reduce(sequences, (result, entry) => (
+                        concat(result, entry.seqFilledData)
+                    ), []);
+
+                    totalFilledDataSorted = sortBy(totalFilledDataUnsorted, ["val"]);
+                    medianDepth = getMedianDepth(totalFilledDataSorted);
+                }
 
                 return {
                     ...isolate,
@@ -69,6 +92,7 @@ const PathoscopeViewer = (props) => {
                     reads: sumBy(sequences, "reads"),
                     maxDepth: maxBy(sequences, "depth").depth,
                     meanDepth,
+                    medianDepth,
                     coverage
                 };
             });

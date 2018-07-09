@@ -16,6 +16,7 @@ export default class PathoscopeController extends React.Component {
             filterOTUs: true,
             findTerm: "",
             showReads: false,
+            showMedian: false,
             sortDescending: true,
             sortKey: "coverage",
             isCrop: false
@@ -42,6 +43,12 @@ export default class PathoscopeController extends React.Component {
     toggleShowReads = () => {
         this.setState({
             showReads: !this.state.showReads
+        });
+    };
+
+    toggleShowMedian = () => {
+        this.setState({
+            showMedian: !this.state.showMedian
         });
     };
 
@@ -172,6 +179,15 @@ export default class PathoscopeController extends React.Component {
                             />
 
                             <Button
+                                icon="chart-bar"
+                                title="Show Isolate Median"
+                                tip="Show Isolate Median"
+                                active={this.state.showMedian}
+                                className="hidden-xs"
+                                onClick={this.toggleShowMedian}
+                            />
+
+                            <Button
                                 icon="crop"
                                 title="Crop Outliers"
                                 tip="Crop Outliers"
@@ -228,6 +244,7 @@ export default class PathoscopeController extends React.Component {
                     expanded={this.state.expanded}
                     toggleIn={this.toggleIn}
                     showReads={this.state.showReads}
+                    showMedian={this.state.showMedian}
                     isCrop={this.state.isCrop}
                 />
             </div>

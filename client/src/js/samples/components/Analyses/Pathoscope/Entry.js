@@ -17,7 +17,7 @@ export default class PathoscopeEntry extends React.Component {
         best: PropTypes.number,
         maxDepth: PropTypes.number,
         reads: PropTypes.number,
-        coverage: PropTypes.number,
+        coverage: PropTypes.string,
         in: PropTypes.bool,
         toggleIn: PropTypes.func,
         showReads: PropTypes.bool

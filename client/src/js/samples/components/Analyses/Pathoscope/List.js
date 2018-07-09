@@ -18,6 +18,7 @@ export default class PathoscopeList extends React.Component {
     static propTypes = {
         expanded: PropTypes.arrayOf(PropTypes.string),
         showReads: PropTypes.bool,
+        showMedian: PropTypes.bool,
         toggleIn: PropTypes.func,
         data: PropTypes.arrayOf(PropTypes.object).isRequired,
         isCrop: PropTypes.bool
@@ -77,6 +78,7 @@ export default class PathoscopeList extends React.Component {
                                 {...isolate}
                                 setScroll={this.setScroll}
                                 showReads={this.props.showReads}
+                                showMedian={this.props.showMedian}
                                 isCrop={this.props.isCrop}
                             />
                         );
