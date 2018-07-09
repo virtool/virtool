@@ -1,9 +1,11 @@
-import os
-import sys
+import copy
 import gzip
 import json
-import copy
+import os
+import sys
+
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 

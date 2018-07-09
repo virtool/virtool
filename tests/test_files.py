@@ -28,9 +28,9 @@ def test_manager_instance(loop, test_dbi, tmpdir):
 
 
 @pytest.fixture
-def patched_test_manager_instance(monkeypatch, test_manager_instance):
+def patched_test_manager_instance(mocker, test_manager_instance):
     for key in ["handle_watch", "handle_close", "handle_create", "handle_delete"]:
-        monkeypatch.setattr(test_manager_instance, key, make_mocked_coro())
+        mocker.patch.object(test_manager_instance, key, make_mocked_coro())
 
     return test_manager_instance
 

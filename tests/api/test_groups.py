@@ -1,3 +1,4 @@
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
@@ -211,44 +212,34 @@ class TestUpdatePermissions:
         assert await resp_is.not_found(resp)
 
 
-class TestRemove:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
+    """
+    Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
 
-    async def test(self, monkeypatch, spawn_client, no_permissions):
-        """
-        Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
+    """
+    client = await spawn_client(authorize=True, administrator=True)
 
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
+    if not error:
         await client.db.groups.insert_one({
             "_id": "test",
             "permissions": no_permissions
         })
 
-        m = make_mocked_coro(None)
+    m_update_member_users = mocker.patch("virtool.db.groups.update_member_users", make_mocked_coro(None))
 
-        monkeypatch.setattr("virtool.db.groups.update_member_users", m)
+    resp = await client.delete("/api/groups/test")
 
-        resp = await client.delete("/api/groups/test")
-
-        assert resp.status == 204
-
-        assert not await client.db.groups.count({"_id": "test"})
-
-        assert m.call_args == (
-            (client.db, "test"),
-            dict(remove=True)
-        )
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that 404 is returned for non-existent group.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        resp = await client.delete("/api/groups/test")
-
+    if error == "404":
         assert await resp_is.not_found(resp)
+        return
 
-        assert resp.status == 404
+    assert resp.status == 204
+
+    assert not await client.db.groups.count({"_id": "test"})
+
+    m_update_member_users.assert_called_with(
+        client.db,
+        "test",
+        remove=True
+    )
