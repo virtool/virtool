@@ -5,11 +5,12 @@ import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
-import CreateAnalysis from "./Analyses/Create";
+import CreateAnalysis from "../../analyses/components/Analyses/Create";
 import QuickAnalyze from "./QuickAnalyze";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } from "../../base";
-import { fetchSamples, analyze } from "../actions";
-import {listReadyIndexes} from "../../indexes/actions";
+import { fetchSamples } from "../actions";
+import { analyze } from "../../analyses/actions";
+import { listReadyIndexes } from "../../indexes/actions";
 import { fetchHmms } from "../../hmm/actions";
 import { getUpdatedScrollListState } from "../../utils";
 
@@ -71,7 +72,7 @@ export class SamplesList extends React.Component {
             return null;
         }
 
-        if (newState.masterList && newState.masterList.length) {
+        if (newState.masterList && newState.masterList.length && !prevState.masterList) {
             const newSelected = createSelection(newState.masterList);
 
             return {
@@ -213,7 +214,7 @@ export class SamplesList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.samples,
-    indexes: state.samples.readyIndexes,
+    indexes: state.analyses.readyIndexes,
     hmms: state.hmms
 });
 
