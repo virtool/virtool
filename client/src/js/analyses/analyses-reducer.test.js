@@ -3,8 +3,6 @@ import reducer, {
     setNuvsBLAST
 } from "./reducer";
 
-import { map } from "lodash-es";
-
 describe("Analyses Reducer", () => {
 
     const initialState = reducerInitialState;
@@ -182,7 +180,7 @@ describe("Analyses Reducer", () => {
     });
 
     describe("should handle ANALYZE_FAILED", () => {
-        
+
         it("when [state.documents=null], return state", () => {
             state = {
                 documents: null
@@ -307,9 +305,7 @@ describe("Analyses Reducer", () => {
             };
             result = reducer(state, action);
             expected = {
-                documents: [
-                    { id: "pathoscope_bowtie" }
-                ]
+                documents: [{ id: "pathoscope_bowtie" }]
             };
 
             expect(result).toEqual(expected);
