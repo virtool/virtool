@@ -112,8 +112,8 @@ class AnalysisDetail extends React.Component {
 
 const mapStateToProps = (state) => ({
     error: get(state, "errors.GET_ANALYSIS_ERROR", null),
-    detail: state.samples.analysisDetail,
-    progress: state.samples.getAnalysisProgress,
+    detail: state.analyses.detail,
+    progress: state.analyses.getAnalysisProgress,
     quality: state.samples.detail.quality
 });
 
