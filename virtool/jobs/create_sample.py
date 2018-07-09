@@ -87,15 +87,10 @@ class CreateSample(virtool.jobs.job.Job):
         """
         input_paths = [os.path.join(self.settings.get("data_path"), "files", file_id) for file_id in self.files]
 
-        min_length = 50
-
-        if self.task_args["srna"]:
-            min_length = 20
-
         command = [
             "skewer",
             "-m", "pe" if self.paired else "any",
-            "-l", str(min_length),
+            "-l", "20" if self.task_args["srna"] else "50",
             "-q", "20",
             "-Q", "25",
             "-t", str(self.settings.get("create_sample_proc")),
@@ -106,7 +101,8 @@ class CreateSample(virtool.jobs.job.Job):
         # Trim reads to max length of 23 if the sample is sRNA.
         if self.task_args["srna"]:
             command += [
-                "-L", "23"
+                "-L", "23",
+                "-e"
             ]
 
         command += input_paths
@@ -198,17 +194,26 @@ class CreateSample(virtool.jobs.job.Job):
 
                 # Length
                 elif "Sequence length" in line:
-                    min_length, max_length = [int(s) for s in line.split("\t")[1].split('-')]
+                    split_length = [int(s) for s in line.split("\t")[1].split('-')]
 
                     if suffix == 1:
-                        fastqc["length"] = [min_length, max_length]
+                        if len(split_length) == 2:
+                            fastqc["length"] = split_length
+                        else:
+                            fastqc["length"] = [split_length[0], split_length[0]]
                     else:
                         fastqc_min_length, fastqc_max_length = fastqc["length"]
 
-                        fastqc["length"] = [
-                            min(fastqc_min_length, min_length),
-                            max(fastqc_max_length, max_length)
-                        ]
+                        if len(split_length) == 2:
+                            fastqc["length"] = [
+                                min(fastqc_min_length, split_length[0]),
+                                max(fastqc_max_length, split_length[1])
+                            ]
+                        else:
+                            fastqc["length"] = [
+                                min(fastqc_min_length, split_length[0]),
+                                max(fastqc_max_length, split_length[0])
+                            ]
 
                 # GC-content
                 elif "%GC" in line and "#" not in line:
