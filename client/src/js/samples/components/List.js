@@ -38,10 +38,10 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
     </div>
 );
 
-const createSelection = (list) => (
+const createSelection = (list, selected) => (
     map(list, (entry, index) => ({
         sampleId: list[index].id,
-        check: false
+        check: selected[index] ? selected[index].check : false
     }))
 );
 
@@ -53,7 +53,7 @@ export class SamplesList extends React.Component {
             masterList: this.props.documents,
             list: this.props.documents,
             page: this.props.page,
-            selected: createSelection(this.props.documents),
+            selected: createSelection(this.props.documents, []),
             lastChecked: null,
             show: false,
             sampleId: ""
@@ -72,14 +72,16 @@ export class SamplesList extends React.Component {
             return null;
         }
 
-        if (newState.masterList && newState.masterList.length && !prevState.masterList) {
-            const newSelected = createSelection(newState.masterList);
+        if (newState.masterList && newState.masterList.length) {
+
+            const newSelected = createSelection(newState.masterList, prevState.selected);
 
             return {
                 ...prevState,
                 ...newState,
                 selected: newSelected
             };
+
         }
 
         return {
