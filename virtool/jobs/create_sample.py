@@ -194,17 +194,26 @@ class CreateSample(virtool.jobs.job.Job):
 
                 # Length
                 elif "Sequence length" in line:
-                    min_length, max_length = [int(s) for s in line.split("\t")[1].split('-')]
+                    split_length = [int(s) for s in line.split("\t")[1].split('-')]
 
                     if suffix == 1:
-                        fastqc["length"] = [min_length, max_length]
+                        if len(split_length) == 2:
+                            fastqc["length"] = split_length
+                        else:
+                            fastqc["length"] = [split_length[0], split_length[0]]
                     else:
                         fastqc_min_length, fastqc_max_length = fastqc["length"]
 
-                        fastqc["length"] = [
-                            min(fastqc_min_length, min_length),
-                            max(fastqc_max_length, max_length)
-                        ]
+                        if len(split_length) == 2:
+                            fastqc["length"] = [
+                                min(fastqc_min_length, split_length[0]),
+                                max(fastqc_max_length, split_length[1])
+                            ]
+                        else:
+                            fastqc["length"] = [
+                                min(fastqc_min_length, split_length[0]),
+                                max(fastqc_max_length, split_length[0])
+                            ]
 
                 # GC-content
                 elif "%GC" in line and "#" not in line:
