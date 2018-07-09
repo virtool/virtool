@@ -1,5 +1,6 @@
 import { WS_CLOSED } from "./actionTypes";
-import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
+import { wsUpdateAnalysis, wsRemoveAnalysis } from "./analyses/actions";
+import { wsUpdateSample, wsRemoveSample } from "./samples/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsUpdateIndex } from "./indexes/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
