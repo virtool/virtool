@@ -9,7 +9,7 @@ import { Row, Col, Label } from "react-bootstrap";
 import { getTaskDisplayName } from "../../../utils";
 import { Icon, RelativeTime } from "../../../base";
 import { removeAnalysis } from "../../actions";
-import { getCanModify } from "../../selectors";
+import { getCanModify } from "../../../samples/selectors";
 
 export const AnalysisItem = (props) => {
 

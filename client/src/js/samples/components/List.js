@@ -5,11 +5,12 @@ import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
-import CreateAnalysis from "./Analyses/Create";
+import CreateAnalysis from "../../analyses/components/Analyses/Create";
 import QuickAnalyze from "./QuickAnalyze";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } from "../../base";
-import { fetchSamples, analyze } from "../actions";
-import {listReadyIndexes} from "../../indexes/actions";
+import { fetchSamples } from "../actions";
+import { analyze } from "../../analyses/actions";
+import { listReadyIndexes } from "../../indexes/actions";
 import { fetchHmms } from "../../hmm/actions";
 import { getUpdatedScrollListState } from "../../utils";
 
@@ -37,10 +38,10 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
     </div>
 );
 
-const createSelection = (list) => (
+const createSelection = (list, selected) => (
     map(list, (entry, index) => ({
         sampleId: list[index].id,
-        check: false
+        check: selected[index] ? selected[index].check : false
     }))
 );
 
@@ -52,7 +53,7 @@ export class SamplesList extends React.Component {
             masterList: this.props.documents,
             list: this.props.documents,
             page: this.props.page,
-            selected: createSelection(this.props.documents),
+            selected: createSelection(this.props.documents, []),
             lastChecked: null,
             show: false,
             sampleId: ""
@@ -72,13 +73,15 @@ export class SamplesList extends React.Component {
         }
 
         if (newState.masterList && newState.masterList.length) {
-            const newSelected = createSelection(newState.masterList);
+
+            const newSelected = createSelection(newState.masterList, prevState.selected);
 
             return {
                 ...prevState,
                 ...newState,
                 selected: newSelected
             };
+
         }
 
         return {
@@ -213,7 +216,7 @@ export class SamplesList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.samples,
-    indexes: state.samples.readyIndexes,
+    indexes: state.analyses.readyIndexes,
     hmms: state.hmms
 });
 

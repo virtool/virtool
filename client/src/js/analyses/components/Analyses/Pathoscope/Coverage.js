@@ -6,7 +6,7 @@ import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
-import { fillEntries, removeOutlierByIQR } from "../../../chartUtils";
+import { fillEntries, removeOutlierByIQR } from "../../../../samples/chartUtils";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
 
