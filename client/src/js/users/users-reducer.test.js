@@ -40,10 +40,29 @@ describe("Users Reducer", () => {
         state = {};
         action = {
             type: "LIST_USERS_SUCCEEDED",
-            data: [
-                { id: "admin" },
-                { id: "user" }
-            ]
+            data: {
+                documents: [
+                    { id: "admin" },
+                    { id: "user" }
+                ]
+            }
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            list: action.data,
+            isLoading: false,
+            errorLoad: false
+        };
+
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_USERS_SUCCEEDED", () => {
+        state = {};
+        action = {
+            type: "FILTER_USERS_SUCCEEDED",
+            data: {}
         };
         result = reducer(state, action);
         expected = {
@@ -54,27 +73,14 @@ describe("Users Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle FILTER_USERS", () => {
-        state = {};
-        action = {
-            type: "FILTER_USERS",
-            term: "search_term"
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            filter: action.term
-        };
-
-        expect(result).toEqual(expected);
-    });
-
     it("should handle CREATE_USER_SUCCEEDED", () => {
         state = {
-            list: [
-                { id: "admin" },
-                { id: "user" }
-            ]
+            list: {
+                documents: [
+                    { id: "admin" },
+                    { id: "user" }
+                ]
+            }
         };
         action = {
             type: "CREATE_USER_SUCCEEDED",
@@ -85,11 +91,13 @@ describe("Users Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            list: [
-                { id: "admin" },
-                { id: "user" },
-                { id: "new_user" }
-            ]
+            list: {
+                documents: [
+                    { id: "admin" },
+                    { id: "user" },
+                    { id: "new_user" }
+                ]
+            }
         };
 
         expect(result).toEqual(expected);
@@ -97,10 +105,12 @@ describe("Users Reducer", () => {
 
     it("should handle EDIT_USER_SUCCEEDED", () => {
         state = {
-            list: [
-                { id: "admin", permissions: { testing: true } },
-                { id: "user", permissions: { testing: false } }
-            ]
+            list: {
+                documents: [
+                    { id: "admin", permissions: { testing: true } },
+                    { id: "user", permissions: { testing: false } }
+                ]
+            }
         };
         action = {
             type: "EDIT_USER_SUCCEEDED",
@@ -111,10 +121,12 @@ describe("Users Reducer", () => {
         };
         result = reducer(state, action);
         expected = {
-            list: [
-                { id: "admin", permissions: { testing: true } },
-                { id: "user", permissions: { testing: true } }
-            ]
+            list: {
+                documents: [
+                    { id: "admin", permissions: { testing: true } },
+                    { id: "user", permissions: { testing: true } }
+                ]
+            }
         };
 
         expect(result).toEqual(expected);
@@ -190,20 +202,24 @@ describe("Users Reducer", () => {
 
             it("should update target user in state.list", () => {
                 state = {
-                    list: [
-                        { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                        { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
-                        { id: "user2", groups: [ "sub" ], permissions: { testing: false }  }
-                    ]
+                    list: {
+                        documents: [
+                            { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
+                            { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
+                            { id: "user2", groups: [ "sub" ], permissions: { testing: false }  }
+                        ]
+                    }
                 };
                 const update = { id: "user2", groups: [ "dev" ], permissions: { testing: true } };
                 result = updateUser(state, update);
                 expected = {
-                    list: [
-                        { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                        { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
-                        { id: "user2", groups: [ "dev" ], permissions: { testing: true } }
-                    ] 
+                    list: {
+                        documents: [
+                            { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
+                            { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
+                            { id: "user2", groups: [ "dev" ], permissions: { testing: true } }
+                        ]
+                    }
                 };
 
                 expect(result).toEqual(expected);
