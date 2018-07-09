@@ -36,7 +36,7 @@ export class ManageUsers extends React.Component {
 
     componentDidMount () {
         if (this.props.users === null) {
-            this.props.onListUsers();
+            this.props.onListUsers(1);
         }
 
         if (this.props.groups === null) {
@@ -58,11 +58,13 @@ export class ManageUsers extends React.Component {
     }
 
     handleFilter = (e) => {
+        e.preventDefault();
+        this.setState({ filter: e.target.value });
         this.props.onFilter(e.target.value);
     }
 
     handlePermissionChanges = () => {
-        this.props.onListUsers();
+        this.props.onListUsers(1);
     }
 
     render () {
@@ -92,7 +94,7 @@ export class ManageUsers extends React.Component {
                                     </InputGroup.Addon>
                                     <FormControl
                                         type="text"
-                                        value={this.props.filter}
+                                        value={this.state.filter}
                                         onChange={this.handleFilter}
                                     />
                                 </InputGroup>
@@ -131,8 +133,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onListUsers: () => {
-        dispatch(listUsers());
+    onListUsers: (page) => {
+        dispatch(listUsers(page));
     },
 
     onListGroups: () => {

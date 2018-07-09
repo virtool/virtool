@@ -1,7 +1,11 @@
 import Request from "superagent";
 
-export const list = () => (
-    Request.get("/api/users")
+export const list = ({ page }) => (
+    Request.get(`/api/users?page=${page}`)
+);
+
+export const filter = ({ term }) => (
+    Request.get(`/api/users?find=${term}`)
 );
 
 export const get = (userId) => (

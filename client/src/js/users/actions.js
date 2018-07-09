@@ -17,8 +17,9 @@ import {
  * @func
  * @returns {object}
  */
-export const listUsers = () => ({
-    type: LIST_USERS.REQUESTED
+export const listUsers = (page) => ({
+    type: LIST_USERS.REQUESTED,
+    page
 });
 
 /**
@@ -29,7 +30,7 @@ export const listUsers = () => ({
  * @returns {object}
  */
 export const filterUsers = (term) => ({
-    type: FILTER_USERS,
+    type: FILTER_USERS.REQUESTED,
     term
 });
 

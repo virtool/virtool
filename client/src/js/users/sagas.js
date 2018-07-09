@@ -6,7 +6,8 @@ import * as usersAPI from "./api";
 import {
     LIST_USERS,
     CREATE_USER,
-    EDIT_USER
+    EDIT_USER,
+    FILTER_USERS
 } from "../actionTypes";
 
 function* listUsers (action) {
@@ -25,8 +26,13 @@ function* editUser (action) {
     yield setPending(apiCall(usersAPI.edit, action, EDIT_USER));
 }
 
+function* filterUsers (action) {
+    yield apiCall(usersAPI.filter, action, FILTER_USERS);
+}
+
 export function* watchUsers () {
     yield takeLatest(LIST_USERS.REQUESTED, listUsers);
     yield throttle(200, CREATE_USER.REQUESTED, createUser);
     yield takeEvery(EDIT_USER.REQUESTED, editUser);
+    yield takeLatest(FILTER_USERS.REQUESTED, filterUsers);
 }

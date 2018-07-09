@@ -10,7 +10,7 @@ class UserGroup extends React.Component {
 
     componentDidUpdate (prevProps) {
         if (this.props.toggled !== prevProps.toggled) {
-            prevProps.onListUsers();
+            prevProps.onListUsers(1);
         }
     }
 
@@ -88,7 +88,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     list: () => {
-        dispatch(listUsers());
+        dispatch(listUsers(1));
     }
 
 });

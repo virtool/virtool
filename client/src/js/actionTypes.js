@@ -177,7 +177,7 @@ export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const FILTER_USERS = "FILTER_USERS";
+export const FILTER_USERS = createRequestActionType("FILTER_USERS");
 export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
 
