@@ -11,7 +11,7 @@ async def test_find(spawn_client, create_user, static_time):
     """
     client = await spawn_client(authorize=True, administrator=True, permissions=["create_sample"])
 
-    user_ids = ["bob", "fred", "john"]
+    user_ids = ["bob", "fred"]
 
     await client.db.users.insert_many([create_user(user_id) for user_id in user_ids])
 
@@ -19,24 +19,70 @@ async def test_find(spawn_client, create_user, static_time):
 
     assert resp.status == 200
 
-    base_dict = {
-        "administrator": False,
-        "identicon": "identicon",
-        "force_reset": False,
-        "groups": [],
-        "last_password_change": static_time.iso,
-        "permissions": {p: False for p in PERMISSIONS},
-        "primary_group": "technician"
+    assert await resp.json() == {
+        "documents": [
+            {
+                "administrator": False,
+                "force_reset": False,
+                "groups": [],
+                "id": "bob",
+                "identicon": "identicon",
+                "last_password_change": static_time.iso,
+                "permissions": {
+                    "cancel_job": False,
+                    "create_ref": False,
+                    "create_sample": False,
+                    "modify_hmm": False,
+                    "modify_subtraction": False,
+                    "remove_file": False,
+                    "remove_job": False,
+                    "upload_file": False},
+                "primary_group": "technician"},
+            {
+                "administrator": False,
+                "force_reset": False,
+                "groups": [],
+                "id": "fred",
+                "identicon": "identicon",
+                "last_password_change": static_time.iso,
+                "permissions": {
+                    "cancel_job": False,
+                    "create_ref": False,
+                    "create_sample": False,
+                    "modify_hmm": False,
+                    "modify_subtraction": False,
+                    "remove_file": False,
+                    "remove_job": False,
+                    "upload_file": False
+                },
+                "primary_group": "technician"
+            },
+            {
+                "administrator": True,
+                "force_reset": False,
+                "groups": [],
+                "id": "test",
+                "identicon": "identicon",
+                "last_password_change": static_time.iso,
+                "permissions": {
+                    "cancel_job": False,
+                    "create_ref": False,
+                    "create_sample": True,
+                    "modify_hmm": False,
+                    "modify_subtraction": False,
+                    "remove_file": False,
+                    "remove_job": False,
+                    "upload_file": False
+                },
+                "primary_group": "technician"
+            }
+        ],
+        "found_count": 3,
+        "page": 1,
+        "page_count": 1,
+        "per_page": 25,
+        "total_count": 3
     }
-
-    expected = [dict(base_dict, id=user_id) for user_id in user_ids + ["test"]]
-
-    expected[3].update({
-        "administrator": True,
-        "permissions": dict(base_dict["permissions"], create_sample=True)
-    })
-
-    assert sorted(await resp.json(), key=itemgetter("id")) == sorted(expected, key=itemgetter("id"))
 
 
 @pytest.mark.parametrize("not_found", [False, True])
