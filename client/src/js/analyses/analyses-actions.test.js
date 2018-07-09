@@ -8,16 +8,6 @@ import {
     blastNuvs,
     removeAnalysis
 } from "./actions";
-import {
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
-    FIND_ANALYSES,
-    GET_ANALYSIS,
-    ANALYZE,
-    BLAST_NUVS,
-    REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS
-} from "../actionTypes";
 
 describe("Analyses Action Creators:", () => {
 
@@ -82,7 +72,7 @@ describe("Analyses Action Creators:", () => {
         beforeEach(() => {
             // 2018 Jan 1st
             originalDate = global.Date;
-            const testDate = new Date('2018');
+            const testDate = new Date("2018");
             global.Date = jest.fn(() => testDate);
         });
 
@@ -93,7 +83,7 @@ describe("Analyses Action Creators:", () => {
         it("returns action to analyze sample", () => {
             const sampleId = "testid";
             const algorithm = "algorithm";
-            const refId = "123abc"
+            const refId = "123abc";
             const created_at = new Date().toISOString();
             const result = analyze(sampleId, refId, algorithm);
             const expected = {

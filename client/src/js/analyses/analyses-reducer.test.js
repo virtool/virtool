@@ -2,15 +2,6 @@ import reducer, {
     initialState as reducerInitialState,
     setNuvsBLAST
 } from "./reducer";
-import {
-    FIND_ANALYSES,
-    FIND_READY_HOSTS,
-    GET_ANALYSIS,
-    ANALYZE,
-    BLAST_NUVS,
-    REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS
-} from "../actionTypes";
 
 import { map } from "lodash-es";
 
@@ -207,10 +198,7 @@ describe("Analyses Reducer", () => {
 
         it("otherwise return state with placeholder removed", () => {
             state = {
-                documents: [
-                    { id: "test_placeholder" },
-                    { id: "random_string" }
-                ]
+                documents: [{ id: "test_placeholder" },{ id: "random_string" }]
             };
             action = {
                 type: "ANALYZE_FAILED",
@@ -220,9 +208,7 @@ describe("Analyses Reducer", () => {
             };
             result = reducer(state, action);
             expected = {
-                documents: [
-                    { id: "random_string" }
-                ]
+                documents: [{ id: "random_string" }]
             };
 
             expect(result).toEqual(expected);
