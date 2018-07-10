@@ -53,14 +53,22 @@ export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
-export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
-export const GET_ANALYSIS_PROGRESS = "GET_ANALYSIS_PROGRESS";
-export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
-export const ANALYZE = createRequestActionType("ANALYZE");
-export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
-export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
+
+// Analysis
+export const ANALYZE = createRequestActionType("ANALYZE");
+export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
+export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
+export const COLLAPSE_ANALYSIS = "COLLAPSE_ANALYSIS";
+export const CROP_PATHOSCOPE = "CROP_PATHOSCOPE";
+export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
+export const GET_ANALYSIS_PROGRESS = "GET_ANALYSIS_PROGRESS";
+export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
+export const SET_ANALYSIS_ITEM_EXPANDED = "SET_ANALYSIS_ITEM_EXPANDED";
+export const SET_PATHOSCOPE_FILTER = "SET_PATHOSCOPE_FILTER";
+export const TOGGLE_SHOW_PATHOSCOPE_MEDIAN = "TOGGLE_SHOW_PATHOSCOPE_MEDIAN";
+export const TOGGLE_SHOW_PATHOSCOPE_READS = "TOGGLE_SHOW_PATHOSCOPE_READS";
 
 // Refs
 export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";

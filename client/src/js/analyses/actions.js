@@ -1,15 +1,32 @@
-import {simpleActionCreator} from "../utils";
 import {
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
+    ANALYZE,
+    BLAST_NUVS,
+    CLEAR_ANALYSIS,
+    COLLAPSE_ANALYSIS,
+    CROP_PATHOSCOPE,
     FIND_ANALYSES,
     GET_ANALYSIS,
     GET_ANALYSIS_PROGRESS,
-    CLEAR_ANALYSIS,
-    ANALYZE,
-    BLAST_NUVS,
-    REMOVE_ANALYSIS
+    REMOVE_ANALYSIS,
+    SET_PATHOSCOPE_FILTER,
+    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    WS_REMOVE_ANALYSIS,
+    WS_UPDATE_ANALYSIS
 } from "../actionTypes";
+import {simpleActionCreator} from "../utils";
+
+export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
+
+export const cropPathoscope = simpleActionCreator(CROP_PATHOSCOPE);
+
+export const setPathoscopeFilter = (key) => ({
+    type: SET_PATHOSCOPE_FILTER,
+    key
+});
+
+export const toggleShowPathoscopeMedia = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
+export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
 /**
  * Returns an action that should be dispatched when a analysis document is updated via websocket.
