@@ -4,8 +4,8 @@ import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 
 import AnalysisValueLabel from "../ValueLabel";
-import { Flex, FlexItem } from "../../../../base";
-import { toScientificNotation } from "../../../../utils";
+import { Flex, FlexItem } from "../../../base/index";
+import { toScientificNotation } from "../../../utils";
 
 export default class PathoscopeEntry extends React.Component {
 

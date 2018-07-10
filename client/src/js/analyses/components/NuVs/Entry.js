@@ -3,7 +3,7 @@ import CX from "classnames";
 import PropTypes from "prop-types";
 import AnalysisValueLabel from "../ValueLabel";
 import { Row, Col } from "react-bootstrap";
-import { Flex, FlexItem } from "../../../../base";
+import { Flex, FlexItem } from "../../../base/index";
 
 export default class NuVsEntry extends React.Component {
 

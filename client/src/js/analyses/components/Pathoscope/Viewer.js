@@ -2,9 +2,9 @@ import React from "react";
 import { map, max, maxBy, sumBy, reduce, sortBy, round, concat } from "lodash-es";
 import PropTypes from "prop-types";
 
-import { Alert } from "../../../../base";
-import { formatIsolateName } from "../../../../utils";
-import { fillEntries } from "../../../../samples/chartUtils";
+import { Alert } from "../../../base/index";
+import { formatIsolateName } from "../../../utils";
+import { fillEntries } from "../../../samples/chartUtils";
 import PathoscopeController from "./Controller";
 
 const calculateIsolateCoverage = (isolate, length) => (

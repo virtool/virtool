@@ -1,7 +1,7 @@
 import React from "react";
 import { Label } from "react-bootstrap";
 
-import { Flex, FlexItem } from "../../../base";
+import { Flex, FlexItem } from "../../base/index";
 
 export default function AnalysisValueLabel ({ bsStyle, label, value }) {
     return (

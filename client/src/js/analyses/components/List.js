@@ -6,11 +6,11 @@ import { Link } from "react-router-dom";
 
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
-import { analyze } from "../../actions";
-import { getCanModify } from "../../../samples/selectors";
-import { listReadyIndexes } from "../../../indexes/actions";
-import { fetchHmms } from "../../../hmm/actions";
-import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
+import { analyze } from "../actions";
+import { getCanModify } from "../../samples/selectors";
+import { listReadyIndexes } from "../../indexes/actions";
+import { fetchHmms } from "../../hmm/actions";
+import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../base/index";
 
 const AnalysesToolbar = ({ onClick, isDisabled }) => (
     <div className="toolbar">

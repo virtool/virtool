@@ -6,7 +6,7 @@ import { Panel } from "react-bootstrap";
 
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";
-import { Icon } from "../../../../base";
+import { Icon } from "../../../base/index";
 
 export default class PathoscopeList extends React.Component {
 

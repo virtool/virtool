@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Flex, FlexItem } from "../../../../base";
+import { Flex, FlexItem } from "../../../base/index";
 import { map, sortBy } from "lodash-es";
 
 import Coverage from "./Coverage";
-import { toScientificNotation } from "../../../../utils";
+import { toScientificNotation } from "../../../utils";
 
 export default class PathoscopeIsolate extends React.Component {
 

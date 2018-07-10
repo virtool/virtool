@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale";
-import { Flex, FlexItem } from "../../../../base";
+import { Flex, FlexItem } from "../../../base/index";
 
 const HEIGHT = 8;
 

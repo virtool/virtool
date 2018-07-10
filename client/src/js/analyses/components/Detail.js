@@ -6,9 +6,9 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 
 
-import { getAnalysis, clearAnalysis } from "../../actions";
-import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../../base";
-import { getTaskDisplayName } from "../../../utils";
+import { getAnalysis, clearAnalysis } from "../actions";
+import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../base/index";
+import { getTaskDisplayName } from "../../utils";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 import NuVsViewer from "./NuVs/Viewer";
 
