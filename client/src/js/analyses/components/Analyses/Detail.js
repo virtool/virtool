@@ -1,11 +1,13 @@
 import React from "react";
-import Numeral from "numeral";
-import { connect } from "react-redux";
 import { get } from "lodash-es";
+import Numeral from "numeral";
 import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
-import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../../base";
+import { connect } from "react-redux";
+import { Link } from "react-router-dom";
+
 
 import { getAnalysis, clearAnalysis } from "../../actions";
+import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../../base";
 import { getTaskDisplayName } from "../../../utils";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 import NuVsViewer from "./NuVs/Viewer";
@@ -81,8 +83,15 @@ class AnalysisDetail extends React.Component {
                             </td>
                         </tr>
                         <tr>
-                            <th>Index Version</th>
-                            <td><Label>{detail.index.version}</Label></td>
+                            <th>Reference</th>
+                            <td>
+                                <Link to={`/refs/${detail.reference.id}`}>
+                                    {detail.reference.name}
+                                </Link>
+                                <Label style={{marginLeft: "5px"}}>
+                                    {detail.index.version}
+                                </Label>
+                            </td>
                         </tr>
                         <IDRow id={detail.id} />
                         <tr>
