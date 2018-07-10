@@ -105,11 +105,9 @@ describe("Users Reducer", () => {
 
     it("should handle EDIT_USER_SUCCEEDED", () => {
         state = {
-            list: {
-                documents: [
-                    { id: "admin", permissions: { testing: true } },
-                    { id: "user", permissions: { testing: false } }
-                ]
+            detail: {
+                id: "user",
+                permissions: { testing: false }
             }
         };
         action = {
@@ -121,11 +119,9 @@ describe("Users Reducer", () => {
         };
         result = reducer(state, action);
         expected = {
-            list: {
-                documents: [
-                    { id: "admin", permissions: { testing: true } },
-                    { id: "user", permissions: { testing: true } }
-                ]
+            detail: {
+                id: "user",
+                permissions: { testing: true }
             }
         };
 
@@ -196,34 +192,4 @@ describe("Users Reducer", () => {
 
     });
 
-    describe("Users Reducer Helper Functions", () => {
-
-        describe("updateUser", () => {
-
-            it("should update target user in state.list", () => {
-                state = {
-                    list: {
-                        documents: [
-                            { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                            { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
-                            { id: "user2", groups: [ "sub" ], permissions: { testing: false }  }
-                        ]
-                    }
-                };
-                const update = { id: "user2", groups: [ "dev" ], permissions: { testing: true } };
-                result = updateUser(state, update);
-                expected = {
-                    list: {
-                        documents: [
-                            { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                            { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
-                            { id: "user2", groups: [ "dev" ], permissions: { testing: true } }
-                        ]
-                    }
-                };
-
-                expect(result).toEqual(expected);
-            });
-        });
-    });
 });
