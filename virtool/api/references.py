@@ -508,6 +508,13 @@ async def edit(req):
 
     document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
+    if "name" in data:
+        await db.analyses.update_many({"reference.id": ref_id}, {
+            "$set": {
+                "reference.name": document["name"]
+            }
+        })
+
     return json_response(document)
 
 
