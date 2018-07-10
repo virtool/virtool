@@ -17,6 +17,7 @@ PROJECTION = [
     "ready",
     "job",
     "index",
+    "reference",
     "user",
     "sample"
 ]
