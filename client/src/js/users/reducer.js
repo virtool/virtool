@@ -1,30 +1,16 @@
-import { map } from "lodash-es";
-
 import {
     LIST_USERS,
     FILTER_USERS,
+    GET_USER,
     CREATE_USER,
     EDIT_USER
 } from "../actionTypes";
 
 export const initialState = {
     list: null,
-    filter: "",
+    detail: null,
     createPending: false
 };
-
-export const updateUser = (state, update) => ({
-    ...state,
-    list: {
-        ...state.list,
-        documents: map(state.list.documents, user => {
-            if (user.id === update.id) {
-                return {...user, ...update};
-            }
-            return user;
-        })
-    }
-});
 
 const reducer = (state = initialState, action) => {
 
@@ -45,8 +31,15 @@ const reducer = (state = initialState, action) => {
             return {...state, list: action.data};
         }
 
+        case GET_USER.REQUESTED:
+            return {...state, detail: null};
+
+        case GET_USER.SUCCEEDED: {
+            return {...state, detail: action.data};
+        }
+
         case EDIT_USER.SUCCEEDED:
-            return updateUser(state, action.data);
+            return {...state, detail: action.data};
 
         case CREATE_USER.REQUESTED:
             return {...state, createPending: true};

@@ -8,6 +8,7 @@ import HTTP from "./Server/HTTP";
 import Proxy from "./Server/Proxy";
 import Sentry from "./Server/Sentry";
 import Data from "./Data";
+import User from "../../users/components/User";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder, ViewHeader } from "../../base";
@@ -31,8 +32,9 @@ const Settings = ({ settings }) => {
                 <Redirect from="/administration" to="/administration/server" exact />
                 <Route path="/administration/server" component={Server} />
                 <Route path="/administration/data" component={Data} />
-                <Route path="/administration/users" component={Users} />
+                <Route path="/administration/users" component={Users} exact />
                 <Route path="/administration/updates" component={Updates} />
+                <Route path="/administration/users/:userId" component={User} />
             </Switch>
         );
     }

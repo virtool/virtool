@@ -10,10 +10,27 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import UserItem from "./User";
-import { ScrollList } from "../../base";
+import { LinkContainer } from "react-router-bootstrap";
+import { ListGroupItem } from "react-bootstrap";
+import { ScrollList, Flex, FlexItem, Identicon, Icon } from "../../base";
 import { listUsers } from "../actions";
 import { getUpdatedScrollListState } from "../../utils";
+
+const UserEntry = ({ id, identicon, isAdmin }) => (
+    <LinkContainer to={`/administration/users/${id}`} style={{paddingLeft: "10px"}}>
+        <ListGroupItem className="spaced">
+            <Flex alignItems="center">
+                <Identicon size={32} hash={identicon} />
+                <FlexItem pad={10}>
+                    {id}
+                </FlexItem>
+                <FlexItem pad={10}>
+                    {isAdmin ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                </FlexItem>
+            </Flex>
+        </ListGroupItem>
+    </LinkContainer>
+);
 
 class UsersList extends React.Component {
 
@@ -26,17 +43,27 @@ class UsersList extends React.Component {
         };
     }
 
+    componentDidMount () {
+        this.props.loadNextPage(1);
+    }
+
     static getDerivedStateFromProps (nextProps, prevState) {
         return getUpdatedScrollListState(nextProps, prevState);
     }
 
-    rowRenderer = (index) => (
-        <UserItem
+/*<UserItem
             key={this.state.masterList[index].id}
             {...this.state.masterList[index]}
             active={this.state.masterList[index].id === this.props.match.params.activeId}
             isAdmin={this.state.masterList[index].administrator}
             canSetRole={(this.props.activeUser !== this.state.masterList[index].id && this.props.activeUserIsAdmin)}
+        />*/
+
+    rowRenderer = (index) => (
+        <UserEntry
+            key={this.state.masterList[index].id}
+            {...this.state.masterList[index]}
+            isAdmin={this.state.masterList[index].administrator}
         />
     );
 
@@ -56,9 +83,7 @@ class UsersList extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    ...state.users.list,
-    activeUser: state.account.id,
-    activeUserIsAdmin: state.account.administrator
+    ...state.users.list
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -8,7 +8,7 @@ export const filter = ({ term }) => (
     Request.get(`/api/users?find=${term}`)
 );
 
-export const get = (userId) => (
+export const get = ({ userId }) => (
     Request.get(`/api/users/${userId}`)
 );
 
@@ -24,4 +24,8 @@ export const create = ({ userId, password, forceReset }) => (
 export const edit = ({ userId, update }) => (
     Request.patch(`/api/users/${userId}`)
         .send(update)
+);
+
+export const remove = ({ userId }) => (
+    Request.delete(`/api/users/${userId}`)
 );
