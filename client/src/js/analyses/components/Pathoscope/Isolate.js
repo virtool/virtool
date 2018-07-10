@@ -12,7 +12,6 @@ export default class PathoscopeIsolate extends React.Component {
         otuId: PropTypes.string,
         name: PropTypes.string,
         pi: PropTypes.number,
-        best: PropTypes.number,
         coverage: PropTypes.string,
         maxDepth: PropTypes.number,
         meanDepth: PropTypes.number,

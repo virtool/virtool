@@ -14,7 +14,6 @@ export default class PathoscopeEntry extends React.Component {
         name: PropTypes.string,
         abbreviation: PropTypes.string,
         pi: PropTypes.number,
-        best: PropTypes.number,
         maxDepth: PropTypes.number,
         reads: PropTypes.number,
         coverage: PropTypes.string,

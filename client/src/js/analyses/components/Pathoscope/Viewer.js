@@ -45,7 +45,7 @@ const PathoscopeViewer = (props) => {
         const mappedReadCount = props.read_count;
 
         const data = map(props.diagnosis, baseOTU => {
-            // Go through each isolate associated with the OTU, adding properties for weight, best-hit, read count,
+            // Go through each isolate associated with the OTU, adding properties for weight, read count,
             // mean depth, and coverage. These values will be calculated from the sequences owned by each isolate.
             let isolates = map(baseOTU.isolates, isolate => {
                 // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
@@ -88,7 +88,6 @@ const PathoscopeViewer = (props) => {
                     name,
                     length,
                     pi: sumBy(sequences, "pi"),
-                    best: sumBy(sequences, "best"),
                     reads: sumBy(sequences, "reads"),
                     maxDepth: maxBy(sequences, "depth").depth,
                     meanDepth,
@@ -114,7 +113,6 @@ const PathoscopeViewer = (props) => {
                 pi,
                 coverage,
                 isolates,
-                best: sumBy(isolates, "best"),
                 reads: pi * mappedReadCount,
                 maxGenomeLength: maxBy(isolates, "length"),
                 maxDepth: maxBy(isolates, "maxDepth").maxDepth
