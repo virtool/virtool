@@ -111,11 +111,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Created</th>
-                            <td><RelativeTime time={detail.created_at} /></td>
-                        </tr>
-                        <tr>
-                            <th>Created By</th>
-                            <td>{detail.user.id}</td>
+                            <td><RelativeTime time={detail.created_at} /> by {detail.user.id}</td>
                         </tr>
                     </tbody>
                 </Table>
