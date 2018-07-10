@@ -15,7 +15,6 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { get } from "lodash-es";
 import { filterUsers } from "../actions";
-//import { listGroups } from "../../groups/actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, LoadingPlaceholder, Alert } from "../../base";
 import UsersList from "./List";
@@ -32,13 +31,7 @@ export class ManageUsers extends React.Component {
             error: ""
         };
     }
-/*
-    componentDidMount () {
-        if (this.props.groups === null) {
-            this.props.onListGroups();
-        }
-    }
-*/
+
     static getDerivedStateFromProps (nextProps, prevState) {
         if (prevState.error !== nextProps.error) {
             return { error: nextProps.error };
@@ -113,18 +106,12 @@ export class ManageUsers extends React.Component {
 }
 
 const mapStateToProps = state => ({
-//    users: state.users.list,
-//    groups: state.groups.list,
     filter: state.users.filter,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
-/*
-    onListGroups: () => {
-        dispatch(listGroups());
-    },
-*/
+
     onFilter: (term) => {
         dispatch(filterUsers(term));
     },

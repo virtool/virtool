@@ -51,14 +51,6 @@ class UsersList extends React.Component {
         return getUpdatedScrollListState(nextProps, prevState);
     }
 
-/*<UserItem
-            key={this.state.masterList[index].id}
-            {...this.state.masterList[index]}
-            active={this.state.masterList[index].id === this.props.match.params.activeId}
-            isAdmin={this.state.masterList[index].administrator}
-            canSetRole={(this.props.activeUser !== this.state.masterList[index].id && this.props.activeUserIsAdmin)}
-        />*/
-
     rowRenderer = (index) => (
         <UserEntry
             key={this.state.masterList[index].id}

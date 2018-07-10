@@ -43,7 +43,6 @@ export class UserItem extends React.Component {
     };
 
     handleRemove = () => {
-        console.log("DELETE: ", this.props.detail.id);
         this.props.onRemoveUser(this.props.detail.id);
     };
 

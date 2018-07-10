@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import {  ViewHeader, Alert, RemoveBanner } from "../../base";
+import { ViewHeader, Alert, RemoveBanner } from "../../base";
 import { purgeHMMs } from "../actions";
 import { checkAdminOrPermission } from "../../utils";
 
