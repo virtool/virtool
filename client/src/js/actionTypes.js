@@ -95,8 +95,6 @@ export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
 export const GET_PROCESS = createRequestActionType("GET_PROCESS");
 
 // OTU
-export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
-export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
 export const FETCH_OTUS = createRequestActionType("FETCH_OTUS");
 export const FIND_OTUS = createRequestActionType("FIND_OTUS");
 export const GET_OTU = createRequestActionType("GET_OTU");
@@ -113,9 +111,7 @@ export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
 export const REMOVE_SEQUENCE = createRequestActionType("REMOVE_SEQUENCE");
 export const REVERT = createRequestActionType("REVERT");
 export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
-export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
 export const SELECT_ISOLATE = "SELECT_ISOLATE";
-export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
 export const SHOW_EDIT_OTU = "SHOW_EDIT_OTU";
 export const SHOW_REMOVE_OTU = "SHOW_REMOVE_OTU";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
@@ -144,7 +140,6 @@ export const LIST_READY_INDEXES = createRequestActionType("LIST_READY_INDEXES");
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
-export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 
 export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
@@ -163,7 +158,6 @@ export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
 export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 
 // Account
-export const WS_UPDATE_ACCOUNT = createRequestActionType("WS_UPDATE_ACCOUNT");
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
 export const UPDATE_ACCOUNT = createRequestActionType("UPDATE_ACCOUNT");
 export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
@@ -197,5 +191,4 @@ export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 // Updates
 export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
-export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
