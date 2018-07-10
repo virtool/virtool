@@ -10,13 +10,22 @@
  */
 
 import React from "react";
-import { capitalize, map } from "lodash-es";
+import { capitalize, map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 
 import { getUser, editUser, removeUser } from "../actions";
-import { Flex, FlexItem, Identicon, InputError, Icon, LoadingPlaceholder, RemoveBanner } from "../../base";
+import {
+    Flex,
+    FlexItem,
+    Identicon,
+    InputError,
+    Icon,
+    LoadingPlaceholder,
+    RemoveBanner,
+    Alert
+} from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
@@ -47,6 +56,15 @@ export class UserItem extends React.Component {
     };
 
     render () {
+
+        if (this.props.error.length) {
+            return (
+                <Alert bsStyle="warning" icon="warning">
+                    <strong>You do not have permission to manage users.</strong>
+                    <span> Contact an administrator.</span>
+                </Alert>
+            );
+        }
 
         if (this.props.detail === null) {
             return <LoadingPlaceholder />;
@@ -140,7 +158,8 @@ const mapStateToProps = state => ({
     detail: state.users.detail,
     activeUser: state.account.id,
     activeUserIsAdmin: state.account.administrator,
-    groups: state.groups.list
+    groups: state.groups.list,
+    error: get(state, "errors.GET_USER_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
