@@ -2,13 +2,11 @@ import {axisBottom, axisLeft} from "d3-axis";
 import {scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
 import {area} from "d3-shape";
-import {map, sortBy} from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import {fillEntries, removeOutlierByIQR} from "../../utils";
 import {createBlob, formatSvg, getPng, getSvgAttr} from "./Download";
 
-const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
+const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     let svg = select(element).append("svg");
 
@@ -52,18 +50,6 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop 
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
-        // Extend original data so there is a coordinate data point for each base along x-axis
-        const filledData = fillEntries(data);
-
-        const sortedY = sortBy(filledData, ["val"]);
-
-        const trimDataY = removeOutlierByIQR(sortedY);
-
-        const reorderTrimY = sortBy(trimDataY, ["key"]);
-
-        const dataCrop = map(reorderTrimY, (entry) => [entry.key, entry.val]);
-
-        const useData = isCrop ? dataCrop : data;
 
         const areaDrawer = area()
             .x(d => x(d[0]))
@@ -71,7 +57,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop 
             .y1(height);
 
         svg.append("path")
-            .datum(useData)
+            .datum(data)
             .attr("class", "depth-area")
             .attr("d", areaDrawer);
     }
@@ -113,19 +99,15 @@ export default class CoverageChart extends React.Component {
         data: PropTypes.array,
         length: PropTypes.number,
         title: PropTypes.string,
-        showYAxis: PropTypes.bool,
-        isCrop: PropTypes.bool
+        showYAxis: PropTypes.bool
     };
 
     componentDidMount () {
         window.addEventListener("resize", this.renderChart);
-        this.renderChart({}, this.props.isCrop);
+        this.renderChart();
     }
 
-    shouldComponentUpdate (nextProps) {
-        if (nextProps.isCrop !== this.props.isCrop) {
-            this.renderChart({}, nextProps.isCrop);
-        }
+    shouldComponentUpdate () {
         return false;
     }
 
@@ -133,7 +115,7 @@ export default class CoverageChart extends React.Component {
         window.removeEventListener("resize", this.renderChart);
     }
 
-    renderChart = (e, isCrop = false) => {
+    renderChart = () => {
 
         while (this.chartNode.firstChild) {
             this.chartNode.removeChild(this.chartNode.firstChild);
@@ -148,8 +130,7 @@ export default class CoverageChart extends React.Component {
             { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
-            this.props.showYAxis,
-            isCrop
+            this.props.showYAxis
         );
     };
 
@@ -164,7 +145,7 @@ export default class CoverageChart extends React.Component {
         getPng({ width, height, url, filename });
 
         formatSvg(svg, "visible");
-    }
+    };
 
     render () {
 
