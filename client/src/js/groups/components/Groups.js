@@ -55,7 +55,11 @@ class Groups extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
 
-        if (!nextProps.groups.length) {
+        if (nextProps.groups === null) {
+            return null;
+        }
+
+        if (nextProps.groups.length) {
             return {
                 activeId: "",
                 groups: nextProps.groups
@@ -87,8 +91,6 @@ class Groups extends React.Component {
             submitted: false,
             error: ""
         });
-
-        this.props.updatePermissions();
 
         if (this.props.error) {
             this.props.onClearError("CREATE_GROUP_ERROR");
