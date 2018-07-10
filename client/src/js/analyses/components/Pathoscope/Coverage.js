@@ -1,12 +1,12 @@
-import React from "react";
+import {axisBottom, axisLeft} from "d3-axis";
+import {scaleLinear} from "d3-scale";
+import {select} from "d3-selection";
+import {area} from "d3-shape";
+import {map, sortBy} from "lodash-es";
 import PropTypes from "prop-types";
-import { map, sortBy } from "lodash-es";
-import { select } from "d3-selection";
-import { area } from "d3-shape";
-import { scaleLinear } from "d3-scale";
-import { axisBottom, axisLeft } from "d3-axis";
-import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
-import { fillEntries, removeOutlierByIQR } from "../../../samples/chartUtils";
+import React from "react";
+import {fillEntries, removeOutlierByIQR} from "../../utils";
+import {createBlob, formatSvg, getPng, getSvgAttr} from "./Download";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis, isCrop = false) => {
 

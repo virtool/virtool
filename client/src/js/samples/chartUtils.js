@@ -1,8 +1,8 @@
-import { select } from "d3-selection";
-import { map, slice, reduce, forEach, range, concat } from "lodash-es";
-import { symbol, symbolSquare } from "d3-shape";
-import { scaleOrdinal } from "d3-scale";
-import { legendColor } from "d3-svg-legend";
+import {scaleOrdinal} from "d3-scale";
+import {select} from "d3-selection";
+import {symbol, symbolSquare} from "d3-shape";
+import {legendColor} from "d3-svg-legend";
+import {map} from "lodash-es";
 
 const height = 300;
 
@@ -44,68 +44,4 @@ export const createSVG = (element, width) => {
     svg.height = height;
 
     return svg;
-};
-
-export const fillEntries = (alignArray) => {
-    let filledEntries = [];
-
-    forEach(alignArray, (entry, i) => {
-
-        if (i === alignArray.length - 1) {
-
-            const lastIndex = alignArray[i - 1][0];
-
-            const numBasesToEnd = entry[0] - lastIndex;
-
-            const fill = map(range(numBasesToEnd), (item, k) => (
-                { key: (lastIndex + k), val: alignArray[i - 1][1] }
-            ));
-
-            fill.push({ key: entry[0], val: entry[1] });
-
-            return filledEntries = concat(filledEntries, fill);
-
-        } else if (i !== 0) {
-            const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
-
-            const fill = map(range(numBasesFromLastEntry), (item, j) => (
-                { key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1] }
-            ));
-
-            return filledEntries = concat(filledEntries, fill);
-        }
-    });
-
-    return filledEntries;
-};
-
-export const getQuartileValue = (values, quartile) => {
-    const index = (values.length * quartile) / 4;
-
-    if (index % 1 === 0) {
-        return values[index].val;
-    }
-
-    const lowerIndex = Math.floor(index);
-    const upperIndex = Math.ceil(index);
-
-    return (values[lowerIndex].val + values[upperIndex].val) / 2;
-};
-
-export const removeOutlierByIQR = (values) => {
-
-    const q1 = getQuartileValue(values, 1);
-    const q3 = getQuartileValue(values, 3);
-    const total = reduce(values, (sum, entry) => sum + entry.val, 0);
-    const mean = total / values.length;
-
-    const IQR = (q3 - q1);
-    const outlierDifference = 1.5 * IQR;
-
-    // Largest value not an outlier
-    if ((values[values.length - 1].val - mean) <= outlierDifference) {
-        return values;
-    }
-
-    return removeOutlierByIQR(slice(values, 0, values.length - 1));
 };
