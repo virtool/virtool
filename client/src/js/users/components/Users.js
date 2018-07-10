@@ -20,6 +20,7 @@ import { Button, Icon, LoadingPlaceholder, Alert } from "../../base";
 import UsersList from "./List";
 import CreateUser from "./Create";
 import Groups from "../../groups/components/Groups";
+import { listGroups } from "../../groups/actions";
 
 export class ManageUsers extends React.Component {
 
@@ -30,6 +31,12 @@ export class ManageUsers extends React.Component {
             filter: "",
             error: ""
         };
+    }
+
+    componentDidMount () {
+        if (this.props.groups === null) {
+            this.props.onListGroups();
+        }
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
@@ -106,7 +113,7 @@ export class ManageUsers extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    filter: state.users.filter,
+    groups: state.groups.list,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 
@@ -118,6 +125,10 @@ const mapDispatchToProps = dispatch => ({
 
     onClearError: (error) => {
         dispatch(clearError(error));
+    },
+
+    onListGroups: () => {
+        dispatch(listGroups());
     }
 
 });
