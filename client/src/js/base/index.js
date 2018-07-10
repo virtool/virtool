@@ -19,6 +19,7 @@ import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
+import { RemoveBanner } from "./RemoveBanner";
 import { RemoveModal } from "./RemoveModal";
 import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
@@ -49,6 +50,7 @@ export {
     ProgressBar,
     Radio,
     RelativeTime,
+    RemoveBanner,
     RemoveModal,
     Tooltip,
     UploadBar,

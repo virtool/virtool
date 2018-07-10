@@ -8,12 +8,6 @@ import { editUser, listUsers } from "../actions";
 
 class UserGroup extends React.Component {
 
-    componentDidUpdate (prevProps) {
-        if (this.props.toggled !== prevProps.toggled) {
-            prevProps.onListUsers();
-        }
-    }
-
     handleClick = () => {
         const { userGroups, groupId, userId } = this.props;
         let newGroups;
@@ -88,7 +82,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     list: () => {
-        dispatch(listUsers());
+        dispatch(listUsers(1));
     }
 
 });
