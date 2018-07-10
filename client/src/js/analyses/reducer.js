@@ -6,14 +6,12 @@ import {
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS,
     LIST_READY_INDEXES
 } from "../actionTypes";
 
 export const initialState = {
     documents: null,
     detail: null,
-    getAnalysisProgress: 0,
     readyIndexes: null
 };
 
@@ -55,8 +53,6 @@ export default function samplesReducer (state = initialState, action) {
         case GET_ANALYSIS.SUCCEEDED:
             return {...state, detail: action.data};
 
-        case GET_ANALYSIS_PROGRESS:
-            return {...state, getAnalysisProgress: action.progress};
 
         case CLEAR_ANALYSIS:
             return {...state, getAnalysisProgress: 0, detail: null};

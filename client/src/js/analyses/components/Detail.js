@@ -29,20 +29,11 @@ class AnalysisDetail extends React.Component {
         }
 
         if (this.props.detail === null) {
-            return (
-                <div style={{paddingTop: "130px"}}>
-                    <Row>
-                        <Col xs={12} md={4} mdOffset={4}>
-                            <div className="progress-small">
-                                <ProgressBar now={this.props.progress || 15} active />
-                            </div>
-                        </Col>
-                    </Row>
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const detail = this.props.detail;
+
         let content;
 
         if (!detail.ready) {
@@ -125,7 +116,6 @@ class AnalysisDetail extends React.Component {
 const mapStateToProps = (state) => ({
     error: get(state, "errors.GET_ANALYSIS_ERROR", null),
     detail: state.analyses.detail,
-    progress: state.analyses.getAnalysisProgress,
     quality: state.samples.detail.quality
 });
 

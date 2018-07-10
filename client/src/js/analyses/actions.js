@@ -6,7 +6,6 @@ import {
     CROP_PATHOSCOPE,
     FIND_ANALYSES,
     GET_ANALYSIS,
-    GET_ANALYSIS_PROGRESS,
     REMOVE_ANALYSIS,
     SET_PATHOSCOPE_FILTER,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
@@ -77,18 +76,6 @@ export const getAnalysis = (analysisId) => ({
 });
 
 export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
-
-/**
- * Returns action for getting the current progress state.
- *
- * @func
- * @param jobId {number} the value of the progress
- * @returns {object}
- */
-export const getAnalysisProgress = (progress) => ({
-    type: GET_ANALYSIS_PROGRESS,
-    progress
-});
 
 /**
  * Returns action that can trigger an API call for sample analysis.
