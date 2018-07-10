@@ -106,11 +106,11 @@ class ReferenceMembers extends React.Component {
 
     render () {
 
-        if (!this.props.userList || !this.props.groupList) {
+        if (!this.props.list || !this.props.groupList) {
             return <LoadingPlaceholder />;
         }
 
-        const list = (this.props.noun === "users") ? this.props.userList : this.props.groupList;
+        const list = (this.props.noun === "users") ? this.props.list.documents : this.props.groupList;
         const members = (this.props.noun === "users") ? this.props.users : this.props.groups;
 
         const otherMembers = getOtherMembers(list, members);
@@ -145,6 +145,7 @@ class ReferenceMembers extends React.Component {
                 <AddReferenceMember
                     show={this.state.showAdd}
                     list={otherMembers}
+                    page={this.props.page}
                     onAdd={this.handleAdd}
                     onHide={this.handleHide}
                     noun={this.props.noun}
@@ -157,7 +158,7 @@ class ReferenceMembers extends React.Component {
 const mapStateToProps = (state) => ({
     refId: state.references.detail.id,
     users: state.references.detail.users,
-    userList: state.users.list ? state.users.list.documents : null,
+    ...state.users,
     groups: state.references.detail.groups,
     groupList: state.groups.list
 });
