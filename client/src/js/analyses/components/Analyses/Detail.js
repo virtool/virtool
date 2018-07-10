@@ -72,6 +72,8 @@ class AnalysisDetail extends React.Component {
             throw Error("Unusable analysis detail content");
         }
 
+        const mappedPercent = Numeral(detail.read_count / this.props.quality.count).format("0.00%");
+
         return (
             <div>
                 <Table bordered>
@@ -96,7 +98,12 @@ class AnalysisDetail extends React.Component {
                         <IDRow id={detail.id} />
                         <tr>
                             <th>Mapped Reads</th>
-                            <td>{Numeral(detail.read_count).format()}</td>
+                            <td>
+                                {Numeral(detail.read_count).format()}
+                                <span style={{paddingLeft: "5px"}}>
+                                    ({mappedPercent})
+                                </span>
+                            </td>
                         </tr>
                         <tr>
                             <th>Library Read Count</th>
