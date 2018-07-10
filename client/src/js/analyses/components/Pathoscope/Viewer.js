@@ -1,42 +1,11 @@
-import React from "react";
-import { map, max, maxBy, sumBy, reduce, sortBy, round, concat } from "lodash-es";
+import {compact, flatMap, map, max, maxBy, mean, round, sortBy, sum, sumBy} from "lodash-es";
 import PropTypes from "prop-types";
+import React from "react";
 
-import { Alert } from "../../../base/index";
-import { formatIsolateName } from "../../../utils";
-import { fillEntries } from "../../../samples/chartUtils";
+import {Alert} from "../../../base/index";
+import {formatIsolateName} from "../../../utils";
+import {fillAlign, median} from "../../utils";
 import PathoscopeController from "./Controller";
-
-const calculateIsolateCoverage = (isolate, length) => (
-    reduce(isolate.sequences, (sum, sequence) => (
-        sum + sequence.coverage * (sequence.length / length)
-    ), 0)
-);
-
-const getSumDepth = (alignArray) => {
-    const sumDepth = reduce(alignArray, (sum, align, i) => {
-        if (i === (alignArray.length - 1) || i === 0) {
-            return sum + align[1];
-        }
-        const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]) - 1;
-        const depthSumBetween = numBasesFromLastEntry * alignArray[i - 1][1];
-        return sum + depthSumBetween + align[1];
-    }, 0);
-
-    return (sumDepth || 0);
-};
-
-const getMedianDepth = (alignArray) => {
-    const midIndex = (alignArray.length - 1) / 2;
-
-    if (midIndex % 1 === 0) {
-        return alignArray[midIndex].val;
-    }
-    const lowerIndex = Math.floor(midIndex);
-    const upperIndex = Math.ceil(midIndex);
-
-    return (alignArray[lowerIndex].val + alignArray[upperIndex].val) / 2;
-};
 
 const PathoscopeViewer = (props) => {
 
@@ -56,32 +25,23 @@ const PathoscopeViewer = (props) => {
                 }
 
                 const sequences = map(isolate.sequences, sequence => {
-                    const reads = round(sequence.pi * mappedReadCount);
-                    const depth = sequence.align ? max(map(sequence.align, p => p[1])) : 0;
-                    const sumDepth = getSumDepth(sequence.align);
+                    const filled = fillAlign(sequence);
 
-                    const seqFilledData = sequence.align ? fillEntries(sequence.align) : null;
-
-                    return {...sequence, reads, depth, sumDepth, seqFilledData};
+                    return {
+                        ...sequence,
+                        reads: round(sequence.pi * mappedReadCount),
+                        meanDepth: mean(filled),
+                        medianDepth: median(filled),
+                        sumDepth: sum(filled),
+                        filled
+                    };
                 });
 
-                const length = sumBy(sequences, "length");
-                const totalSeqDepth = sumBy(sequences, "sumDepth");
-                const meanDepth = round(totalSeqDepth / length);
-                const coverage = calculateIsolateCoverage(isolate, length).toFixed(3);
-                let medianDepth = 0;
+                const filled = flatMap(sequences, "filled");
 
-                let totalFilledDataUnsorted;
-                let totalFilledDataSorted;
+                const length = filled.length;
 
-                if (totalSeqDepth) {
-                    totalFilledDataUnsorted = reduce(sequences, (result, entry) => (
-                        concat(result, entry.seqFilledData)
-                    ), []);
-
-                    totalFilledDataSorted = sortBy(totalFilledDataUnsorted, ["val"]);
-                    medianDepth = getMedianDepth(totalFilledDataSorted);
-                }
+                const coverage = compact(filled).length / length;
 
                 return {
                     ...isolate,
@@ -89,20 +49,12 @@ const PathoscopeViewer = (props) => {
                     length,
                     pi: sumBy(sequences, "pi"),
                     reads: sumBy(sequences, "reads"),
-                    maxDepth: maxBy(sequences, "depth").depth,
-                    meanDepth,
-                    medianDepth,
-                    coverage
+                    maxDepth: max(filled),
+                    meanDepth: mean(filled),
+                    medianDepth: median(filled),
+                    coverage: coverage.toFixed(3)
                 };
             });
-
-            let coverage;
-
-            if (isolates.length === 1) {
-                coverage = isolates[0].coverage;
-            } else {
-                coverage = maxBy(isolates, "coverage").coverage;
-            }
 
             isolates = sortBy(isolates, "coverage").reverse();
 
@@ -110,12 +62,14 @@ const PathoscopeViewer = (props) => {
 
             return {
                 ...baseOTU,
-                pi,
-                coverage,
+                coverage: maxBy(isolates, "coverage").coverage,
                 isolates,
-                reads: pi * mappedReadCount,
-                maxGenomeLength: maxBy(isolates, "length"),
-                maxDepth: maxBy(isolates, "maxDepth").maxDepth
+                maxGenomeLength: maxBy(isolates, "length").length,
+                maxDepth: maxBy(isolates, "meanDepth").maxDepth,
+                meanDepth: maxBy(isolates, "meanDepth").meanDepth,
+                medianDepth: maxBy(isolates, "medianDepth").medianDepth,
+                pi,
+                reads: pi * mappedReadCount
             };
         });
 

@@ -1,4 +1,4 @@
-import {concat, forEach, map, range, reduce, slice} from "lodash-es";
+import {fill, fromPairs, map, reduce, slice} from "lodash-es";
 
 export const calculateQuartile = (values, quartile) => {
     const index = (values.length * quartile) / 4;
@@ -13,37 +13,39 @@ export const calculateQuartile = (values, quartile) => {
     return (values[lowerIndex].val + values[upperIndex].val) / 2;
 };
 
-export const fillEntries = (alignArray) => {
-    let filledEntries = [];
+export const fillAlign = ({ align, length }) => {
+    const filled = Array(length - 1);
 
-    forEach(alignArray, (entry, i) => {
+    if (!align) {
+        return fill(Array(length - 1), 0);
+    }
 
-        if (i === alignArray.length - 1) {
+    const coords = fromPairs(align);
 
-            const lastIndex = alignArray[i - 1][0];
+    let prev = 0;
 
-            const numBasesToEnd = entry[0] - lastIndex;
+    return map(filled, (depth, i) => {
+        const next = coords[i];
 
-            const fill = map(range(numBasesToEnd), (item, k) => (
-                {key: (lastIndex + k), val: alignArray[i - 1][1]}
-            ));
-
-            fill.push({key: entry[0], val: entry[1]});
-
-            return filledEntries = concat(filledEntries, fill);
-
-        } else if (i !== 0) {
-            const numBasesFromLastEntry = (alignArray[i][0] - alignArray[i - 1][0]);
-
-            const fill = map(range(numBasesFromLastEntry), (item, j) => (
-                {key: (alignArray[i - 1][0] + j), val: alignArray[i - 1][1]}
-            ));
-
-            return filledEntries = concat(filledEntries, fill);
+        if (next) {
+            prev = next;
         }
-    });
 
-    return filledEntries;
+        return prev;
+    });
+};
+
+export const median = (values) => {
+    const midIndex = (values.length - 1) / 2;
+
+    if (midIndex % 1 === 0) {
+        return values[midIndex];
+    }
+
+    const lowerIndex = Math.floor(midIndex);
+    const upperIndex = Math.ceil(midIndex);
+
+    return (values[lowerIndex] + values[upperIndex]) / 2;
 };
 
 export const removeOutlierByIQR = (values) => {
@@ -64,4 +66,3 @@ export const removeOutlierByIQR = (values) => {
 
     return removeOutlierByIQR(slice(values, 0, values.length - 1));
 };
-
