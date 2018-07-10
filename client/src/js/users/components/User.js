@@ -14,11 +14,9 @@ import { capitalize, map } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
-//import { LinkContainer } from "react-router-bootstrap";
-//import { ListGroupItem } from "react-bootstrap";
 
 import { getUser, editUser, removeUser } from "../actions";
-import { Flex, FlexItem, Identicon, InputError, Icon, LoadingPlaceholder } from "../../base";
+import { Flex, FlexItem, Identicon, InputError, Icon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
@@ -44,6 +42,11 @@ export class UserItem extends React.Component {
         this.props.onSetUserRole(this.props.detail.id, (e.target.value === "Administrator"));
     };
 
+    handleRemove = () => {
+        console.log("DELETE: ", this.props.detail.id);
+        this.props.onRemoveUser(this.props.detail.id);
+    };
+
     render () {
 
         if (this.props.detail === null) {
@@ -57,6 +60,8 @@ export class UserItem extends React.Component {
         );
 
         const currentRole = this.props.detail.administrator ? "Administrator" : "Limited";
+
+        const canModifyUser = (this.props.activeUser !== this.props.detail.id && this.props.activeUserIsAdmin);
 
         return (
             <div>
@@ -105,7 +110,7 @@ export class UserItem extends React.Component {
                     </Flex>
                     <UserPermissions permissions={this.props.detail.permissions} />
 
-                    {(this.props.activeUser !== this.props.detail.id && this.props.activeUserIsAdmin) ? (
+                    {canModifyUser ? (
                         <React.Fragment>
                             <label>User Role</label>
                             <InputError
@@ -117,6 +122,14 @@ export class UserItem extends React.Component {
                                 <option key="limit" value="Limited">Limited</option>
                             </InputError>
                         </React.Fragment>
+                    ) : null}
+
+                    {canModifyUser ? (
+                        <RemoveBanner
+                            message="Click the Delete button to permanently remove this user."
+                            buttonText="Delete"
+                            onClick={this.handleRemove}
+                        />
                     ) : null}
                 </div>
             </div>
@@ -135,6 +148,10 @@ const mapDispatchToProps = dispatch => ({
 
     onGetUser: (userId) => {
         dispatch(getUser(userId));
+    },
+
+    onRemoveUser: (userId) => {
+        dispatch(removeUser(userId));
     },
 
     onClose: () => {

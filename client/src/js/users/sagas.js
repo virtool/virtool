@@ -33,7 +33,10 @@ function* editUser (action) {
 }
 
 function* removeUser (action) {
-    yield setPending(apiCall(usersAPI.remove, action, REMOVE_USER));
+    const extraFunc = {
+        goBack: put(push("/administration/users"))
+    };
+    yield setPending(apiCall(usersAPI.remove, action, REMOVE_USER, {}, extraFunc));
 }
 
 function* filterUsers (action) {
