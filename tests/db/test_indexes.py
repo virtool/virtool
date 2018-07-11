@@ -7,15 +7,15 @@ import virtool.jobs.build_index
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_current_id_and_version(exists, has_ref, test_indexes, test_motor):
+async def test_get_current_id_and_version(exists, has_ref, test_indexes, test_dbi):
     if not exists:
         test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
 
-    await test_motor.indexes.insert_many(test_indexes)
+    await test_dbi.indexes.insert_many(test_indexes)
 
     ref_id = "hxn167" if has_ref else "foobar"
 
-    index_id, index_version = await virtool.db.indexes.get_current_id_and_version(test_motor, ref_id)
+    index_id, index_version = await virtool.db.indexes.get_current_id_and_version(test_dbi, ref_id)
 
     if has_ref and exists:
         assert index_id == "ptlrcefm"
@@ -28,23 +28,23 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, test_mo
 
 @pytest.mark.parametrize("empty", [False, True])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_next_version(empty, has_ref, test_indexes, test_motor):
+async def test_get_next_version(empty, has_ref, test_indexes, test_dbi):
     if not empty:
-        await test_motor.indexes.insert_many(test_indexes)
+        await test_dbi.indexes.insert_many(test_indexes)
 
     expected = 4
 
     if empty or not has_ref:
         expected = 0
 
-    assert await virtool.db.indexes.get_next_version(test_motor, "hxn167" if has_ref else "foobar") == expected
+    assert await virtool.db.indexes.get_next_version(test_dbi, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_tag_unbuilt_changes(test_motor, create_mock_history):
+async def test_tag_unbuilt_changes(test_dbi, create_mock_history):
     await create_mock_history(False)
 
-    async for document in test_motor.history.find():
-        await test_motor.history.insert({
+    async for document in test_dbi.history.find():
+        await test_dbi.history.insert_one({
             **document,
             "_id": "foo_" + document["_id"],
             "reference": {
@@ -52,11 +52,11 @@ async def test_tag_unbuilt_changes(test_motor, create_mock_history):
             }
         })
 
-    assert await test_motor.history.count({"index.id": "unbuilt"}) == 8
-    assert await test_motor.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await test_motor.history.count({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
+    assert await test_dbi.history.count({"index.id": "unbuilt"}) == 8
+    assert await test_dbi.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await test_dbi.history.count({"reference.id": "hxn167", "index.id": "unbuilt"}) == 4
 
-    await virtool.db.indexes.tag_unbuilt_changes(test_motor, "hxn167", "foo", 5)
+    await virtool.db.indexes.tag_unbuilt_changes(test_dbi, "hxn167", "foo", 5)
 
-    assert await test_motor.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
-    assert await test_motor.history.count({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4
+    assert await test_dbi.history.count({"reference.id": "foobar", "index.id": "unbuilt"}) == 4
+    assert await test_dbi.history.count({"reference.id": "hxn167", "index.id": "foo", "index.version": 5}) == 4

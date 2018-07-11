@@ -202,17 +202,17 @@ async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
         m_remove.assert_called_with(path)
 
 
-async def test_handle_delete(test_motor, test_manager_instance):
+async def test_handle_delete(test_dbi, test_manager_instance):
     """
     Test the the correspond database document for a file is deleted when the file is deleted.
 
     """
     filename = "foobar-test.fq"
 
-    await test_motor.files.insert({
+    await test_dbi.files.insert_one({
         "_id": filename
     })
 
     await test_manager_instance.handle_delete(filename)
 
-    assert not await test_motor.files.count()
+    assert not await test_dbi.files.count()

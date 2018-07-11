@@ -69,8 +69,8 @@ class TestCalculateAlgorithmTags:
 
 class TestRecalculateAlgorithmTags:
 
-    async def test(self, mocker, test_motor):
-        await test_motor.samples.insert_one({
+    async def test(self, mocker, test_dbi):
+        await test_dbi.samples.insert_one({
             "_id": "test",
             "pathoscope": False,
             "nuvs": False
@@ -103,7 +103,7 @@ class TestRecalculateAlgorithmTags:
             }
         ]
 
-        await test_motor.analyses.insert_many(analysis_documents + [
+        await test_dbi.analyses.insert_many(analysis_documents + [
             {
                 "_id": "test_4",
                 "sample": {
@@ -119,14 +119,14 @@ class TestRecalculateAlgorithmTags:
             "nuvs": "ip"
         })
 
-        await virtool.db.samples.recalculate_algorithm_tags(test_motor, "test")
+        await virtool.db.samples.recalculate_algorithm_tags(test_dbi, "test")
 
         for document in analysis_documents:
             del document["sample"]
 
         assert m.call_args[0][0] == analysis_documents
 
-        assert await test_motor.samples.find_one() == {
+        assert await test_dbi.samples.find_one() == {
             "_id": "test",
             "pathoscope": True,
             "nuvs": "ip"
@@ -135,12 +135,12 @@ class TestRecalculateAlgorithmTags:
 
 class TestGetSampleOwner:
 
-    async def test(self, test_motor):
+    async def test(self, test_dbi):
         """
         Test that the correct owner id is returned given a sample id.
 
         """
-        await test_motor.samples.insert_many([
+        await test_dbi.samples.insert_many([
             {
                 "_id": "test",
                 "user": {
@@ -155,14 +155,14 @@ class TestGetSampleOwner:
             },
         ])
 
-        assert await virtool.db.samples.get_sample_owner(test_motor, "test") == "foobar"
+        assert await virtool.db.samples.get_sample_owner(test_dbi, "test") == "foobar"
 
-    async def test_none(self, test_motor):
+    async def test_none(self, test_dbi):
         """
         Test that ``None`` is returned if the sample id does not exist.
 
         """
-        assert await virtool.db.samples.get_sample_owner(test_motor, "foobar") is None
+        assert await virtool.db.samples.get_sample_owner(test_dbi, "foobar") is None
 
 
 class TestRemoveSamples:
@@ -194,7 +194,7 @@ class TestRemoveSamples:
             ]
         )
     ])
-    async def test(self, id_list, ls, samples, analyses, tmpdir, test_motor):
+    async def test(self, id_list, ls, samples, analyses, tmpdir, test_dbi):
         """
         Test that the function can remove one or more samples, their analysis documents, and files.
 
@@ -208,13 +208,13 @@ class TestRemoveSamples:
         for handle in [sample_1_file, sample_2_file, sample_3_file]:
             handle.write("hello world")
 
-        await test_motor.samples.insert_many([
+        await test_dbi.samples.insert_many([
             {"_id": "test_1"},
             {"_id": "test_2"},
             {"_id": "test_3"}
         ])
 
-        await test_motor.analyses.insert_many([
+        await test_dbi.analyses.insert_many([
             {"_id": "a_1", "sample": {"id": "test_1"}},
             {"_id": "a_2", "sample": {"id": "test_1"}},
             {"_id": "a_3", "sample": {"id": "test_2"}},
@@ -230,14 +230,14 @@ class TestRemoveSamples:
             "data_path": str(tmpdir)
         }
 
-        await virtool.db.samples.remove_samples(test_motor, settings, id_list)
+        await virtool.db.samples.remove_samples(test_dbi, settings, id_list)
 
         assert set(ls) == set(os.listdir(str(samples_dir)))
 
-        assert await test_motor.samples.find().to_list(None) == samples
-        assert await test_motor.analyses.find().to_list(None) == analyses
+        assert await test_dbi.samples.find().to_list(None) == samples
+        assert await test_dbi.analyses.find().to_list(None) == analyses
 
-    async def test_not_list(self, test_motor):
+    async def test_not_list(self, test_dbi):
         """
         Test that a custom ``TypeError`` is raised if a non-list variable is passed as ``id_list``.
 
@@ -247,11 +247,11 @@ class TestRemoveSamples:
         }
 
         with pytest.raises(TypeError) as err:
-            await virtool.db.samples.remove_samples(test_motor, settings, "foobar")
+            await virtool.db.samples.remove_samples(test_dbi, settings, "foobar")
 
         assert "id_list must be a list" in str(err)
 
-    async def test_file_not_found(self, tmpdir, test_motor):
+    async def test_file_not_found(self, tmpdir, test_dbi):
         """
         Test that the function does not fail when a sample folder is missing.
 
@@ -262,7 +262,7 @@ class TestRemoveSamples:
 
         sample_1_file.write("hello world")
 
-        await test_motor.samples.insert_many([
+        await test_dbi.samples.insert_many([
             {"_id": "test_1"},
             {"_id": "test_2"}
         ])
@@ -271,8 +271,8 @@ class TestRemoveSamples:
             "data_path": str(tmpdir)
         }
 
-        await virtool.db.samples.remove_samples(test_motor, settings, ["test_1", "test_2"])
+        await virtool.db.samples.remove_samples(test_dbi, settings, ["test_1", "test_2"])
 
         assert os.listdir(str(samples_dir)) == []
 
-        assert not await test_motor.samples.count()
+        assert not await test_dbi.samples.count()

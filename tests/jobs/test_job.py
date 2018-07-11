@@ -33,7 +33,7 @@ def test_processor(test_job, static_time):
 
 
 @pytest.mark.parametrize("empty", [True, False], ids=["empty", "not-empty"])
-async def test_get_waiting_and_running(empty, test_motor):
+async def test_get_waiting_and_running(empty, test_dbi):
     documents = list()
 
     if not empty:
@@ -71,12 +71,12 @@ async def test_get_waiting_and_running(empty, test_motor):
             }
         ]
 
-    await test_motor.jobs.insert_many(documents)
+    await test_dbi.jobs.insert_many(documents)
 
     expected = list()
 
     if not empty:
         expected = ["foo", "baz", "bat"]
 
-    assert await virtool.db.jobs.get_waiting_and_running_ids(test_motor) == expected
+    assert await virtool.db.jobs.get_waiting_and_running_ids(test_dbi) == expected
 
