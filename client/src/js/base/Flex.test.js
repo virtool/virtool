@@ -31,7 +31,7 @@ describe("<Flex />", () => {
             alignContent: "space-between",
         };
 
-        expect(wrapper.prop('style')).toEqual(expected);
+        expect(wrapper.prop("style")).toEqual(expected);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -52,8 +52,8 @@ describe("<Flex />", () => {
             ...props.style
         };
 
-        expect(wrapper.prop('style')).toEqual(expected);
-        expect(wrapper.prop('className')).toEqual(props.className);
+        expect(wrapper.prop("style")).toEqual(expected);
+        expect(wrapper.prop("className")).toEqual(props.className);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -81,7 +81,7 @@ describe("<Flex />", () => {
                 marginLeft: "3px"
             };
 
-            expect(wrapper.prop('style')).toEqual(expected);
+            expect(wrapper.prop("style")).toEqual(expected);
             expect(wrapper).toMatchSnapshot();
         });
 
@@ -100,8 +100,8 @@ describe("<Flex />", () => {
                 ...props.style
             };
 
-            expect(wrapper.prop('style')).toEqual(expected);
-            expect(wrapper.prop('className')).toEqual(props.className);
+            expect(wrapper.prop("style")).toEqual(expected);
+            expect(wrapper.prop("className")).toEqual(props.className);
             expect(wrapper).toMatchSnapshot();
         });
     });

@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Alert /> renders correctly 1`] = `
+<Alert
+  bsClass="alert"
+  bsStyle="info"
+  closeLabel="Close alert"
+/>
+`;
+
+exports[`<Alert /> renders correctly 2`] = `
+<Alert
+  bsClass="alert"
+  bsStyle="danger"
+  className="tester"
+  closeLabel="Close alert"
+/>
+`;

@@ -39,7 +39,7 @@ describe("Samples Reducer", () => {
     it("should handle FIND_SAMPLES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_SAMPLES_SUCCEEDED",
+            type: FIND_SAMPLES.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -54,7 +54,7 @@ describe("Samples Reducer", () => {
     it("should handle FIND_READY_HOSTS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_READY_HOSTS_SUCCEEDED",
+            type: FIND_READY_HOSTS.SUCCEEDED,
             data: {
                 documents: []
             }
@@ -71,7 +71,7 @@ describe("Samples Reducer", () => {
     it("should handle GET_SAMPLE_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_SAMPLE_REQUESTED"
+            type: GET_SAMPLE.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -85,7 +85,7 @@ describe("Samples Reducer", () => {
     it("should handle GET_SAMPLE_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_SAMPLE_SUCCEEDED",
+            type: GET_SAMPLE.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -104,7 +104,7 @@ describe("Samples Reducer", () => {
                 documents: null
             };
             action = {
-                type: "UPDATE_SAMPLE_SUCCEEDED"
+                type: UPDATE_SAMPLE.SUCCEEDED
             };
             result = reducer(state, action);
             expected = state;
@@ -120,7 +120,7 @@ describe("Samples Reducer", () => {
                 ]
             };
             action = {
-                type: "UPDATE_SAMPLE_SUCCEEDED",
+                type: UPDATE_SAMPLE.SUCCEEDED,
                 data: {
                     id: "test1",
                     update: "update_test"
@@ -143,7 +143,7 @@ describe("Samples Reducer", () => {
     it("should handle REMOVE_SAMPLE_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "REMOVE_SAMPLE_SUCCEEDED"
+            type: REMOVE_SAMPLE.SUCCEEDED
         };
         result = reducer(state, action);
         expected = {
@@ -159,7 +159,7 @@ describe("Samples Reducer", () => {
     it("should handle SHOW_REMOVE_SAMPLE", () => {
         state = {};
         action = {
-            type: "SHOW_REMOVE_SAMPLE"
+            type: SHOW_REMOVE_SAMPLE
         };
         result = reducer(state, action);
         expected = {
@@ -173,7 +173,7 @@ describe("Samples Reducer", () => {
     it("should handle HIDE_SAMPLE_MODAL", () => {
         state = {};
         action = {
-            type: "HIDE_SAMPLE_MODAL"
+            type: HIDE_SAMPLE_MODAL
         };
         result = reducer(state, action);
         expected = {

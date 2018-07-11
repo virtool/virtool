@@ -38,7 +38,7 @@ describe("Indexes Reducer", () => {
             documents: []
         };
         action = {
-            type: "WS_UPDATE_INDEX",
+            type: WS_UPDATE_INDEX,
             index_id: 3,
             data: {}
         };
@@ -47,7 +47,7 @@ describe("Indexes Reducer", () => {
     it("should handle FIND_INDEXES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_INDEXES_SUCCEEDED",
+            type: FIND_INDEXES.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -64,7 +64,7 @@ describe("Indexes Reducer", () => {
     it("should handle GET_INDEX_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_INDEX_REQUESTED"
+            type: GET_INDEX.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -78,7 +78,7 @@ describe("Indexes Reducer", () => {
     it("should handle GET_INDEX_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_INDEX_SUCCEEDED",
+            type: GET_INDEX.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -93,7 +93,7 @@ describe("Indexes Reducer", () => {
     it("should handle GET_UNBUILT_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_UNBUILT_SUCCEEDED",
+            type: GET_UNBUILT.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -108,7 +108,7 @@ describe("Indexes Reducer", () => {
     it("should handle GET_INDEX_HISTORY_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_INDEX_HISTORY_REQUESTED"
+            type: GET_INDEX_HISTORY.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -123,7 +123,7 @@ describe("Indexes Reducer", () => {
     it("should handle GET_INDEX_HISTORY_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_INDEX_HISTORY_SUCCEEDED",
+            type: GET_INDEX_HISTORY.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);

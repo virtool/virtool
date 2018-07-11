@@ -39,7 +39,7 @@ describe("<Radio />", () => {
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            wrapper.find(Icon).simulate('click');
+            wrapper.find(Icon).simulate("click");
 
             expect(props.onClick).toHaveBeenCalled();
             expect(wrapper).toMatchSnapshot();
@@ -51,7 +51,7 @@ describe("<Radio />", () => {
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("dot-circle");
+            expect(wrapper.find(Icon).prop("name")).toEqual("dot-circle");
             expect(wrapper).toMatchSnapshot();
         });
 
@@ -61,7 +61,7 @@ describe("<Radio />", () => {
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("circle");
+            expect(wrapper.find(Icon).prop("name")).toEqual("circle");
             expect(wrapper).toMatchSnapshot();
         })
 
@@ -76,7 +76,7 @@ describe("<Radio />", () => {
             };
             let wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find('span').text()).toEqual(` ${props.label}`);
+            expect(wrapper.find("span").text()).toEqual(` ${props.label}`);
             expect(wrapper).toMatchSnapshot();
         });
 

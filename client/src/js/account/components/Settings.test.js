@@ -43,7 +43,7 @@ describe("<Settings />", () => {
             expect(wrapper.find(Checkbox).at(0).exists()).toBe(true);
 
             const checkboxWrapper = wrapper.find(Checkbox).at(0).shallow();
-            checkboxWrapper.simulate('click');
+            checkboxWrapper.simulate("click");
 
             expected = {
                 show_ids: !initialState.account.settings.show_ids

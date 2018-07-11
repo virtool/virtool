@@ -29,7 +29,7 @@ describe("Sample Action Creators:", () => {
         const update = {};
         const result = wsUpdateSample(update);
         const expected = {
-            type: "WS_UPDATE_SAMPLE",
+            type: WS_UPDATE_SAMPLE,
             update
         };
 
@@ -40,7 +40,7 @@ describe("Sample Action Creators:", () => {
         const removed = "";
         const result = wsRemoveSample(removed);
         const expected = {
-            type: "WS_REMOVE_SAMPLE",
+            type: WS_REMOVE_SAMPLE,
             removed
         };
 
@@ -50,7 +50,7 @@ describe("Sample Action Creators:", () => {
     it("findReadyHosts: returns simple action", () => {
         const result = findReadyHosts();
         const expected = {
-            type: "FIND_READY_HOSTS_REQUESTED"
+            type: FIND_READY_HOSTS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -60,7 +60,7 @@ describe("Sample Action Creators:", () => {
         const sampleId = "testsample";
         const result = getSample(sampleId);
         const expected = {
-            type: "GET_SAMPLE_REQUESTED",
+            type: GET_SAMPLE.REQUESTED,
             sampleId
         };
 
@@ -77,7 +77,7 @@ describe("Sample Action Creators:", () => {
         const files = {};
         const result = createSample(name, isolate, host, locale, srna, subtraction, files);
         const expected = {
-            type: "CREATE_SAMPLE_REQUESTED",
+            type: CREATE_SAMPLE.REQUESTED,
             name,
             isolate,
             host,
@@ -95,7 +95,7 @@ describe("Sample Action Creators:", () => {
         const update = {};
         const result = editSample(sampleId, update);
         const expected = {
-            type: "UPDATE_SAMPLE_REQUESTED",
+            type: UPDATE_SAMPLE.REQUESTED,
             sampleId,
             update
         };
@@ -108,7 +108,7 @@ describe("Sample Action Creators:", () => {
         const update = {};
         const result = updateSampleRights(sampleId, update);
         const expected = {
-            type: "UPDATE_SAMPLE_RIGHTS_REQUESTED",
+            type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
             sampleId,
             update
         };
@@ -120,7 +120,7 @@ describe("Sample Action Creators:", () => {
         const sampleId = "testid";
         const result = removeSample(sampleId);
         const expected = {
-            type: "REMOVE_SAMPLE_REQUESTED",
+            type: REMOVE_SAMPLE.REQUESTED,
             sampleId
         };
 
@@ -130,7 +130,7 @@ describe("Sample Action Creators:", () => {
     it("showRemoveSample: returns simple action", () => {
         const result = showRemoveSample();
         const expected = {
-            type: "SHOW_REMOVE_SAMPLE"
+            type: SHOW_REMOVE_SAMPLE
         };
 
         expect(result).toEqual(expected);
@@ -139,7 +139,7 @@ describe("Sample Action Creators:", () => {
     it("hideSampleModal: returns simple action", () => {
         const result = hideSampleModal();
         const expected = {
-            type: "HIDE_SAMPLE_MODAL"
+            type: HIDE_SAMPLE_MODAL
         };
 
         expect(result).toEqual(expected);

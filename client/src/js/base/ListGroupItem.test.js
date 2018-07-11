@@ -20,7 +20,7 @@ describe("<ListGroupItem />", () => {
         wrapper = shallow(<ListGroupItem {...props} />);
 
         expect(wrapper.find(BsListGroupItem).length).toEqual(1);
-        expect(wrapper.prop('onFocus')).toBeDefined();
+        expect(wrapper.prop("onFocus")).toBeDefined();
     });
 
     it("should let subcomponent focus/blur when prop allowFocus is supplied", () => {
@@ -33,7 +33,7 @@ describe("<ListGroupItem />", () => {
         const spyFocusHandler = jest.spyOn(wrapper.instance(), "handleFocus");
         wrapper.instance().forceUpdate();
 
-        wrapper.find('div').simulate('focus');
+        wrapper.find("div").simulate("focus");
 
         expect(spyFocusHandler).not.toHaveBeenCalled();
         expect(handleFocus).toHaveBeenCalled();
@@ -52,7 +52,7 @@ describe("<ListGroupItem />", () => {
         const spyFocusHandler = jest.spyOn(wrapper.instance(), "handleFocus");
         wrapper.instance().forceUpdate();
 
-        wrapper.simulate('focus');
+        wrapper.simulate("focus");
         
         expect(spyFocusHandler).toHaveBeenCalled();
         expect(handleFocus).not.toHaveBeenCalled();

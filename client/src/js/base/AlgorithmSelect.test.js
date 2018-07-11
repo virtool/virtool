@@ -61,9 +61,9 @@ describe("<AlgorithmSelect />", () => {
             />
         );
 
-        expect(wrapper.find('option').length).toEqual(algorithms.length);
+        expect(wrapper.find("option").length).toEqual(algorithms.length);
 
-        wrapper.find('option').forEach((node, index) => {
+        wrapper.find("option").forEach((node, index) => {
             expect(node.props().value).toEqual(algorithms[index]);
         });
     });

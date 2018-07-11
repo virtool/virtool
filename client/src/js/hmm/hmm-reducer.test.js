@@ -31,7 +31,7 @@ describe("HMM Reducer", () => {
         it("otherwise return state", () => {
             state = {};
             action = {
-                type: "WS_UPDATE_STATUS",
+                type: WS_UPDATE_STATUS,
                 data: {
                     id: "other_id",
                 }
@@ -47,7 +47,7 @@ describe("HMM Reducer", () => {
     it("should handle FIND_HMMS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_HMMS_SUCCEEDED",
+            type: FIND_HMMS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -64,7 +64,7 @@ describe("HMM Reducer", () => {
     it("should handle GET_HMM_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_HMM_REQUESTED",
+            type: GET_HMM.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -78,7 +78,7 @@ describe("HMM Reducer", () => {
     it("should handle GET_HMM_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_HMM_SUCCEEDED",
+            type: GET_HMM.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);

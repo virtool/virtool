@@ -20,7 +20,7 @@ describe("<Icon />", () => {
         };
 
         wrapper = shallow(<Icon {...props} />);
-        expect(wrapper.find('i').prop('style')).toEqual({ marginLeft: "3px" });
+        expect(wrapper.find("i").prop("style")).toEqual({ marginLeft: "3px" });
     });
 
     it("add bsStyle class when bsStyle prop is given and [prop.pending=false]", () => {
@@ -30,7 +30,7 @@ describe("<Icon />", () => {
         };
         wrapper = shallow(<Icon {...props} />);
 
-        expect(wrapper.find('i').hasClass(`text-${props.bsStyle}`)).toBe(true);
+        expect(wrapper.find("i").hasClass(`text-${props.bsStyle}`)).toBe(true);
     });
 
     describe("when props.tip is supplied", () => {
@@ -44,7 +44,7 @@ describe("<Icon />", () => {
 
             expect(wrapper.find(OverlayTrigger).length).toEqual(1);
 
-            const target = wrapper.find(OverlayTrigger).prop('overlay');
+            const target = wrapper.find(OverlayTrigger).prop("overlay");
 
             expect(target.type.name).toEqual("Tooltip");
             expect(target.props.children).toEqual(props.tip);
@@ -58,7 +58,7 @@ describe("<Icon />", () => {
             };
 
             wrapper = shallow(<Icon {...props} />);
-            expect(wrapper.find(OverlayTrigger).prop('placement')).toEqual(props.tipPlacement);
+            expect(wrapper.find(OverlayTrigger).prop("placement")).toEqual(props.tipPlacement);
         });
 
     });
@@ -72,7 +72,7 @@ describe("<Icon />", () => {
             wrapper = shallow(<Icon {...props} />);
 
             expect(wrapper.length).toEqual(1);
-            expect(wrapper.find('i').exists()).toBe(true);
+            expect(wrapper.find("i").exists()).toBe(true);
         });
 
         it("is clickable if onClick is supplied", () => {
@@ -82,7 +82,7 @@ describe("<Icon />", () => {
             };
             wrapper = shallow(<Icon {...props} />);
 
-            wrapper.find('i').simulate('click', { stopPropagation: () => {} });
+            wrapper.find("i").simulate("click", { stopPropagation: jest.fn() });
 
             expect(props.onClick).toHaveBeenCalled();
         });
