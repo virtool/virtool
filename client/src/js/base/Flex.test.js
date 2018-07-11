@@ -28,7 +28,7 @@ describe("<Flex />", () => {
             flexFlow: `${props.direction} ${props.wrap}`,
             justifyContent: "center",
             alignItems: "stretch",
-            alignContent: "space-between",
+            alignContent: "space-between"
         };
 
         expect(wrapper.prop("style")).toEqual(expected);

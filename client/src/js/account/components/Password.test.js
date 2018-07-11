@@ -9,9 +9,7 @@ describe("<Password />", () => {
 
     it("renders correctly", () => {
         const initialState = {
-            account: {
-                last_password_change: "2018-02-14T12:00:00.000000Z"
-            },
+            account: { last_password_change: "2018-02-14T12:00:00.000000Z" },
             settings: {
                 data: {
                     minimum_password_length: 8
@@ -165,9 +163,7 @@ describe("<Password />", () => {
             const spyChangePassword = sinon.spy(actions, "changePassword");
 
             const initialState = {
-                account: {
-                    last_password_change: "2018-02-14T12:00:00.000000Z",
-                },
+                account: { last_password_change: "2018-02-14T12:00:00.000000Z" },
                 settings: {
                     data: {
                         minimum_password_length: 8

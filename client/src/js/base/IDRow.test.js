@@ -45,7 +45,6 @@ describe("<IDRow />", () => {
         });
 
         it("renders a table row with a header and the target's unique database id", () => {
-            
             expect(wrapper.find("tr").exists()).toBe(true);
             expect(wrapper.find("th").text()).toEqual("Unique ID");
             expect(wrapper.find("td").text()).toEqual(props.id);
