@@ -156,8 +156,7 @@
   },
   "overrides": [
     {
-      "files": ["src/js/**/*.{js,jsx}"],
-      "excludedFiles": "*.test.js",
+      "files": ["*.test.js"],
       "rules": {
         "jest/prefer-to-have-length": "off",
         "lodash/prefer-lodash-method": "off"
