@@ -1,6 +1,5 @@
-import pytest
-import pymongo
 import motor.motor_asyncio
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.db.iface
@@ -18,17 +17,7 @@ def test_db_name(worker_id):
 
 
 @pytest.fixture
-def test_db(test_db_name):
-    client = pymongo.MongoClient()
-    client.drop_database(test_db_name)
-
-    yield client[test_db_name]
-
-    client.drop_database(test_db_name)
-
-
-@pytest.fixture
-def test_motor(test_db, test_db_name, loop):
+def test_motor(test_db_name, loop):
     client = motor.motor_asyncio.AsyncIOMotorClient(io_loop=loop)
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
