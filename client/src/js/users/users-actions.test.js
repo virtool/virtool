@@ -2,16 +2,13 @@ import {
     listUsers,
     filterUsers,
     createUser,
-    editUser,
-    addUserToGroup,
-    removeUserFromGroup
+    editUser
 } from "./actions";
 import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP, EDIT_USER
+    EDIT_USER
 } from "../actionTypes";
 
 describe("Users Action Creators:", () => {

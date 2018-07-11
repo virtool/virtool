@@ -12,7 +12,7 @@ describe("Subtraction Reducer", () => {
     it("should return the initial state on first pass", () => {
         result = reducer(undefined, {});
         expected = initialState;
-        
+
         expect(result).toEqual(expected);
     });
 

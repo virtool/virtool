@@ -6,9 +6,7 @@ import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    EDIT_USER,
-    ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP
+    EDIT_USER
 } from "../actionTypes";
 
 describe("Users Reducer", () => {
@@ -133,7 +131,7 @@ describe("Users Reducer", () => {
 
         expect(result).toEqual(expected);
     });
-    
+
     it("should handle CREATE_USER_FAILED", () => {
         state = {};
         action = {
@@ -175,7 +173,7 @@ describe("Users Reducer", () => {
             action = {
                 type: EDIT_USER.REQUESTED,
                 update: {}
-            }
+            };
             result = reducer(state, action);
             expected = state;
 
@@ -192,8 +190,8 @@ describe("Users Reducer", () => {
                 state = {
                     list: [
                         { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                        { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
-                        { id: "user2", groups: [ "sub" ], permissions: { testing: false }  }
+                        { id: "user1", groups: [ "sub" ], permissions: { testing: false } },
+                        { id: "user2", groups: [ "sub" ], permissions: { testing: false } }
                     ]
                 };
                 const update = { id: "user2", groups: [ "dev" ], permissions: { testing: true } };
@@ -201,9 +199,9 @@ describe("Users Reducer", () => {
                 expected = {
                     list: [
                         { id: "admin", groups: [ "dev" ], permissions: { testing: true } },
-                        { id: "user1", groups: [ "sub" ], permissions: { testing: false }  },
+                        { id: "user1", groups: [ "sub" ], permissions: { testing: false } },
                         { id: "user2", groups: [ "dev" ], permissions: { testing: true } }
-                    ] 
+                    ]
                 };
 
                 expect(result).toEqual(expected);

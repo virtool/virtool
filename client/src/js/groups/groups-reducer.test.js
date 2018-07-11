@@ -137,7 +137,7 @@ describe("Groups Reducer", () => {
                 createError: true,
                 pending: false
             };
-    
+
             expect(result).toEqual(expected);
         });
 
