@@ -9,42 +9,79 @@
  * @exports UsersList
  */
 import React from "react";
-import { filter, map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { ListGroup } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
+import { ListGroupItem } from "react-bootstrap";
+import { ScrollList, Flex, FlexItem, Identicon, Icon } from "../../base";
+import { listUsers } from "../actions";
+import { getUpdatedScrollListState } from "../../utils";
 
-import UserItem from "./User";
+const UserEntry = ({ id, identicon, isAdmin }) => (
+    <LinkContainer to={`/administration/users/${id}`} style={{paddingLeft: "10px"}}>
+        <ListGroupItem className="spaced">
+            <Flex alignItems="center">
+                <Identicon size={32} hash={identicon} />
+                <FlexItem pad={10}>
+                    {id}
+                </FlexItem>
+                <FlexItem pad={10}>
+                    {isAdmin ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                </FlexItem>
+            </Flex>
+        </ListGroupItem>
+    </LinkContainer>
+);
 
-export const UsersList = (props) => {
+class UsersList extends React.Component {
 
-    const re = new RegExp(props.filter);
+    constructor (props) {
+        super(props);
+        this.state = {
+            masterList: this.props.documents,
+            list: this.props.documents,
+            page: this.props.page
+        };
+    }
 
-    const users = sortBy(filter(props.users, user => user.id.match(re)), "id");
+    componentDidMount () {
+        this.props.loadNextPage(1);
+    }
 
-    const userComponents = map(users, user =>
-        <UserItem
-            key={user.id}
-            {...user}
-            active={user.id === props.match.params.activeId}
-            isAdmin={user.administrator}
-            canSetRole={(props.activeUser !== user.id && props.activeUserIsAdmin)}
+    static getDerivedStateFromProps (nextProps, prevState) {
+        return getUpdatedScrollListState(nextProps, prevState);
+    }
+
+    rowRenderer = (index) => (
+        <UserEntry
+            key={this.state.masterList[index].id}
+            {...this.state.masterList[index]}
+            isAdmin={this.state.masterList[index].administrator}
         />
     );
 
-    return (
-        <div>
-            <ListGroup className="spaced">
-                {userComponents}
-            </ListGroup>
-        </div>
-    );
-};
+    render () {
+        return (
+            <ScrollList
+                hasNextPage={this.props.page < this.props.page_count}
+                isNextPageLoading={this.props.isLoading}
+                isLoadError={this.props.errorLoad}
+                list={this.state.masterList}
+                loadNextPage={this.props.loadNextPage}
+                page={this.state.page}
+                rowRenderer={this.rowRenderer}
+            />
+        );
+    }
+}
 
 const mapStateToProps = state => ({
-    users: state.users.list,
-    activeUser: state.account.id,
-    activeUserIsAdmin: state.account.administrator,
-    filter: state.users.filter
+    ...state.users.list
 });
 
-export default connect(mapStateToProps)(UsersList);
+const mapDispatchToProps = (dispatch) => ({
+    loadNextPage: (page) => {
+        dispatch(listUsers(page));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(UsersList);

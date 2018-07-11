@@ -87,7 +87,8 @@ class Password extends React.Component {
             return;
         }
 
-        this.props.onSubmit(this.props.id, this.state.password);
+        this.props.onSubmit(this.props.detail.id, this.state.password);
+        this.handleClear();
     };
 
     render () {
@@ -100,7 +101,7 @@ class Password extends React.Component {
                 <Panel.Body>
                     <p>
                         <em>
-                            Last changed <RelativeTime time={this.props.last_password_change} em={true} />
+                            Last changed <RelativeTime time={this.props.detail.last_password_change} em={true} />
                         </em>
                     </p>
 

@@ -16,18 +16,18 @@ import {
 import { listUsers } from "../../../users/actions";
 import { listGroups } from "../../../groups/actions";
 
+const getInitialState = () => ({
+    value: "",
+    selected: "",
+    showAdd: false
+});
+
 const getOtherMembers = (list, members) => {
     const otherMembers = filter(list, member => (
         !some(members, ["id", member.id])
     ));
     return otherMembers;
 };
-
-const getInitialState = () => ({
-    value: "",
-    selected: "",
-    showAdd: false
-});
 
 const getCurrentMembers = (list, members, noun) => {
 
@@ -157,7 +157,7 @@ class ReferenceMembers extends React.Component {
 const mapStateToProps = (state) => ({
     refId: state.references.detail.id,
     users: state.references.detail.users,
-    userList: state.users.list,
+    userList: state.users.list ? state.users.list.documents : null,
     groups: state.references.detail.groups,
     groupList: state.groups.list
 });
@@ -190,7 +190,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onList: (noun) => {
         if (noun === "users") {
-            dispatch(listUsers());
+            dispatch(listUsers(1));
         } else {
             dispatch(listGroups());
         }

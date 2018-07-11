@@ -12,16 +12,15 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Route, Switch } from "react-router-dom";
 import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { get } from "lodash-es";
-import { listUsers, filterUsers } from "../actions";
-import { listGroups } from "../../groups/actions";
+import { filterUsers } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, LoadingPlaceholder, Alert } from "../../base";
 import UsersList from "./List";
 import CreateUser from "./Create";
 import Groups from "../../groups/components/Groups";
+import { listGroups } from "../../groups/actions";
 
 export class ManageUsers extends React.Component {
 
@@ -35,10 +34,6 @@ export class ManageUsers extends React.Component {
     }
 
     componentDidMount () {
-        if (this.props.users === null) {
-            this.props.onListUsers();
-        }
-
         if (this.props.groups === null) {
             this.props.onListGroups();
         }
@@ -58,11 +53,9 @@ export class ManageUsers extends React.Component {
     }
 
     handleFilter = (e) => {
+        e.preventDefault();
+        this.setState({ filter: e.target.value });
         this.props.onFilter(e.target.value);
-    }
-
-    handlePermissionChanges = () => {
-        this.props.onListUsers();
     }
 
     render () {
@@ -76,7 +69,7 @@ export class ManageUsers extends React.Component {
             );
         }
 
-        if (this.props.users === null || this.props.groups === null) {
+        if (this.props.groups === null) {
             return <LoadingPlaceholder margin="220px" />;
         }
 
@@ -92,7 +85,7 @@ export class ManageUsers extends React.Component {
                                     </InputGroup.Addon>
                                     <FormControl
                                         type="text"
-                                        value={this.props.filter}
+                                        value={this.state.filter}
                                         onChange={this.handleFilter}
                                     />
                                 </InputGroup>
@@ -108,36 +101,23 @@ export class ManageUsers extends React.Component {
                         </div>
                     </Col>
                     <Col xs={12}>
-                        <Switch>
-                            <Route path="/administration/users" component={UsersList} exact />
-                            <Route path="/administration/users/:activeId" component={UsersList} />
-                        </Switch>
+                        <UsersList />
                     </Col>
                 </Row>
 
                 <CreateUser />
-                <Groups updatePermissions={this.handlePermissionChanges} />
+                <Groups />
             </div>
         );
     }
 }
 
 const mapStateToProps = state => ({
-    users: state.users.list,
     groups: state.groups.list,
-    filter: state.users.filter,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    onListUsers: () => {
-        dispatch(listUsers());
-    },
-
-    onListGroups: () => {
-        dispatch(listGroups());
-    },
 
     onFilter: (term) => {
         dispatch(filterUsers(term));
@@ -145,6 +125,10 @@ const mapDispatchToProps = dispatch => ({
 
     onClearError: (error) => {
         dispatch(clearError(error));
+    },
+
+    onListGroups: () => {
+        dispatch(listGroups());
     }
 
 });
