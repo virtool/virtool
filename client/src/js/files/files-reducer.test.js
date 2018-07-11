@@ -152,7 +152,7 @@ describe("Files Reducer", () => {
                 type: UPLOAD_PROGRESS,
                 localId: "test2",
                 progress: 30
-            }
+            };
             result = reducer(state, action);
             expected = {
                 uploads: [
@@ -211,7 +211,7 @@ describe("Files Reducer", () => {
     describe("Files Reducer Helper Functions", () => {
 
         describe("checkUploadsComplete", () => {
-            
+
             it("sets [uploadsComplete=true] if all uploads have [progress=100]", () => {
                 state = {
                     uploads: [

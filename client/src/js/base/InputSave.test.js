@@ -54,7 +54,7 @@ describe("<InputSave />", () => {
         it("<h5> subcomponent displays label when provided", () => {
             expect(wrapper.find("h5 > strong").text()).toEqual(props.label);
         });
-    
+
         it("Flex component contains a FlexItem and Button components", () => {
             expect(wrapper.find(Flex).children().length).toEqual(2);
             expect(wrapper.find(FlexItem).length).toEqual(1);

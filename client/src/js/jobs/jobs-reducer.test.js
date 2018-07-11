@@ -209,15 +209,9 @@ describe("Job Reducer", () => {
             it("updates a specific job", () => {
                 state = {
                     documents: [
-                        {
-                            id: "test1",
-                        },
-                        {
-                            id: "test2",
-                        },
-                        {
-                            id: "test3"
-                        }
+                        { id: "test1" },
+                        { id: "test2" },
+                        { id: "test3" }
                     ]
                 };
                 action = {
@@ -230,16 +224,9 @@ describe("Job Reducer", () => {
                 expected = {
                     ...state,
                     documents: [
-                        {
-                            id: "test1",
-                        },
-                        {
-                            id: "test2",
-                            update: "test_update"
-                        },
-                        {
-                            id: "test3"
-                        }
+                        { id: "test1" },
+                        { id: "test2", update: "test_update" },
+                        { id: "test3" }
                     ]
                 };
 

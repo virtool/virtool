@@ -353,7 +353,7 @@ describe("Analyses Reducer", () => {
                         ]
                     }
                 };
-        
+
                 expect(result).toEqual(expected);
             });
 

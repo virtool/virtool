@@ -17,7 +17,7 @@ describe("Utility constants and functions module", () => {
 
         bytes = NaN;
         result = utils.byteSize(bytes);
-        expected = "0.0 B"
+        expected = "0.0 B";
         expect(result).toEqual(expected);
 
         bytes = 0;
@@ -44,25 +44,12 @@ describe("Utility constants and functions module", () => {
         expect(result).toEqual(actual);
     });
 
-    it("createFindURL()", () => {
-
-        // 
-    });
-
     it("createRandomString()", () => {
         result = utils.createRandomString();
         expect(result.length).toEqual(8);
 
         result = utils.createRandomString(20);
         expect(result.length).toEqual(20);
-    });
-
-    it("followDownload()", () => {
-        //
-    });
-
-    it("followDynamicDownload()", () => {
-        //
     });
 
     it("formatIsolateName()", () => {
@@ -83,30 +70,6 @@ describe("Utility constants and functions module", () => {
         result = utils.formatIsolateName(isolate);
         expected = "Unnamed";
         expect(result).toEqual(expected);
-    });
-
-    it("getFindTerm()", () => {
-        //
-    });
-
-    it("getTaskDisplayName()", () => {
-        let taskName = "";
-    });
-
-    it("reportAPIError()", () => {
-
-    });
-
-    it("routerLocationHasState()", () => {
-
-    });
-
-    it("simpleActionCreator()", () => {
-
-    });
-
-    it("toScientificNotation()", () => {
-
     });
 
 });

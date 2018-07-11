@@ -1,5 +1,4 @@
-import APIContainer, { APIKeys } from "./API";
-import * as actions from "../../actions";
+import APIContainer from "./API";
 
 describe("<API />", () => {
     let initialState;

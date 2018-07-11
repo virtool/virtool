@@ -1,6 +1,5 @@
 import reducer, {
-    initialState as reducerInitialState,
-    updateUser
+    initialState as reducerInitialState
 } from "./reducer";
 import {
     LIST_USERS,

@@ -6,10 +6,6 @@
     "console": true,
     "fetch": true
   },
-  "env": {
-    "jest/globals": true
-
-  },
   "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 6,
@@ -150,10 +146,15 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js"],
+      "files": ["*.test.js", "setupTests.js"],
+      "env": {
+        "jest/globals": true
+      },
       "rules": {
         "jest/prefer-to-have-length": "off",
+        "react/react-in-jsx-scope": "off",
         "lodash/prefer-lodash-method": "off",
+        "lodash/prefer-noop": "off",
         "no-undef": "off"
       }
     }

@@ -1,6 +1,5 @@
 import {
     getSettings,
-    getControlReadahead,
     testProxy,
     updateSetting,
     updateSettings
@@ -8,7 +7,6 @@ import {
 import {
     GET_SETTINGS,
     UPDATE_SETTINGS,
-    GET_CONTROL_READAHEAD,
     TEST_PROXY
 } from "../actionTypes";
 
