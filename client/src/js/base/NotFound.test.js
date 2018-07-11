@@ -1,5 +1,4 @@
 import { NotFound } from "./NotFound";
-import { Jumbotron } from "react-bootstrap";
 
 describe("<NotFound />", () => {
     let wrapper;

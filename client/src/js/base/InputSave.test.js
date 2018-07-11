@@ -130,7 +130,7 @@ describe("<InputSave />", () => {
             // Since getDerivedStateFromProps will interfere with setting state,
             // must mock it for this test
             const originalMethod = InputSave.getDerivedStateFromProps;
-            InputSave.getDerivedStateFromProps = () => { return null; };
+            InputSave.getDerivedStateFromProps = () => (null);
 
             wrapper = mount(<InputSave {...props} />);
     

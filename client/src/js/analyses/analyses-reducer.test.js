@@ -8,8 +8,7 @@ import {
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS,
-    LIST_READY_INDEXES
+    GET_ANALYSIS_PROGRESS
 } from "../actionTypes";
 
 describe("Analyses Reducer", () => {
