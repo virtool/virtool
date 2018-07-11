@@ -26,7 +26,7 @@ describe("Users Action Creators:", () => {
         const term = "searchterm";
         const result = filterUsers(term);
         const expected = {
-            type: FILTER_USERS,
+            type: FILTER_USERS.REQUESTED,
             term
         };
 
