@@ -33,9 +33,7 @@ export default class AddReferenceMember extends React.Component {
         if (!this.state.id.length) {
             return;
         }
-
         const idType = (this.props.noun === "users") ? "user_id" : "group_id";
-
         this.props.onAdd({...this.state}, idType);
     }
 
@@ -59,7 +57,7 @@ export default class AddReferenceMember extends React.Component {
         let content;
 
         if (this.props.noun === "users") {
-            content = (
+            content = this.props.list.length ? (
                 <UserList
                     documents={this.props.list}
                     onEdit={this.handleChange}
@@ -72,6 +70,10 @@ export default class AddReferenceMember extends React.Component {
                         remove: this.state.remove
                     }}
                 />
+            ) : (
+                <Modal.Body style={modalStyle}>
+                    {listComponents}
+                </Modal.Body>
             );
         } else {
             listComponents = this.props.list.length ? map(this.props.list, member =>

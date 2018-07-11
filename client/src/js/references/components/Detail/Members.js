@@ -16,18 +16,18 @@ import {
 import { listUsers } from "../../../users/actions";
 import { listGroups } from "../../../groups/actions";
 
+const getInitialState = () => ({
+    value: "",
+    selected: "",
+    showAdd: false
+});
+
 const getOtherMembers = (list, members) => {
     const otherMembers = filter(list, member => (
         !some(members, ["id", member.id])
     ));
     return otherMembers;
 };
-
-const getInitialState = () => ({
-    value: "",
-    selected: "",
-    showAdd: false
-});
 
 const getCurrentMembers = (list, members, noun) => {
 
