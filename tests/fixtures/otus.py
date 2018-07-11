@@ -110,15 +110,8 @@ def test_merged_otu():
 
 
 @pytest.fixture
-def test_add_history(monkeypatch, mocker):
-    m = mocker.Mock()
-
-    async def fake_add_history(*args, **kwargs):
-        return m(*args, **kwargs)
-
-    monkeypatch.setattr("virtool.db.history.add", fake_add_history)
-
-    return m
+def test_add_history(mocker):
+    return mocker.patch("virtool.db.history.add", make_mocked_coro())
 
 
 @pytest.fixture(scope="function")
