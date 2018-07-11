@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, some, reduce } from "lodash-es";
+import { map, filter, some, forEach, find } from "lodash-es";
 import MemberEntry from "./MemberEntry";
 import MemberSetting from "./MemberSetting";
 import AddReferenceMember from "./AddMember";
@@ -35,22 +35,16 @@ const getCurrentMembers = (list, members, noun) => {
         return members;
     }
 
-    const takenUsers = filter(list, user => (
-        some(members, ["id", user.id])
-    ));
+    const takenUsers = [];
+    forEach(list, user => {
+        const taken = find(members, ["id", user.id]);
 
-    const currentList = members.slice();
+        if (taken) {
+            takenUsers.push({...taken, identicon: user.identicon});
+        }
+    });
 
-    map(takenUsers, (takenUser, index) => (
-        reduce(takenUser, (result, value, key) => {
-            if (key === "identicon") {
-                result[key] = value;
-            }
-            return result;
-        }, currentList[index])
-    ));
-
-    return currentList;
+    return takenUsers;
 };
 
 class ReferenceMembers extends React.Component {
