@@ -7,7 +7,7 @@ async def test_find(spawn_client, all_permissions, no_permissions):
     Test that a ``GET /api/groups`` return a complete list of groups.
 
     """
-    client = await spawn_client(authorize=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True, administrator=True)
 
     await client.db.groups.insert_many([
         {
@@ -54,12 +54,12 @@ async def test_create(error, spawn_client, all_permissions, no_permissions, resp
         "group_id": "test"
     })
 
-    assert resp.status == 201
-    assert resp.headers["Location"] == "/api/groups/test"
-
     if error:
         assert await resp_is.bad_request(resp, "Group already exists")
         return
+
+    assert resp.status == 201
+    assert resp.headers["Location"] == "/api/groups/test"
 
     assert await resp.json() == {
         "id": "test",
@@ -78,7 +78,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     Test that a ``GET /api/groups/:group_id`` return the correct group.
 
     """
-    client = await spawn_client(authorize=True, admin=True)
+    client = await spawn_client(authorize=True, administrator=True)
 
     if not error:
         await client.db.groups.insert_one({
@@ -95,7 +95,7 @@ async def test_get(error, spawn_client, all_permissions, resp_is):
     assert resp.status == 200
 
     assert await resp.json() == {
-        "id": "test",
+        "id": "foo",
         "permissions": all_permissions
     }
 

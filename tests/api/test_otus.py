@@ -47,7 +47,7 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
     )
 
 
-@pytest.mark.parametrize("error", [None, "404_otu", "404_sequence", "404_both"])
+@pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, spawn_client, resp_is, test_otu, test_sequence):
     """
     Test that a valid request returns a complete otu document.
@@ -55,13 +55,12 @@ async def test_get(error, spawn_client, resp_is, test_otu, test_sequence):
     """
     client = await spawn_client(authorize=True)
 
-    if error != "404_otu" and error != "404_both":
+    if not error:
         await client.db.otus.insert_one(test_otu)
 
-    if error != "404_sequence" and error != "404_both":
-        await client.db.sequences.insert_one(test_sequence)
+    await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/{}".format(test_otu["_id"]))
+    resp = await client.get("/api/otus/6116cba1")
 
     if error:
         assert await resp_is.not_found(resp)
@@ -664,7 +663,7 @@ async def test_list_isolates(error, spawn_client, resp_is, test_otu):
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
-async def test(error, spawn_client, resp_is, test_otu, test_sequence):
+async def test_get_isolate(error, spawn_client, resp_is, test_otu, test_sequence):
     """
     Test that an existing isolate is successfully returned.
 
@@ -676,6 +675,8 @@ async def test(error, spawn_client, resp_is, test_otu, test_sequence):
 
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
+
+    await client.db.sequences.insert_one(test_sequence)
 
     resp = await client.get("/api/otus/6116cba1/isolates/cab8b360")
 
@@ -1507,7 +1508,7 @@ async def test_list_sequences(error, spawn_client, resp_is, test_otu, test_seque
     if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
 
-    await client.db.sequence.insert_one(test_sequence)
+    await client.db.sequences.insert_one(test_sequence)
 
     resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
 
@@ -1542,6 +1543,7 @@ async def test_get_sequence(error, spawn_client, resp_is, test_otu, test_sequenc
     resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
     if error:
+        print(resp.status)
         assert await resp_is.not_found(resp)
         return
 
@@ -1571,12 +1573,12 @@ async def test_create_sequence(error, spawn_client, check_ref_right, resp_is, te
 
     resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", data)
 
-    if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
-        return
-
     if error:
         assert await resp_is.not_found(resp)
+        return
+
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
         return
 
     assert resp.status == 201
@@ -1676,12 +1678,12 @@ async def test_edit_sequence(error, spawn_client, check_ref_right, resp_is, test
 
     resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
 
-    if not check_ref_right:
-        assert await resp_is.insufficient_rights(resp)
-        return
-
     if error:
         assert await resp_is.not_found(resp)
+        return
+
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
         return
 
     assert resp.status == 200
@@ -1762,6 +1764,9 @@ async def test_remove_sequence(error, spawn_client, check_ref_right, resp_is, te
     old = await virtool.db.otus.join(client.db, test_otu["_id"])
 
     resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
+
+    import pprint
+    print(resp.status)
 
     if error:
         assert await resp_is.not_found(resp)

@@ -1,7 +1,6 @@
 import pytest
-from operator import itemgetter
 
-from virtool.users import check_password, PERMISSIONS
+from virtool.users import check_password
 
 
 async def test_find(spawn_client, create_user, static_time):
@@ -155,7 +154,7 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
         return
 
     if error == "400_password":
-        assert await resp_is.bad_request(resp, "Password is too fucking short")
+        assert await resp_is.bad_request(resp, "Password does not meet length requirement")
         return
 
     assert resp.status == 201

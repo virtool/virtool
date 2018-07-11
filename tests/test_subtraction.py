@@ -3,7 +3,7 @@ import os
 import virtool.subtractions
 
 
-async def test_calculate_gc(tmpdir, mock_fasta):
+async def test_calculate_gc(tmpdir):
     lines = [
         ">foo\n",
         "ATGGACTGGTTCTCTCTCTCTAGGCACTG\n",

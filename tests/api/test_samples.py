@@ -431,7 +431,7 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
-async def test_remove(self, delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
+async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
     client = await spawn_client(authorize=True)
 
     mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
@@ -468,12 +468,13 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
 
     client = await spawn_client(authorize=True)
 
-    await client.db.samples.insert_one({
-        "_id": "test",
-        "created_at": static_time.datetime,
-        "all_read": True,
-        "all_write": True
-    })
+    if not error:
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "created_at": static_time.datetime,
+            "all_read": True,
+            "all_write": True
+        })
 
     await client.db.analyses.insert_many([
         {
