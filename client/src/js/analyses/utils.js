@@ -1,17 +1,5 @@
-import {fill, fromPairs, map, reduce, slice} from "lodash-es";
-
-export const calculateQuartile = (values, quartile) => {
-    const index = (values.length * quartile) / 4;
-
-    if (index % 1 === 0) {
-        return values[index].val;
-    }
-
-    const lowerIndex = Math.floor(index);
-    const upperIndex = Math.ceil(index);
-
-    return (values[lowerIndex].val + values[upperIndex].val) / 2;
-};
+import {compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy} from "lodash-es";
+import {formatIsolateName} from "../utils";
 
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length - 1);
@@ -46,23 +34,4 @@ export const median = (values) => {
     const upperIndex = Math.ceil(midIndex);
 
     return (values[lowerIndex] + values[upperIndex]) / 2;
-};
-
-export const removeOutlierByIQR = (values) => {
-
-    const q1 = calculateQuartile(values, 1);
-    const q3 = calculateQuartile(values, 3);
-
-    const total = reduce(values, (sum, entry) => sum + entry.val, 0);
-    const mean = total / values.length;
-
-    const IQR = (q3 - q1);
-    const outlierDifference = 1.5 * IQR;
-
-    // Largest value not an outlier
-    if ((values[values.length - 1].val - mean) <= outlierDifference) {
-        return values;
-    }
-
-    return removeOutlierByIQR(slice(values, 0, values.length - 1));
 };

@@ -15,13 +15,11 @@ import {
 export const PathoscopeToolbar = (props) => {
 
     const {
-        crop,
         filterIsolates,
         filterOTUs,
         onCollapse,
         onFilter,
         onSetSortKey,
-        onToggleCrop,
         onToggleShowMedian,
         onToggleShowReads,
         onToggleSortDescending,
@@ -89,15 +87,6 @@ export const PathoscopeToolbar = (props) => {
                 active={showMedian}
                 className="hidden-xs"
                 onClick={onToggleShowMedian}
-            />
-
-            <Button
-                icon="crop"
-                title="Crop Outliers"
-                tip="Crop Outliers"
-                active={crop}
-                className="hidden-xs"
-                onClick={onToggleCrop}
             />
 
             <Dropdown
