@@ -152,6 +152,16 @@
     "react/jsx-tag-spacing": [1],
     "react/jsx-uses-react": [1],
     "react/jsx-uses-vars": [1],
-    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}],
-  }
+    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}]
+  },
+  "overrides": [
+    {
+      "files": ["src/js/**/*.{js,jsx}"],
+      "excludedFiles": "*.test.js",
+      "rules": {
+        "jest/prefer-to-have-length": "off",
+        "lodash/prefer-lodash-method": "off"
+      }
+    }
+  ]
 }

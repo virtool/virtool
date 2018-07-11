@@ -82,7 +82,7 @@ describe("<Icon />", () => {
             };
             wrapper = shallow(<Icon {...props} />);
 
-            wrapper.find("i").simulate("click", { stopPropagation: () => {} });
+            wrapper.find("i").simulate("click", { stopPropagation: jest.fn() });
 
             expect(props.onClick).toHaveBeenCalled();
         });
