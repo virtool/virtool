@@ -178,7 +178,8 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
             "version": index_version
         },
         "reference": {
-            "id": ref_id
+            "id": ref_id,
+            "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id)
         },
         "user": {
             "id": user_id,
