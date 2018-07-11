@@ -36,178 +36,107 @@ async def test_find(spawn_client, all_permissions, no_permissions):
     ]
 
 
-class TestCreate:
+@pytest.mark.parametrize("error", [None, "400_exists"])
+async def test_create(error, spawn_client, all_permissions, no_permissions, resp_is):
+    """
+    Test that a group can be added to the database at ``POST /api/groups/:group_id``.
 
-    async def test_valid(self, spawn_client, no_permissions):
-        """
-        Test that a group can be added to the database at ``POST /api/groups/:group_id``.
+    """
+    client = await spawn_client(authorize=True, administrator=True)
 
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        resp = await client.post("/api/groups", data={
-            "group_id": "test"
-        })
-
-        assert resp.status == 201
-
-        assert resp.headers["Location"] == "/api/groups/test"
-
-        assert await resp.json() == {
-            "id": "test",
-            "permissions": no_permissions
-        }
-
-        assert await client.db.groups.find_one("test") == {
-            "_id": "test",
-            "permissions": no_permissions
-        }
-
-    async def test_exists(self, spawn_client, resp_is, all_permissions):
-        """
-        Test that a 400 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
-        ``group_id`` already exists.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
+    if error:
         await client.db.groups.insert_one({
             "_id": "test",
             "permissions": all_permissions
         })
 
-        resp = await client.post("/api/groups", data={
-            "group_id": "test"
-        })
+    resp = await client.post("/api/groups", data={
+        "group_id": "test"
+    })
 
+    assert resp.status == 201
+    assert resp.headers["Location"] == "/api/groups/test"
+
+    if error:
         assert await resp_is.bad_request(resp, "Group already exists")
+        return
 
-    async def test_missing(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
+    assert await resp.json() == {
+        "id": "test",
+        "permissions": no_permissions
+    }
 
-        resp = await client.post("/api/groups", data={
-            "test": "test"
-        })
-
-        assert await resp_is.invalid_input(resp, {
-            "group_id": ["required field"]
-        })
-
-    async def test_wrong_type(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        resp = await client.post("/api/groups", data={
-            "group_id": 1
-        })
-
-        assert await resp_is.invalid_input(resp, {
-            "group_id": ["must be of string type"]
-        })
+    assert await client.db.groups.find_one("test") == {
+        "_id": "test",
+        "permissions": no_permissions
+    }
 
 
-class TestGet:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, spawn_client, all_permissions, resp_is):
+    """
+    Test that a ``GET /api/groups/:group_id`` return the correct group.
 
-    async def test_valid(self, spawn_client, all_permissions):
-        """
-        Test that a ``GET /api/groups/:group_id`` return the correct group.
+    """
+    client = await spawn_client(authorize=True, admin=True)
 
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
-
+    if not error:
         await client.db.groups.insert_one({
-            "_id": "test",
+            "_id": "foo",
             "permissions": all_permissions
         })
 
-        resp = await client.get("/api/groups/test")
+    resp = await client.get("/api/groups/foo")
 
-        assert await resp.json() == {
-            "id": "test",
-            "permissions": all_permissions
-        }
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that a ``GET /api/groups/:group_id`` returns 404 for a non-existent ``group_id``.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
-
-        resp = await client.get("/api/groups/foo")
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "id": "test",
+        "permissions": all_permissions
+    }
 
 
-class TestUpdatePermissions:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_update_permissions(error, spawn_client, no_permissions, resp_is):
+    """
+    Test that a valid request results in permission changes.
 
-    async def test(self, spawn_client, no_permissions):
-        """
-        Test that a valid request results in permission changes.
+    """
+    client = await spawn_client(authorize=True, administrator=True)
 
-        """
-        client = await spawn_client(authorize=True, administrator=True)
-
+    if not error:
         await client.db.groups.insert_one({
             "_id": "test",
             "permissions": no_permissions
         })
 
-        resp = await client.patch("/api/groups/test", data={
-            "permissions": {
-                "create_sample": True
-            }
-        })
-
-        assert resp.status == 200
-
-        no_permissions["create_sample"] = True
-
-        assert await resp.json() == {
-            "id": "test",
-            "permissions": no_permissions
+    resp = await client.patch("/api/groups/test", data={
+        "permissions": {
+            "create_sample": True
         }
+    })
 
-        assert await client.db.groups.find_one("test") == {
-            "_id": "test",
-            "permissions": no_permissions
-        }
-
-    async def test_invalid_input(self, spawn_client, resp_is, no_permissions):
-        """
-        Test that an invalid permission key results in a ``422`` response.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        await client.db.groups.insert_one({
-            "_id": "test",
-            "permissions": no_permissions
-        })
-
-        resp = await client.patch("/api/groups/test", data={
-            "permissions": {
-                "foo_bar": True
-            }
-        })
-
-        assert await resp_is.invalid_input(resp, {
-            "permissions": ["Keys must be valid permissions"]
-        })
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that updating an non-existent group results in a ``404`` response.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        resp = await client.patch("/api/groups/test", data={
-            "permissions": {
-                "create_sample": True
-            }
-        })
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    no_permissions["create_sample"] = True
+
+    assert await resp.json() == {
+        "id": "test",
+        "permissions": no_permissions
+    }
+
+    assert await client.db.groups.find_one("test") == {
+        "_id": "test",
+        "permissions": no_permissions
+    }
 
 
 @pytest.mark.parametrize("error", [None, "404"])

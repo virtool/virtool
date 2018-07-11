@@ -1,3 +1,4 @@
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
@@ -47,37 +48,29 @@ async def test_find(mocker, spawn_client, hmm_document):
     m.assert_called_with(client.db)
 
 
-class TestGet:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_exists(error, spawn_client, hmm_document, resp_is):
+    """
+    Check that a ``GET`` request for a valid annotation document results in a response containing that complete
+    document.
 
-    async def test_exists(self, spawn_client, hmm_document):
-        """
-        Check that a ``GET`` request for a valid annotation document results in a response containing that complete
-        document.
+    Check that a `404` is returned if the HMM does not exist.
 
-        """
-        client = await spawn_client(authorize=True)
+    """
+    client = await spawn_client(authorize=True)
 
+    if not error:
         await client.db.hmm.insert_one(hmm_document)
 
-        resp = await client.get("/api/hmms/f8666902")
+    resp = await client.get("/api/hmms/f8666902")
 
-        assert resp.status == 200
-
-        expected = dict(hmm_document, id=hmm_document["_id"])
-        expected.pop("_id")
-
-        assert await resp.json() == expected
-
-    async def test_does_not_exist(self, spawn_client, resp_is, hmm_document):
-        """
-        Check that a ``GET`` request for a valid annotation document results in a response containing that complete
-        document.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        await client.db.hmm.insert_one(hmm_document)
-
-        resp = await client.get("/api/hmms/foobar")
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    expected = dict(hmm_document, id=hmm_document["_id"])
+    expected.pop("_id")
+
+    assert await resp.json() == expected
