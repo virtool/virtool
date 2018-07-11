@@ -90,7 +90,7 @@ async def test_get(error, spawn_client, create_user, no_permissions, resp_is, st
     Test that a ``GET /api/users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True, administrator=True)
 
     users = [create_user("bob")]
 
