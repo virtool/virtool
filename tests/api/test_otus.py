@@ -1114,26 +1114,6 @@ class TestEditIsolate:
 
         assert (await client.db.otus.find_one("6116cba1", ["isolates"]))["isolates"] == [expected]
 
-    async def test_invalid_input(self, spawn_client, test_otu, resp_is):
-        """
-        Test that invalid input results in a ``422`` response and a list of errors.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_one(test_otu)
-
-        data = {
-            "source_type": {"key": "variant"},
-            "source_name": "A"
-        }
-
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
-
-        assert await resp_is.invalid_input(resp, {
-            "source_type": ["must be of string type"]
-        })
-
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
         ("test", "cab8b360"),
