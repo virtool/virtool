@@ -3,7 +3,6 @@ import {
     BLAST_NUVS,
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
-    CROP_PATHOSCOPE,
     FIND_ANALYSES,
     GET_ANALYSIS,
     REMOVE_ANALYSIS,
@@ -34,8 +33,6 @@ export const setSortKey = (key) => ({
     type: SET_PATHOSCOPE_SORT_KEY,
     key
 });
-
-export const toggleCrop = simpleActionCreator(CROP_PATHOSCOPE);
 
 export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
 

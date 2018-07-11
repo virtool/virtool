@@ -25,8 +25,6 @@ export const initialState = {
     sortDescending: true,
 
     // Pathoscope-specific
-    crop: false,
-    cropped: null,
     filterOTUs: true,
     filterIsolates: true,
     showMedian: true,
@@ -142,8 +140,7 @@ export default function samplesReducer (state = initialState, action) {
             return {
                 ...state,
                 detail: null,
-                data: null,
-                croppedData: null
+                data: null
             };
 
         case GET_ANALYSIS.SUCCEEDED: {

@@ -66,7 +66,8 @@ describe("Analyses Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            detail: null
+            detail: null,
+            data: null
         };
 
         expect(result).toEqual(expected);
@@ -76,12 +77,15 @@ describe("Analyses Reducer", () => {
         state = {};
         action = {
             type: "GET_ANALYSIS_SUCCEEDED",
-            data: {}
+            data: {
+                diagnosis: []
+            }
         };
         result = reducer(state, action);
         expected = {
             ...state,
-            detail: action.data
+            detail: action.data,
+            data: []
         };
 
         expect(result).toEqual(expected);
