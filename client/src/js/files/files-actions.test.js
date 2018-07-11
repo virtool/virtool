@@ -23,7 +23,7 @@ describe("Files Action Creators", () => {
         const data = {};
         const result = wsUpdateFile(data);
         const expected = {
-            type: "WS_UPDATE_FILE",
+            type: WS_UPDATE_FILE,
             data
         };
 
@@ -34,7 +34,7 @@ describe("Files Action Creators", () => {
         const data = {};
         const result = wsRemoveFile(data);
         const expected = {
-            type: "WS_REMOVE_FILE",
+            type: WS_REMOVE_FILE,
             data
         };
 
@@ -46,7 +46,7 @@ describe("Files Action Creators", () => {
         const page = 3;
         const result = findFiles(fileType, page);
         const expected = {
-            type: "FIND_FILES_REQUESTED",
+            type: FIND_FILES.REQUESTED,
             fileType,
             page
         };
@@ -60,7 +60,7 @@ describe("Files Action Creators", () => {
         const fileType = "reads";
         const result = upload(localId, file, fileType);
         const expected = {
-            type: "UPLOAD_REQUESTED",
+            type: UPLOAD.REQUESTED,
             localId,
             file,
             fileType
@@ -73,7 +73,7 @@ describe("Files Action Creators", () => {
         const fileId = "testerfileid";
         const result = removeFile(fileId);
         const expected = {
-            type: "REMOVE_FILE_REQUESTED",
+            type: REMOVE_FILE.REQUESTED,
             fileId
         };
 
@@ -85,7 +85,7 @@ describe("Files Action Creators", () => {
         const progress = 6;
         const result = uploadProgress(localId, progress);
         const expected = {
-            type: "UPLOAD_PROGRESS",
+            type: UPLOAD_PROGRESS,
             localId,
             progress
         };
@@ -96,7 +96,7 @@ describe("Files Action Creators", () => {
     it("hideUploadOverlay: returns simple action", () => {
         const result = hideUploadOverlay();
         const expected = {
-            type: "HIDE_UPLOAD_OVERLAY"
+            type: HIDE_UPLOAD_OVERLAY
         };
 
         expect(result).toEqual(expected);

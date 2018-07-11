@@ -28,7 +28,7 @@ describe("Account Action Creators:", () => {
     it("getAccount: returns simple action", () => {
         const result = getAccount();
         const expected = {
-            type: "GET_ACCOUNT_REQUESTED"
+            type: GET_ACCOUNT.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -38,7 +38,7 @@ describe("Account Action Creators:", () => {
         const update = { email: "example@test.com" };
         const result = updateAccount(update);
         const expected = {
-            type: "UPDATE_ACCOUNT_REQUESTED",
+            type: UPDATE_ACCOUNT.REQUESTED,
             update
         };
 
@@ -51,7 +51,7 @@ describe("Account Action Creators:", () => {
         };
         const result = updateAccountSettings(update);
         const expected = {
-            type: "UPDATE_ACCOUNT_SETTINGS_REQUESTED",
+            type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
             update
         };
 
@@ -63,7 +63,7 @@ describe("Account Action Creators:", () => {
         const newPassword = "newpassword";
         const result = changePassword(oldPassword, newPassword);
         const expected = {
-            type: "CHANGE_ACCOUNT_PASSWORD_REQUESTED",
+            type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
             oldPassword,
             newPassword
         };
@@ -74,7 +74,7 @@ describe("Account Action Creators:", () => {
     it("getAPIKeys: returns simple action", () => {
         const result = getAPIKeys();
         const expected = {
-            type: "GET_API_KEYS_REQUESTED"
+            type: GET_API_KEYS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -85,7 +85,7 @@ describe("Account Action Creators:", () => {
         const permissions = {};
         const result = createAPIKey(name, permissions);
         const expected = {
-            type: "CREATE_API_KEY_REQUESTED",
+            type: CREATE_API_KEY.REQUESTED,
             name,
             permissions
         };
@@ -96,7 +96,7 @@ describe("Account Action Creators:", () => {
     it("clearAPIKey: returns simple action", () => {
         const result = clearAPIKey();
         const expected = {
-            type: "CLEAR_API_KEY"
+            type: CLEAR_API_KEY
         };
 
         expect(result).toEqual(expected);
@@ -107,7 +107,7 @@ describe("Account Action Creators:", () => {
         const permissions = {};
         const result = updateAPIKey(keyId, permissions);
         const expected = {
-            type: "UPDATE_API_KEY_REQUESTED",
+            type: UPDATE_API_KEY.REQUESTED,
             keyId,
             permissions
         };
@@ -119,7 +119,7 @@ describe("Account Action Creators:", () => {
         const keyId = "uniqueid"
         const result = removeAPIKey(keyId);
         const expected = {
-            type: "REMOVE_API_KEY_REQUESTED",
+            type: REMOVE_API_KEY.REQUESTED,
             keyId
         };
 
@@ -129,7 +129,7 @@ describe("Account Action Creators:", () => {
     it("logout: returns simple action", () => {
         const result = logout();
         const expected = {
-            type: "LOGOUT_REQUESTED"
+            type: LOGOUT.REQUESTED
         };
 
         expect(result).toEqual(expected);

@@ -16,7 +16,7 @@ describe("Groups Action Creators:", () => {
     it("listGroups: returns simple action", () => {
         const result = listGroups();
         const expected = {
-            type: "LIST_GROUPS_REQUESTED"
+            type: LIST_GROUPS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -26,7 +26,7 @@ describe("Groups Action Creators:", () => {
         const groupId = "testerid";
         const result = createGroup(groupId);
         const expected = {
-            type: "CREATE_GROUP_REQUESTED",
+            type: CREATE_GROUP.REQUESTED,
             groupId
         };
 
@@ -39,7 +39,7 @@ describe("Groups Action Creators:", () => {
         const value = true;
         const result = setGroupPermission(groupId, permission, value);
         const expected = {
-            type: "SET_GROUP_PERMISSION_REQUESTED",
+            type: SET_GROUP_PERMISSION.REQUESTED,
             groupId,
             permission,
             value
@@ -52,7 +52,7 @@ describe("Groups Action Creators:", () => {
         const groupId = "testerid";
         const result = removeGroup(groupId);
         const expected = {
-            type: "REMOVE_GROUP_REQUESTED",
+            type: REMOVE_GROUP.REQUESTED,
             groupId
         };
 

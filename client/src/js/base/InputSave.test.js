@@ -78,32 +78,6 @@ describe("<InputSave />", () => {
 
     });
 
-    describe("getDerivedStateFromProps: ", () => {
-        let nextProps;
-        let prevState;
-        let result;
-        let expected;
-
-        it("should return new state if initialValue props has changed", () => {
-            nextProps = { initialValue: "changed" };
-            prevState = { value: "original" };
-            result = InputSave.getDerivedStateFromProps(nextProps, prevState);
-            expected = { pending: false, value: nextProps.initialValue };
-
-            expect(result).toEqual(expected);
-        });
-
-        it("should return null otherwise", () => {
-            nextProps = { initialValue: "same" };
-            prevState = { value: "same" };
-            result = InputSave.getDerivedStateFromProps(nextProps, prevState);
-            expected = null;
-
-            expect(result).toEqual(expected);
-        });
-        
-    });
-
     describe("handleChange:", () => {
         let spy;
         let mockEvent;
@@ -313,25 +287,12 @@ describe("<InputSave />", () => {
         });
 
         it("when there is a change in value, click/enter sets [state.pending=true] and calls the onSave prop", () => {
-            const newProps = {
-                onSave: jest.fn(),
-                initialValue: "new_value"
-            };
-
-            // Since getDerivedStateFromProps will interfere with setting state,
-            // must mock it for this test
-            const originalMethod = InputSave.getDerivedStateFromProps;
-            InputSave.getDerivedStateFromProps = () => { return null; };
-
-            wrapper.setProps(newProps);
+            wrapper.setState({ value: "CHANGED" });
             wrapper.find(Button).simulate('submit');
 
-            expect(wrapper.state('pending')).toEqual(true);
             expect(spyHandler.calledOnce).toBe(true);
-            expect(newProps.onSave).toHaveBeenCalled();
-
-            // Restore original getDerivedStateFromProps method
-            InputSave.getDerivedStateFromProps = originalMethod;
+            expect(wrapper.state('pending')).toEqual(true);
+            expect(props.onSave).toHaveBeenCalled();
         });
 
     });

@@ -17,7 +17,7 @@ describe("Subtraction Action Creators:", () => {
         const subtractionId = "testerid";
         const result = getSubtraction(subtractionId);
         const expected = {
-            type: "GET_SUBTRACTION_REQUESTED",
+            type: GET_SUBTRACTION.REQUESTED,
             subtractionId
         };
 
@@ -30,7 +30,7 @@ describe("Subtraction Action Creators:", () => {
         const nickname = "nickname";
         const result = createSubtraction(subtractionId, fileId, nickname);
         const expected = {
-            type: "CREATE_SUBTRACTION_REQUESTED",
+            type: CREATE_SUBTRACTION.REQUESTED,
             subtractionId,
             fileId,
             nickname
@@ -44,7 +44,7 @@ describe("Subtraction Action Creators:", () => {
         const nickname = "nickname";
         const result = updateSubtraction(subtractionId, nickname);
         const expected = {
-            type: "UPDATE_SUBTRACTION_REQUESTED",
+            type: UPDATE_SUBTRACTION.REQUESTED,
             subtractionId,
             nickname
         };
@@ -56,7 +56,7 @@ describe("Subtraction Action Creators:", () => {
         const subtractionId = "testerid";
         const result = removeSubtraction(subtractionId);
         const expected = {
-            type: "REMOVE_SUBTRACTION_REQUESTED",
+            type: REMOVE_SUBTRACTION.REQUESTED,
             subtractionId
         };
 

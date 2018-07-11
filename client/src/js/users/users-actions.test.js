@@ -19,7 +19,7 @@ describe("Users Action Creators:", () => {
     it("listUsers: returns action to list all users", () => {
         const result = listUsers();
         const expected = {
-            type: "LIST_USERS_REQUESTED"
+            type: LIST_USERS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -29,7 +29,7 @@ describe("Users Action Creators:", () => {
         const term = "searchterm";
         const result = filterUsers(term);
         const expected = {
-            type: "FILTER_USERS",
+            type: FILTER_USERS,
             term
         };
 
@@ -40,7 +40,7 @@ describe("Users Action Creators:", () => {
         const data = {};
         const result = createUser(data);
         const expected = {
-            type: "CREATE_USER_REQUESTED"
+            type: CREATE_USER.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -51,7 +51,7 @@ describe("Users Action Creators:", () => {
         const update = {};
         const result = editUser(userId, update);
         const expected = {
-            type: "EDIT_USER_REQUESTED",
+            type: EDIT_USER.REQUESTED,
             userId,
             update
         };

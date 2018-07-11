@@ -43,7 +43,7 @@ describe("Job Reducer", () => {
                 documents: null
             };
             action = {
-                type: "WS_UPDATE_JOB"
+                type: WS_UPDATE_JOB
             };
             result = reducer(state, action);
             expected = state;
@@ -65,7 +65,7 @@ describe("Job Reducer", () => {
                 ]
             };
             action = {
-                type: "WS_UPDATE_JOB",
+                type: WS_UPDATE_JOB,
                 data: {
                     id: "anotherid",
                     update: "update"
@@ -104,7 +104,7 @@ describe("Job Reducer", () => {
             ]
         };
         action = {
-            type: "WS_REMOVE_JOB",
+            type: WS_REMOVE_JOB,
             jobId: "test2"
         };
         result = reducer(state, action);
@@ -122,7 +122,7 @@ describe("Job Reducer", () => {
     it("should handle FIND_JOBS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_JOBS_SUCCEEDED",
+            type: FIND_JOBS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -137,7 +137,7 @@ describe("Job Reducer", () => {
     it("should handle GET_JOB_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_JOB_REQUESTED"
+            type: GET_JOB.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -151,7 +151,7 @@ describe("Job Reducer", () => {
     it("should handle GET_JOB_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_JOB_SUCCEEDED",
+            type: GET_JOB.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -177,7 +177,7 @@ describe("Job Reducer", () => {
             ]
         };
         action = {
-            type: "CANCEL_JOB_SUCCEEDED",
+            type: CANCEL_JOB.SUCCEEDED,
             data: {
                 id: "testid",
                 update: "cancelled"
@@ -205,7 +205,7 @@ describe("Job Reducer", () => {
     it("should handle GET_RESOURCES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_RESOURCES_SUCCEEDED",
+            type: GET_RESOURCES.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);

@@ -1,5 +1,5 @@
 import reducer, { initialState as reducerInitialState } from "./reducer";
-import { WS_UPDATE_STATUS } from "../actionTypes";
+import { WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../actionTypes";
 
 describe("Updates Reducer", () => {
 
@@ -31,7 +31,7 @@ describe("Updates Reducer", () => {
         it("when [action.data.id='software_update'], return with software data", () => {
             state = {};
             action = {
-                type: "WS_UPDATE_STATUS",
+                type: WS_UPDATE_STATUS,
                 data: {
                     id: "software"
                 }
@@ -48,7 +48,7 @@ describe("Updates Reducer", () => {
         it("otherwise return state", () => {
             state = {};
             action = {
-                type: "WS_UPDATE_STATUS",
+                type: WS_UPDATE_STATUS,
                 data: {
                     id: "not_software_update"
                 }
@@ -65,7 +65,7 @@ describe("Updates Reducer", () => {
         state = {};
 
         action = {
-            type: "GET_SOFTWARE_UPDATES_SUCCEEDED",
+            type: GET_SOFTWARE_UPDATES.SUCCEEDED,
             data: {
                 id: "test"
             }
