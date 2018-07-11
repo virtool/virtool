@@ -204,7 +204,7 @@ describe("Analyses Reducer", () => {
 
         it("otherwise return state with placeholder removed", () => {
             state = {
-                documents: [{ id: "test_placeholder" },{ id: "random_string" }]
+                documents: [{ id: "test_placeholder" }, { id: "random_string" }]
             };
             action = {
                 type: ANALYZE.FAILED,
