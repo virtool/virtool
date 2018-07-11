@@ -53,33 +53,7 @@ export default class AddReferenceMember extends React.Component {
     };
 
     render () {
-/*
-        const listComponents = this.props.list.length
-            ? map(this.props.list, member =>
-                <MemberEntry
-                    key={member.id}
-                    onEdit={this.handleChange}
-                    onToggleSelect={this.toggleMember}
-                    add={this.state.selected === member.id}
-                    id={member.id}
-                    identicon={member.identicon}
-                    permissions={this.state.selected === member.id
-                        ? {
-                            build: this.state.build,
-                            modify: this.state.modify,
-                            modify_otu: this.state.modify_otu,
-                            remove: this.state.remove
-                        }
-                        : {
-                            build: member.build,
-                            modify: member.modify,
-                            modify_otu: member.modify_otu,
-                            remove: member.remove
-                        }}
-                    isSelected={this.state.selected === member.id}
-                />)
-            : <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
-*/
+
         const modalStyle = this.props.list.length ? {height: "300px", overflowY: "auto"} : null;
         let listComponents = <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
         let content;
@@ -88,10 +62,15 @@ export default class AddReferenceMember extends React.Component {
             content = (
                 <UserList
                     documents={this.props.list}
-                    page={this.props.page}
                     onEdit={this.handleChange}
                     onToggleSelect={this.toggleMember}
                     selected={this.state.selected}
+                    permissions={{
+                        build: this.state.build,
+                        modify: this.state.modify,
+                        modify_otu: this.state.modify_otu,
+                        remove: this.state.remove
+                    }}
                 />
             );
         } else {

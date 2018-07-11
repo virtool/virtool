@@ -1,10 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { ListGroupItem } from "react-bootstrap";
-
 import MemberEntry from "./MemberEntry";
-import { ScrollList, Flex, FlexItem, Identicon, Icon } from "../../../base";
+import { ScrollList } from "../../../base";
 import { listUsers } from "../../../users/actions";
 import { getUpdatedScrollListState } from "../../../utils";
 
@@ -20,36 +17,40 @@ class UsersList extends React.Component {
 
         this.scrollContainer = React.createRef();
     }
-/*
-    componentDidMount () {
-        //this.props.loadNextPage(1);
-    //    console.log("scrollContainer: ", this.scrollContainer.current);
-    //    console.log("scrolllist: ", this.scrollContainer.current.scrollList.current);
 
-    //    console.log("testing: ", this.scrollContainer.clientHeight);
+    componentDidMount () {
+        this.props.loadNextPage(1);
     }
-*/
+
     static getDerivedStateFromProps (nextProps, prevState) {
         return getUpdatedScrollListState(nextProps, prevState);
     }
 
-    rowRenderer = (index) => (
-        <MemberEntry
-            key={this.state.masterList[index].id}
-            onEdit={this.props.edit}
-            onToggleSelect={this.props.onToggleSelect}
-            add={this.props.selected === this.state.masterList[index].id}
-            id={this.state.masterList[index].id}
-            identicon={this.state.masterList[index].identicon}
-            permissions={{
-                build: this.state.masterList[index].build,
-                modify: this.state.masterList[index].modify,
-                modify_otu: this.state.masterList[index].modify_otu,
-                remove: this.state.masterList[index].remove
-            }}
-            isSelected={this.props.selected === this.state.masterList[index].id}
-        />
-    );
+    rowRenderer = (index) => {
+        const isSelected = (this.props.selected === this.state.masterList[index].id);
+        return (
+            <MemberEntry
+                key={this.state.masterList[index].id}
+                onEdit={this.props.onEdit}
+                onToggleSelect={this.props.onToggleSelect}
+                add={isSelected}
+                id={this.state.masterList[index].id}
+                identicon={this.state.masterList[index].identicon}
+                permissions={isSelected ? {
+                    build: this.props.permissions.build,
+                    modify: this.props.permissions.modify,
+                    modify_otu: this.props.permissions.modify_otu,
+                    remove: this.props.permissions.remove
+                } : {
+                    build: this.state.masterList[index].build,
+                    modify: this.state.masterList[index].modify,
+                    modify_otu: this.state.masterList[index].modify_otu,
+                    remove: this.state.masterList[index].remove
+                }}
+                isSelected={isSelected}
+            />
+        );
+    };
 
     render () {
         return (
@@ -68,15 +69,18 @@ class UsersList extends React.Component {
         );
     }
 }
-/*
+
 const mapStateToProps = state => ({
-    ...state.users.list
+    page: state.users.list.page,
+    page_count: state.users.list.page_count,
+    errorLoad: state.users.errorLoad,
+    isLoading: state.users.isLoading
 });
-*/
+
 const mapDispatchToProps = (dispatch) => ({
     loadNextPage: (page) => {
         dispatch(listUsers(page));
     }
 });
 
-export default connect(null, mapDispatchToProps)(UsersList);
+export default connect(mapStateToProps, mapDispatchToProps)(UsersList);
