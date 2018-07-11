@@ -4,8 +4,7 @@ import {
     FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
-    GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR
+    GET_INDEX_HISTORY
 } from "../actionTypes";
 
 describe("Indexes Reducer", () => {

@@ -3,7 +3,7 @@ import reducer, {
     getErrorName,
     resetErrorName
 } from "./reducer";
-import { map } from "lodash-es";
+import { forEach } from "lodash-es";
 
 // Must mock target modules before imports to use in testing
 jest.mock("../utils");
@@ -53,7 +53,7 @@ describe("Errors Reducer", () => {
             "CREATE_GROUP"
         ];
 
-        map(failedActions, (failedActionType) => {
+        forEach(failedActions, (failedActionType) => {
 
             it(failedActionType, () => {
                 state = {};
@@ -74,7 +74,7 @@ describe("Errors Reducer", () => {
                 };
 
                 expect(result).toEqual(expected);
-            })
+            });
 
         });
     });

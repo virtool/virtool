@@ -4,7 +4,7 @@ import Adapter from "enzyme-adapter-react-16";
 import configureStore from "redux-mock-store";
 import sinon from "sinon";
 
-// Note that enzyme-to-json snapshot serializer is configured in 
+// Note that enzyme-to-json snapshot serializer is configured in
 // jest configuration settings specified in package.json instead of here.
 
 // React 16 Enzyme adapter

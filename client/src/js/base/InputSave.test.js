@@ -44,7 +44,7 @@ describe("<InputSave />", () => {
             expect(wrapper.find("form").length).toEqual(1);
             expect(wrapper).toMatchSnapshot();
         });
-    
+
         it("renders two subcomponents: <h5> label element and Flex component", () => {
             expect(wrapper.children().length).toEqual(2);
             expect(wrapper.find("h5").length).toEqual(1);

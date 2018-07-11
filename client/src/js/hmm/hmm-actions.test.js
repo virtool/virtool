@@ -13,7 +13,7 @@ describe("HMM Action Creators:", () => {
     });
 
     it("getHmm: returns action for getting specific hmm document", () => {
-        const hmmId = "tester"
+        const hmmId = "tester";
         const result = getHmm(hmmId);
         const expected = {
             type: GET_HMM.REQUESTED,

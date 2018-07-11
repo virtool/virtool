@@ -4,6 +4,7 @@ import { map } from "lodash-es";
 import { Button, NoneFound } from "../../../base";
 
 import MemberEntry from "./MemberEntry";
+import UserList from "./UserList";
 
 const getInitialState = () => ({
     selected: "",
@@ -32,9 +33,7 @@ export default class AddReferenceMember extends React.Component {
         if (!this.state.id.length) {
             return;
         }
-
         const idType = (this.props.noun === "users") ? "user_id" : "group_id";
-
         this.props.onAdd({...this.state}, idType);
     }
 
@@ -53,8 +52,31 @@ export default class AddReferenceMember extends React.Component {
 
     render () {
 
-        const listComponents = this.props.list.length
-            ? map(this.props.list, member =>
+        const modalStyle = this.props.list.length ? {height: "300px", overflowY: "auto"} : null;
+        let listComponents = <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
+        let content;
+
+        if (this.props.noun === "users") {
+            content = this.props.list.length ? (
+                <UserList
+                    documents={this.props.list}
+                    onEdit={this.handleChange}
+                    onToggleSelect={this.toggleMember}
+                    selected={this.state.selected}
+                    permissions={{
+                        build: this.state.build,
+                        modify: this.state.modify,
+                        modify_otu: this.state.modify_otu,
+                        remove: this.state.remove
+                    }}
+                />
+            ) : (
+                <Modal.Body style={modalStyle}>
+                    {listComponents}
+                </Modal.Body>
+            );
+        } else {
+            listComponents = this.props.list.length ? map(this.props.list, member =>
                 <MemberEntry
                     key={member.id}
                     onEdit={this.handleChange}
@@ -76,19 +98,21 @@ export default class AddReferenceMember extends React.Component {
                             remove: member.remove
                         }}
                     isSelected={this.state.selected === member.id}
-                />)
-            : <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
+                />) : listComponents;
 
-        const modalStyle = listComponents.length ? {height: "300px", overflowY: "auto"} : null;
+            content = (
+                <Modal.Body style={modalStyle}>
+                    {listComponents}
+                </Modal.Body>
+            );
+        }
 
         return (
             <Modal show={this.props.show} onHide={this.handleExited} onExit={this.handleExited}>
                 <Modal.Header closeButton>
                     <span className="text-capitalize">Add {this.props.noun}</span>
                 </Modal.Header>
-                <Modal.Body style={modalStyle}>
-                    {listComponents}
-                </Modal.Body>
+                {content}
                 <Modal.Footer>
                     <Button bsStyle="primary" onClick={this.handleSubmit} >
                         Add

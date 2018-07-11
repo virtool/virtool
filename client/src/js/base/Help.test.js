@@ -1,12 +1,12 @@
 import React from "react";
 import { Help } from "./Help";
-import { OverlayTrigger, Popover } from "react-bootstrap";
+import { OverlayTrigger } from "react-bootstrap";
 
 describe("<Help />", () => {
     let props = {
         title: "test",
         pullRight: false,
-        children: <div class="test_div" />
+        children: <div className="test_div" />
     };
     let wrapper = shallow(<Help {...props} />);
 
@@ -27,7 +27,7 @@ describe("<Help />", () => {
     });
 
     it("renders even when title and pullRight props are missing", () => {
-        props = { children: <div class="test_div" /> };
+        props = { children: <div className="test_div" /> };
         wrapper = shallow(<Help {...props} />);
 
         expect(wrapper).toMatchSnapshot();

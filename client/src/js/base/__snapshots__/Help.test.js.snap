@@ -19,7 +19,7 @@ exports[`<Help /> renders an OverlayTrigger component 1`] = `
       title="test"
     >
       <div
-        class="test_div"
+        className="test_div"
       />
     </Popover>
   }
@@ -51,7 +51,7 @@ exports[`<Help /> renders correctly 1`] = `
       title="test"
     >
       <div
-        class="test_div"
+        className="test_div"
       />
     </Popover>
   }
@@ -82,7 +82,7 @@ exports[`<Help /> renders even when title and pullRight props are missing 1`] = 
       placement="right"
     >
       <div
-        class="test_div"
+        className="test_div"
       />
     </Popover>
   }

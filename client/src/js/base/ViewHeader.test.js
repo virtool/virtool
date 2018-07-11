@@ -1,8 +1,7 @@
-import { ViewHeader, PageHint } from "./ViewHeader";
+import { ViewHeader } from "./ViewHeader";
 import { Badge } from "react-bootstrap";
 
 describe("<ViewHeader />", () => {
-    let props;
     let wrapper;
 
     it("renders correctly an html <head><title> element", () => {

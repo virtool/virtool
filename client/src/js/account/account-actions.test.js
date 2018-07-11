@@ -116,7 +116,7 @@ describe("Account Action Creators:", () => {
     });
 
     it("removeAPIKey: returns action for API key remove", () => {
-        const keyId = "uniqueid"
+        const keyId = "uniqueid";
         const result = removeAPIKey(keyId);
         const expected = {
             type: REMOVE_API_KEY.REQUESTED,

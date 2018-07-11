@@ -28,7 +28,7 @@ describe("<IDRow />", () => {
     });
 
     describe("when [account.settings.show_ids=true]: ", () => {
-        
+
         beforeEach(() => {
             props = { id: "test_id", showIds: true };
             wrapper = mount(
