@@ -45,7 +45,7 @@ def otu_resource():
 
 
 @pytest.fixture
-async def mock_job(loop, mocker, tmpdir, test_dbi, otu_resource):
+async def mock_job(loop, mocker, tmpdir, dbi, otu_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
@@ -78,7 +78,7 @@ async def mock_job(loop, mocker, tmpdir, test_dbi, otu_resource):
     job = virtool.jobs.analysis.PathoscopeBowtie(
         loop,
         executor,
-        test_dbi,
+        dbi,
         settings,
         mocker.stub("capture_exception"),
         "foobar",
@@ -92,7 +92,7 @@ async def mock_job(loop, mocker, tmpdir, test_dbi, otu_resource):
 
 
 @pytest.mark.parametrize("paired", [False, True])
-async def test_check_db(tmpdir, paired, test_dbi, mock_job):
+async def test_check_db(tmpdir, paired, dbi, mock_job):
     """
     Check that the method assigns various job attributes based on information from the database.
 
@@ -101,7 +101,7 @@ async def test_check_db(tmpdir, paired, test_dbi, mock_job):
     assert mock_job.read_paths is None
     assert mock_job.subtraction is None
 
-    await test_dbi.samples.insert_one({
+    await dbi.samples.insert_one({
         "_id": "foobar",
         "paired": paired,
         "subtraction": {
@@ -112,7 +112,7 @@ async def test_check_db(tmpdir, paired, test_dbi, mock_job):
         }
     })
 
-    await test_dbi.subtraction.insert_one({
+    await dbi.subtraction.insert_one({
         "_id": "Arabidopsis thaliana"
     })
 
@@ -315,8 +315,8 @@ async def test_pathoscope(mock_job):
         }
 
 
-async def test_import_results(test_dbi, mock_job):
-    await test_dbi.analyses.insert_one({
+async def test_import_results(dbi, mock_job):
+    await dbi.analyses.insert_one({
         "_id": "baz",
         "algorithm": "pathoscope_bowtie",
         "ready": False,
@@ -325,7 +325,7 @@ async def test_import_results(test_dbi, mock_job):
         }
     })
 
-    await test_dbi.samples.insert_one({
+    await dbi.samples.insert_one({
         "_id": "foobar",
         "pathoscope": False
     })
@@ -338,7 +338,7 @@ async def test_import_results(test_dbi, mock_job):
 
     await mock_job.import_results()
 
-    assert await test_dbi.analyses.find_one() == {
+    assert await dbi.analyses.find_one() == {
         "_id": "baz",
         "ready": True,
         "algorithm": "pathoscope_bowtie",
@@ -349,7 +349,7 @@ async def test_import_results(test_dbi, mock_job):
         }
     }
 
-    assert await test_dbi.samples.find_one() == {
+    assert await dbi.samples.find_one() == {
         "_id": "foobar",
         "nuvs": False,
         "pathoscope": True

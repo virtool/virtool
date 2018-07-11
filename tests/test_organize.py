@@ -9,8 +9,8 @@ ORIGINAL_REFERENCE = {
 }
 
 
-async def test_add_original_reference(test_dbi):
-    await test_dbi.analyses.insert_many([
+async def test_add_original_reference(dbi):
+    await dbi.analyses.insert_many([
         {
             "_id": "baz"
         },
@@ -19,9 +19,9 @@ async def test_add_original_reference(test_dbi):
         }
     ])
 
-    await virtool.organize.add_original_reference(test_dbi.analyses)
+    await virtool.organize.add_original_reference(dbi.analyses)
 
-    assert await test_dbi.analyses.find().to_list(None) == [
+    assert await dbi.analyses.find().to_list(None) == [
         {
             "_id": "baz",
             "reference": ORIGINAL_REFERENCE
@@ -33,8 +33,8 @@ async def test_add_original_reference(test_dbi):
     ]
 
 
-async def test_delete_unready(test_dbi):
-    await test_dbi.analyses.insert_many([
+async def test_delete_unready(dbi):
+    await dbi.analyses.insert_many([
         {
             "_id": 1,
             "ready": True
@@ -45,9 +45,9 @@ async def test_delete_unready(test_dbi):
         }
     ])
 
-    await virtool.organize.delete_unready(test_dbi.analyses)
+    await virtool.organize.delete_unready(dbi.analyses)
 
-    assert await test_dbi.analyses.find().to_list(None) == [
+    assert await dbi.analyses.find().to_list(None) == [
         {
             "_id": 1,
             "ready": True
@@ -55,13 +55,13 @@ async def test_delete_unready(test_dbi):
     ]
 
 
-async def test_organize_analyses(test_dbi):
+async def test_organize_analyses(dbi):
     """
     Test that documents with the ``ready`` field set to ``False`` are deleted from the collection. These documents
     are assumed to be associated with defunct analysis jobs.
 
     """
-    await test_dbi.analyses.insert_many([
+    await dbi.analyses.insert_many([
         {
             "_id": 1,
             "ready": True
@@ -80,9 +80,9 @@ async def test_organize_analyses(test_dbi):
         }
     ])
 
-    await virtool.organize.organize_analyses(test_dbi)
+    await virtool.organize.organize_analyses(dbi)
 
-    assert await test_dbi.analyses.find().to_list(None) == [
+    assert await dbi.analyses.find().to_list(None) == [
         {
             "_id": 1,
             "ready": True,
@@ -100,7 +100,7 @@ async def test_organize_analyses(test_dbi):
     ]
 
 
-async def test_organize_files(test_dbi):
+async def test_organize_files(dbi):
     documents = [
         {"_id": 1},
         {"_id": 2},
@@ -108,17 +108,17 @@ async def test_organize_files(test_dbi):
         {"_id": 4, "reserved": True}
     ]
 
-    await test_dbi.files.insert_many(documents)
+    await dbi.files.insert_many(documents)
 
-    await virtool.organize.organize_files(test_dbi)
+    await virtool.organize.organize_files(dbi)
 
-    async for document in test_dbi.files.find():
+    async for document in dbi.files.find():
         assert document["reserved"] is False
 
 
-async def test_organize_groups(test_dbi):
+async def test_organize_groups(dbi):
 
-    await test_dbi.groups.insert_many([
+    await dbi.groups.insert_many([
         {
             "_id": "administrator"
         },
@@ -131,9 +131,9 @@ async def test_organize_groups(test_dbi):
         }
     ])
 
-    await virtool.organize.organize_groups(test_dbi)
+    await virtool.organize.organize_groups(dbi)
 
-    documents = await test_dbi.groups.find().to_list(None)
+    documents = await dbi.groups.find().to_list(None)
 
     assert documents == [{
         "_id": "foobar",
@@ -161,14 +161,14 @@ async def test_organize_indexes(mocker):
 
 @pytest.mark.parametrize("has_otu", [True, False])
 @pytest.mark.parametrize("has_references", [True, False])
-async def test_organize_references(has_references, has_otu, mocker, test_dbi):
+async def test_organize_references(has_references, has_otu, mocker, dbi):
     if has_otu:
-        await test_dbi.otus.insert_one({
+        await dbi.otus.insert_one({
             "_id": "foobar"
         })
 
     if has_references:
-        await test_dbi.references.insert_one({
+        await dbi.references.insert_one({
             "_id": "baz"
         })
 
@@ -181,26 +181,26 @@ async def test_organize_references(has_references, has_otu, mocker, test_dbi):
         ]
     }
 
-    await virtool.organize.organize_references(test_dbi, settings)
+    await virtool.organize.organize_references(dbi, settings)
 
-    document = await test_dbi.references.find_one()
+    document = await dbi.references.find_one()
 
     if has_otu and not has_references:
         assert document is None
-        m.assert_called_with(test_dbi, settings)
+        m.assert_called_with(dbi, settings)
 
     else:
         assert not m.called
 
     if has_references:
-        assert await test_dbi.references.find_one() == {
+        assert await dbi.references.find_one() == {
             "_id": "baz"
         }
 
 
-async def test_organize_sequences(test_dbi, test_random_alphanumeric):
+async def test_organize_sequences(dbi, test_random_alphanumeric):
 
-    await test_dbi.sequences.insert_many([
+    await dbi.sequences.insert_many([
         {
             "_id": "foo"
         },
@@ -212,9 +212,9 @@ async def test_organize_sequences(test_dbi, test_random_alphanumeric):
         }
     ])
 
-    await virtool.organize.organize_sequences(test_dbi)
+    await virtool.organize.organize_sequences(dbi)
 
-    assert await test_dbi.sequences.find().to_list(None) == [
+    assert await dbi.sequences.find().to_list(None) == [
         {
             "_id": test_random_alphanumeric.history[0],
             "accession": "foo",
@@ -269,22 +269,22 @@ async def test_organize_otus(collection_name, test_motor):
 @pytest.mark.parametrize("has_software", [True, False])
 @pytest.mark.parametrize("has_software_update", [True, False])
 @pytest.mark.parametrize("has_version", [True, False])
-async def test_organize_status(has_software, has_software_update, has_version, test_dbi):
+async def test_organize_status(has_software, has_software_update, has_version, dbi):
     if has_software:
-        await test_dbi.status.insert_one({
+        await dbi.status.insert_one({
             "_id": "software",
             "version": "v2.2.2"
         })
 
     if has_software_update:
-        await test_dbi.status.insert_one({"_id": "software_update"})
+        await dbi.status.insert_one({"_id": "software_update"})
 
     if has_version:
-        await test_dbi.status.insert_one({"_id": "version"})
+        await dbi.status.insert_one({"_id": "version"})
 
-    await virtool.organize.organize_status(test_dbi, "v3.0.0")
+    await virtool.organize.organize_status(dbi, "v3.0.0")
 
-    result = await test_dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
+    result = await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
 
     import pprint
     pprint.pprint(result)
@@ -302,7 +302,7 @@ async def test_organize_status(has_software, has_software_update, has_version, t
             "releases": list()
         })
 
-    assert await test_dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
+    assert await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None) == [
         {
             "_id": "hmm",
             "installed": None,
@@ -324,7 +324,7 @@ async def test_organize_subtraction(mocker):
     assert m_delete_unready.call_args[0][0] == m_db.subtraction
 
 
-async def test_organize_users(test_dbi):
+async def test_organize_users(dbi):
     documents = [
         {
             "_id": "foo",
@@ -341,13 +341,13 @@ async def test_organize_users(test_dbi):
         }
     ]
 
-    await test_dbi.users.insert_many(documents)
+    await dbi.users.insert_many(documents)
 
-    await virtool.organize.organize_users(test_dbi)
+    await virtool.organize.organize_users(dbi)
 
     documents[1].update({
         "groups": ["test"],
         "administrator": True
     })
 
-    assert await test_dbi.users.find().to_list(None) == documents
+    assert await dbi.users.find().to_list(None) == documents

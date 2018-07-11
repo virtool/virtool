@@ -32,11 +32,11 @@ class MockSettings:
 
 
 @pytest.fixture
-def test_job_manager(mocker, loop, test_dbi):
+def test_job_manager(mocker, loop, dbi):
 
     manager = virtool.jobs.manager.Manager(
         loop,
-        test_dbi,
+        dbi,
         MockSettings(),
         mocker.stub(name="capture_exception")
     )

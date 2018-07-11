@@ -36,7 +36,7 @@ def test_motor(test_db, test_db_name, loop):
 
 
 @pytest.fixture
-def test_dbi(test_motor, loop):
+def dbi(test_motor, loop):
     i = virtool.db.iface.DB(test_motor, make_mocked_coro(), loop)
     loop.run_until_complete(i.connect())
     return i
