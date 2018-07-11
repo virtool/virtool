@@ -19,16 +19,16 @@ describe("<Flex />", () => {
             wrap: "wrap-reverse",
             justifyContent: "center",
             alignItems: "stretch",
-            alignContent: "space-between",
+            alignContent: "space-between"
         };
-        wrapper = shallow(<Flex {...props}><div id="tester2"/></Flex>);
+        wrapper = shallow(<Flex {...props}><div id="tester2" /></Flex>);
 
         const expected = {
             display: "flex",
             flexFlow: `${props.direction} ${props.wrap}`,
             justifyContent: "center",
             alignItems: "stretch",
-            alignContent: "space-between",
+            alignContent: "space-between"
         };
 
         expect(wrapper.prop("style")).toEqual(expected);
@@ -37,7 +37,7 @@ describe("<Flex />", () => {
 
     it("applies given style and className props", () => {
         props = {
-            children: <div id="tester3"/>,
+            children: <div id="tester3" />,
             style: { marginTop: "100px" },
             className: "tester-class"
         };

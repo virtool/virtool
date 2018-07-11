@@ -1,5 +1,5 @@
 import { Icon } from "./Icon";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { OverlayTrigger } from "react-bootstrap";
 
 describe("<Icon />", () => {
     let props;

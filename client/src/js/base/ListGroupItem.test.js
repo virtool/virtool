@@ -53,7 +53,7 @@ describe("<ListGroupItem />", () => {
         wrapper.instance().forceUpdate();
 
         wrapper.simulate("focus");
-        
+
         expect(spyFocusHandler).toHaveBeenCalled();
         expect(handleFocus).not.toHaveBeenCalled();
 

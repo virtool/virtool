@@ -4,17 +4,7 @@
     "document": true,
     "dispatcher": true,
     "console": true,
-    "fetch": true,
-    "shallow": true,
-    "render": true,
-    "mount": true,
-    "React": true,
-    "sinon": true,
-    "mockStore": true
-  },
-  "env": {
-    "jest/globals": true,
-
+    "fetch": true
   },
   "parser": "babel-eslint",
   "parserOptions": {
@@ -156,10 +146,16 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js"],
+      "files": ["*.test.js", "setupTests.js"],
+      "env": {
+        "jest/globals": true
+      },
       "rules": {
         "jest/prefer-to-have-length": "off",
-        "lodash/prefer-lodash-method": "off"
+        "react/react-in-jsx-scope": "off",
+        "lodash/prefer-lodash-method": "off",
+        "lodash/prefer-noop": "off",
+        "no-undef": "off"
       }
     }
   ]

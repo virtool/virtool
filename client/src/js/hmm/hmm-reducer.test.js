@@ -32,9 +32,7 @@ describe("HMM Reducer", () => {
             state = {};
             action = {
                 type: WS_UPDATE_STATUS,
-                data: {
-                    id: "other_id",
-                }
+                data: { id: "other_id" }
             };
             result = reducer(state, action);
             expected = state;

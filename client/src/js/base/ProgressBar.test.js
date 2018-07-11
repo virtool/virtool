@@ -169,14 +169,14 @@ describe("<ProgressBar />", () => {
         });
 
         it("onMove handler should reset fill state if [now=100]", () => {
-            // now !== 100 so handleMoved does not execute anything
+            // [now !== 100] so handleMoved does not execute anything
             wrapper = mount(<AutoProgressBar />);
             wrapper.setState({ fill: 25 });
 
             wrapper.instance().handleMoved(50);
             expect(wrapper.state("fill")).toEqual(25);
 
-            // props.now === 100 therefore should reset state.fill to 0
+            // [now === 100] therefore should reset state.fill to 0
             wrapper.instance().handleMoved(100);
             expect(wrapper.state("fill")).toEqual(0);
         });

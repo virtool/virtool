@@ -38,7 +38,7 @@ describe("Settings Reducer", () => {
         state = {};
         action = {
             type: GET_SETTINGS.SUCCEEDED,
-            data: {},
+            data: {}
         };
         result = reducer(state, action);
         expected = {

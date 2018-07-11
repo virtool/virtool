@@ -1,5 +1,5 @@
 import AccountSettings from "./Settings";
-import { AlgorithmSelect, Checkbox } from "../../base";
+import { Checkbox } from "../../base";
 import * as actions from "../actions";
 
 describe("<Settings />", () => {
@@ -11,7 +11,7 @@ describe("<Settings />", () => {
             account: {
                 settings: {
                     show_ids: false,
-                    skip_quick_analyze_dialog: false,
+                    skip_quick_analyze_dialog: false
                 }
             }
         };

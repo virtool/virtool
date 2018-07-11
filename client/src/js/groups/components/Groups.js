@@ -4,7 +4,7 @@ import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-boot
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
-import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
+import { createGroup, setGroupPermission, removeGroup } from "../actions";
 import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { routerLocationHasState } from "../../utils";
@@ -34,7 +34,7 @@ class Groups extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            activeId: null,
+            activeId: "",
             createGroupId: "",
             spaceError: false,
             submitted: false,
@@ -44,9 +44,7 @@ class Groups extends React.Component {
     }
 
     componentDidMount () {
-        if (this.props.groups === null) {
-            this.props.onList();
-        } else if (this.props.groups.length) {
+        if (this.props.groups.length) {
             this.setState({
                 activeId: this.props.groups[0].id
             });
@@ -55,9 +53,18 @@ class Groups extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
 
-        if (!nextProps.groups.length) {
+        if (prevState.groups.length && !nextProps.groups.length) {
             return {
                 activeId: "",
+                createGroupId: "",
+                groups: nextProps.groups
+            };
+        }
+
+        if (!prevState.groups.length && nextProps.groups.length) {
+            return {
+                activeId: nextProps.groups[0].id,
+                createGroupId: "",
                 groups: nextProps.groups
             };
         }
@@ -87,8 +94,6 @@ class Groups extends React.Component {
             submitted: false,
             error: ""
         });
-
-        this.props.updatePermissions();
 
         if (this.props.error) {
             this.props.onClearError("CREATE_GROUP_ERROR");
@@ -158,7 +163,7 @@ class Groups extends React.Component {
         let members = [];
 
         if (activeGroup) {
-            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+            members = filter(this.props.users.documents, user => includes(user.groups, activeGroup.id));
         }
 
         let memberComponents = [];
@@ -283,10 +288,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
         dispatch(push({...window.location, state: {groups: false}}));
-    },
-
-    onList: () => {
-        dispatch(listGroups());
     },
 
     onRemove: (groupId) => {

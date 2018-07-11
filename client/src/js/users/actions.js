@@ -7,8 +7,10 @@
 import {
     LIST_USERS,
     FILTER_USERS,
+    GET_USER,
     CREATE_USER,
-    EDIT_USER
+    EDIT_USER,
+    REMOVE_USER
 } from "../actionTypes";
 
 /**
@@ -17,8 +19,9 @@ import {
  * @func
  * @returns {object}
  */
-export const listUsers = () => ({
-    type: LIST_USERS.REQUESTED
+export const listUsers = (page) => ({
+    type: LIST_USERS.REQUESTED,
+    page
 });
 
 /**
@@ -29,8 +32,13 @@ export const listUsers = () => ({
  * @returns {object}
  */
 export const filterUsers = (term) => ({
-    type: FILTER_USERS,
+    type: FILTER_USERS.REQUESTED,
     term
+});
+
+export const getUser = (userId) => ({
+    type: GET_USER.REQUESTED,
+    userId
 });
 
 /**
@@ -57,4 +65,9 @@ export const editUser = (userId, update) => ({
     type: EDIT_USER.REQUESTED,
     userId,
     update
+});
+
+export const removeUser = (userId) => ({
+    type: REMOVE_USER.REQUESTED,
+    userId
 });

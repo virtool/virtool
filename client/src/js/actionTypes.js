@@ -180,9 +180,11 @@ export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const FILTER_USERS = "FILTER_USERS";
+export const FILTER_USERS = createRequestActionType("FILTER_USERS");
+export const GET_USER = createRequestActionType("GET_USER");
 export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
+export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

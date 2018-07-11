@@ -106,7 +106,7 @@ describe("Files Reducer", () => {
                 size: 100,
                 type: "reads"
             },
-            localId: "testid",
+            localId: "testid"
         };
         const { name, size, type } = action.file;
 
@@ -130,7 +130,7 @@ describe("Files Reducer", () => {
                 type: UPLOAD_PROGRESS,
                 localId: "testid",
                 progress: 5
-            }
+            };
             result = reducer(state, action);
             expected = {
                 ...state,
@@ -139,7 +139,7 @@ describe("Files Reducer", () => {
 
             expect(result).toEqual(expected);
         });
-        
+
         it("with incomplete uploads", () => {
             state = {
                 uploads: [
@@ -152,7 +152,7 @@ describe("Files Reducer", () => {
                 type: UPLOAD_PROGRESS,
                 localId: "test2",
                 progress: 30
-            }
+            };
             result = reducer(state, action);
             expected = {
                 uploads: [
@@ -211,7 +211,7 @@ describe("Files Reducer", () => {
     describe("Files Reducer Helper Functions", () => {
 
         describe("checkUploadsComplete", () => {
-            
+
             it("sets [uploadsComplete=true] if all uploads have [progress=100]", () => {
                 state = {
                     uploads: [

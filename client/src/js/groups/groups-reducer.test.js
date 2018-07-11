@@ -137,7 +137,7 @@ describe("Groups Reducer", () => {
                 createError: true,
                 pending: false
             };
-    
+
             expect(result).toEqual(expected);
         });
 
@@ -149,7 +149,7 @@ describe("Groups Reducer", () => {
             };
             result = reducer(state, action);
             expected = state;
-    
+
             expect(result).toEqual(expected);
         });
 
