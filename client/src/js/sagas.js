@@ -5,6 +5,7 @@
  */
 
 import { watchAccount } from "./account/sagas";
+import { watchAnalyses } from "./analyses/sagas";
 import { watchFiles } from "./files/sagas";
 import { watchGroups } from "./groups/sagas";
 import { watchHmms } from "./hmm/sagas";
@@ -28,6 +29,7 @@ import { all } from "redux-saga/effects";
 function* rootSaga () {
     yield all([
         watchAccount(),
+        watchAnalyses(),
         watchFiles(),
         watchSubtraction(),
         watchHmms(),

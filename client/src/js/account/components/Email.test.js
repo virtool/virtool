@@ -51,7 +51,7 @@ describe("<Email />", () => {
             mockEvent = {
                 preventDefault: jest.fn()
             };
-            wrapper.find('form').simulate('submit', mockEvent);
+            wrapper.find("form").simulate("submit", mockEvent);
 
             expected = {
                 email: initialState.account.email
@@ -69,7 +69,7 @@ describe("<Email />", () => {
                 }
             };
             wrapper.setProps({ error: { UPDATE_ACCOUNT_ERROR: "Invalid input" } });
-            wrapper.find(InputError).simulate('change', mockEvent);
+            wrapper.find(InputError).simulate("change", mockEvent);
 
             expect(spyClearError.calledOnceWith("UPDATE_ACCOUNT_ERROR")).toBe(true);
         });
@@ -89,17 +89,17 @@ describe("<Email />", () => {
             wrapper.instance().forceUpdate();
 
             expect(spyChange.calledOnce).toBe(false);
-            expect(wrapper.state('email')).toEqual("");
+            expect(wrapper.state("email")).toEqual("");
 
             const mockEvent = {
                 target: {
                     value: "newtestemail@github.com"
                 }
             };
-            wrapper.find('input').simulate('change', mockEvent);
+            wrapper.find("input").simulate("change", mockEvent);
 
             expect(spyChange.calledOnce).toBe(true);
-            expect(wrapper.state('email')).toEqual(mockEvent.target.value);
+            expect(wrapper.state("email")).toEqual(mockEvent.target.value);
         });
 
         it("if a previously failed request error exists in state, dispatch clearError", () => {
@@ -118,7 +118,7 @@ describe("<Email />", () => {
                     value: "test"
                 }
             };
-            wrapper.find('input').simulate('change', mockEvent);
+            wrapper.find("input").simulate("change", mockEvent);
 
             expect(props.onClearError.calledOnceWith("UPDATE_ACCOUNT_ERROR")).toBe(true);
         });
@@ -143,15 +143,15 @@ describe("<Email />", () => {
 
         it("sets state with original email and clears error if a non-focus element was clicked", () => {
             expect(spyBlur.calledOnce).toBe(false);
-            expect(wrapper.state('email')).toEqual(props.email);
+            expect(wrapper.state("email")).toEqual(props.email);
 
             const mockEvent = {
                 relatedTarget: undefined
             };
-            wrapper.find('input').simulate('blur', mockEvent);
+            wrapper.find("input").simulate("blur", mockEvent);
 
             expect(spyBlur.calledOnce).toBe(true);
-            expect(wrapper.state('email')).toEqual(props.email);
+            expect(wrapper.state("email")).toEqual(props.email);
         });
 
         it("does nothing if a related focus element was clicked", () => {
@@ -162,7 +162,7 @@ describe("<Email />", () => {
                     type: "submit"
                 }
             };
-            wrapper.find('input').simulate('blur', mockEvent);
+            wrapper.find("input").simulate("blur", mockEvent);
 
             expect(spyBlur.calledOnce).toBe(true);
         });
@@ -188,12 +188,12 @@ describe("<Email />", () => {
 
         it("if submitted email is valid, dispatch onUpdateEmail", () => {
             expect(spySubmit.calledOnce).toBe(false);
-            expect(wrapper.state('email')).toEqual(props.email);
+            expect(wrapper.state("email")).toEqual(props.email);
 
             const mockEvent = {
                 preventDefault: jest.fn()
             };
-            wrapper.find('form').simulate('submit', mockEvent);
+            wrapper.find("form").simulate("submit", mockEvent);
 
             const expected = {
                 email: props.email
@@ -211,10 +211,10 @@ describe("<Email />", () => {
             };
 
             wrapper.setState({ email: "invalidemail" });
-            wrapper.find('form').simulate('submit', mockEvent);
+            wrapper.find("form").simulate("submit", mockEvent);
 
             expect(spySubmit.calledOnce).toBe(true);
-            expect(wrapper.state('error')).toEqual("Please provide a valid email address");
+            expect(wrapper.state("error")).toEqual("Please provide a valid email address");
         });
     });
 

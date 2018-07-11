@@ -28,10 +28,6 @@ class Analyses extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    analyses: state.samples.analyses
-});
-
 const mapDispatchToProps = (dispatch) => ({
 
     findAnalyses: (sampleId) => {
@@ -40,4 +36,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Analyses);
+export default connect(null, mapDispatchToProps)(Analyses);

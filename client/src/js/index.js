@@ -15,6 +15,7 @@ import { routerReducer, routerMiddleware } from "react-router-redux";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 
 import accountReducer from "./account/reducer";
+import analysesReducer from "./analyses/reducer";
 import errorsReducer from "./errors/reducer";
 import filesReducer from "./files/reducer";
 import groupsReducer from "./groups/reducer";
@@ -63,6 +64,7 @@ const history = createHistory();
 const store = createStore(
     combineReducers({
         account: accountReducer,
+        analyses: analysesReducer,
         app: appReducer,
         errors: errorsReducer,
         files: filesReducer,

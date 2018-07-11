@@ -6,17 +6,17 @@ describe("HMM Action Creators:", () => {
     it("fetchHmms: returns simple action", () => {
         const result = fetchHmms();
         const expected = {
-            type: "FETCH_HMMS"
+            type: FETCH_HMMS
         };
 
         expect(result).toEqual(expected);
     });
 
     it("getHmm: returns action for getting specific hmm document", () => {
-        const hmmId = "tester"
+        const hmmId = "tester";
         const result = getHmm(hmmId);
         const expected = {
-            type: "GET_HMM_REQUESTED",
+            type: GET_HMM.REQUESTED,
             hmmId
         };
 
@@ -26,7 +26,7 @@ describe("HMM Action Creators:", () => {
     it("installHMMs: returns action for installing HMMs", () => {
         const result = installHMMs();
         const expected = {
-            type: "INSTALL_HMMS_REQUESTED"
+            type: INSTALL_HMMS.REQUESTED
         };
 
         expect(result).toEqual(expected);

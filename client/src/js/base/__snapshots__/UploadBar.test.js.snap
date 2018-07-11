@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UploadBar /> renders correctly 1`] = `
+<div
+  className="toolbar"
+>
+  <t
+    activeClassName="dropzone-active"
+    className="dropzone"
+    disableClick={true}
+    disablePreview={false}
+    disabled={false}
+    inputProps={Object {}}
+    maxSize={Infinity}
+    minSize={0}
+    multiple={true}
+    preventDropOnDocument={true}
+  >
+    Drag file here to upload
+  </t>
+  <Button
+    bsStyle="default"
+    icon="folder-open"
+    onClick={[Function]}
+    pullRight={false}
+    tipPlacement="top"
+    type="button"
+  />
+</div>
+`;
+
+exports[`<UploadBar /> renders optional message instead 1`] = `
+<div
+  className="toolbar"
+>
+  <t
+    activeClassName="dropzone-active"
+    className="dropzone"
+    disableClick={true}
+    disablePreview={false}
+    disabled={false}
+    inputProps={Object {}}
+    maxSize={Infinity}
+    minSize={0}
+    multiple={true}
+    preventDropOnDocument={true}
+  >
+    tester
+  </t>
+  <Button
+    bsStyle="default"
+    icon="folder-open"
+    onClick={[Function]}
+    pullRight={false}
+    tipPlacement="top"
+    type="button"
+  />
+</div>
+`;

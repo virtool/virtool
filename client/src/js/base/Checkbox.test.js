@@ -16,7 +16,7 @@ describe("<Checkbox />", () => {
         };
         wrapper = shallow(<Checkbox {...props} />);
 
-        wrapper.find('span').simulate('click');
+        wrapper.find("span").simulate("click");
 
         expect(props.onClick).toHaveBeenCalled();
     });
@@ -27,12 +27,12 @@ describe("<Checkbox />", () => {
         };
         wrapper = shallow(<Checkbox {...props} />);
 
-        expect(wrapper.find('span').length).toEqual(2);
-        expect(wrapper.find('span').at(1).text()).toEqual(props.label);
+        expect(wrapper.find("span").length).toEqual(2);
+        expect(wrapper.find("span").at(1).text()).toEqual(props.label);
 
         wrapper = shallow(<Checkbox label="" />);
 
-        expect(wrapper.find('span').length).toEqual(1);
+        expect(wrapper.find("span").length).toEqual(1);
     });
 
     it("applies given className and style attributes", () => {
@@ -48,9 +48,9 @@ describe("<Checkbox />", () => {
             ...props.style
         };
 
-        expect(wrapper.find('span').hasClass(`pointer text-muted ${props.className}`)).toBe(true);
-        expect(wrapper.find('span').prop('style')).toEqual(expected);
-        expect(wrapper.find('span').prop('onClick')).toEqual(null);
+        expect(wrapper.find("span").hasClass(`pointer text-muted ${props.className}`)).toBe(true);
+        expect(wrapper.find("span").prop("style")).toEqual(expected);
+        expect(wrapper.find("span").prop("onClick")).toEqual(null);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -58,10 +58,10 @@ describe("<Checkbox />", () => {
 
         it("renders different class names depending on checked prop", () => {
             wrapper = shallow(<CheckboxIcon checked={true} />);
-            expect(wrapper.find('i').prop('className')).toEqual("far fa-lg fa-check-square");
+            expect(wrapper.find("i").prop("className")).toEqual("far fa-lg fa-check-square");
 
             wrapper = shallow(<CheckboxIcon checked={false} />);
-            expect(wrapper.find('i').prop('className')).toEqual("far fa-lg fa-square");
+            expect(wrapper.find("i").prop("className")).toEqual("far fa-lg fa-square");
         });
 
     });

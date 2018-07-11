@@ -22,12 +22,12 @@ describe("<InputError />", () => {
         });
 
         it("[class='input-form-error']", () => {
-            expect(wrapper.find('div').at(1).hasClass('input-form-error')).toBe(true);
+            expect(wrapper.find("div").at(1).hasClass("input-form-error")).toBe(true);
         });
 
         it("shown message is error string", () => {
-            expect(wrapper.find('span').text()).toEqual(props.error);
-            expect(wrapper.find('div').at(1)).toMatchSnapshot();
+            expect(wrapper.find("span").text()).toEqual(props.error);
+            expect(wrapper.find("div").at(1)).toMatchSnapshot();
         });
 
     });
@@ -42,12 +42,12 @@ describe("<InputError />", () => {
         });
 
         it("[class='input-form-error-none']", () => {
-            expect(wrapper.find('div').at(1).hasClass('input-form-error-none')).toBe(true);
+            expect(wrapper.find("div").at(1).hasClass("input-form-error-none")).toBe(true);
         });
 
         it("hidden message is 'None'", () => {
-            expect(wrapper.find('span').text()).toEqual("None");
-            expect(wrapper.find('div').at(1)).toMatchSnapshot();
+            expect(wrapper.find("span").text()).toEqual("None");
+            expect(wrapper.find("div").at(1)).toMatchSnapshot();
         });
 
     });
@@ -58,7 +58,7 @@ describe("<InputError />", () => {
         };
         wrapper = shallow(<InputError {...props} />);
 
-        expect(wrapper.find('div').length).toEqual(1);
+        expect(wrapper.find("div").length).toEqual(1);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -68,12 +68,12 @@ describe("<InputError />", () => {
         };
         wrapper = shallow(<InputError {...props} />);
 
-        expect(wrapper.find('div').length).toEqual(2);
-        expect(wrapper.find('div')
+        expect(wrapper.find("div").length).toEqual(2);
+        expect(wrapper.find("div")
             .at(1)
-            .hasClass('input-form-error-none'))
+            .hasClass("input-form-error-none"))
             .toBe(true);
-        expect(wrapper.find('div').at(1)).toMatchSnapshot();
+        expect(wrapper.find("div").at(1)).toMatchSnapshot();
     });
 
     it("withButton props supplied, renders <InputSave />", () => {

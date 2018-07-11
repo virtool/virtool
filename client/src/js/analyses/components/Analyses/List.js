@@ -7,8 +7,8 @@ import { Link } from "react-router-dom";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import { analyze } from "../../actions";
-import { getCanModify } from "../../selectors";
-import {listReadyIndexes} from "../../../indexes/actions";
+import { getCanModify } from "../../../samples/selectors";
+import { listReadyIndexes } from "../../../indexes/actions";
 import { fetchHmms } from "../../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 
@@ -109,8 +109,8 @@ class AnalysesList extends React.Component {
 
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
-    analyses: state.samples.analyses,
-    indexes: state.samples.readyIndexes,
+    analyses: state.analyses.documents,
+    indexes: state.analyses.readyIndexes,
     hmms: state.hmms,
     canModify: getCanModify(state)
 });

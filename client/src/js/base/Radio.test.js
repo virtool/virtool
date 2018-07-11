@@ -9,7 +9,7 @@ describe("<Radio />", () => {
         props = {
             checked: false
         };
-        let wrapper = shallow(<Radio {...props} />);
+        wrapper = shallow(<Radio {...props} />);
 
         expect(wrapper).toMatchSnapshot();
     });
@@ -20,7 +20,7 @@ describe("<Radio />", () => {
             label: "test label",
             onClick: jest.fn()
         };
-        let wrapper = shallow(<Radio {...props} />);
+        wrapper = shallow(<Radio {...props} />);
 
         expect(wrapper.find(Flex).length).toEqual(1);
         expect(wrapper.find(Flex).children().length).toEqual(2);
@@ -37,9 +37,9 @@ describe("<Radio />", () => {
                 checked: true,
                 onClick: jest.fn()
             };
-            let wrapper = shallow(<Radio {...props} />);
+            wrapper = shallow(<Radio {...props} />);
 
-            wrapper.find(Icon).simulate('click');
+            wrapper.find(Icon).simulate("click");
 
             expect(props.onClick).toHaveBeenCalled();
             expect(wrapper).toMatchSnapshot();
@@ -49,9 +49,9 @@ describe("<Radio />", () => {
             props = {
                 checked: true
             };
-            let wrapper = shallow(<Radio {...props} />);
+            wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("dot-circle");
+            expect(wrapper.find(Icon).prop("name")).toEqual("dot-circle");
             expect(wrapper).toMatchSnapshot();
         });
 
@@ -59,11 +59,11 @@ describe("<Radio />", () => {
             props = {
                 checked: false
             };
-            let wrapper = shallow(<Radio {...props} />);
+            wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find(Icon).prop('name')).toEqual("circle");
+            expect(wrapper.find(Icon).prop("name")).toEqual("circle");
             expect(wrapper).toMatchSnapshot();
-        })
+        });
 
     });
 
@@ -74,9 +74,9 @@ describe("<Radio />", () => {
                 checked: false,
                 label: "tester"
             };
-            let wrapper = shallow(<Radio {...props} />);
+            wrapper = shallow(<Radio {...props} />);
 
-            expect(wrapper.find('span').text()).toEqual(` ${props.label}`);
+            expect(wrapper.find("span").text()).toEqual(` ${props.label}`);
             expect(wrapper).toMatchSnapshot();
         });
 
@@ -84,7 +84,7 @@ describe("<Radio />", () => {
             props = {
                 checked: false
             };
-            let wrapper = shallow(<Radio {...props} />);
+            wrapper = shallow(<Radio {...props} />);
 
             expect(wrapper.find(FlexItem).children().length).toEqual(0);
             expect(wrapper).toMatchSnapshot();

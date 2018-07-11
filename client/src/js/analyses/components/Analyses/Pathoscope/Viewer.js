@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 
 import { Alert } from "../../../../base";
 import { formatIsolateName } from "../../../../utils";
-import { fillEntries } from "../../../chartUtils";
+import { fillEntries } from "../../../../samples/chartUtils";
 import PathoscopeController from "./Controller";
 
 const calculateIsolateCoverage = (isolate, length) => (

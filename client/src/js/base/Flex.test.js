@@ -19,9 +19,9 @@ describe("<Flex />", () => {
             wrap: "wrap-reverse",
             justifyContent: "center",
             alignItems: "stretch",
-            alignContent: "space-between",
+            alignContent: "space-between"
         };
-        wrapper = shallow(<Flex {...props}><div id="tester2"/></Flex>);
+        wrapper = shallow(<Flex {...props}><div id="tester2" /></Flex>);
 
         const expected = {
             display: "flex",
@@ -31,13 +31,13 @@ describe("<Flex />", () => {
             alignContent: "space-between",
         };
 
-        expect(wrapper.prop('style')).toEqual(expected);
+        expect(wrapper.prop("style")).toEqual(expected);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("applies given style and className props", () => {
         props = {
-            children: <div id="tester3"/>,
+            children: <div id="tester3" />,
             style: { marginTop: "100px" },
             className: "tester-class"
         };
@@ -52,8 +52,8 @@ describe("<Flex />", () => {
             ...props.style
         };
 
-        expect(wrapper.prop('style')).toEqual(expected);
-        expect(wrapper.prop('className')).toEqual(props.className);
+        expect(wrapper.prop("style")).toEqual(expected);
+        expect(wrapper.prop("className")).toEqual(props.className);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -81,7 +81,7 @@ describe("<Flex />", () => {
                 marginLeft: "3px"
             };
 
-            expect(wrapper.prop('style')).toEqual(expected);
+            expect(wrapper.prop("style")).toEqual(expected);
             expect(wrapper).toMatchSnapshot();
         });
 
@@ -100,8 +100,8 @@ describe("<Flex />", () => {
                 ...props.style
             };
 
-            expect(wrapper.prop('style')).toEqual(expected);
-            expect(wrapper.prop('className')).toEqual(props.className);
+            expect(wrapper.prop("style")).toEqual(expected);
+            expect(wrapper.prop("className")).toEqual(props.className);
             expect(wrapper).toMatchSnapshot();
         });
     });

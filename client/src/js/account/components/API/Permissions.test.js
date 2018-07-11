@@ -1,5 +1,5 @@
 import APIPermissions from "./Permissions";
-import { Icon, ListGroupItem } from "../../../base/index";
+import { ListGroupItem } from "../../../base/index";
 
 describe("<Permissions />", () => {
     let props;
@@ -29,7 +29,7 @@ describe("<Permissions />", () => {
     });
 
     it("clicking invokes onChange callback", () => {
-        wrapper.find(ListGroupItem).at(1).simulate('click');
+        wrapper.find(ListGroupItem).at(1).simulate("click");
         expect(props.onChange).toHaveBeenCalled();
     });
 

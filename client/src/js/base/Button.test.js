@@ -1,5 +1,5 @@
 import { Button } from "./Button";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { OverlayTrigger } from "react-bootstrap";
 import { Icon } from "./Icon";
 
 describe("<Button />", () => {
@@ -9,7 +9,7 @@ describe("<Button />", () => {
     it("renders correctly", () => {
         wrapper = shallow(<Button />);
 
-        expect(wrapper.find('button').hasClass('btn btn-default')).toBe(true);
+        expect(wrapper.find("button").hasClass("btn btn-default")).toBe(true);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -23,8 +23,8 @@ describe("<Button />", () => {
         const iconComponent = wrapper.find(Icon);
 
         expect(iconComponent.length).toEqual(1);
-        expect(iconComponent.prop('name')).toEqual(props.icon);
-        expect(iconComponent.prop('className')).toEqual(`text-${props.iconStyle}`);
+        expect(iconComponent.prop("name")).toEqual(props.icon);
+        expect(iconComponent.prop("className")).toEqual(`text-${props.iconStyle}`);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -35,7 +35,7 @@ describe("<Button />", () => {
         wrapper = shallow(<Button {...props} />);
         const childElement = shallow(props.children);
 
-        expect(wrapper.find('span').children().html()).toEqual(childElement.html());
+        expect(wrapper.find("span").children().html()).toEqual(childElement.html());
     });
 
     it("renders <button> element wrapped in OverlayTrigger when props.tip provided", () => {
@@ -56,7 +56,7 @@ describe("<Button />", () => {
         };
         wrapper = mount(<Button {...props} />);
 
-        const target = wrapper.find(OverlayTrigger).prop('overlay');
+        const target = wrapper.find(OverlayTrigger).prop("overlay");
 
         expect(target.type.name).toEqual("Tooltip");
         expect(target.props.children).toEqual(props.tip);

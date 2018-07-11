@@ -25,7 +25,7 @@ describe("Jobs Action Creators:", () => {
         const data = {};
         const result = wsUpdateJob(data);
         const expected = {
-            type: "WS_UPDATE_JOB",
+            type: WS_UPDATE_JOB,
             data
         };
 
@@ -36,7 +36,7 @@ describe("Jobs Action Creators:", () => {
         const jobId = "tester";
         const result = wsRemoveJob(jobId);
         const expected = {
-            type: "WS_REMOVE_JOB",
+            type: WS_REMOVE_JOB,
             jobId
         };
 
@@ -46,7 +46,7 @@ describe("Jobs Action Creators:", () => {
     it("findJobs: returns simple action", () => {
         const result = findJobs();
         const expected = {
-            type: "FIND_JOBS_REQUESTED"
+            type: FIND_JOBS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -56,7 +56,7 @@ describe("Jobs Action Creators:", () => {
         const jobId = "tester";
         const result = getJob(jobId);
         const expected = {
-            type: "GET_JOB_REQUESTED",
+            type: GET_JOB.REQUESTED,
             jobId
         };
 
@@ -67,7 +67,7 @@ describe("Jobs Action Creators:", () => {
         const jobId = "tester";
         const result = cancelJob(jobId);
         const expected = {
-            type: "CANCEL_JOB_REQUESTED",
+            type: CANCEL_JOB.REQUESTED,
             jobId
         };
 
@@ -78,7 +78,7 @@ describe("Jobs Action Creators:", () => {
         const jobId = "tester";
         const result = removeJob(jobId);
         const expected = {
-            type: "REMOVE_JOB_REQUESTED",
+            type: REMOVE_JOB.REQUESTED,
             jobId
         };
 
@@ -89,7 +89,7 @@ describe("Jobs Action Creators:", () => {
         const scope = "filter";
         const result = clearJobs(scope);
         const expected = {
-            type: "CLEAR_JOBS_REQUESTED",
+            type: CLEAR_JOBS.REQUESTED,
             scope
         };
 
@@ -99,7 +99,7 @@ describe("Jobs Action Creators:", () => {
     it("getResources: returns action to retrieve computing resources data", () => {
         const result = getResources();
         const expected = {
-            type: "GET_RESOURCES_REQUESTED"
+            type: GET_RESOURCES.REQUESTED
         };
 
         expect(result).toEqual(expected);

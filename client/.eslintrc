@@ -6,6 +6,10 @@
     "console": true,
     "fetch": true
   },
+  "env": {
+    "jest/globals": true
+
+  },
   "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 6,
@@ -15,12 +19,14 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:jest/recommended"
   ],
   "plugins": [
     "import",
     "lodash",
-    "react"
+    "react",
+    "jest"
   ],
   "rules": {
     // Basic
@@ -140,6 +146,16 @@
     "react/jsx-tag-spacing": [1],
     "react/jsx-uses-react": [1],
     "react/jsx-uses-vars": [1],
-    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}],
-  }
+    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}]
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js"],
+      "rules": {
+        "jest/prefer-to-have-length": "off",
+        "lodash/prefer-lodash-method": "off",
+        "no-undef": "off"
+      }
+    }
+  ]
 }
