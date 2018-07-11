@@ -4,7 +4,7 @@ import {Col, Row} from "react-bootstrap";
 import {connect} from "react-redux";
 import {Flex, FlexItem} from "../../../base/index";
 import {toScientificNotation} from "../../../utils";
-import {setExpanded} from "../../actions";
+import {toggleExpanded} from "../../actions";
 
 import AnalysisValueLabel from "../ValueLabel";
 
@@ -16,7 +16,7 @@ export const PathoscopeItem = (props) => {
 
     if (props.expanded) {
         closeButton = (
-            <button type="button" className="close" onClick={props.onExpand}>
+            <button type="button" className="close" onClick={() => props.onExpand(props.id)}>
                 <span>×</span>
             </button>
         );
@@ -57,7 +57,7 @@ export const PathoscopeItem = (props) => {
                     <AnalysisValueLabel
                         bsStyle="danger"
                         label="Depth"
-                        value={props.meanDepth.toFixed(3)}
+                        value={props.depth.toFixed(1)}
                     />
                 </Col>
                 <Col xs={6} sm={4} md={2}>
@@ -88,7 +88,7 @@ const mapStateToProps = (state, ownProps) => ({
 const mapDispatchToProps = (dispatch) => ({
 
     onExpand: (id) => {
-        dispatch(setExpanded(id))
+        dispatch(toggleExpanded(id));
     }
 });
 

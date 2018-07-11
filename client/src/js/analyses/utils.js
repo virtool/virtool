@@ -23,6 +23,74 @@ export const fillAlign = ({ align, length }) => {
     });
 };
 
+export const formatData = (detail) => {
+    if (detail.diagnosis.length === 0) {
+        return detail.diagnosis;
+    }
+
+    const mappedReadCount = detail.read_count;
+
+    return map(detail.diagnosis, otu => {
+        // Go through each isolate associated with the OTU, adding properties for weight, read count,
+        // mean depth, and coverage. These values will be calculated from the sequences owned by each isolate.
+        let isolates = map(otu.isolates, isolate => {
+            // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
+            let name = formatIsolateName(isolate);
+
+            if (name === "unknown unknown") {
+                name = "Unnamed Isolate";
+            }
+
+            const sequences = map(isolate.sequences, sequence => {
+                const filled = fillAlign(sequence);
+
+                return {
+                    ...sequence,
+                    reads: round(sequence.pi * mappedReadCount),
+                    meanDepth: mean(filled),
+                    medianDepth: median(filled),
+                    sumDepth: sum(filled),
+                    filled
+                };
+            });
+
+            const filled = flatMap(sequences, "filled");
+
+            const length = filled.length;
+
+            const coverage = compact(filled).length / length;
+
+            return {
+                ...isolate,
+                name,
+                length,
+                coverage,
+                pi: sumBy(sequences, "pi"),
+                reads: sumBy(sequences, "reads"),
+                maxDepth: max(filled),
+                meanDepth: mean(filled),
+                medianDepth: median(filled)
+            };
+        });
+
+        isolates = sortBy(isolates, "coverage").reverse();
+
+        const pi = sumBy(isolates, "pi");
+
+        return {
+            ...otu,
+            coverage: maxBy(isolates, "coverage").coverage,
+            isolates,
+            maxGenomeLength: maxBy(isolates, "length").length,
+            maxDepth: maxBy(isolates, "maxDepth").maxDepth,
+            meanDepth: maxBy(isolates, "meanDepth").meanDepth,
+            medianDepth: maxBy(isolates, "medianDepth").medianDepth,
+            pi,
+            reads: pi * mappedReadCount
+        };
+    });
+};
+
 export const median = (values) => {
     const midIndex = (values.length - 1) / 2;
 

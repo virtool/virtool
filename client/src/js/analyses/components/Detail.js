@@ -1,16 +1,16 @@
-import React from "react";
-import { get } from "lodash-es";
+import {get} from "lodash-es";
 import Numeral from "numeral";
-import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
-import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import React from "react";
+import {Label, Panel, Table} from "react-bootstrap";
+import {connect} from "react-redux";
+import {Link} from "react-router-dom";
+import {IDRow, LoadingPlaceholder, NotFound, RelativeTime} from "../../base/index";
+import {getTaskDisplayName} from "../../utils";
 
 
-import { getAnalysis, clearAnalysis } from "../actions";
-import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../base/index";
-import { getTaskDisplayName } from "../../utils";
-import PathoscopeViewer from "./Pathoscope/Viewer";
+import {clearAnalysis, getAnalysis} from "../actions";
 import NuVsViewer from "./NuVs/Viewer";
+import PathoscopeViewer from "./Pathoscope/Viewer";
 
 class AnalysisDetail extends React.Component {
 

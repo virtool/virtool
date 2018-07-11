@@ -1,28 +1,18 @@
+import {filter, flatten, forIn, map, sortBy, split} from "lodash-es";
 import React from "react";
-import PropTypes from "prop-types";
+import {Panel} from "react-bootstrap";
 import FlipMove from "react-flip-move";
-import { flatten, forIn, includes, map, sortBy, split } from "lodash-es";
-import { Panel } from "react-bootstrap";
-
-import PathoscopeEntry from "./Entry";
+import {connect} from "react-redux";
+import {Icon} from "../../../base/index";
 import PathoscopeIsolate from "./Isolate";
-import { Icon } from "../../../base/index";
+import PathoscopeItem from "./Item";
 
-export default class PathoscopeList extends React.Component {
+export class PathoscopeList extends React.Component {
 
     constructor (props) {
         super(props);
         this.itemRefs = {};
     }
-
-    static propTypes = {
-        expanded: PropTypes.arrayOf(PropTypes.string),
-        showReads: PropTypes.bool,
-        showMedian: PropTypes.bool,
-        toggleIn: PropTypes.func,
-        data: PropTypes.arrayOf(PropTypes.object).isRequired,
-        isCrop: PropTypes.bool
-    };
 
     setScroll = (otuId, scrollLeft) => {
         forIn(this.itemRefs, (ref, key) => {
@@ -49,21 +39,34 @@ export default class PathoscopeList extends React.Component {
     render () {
 
         if (this.props.data.length) {
-            const rows = map(this.props.data, (item, index) => {
 
-                const expanded = includes(this.props.expanded, item.id);
+            let data = filter(this.props.data, otu => (
+                this.props.filterOTUs ? otu.reads >= otu.length * 0.8 / this.props.maxReadLength : true
+            ));
+
+            if (this.props.filterIsolates) {
+                data = map(data, otu => ({
+                    ...otu,
+                    isolates: filter(otu.isolates, isolate => (isolate.pi >= 0.03 * otu.pi))
+                }));
+            }
+
+            data = sortBy(data, this.props.sortKey);
+
+            if (this.props.sortDescending) {
+                data.reverse();
+            }
+
+            const rows = map(data, (item, index) => {
 
                 const components = [
-                    <PathoscopeEntry
+                    <PathoscopeItem
                         key={item.id}
                         {...item}
-                        toggleIn={this.props.toggleIn}
-                        showReads={this.props.showReads}
-                        in={expanded}
                     />
                 ];
 
-                if (expanded) {
+                if (item.expanded) {
 
                     const isolateComponents = map(sortBy(item.isolates, "pi").reverse(), isolate => {
                         const key = `${item.id}-${isolate.id}`;
@@ -77,9 +80,6 @@ export default class PathoscopeList extends React.Component {
                                 maxGenomeLength={item.maxGenomeLength}
                                 {...isolate}
                                 setScroll={this.setScroll}
-                                showReads={this.props.showReads}
-                                showMedian={this.props.showMedian}
-                                isCrop={this.props.isCrop}
                             />
                         );
                     });
@@ -119,5 +119,27 @@ export default class PathoscopeList extends React.Component {
             </Panel>
         );
     }
-
 }
+
+const mapStateToProps = (state) => {
+    const {
+        data,
+        filterOTUs,
+        filterIsolates,
+        showMedian,
+        sortDescending,
+        sortKey
+    } = state.analyses;
+
+    return {
+        data,
+        filterIsolates,
+        filterOTUs,
+        maxReadLength: state.samples.detail.quality.length[1],
+        showMedian,
+        sortDescending,
+        sortKey
+    };
+};
+
+export default connect(mapStateToProps)(PathoscopeList);

@@ -6,8 +6,8 @@ import PathoscopeToolbar from "./Toolbar";
 export default function PathoscopeViewer () {
     return (
         <div>
-            <PathoscopeToolbar/>
-            <PathoscopeList/>
+            <PathoscopeToolbar />
+            <PathoscopeList />
         </div>
     );
 }

@@ -8,6 +8,9 @@ import {
     GET_ANALYSIS,
     REMOVE_ANALYSIS,
     SET_PATHOSCOPE_FILTER,
+    SET_PATHOSCOPE_SORT_KEY,
+    TOGGLE_ANALYSIS_EXPANDED,
+    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS,
     WS_REMOVE_ANALYSIS,
@@ -17,14 +20,27 @@ import {simpleActionCreator} from "../utils";
 
 export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
 
-export const cropPathoscope = simpleActionCreator(CROP_PATHOSCOPE);
+export const toggleExpanded = (id) => ({
+    type: TOGGLE_ANALYSIS_EXPANDED,
+    id
+});
 
 export const setPathoscopeFilter = (key) => ({
     type: SET_PATHOSCOPE_FILTER,
     key
 });
 
-export const toggleShowPathoscopeMedia = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
+export const setSortKey = (key) => ({
+    type: SET_PATHOSCOPE_SORT_KEY,
+    key
+});
+
+export const toggleCrop = simpleActionCreator(CROP_PATHOSCOPE);
+
+export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
+
+export const toggleShowPathoscopeMedian = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
+
 export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
 /**

@@ -6,7 +6,6 @@ import {
     collapseAnalysis,
     setPathoscopeFilter,
     setSortKey,
-    toggleCrop,
     togglePathoscopeSortDescending,
     toggleShowPathoscopeMedian,
     toggleShowPathoscopeReads
@@ -55,7 +54,7 @@ export const PathoscopeToolbar = (props) => {
                         <option className="text-success" value="pi">
                             Weight
                         </option>
-                        <option className="text-danger" value="maxDepth">
+                        <option className="text-danger" value="depth">
                             Depth
                         </option>
                     </FormControl>
@@ -65,7 +64,7 @@ export const PathoscopeToolbar = (props) => {
             <Button
                 icon="compress"
                 title="Collapse"
-                tip="Collapse Opened"
+                tip="Collapse"
                 onClick={onCollapse}
                 className="hidden-xs"
                 disabled={false}
@@ -73,8 +72,8 @@ export const PathoscopeToolbar = (props) => {
 
             <Button
                 icon="chart-pie"
-                title="Change Weight Format"
-                tip="Change Weight Format"
+                title="Weight Format"
+                tip="Weight Format"
                 active={!showReads}
                 className="hidden-xs"
                 onClick={onToggleShowReads}
@@ -82,8 +81,8 @@ export const PathoscopeToolbar = (props) => {
 
             <Button
                 icon="chart-bar"
-                title="Show Isolate Median"
-                tip="Show Isolate Median"
+                title="Median Depth"
+                tip="Median Depth"
                 active={showMedian}
                 className="hidden-xs"
                 onClick={onToggleShowMedian}
@@ -94,7 +93,7 @@ export const PathoscopeToolbar = (props) => {
                 onSelect={onFilter}
                 className="split-dropdown"
                 pullRight
-                style={{zIndex: "1"}}
+                style={{zIndex: 1}}
             >
                 <Button
                     title="Filter"
@@ -105,7 +104,7 @@ export const PathoscopeToolbar = (props) => {
                     <Icon name="filter" />
                 </Button>
                 <Dropdown.Toggle />
-                <Dropdown.Menu onSelect={onFilter}>
+                <Dropdown.Menu>
                     <MenuItem eventKey="OTUs">
                         <Flex>
                             <FlexItem>
@@ -143,15 +142,19 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onFilter: (key) => {
+        if (key !== "OTUs" && key !== "isolates") {
+            key = "";
+        }
+
         dispatch(setPathoscopeFilter(key));
     },
 
-    onSetSortKey: (key) => {
-        dispatch(setSortKey(key));
+    onToggleSortDescending: () => {
+        dispatch(togglePathoscopeSortDescending());
     },
 
-    onToggleCrop: () => {
-        dispatch(toggleCrop());
+    onSetSortKey: (e) => {
+        dispatch(setSortKey(e.target.value));
     },
 
     onToggleShowMedian: () => {
@@ -160,11 +163,8 @@ const mapDispatchToProps = (dispatch) => ({
 
     onToggleShowReads: () => {
         dispatch(toggleShowPathoscopeReads());
-    },
-
-    onToggleSortDescending: () => {
-        dispatch(togglePathoscopeSortDescending());
     }
+
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PathoscopeToolbar);

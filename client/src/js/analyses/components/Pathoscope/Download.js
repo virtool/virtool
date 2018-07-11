@@ -7,9 +7,8 @@ export const createBlob = (svgNode) => {
 
     const svg = (new window.XMLSerializer()).serializeToString(svgNode);
     const blob = new window.Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
-    const url = window.URL.createObjectURL(blob);
 
-    return url;
+    return window.URL.createObjectURL(blob);
 };
 
 export const formatSvg = (svg, setting) => {
