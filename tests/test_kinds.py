@@ -172,7 +172,7 @@ def test_split(test_otu, test_sequence, test_merged_otu):
 class TestExtractIsolateIds:
 
     @pytest.mark.parametrize("multiple", [True, False])
-    def test(self, multiple, test_otu):
+    def test_extract_isolate_ids(self, multiple, test_otu):
         if multiple:
             test_otu["isolates"].append({
                 "id": "foobar"
@@ -246,23 +246,25 @@ class TestExtractSequenceIds:
         assert "Empty sequences list" in str(err)
 
 
-class TestFormatIsolateName:
+@pytest.mark.parametrize("source_type, source_name", [
+    ("Isolate", ""),
+    ("Isolate", ""),
+    ("", "8816 - v2")
+])
+def test_format_isolate_name(source_type, source_name, test_isolate):
+    """
+    Test that a formatted isolate name is produced for a full ``source_type`` and ``source_name``. Test that if
+    either of these fields are missing, "Unnamed isolate" is returned.
 
-    @pytest.mark.parametrize("source_type, source_name", [("Isolate", ""), ("Isolate", ""), ("", "8816 - v2")])
-    def test(self, source_type, source_name, test_isolate):
-        """
-        Test that a formatted isolate name is produced for a full ``source_type`` and ``source_name``. Test that if
-        either of these fields are missing, "Unnamed isolate" is returned.
+    """
+    test_isolate.update({
+        "source_type": source_type,
+        "source_name": source_name
+    })
 
-        """
-        test_isolate.update({
-            "source_type": source_type,
-            "source_name": source_name
-        })
+    formatted = virtool.otus.format_isolate_name(test_isolate)
 
-        formatted = virtool.otus.format_isolate_name(test_isolate)
-
-        if source_type and source_name:
-            assert formatted == "Isolate 8816 - v2"
-        else:
-            assert formatted == "Unnamed Isolate"
+    if source_type and source_name:
+        assert formatted == "Isolate 8816 - v2"
+    else:
+        assert formatted == "Unnamed Isolate"
