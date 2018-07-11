@@ -41,18 +41,18 @@ describe("<InputSave />", () => {
         });
 
         it("renders main <form> element", () => {
-            expect(wrapper.find('form').length).toEqual(1);
+            expect(wrapper.find("form").length).toEqual(1);
             expect(wrapper).toMatchSnapshot();
         });
     
         it("renders two subcomponents: <h5> label element and Flex component", () => {
             expect(wrapper.children().length).toEqual(2);
-            expect(wrapper.find('h5').length).toEqual(1);
+            expect(wrapper.find("h5").length).toEqual(1);
             expect(wrapper.find(Flex).length).toEqual(1);
         });
 
         it("<h5> subcomponent displays label when provided", () => {
-            expect(wrapper.find('h5 > strong').text()).toEqual(props.label);
+            expect(wrapper.find("h5 > strong").text()).toEqual(props.label);
         });
     
         it("Flex component contains a FlexItem and Button components", () => {
@@ -103,14 +103,14 @@ describe("<InputSave />", () => {
             spy = sinon.spy(wrapper.instance(), "handleChange");
             wrapper.instance().forceUpdate();
 
-            expect(wrapper.state('value')).toEqual(props.initialValue);
+            expect(wrapper.state("value")).toEqual(props.initialValue);
 
-            wrapper.find(FormControl).simulate('change', mockEvent);
+            wrapper.find(FormControl).simulate("change", mockEvent);
             
             expect(spy.calledOnce).toBe(true);
             expect(props.onChange).toHaveBeenCalled();
 
-            expect(wrapper.state('value')).not.toEqual(mockEvent.target.value);
+            expect(wrapper.state("value")).not.toEqual(mockEvent.target.value);
         });
 
         it("should update state if [props.disabled=false]", () => {
@@ -138,12 +138,12 @@ describe("<InputSave />", () => {
             wrapper.instance().forceUpdate();
 
             expect(spy.called).toBe(false);
-            expect(wrapper.state('value')).toEqual(props.initialValue);
+            expect(wrapper.state("value")).toEqual(props.initialValue);
 
-            wrapper.find('input').simulate('change', mockEvent);
+            wrapper.find("input").simulate("change", mockEvent);
             
             expect(spy.calledOnce).toBe(true);
-            expect(wrapper.state('value')).toEqual(mockEvent.target.value);
+            expect(wrapper.state("value")).toEqual(mockEvent.target.value);
 
             // Restore original getDerivedStateFromProps method
             InputSave.getDerivedStateFromProps = originalMethod;
@@ -168,7 +168,7 @@ describe("<InputSave />", () => {
 
             expect(spy.called).toBe(false);
             expect(() => {
-                wrapper.find(FormControl).simulate('change');
+                wrapper.find(FormControl).simulate("change");
             }).not.toThrow();
             expect(spy.calledOnce).toBe(true);
         });
@@ -202,18 +202,18 @@ describe("<InputSave />", () => {
                     type: "not-submit"
                 }
             };
-            wrapper.find(FormControl).simulate('blur', mockEvent);
+            wrapper.find(FormControl).simulate("blur", mockEvent);
 
             expect(spy).toHaveBeenCalled();
-            expect(wrapper.state('value')).toEqual(props.initialValue);
+            expect(wrapper.state("value")).toEqual(props.initialValue);
         });
 
         it("should reset input value if blur is caused by clicking on a non focus element", () => {
             mockEvent = {};
-            wrapper.find(FormControl).simulate('blur', mockEvent);
+            wrapper.find(FormControl).simulate("blur", mockEvent);
 
             expect(spy).toHaveBeenCalled();
-            expect(wrapper.state('value')).toEqual(props.initialValue);
+            expect(wrapper.state("value")).toEqual(props.initialValue);
         });
 
         it("should save input value if the blur is caused by a valid submit event", () => {
@@ -222,7 +222,7 @@ describe("<InputSave />", () => {
                     type: "submit"
                 }
             };
-            wrapper.find(FormControl).simulate('blur', mockEvent);
+            wrapper.find(FormControl).simulate("blur", mockEvent);
 
             expect(spy).toHaveBeenCalled();
             expect(props.onChange).toHaveBeenCalled();
@@ -247,7 +247,7 @@ describe("<InputSave />", () => {
 
             expect(spyAlternate).not.toHaveBeenCalled();
             expect(() => {
-                wrapper.find(FormControl).simulate('blur', mockEvent);
+                wrapper.find(FormControl).simulate("blur", mockEvent);
             }).not.toThrow();
             expect(spyAlternate).toHaveBeenCalled();
 
@@ -280,7 +280,7 @@ describe("<InputSave />", () => {
         });
 
         it("when there is no change in value, click/enter triggers submit handler and blur", () => {
-            wrapper.find(Button).simulate('submit');
+            wrapper.find(Button).simulate("submit");
 
             expect(spyHandler.calledOnce).toBe(true);
             expect(spyBlur.calledOnce).toBe(true);
@@ -288,10 +288,10 @@ describe("<InputSave />", () => {
 
         it("when there is a change in value, click/enter sets [state.pending=true] and calls the onSave prop", () => {
             wrapper.setState({ value: "CHANGED" });
-            wrapper.find(Button).simulate('submit');
+            wrapper.find(Button).simulate("submit");
 
             expect(spyHandler.calledOnce).toBe(true);
-            expect(wrapper.state('pending')).toEqual(true);
+            expect(wrapper.state("pending")).toEqual(true);
             expect(props.onSave).toHaveBeenCalled();
         });
 

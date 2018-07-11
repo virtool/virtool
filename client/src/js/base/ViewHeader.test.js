@@ -8,7 +8,7 @@ describe("<ViewHeader />", () => {
     it("renders correctly an html <head><title> element", () => {
         wrapper = shallow(<ViewHeader title="tester" />);
 
-        expect(wrapper.find('title').text()).toEqual("tester");
+        expect(wrapper.find("title").text()).toEqual("tester");
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -17,7 +17,7 @@ describe("<ViewHeader />", () => {
             <ViewHeader title="test-title" totalCount={10} />
         );
 
-        expect(wrapper.find('strong').text()).toEqual("test-title");
+        expect(wrapper.find("strong").text()).toEqual("test-title");
         expect(wrapper.find(Badge).children().text()).toEqual("10");
     });
 
@@ -28,6 +28,6 @@ describe("<ViewHeader />", () => {
             </ViewHeader>
         );
 
-        expect(wrapper.find('div').text()).toEqual("Tester");
+        expect(wrapper.find("div").text()).toEqual("Tester");
     });
 });

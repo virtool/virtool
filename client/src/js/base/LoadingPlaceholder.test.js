@@ -18,8 +18,8 @@ describe("<LoadingPlaceholder />", () => {
         };
         wrapper = shallow(<LoadingPlaceholder {...props} />);
 
-        expect(wrapper.find('div').prop('style')).toEqual({marginTop: props.margin});
-        expect(wrapper.find('p').text()).toEqual(props.message);
+        expect(wrapper.find("div").prop("style")).toEqual({marginTop: props.margin});
+        expect(wrapper.find("p").text()).toEqual(props.message);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -31,8 +31,8 @@ describe("<LoadingPlaceholder />", () => {
         wrapper = shallow(<LoadingPlaceholder {...props} />);
 
         expect(wrapper.find(ClipLoader).length).toEqual(1);
-        expect(wrapper.find(ClipLoader).prop('color')).toEqual(props.color);
-        expect(wrapper.find(ClipLoader).prop('size')).toEqual(props.size);
+        expect(wrapper.find(ClipLoader).prop("color")).toEqual(props.color);
+        expect(wrapper.find(ClipLoader).prop("size")).toEqual(props.size);
         expect(wrapper.find(ClipLoader)).toMatchSnapshot();
     });
 

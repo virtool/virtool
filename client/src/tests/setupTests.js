@@ -1,6 +1,6 @@
 import React from "react";
-import Enzyme, { shallow, render, mount } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import Enzyme, { shallow, render, mount } from "enzyme";
+import Adapter from "enzyme-adapter-react-16";
 import configureStore from "redux-mock-store";
 import sinon from "sinon";
 

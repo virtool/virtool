@@ -5,7 +5,6 @@ import reducer, {
 import {
     FIND_ANALYSES,
     GET_ANALYSIS,
-    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,

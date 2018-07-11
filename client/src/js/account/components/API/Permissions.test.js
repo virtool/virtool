@@ -29,7 +29,7 @@ describe("<Permissions />", () => {
     });
 
     it("clicking invokes onChange callback", () => {
-        wrapper.find(ListGroupItem).at(1).simulate('click');
+        wrapper.find(ListGroupItem).at(1).simulate("click");
         expect(props.onChange).toHaveBeenCalled();
     });
 

@@ -12,8 +12,8 @@ describe("<NotFound />", () => {
     it("renders optional alternate message and status", () => {
         wrapper = shallow(<NotFound status={409} message="Test" />);
 
-        expect(wrapper.find('span').children().text()).toEqual("409");
-        expect(wrapper.find('strong').children().text()).toEqual("Test");
+        expect(wrapper.find("span").children().text()).toEqual("409");
+        expect(wrapper.find("strong").children().text()).toEqual("Test");
         expect(wrapper).toMatchSnapshot();
     });
 });

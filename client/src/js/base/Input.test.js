@@ -50,18 +50,18 @@ describe("<Input />", () => {
             type: "textarea"
         };
         wrapper = shallow(<Input {...props} />);
-        expect(wrapper.find(FormControl).prop('componentClass')).toEqual(props.type);
+        expect(wrapper.find(FormControl).prop("componentClass")).toEqual(props.type);
 
         props.type = "select";
         wrapper = shallow(<Input {...props} />);
-        expect(wrapper.find(FormControl).prop('componentClass')).toEqual(props.type);
+        expect(wrapper.find(FormControl).prop("componentClass")).toEqual(props.type);
 
         props.type = "number";
         wrapper = shallow(<Input {...props} />);
         const expected = {
             paddingRight: "12px"
         };
-        expect(wrapper.find(FormControl).prop('style')).toEqual(expected);;
+        expect(wrapper.find(FormControl).prop("style")).toEqual(expected);
     });
 
     it("renders two children: optional ControlLabel + FormControl components", () => {

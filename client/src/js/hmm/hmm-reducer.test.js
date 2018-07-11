@@ -64,7 +64,7 @@ describe("HMM Reducer", () => {
     it("should handle GET_HMM_REQUESTED", () => {
         state = {};
         action = {
-            type: GET_HMM.REQUESTED,
+            type: GET_HMM.REQUESTED
         };
         result = reducer(state, action);
         expected = {

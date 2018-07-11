@@ -34,7 +34,7 @@ describe("<RemoveModal />", () => {
         };
         wrapper = mount(<RemoveModal {...props} />);
 
-        wrapper.find('button').at(0).simulate('click');
+        wrapper.find("button").at(0).simulate("click");
 
         expect(props.onHide).toHaveBeenCalled();
     });
@@ -78,7 +78,7 @@ describe("<RemoveModal />", () => {
         };
         wrapper = shallow(<RemoveModal {...props} />);
 
-        wrapper.find(Button).simulate('click');
+        wrapper.find(Button).simulate("click");
 
         expect(props.onConfirm).toHaveBeenCalled();
     });

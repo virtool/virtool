@@ -23,6 +23,6 @@ describe("<Alert />", () => {
 
     it("renders supplied children if icon is not supplied", () => {
         wrapper = shallow(<Alert><div>Child Component</div></Alert>);
-        expect(wrapper.find('div').text()).toEqual("Child Component");
+        expect(wrapper.find("div").text()).toEqual("Child Component");
     });
 });
