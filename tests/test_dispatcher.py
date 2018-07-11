@@ -49,6 +49,7 @@ def test_add_connection(loop, mocker):
 
     assert m in dispatcher.connections
 
+
 def test_remove_connection(loop, mocker):
 
     dispatcher = Dispatcher(loop)

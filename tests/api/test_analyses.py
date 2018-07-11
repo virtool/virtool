@@ -141,6 +141,11 @@ async def test_remove(error, spawn_client, resp_is):
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_algorithm", "409_ready"])
 async def test_blast(error, mocker, spawn_client, resp_is, static_time):
+    """
+    Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
+    correctly.
+
+    """
     client = await spawn_client(authorize=True)
 
     if error != "404_analysis":

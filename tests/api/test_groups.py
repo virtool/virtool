@@ -2,40 +2,38 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-class TestFind:
+async def test_find(spawn_client, all_permissions, no_permissions):
+    """
+    Test that a ``GET /api/groups`` return a complete list of groups.
 
-    async def test_no_params(self, spawn_client, all_permissions, no_permissions):
-        """
-        Test that a ``GET /api/groups`` return a complete list of groups.
+    """
+    client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        """
-        client = await spawn_client(authorize=True, permissions=["manage_users"])
+    await client.db.groups.insert_many([
+        {
+            "_id": "test",
+            "permissions": all_permissions
+        },
+        {
+            "_id": "limited",
+            "permissions": no_permissions
+        }
+    ])
 
-        await client.db.groups.insert_many([
-            {
-                "_id": "test",
-                "permissions": all_permissions
-            },
-            {
-                "_id": "limited",
-                "permissions": no_permissions
-            }
-        ])
+    resp = await client.get("/api/groups")
 
-        resp = await client.get("/api/groups")
+    assert resp.status == 200
 
-        assert resp.status == 200
-
-        assert await resp.json() == [
-            {
-                "id": "test",
-                "permissions": all_permissions
-            },
-            {
-                "id": "limited",
-                "permissions": no_permissions
-            }
-        ]
+    assert await resp.json() == [
+        {
+            "id": "test",
+            "permissions": all_permissions
+        },
+        {
+            "id": "limited",
+            "permissions": no_permissions
+        }
+    ]
 
 
 class TestCreate:

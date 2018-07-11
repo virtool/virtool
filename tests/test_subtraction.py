@@ -1,11 +1,9 @@
 import os
-import pytest
 
 import virtool.subtractions
 
 
-@pytest.fixture
-def write_mock_fasta(tmpdir):
+async def test_calculate_gc(tmpdir, mock_fasta):
     lines = [
         ">foo\n",
         "ATGGACTGGTTCTCTCTCTCTAGGCACTG\n",
@@ -15,27 +13,13 @@ def write_mock_fasta(tmpdir):
         "TTTCGACTTGACTTCTTNTCTCATGCGAT"
     ]
 
-    def func(path):
-        with open(path, "w") as handle:
-            for line in lines:
-                handle.write(line)
+    path = os.path.join(str(tmpdir), "test.fa")
 
-    return func
+    with open(path, "w") as handle:
+        for line in lines:
+            handle.write(line)
 
-
-
-
-@pytest.fixture
-def mock_fasta(tmpdir, write_mock_fasta):
-    fasta_path = os.path.join(str(tmpdir), "test.fa")
-
-    write_mock_fasta(fasta_path)
-
-    return fasta_path
-
-
-async def test_calculate_gc(mock_fasta):
-    assert virtool.subtractions.calculate_fasta_gc(mock_fasta) == ({
+    assert virtool.subtractions.calculate_fasta_gc(path) == ({
         "a": 0.149,
         "t": 0.345,
         "g": 0.253,

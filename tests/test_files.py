@@ -60,8 +60,10 @@ def test_has_read_extension(filename,expected):
 
 @pytest.mark.parametrize("called", [True, False])
 async def test_detect_watch(called, patched_test_manager_instance):
+    """
+    Test that handle_watch is called if file is written in files_path, only if in watch_path.
 
-    # handle_watch should not be called if file is written in files_path, only if in watch_path
+    """
     path = patched_test_manager_instance.watch_path if called else patched_test_manager_instance.files_path
 
     touch(os.path.join(path, "test.fq"))
