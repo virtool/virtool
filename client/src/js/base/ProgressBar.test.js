@@ -18,9 +18,9 @@ describe("<ProgressBar />", () => {
         };
         wrapper = shallow(<ProgressBar {...props} />);
 
-        expect(wrapper.find('div').at(0).hasClass("progress progress-affixed")).toBe(true);
-        expect(wrapper.find('div').at(0).prop('style')).toEqual(props.style);
-        expect(wrapper.find('div').at(1).hasClass(`progress-bar progress-bar-${props.bsStyle}`)).toBe(true);
+        expect(wrapper.find("div").at(0).hasClass("progress progress-affixed")).toBe(true);
+        expect(wrapper.find("div").at(0).prop("style")).toEqual(props.style);
+        expect(wrapper.find("div").at(1).hasClass(`progress-bar progress-bar-${props.bsStyle}`)).toBe(true);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -30,11 +30,33 @@ describe("<ProgressBar />", () => {
         };
         wrapper = shallow(<ProgressBar {...props} />);
 
-        expect(wrapper.find('div').length).toEqual(3);
-        expect(wrapper.is('div')).toBe(true);
-        expect(wrapper.childAt(0).is('div')).toBe(true);
-        expect(wrapper.find('#test-child').exists()).toBe(true);
+        expect(wrapper.find("div").length).toEqual(3);
+        expect(wrapper.is("div")).toBe(true);
+        expect(wrapper.childAt(0).is("div")).toBe(true);
+        expect(wrapper.find("#test-child").exists()).toBe(true);
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("adds custom eventListener in componentDidUpdate when there is a change in 'now' props", () => {
+        const spyCDU = sinon.spy(ProgressBar.prototype, "componentDidUpdate");
+        wrapper = mount(<ProgressBar bsStyle="primary" now={50} />);
+        const spyAddListener = sinon.spy(wrapper.find("div").at(1).instance(), "addEventListener");
+
+        expect(spyCDU.called).toBe(false);
+        expect(spyAddListener.called).toBe(false);
+
+        // No change in now props; event listener should not be added
+        wrapper.setProps({ bsStyle: "danger", now: 50 });
+
+        expect(spyAddListener.called).toBe(false);
+
+        // Change in now props; add event listener
+        wrapper.setProps({ bsStyle: "warning", now: 100 });
+
+        expect(spyAddListener.calledOnce).toBe(true);
+
+        spyCDU.restore();
+        spyAddListener.restore();
     });
 
     it("calls onTransitionend() when props.now changes", () => {
@@ -66,7 +88,7 @@ describe("<ProgressBar />", () => {
     it("removes custom eventListener in componentWillUnmount", () => {
         const spyCWU = sinon.spy(ProgressBar.prototype, "componentWillUnmount");
         wrapper = mount(<ProgressBar />);
-        const spyRemoveListener = sinon.spy(wrapper.find('div').at(1).instance(), "removeEventListener");
+        const spyRemoveListener = sinon.spy(wrapper.find("div").at(1).instance(), "removeEventListener");
 
         expect(spyCWU.called).toBe(false);
         expect(spyRemoveListener.called).toBe(false);
@@ -88,11 +110,40 @@ describe("<ProgressBar />", () => {
             expect(wrapper).toMatchSnapshot();
         });
 
+        it("getDerivedStateFromProps", () => {
+            let nextProps = { active: true };
+            let prevState = { active: false };
+            let result = AutoProgressBar.getDerivedStateFromProps(nextProps, prevState);
+            let expected = { fill: 10, active: nextProps.active };
+
+            expect(result).toEqual(expected);
+
+            nextProps = { active: false };
+            prevState = { active: true };
+            result = AutoProgressBar.getDerivedStateFromProps(nextProps, prevState);
+            expected = { fill: 100, active: nextProps.active };
+
+            expect(result).toEqual(expected);
+        });
+
+        it("componentDidUpdate should call stop() if active state goes from true to false", () => {
+            wrapper = mount(<AutoProgressBar active={true} />);
+            const spy = sinon.spy(wrapper.instance(), "stop");
+
+            expect(spy.called).toBe(false);
+
+            wrapper.setProps({ active: false });
+
+            expect(spy.calledOnce).toBe(true);
+
+            spy.restore();
+        });
+
         it("renders a ProgressBar component if [state.fill>0], <div> otherwise", () => {
             wrapper = shallow(<AutoProgressBar />);
 
             expect(wrapper.find(ProgressBar).length).toEqual(0);
-            expect(wrapper.find('div').hasClass("progress-affixed-empty")).toBe(true);
+            expect(wrapper.find("div").hasClass("progress-affixed-empty")).toBe(true);
 
             wrapper.setState({ fill: 10 });
 
@@ -123,11 +174,11 @@ describe("<ProgressBar />", () => {
             wrapper.setState({ fill: 25 });
 
             wrapper.instance().handleMoved(50);
-            expect(wrapper.state('fill')).toEqual(25);
+            expect(wrapper.state("fill")).toEqual(25);
 
             // props.now === 100 therefore should reset state.fill to 0
             wrapper.instance().handleMoved(100);
-            expect(wrapper.state('fill')).toEqual(0);
+            expect(wrapper.state("fill")).toEqual(0);
         });
 
         describe("move()", () => {
@@ -142,7 +193,7 @@ describe("<ProgressBar />", () => {
             wrapper.setState({ fill: 10 });
             wrapper.instance().move();
             expect(spyStop.called).toBe(false);
-            expect(wrapper.state('fill')).toEqual(14);
+            expect(wrapper.state("fill")).toEqual(14);
 
             // If fill >= 90, call stop()
             wrapper.setState({ fill: 80 });

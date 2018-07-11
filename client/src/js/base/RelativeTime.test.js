@@ -7,7 +7,7 @@ describe("<RelativeTime />", () => {
     let expected;
 
     it("renders correctly", () => {
-        const pastTime = `${Moment().subtract(60, 'day').toDate().toISOString()}`;
+        const pastTime = `${Moment().subtract(60, "day").toDate().toISOString()}`;
         let props = {
             time: pastTime
         };
@@ -20,7 +20,7 @@ describe("<RelativeTime />", () => {
     });
 
     it("renders 'just now' for browser lag future times", () => {
-        const futureTime = `${Moment().add(30, 'seconds').toDate().toISOString()}`;
+        const futureTime = `${Moment().add(30, "seconds").toDate().toISOString()}`;
         let props = {
             time: futureTime 
         };
@@ -74,7 +74,7 @@ describe("<RelativeTime />", () => {
             
             expect(spySCU.called).toBe(false);
             const expected = Moment(props.time).fromNow();
-            expect(wrapper.state('timeString')).toEqual(expected);
+            expect(wrapper.state("timeString")).toEqual(expected);
     
             // when given same props on update,
             // shouldComponentUpdate returns false, no re-render
@@ -98,7 +98,7 @@ describe("<RelativeTime />", () => {
             const expected = Moment(update.time).fromNow();
 
             expect(spyCDU.called).toBe(true);
-            expect(wrapper.state('timeString')).toEqual(expected);
+            expect(wrapper.state("timeString")).toEqual(expected);
         });
 
         it("should not force an update in componentDidUpdate if timestamp remains the same", () => {
@@ -109,11 +109,11 @@ describe("<RelativeTime />", () => {
             spyCDU.resetHistory();
 
             expect(spyCDU.calledOnce).toBe(false);
-            expect(wrapper.state('timeString')).toEqual("just now");
+            expect(wrapper.state("timeString")).toEqual("just now");
 
             clock.tick(60000);
 
-            expect(wrapper.state('timeString')).toEqual("a minute ago");
+            expect(wrapper.state("timeString")).toEqual("a minute ago");
 
             clock.restore();
         });

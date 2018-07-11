@@ -7,6 +7,16 @@ import {
     blastNuvs,
     removeAnalysis
 } from "./actions";
+import {
+    WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    GET_ANALYSIS_PROGRESS,
+    ANALYZE,
+    BLAST_NUVS,
+    REMOVE_ANALYSIS
+} from "../actionTypes";
 
 describe("Analyses Action Creators:", () => {
 
@@ -14,7 +24,7 @@ describe("Analyses Action Creators:", () => {
         const update = {};
         const result = wsUpdateAnalysis(update);
         const expected = {
-            type: "WS_UPDATE_ANALYSIS",
+            type: WS_UPDATE_ANALYSIS,
             update
         };
 
@@ -25,7 +35,7 @@ describe("Analyses Action Creators:", () => {
         const removed = "";
         const result = wsRemoveAnalysis(removed);
         const expected = {
-            type: "WS_REMOVE_ANALYSIS",
+            type: WS_REMOVE_ANALYSIS,
             removed
         };
 
@@ -36,7 +46,7 @@ describe("Analyses Action Creators:", () => {
         const sampleId = "testid";
         const result = findAnalyses(sampleId);
         const expected = {
-            type: "FIND_ANALYSES_REQUESTED",
+            type: FIND_ANALYSES.REQUESTED,
             sampleId
         };
 
@@ -47,13 +57,12 @@ describe("Analyses Action Creators:", () => {
         const analysisId = "testid";
         const result = getAnalysis(analysisId);
         const expected = {
-            type: "GET_ANALYSIS_REQUESTED",
+            type: GET_ANALYSIS.REQUESTED,
             analysisId
         };
 
         expect(result).toEqual(expected);
     });
-
     describe("analyze:", () => {
         let originalDate;
 
@@ -75,7 +84,7 @@ describe("Analyses Action Creators:", () => {
             const created_at = new Date().toISOString();
             const result = analyze(sampleId, refId, algorithm);
             const expected = {
-                type: "ANALYZE_REQUESTED",
+                type: ANALYZE.REQUESTED,
                 algorithm,
                 placeholder: {
                     algorithm,
@@ -97,7 +106,7 @@ describe("Analyses Action Creators:", () => {
         const sequenceIndex = 2;
         const result = blastNuvs(analysisId, sequenceIndex);
         const expected = {
-            type: "BLAST_NUVS_REQUESTED",
+            type: BLAST_NUVS.REQUESTED,
             analysisId,
             sequenceIndex
         };
@@ -109,7 +118,7 @@ describe("Analyses Action Creators:", () => {
         const analysisId = "testid";
         const result = removeAnalysis(analysisId);
         const expected = {
-            type: "REMOVE_ANALYSIS_REQUESTED",
+            type: REMOVE_ANALYSIS.REQUESTED,
             analysisId
         };
 

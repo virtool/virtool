@@ -37,7 +37,7 @@ describe("Settings Reducer", () => {
     it("should handle GET_SETTINGS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_SETTINGS_SUCCEEDED",
+            type: GET_SETTINGS.SUCCEEDED,
             data: {},
         };
         result = reducer(state, action);
@@ -57,7 +57,7 @@ describe("Settings Reducer", () => {
             }
         };
         action = {
-            type: "UPDATE_SETTINGS_SUCCEEDED",
+            type: UPDATE_SETTINGS.SUCCEEDED,
             update: {
                 test: "target_updated"
             }
@@ -78,7 +78,7 @@ describe("Settings Reducer", () => {
     it("should handle GET_CONTROL_READAHEAD_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_CONTROL_READAHEAD_REQUESTED"
+            type: GET_CONTROL_READAHEAD.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -92,7 +92,7 @@ describe("Settings Reducer", () => {
     it("should handle GET_CONTROL_READAHEAD_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_CONTROL_READAHEAD_SUCCEEDED",
+            type: GET_CONTROL_READAHEAD.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -108,7 +108,7 @@ describe("Settings Reducer", () => {
     it("should handle GET_CONTROL_READAHEAD_FAILED", () => {
         state = {};
         action = {
-            type: "GET_CONTROL_READAHEAD_FAILED"
+            type: GET_CONTROL_READAHEAD.FAILED
         };
         result = reducer(state, action);
         expected = {
@@ -121,7 +121,7 @@ describe("Settings Reducer", () => {
     it("should handle TEST_PROXY_REQUESTED", () => {
         state = {};
         action = {
-            type: "TEST_PROXY_REQUESTED"
+            type: TEST_PROXY.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -136,7 +136,7 @@ describe("Settings Reducer", () => {
     it("should handle TEST_PROXY_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "TEST_PROXY_SUCCEEDED"
+            type: TEST_PROXY.SUCCEEDED
         };
         result = reducer(state, action);
         expected = {
@@ -151,7 +151,7 @@ describe("Settings Reducer", () => {
     it("should handle TEST_PROXY_FAILED", () => {
         state = {};
         action = {
-            type: "TEST_PROXY_FAILED",
+            type: TEST_PROXY.FAILED,
             message: "test_failed"
         };
         result = reducer(state, action);

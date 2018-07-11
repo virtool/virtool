@@ -39,7 +39,7 @@ describe("Files Reducer", () => {
     it("should handle FIND_FILES_REQUESTED", () => {
         state = initialState;
         action = {
-            type: "FIND_FILES_REQUESTED"
+            type: FIND_FILES.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -57,7 +57,7 @@ describe("Files Reducer", () => {
     it("should handle FIND_FILES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_FILES_SUCCEEDED",
+            type: FIND_FILES.SUCCEEDED,
             data: {},
             fileType: "test"
         };
@@ -81,7 +81,7 @@ describe("Files Reducer", () => {
             ]
         };
         action = {
-            type: "REMOVE_FILE_SUCCEEDED",
+            type: REMOVE_FILE.SUCCEEDED,
             data: {
                 file_id: "test_file"
             }
@@ -100,7 +100,7 @@ describe("Files Reducer", () => {
             uploads: []
         };
         action = {
-            type: "UPLOAD_REQUESTED",
+            type: UPLOAD.REQUESTED,
             file: {
                 name: "test.fq.gz",
                 size: 100,
@@ -127,7 +127,7 @@ describe("Files Reducer", () => {
                 uploads: []
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "testid",
                 progress: 5
             }
@@ -149,7 +149,7 @@ describe("Files Reducer", () => {
                 ]
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "test2",
                 progress: 30
             }
@@ -175,7 +175,7 @@ describe("Files Reducer", () => {
                 ]
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "test1",
                 progress: 100
             }
@@ -197,7 +197,7 @@ describe("Files Reducer", () => {
     it("should handle HIDE_UPLOAD_OVERLAY", () => {
         state = {};
         action = {
-            type: "HIDE_UPLOAD_OVERLAY"
+            type: HIDE_UPLOAD_OVERLAY
         };
         result = reducer(state, action);
         expected = {

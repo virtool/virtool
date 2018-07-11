@@ -37,7 +37,7 @@ describe("Account Reducer", () => {
     it("should handle GET_ACCOUNT_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_ACCOUNT_SUCCEEDED",
+            type: GET_ACCOUNT.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -53,7 +53,7 @@ describe("Account Reducer", () => {
     it("should handle UPDATE_ACCOUNT_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "UPDATE_ACCOUNT_SUCCEEDED",
+            type: UPDATE_ACCOUNT.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -68,7 +68,7 @@ describe("Account Reducer", () => {
     it("should handle GET_API_KEYS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_API_KEYS_SUCCEEDED",
+            type: GET_API_KEYS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -83,7 +83,7 @@ describe("Account Reducer", () => {
     it("should handle CHANGE_ACCOUNT_PASSWORD_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "CHANGE_ACCOUNT_PASSWORD_SUCCEEDED"
+            type: CHANGE_ACCOUNT_PASSWORD.SUCCEEDED
         };
         result = reducer(state, action);
         expected = {
@@ -97,7 +97,7 @@ describe("Account Reducer", () => {
     it("should handle CREATE_API_KEY_REQUESTED", () => {
         state = {};
         action = {
-            type: "CREATE_API_KEY_REQUESTED"
+            type: CREATE_API_KEY.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -111,7 +111,7 @@ describe("Account Reducer", () => {
     it("should handle CREATE_API_KEY_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "CREATE_API_KEY_SUCCEEDED",
+            type: CREATE_API_KEY.SUCCEEDED,
             data: {
                 key: "testkey"
             }
@@ -128,7 +128,7 @@ describe("Account Reducer", () => {
     it("should handle CLEAR_API_KEY", () => {
         state = {};
         action = {
-            type: "CLEAR_API_KEY"
+            type: CLEAR_API_KEY
         };
         result = reducer(state, action);
         expected = {
@@ -142,7 +142,7 @@ describe("Account Reducer", () => {
     it("should handle UPDATE_ACCOUNT_SETTINGS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "UPDATE_ACCOUNT_SETTINGS_SUCCEEDED",
+            type: UPDATE_ACCOUNT_SETTINGS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);

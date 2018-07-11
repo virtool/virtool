@@ -13,7 +13,7 @@ describe("<Tooltip />", () => {
     it("renders a .tooltip div", () => {
         wrapper = shallow(<Tooltip />);
 
-        expect(wrapper.find('.tooltip').length).toEqual(1);
+        expect(wrapper.find(".tooltip").length).toEqual(1);
     });
 
     it("renders a header subcomponent when header prop is provided", () => {
@@ -22,7 +22,7 @@ describe("<Tooltip />", () => {
         };
         wrapper = shallow(<Tooltip {...props} />);
 
-        expect(wrapper.find('.tooltip-header').length).toEqual(1);
+        expect(wrapper.find(".tooltip-header").length).toEqual(1);
     });
 
     it("renders a body subcomponent that contains optional children nodes if supplied", () => {
@@ -33,7 +33,7 @@ describe("<Tooltip />", () => {
 
         const expected = "<div class=\"test-child\"></div>";
 
-        expect(wrapper.find('.tooltip-body').childAt(0).html()).toEqual(expected);
+        expect(wrapper.find(".tooltip-body").childAt(0).html()).toEqual(expected);
     });
 
     it("renders tooltip placement relative to given x & y props", () => {
@@ -43,7 +43,7 @@ describe("<Tooltip />", () => {
         };
         wrapper = shallow(<Tooltip {...props} />);
 
-        expect(wrapper.find('.tooltip').prop('style')).toEqual({
+        expect(wrapper.find(".tooltip").prop("style")).toEqual({
             left: (props.x - 10) + "px",
             top: (props.y - window.pageYOffset - 10) + "px",
             zIndex: 10000

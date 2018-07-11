@@ -37,7 +37,7 @@ describe("Groups Reducer", () => {
     it("should handle LIST_GROUPS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "LIST_GROUPS_SUCCEEDED",
+            type: LIST_GROUPS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -52,7 +52,7 @@ describe("Groups Reducer", () => {
     it("should handle CREATE_GROUP_REQUESTED", () => {
         state = {};
         action = {
-            type: "CREATE_GROUP_REQUESTED"
+            type: CREATE_GROUP.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -66,7 +66,7 @@ describe("Groups Reducer", () => {
     it("should handle REMOVE_GROUP_REQUESTED", () => {
         state = {};
         action = {
-            type: "REMOVE_GROUP_REQUESTED"
+            type: REMOVE_GROUP.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -80,7 +80,7 @@ describe("Groups Reducer", () => {
     it("should handle SET_GROUP_PERMISSION_REQUESTED", () => {
         state = {};
         action = {
-            type: "SET_GROUP_PERMISSION_REQUESTED"
+            type: SET_GROUP_PERMISSION.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -94,7 +94,7 @@ describe("Groups Reducer", () => {
     it("should handle CREATE_GROUP_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "CREATE_GROUP_SUCCEEDED",
+            type: CREATE_GROUP.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -110,7 +110,7 @@ describe("Groups Reducer", () => {
     it("should handle SET_GROUP_PERMISSION_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "SET_GROUP_PERMISSION_SUCCEEDED",
+            type: SET_GROUP_PERMISSION.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -128,7 +128,7 @@ describe("Groups Reducer", () => {
         it("with 'Group already exists' error", () => {
             state = {};
             action = {
-                type: "CREATE_GROUP_FAILED",
+                type: CREATE_GROUP.FAILED,
                 message: "Group already exists"
             };
             result = reducer(state, action);
@@ -144,7 +144,7 @@ describe("Groups Reducer", () => {
         it("with some other error", () => {
             state = {};
             action = {
-                type: "CREATE_GROUP_FAILED",
+                type: CREATE_GROUP.FAILED,
                 message: "different error"
             };
             result = reducer(state, action);
@@ -164,7 +164,7 @@ describe("Groups Reducer", () => {
             ]
         };
         action = {
-            type: "REMOVE_GROUP_SUCCEEDED",
+            type: REMOVE_GROUP.SUCCEEDED,
             id: "group3"
         };
         result = reducer(state, action);

@@ -22,8 +22,8 @@ describe("<Help />", () => {
     it("renders a question mark icon", () => {
         wrapper = mount(<Help {...props} />);
 
-        expect(wrapper.find('i').hasClass("fa-question-circle")).toBe(true);
-        expect(wrapper.find('i')).toMatchSnapshot();
+        expect(wrapper.find("i").hasClass("fa-question-circle")).toBe(true);
+        expect(wrapper.find("i")).toMatchSnapshot();
     });
 
     it("renders even when title and pullRight props are missing", () => {

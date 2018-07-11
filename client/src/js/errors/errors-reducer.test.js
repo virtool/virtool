@@ -4,24 +4,6 @@ import reducer, {
     resetErrorName
 } from "./reducer";
 import { map } from "lodash-es";
-import {
-    CLEAR_ERROR,
-    CREATE_SAMPLE,
-    UPDATE_SAMPLE,
-    CREATE_OTU,
-    EDIT_OTU,
-    ADD_ISOLATE,
-    EDIT_ISOLATE,
-    ADD_SEQUENCE,
-    EDIT_SEQUENCE,
-    CREATE_INDEX,
-    CREATE_SUBTRACTION,
-    UPDATE_ACCOUNT,
-    CHANGE_ACCOUNT_PASSWORD,
-    CREATE_USER,
-    EDIT_USER,
-    CREATE_GROUP
-} from "../actionTypes";
 
 // Must mock target modules before imports to use in testing
 jest.mock("../utils");

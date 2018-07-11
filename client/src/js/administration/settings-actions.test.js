@@ -17,7 +17,7 @@ describe("Settings Action Creators:", () => {
     it("getSettings: returns simple action", () => {
         const result = getSettings();
         const expected = {
-            type: "GET_SETTINGS_REQUESTED"
+            type: GET_SETTINGS.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -26,7 +26,7 @@ describe("Settings Action Creators:", () => {
     it("testProxy: returns simple action", () => {
         const result = testProxy();
         const expected = {
-            type: "TEST_PROXY_REQUESTED"
+            type: TEST_PROXY.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -37,7 +37,7 @@ describe("Settings Action Creators:", () => {
         const value = 1;
         const result = updateSetting(key, value);
         const expected = {
-            type: "UPDATE_SETTINGS_REQUESTED",
+            type: UPDATE_SETTINGS.REQUESTED,
             update: {
                 [key]: value
             }
@@ -50,7 +50,7 @@ describe("Settings Action Creators:", () => {
         const update = {};
         const result = updateSettings(update);
         const expected = {
-            type: "UPDATE_SETTINGS_REQUESTED",
+            type: UPDATE_SETTINGS.REQUESTED,
             update
         };
 

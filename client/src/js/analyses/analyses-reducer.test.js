@@ -2,6 +2,14 @@ import reducer, {
     initialState as reducerInitialState,
     setNuvsBLAST
 } from "./reducer";
+import {
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    ANALYZE,
+    BLAST_NUVS,
+    REMOVE_ANALYSIS,
+    GET_ANALYSIS_PROGRESS
+} from "../actionTypes";
 
 describe("Analyses Reducer", () => {
 
@@ -30,7 +38,7 @@ describe("Analyses Reducer", () => {
 
     it("should handle FIND_ANALYSES_REQUESTED", () => {
         state = {};
-        action = { type: "FIND_ANALYSES_REQUESTED", sampleId: "tester" };
+        action = { type: FIND_ANALYSES.REQUESTED, sampleId: "tester" };
         result = reducer(state, action);
         expected = {
             ...state,
@@ -44,7 +52,7 @@ describe("Analyses Reducer", () => {
     it("should handle FIND_ANALYSES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_ANALYSES_SUCCEEDED",
+            type: FIND_ANALYSES.SUCCEEDED,
             data: {
                 documents: []
             }
@@ -61,7 +69,7 @@ describe("Analyses Reducer", () => {
     it("should handle GET_ANALYSIS_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_ANALYSIS_REQUESTED"
+            type: GET_ANALYSIS.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -98,7 +106,7 @@ describe("Analyses Reducer", () => {
                 documents: null
             };
             action = {
-                type: "ANALYZE_REQUESTED"
+                type: ANALYZE.REQUESTED
             };
             result = reducer(state, action);
             expected = state;
@@ -111,7 +119,7 @@ describe("Analyses Reducer", () => {
                 documents: []
             };
             action = {
-                type: "ANALYZE_REQUESTED",
+                type: ANALYZE.REQUESTED,
                 placeholder: {}
             };
             result = reducer(state, action);
@@ -132,7 +140,7 @@ describe("Analyses Reducer", () => {
                 documents: null
             };
             action = {
-                type: "ANALYZE_SUCCEEDED"
+                type: ANALYZE.SUCCEEDED
             };
             result = reducer(state, action);
             expected = state;
@@ -148,7 +156,7 @@ describe("Analyses Reducer", () => {
                 ]
             };
             action = {
-                type: "ANALYZE_SUCCEEDED",
+                type: ANALYZE.SUCCEEDED,
                 placeholder: { id: "test_placeholder" },
                 data: {
                     id: "test_replacement"
@@ -174,7 +182,7 @@ describe("Analyses Reducer", () => {
                 documents: null
             };
             action = {
-                type: "ANALYZE_FAILED"
+                type: ANALYZE.FAILED
             };
             result = reducer(state, action);
             expected = state;
@@ -184,10 +192,10 @@ describe("Analyses Reducer", () => {
 
         it("otherwise return state with placeholder removed", () => {
             state = {
-                documents: [{ id: "test_placeholder" },{ id: "random_string" }]
+                documents: [{ id: "test_placeholder" }, { id: "random_string" }]
             };
             action = {
-                type: "ANALYZE_FAILED",
+                type: ANALYZE.FAILED,
                 placeholder: {
                     id: "test_placeholder"
                 }
@@ -214,7 +222,7 @@ describe("Analyses Reducer", () => {
             }
         };
         action = {
-            type: "BLAST_NUVS_REQUESTED",
+            type: BLAST_NUVS.REQUESTED,
             analysisId: "testid",
             sequenceIndex: 3
         };
@@ -245,7 +253,7 @@ describe("Analyses Reducer", () => {
             }
         };
         action = {
-            type: "BLAST_NUVS_SUCCEEDED",
+            type: BLAST_NUVS.SUCCEEDED,
             analysisId: "testid",
             sequenceIndex: 3,
             data: {}
@@ -272,7 +280,7 @@ describe("Analyses Reducer", () => {
                 documents: null
             };
             action = {
-                type: "REMOVE_ANALYSIS_SUCCEEDED"
+                type: REMOVE_ANALYSIS.SUCCEEDED
             };
             result = reducer(state, action);
             expected = state;
@@ -288,7 +296,7 @@ describe("Analyses Reducer", () => {
                 ]
             };
             action = {
-                type: "REMOVE_ANALYSIS_SUCCEEDED",
+                type: REMOVE_ANALYSIS.SUCCEEDED,
                 id: "test_target"
             };
             result = reducer(state, action);

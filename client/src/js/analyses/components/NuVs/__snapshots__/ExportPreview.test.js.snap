@@ -91,7 +91,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
 </div>
 `;
 
-exports[`<NuVsExportPreview /> renders correctly when [mode='contigs] 1`] = `
+exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
 <div>
   <label>
     Preview
