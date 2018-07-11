@@ -637,9 +637,20 @@ async def get_sequence(req):
     """
     db = req.app["db"]
 
+    otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(sequence_id, virtool.db.otus.SEQUENCE_PROJECTION)
+    if not await db.otus.count({"_id": otu_id, "isolates.id": isolate_id}):
+        return not_found()
+
+    query = {
+        "_id": sequence_id,
+        "otu_id": otu_id,
+        "isolate_id": isolate_id
+    }
+
+    document = await db.sequences.find_one(query, virtool.db.otus.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -813,6 +824,9 @@ async def remove_sequence(req):
         return not_found()
 
     old = await virtool.db.otus.join(db, {"_id": otu_id, "isolates.id": isolate_id})
+
+    if old is None:
+        return not_found()
 
     if not await virtool.db.references.check_right(req, old["reference"]["id"], "modify_otu"):
         return insufficient_rights()
