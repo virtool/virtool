@@ -178,7 +178,7 @@ describe("Files Reducer", () => {
                 type: UPLOAD_PROGRESS,
                 localId: "test1",
                 progress: 100
-            }
+            };
             result = reducer(state, action);
             expected = {
                 uploads: [
