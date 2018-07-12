@@ -268,7 +268,7 @@ async def test_clear(spawn_client, mock_setup):
 async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_time):
     client = await spawn_client(setup_mode=True)
 
-    m_reload = mocker.patch("virtool.utils.reload", new=make_mocked_coro())
+    mocker.patch("virtool.utils.reload", new=make_mocked_coro())
 
     connection = motor.motor_asyncio.AsyncIOMotorClient(
         io_loop=client.app.loop,
@@ -280,7 +280,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     await connection.drop_database("foobar")
 
     m_reload = mocker.patch("virtool.utils.reload")
-    m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", make_mocked_coro())
+    m_write_settings_file = mocker.patch("virtool.settings.write_settings_file", make_mocked_coro())
 
     data = tmpdir.mkdir("data")
     watch = tmpdir.mkdir("watch")

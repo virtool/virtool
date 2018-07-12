@@ -50,7 +50,7 @@ class TestInitSettings:
             async def load(self):
                 self.stub()
 
-        mocker.patch("virtool.app_settings.Settings", MockSettings)
+        mocker.patch("virtool.settings.Settings", MockSettings)
 
         app = web.Application(loop=loop)
 
