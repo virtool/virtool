@@ -32,7 +32,6 @@ class Dispatcher:
 
         #: A dict of all active connections.
         self.connections = list()
-        self.alive = True
 
     async def run(self):
         to_remove = list()
