@@ -6,10 +6,10 @@ import { LinkContainer } from "react-router-bootstrap";
 import { ClipLoader } from "halogenium";
 import { Row, Col, Label } from "react-bootstrap";
 
-import { getTaskDisplayName } from "../../../utils";
-import { Icon, RelativeTime } from "../../../base";
-import { removeAnalysis } from "../../actions";
-import { getCanModify } from "../../../samples/selectors";
+import { getTaskDisplayName } from "../../utils";
+import { Icon, RelativeTime } from "../../base/index";
+import { removeAnalysis } from "../actions";
+import { getCanModify } from "../../samples/selectors";
 
 export const AnalysisItem = (props) => {
 
@@ -37,6 +37,19 @@ export const AnalysisItem = (props) => {
         );
     }
 
+    let reference;
+
+    if (!props.placeholder) {
+        reference = (
+            <span>
+                {props.reference.name}
+                <Label style={{marginLeft: "5px"}}>
+                    {props.index.version}
+                </Label>
+            </span>
+        );
+    }
+
     const content = (
         <div className={itemClass}>
             <Row>
@@ -46,10 +59,10 @@ export const AnalysisItem = (props) => {
                 <Col md={4}>
                     Started <RelativeTime time={props.created_at} />{props.placeholder ? null : ` by ${props.user.id}`}
                 </Col>
-                <Col md={1}>
-                    {props.placeholder ? null : <Label>{props.index.version}</Label>}
+                <Col md={3}>
+                    {reference}
                 </Col>
-                <Col md={4}>
+                <Col md={2}>
                     {end}
                 </Col>
             </Row>

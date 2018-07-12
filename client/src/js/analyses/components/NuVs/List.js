@@ -7,7 +7,7 @@ import { LinkContainer } from "react-router-bootstrap";
 
 import NuVsEntry from "./Entry";
 import NuVsExpansion from "./Expansion";
-import { Button, Icon } from "../../../../base";
+import { Button, Icon } from "../../../base/index";
 
 export default class NuVsList extends React.Component {
 

@@ -1,15 +1,44 @@
-import {simpleActionCreator} from "../utils";
 import {
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
-    FIND_ANALYSES,
-    GET_ANALYSIS,
-    GET_ANALYSIS_PROGRESS,
-    CLEAR_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS
+    CLEAR_ANALYSIS,
+    COLLAPSE_ANALYSIS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    REMOVE_ANALYSIS,
+    SET_PATHOSCOPE_FILTER,
+    SET_PATHOSCOPE_SORT_KEY,
+    TOGGLE_ANALYSIS_EXPANDED,
+    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
+    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    WS_REMOVE_ANALYSIS,
+    WS_UPDATE_ANALYSIS
 } from "../actionTypes";
+import {simpleActionCreator} from "../utils";
+
+export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
+
+export const toggleExpanded = (id) => ({
+    type: TOGGLE_ANALYSIS_EXPANDED,
+    id
+});
+
+export const setPathoscopeFilter = (key) => ({
+    type: SET_PATHOSCOPE_FILTER,
+    key
+});
+
+export const setSortKey = (key) => ({
+    type: SET_PATHOSCOPE_SORT_KEY,
+    key
+});
+
+export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
+
+export const toggleShowPathoscopeMedian = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
+
+export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
 /**
  * Returns an action that should be dispatched when a analysis document is updated via websocket.
@@ -60,18 +89,6 @@ export const getAnalysis = (analysisId) => ({
 });
 
 export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
-
-/**
- * Returns action for getting the current progress state.
- *
- * @func
- * @param jobId {number} the value of the progress
- * @returns {object}
- */
-export const getAnalysisProgress = (progress) => ({
-    type: GET_ANALYSIS_PROGRESS,
-    progress
-});
 
 /**
  * Returns action that can trigger an API call for sample analysis.

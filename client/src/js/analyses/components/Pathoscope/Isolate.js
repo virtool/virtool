@@ -1,10 +1,10 @@
-import React from "react";
+import {map, sortBy} from "lodash-es";
 import PropTypes from "prop-types";
-import { Flex, FlexItem } from "../../../../base";
-import { map, sortBy } from "lodash-es";
+import React from "react";
+import {Flex, FlexItem} from "../../../base/index";
+import {toScientificNotation} from "../../../utils";
 
 import Coverage from "./Coverage";
-import { toScientificNotation } from "../../../../utils";
 
 export default class PathoscopeIsolate extends React.Component {
 
@@ -12,17 +12,15 @@ export default class PathoscopeIsolate extends React.Component {
         otuId: PropTypes.string,
         name: PropTypes.string,
         pi: PropTypes.number,
-        best: PropTypes.number,
-        coverage: PropTypes.string,
+        coverage: PropTypes.number,
+        depth: PropTypes.number,
         maxDepth: PropTypes.number,
         meanDepth: PropTypes.number,
         medianDepth: PropTypes.number,
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,
-        showReads: PropTypes.bool,
-        showMedian: PropTypes.bool,
-        isCrop: PropTypes.bool
+        showReads: PropTypes.bool
     };
 
     componentDidMount () {
@@ -63,14 +61,10 @@ export default class PathoscopeIsolate extends React.Component {
                 yMax={this.props.maxDepth}
                 showYAxis={i === 0}
                 isolateComponent={this}
-                isCrop={this.props.isCrop}
             />
         );
 
         const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
-        const avgDepth = this.props.showMedian
-            ? toScientificNotation(this.props.medianDepth)
-            : toScientificNotation(this.props.meanDepth);
 
         return (
             <div>
@@ -86,7 +80,7 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <strong className="small text-danger">
-                                {avgDepth}
+                                {this.props.depth.toFixed(1)}
                             </strong>
                         </FlexItem>
                         <FlexItem pad={5}>

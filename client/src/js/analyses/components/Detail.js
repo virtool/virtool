@@ -1,14 +1,16 @@
-import React from "react";
+import {get} from "lodash-es";
 import Numeral from "numeral";
-import { connect } from "react-redux";
-import { get } from "lodash-es";
-import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
-import { IDRow, LoadingPlaceholder, RelativeTime, NotFound } from "../../../base";
+import React from "react";
+import {Label, Panel, Table} from "react-bootstrap";
+import {connect} from "react-redux";
+import {Link} from "react-router-dom";
+import {IDRow, LoadingPlaceholder, NotFound, RelativeTime} from "../../base/index";
+import {getTaskDisplayName} from "../../utils";
 
-import { getAnalysis, clearAnalysis } from "../../actions";
-import { getTaskDisplayName } from "../../../utils";
-import PathoscopeViewer from "./Pathoscope/Viewer";
+
+import {clearAnalysis, getAnalysis} from "../actions";
 import NuVsViewer from "./NuVs/Viewer";
+import PathoscopeViewer from "./Pathoscope/Viewer";
 
 class AnalysisDetail extends React.Component {
 
@@ -27,20 +29,11 @@ class AnalysisDetail extends React.Component {
         }
 
         if (this.props.detail === null) {
-            return (
-                <div style={{paddingTop: "130px"}}>
-                    <Row>
-                        <Col xs={12} md={4} mdOffset={4}>
-                            <div className="progress-small">
-                                <ProgressBar now={this.props.progress || 15} active />
-                            </div>
-                        </Col>
-                    </Row>
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const detail = this.props.detail;
+
         let content;
 
         if (!detail.ready) {
@@ -70,6 +63,8 @@ class AnalysisDetail extends React.Component {
             throw Error("Unusable analysis detail content");
         }
 
+        const mappedPercent = Numeral(detail.read_count / this.props.quality.count).format("0.00%");
+
         return (
             <div>
                 <Table bordered>
@@ -81,13 +76,25 @@ class AnalysisDetail extends React.Component {
                             </td>
                         </tr>
                         <tr>
-                            <th>Index Version</th>
-                            <td><Label>{detail.index.version}</Label></td>
+                            <th>Reference</th>
+                            <td>
+                                <Link to={`/refs/${detail.reference.id}`}>
+                                    {detail.reference.name}
+                                </Link>
+                                <Label style={{marginLeft: "5px"}}>
+                                    {detail.index.version}
+                                </Label>
+                            </td>
                         </tr>
                         <IDRow id={detail.id} />
                         <tr>
                             <th>Mapped Reads</th>
-                            <td>{Numeral(detail.read_count).format()}</td>
+                            <td>
+                                {Numeral(detail.read_count).format()}
+                                <span style={{paddingLeft: "5px"}}>
+                                    ({mappedPercent})
+                                </span>
+                            </td>
                         </tr>
                         <tr>
                             <th>Library Read Count</th>
@@ -95,11 +102,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Created</th>
-                            <td><RelativeTime time={detail.created_at} /></td>
-                        </tr>
-                        <tr>
-                            <th>Created By</th>
-                            <td>{detail.user.id}</td>
+                            <td><RelativeTime time={detail.created_at} /> by {detail.user.id}</td>
                         </tr>
                     </tbody>
                 </Table>
@@ -113,7 +116,6 @@ class AnalysisDetail extends React.Component {
 const mapStateToProps = (state) => ({
     error: get(state, "errors.GET_ANALYSIS_ERROR", null),
     detail: state.analyses.detail,
-    progress: state.analyses.getAnalysisProgress,
     quality: state.samples.detail.quality
 });
 

@@ -3,7 +3,6 @@ import {
     wsRemoveAnalysis,
     findAnalyses,
     getAnalysis,
-    getAnalysisProgress,
     analyze,
     blastNuvs,
     removeAnalysis
@@ -64,18 +63,6 @@ describe("Analyses Action Creators:", () => {
 
         expect(result).toEqual(expected);
     });
-
-    it("getAnalysisProgress: returns action to get current progress of analysis", () => {
-        const progress = 5;
-        const result = getAnalysisProgress(progress);
-        const expected = {
-            type: GET_ANALYSIS_PROGRESS,
-            progress
-        };
-
-        expect(result).toEqual(expected);
-    });
-
     describe("analyze:", () => {
         let originalDate;
 

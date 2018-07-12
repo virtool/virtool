@@ -350,11 +350,13 @@ async def list_analyses(req):
 
         raise
 
-    documents = await db.analyses.find({"sample.id": sample_id}, virtool.db.analyses.PROJECTION).to_list(None)
+    analysis_cursor = db.analyses.find({"sample.id": sample_id}, virtool.db.analyses.PROJECTION)
+
+    documents = [virtool.utils.base_processor(d) async for d in analysis_cursor]
 
     return json_response({
         "total_count": len(documents),
-        "documents": [virtool.utils.base_processor(d) for d in documents]
+        "documents": documents
     })
 
 

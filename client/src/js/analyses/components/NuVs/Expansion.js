@@ -7,7 +7,7 @@ import { select } from "d3-selection";
 
 import NuVsBLAST from "./BLAST";
 import NuVsORF from "./ORF";
-import { ListGroupItem } from "../../../../base";
+import { ListGroupItem } from "../../../base/index";
 
 export default class NuVsExpansion extends React.Component {
 

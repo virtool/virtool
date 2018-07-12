@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { map, find, reject } from "lodash-es";
 import { Modal, ListGroup, Col, Label } from "react-bootstrap";
-import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../../base";
-import { getTaskDisplayName } from "../../../utils";
+import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../base/index";
+import { getTaskDisplayName } from "../../utils";
 
 const IndexSelect = ({ indexes, onSelect, selected, error }) => {
 

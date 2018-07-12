@@ -5,7 +5,7 @@ import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
-import CreateAnalysis from "../../analyses/components/Analyses/Create";
+import CreateAnalysis from "../../analyses/components/Create";
 import QuickAnalyze from "./QuickAnalyze";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } from "../../base";
 import { fetchSamples } from "../actions";

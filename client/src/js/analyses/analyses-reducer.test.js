@@ -75,7 +75,7 @@ describe("Analyses Reducer", () => {
         expected = {
             ...state,
             detail: null,
-            getAnalysisProgress: 0
+            data: null
         };
 
         expect(result).toEqual(expected);
@@ -84,28 +84,16 @@ describe("Analyses Reducer", () => {
     it("should handle GET_ANALYSIS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: GET_ANALYSIS.SUCCEEDED,
-            data: {}
+            type: "GET_ANALYSIS_SUCCEEDED",
+            data: {
+                diagnosis: []
+            }
         };
         result = reducer(state, action);
         expected = {
             ...state,
-            detail: action.data
-        };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle GET_ANALYSIS_PROGRESS", () => {
-        state = {};
-        action = {
-            type: GET_ANALYSIS_PROGRESS,
-            progress: 50
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            getAnalysisProgress: 50
+            detail: action.data,
+            data: []
         };
 
         expect(result).toEqual(expected);
@@ -372,7 +360,7 @@ describe("Analyses Reducer", () => {
                 sequenceIndex = 3;
                 result = setNuvsBLAST(state, analysisId, sequenceIndex);
                 expected = state;
-        
+
                 expect(result).toEqual(expected);
             });
 
