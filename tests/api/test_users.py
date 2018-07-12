@@ -1,7 +1,6 @@
 import pytest
-from operator import itemgetter
 
-from virtool.users import check_password, PERMISSIONS
+from virtool.users import check_password
 
 
 async def test_find(spawn_client, create_user, static_time):
@@ -85,133 +84,105 @@ async def test_find(spawn_client, create_user, static_time):
     }
 
 
-@pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, spawn_client, create_user, no_permissions, resp_is, static_time):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, spawn_client, create_user, no_permissions, resp_is, static_time):
     """
     Test that a ``GET /api/users`` returns a list of users.
 
     """
-    client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
+    client = await spawn_client(authorize=True, administrator=True)
 
     users = [create_user("bob")]
 
-    if not not_found:
+    if not error:
         users.append(create_user("fred"))
 
     await client.db.users.insert_many(users)
 
     resp = await client.get("/api/users/fred")
 
-    if not_found:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        assert resp.status == 200
+    assert resp.status == 200
 
-        assert await resp.json() == {
-            "id": "fred",
-            "administrator": False,
-            "force_reset": False,
-            "groups": [],
-            "identicon": "identicon",
-            "last_password_change": static_time.iso,
-            "permissions": no_permissions,
-            "primary_group": "technician"
-        }
+    assert await resp.json() == {
+        "id": "fred",
+        "administrator": False,
+        "force_reset": False,
+        "groups": [],
+        "identicon": "identicon",
+        "last_password_change": static_time.iso,
+        "permissions": no_permissions,
+        "primary_group": "technician"
+    }
 
 
-class TestCreate:
+@pytest.mark.parametrize("error", [None, "400_exists", "400_password"])
+async def test_create(error, spawn_client, create_user, resp_is, static_time):
+    """
+    Test that a valid request results in a user document being properly inserted.
 
-    async def test(self, spawn_client, create_user, static_time):
-        """
-        Test that a valid request results in a user document being properly inserted.
+    - check response
+    - check database
+    - check password
 
-        - check response
-        - check database
-        - check password
+    """
+    client = await spawn_client(authorize=True, administrator=True)
 
-        """
-        client = await spawn_client(authorize=True, administrator=True)
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        data = {
-            "user_id": "bob",
-            "password": "hello_world",
-            "force_reset": False
-        }
-
-        resp = await client.post("/api/users", data)
-
-        assert resp.status == 201
-
-        assert resp.headers["Location"] == "/api/users/bob"
-
-        expected = {
-            "id": "bob","administrator": False,
-            "force_reset": False,
-            "groups": [],
-            "last_password_change": static_time.iso,
-            "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
-            "permissions": create_user()["permissions"],
-            "primary_group": ""
-        }
-
-        assert await resp.json() == expected
-
-        expected.update({
-            "_id": expected.pop("id"),
-            "last_password_change": static_time.datetime
+    if error == "400_exists":
+        await client.db.users.insert_one({
+            "_id": "bob"
         })
 
-        assert await client.db.users.find_one("bob", list(expected.keys())) == expected
+    client.app["settings"]["minimum_password_length"] = 8
 
-        document = await client.db.users.find_one("bob", ["password"])
+    data = {
+        "user_id": "bob",
+        "password": "hello_world",
+        "force_reset": False
+    }
 
-        assert check_password("hello_world", document["password"])
+    if error == "400_password":
+        data["password"] = "foo"
 
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that invalid and missing input data result in a ``422`` response with detailed error data.
+    resp = await client.post("/api/users", data)
 
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        data = {
-            "username": "bob",
-            "password": 1234,
-            "force_reset": False
-        }
-
-        resp = await client.post("/api/users", data)
-
-        print(await resp.json())
-
-        assert await resp_is.invalid_input(resp, {
-            "password": ["must be of string type"],
-            "user_id": ["required field"]
-        })
-
-    async def test_user_exists(self, spawn_client, resp_is):
-        """
-        Test that an input ``user_id`` that already exists results in a ``400`` response with informative error message.
-
-        """
-        client = await spawn_client(authorize=True, administrator=True, permissions=["manage_users"])
-
-        client.app["settings"]["minimum_password_length"] = 8
-
-        data = {
-            "user_id": "test",
-            "password": "hello_world",
-            "force_reset": False
-        }
-
-        resp = await client.post("/api/users", data)
-
+    if error == "400_exists":
         assert await resp_is.bad_request(resp, "User already exists")
+        return
+
+    if error == "400_password":
+        assert await resp_is.bad_request(resp, "Password does not meet length requirement")
+        return
+
+    assert resp.status == 201
+
+    assert resp.headers["Location"] == "/api/users/bob"
+
+    expected = {
+        "id": "bob","administrator": False,
+        "force_reset": False,
+        "groups": [],
+        "last_password_change": static_time.iso,
+        "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
+        "permissions": create_user()["permissions"],
+        "primary_group": ""
+    }
+
+    assert await resp.json() == expected
+
+    expected.update({
+        "_id": expected.pop("id"),
+        "last_password_change": static_time.datetime
+    })
+
+    assert await client.db.users.find_one("bob", list(expected.keys())) == expected
+
+    document = await client.db.users.find_one("bob", ["password"])
+
+    assert check_password("hello_world", document["password"])
 
 
 @pytest.mark.parametrize("data", [
@@ -296,20 +267,21 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         assert await resp.json() == expected
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test_remove(exists, spawn_client, resp_is, create_user):
+@pytest.mark.parametrize("error", [None, "400"])
+async def test_remove(error, spawn_client, resp_is, create_user):
     """
     Test that a group is removed from the user for a valid request.
 
     """
     client = await spawn_client(authorize=True, administrator=True)
 
-    if exists:
+    if not error:
         await client.db.users.insert_one(create_user("bob"))
 
     resp = await client.delete("/api/users/bob")
 
-    if exists:
-        assert resp.status == 204
-    else:
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert await resp_is.no_content(resp)

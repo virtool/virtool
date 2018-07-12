@@ -3,219 +3,202 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-class TestFind:
-    @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
-        (None, None, None, range(0, 3), {
-            "page": 1,
-            "per_page": 25,
-            "page_count": 1,
-            "found_count": 3,
-            "total_count": 3
-        }),
-        # Test ``per_page`` query param.
-        (None, 2, 1, range(0, 2), {
-            "page": 1,
-            "per_page": 2,
-            "page_count": 2,
-            "found_count": 3,
-            "total_count": 3
-        }),
-        # Test ``per_page`` and ``page`` query param.
-        (None, 2, 2, range(2, 3), {
-            "page": 2,
-            "per_page": 2,
-            "page_count": 2,
-            "found_count": 3,
-            "total_count": 3
-        }),
-        # Test ``find`` query param and ``found_count`` response field.
-        ("gv", None, None, range(1, 3), {
-            "page": 1,
-            "per_page": 25,
-            "page_count": 1,
-            "found_count": 2,
-            "total_count": 3
-        }),
-        ("sp", None, None, range(0, 1), {
-            "page": 1,
-            "per_page": 25,
-            "page_count": 1,
-            "found_count": 1,
-            "total_count": 3
-        }),
-        ("fred", None, None, [0, 2], {
-            "page": 1,
-            "per_page": 25,
-            "page_count": 1,
-            "found_count": 2,
-            "total_count": 3
-        })
+@pytest.mark.parametrize("find,per_page,page,d_range,meta", [
+    (None, None, None, range(0, 3), {
+        "page": 1,
+        "per_page": 25,
+        "page_count": 1,
+        "found_count": 3,
+        "total_count": 3
+    }),
+    # Test ``per_page`` query param.
+    (None, 2, 1, range(0, 2), {
+        "page": 1,
+        "per_page": 2,
+        "page_count": 2,
+        "found_count": 3,
+        "total_count": 3
+    }),
+    # Test ``per_page`` and ``page`` query param.
+    (None, 2, 2, range(2, 3), {
+        "page": 2,
+        "per_page": 2,
+        "page_count": 2,
+        "found_count": 3,
+        "total_count": 3
+    }),
+    # Test ``find`` query param and ``found_count`` response field.
+    ("gv", None, None, range(1, 3), {
+        "page": 1,
+        "per_page": 25,
+        "page_count": 1,
+        "found_count": 2,
+        "total_count": 3
+    }),
+    ("sp", None, None, range(0, 1), {
+        "page": 1,
+        "per_page": 25,
+        "page_count": 1,
+        "found_count": 1,
+        "total_count": 3
+    }),
+    ("fred", None, None, [0, 2], {
+        "page": 1,
+        "per_page": 25,
+        "page_count": 1,
+        "found_count": 2,
+        "total_count": 3
+    })
+])
+async def test_find(find, per_page, page, d_range, meta, spawn_client, static_time):
+    client = await spawn_client(authorize=True)
+
+    time_1 = arrow.get(static_time.datetime).datetime
+    time_2 = arrow.get(static_time.datetime).shift(hours=1).datetime
+    time_3 = arrow.get(static_time.datetime).shift(hours=2).datetime
+
+    await client.db.samples.insert_many([
+        {
+            "user": {
+                "id": "bob"
+            },
+            "nuvs": False,
+            "host": "",
+            "foobar": True,
+            "imported": True,
+            "isolate": "Thing",
+            "created_at": time_2,
+            "archived": True,
+            "_id": "beb1eb10",
+            "name": "16GVP042",
+            "pathoscope": False,
+            "all_read": True
+        },
+        {
+            "user": {
+                "id": "fred"
+            },
+            "nuvs": False,
+            "host": "",
+            "foobar": True,
+            "imported": True,
+            "isolate": "Test",
+            "created_at": time_1,
+            "archived": True,
+            "_id": "72bb8b31",
+            "name": "16GVP043",
+            "pathoscope": False,
+            "all_read": True
+        },
+        {
+            "user": {
+                "id": "fred"
+            },
+            "nuvs": False,
+            "host": "",
+            "foobar": True,
+            "imported": True,
+            "isolate": "",
+            "created_at": time_3,
+            "archived": False,
+            "_id": "cb400e6d",
+            "name": "16SPP044",
+            "pathoscope": False,
+            "all_read": True
+        }
     ])
-    async def test(self, find, per_page, page, d_range, meta, spawn_client, static_time):
-        client = await spawn_client(authorize=True)
 
-        time_1 = arrow.get(static_time.datetime).datetime
-        time_2 = arrow.get(static_time.datetime).shift(hours=1).datetime
-        time_3 = arrow.get(static_time.datetime).shift(hours=2).datetime
+    path = "/api/samples"
+    query = list()
 
-        await client.db.samples.insert_many([
-            {
-                "user": {
-                    "id": "bob"
-                },
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "imported": True,
-                "isolate": "Thing",
-                "created_at": time_2,
-                "archived": True,
-                "_id": "beb1eb10",
-                "name": "16GVP042",
-                "pathoscope": False,
-                "all_read": True
+    if find is not None:
+        query.append("find={}".format(find))
+
+    if per_page is not None:
+        query.append("per_page={}".format(per_page))
+
+    if page is not None:
+        query.append("page={}".format(page))
+
+    if len(query):
+        path += "?{}".format("&".join(query))
+
+    resp = await client.get(path)
+
+    assert resp.status == 200
+
+    expected_documents = [
+        {
+            "user": {
+                "id": "fred"
             },
-            {
-                "user": {
-                    "id": "fred"
-                },
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "imported": True,
-                "isolate": "Test",
-                "created_at": time_1,
-                "archived": True,
-                "_id": "72bb8b31",
-                "name": "16GVP043",
-                "pathoscope": False,
-                "all_read": True
+            "nuvs": False,
+            "host": "",
+            "imported": True,
+            "isolate": "",
+            "created_at": "2015-10-06T22:00:00Z",
+            "archived": False,
+            "id": "cb400e6d",
+            "name": "16SPP044",
+            "pathoscope": False
+        },
+        {
+            "user": {
+                "id": "bob"
             },
-            {
-                "user": {
-                    "id": "fred"
-                },
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "imported": True,
-                "isolate": "",
-                "created_at": time_3,
-                "archived": False,
-                "_id": "cb400e6d",
-                "name": "16SPP044",
-                "pathoscope": False,
-                "all_read": True
-            }
-        ])
-
-        path = "/api/samples"
-        query = list()
-
-        if find is not None:
-            query.append("find={}".format(find))
-
-        if per_page is not None:
-            query.append("per_page={}".format(per_page))
-
-        if page is not None:
-            query.append("page={}".format(page))
-
-        if len(query):
-            path += "?{}".format("&".join(query))
-
-        resp = await client.get(path)
-
-        assert resp.status == 200
-
-        expected_documents = [
-            {
-                "user": {
-                    "id": "fred"
-                },
-                "nuvs": False,
-                "host": "",
-                "imported": True,
-                "isolate": "",
-                "created_at": "2015-10-06T22:00:00Z",
-                "archived": False,
-                "id": "cb400e6d",
-                "name": "16SPP044",
-                "pathoscope": False
+            "nuvs": False,
+            "host": "",
+            "imported": True,
+            "isolate": "Thing",
+            "created_at": "2015-10-06T21:00:00Z",
+            "archived": True,
+            "id": "beb1eb10",
+            "name": "16GVP042",
+            "pathoscope": False
+        },
+        {
+            "user": {
+                "id": "fred"
             },
-            {
-                "user": {
-                    "id": "bob"
-                },
-                "nuvs": False,
-                "host": "",
-                "imported": True,
-                "isolate": "Thing",
-                "created_at": "2015-10-06T21:00:00Z",
-                "archived": True,
-                "id": "beb1eb10",
-                "name": "16GVP042",
-                "pathoscope": False
-            },
-            {
-                "user": {
-                    "id": "fred"
-                },
-                "nuvs": False,
-                "host": "",
-                "imported": True,
-                "isolate": "Test",
-                "created_at": "2015-10-06T20:00:00Z",
-                "archived": True,
-                "id": "72bb8b31",
-                "name": "16GVP043",
-                "pathoscope": False
-            }
-        ]
+            "nuvs": False,
+            "host": "",
+            "imported": True,
+            "isolate": "Test",
+            "created_at": "2015-10-06T20:00:00Z",
+            "archived": True,
+            "id": "72bb8b31",
+            "name": "16GVP043",
+            "pathoscope": False
+        }
+    ]
 
-        assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
-
-    async def test_invalid_query(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get("/api/samples?per_page=five")
-
-        assert resp.status == 422
-
-        assert await resp_is.invalid_query(resp, {
-                'per_page': [
-                    "field 'per_page' cannot be coerced: invalid literal for int() with base 10: 'five'",
-                    'must be of integer type'
-                ]
-        })
+    assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
 
 
-class TestGet:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, mocker, spawn_client, resp_is, static_time):
+    mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-    async def test(self, mocker, spawn_client, static_time):
-        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
+    client = await spawn_client(authorize=True)
 
-        client = await spawn_client(authorize=True)
-
+    if not error:
         await client.db.samples.insert_one({
             "_id": "test",
             "created_at": static_time.datetime
         })
 
-        resp = await client.get("api/samples/test")
+    resp = await client.get("api/samples/test")
 
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "id": "test",
-            "created_at": static_time.iso
-        }
-
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get("/api/samples/foobar")
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "id": "test",
+        "created_at": static_time.iso
+    }
 
 
 class TestCreate:
@@ -447,47 +430,45 @@ class TestCreate:
         assert await resp_is.bad_request(resp, "File does not exist")
 
 
-class TestRemove:
+@pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
+async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
+    client = await spawn_client(authorize=True)
 
-    @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
-    async def test(self, delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
-        client = await spawn_client(authorize=True)
+    mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
+    if resp_is_attr == "no_content":
+        await client.db.samples.insert_one({
+            "_id": "test",
+            "all_read": True,
+            "all_write": True
+        })
 
-        if resp_is_attr == "no_content":
-            await client.db.samples.insert_one({
-                "_id": "test",
-                "all_read": True,
-                "all_write": True
-            })
+    m = mocker.stub(name="remove_samples")
 
-        m = mocker.stub(name="remove_samples")
+    async def mock_remove_samples(*args, **kwargs):
+        m(*args, **kwargs)
+        return create_delete_result(delete_result)
 
-        async def mock_remove_samples(*args, **kwargs):
-            m(*args, **kwargs)
-            return create_delete_result(delete_result)
+    mocker.patch("virtool.db.samples.remove_samples", new=mock_remove_samples)
 
-        mocker.patch("virtool.db.samples.remove_samples", new=mock_remove_samples)
+    resp = await client.delete("/api/samples/test")
 
-        resp = await client.delete("/api/samples/test")
+    assert await getattr(resp_is, resp_is_attr)(resp)
 
-        assert await getattr(resp_is, resp_is_attr)(resp)
-
-        if resp_is_attr == "no_content":
-            m.assert_called_with(client.db, client.app["settings"], ["test"])
-        else:
-            assert not m.called
+    if resp_is_attr == "no_content":
+        m.assert_called_with(client.db, client.app["settings"], ["test"])
+    else:
+        assert not m.called
 
 
-class TestListAnalyses:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
 
-    async def test(self, mocker, spawn_client, static_time):
+    mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-        mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
+    client = await spawn_client(authorize=True)
 
-        client = await spawn_client(authorize=True)
-
+    if not error:
         await client.db.samples.insert_one({
             "_id": "test",
             "created_at": static_time.datetime,
@@ -495,142 +476,139 @@ class TestListAnalyses:
             "all_write": True
         })
 
-        await client.db.analyses.insert_many([
-            {
-                "_id": "test_1",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                },
-                "foobar": True
+    await client.db.analyses.insert_many([
+        {
+            "_id": "test_1",
+            "algorithm": "pathopscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
             },
-            {
-                "_id": "test_2",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                },
-                "foobar": True
+            "index": {
+                "version": 2,
+                "id": "foo"
             },
-            {
-                "_id": "test_3",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": static_time.datetime,
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                },
-                "foobar": False
+            "user": {
+                "id": "fred"
             },
-        ])
+            "sample": {
+                "id": "test"
+            },
+            "foobar": True
+        },
+        {
+            "_id": "test_2",
+            "algorithm": "pathopscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": "fred"
+            },
+            "sample": {
+                "id": "test"
+            },
+            "foobar": True
+        },
+        {
+            "_id": "test_3",
+            "algorithm": "pathopscope_bowtie",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": "fred"
+            },
+            "sample": {
+                "id": "test"
+            },
+            "foobar": False
+        },
+    ])
 
-        resp = await client.get("/api/samples/test/analyses")
+    resp = await client.get("/api/samples/test/analyses")
 
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "total_count": 3,
-            "documents": [
-                {
-                    "id": "test_1",
-                    "algorithm": "pathopscope_bowtie",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "ready": True,
-                    "job": {
-                        "id": "test"
-                    },
-                    "index": {
-                        "version": 2,
-                        "id": "foo"
-                    },
-                    "user": {
-                        "id": "fred"
-                    },
-                    "sample": {
-                        "id": "test"
-                    }
-                },
-                {
-                    "id": "test_2",
-                    "algorithm": "pathopscope_bowtie",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "ready": True,
-                    "job": {
-                        "id": "test"
-                    },
-                    "index": {
-                        "version": 2,
-                        "id": "foo"
-                    },
-                    "user": {
-                        "id": "fred"
-                    },
-                    "sample": {
-                        "id": "test"
-                    }
-                },
-                {
-                    "id": "test_3",
-                    "algorithm": "pathopscope_bowtie",
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "ready": True,
-                    "job": {
-                        "id": "test"
-                    },
-                    "index": {
-                        "version": 2,
-                        "id": "foo"
-                    },
-                    "user": {
-                        "id": "fred"
-                    },
-                    "sample": {
-                        "id": "test"
-                    }
-                }
-            ]
-        }
-
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get("/api/samples/test/analyses")
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "total_count": 3,
+        "documents": [
+            {
+                "id": "test_1",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": "2015-10-06T20:00:00Z",
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            },
+            {
+                "id": "test_2",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": "2015-10-06T20:00:00Z",
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            },
+            {
+                "id": "test_3",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": "2015-10-06T20:00:00Z",
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            }
+        ]
+    }
 
 
 @pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])

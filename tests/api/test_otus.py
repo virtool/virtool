@@ -12,7 +12,7 @@ import virtool.otus
 @pytest.mark.parametrize("names", [None, True, False])
 async def test_find(find, verified, names, mocker, spawn_client, test_otu):
     """
-
+    Test that OTUs can be found be `find` and `verified` fields. Ensure names returns a list of names and ids.
 
     """
     client = await spawn_client(authorize=True)
@@ -47,58 +47,60 @@ async def test_find(find, verified, names, mocker, spawn_client, test_otu):
     )
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test_get(exists, spawn_client, resp_is, test_otu, test_sequence):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, spawn_client, resp_is, test_otu, test_sequence):
     """
     Test that a valid request returns a complete otu document.
 
     """
     client = await spawn_client(authorize=True)
 
-    if exists:
+    if not error:
         await client.db.otus.insert_one(test_otu)
-        await client.db.sequences.insert_one(test_sequence)
 
-    resp = await client.get("/api/otus/{}".format(test_otu["_id"]))
+    await client.db.sequences.insert_one(test_sequence)
 
-    if exists:
-        assert resp.status == 200
+    resp = await client.get("/api/otus/6116cba1")
 
-        assert await resp.json() == {
-            "abbreviation": "PVF",
-            "imported": True,
-            "last_indexed_version": 0,
-            "verified": False,
-            "most_recent_change": None,
-            "name": "Prunus virus F",
-            "version": 0,
-            "id": "6116cba1",
-            "schema": [],
-            "isolates": [
-                {
-                    "id": "cab8b360",
-                    "source_type": "isolate",
-                    "source_name": "8816-v2",
-                    "default": True,
-                    "sequences": [
-                        {
-                            "id": "KX269872",
-                            "definition": "Prunus virus F isolate 8816-s2 "
-                            "segment RNA2 polyprotein 2 gene, complete cds.",
-                            "host": "sweet cherry",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "segment": None
-                        }
-                    ]
-                }
-            ],
-            "issues": None,
-            "reference": {
-                "id": "hxn167"
-            }
-        }
-    else:
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "abbreviation": "PVF",
+        "imported": True,
+        "last_indexed_version": 0,
+        "verified": False,
+        "most_recent_change": None,
+        "name": "Prunus virus F",
+        "version": 0,
+        "id": "6116cba1",
+        "schema": [],
+        "isolates": [
+            {
+                "id": "cab8b360",
+                "source_type": "isolate",
+                "source_name": "8816-v2",
+                "default": True,
+                "sequences": [
+                    {
+                        "id": "KX269872",
+                        "definition": "Prunus virus F isolate 8816-s2 "
+                        "segment RNA2 polyprotein 2 gene, complete cds.",
+                        "host": "sweet cherry",
+                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                        "segment": None
+                    }
+                ]
+            }
+        ],
+        "issues": None,
+        "reference": {
+            "id": "hxn167"
+        }
+    }
 
 
 class TestCreate:
@@ -616,15 +618,15 @@ async def test_remove(abbreviation, description, exists, spawn_client, check_ref
     )
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test_list_isolates(exists, spawn_client, resp_is, test_otu):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_list_isolates(error, spawn_client, resp_is, test_otu):
     """
     Test the isolates are properly listed and formatted for an existing otu.
 
     """
     client = await spawn_client(authorize=True)
 
-    if exists:
+    if not error:
         test_otu["isolates"].append({
             "default": False,
             "source_type": "isolate",
@@ -636,73 +638,66 @@ async def test_list_isolates(exists, spawn_client, resp_is, test_otu):
 
     resp = await client.get("/api/otus/6116cba1/isolates")
 
-    if exists:
-        assert resp.status == 200
-
-        assert await resp.json() == [
-            {
-                "default": True,
-                "source_type": "isolate",
-                "source_name": "8816-v2",
-                "id": "cab8b360",
-                "sequences": []
-            },
-            {
-                "default": False,
-                "source_type": "isolate",
-                "source_name": "7865",
-                "id": "bcb9b352",
-                "sequences": []
-            }
-        ]
-
-    else:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
+    assert resp.status == 200
 
-class TestGetIsolate:
-
-    async def test(self, spawn_client, test_otu, test_sequence):
-        """
-        Test that an existing isolate is successfully returned.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        await client.db.otus.insert_one(test_otu)
-        await client.db.sequences.insert_one(test_sequence)
-
-        resp = await client.get("/api/otus/6116cba1/isolates/cab8b360")
-
-        assert resp.status == 200
-
-        test_sequence["id"] = test_sequence.pop("_id")
-        del test_sequence["otu_id"]
-        del test_sequence["isolate_id"]
-
-        assert await resp.json() == {
+    assert await resp.json() == [
+        {
             "default": True,
             "source_type": "isolate",
             "source_name": "8816-v2",
             "id": "cab8b360",
-            "sequences": [test_sequence]
+            "sequences": []
+        },
+        {
+            "default": False,
+            "source_type": "isolate",
+            "source_name": "7865",
+            "id": "bcb9b352",
+            "sequences": []
         }
+    ]
 
-    @pytest.mark.parametrize("otu_id,isolate_id", [
-        ("foobar", "cab8b360"),
-        ("6116cba1", "foobar"),
-        ("6116cba1", "cab8b360")
-    ])
-    async def test_not_found(self, otu_id, isolate_id, spawn_client, resp_is):
-        """
-        Test that a ``404`` response results for a non-existent otu and/or isolate.
 
-        """
-        client = await spawn_client(authorize=True)
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
+async def test_get_isolate(error, spawn_client, resp_is, test_otu, test_sequence):
+    """
+    Test that an existing isolate is successfully returned.
 
-        resp = await client.get("/api/otus/{}/isolates/{}".format(otu_id, isolate_id))
+    """
+    client = await spawn_client(authorize=True)
 
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
+
+    if error != "404_otu":
+        await client.db.otus.insert_one(test_otu)
+
+    await client.db.sequences.insert_one(test_sequence)
+
+    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360")
+
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    test_sequence["id"] = test_sequence.pop("_id")
+
+    del test_sequence["otu_id"]
+    del test_sequence["isolate_id"]
+
+    assert await resp.json() == {
+        "default": True,
+        "source_type": "isolate",
+        "source_name": "8816-v2",
+        "id": "cab8b360",
+        "sequences": [test_sequence]
+    }
 
 
 class TestAddIsolate:
@@ -1119,26 +1114,6 @@ class TestEditIsolate:
 
         assert (await client.db.otus.find_one("6116cba1", ["isolates"]))["isolates"] == [expected]
 
-    async def test_invalid_input(self, spawn_client, test_otu, resp_is):
-        """
-        Test that invalid input results in a ``422`` response and a list of errors.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.otus.insert_one(test_otu)
-
-        data = {
-            "source_type": {"key": "variant"},
-            "source_name": "A"
-        }
-
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360", data)
-
-        assert await resp_is.invalid_input(resp, {
-            "source_type": ["must be of string type"]
-        })
-
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
         ("test", "cab8b360"),
@@ -1503,340 +1478,288 @@ class TestRemoveIsolate:
         assert await resp_is.not_found(resp)
 
 
-class TestListSequences:
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
+async def test_list_sequences(error, spawn_client, resp_is, test_otu, test_sequence):
+    client = await spawn_client(authorize=True)
 
-    async def test(self, spawn_client, test_otu, test_sequence):
-        client = await spawn_client(authorize=True)
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
 
+    if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
+
+    await client.db.sequences.insert_one(test_sequence)
+
+    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
+
+    if error:
+        assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == [{
+        "id": "KX269872",
+        "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
+        "host": "sweet cherry",
+        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+        "segment": None
+    }]
+
+
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
+async def test_get_sequence(error, spawn_client, resp_is, test_otu, test_sequence):
+    client = await spawn_client(authorize=True)
+
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
+
+    if error != "404_otu":
+        await client.db.otus.insert_one(test_otu)
+
+    if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-        resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences")
+    resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
-        assert resp.status == 200
-
-        assert await resp.json() == [{
-            "id": "KX269872",
-            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
-            "host": "sweet cherry",
-            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-            "segment": None
-        }]
-
-    @pytest.mark.parametrize("url", [
-        "/api/otus/6116cba1/isolates/foobar/sequences",
-        "/api/otus/foobar/isolates/cab8b360/sequences"
-    ])
-    async def test_not_found(self, url, spawn_client, resp_is):
-        """
-        Test that ``404`` is returned when the isolate id or sequence id do not exist.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get(url)
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    test_sequence["id"] = test_sequence.pop("_id")
+
+    assert await resp.json() == test_sequence
 
 
-class TestGetSequence:
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
+async def test_create_sequence(error, spawn_client, check_ref_right, resp_is, test_otu, test_add_history, test_random_alphanumeric):
+    client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-    async def test(self, spawn_client, test_otu, test_sequence):
-        client = await spawn_client(authorize=True)
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
 
-        await client.db.otus.insert_one(test_otu)
-        await client.db.sequences.insert_one(test_sequence)
-
-        resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
-
-        assert resp.status == 200
-
-        test_sequence["id"] = test_sequence.pop("_id")
-
-        assert await resp.json() == test_sequence
-
-    @pytest.mark.parametrize("url", [
-        "/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872",
-        "/api/otus/6116cba1/isolates/cab8b360/sequences/foobar",
-        "/api/otus/6116cba1/isolates/foobar/sequences/KX269872",
-        "/api/otus/foobar/isolates/cab8b360/sequences/KX269872",
-    ])
-    async def test_not_found(self, url, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get(url)
-
-        assert await resp_is.not_found(resp)
-
-
-class TestCreateSequence:
-
-    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history, test_random_alphanumeric):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
+    if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
 
-        data = {
-            "accession": "foobar",
-            "host": "Plant",
-            "sequence": "ATGCGTGTACTG",
-            "definition": "A made up sequence"
-        }
+    data = {
+        "accession": "foobar",
+        "host": "Plant",
+        "sequence": "ATGCGTGTACTG",
+        "definition": "A made up sequence"
+    }
 
-        resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", data)
+    resp = await client.post("/api/otus/6116cba1/isolates/cab8b360/sequences", data)
 
-        if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
-            return
+    if error:
+        assert await resp_is.not_found(resp)
+        return
 
-        assert resp.status == 201
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-        sequence_id = test_random_alphanumeric.history[0]
+    assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/cab8b360/sequences/" + sequence_id
+    sequence_id = test_random_alphanumeric.history[0]
 
-        assert await resp.json() == {
-            "id": sequence_id,
-            "accession": "foobar",
-            "definition": "A made up sequence",
-            "otu_id": "6116cba1",
-            "isolate_id": "cab8b360",
-            "host": "Plant",
-            "reference": {
-                "id": "hxn167"
-            },
-            "sequence": "ATGCGTGTACTG",
-            "segment": None,
+    assert resp.headers["Location"] == "/api/otus/6116cba1/isolates/cab8b360/sequences/" + sequence_id
 
-        }
+    assert await resp.json() == {
+        "id": sequence_id,
+        "accession": "foobar",
+        "definition": "A made up sequence",
+        "otu_id": "6116cba1",
+        "isolate_id": "cab8b360",
+        "host": "Plant",
+        "reference": {
+            "id": "hxn167"
+        },
+        "sequence": "ATGCGTGTACTG",
+        "segment": None,
 
-        old = {
-            "_id": "6116cba1",
-            "abbreviation": "PVF",
-            "imported": True,
-            "schema": [],
-            "isolates": [
-                {
-                    "default": True,
-                    "id": "cab8b360",
-                    "sequences": [],
-                    "source_name": "8816-v2",
-                    "source_type": "isolate"
-                }
-            ],
-            "last_indexed_version": 0,
-            "lower_name": "prunus virus f",
-            "verified": False,
-            "name": "Prunus virus F",
-            "version": 0,
-            "reference": {
-                "id": "hxn167"
+    }
+
+    old = {
+        "_id": "6116cba1",
+        "abbreviation": "PVF",
+        "imported": True,
+        "schema": [],
+        "isolates": [
+            {
+                "default": True,
+                "id": "cab8b360",
+                "sequences": [],
+                "source_name": "8816-v2",
+                "source_type": "isolate"
             }
+        ],
+        "last_indexed_version": 0,
+        "lower_name": "prunus virus f",
+        "verified": False,
+        "name": "Prunus virus F",
+        "version": 0,
+        "reference": {
+            "id": "hxn167"
         }
+    }
 
-        new = deepcopy(old)
+    new = deepcopy(old)
 
-        new["isolates"][0]["sequences"] = [{
-            "_id": test_random_alphanumeric.history[0],
-            "accession": "foobar",
-            "definition": "A made up sequence",
-            "otu_id": "6116cba1",
-            "isolate_id": "cab8b360",
-            "host": "Plant",
-            "reference": {
-                "id": "hxn167"
-            },
-            "sequence": "ATGCGTGTACTG",
-            "segment": None
-        }]
+    new["isolates"][0]["sequences"] = [{
+        "_id": test_random_alphanumeric.history[0],
+        "accession": "foobar",
+        "definition": "A made up sequence",
+        "otu_id": "6116cba1",
+        "isolate_id": "cab8b360",
+        "host": "Plant",
+        "reference": {
+            "id": "hxn167"
+        },
+        "sequence": "ATGCGTGTACTG",
+        "segment": None
+    }]
 
-        new.update({
-            "verified": True,
-            "version": 1
-        })
+    new.update({
+        "verified": True,
+        "version": 1
+    })
 
-        test_add_history.assert_called_with(
-            client.db,
-            "create_sequence",
-            old,
-            new,
-            "Created new sequence foobar in Isolate 8816-v2",
-            "test"
-        )
-
-    @pytest.mark.parametrize("otu_id, isolate_id", [
-        ("6116cba1", "cab8b360"),
-        ("6116cba1", "foobar"),
-        ("foobar", "cab8b360")
-    ])
-    async def test_not_found(self, otu_id, isolate_id, spawn_client, resp_is):
-        """
-        Test that non-existent otu or isolate ids in the URL result in a ``404`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        data = {
-            "accession": "FOOBAR",
-            "host": "Plant",
-            "sequence": "ATGCGTGTACTG",
-            "definition": "A made up sequence"
-        }
-
-        url = "/api/otus/{}/isolates/{}/sequences".format(otu_id, isolate_id)
-
-        resp = await client.post(url, data)
-
-        assert await resp_is.not_found(resp)
+    test_add_history.assert_called_with(
+        client.db,
+        "create_sequence",
+        old,
+        new,
+        "Created new sequence foobar in Isolate 8816-v2",
+        "test"
+    )
 
 
-class TestEditSequence:
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
+async def test_edit_sequence(error, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
+    client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
-    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
 
+    if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
+
+    if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-        data = {
-            "host": "Grapevine",
-            "sequence": "ATGCGTGTACTG",
-            "definition": "A made up sequence"
-        }
+    data = {
+        "host": "Grapevine",
+        "sequence": "ATGCGTGTACTG",
+        "definition": "A made up sequence"
+    }
 
-        resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
+    resp = await client.patch("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872", data)
 
-        if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
-            return
+    if error:
+        assert await resp_is.not_found(resp)
+        return
 
-        assert resp.status == 200
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-        assert await resp.json() == {
-            "id": "KX269872",
-            "definition": "A made up sequence",
-            "host": "Grapevine",
-            "otu_id": "6116cba1",
-            "isolate_id": "cab8b360",
-            "sequence": "ATGCGTGTACTG",
-            "segment": None
-        }
+    assert resp.status == 200
 
-        old = {
-            "_id": "6116cba1",
-            "abbreviation": "PVF",
-            "imported": True,
-            "isolates": [
-                {
-                    "default": True,
-                    "id": "cab8b360",
-                    "sequences": [dict(test_sequence, otu_id="6116cba1")],
-                    "source_name": "8816-v2",
-                    "source_type": "isolate"
-                }
-            ],
-            "last_indexed_version": 0,
-            "lower_name": "prunus virus f",
-            "verified": False,
-            "name": "Prunus virus F",
-            "schema": [],
-            "version": 0,
-            "reference": {
-                "id": "hxn167"
+    assert await resp.json() == {
+        "id": "KX269872",
+        "definition": "A made up sequence",
+        "host": "Grapevine",
+        "otu_id": "6116cba1",
+        "isolate_id": "cab8b360",
+        "sequence": "ATGCGTGTACTG",
+        "segment": None
+    }
+
+    old = {
+        "_id": "6116cba1",
+        "abbreviation": "PVF",
+        "imported": True,
+        "isolates": [
+            {
+                "default": True,
+                "id": "cab8b360",
+                "sequences": [dict(test_sequence, otu_id="6116cba1")],
+                "source_name": "8816-v2",
+                "source_type": "isolate"
             }
+        ],
+        "last_indexed_version": 0,
+        "lower_name": "prunus virus f",
+        "verified": False,
+        "name": "Prunus virus F",
+        "schema": [],
+        "version": 0,
+        "reference": {
+            "id": "hxn167"
         }
+    }
 
-        new = deepcopy(old)
+    new = deepcopy(old)
 
-        new["isolates"][0]["sequences"] = [{
-            "_id": "KX269872",
-            "definition": "A made up sequence",
-            "otu_id": "6116cba1",
-            "isolate_id": "cab8b360",
-            "host": "Grapevine",
-            "sequence": "ATGCGTGTACTG",
-            "segment": None
-        }]
+    new["isolates"][0]["sequences"] = [{
+        "_id": "KX269872",
+        "definition": "A made up sequence",
+        "otu_id": "6116cba1",
+        "isolate_id": "cab8b360",
+        "host": "Grapevine",
+        "sequence": "ATGCGTGTACTG",
+        "segment": None
+    }]
 
-        new.update({
-            "verified": True,
-            "version": 1
-        })
+    new.update({
+        "verified": True,
+        "version": 1
+    })
 
-        assert test_add_history.call_args[0][1:] == (
-            "edit_sequence",
-            old,
-            new,
-            "Edited sequence KX269872 in Isolate 8816-v2",
-            "test"
-        )
+    assert test_add_history.call_args[0][1:] == (
+        "edit_sequence",
+        old,
+        new,
+        "Edited sequence KX269872 in Isolate 8816-v2",
+        "test"
+    )
 
-    @pytest.mark.parametrize("foobar", ["otu_id", "isolate_id", "sequence_id"])
-    async def test_not_found(self, foobar, spawn_client, resp_is, test_otu, test_sequence):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
+@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate", "404_sequence"])
+async def test_remove_sequence(error, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
+    client = await spawn_client(authorize=True)
+
+    if error == "404_isolate":
+        test_otu["isolates"] = list()
+
+    if error != "404_otu":
         await client.db.otus.insert_one(test_otu)
+
+    if error != "404_sequence":
         await client.db.sequences.insert_one(test_sequence)
 
-        url = "/api/otus/{}/isolates/{}/sequences/{}".format(
-            "foobar" if foobar == "otu_id" else "6116cba1",
-            "foobar" if foobar == "isolate_id" else "cab8b360",
-            "foobar" if foobar == "sequence_id" else "KX269872"
-        )
+    old = await virtool.db.otus.join(client.db, test_otu["_id"])
 
-        resp = await client.patch(url, {
-            "host": "Grapevine",
-            "sequence": "ATGCGTGTACTG",
-            "definition": "A made up sequence"
-        })
+    resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
+    if not check_ref_right:
+        assert await resp_is.insufficient_rights(resp)
+        return
 
-class TestRemoveSequence:
+    new = await virtool.db.otus.join(client.db, test_otu["_id"])
 
-    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_sequence, test_add_history):
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
+    assert resp.status == 204
 
-        await client.db.otus.insert_one(test_otu)
-        await client.db.sequences.insert_one(test_sequence)
-
-        old = await virtool.db.otus.join(client.db, test_otu["_id"])
-
-        resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
-
-        if not check_ref_right:
-            assert await resp_is.insufficient_rights(resp)
-            return
-
-        new = await virtool.db.otus.join(client.db, test_otu["_id"])
-
-        assert test_add_history.call_args[0][1:] == (
-            "remove_sequence",
-            old,
-            new,
-            "Removed sequence KX269872 from Isolate 8816-v2",
-            "test"
-        )
-
-        assert resp.status == 204
-
-    @pytest.mark.parametrize("otu_id,isolate_id,sequence_id", [
-        ("test", "cab8b360", "KX269872"),
-        ("6116cba1", "test", "KX269872"),
-        ("6116cba1", "cab8b360", "test"),
-        ("test", "test", "KX269872"),
-        ("6116cba1", "test", "test"),
-        ("test", "test", "test")
-    ])
-    async def test_otu_not_found(self, otu_id, isolate_id, sequence_id, test_otu, test_sequence,
-                                 spawn_client, resp_is):
-
-        client = await spawn_client(authorize=True, permissions=["modify_otu"])
-
-        await client.db.sequences.insert_one(test_otu)
-        await client.db.otus.insert_one(test_sequence)
-
-        resp = await client.delete("/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, sequence_id))
-
-        await resp_is.not_found(resp)
+    assert test_add_history.call_args[0][1:] == (
+        "remove_sequence",
+        old,
+        new,
+        "Removed sequence KX269872 from Isolate 8816-v2",
+        "test"
+    )

@@ -19,7 +19,7 @@ TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files"
 @pytest.mark.parametrize("error", [None, "duplicate", "missing", "missing_member"])
 @pytest.mark.parametrize("field", ["group", "user"])
 @pytest.mark.parametrize("rights", [True, False])
-async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
+async def test_add_group_or_user(error, field, rights, dbi, static_time):
 
     ref_id = "foo"
 
@@ -29,7 +29,7 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
     ]
 
     if error != "missing":
-        await test_dbi.references.insert_one({
+        await dbi.references.insert_one({
             "_id": ref_id,
             "groups": subdocuments,
             "users": subdocuments
@@ -37,8 +37,8 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
 
     if error != "missing_member":
         for _id in ["bar", "buzz"]:
-            await test_dbi.groups.insert_one({"_id": _id})
-            await test_dbi.users.insert_one({"_id": _id})
+            await dbi.groups.insert_one({"_id": _id})
+            await dbi.users.insert_one({"_id": _id})
 
     subdocument_id = "bar" if error == "duplicate" else "buzz"
 
@@ -49,7 +49,7 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
     if rights:
         payload["build"] = True
 
-    task = virtool.db.references.add_group_or_user(test_dbi, ref_id, field + "s", payload)
+    task = virtool.db.references.add_group_or_user(dbi, ref_id, field + "s", payload)
 
     if error == "duplicate" or error == "missing_member":
         with pytest.raises(virtool.errors.DatabaseError) as err:
@@ -76,7 +76,7 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
             "remove": False
         }
 
-        assert await test_dbi.references.find_one() == {
+        assert await dbi.references.find_one() == {
             "_id": ref_id,
             "groups": subdocuments + ([expected] if field == "group" else []),
             "users": subdocuments + ([expected] if field == "user" else [])
@@ -91,9 +91,9 @@ async def test_add_group_or_user(error, field, rights, test_dbi, static_time):
     ("modify_otu", True),
     ("modify", False)
 ])
-async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, test_dbi):
+async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, dbi):
     mock_req.app = {
-        "db": test_dbi
+        "db": dbi
     }
 
     mock_req["client"] = mocker.Mock()
@@ -126,7 +126,7 @@ async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, 
         ]
     }
 
-    await test_dbi.references.insert_one(reference)
+    await dbi.references.insert_one(reference)
 
     if ref is None:
         ref = reference
@@ -143,15 +143,15 @@ async def test_check_right(admin, expect, member, ref, right, mocker, mock_req, 
     assert result == expect
 
 
-async def test_create_manifest(test_motor, test_otu):
-    await test_motor.otus.insert_many([
+async def test_create_manifest(dbi, test_otu):
+    await dbi.otus.insert_many([
         test_otu,
         dict(test_otu, _id="foo", version=5),
         dict(test_otu, _id="baz", version=3, reference={"id": "123"}),
         dict(test_otu, _id="bar", version=11)
     ])
 
-    assert await virtool.db.references.get_manifest(test_motor, "hxn167") == {
+    assert await virtool.db.references.get_manifest(dbi, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11
@@ -160,7 +160,7 @@ async def test_create_manifest(test_motor, test_otu):
 
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
 @pytest.mark.parametrize("field", ["group", "user"])
-async def test_edit_group_or_user(field, missing, test_dbi, static_time):
+async def test_edit_group_or_user(field, missing, dbi, static_time):
 
     ref_id = "foo"
 
@@ -170,7 +170,7 @@ async def test_edit_group_or_user(field, missing, test_dbi, static_time):
     ]
 
     if missing != "reference":
-        await test_dbi.references.insert_one({
+        await dbi.references.insert_one({
             "_id": ref_id,
             "groups": subdocuments,
             "users": subdocuments
@@ -178,7 +178,7 @@ async def test_edit_group_or_user(field, missing, test_dbi, static_time):
 
     subdocument_id = "buzz" if missing == "subdocument" else "baz"
 
-    subdocument = await virtool.db.references.edit_group_or_user(test_dbi, ref_id, subdocument_id, field + "s", {
+    subdocument = await virtool.db.references.edit_group_or_user(dbi, ref_id, subdocument_id, field + "s", {
         "build": True,
         "remove": True
     })
@@ -195,7 +195,7 @@ async def test_edit_group_or_user(field, missing, test_dbi, static_time):
             "remove": True
         }
 
-        assert await test_dbi.references.find_one() == {
+        assert await dbi.references.find_one() == {
             "_id": ref_id,
             "groups": (subdocuments[:1] + [expected]) if field == "group" else subdocuments,
             "users": (subdocuments[:1] + [expected]) if field == "user" else subdocuments
@@ -203,7 +203,7 @@ async def test_edit_group_or_user(field, missing, test_dbi, static_time):
 
 
 @pytest.mark.parametrize("field", ["groups", "users"])
-async def test_delete_group_or_user(field, test_dbi):
+async def test_delete_group_or_user(field, dbi):
 
     ref_id = "foo"
 
@@ -216,15 +216,15 @@ async def test_delete_group_or_user(field, test_dbi):
         }
     ]
 
-    await test_dbi.references.insert_one({
+    await dbi.references.insert_one({
         "_id": ref_id,
         "groups": subdocuments,
         "users": subdocuments
     })
 
-    await virtool.db.references.delete_group_or_user(test_dbi, "foo", "bar", field)
+    await virtool.db.references.delete_group_or_user(dbi, "foo", "bar", field)
 
-    assert await test_dbi.references.find_one() == {
+    assert await dbi.references.find_one() == {
         "_id": ref_id,
         "groups": [subdocuments[1]] if field == "groups" else subdocuments,
         "users": [subdocuments[1]] if field == "users" else subdocuments

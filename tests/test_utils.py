@@ -105,23 +105,21 @@ class TestRm:
         assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt"}
 
 
-class TestTimestamp:
+def test_timestamp(mocker):
+    """
+    Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
+    zero.
 
-    def test(self, mocker):
-        """
-        Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
-        zero.
+    """
+    m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
 
-        """
-        m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
+    mocker.patch("arrow.utcnow", new=m)
 
-        mocker.patch("arrow.utcnow", new=m)
+    timestamp = virtool.utils.timestamp()
 
-        timestamp = virtool.utils.timestamp()
+    assert isinstance(timestamp, datetime.datetime)
 
-        assert isinstance(timestamp, datetime.datetime)
-
-        assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
+    assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
 
 
 class TestRandomAlphanumeric:
@@ -169,33 +167,28 @@ class TestAverageList:
             virtool.utils.average_list([2, 5, 6], "a")
 
 
-class TestReload:
+@pytest.mark.parametrize("method", ["execl", "execv", None], ids=["execl", "execv", "error"])
+async def test_reload(method, mocker):
+    if method:
+        mocker.patch("sys.executable", "python" if method == "execl" else "run")
+    else:
+        mocker.patch("sys.executable", "foobar")
 
-    @pytest.mark.parametrize("method", ["execl", "execv", None], ids=["execl", "execv", "error"])
-    async def test(self, method, monkeypatch, mocker):
-        if method:
-            monkeypatch.setattr("sys.executable", "python" if method == "execl" else "run")
-        else:
-            monkeypatch.setattr("sys.executable", "foobar")
+    execl = mocker.patch("os.execl")
+    execv = mocker.patch("os.execv")
 
-        execl = mocker.patch("os.execl")
-        execv = mocker.patch("os.execv")
+    app = mocker.Mock()
 
-        app = mocker.Mock()
+    setattr(app, "on_shutdown", [
+        make_mocked_coro(),
+        make_mocked_coro()
+    ])
 
-        setattr(app, "on_shutdown", [
-            make_mocked_coro(),
-            make_mocked_coro()
-        ])
-
-        if method:
+    if method:
+        await virtool.utils.reload(app)
+    else:
+        with pytest.raises(SystemError):
             await virtool.utils.reload(app)
-        else:
-            with pytest.raises(SystemError):
-                await virtool.utils.reload(app)
 
-        assert execl.called is (method == "execl")
-        assert execv.called is (method == "execv")
-
-    async def test_error(self, monkeypatch):
-        monkeypatch.setattr("sys.executable", "foobar")
+    assert execl.called is (method == "execl")
+    assert execv.called is (method == "execv")

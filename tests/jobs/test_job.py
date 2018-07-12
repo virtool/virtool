@@ -4,16 +4,12 @@ import virtool.db.jobs
 import virtool.jobs.job
 
 
-def test_processor(test_db, test_job, static_time):
+def test_processor(test_job, static_time):
     """
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
     """
-    test_db.jobs.insert_one(test_job)
-
-    document = test_db.jobs.find_one()
-
-    assert virtool.db.jobs.processor(document) == {
+    assert virtool.db.jobs.processor(test_job) == {
         "id": "4c530449",
         "created_at": static_time.datetime,
         "args": {
@@ -37,7 +33,7 @@ def test_processor(test_db, test_job, static_time):
 
 
 @pytest.mark.parametrize("empty", [True, False], ids=["empty", "not-empty"])
-async def test_get_waiting_and_running(empty, test_motor):
+async def test_get_waiting_and_running(empty, dbi):
     documents = list()
 
     if not empty:
@@ -75,12 +71,12 @@ async def test_get_waiting_and_running(empty, test_motor):
             }
         ]
 
-    await test_motor.jobs.insert_many(documents)
+    await dbi.jobs.insert_many(documents)
 
     expected = list()
 
     if not empty:
         expected = ["foo", "baz", "bat"]
 
-    assert await virtool.db.jobs.get_waiting_and_running_ids(test_motor) == expected
+    assert await virtool.db.jobs.get_waiting_and_running_ids(dbi) == expected
 

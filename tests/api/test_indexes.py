@@ -23,23 +23,24 @@ async def test_find(mocker, spawn_client, md_proxy):
     m_find.assert_called_with(client.db, md_proxy())
 
 
-@pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, mocker, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    await client.db.indexes.insert_one({
-        "_id": "foobar",
-        "version": 0,
-        "created_at": static_time.datetime,
-        "ready": False,
-        "has_files": True,
-        "user": {
-            "id": "test"
-        },
-        "job": {
-            "id": "sj82la"
-        }
-    })
+    if not error:
+        await client.db.indexes.insert_one({
+            "_id": "foobar",
+            "version": 0,
+            "created_at": static_time.datetime,
+            "ready": False,
+            "has_files": True,
+            "user": {
+                "id": "test"
+            },
+            "job": {
+                "id": "sj82la"
+            }
+        })
 
     contributors = [
         {
@@ -65,58 +66,63 @@ async def test_get(not_found, mocker, resp_is, spawn_client, static_time):
         }
     ]
 
-    m_get_contributors = mocker.patch("virtool.db.indexes.get_contributors", new=make_mocked_coro(contributors))
-    m_get_otus = mocker.patch("virtool.db.indexes.get_otus", new=make_mocked_coro(otus))
+    m_get_contributors = mocker.patch("virtool.db.indexes.get_contributors", make_mocked_coro(contributors))
+    m_get_otus = mocker.patch("virtool.db.indexes.get_otus", make_mocked_coro(otus))
 
-    index_id = "baz" if not_found else "foobar"
+    resp = await client.get("/api/indexes/foobar")
 
-    resp = await client.get("/api/indexes/" + index_id)
-
-    if not_found:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        m_get_contributors.assert_called_with(client.db, index_id)
-        m_get_otus.assert_called_with(client.db, index_id)
+    m_get_contributors.assert_called_with(
+        client.db,
+        "foobar"
+    )
 
-        assert resp.status == 200
+    m_get_otus.assert_called_with(
+        client.db,
+        "foobar"
+    )
 
-        assert await resp.json() == {
-            "created_at": static_time.iso,
-            "has_files": True,
-            "id": "foobar",
-            "version": 0,
-            "change_count": 4,
-            "otus": [
-                {
-                    "id": "kjs8sa99",
-                    "name": "Foo",
-                    "change_count": 1
-                },
-                {
-                    "id": "zxbbvngc",
-                    "name": "Test",
-                    "change_count": 3
-                }
-            ],
-            "contributors": [
-                {
-                    "id": "fred",
-                    "count": 1
-                },
-                {
-                    "id": "igboyes",
-                    "count": 3
-                }
-            ],
-            "ready": False,
-            "job": {
-                "id": "sj82la"
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "created_at": static_time.iso,
+        "has_files": True,
+        "id": "foobar",
+        "version": 0,
+        "change_count": 4,
+        "otus": [
+            {
+                "id": "kjs8sa99",
+                "name": "Foo",
+                "change_count": 1
             },
-            "user": {
-                "id": "test"
+            {
+                "id": "zxbbvngc",
+                "name": "Test",
+                "change_count": 3
             }
+        ],
+        "contributors": [
+            {
+                "id": "fred",
+                "count": 1
+            },
+            {
+                "id": "igboyes",
+                "count": 3
+            }
+        ],
+        "ready": False,
+        "job": {
+            "id": "sj82la"
+        },
+        "user": {
+            "id": "test"
         }
+    }
 
 
 class TestCreate:
@@ -153,7 +159,6 @@ class TestCreate:
         resp = await client.post("/api/refs/foo/indexes")
 
         if not check_ref_right:
-            print(resp.status)
             assert await resp_is.insufficient_rights(resp)
             return
 
@@ -253,11 +258,11 @@ class TestCreate:
             return
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test(exists, spawn_client, resp_is):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test(error, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
-    if exists:
+    if not error:
         await client.db.indexes.insert_one({
             "_id": "foobar",
             "version": 0
@@ -344,81 +349,79 @@ async def test(exists, spawn_client, resp_is):
 
     resp = await client.get("/api/indexes/foobar/history")
 
-    if exists:
-        assert resp.status == 200
-
-        expected = {
-            "found_count": 4,
-            "page": 1,
-            "page_count": 1,
-            "per_page": 25,
-            "total_count": 6,
-            "documents": [
-                {
-                    "id": "kjs8sa99.3",
-                    "index": {
-                        "id": "foobar",
-                        "version": 0
-                    },
-                    "method_name": "add_sequence",
-                    "user": {
-                        "id": "fred"
-                    },
-                    "otu": {
-                        "id": "kjs8sa99",
-                        "name": "Foo",
-                        "version": 3
-                    }
-                },
-                {
-                    "id": "zxbbvngc.2",
-                    "index": {
-                        "id": "foobar", "version": 0
-                    },
-                    "method_name": "add_isolate",
-                    "user": {
-                        "id": "igboyes"
-                    },
-                    "otu": {
-                        "id": "zxbbvngc",
-                        "name": "Test",
-                        "version": 2
-                    }
-                },
-                {
-                    "id": "zxbbvngc.1",
-                    "index": {
-                        "id": "foobar", "version": 0
-                    },
-                    "method_name": "add_isolate",
-                    "user": {
-                        "id": "igboyes"
-                    },
-                    "otu": {
-                        "id": "zxbbvngc",
-                        "name": "Test",
-                        "version": 1
-                    }
-                },
-                {
-                    "id": "zxbbvngc.0",
-                    "index": {
-                        "id": "foobar",
-                        "version": 0
-                    },
-                    "user": {
-                        "id": "igboyes"
-                    },
-                    "otu": {
-                        "id": "zxbbvngc",
-                        "name": "Test",
-                        "version": 0
-                    }
-                }
-            ]
-        }
-
-        assert await resp.json() == expected
-
-    else:
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "found_count": 4,
+        "page": 1,
+        "page_count": 1,
+        "per_page": 25,
+        "total_count": 6,
+        "documents": [
+            {
+                "id": "kjs8sa99.3",
+                "index": {
+                    "id": "foobar",
+                    "version": 0
+                },
+                "method_name": "add_sequence",
+                "user": {
+                    "id": "fred"
+                },
+                "otu": {
+                    "id": "kjs8sa99",
+                    "name": "Foo",
+                    "version": 3
+                }
+            },
+            {
+                "id": "zxbbvngc.2",
+                "index": {
+                    "id": "foobar", "version": 0
+                },
+                "method_name": "add_isolate",
+                "user": {
+                    "id": "igboyes"
+                },
+                "otu": {
+                    "id": "zxbbvngc",
+                    "name": "Test",
+                    "version": 2
+                }
+            },
+            {
+                "id": "zxbbvngc.1",
+                "index": {
+                    "id": "foobar", "version": 0
+                },
+                "method_name": "add_isolate",
+                "user": {
+                    "id": "igboyes"
+                },
+                "otu": {
+                    "id": "zxbbvngc",
+                    "name": "Test",
+                    "version": 1
+                }
+            },
+            {
+                "id": "zxbbvngc.0",
+                "index": {
+                    "id": "foobar",
+                    "version": 0
+                },
+                "user": {
+                    "id": "igboyes"
+                },
+                "otu": {
+                    "id": "zxbbvngc",
+                    "name": "Test",
+                    "version": 0
+                }
+            }
+        ]
+    }

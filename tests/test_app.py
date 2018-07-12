@@ -38,7 +38,7 @@ class TestInitSettings:
 
         assert isinstance(app["settings"], virtool.app_settings.Settings)
 
-    async def test_load_called(self, monkeypatch, mocker, loop):
+    async def test_load_called(self, mocker, loop):
         """
         Test that the :meth:`virtool.app_settings.Settings.load` method is called after the settings object is created.
         """
@@ -50,7 +50,7 @@ class TestInitSettings:
             async def load(self):
                 self.stub()
 
-        monkeypatch.setattr("virtool.app_settings.Settings", MockSettings)
+        mocker.patch("virtool.app_settings.Settings", MockSettings)
 
         app = web.Application(loop=loop)
 

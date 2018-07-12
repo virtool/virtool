@@ -357,11 +357,11 @@ class TestUpdateAPIKey:
         assert await resp_is.not_found(resp)
 
 
-class TestRemoveAPIKey:
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_remove_api_key(error, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
 
-    async def test(self, spawn_client, resp_is):
-        client = await spawn_client(authorize=True)
-
+    if not error:
         await client.db.keys.insert_one({
             "_id": "foobar",
             "id": "foobar_0",
@@ -371,22 +371,14 @@ class TestRemoveAPIKey:
             }
         })
 
-        resp = await client.delete("/api/account/keys/foobar_0")
+    resp = await client.delete("/api/account/keys/foobar_0")
 
-        assert await resp_is.no_content(resp)
-
-        assert await client.db.keys.count() == 0
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that ``404 Not found`` is returned when the API key does not exist.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        resp = await client.delete("/api/account/keys/foobar_0")
-
+    if error:
         assert await resp_is.not_found(resp)
+        return
+
+    assert await resp_is.no_content(resp)
+    assert await client.db.keys.count() == 0
 
 
 async def test_remove_all_api_keys(spawn_client, resp_is):
