@@ -2,24 +2,22 @@ import {
     listUsers,
     filterUsers,
     createUser,
-    editUser,
-    addUserToGroup,
-    removeUserFromGroup
+    editUser
 } from "./actions";
 import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP, EDIT_USER
+    EDIT_USER
 } from "../actionTypes";
 
 describe("Users Action Creators:", () => {
 
     it("listUsers: returns action to list all users", () => {
-        const result = listUsers();
+        const result = listUsers(1);
         const expected = {
-            type: "LIST_USERS_REQUESTED"
+            type: LIST_USERS.REQUESTED,
+            page: 1
         };
 
         expect(result).toEqual(expected);
@@ -29,7 +27,7 @@ describe("Users Action Creators:", () => {
         const term = "searchterm";
         const result = filterUsers(term);
         const expected = {
-            type: "FILTER_USERS",
+            type: FILTER_USERS.REQUESTED,
             term
         };
 
@@ -40,7 +38,7 @@ describe("Users Action Creators:", () => {
         const data = {};
         const result = createUser(data);
         const expected = {
-            type: "CREATE_USER_REQUESTED"
+            type: CREATE_USER.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -51,7 +49,7 @@ describe("Users Action Creators:", () => {
         const update = {};
         const result = editUser(userId, update);
         const expected = {
-            type: "EDIT_USER_REQUESTED",
+            type: EDIT_USER.REQUESTED,
             userId,
             update
         };

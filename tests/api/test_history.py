@@ -97,8 +97,8 @@ async def test_find(spawn_client, test_changes, static_time):
     }
 
 
-@pytest.mark.parametrize("not_found", [False, True])
-async def test_get(not_found, resp_is, spawn_client, test_changes, static_time):
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, resp_is, spawn_client, test_changes, static_time):
     """
     Test that a specific history change can be retrieved by its change_id.
 
@@ -107,47 +107,47 @@ async def test_get(not_found, resp_is, spawn_client, test_changes, static_time):
 
     await client.db.history.insert_many(test_changes)
 
-    change_id = "baz.1" if not_found else "6116cba1.1"
+    change_id = "baz.1" if error else "6116cba1.1"
 
     resp = await client.get("/api/history/" + change_id)
 
-    if not_found:
+    if error:
         assert await resp_is.not_found(resp)
+        return
 
-    else:
-        assert resp.status == 200
+    assert resp.status == 200
 
-        assert await resp.json() == {
-            "description": "Edited Prunus virus E",
-            "diff": [
-                ["change", "abbreviation", ["PVF", ""]],
-                ["change", "name", ["Prunus virus F", "Prunus virus E"]],
-                ["change", "version", [0, 1]]
-            ],
-            "id": "6116cba1.1",
-            "index": {
-                "id": "unbuilt",
-                "version": "unbuilt"
-            },
-            "method_name": "edit",
-            "created_at": static_time.iso,
-            "user": {
-                "id": "test"
-            },
-            "otu": {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "version": 1
-            },
-            "reference": {
-                "id": "hxn167"
-            }
+    assert await resp.json() == {
+        "description": "Edited Prunus virus E",
+        "diff": [
+            ["change", "abbreviation", ["PVF", ""]],
+            ["change", "name", ["Prunus virus F", "Prunus virus E"]],
+            ["change", "version", [0, 1]]
+        ],
+        "id": "6116cba1.1",
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
+        "method_name": "edit",
+        "created_at": static_time.iso,
+        "user": {
+            "id": "test"
+        },
+        "otu": {
+            "id": "6116cba1",
+            "name": "Prunus virus F",
+            "version": 1
+        },
+        "reference": {
+            "id": "hxn167"
         }
+    }
 
 
-@pytest.mark.parametrize("exists", [True, False])
+@pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
-async def test_revert(exists, remove, create_mock_history, spawn_client, check_ref_right, resp_is):
+async def test_revert(error, remove, create_mock_history, spawn_client, check_ref_right, resp_is):
     """
     Test that a valid request results in a reversion and a ``204`` response.
 
@@ -156,11 +156,11 @@ async def test_revert(exists, remove, create_mock_history, spawn_client, check_r
 
     await create_mock_history(remove)
 
-    change_id = "6116cba1.2" if exists else "foo.1"
+    change_id = "foo.1" if error else "6116cba1.2"
 
     resp = await client.delete("/api/history/" + change_id)
 
-    if not exists:
+    if error:
         assert await resp_is.not_found(resp)
         return
 

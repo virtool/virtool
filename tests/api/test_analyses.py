@@ -141,6 +141,11 @@ async def test_remove(error, spawn_client, resp_is):
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_algorithm", "409_ready"])
 async def test_blast(error, mocker, spawn_client, resp_is, static_time):
+    """
+    Test that the handler starts a BLAST for given NuVs sequence. Also check that it handles all error conditions
+    correctly.
+
+    """
     client = await spawn_client(authorize=True)
 
     if error != "404_analysis":
@@ -204,20 +209,19 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
         assert await resp_is.not_found(resp, "Analysis not found")
         return
 
-    elif error == "404_sequence":
+    if error == "404_sequence":
         assert await resp_is.not_found(resp, "Sequence not found")
         return
 
-    elif error == "409_algorithm":
+    if error == "409_algorithm":
         assert await resp_is.conflict(resp, "Not a NuVs analysis")
         return
 
-    elif error == "409_ready":
+    if error == "409_ready":
         assert await resp_is.conflict(resp, "Analysis is still running")
         return
 
     assert resp.status == 201
-
     assert resp.headers["Location"] == "/api/analyses/foobar/5/blast"
 
     blast = {

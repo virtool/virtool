@@ -15,12 +15,14 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:jest/recommended"
   ],
   "plugins": [
     "import",
     "lodash",
-    "react"
+    "react",
+    "jest"
   ],
   "rules": {
     // Basic
@@ -140,6 +142,21 @@
     "react/jsx-tag-spacing": [1],
     "react/jsx-uses-react": [1],
     "react/jsx-uses-vars": [1],
-    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}],
-  }
+    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}]
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js", "setupTests.js"],
+      "env": {
+        "jest/globals": true
+      },
+      "rules": {
+        "jest/prefer-to-have-length": "off",
+        "react/react-in-jsx-scope": "off",
+        "lodash/prefer-lodash-method": "off",
+        "lodash/prefer-noop": "off",
+        "no-undef": "off"
+      }
+    }
+  ]
 }

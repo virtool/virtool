@@ -39,7 +39,7 @@ describe("Files Reducer", () => {
     it("should handle FIND_FILES_REQUESTED", () => {
         state = initialState;
         action = {
-            type: "FIND_FILES_REQUESTED"
+            type: FIND_FILES.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -57,7 +57,7 @@ describe("Files Reducer", () => {
     it("should handle FIND_FILES_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_FILES_SUCCEEDED",
+            type: FIND_FILES.SUCCEEDED,
             data: {},
             fileType: "test"
         };
@@ -81,7 +81,7 @@ describe("Files Reducer", () => {
             ]
         };
         action = {
-            type: "REMOVE_FILE_SUCCEEDED",
+            type: REMOVE_FILE.SUCCEEDED,
             data: {
                 file_id: "test_file"
             }
@@ -100,13 +100,13 @@ describe("Files Reducer", () => {
             uploads: []
         };
         action = {
-            type: "UPLOAD_REQUESTED",
+            type: UPLOAD.REQUESTED,
             file: {
                 name: "test.fq.gz",
                 size: 100,
                 type: "reads"
             },
-            localId: "testid",
+            localId: "testid"
         };
         const { name, size, type } = action.file;
 
@@ -127,10 +127,10 @@ describe("Files Reducer", () => {
                 uploads: []
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "testid",
                 progress: 5
-            }
+            };
             result = reducer(state, action);
             expected = {
                 ...state,
@@ -139,7 +139,7 @@ describe("Files Reducer", () => {
 
             expect(result).toEqual(expected);
         });
-        
+
         it("with incomplete uploads", () => {
             state = {
                 uploads: [
@@ -149,10 +149,10 @@ describe("Files Reducer", () => {
                 ]
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "test2",
                 progress: 30
-            }
+            };
             result = reducer(state, action);
             expected = {
                 uploads: [
@@ -175,10 +175,10 @@ describe("Files Reducer", () => {
                 ]
             };
             action = {
-                type: "UPLOAD_PROGRESS",
+                type: UPLOAD_PROGRESS,
                 localId: "test1",
                 progress: 100
-            }
+            };
             result = reducer(state, action);
             expected = {
                 uploads: [
@@ -197,7 +197,7 @@ describe("Files Reducer", () => {
     it("should handle HIDE_UPLOAD_OVERLAY", () => {
         state = {};
         action = {
-            type: "HIDE_UPLOAD_OVERLAY"
+            type: HIDE_UPLOAD_OVERLAY
         };
         result = reducer(state, action);
         expected = {
@@ -211,7 +211,7 @@ describe("Files Reducer", () => {
     describe("Files Reducer Helper Functions", () => {
 
         describe("checkUploadsComplete", () => {
-            
+
             it("sets [uploadsComplete=true] if all uploads have [progress=100]", () => {
                 state = {
                     uploads: [

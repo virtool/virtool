@@ -20,11 +20,14 @@ logger = logging.getLogger(__name__)
 VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
 
 
-async def fetch_and_update_software_releases(app):
+async def fetch_and_update_releases(app, ignore_errors=False):
     """
     Get a list of releases, from the Virtool website, published since the current server version.
 
     :param app: the application object
+
+    :param ignore_errors: ignore errors during request to virtool.ca
+    :type ignore_errors: bool
 
     :return: a list of releases
     :rtype: Coroutine[list]
@@ -44,9 +47,19 @@ async def fetch_and_update_software_releases(app):
             data = json.loads(data)
 
         logger.debug("Retrieved software releases from www.virtool.ca")
-    except aiohttp.ClientConnectionError:
+    except aiohttp.ClientConnectorError:
         # Return any existing release list or `None`.
         logger.debug("Could not retrieve software releases")
+
+        await db.status.update_one({"_id": "software"}, {
+            "$set": {
+                "errors": ["Could not retrieve software releases"]
+            }
+        })
+
+        if not ignore_errors:
+            raise
+
         return await virtool.db.utils.get_one_field(db.status, "releases", "software")
 
     data = data["software"]
@@ -71,6 +84,7 @@ async def fetch_and_update_software_releases(app):
 
     await db.status.update_one({"_id": "software"}, {
         "$set": {
+            "errors": [],
             "releases": releases
         }
     })
@@ -171,11 +185,15 @@ async def refresh(app):
 
     """
     try:
+        logging.debug("Started software refresher")
+
         while True:
-            await fetch_and_update_software_releases(app)
+            await fetch_and_update_releases(app, ignore_errors=True)
             await asyncio.sleep(43200, loop=app.loop)
     except asyncio.CancelledError:
         pass
+
+    logging.debug("Started HMM refresher")
 
 
 async def update_software_process(db, progress, step=None):

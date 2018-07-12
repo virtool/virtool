@@ -6,7 +6,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { push } from "react-router-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 
-import Analyses from "./Analyses/Analyses";
+import Analyses from "../../analyses/components/Analyses";
 import General from "./General";
 import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";

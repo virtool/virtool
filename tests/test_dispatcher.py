@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.api.utils
-from virtool.app_dispatcher import Dispatcher
+from virtool.dispatcher import Dispatcher
 
 
 class TestConnection:
@@ -48,6 +48,7 @@ def test_add_connection(loop, mocker):
     dispatcher.add_connection(m)
 
     assert m in dispatcher.connections
+
 
 def test_remove_connection(loop, mocker):
 

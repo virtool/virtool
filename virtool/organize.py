@@ -68,6 +68,13 @@ async def organize_analyses(db):
     await delete_unready(db.analyses)
     await add_original_reference(db.analyses)
 
+    async for document in db.references.find({}, ["name"]):
+        await db.analyses.update_many({"reference.id": document["_id"], "reference.name": {"$ne": document["name"]}}, {
+            "$set": {
+                "reference.name": document["name"]
+            }
+        })
+
 
 async def organize_files(db):
     logger.info(" • files")

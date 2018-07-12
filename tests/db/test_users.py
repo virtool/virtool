@@ -22,10 +22,10 @@ async def test_compose_force_reset_update(force_reset):
 
 
 @pytest.mark.parametrize("groups", [None, [], ["kings"], ["kings", "peasants"]])
-async def test_compose_groups_update(groups, test_motor, kings, all_permissions, no_permissions):
-    await test_motor.groups.insert_many([kings])
+async def test_compose_groups_update(groups, dbi, kings, all_permissions, no_permissions):
+    await dbi.groups.insert_many([kings])
 
-    coroutine = virtool.db.users.compose_groups_update(test_motor, groups)
+    coroutine = virtool.db.users.compose_groups_update(dbi, groups)
 
     if groups == ["kings", "peasants"]:
         with pytest.raises(virtool.errors.DatabaseError) as err:
@@ -62,12 +62,12 @@ async def test_compose_password_update(password, mocker, static_time):
 
 
 @pytest.mark.parametrize("primary_group", [None, "kings", "lords", "peasants", "none"])
-async def test_compose_primary_group_update(primary_group, test_motor, bob, kings, peasants):
-    await test_motor.users.insert_one(bob)
+async def test_compose_primary_group_update(primary_group, dbi, bob, kings, peasants):
+    await dbi.users.insert_one(bob)
 
-    await test_motor.groups.insert_many([kings, peasants])
+    await dbi.groups.insert_many([kings, peasants])
 
-    coroutine = virtool.db.users.compose_primary_group_update(test_motor, "bob", primary_group)
+    coroutine = virtool.db.users.compose_primary_group_update(dbi, "bob", primary_group)
 
     if primary_group == "lords" or primary_group == "kings":
         with pytest.raises(virtool.errors.DatabaseError) as err:
@@ -95,16 +95,16 @@ async def test_compose_primary_group_update(primary_group, test_motor, bob, king
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("force_reset", [None, True, False])
-async def test_create(exists, force_reset, mocker, test_motor, bob):
+async def test_create(exists, force_reset, mocker, dbi, bob):
 
     user_id = "bob"
     password = "hello_world"
 
     # Ensure the force_reset is set to True by default.
     if force_reset is None:
-        args = (test_motor, user_id, password)
+        args = (dbi, user_id, password)
     else:
-        args = (test_motor, user_id, password, force_reset)
+        args = (dbi, user_id, password, force_reset)
 
     mocker.patch("virtool.db.utils.id_exists", new=make_mocked_coro(return_value=exists))
     mocker.patch("virtool.users.hash_password", return_value="hashed_password")
@@ -127,12 +127,12 @@ async def test_create(exists, force_reset, mocker, test_motor, bob):
             "groups": []
         })
 
-        assert await test_motor.users.find_one() == document == bob
+        assert await dbi.users.find_one() == document == bob
 
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("administrator", [True, False])
-async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bob, static_time):
+async def test_edit(exists, administrator, mocker, dbi, all_permissions, bob, static_time):
     """
     Test editing an existing user.
 
@@ -183,10 +183,10 @@ async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bo
     )
 
     if exists:
-        await test_dbi.users.insert_one(bob)
+        await dbi.users.insert_one(bob)
 
     coroutine = virtool.db.users.edit(
-        test_dbi,
+        dbi,
         "bob",
         administrator,
         True,
@@ -205,7 +205,7 @@ async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bo
 
     document = await coroutine
 
-    assert document == await test_dbi.users.find_one("bob") == {
+    assert document == await dbi.users.find_one("bob") == {
         **bob,
         **administrator_update,
         **force_reset_update,
@@ -216,11 +216,11 @@ async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bo
 
     m_compose_force_reset_update.assert_called_with(True)
 
-    m_compose_groups_update.assert_called_with(test_dbi, ["peasants", "kings"])
+    m_compose_groups_update.assert_called_with(dbi, ["peasants", "kings"])
 
     m_compose_password_update.assert_called_with("hello_world")
 
-    m_compose_primary_group_update.assert_called_with(test_dbi, "bob", "peasants")
+    m_compose_primary_group_update.assert_called_with(dbi, "bob", "peasants")
 
 
 @pytest.mark.parametrize("user_id,password,result", [
@@ -230,7 +230,7 @@ async def test_edit(exists, administrator, mocker, test_dbi, all_permissions, bo
     ("baz", "baz", False)
 ])
 @pytest.mark.parametrize("legacy", [True, False])
-async def test_validate_credentials(legacy, user_id, password, result, test_motor):
+async def test_validate_credentials(legacy, user_id, password, result, dbi):
     """
     Test that valid, bcrypt-based credentials work.
 
@@ -249,15 +249,15 @@ async def test_validate_credentials(legacy, user_id, password, result, test_moto
     else:
         document["password"] = virtool.users.hash_password("foobar")
 
-    await test_motor.users.insert_one(document)
+    await dbi.users.insert_one(document)
 
-    assert await virtool.db.users.validate_credentials(test_motor, user_id, password) is result
+    assert await virtool.db.users.validate_credentials(dbi, user_id, password) is result
 
 
 @pytest.mark.parametrize("administrator", [True, False])
 @pytest.mark.parametrize("elevate", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_update_sessions_and_keys(administrator, elevate, missing, test_motor, all_permissions, no_permissions):
+async def test_update_sessions_and_keys(administrator, elevate, missing, dbi, all_permissions, no_permissions):
     """
     Test that permissions assigned to keys and sessions are updated correctly.
 
@@ -275,7 +275,7 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, test_mo
             "upload_file": False
         })
 
-    await test_motor.keys.insert_one({
+    await dbi.keys.insert_one({
         "_id": "foobar",
         "administrator": False,
         "groups": ["peasants"],
@@ -285,7 +285,7 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, test_mo
         }
     })
 
-    await test_motor.sessions.insert_one({
+    await dbi.sessions.insert_one({
         "_id": "foobar",
         "administrator": False,
         "groups": ["peasants"],
@@ -298,14 +298,14 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, test_mo
     target_permissions = all_permissions if elevate else no_permissions
 
     await virtool.db.users.update_sessions_and_keys(
-        test_motor,
+        dbi,
         "bob",
         administrator,
         ["peasants", "kings"],
         target_permissions
     )
 
-    assert await test_motor.sessions.find_one() == {
+    assert await dbi.sessions.find_one() == {
         "_id": "foobar",
         "administrator": administrator,
         "groups": ["peasants", "kings"],
@@ -318,7 +318,7 @@ async def test_update_sessions_and_keys(administrator, elevate, missing, test_mo
     for key, value in permissions.items():
         permissions[key] = value and target_permissions[key]
 
-    assert await test_motor.keys.find_one() == {
+    assert await dbi.keys.find_one() == {
         "_id": "foobar",
         "administrator": administrator,
         "groups": ["peasants", "kings"],

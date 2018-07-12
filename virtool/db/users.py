@@ -1,3 +1,5 @@
+from typing import Union
+
 import virtool.db.groups
 import virtool.db.utils
 import virtool.errors
@@ -26,6 +28,33 @@ ACCOUNT_PROJECTION = [
     "primary_group",
     "settings"
 ]
+
+
+async def attach_identicons(db, users: Union[dict, list]):
+    """
+    Attach identicon fields to a list of user documents.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param users: user documents to attach identicons to
+
+    :return: the user documents with identicon fields
+    :rtype: Union[dict,list]
+
+    """
+    if isinstance(users, list):
+        user_ids = [u["id"] for u in users]
+
+        cursor = db.users.find({"_id": {"$in": user_ids}}, ["identicon"])
+
+        lookup = {d["_id"]: d["identicon"] async for d in cursor}
+
+        return [dict(u, identicon=lookup[u["id"]]) for u in users]
+
+    identicon = await virtool.db.utils.get_one_field(db.users, "identicon", users["id"])
+
+    return dict(users, identicon=identicon)
 
 
 def compose_force_reset_update(force_reset):

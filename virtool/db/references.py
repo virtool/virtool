@@ -1,7 +1,9 @@
 import asyncio
 import json.decoder
+import logging
 import os
 
+import aiohttp
 import pymongo
 import semver
 
@@ -263,16 +265,22 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
             return subdocument
 
 
-async def fetch_and_update_release(app, ref_id):
+async def fetch_and_update_release(app, ref_id, ignore_errors=False):
     """
     Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
     reference identified by the passed `ref_id` and return the release.
+
+    Exceptions can be ignored during the GitHub request. Error information will still be written to the reference
+    document.
 
     :param app: the application object
     :type app: :class:`aiohttp.Application`
 
     :param ref_id: the id of the reference to update
     :type ref_id: str
+
+    :param ignore_errors: ignore exceptions raised during GitHub request
+    :type ignore_errors:
 
     :return: the latest release
     :rtype: Coroutine[dict]
@@ -288,32 +296,40 @@ async def fetch_and_update_release(app, ref_id):
         "remotes_from"
     ])
 
+    release = document.get("release", None)
+
     try:
-        etag = document["release"]["etag"]
+        etag = release["etag"]
     except (KeyError, TypeError):
         etag = None
 
+    # Variables that will be used when trying to fetch release from GitHub.
+    errors = list()
+    updated = None
+
     try:
-        release = await virtool.github.get_release(
+        updated = await virtool.github.get_release(
             app["settings"],
             app["client"],
             document["remotes_from"]["slug"],
             etag
         )
-    except virtool.errors.GitHubError as err:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release.retrieved_at": retrieved_at,
-                "remotes_from.errors": [str(err)]
-            }
-        })
 
-        return document.get("release", None)
+        if updated:
+            updated = virtool.github.format_release(updated)
 
-    if release:
-        release = virtool.github.format_release(release)
-    else:
-        release = document.get("release", None)
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError) as err:
+        if "ClientConnectorError" in str(err):
+            errors = ["Could not reach GitHub"]
+
+        if "404" in str(err):
+            errors = ["GitHub repository or release does not exist"]
+
+        if errors and not ignore_errors:
+            raise
+
+    if updated:
+        release = updated
 
     if release:
         release["retrieved_at"] = retrieved_at
@@ -325,21 +341,14 @@ async def fetch_and_update_release(app, ref_id):
             semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
         )
 
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release": release,
-                "remotes_from.errors": None
-            }
-        })
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "errors": errors,
+            "release": release
+        }
+    })
 
-    else:
-        await db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "release.retrieved_at": retrieved_at
-            }
-        })
-
-    return document.get("release", None)
+    return release
 
 
 async def get_computed(db, ref_id, internal_control_id):
@@ -870,12 +879,19 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         increment=0.1
     )
 
-    import_data = await download_and_parse_release(
-        app,
-        release["download_url"],
-        process_id,
-        progress_tracker.add
-    )
+    try:
+        import_data = await download_and_parse_release(
+            app,
+            release["download_url"],
+            process_id,
+            progress_tracker.add
+        )
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+        return await virtool.db.processes.update(
+            db,
+            process_id,
+            errors=["Could not download reference data"]
+        )
 
     errors = virtool.references.check_import_data(
         import_data,
@@ -936,11 +952,9 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         await insert_change(db, otu_id, "remote", user_id)
         await progress_tracker.add(1)
 
-    update = virtool.github.create_update_subdocument(release, True, user_id)
-
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
-            "installed": update,
+            "installed": virtool.github.create_update_subdocument(release, True, user_id),
             "updates.$.ready": True,
             "updating": False
         }
@@ -1037,35 +1051,28 @@ async def refresh_remotes(app):
     db = app["db"]
 
     try:
+        logging.debug("Started reference refresher")
+
         while True:
             for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
                 await fetch_and_update_release(
                     app,
-                    ref_id
+                    ref_id,
+                    ignore_errors=True
                 )
 
             await asyncio.sleep(600, loop=app.loop)
     except asyncio.CancelledError:
         pass
 
+    logging.debug("Stopped reference refresher")
 
-async def update(app, process_id, ref_id, release_id, user_id):
+
+async def update(app, process_id, ref_id, release, user_id):
 
     db = app["db"]
 
     created_at = virtool.utils.timestamp()
-
-    if release_id:
-        remotes_from = await virtool.db.utils.get_one_field(db.references, ref_id, "remotes_from")
-
-        release = await virtool.github.get_release(
-            app["settings"],
-            app["client"],
-            remotes_from["slug"],
-            release_id=release_id
-        )
-    else:
-        release = await virtool.db.utils.get_one_field(db.references, "release", ref_id)
 
     update_subdocument = virtool.github.create_update_subdocument(
         release,
@@ -1167,12 +1174,19 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
         increment=0.1
     )
 
-    update_data = await download_and_parse_release(
-        app,
-        release["download_url"],
-        process_id,
-        progress_tracker.add
-    )
+    try:
+        update_data = await download_and_parse_release(
+            app,
+            release["download_url"],
+            process_id,
+            progress_tracker.add
+        )
+    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+        return await virtool.db.processes.update(
+            db,
+            process_id,
+            errors=["Could not download reference data"]
+        )
 
     await virtool.db.processes.update(
         db,

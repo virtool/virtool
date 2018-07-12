@@ -12,7 +12,7 @@ describe("Subtraction Reducer", () => {
     it("should return the initial state on first pass", () => {
         result = reducer(undefined, {});
         expected = initialState;
-        
+
         expect(result).toEqual(expected);
     });
 
@@ -29,7 +29,7 @@ describe("Subtraction Reducer", () => {
     it("should handle FIND_SUBTRACTIONS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "FIND_SUBTRACTIONS_SUCCEEDED",
+            type: FIND_SUBTRACTIONS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -44,7 +44,7 @@ describe("Subtraction Reducer", () => {
     it("should handle LIST_SUBTRACTION_IDS_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "LIST_SUBTRACTION_IDS_SUCCEEDED",
+            type: LIST_SUBTRACTION_IDS.SUCCEEDED,
             data: {}
         };
         result = reducer(state, action);
@@ -59,7 +59,7 @@ describe("Subtraction Reducer", () => {
     it("should handle GET_SUBTRACTION_REQUESTED", () => {
         state = {};
         action = {
-            type: "GET_SUBTRACTION_REQUESTED"
+            type: GET_SUBTRACTION.REQUESTED
         };
         result = reducer(state, action);
         expected = {
@@ -73,7 +73,7 @@ describe("Subtraction Reducer", () => {
     it("should handle GET_SUBTRACTION_SUCCEEDED", () => {
         state = {};
         action = {
-            type: "GET_SUBTRACTION_SUCCEEDED"
+            type: GET_SUBTRACTION.SUCCEEDED
         };
         result = reducer(state, action);
         expected = {

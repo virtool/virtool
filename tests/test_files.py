@@ -10,7 +10,7 @@ import virtool.files
 
 
 @pytest.fixture
-def test_manager_instance(loop, test_dbi, tmpdir):
+def test_manager_instance(loop, dbi, tmpdir):
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
@@ -18,7 +18,7 @@ def test_manager_instance(loop, test_dbi, tmpdir):
 
     scheduler = loop.run_until_complete(aiojobs.create_scheduler())
 
-    manager = virtool.files.Manager(loop, executor, test_dbi, files_path, watch_path)
+    manager = virtool.files.Manager(loop, executor, dbi, files_path, watch_path)
 
     loop.run_until_complete(scheduler.spawn(manager.run()))
 
@@ -28,9 +28,9 @@ def test_manager_instance(loop, test_dbi, tmpdir):
 
 
 @pytest.fixture
-def patched_test_manager_instance(monkeypatch, test_manager_instance):
+def patched_test_manager_instance(mocker, test_manager_instance):
     for key in ["handle_watch", "handle_close", "handle_create", "handle_delete"]:
-        monkeypatch.setattr(test_manager_instance, key, make_mocked_coro())
+        mocker.patch.object(test_manager_instance, key, make_mocked_coro())
 
     return test_manager_instance
 
@@ -60,8 +60,10 @@ def test_has_read_extension(filename,expected):
 
 @pytest.mark.parametrize("called", [True, False])
 async def test_detect_watch(called, patched_test_manager_instance):
+    """
+    Test that handle_watch is called if file is written in files_path, only if in watch_path.
 
-    # handle_watch should not be called if file is written in files_path, only if in watch_path
+    """
     path = patched_test_manager_instance.watch_path if called else patched_test_manager_instance.files_path
 
     touch(os.path.join(path, "test.fq"))
@@ -107,7 +109,7 @@ async def test_detect_create_close_and_delete(called, patched_test_manager_insta
 
 
 @pytest.mark.parametrize("has_ext", [True, False])
-async def test_handle_watch(has_ext, mocker, test_dbi, test_manager_instance):
+async def test_handle_watch(has_ext, mocker, dbi, test_manager_instance):
 
     m_copy = mocker.patch("shutil.copy")
 
@@ -127,7 +129,7 @@ async def test_handle_watch(has_ext, mocker, test_dbi, test_manager_instance):
 
     if has_ext:
         m_create.assert_called_with(
-            test_dbi,
+            dbi,
             filename,
             "reads"
         )
@@ -141,17 +143,17 @@ async def test_handle_watch(has_ext, mocker, test_dbi, test_manager_instance):
 
 
 @pytest.mark.parametrize("tracked", [True, False])
-async def test_handle_create(tracked, test_dbi, test_manager_instance):
+async def test_handle_create(tracked, dbi, test_manager_instance):
     filename = "foobar-test.fq"
 
     if tracked:
-        await test_dbi.files.insert_one({
+        await dbi.files.insert_one({
             "_id": filename
         })
 
     await test_manager_instance.handle_create(filename)
 
-    document = await test_dbi.files.find_one()
+    document = await dbi.files.find_one()
 
     if tracked:
         assert document == {
@@ -160,11 +162,11 @@ async def test_handle_create(tracked, test_dbi, test_manager_instance):
         }
     else:
         assert document is None
-        assert await test_dbi.files.count() == 0
+        assert await dbi.files.count() == 0
 
 
 @pytest.mark.parametrize("tracked", [True, False])
-async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
+async def test_handle_close(tracked, mocker, dbi, test_manager_instance):
     """
     When a file is
 
@@ -176,13 +178,13 @@ async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
     filename = "foobar-test.fq"
 
     if tracked:
-        await test_dbi.files.insert_one({
+        await dbi.files.insert_one({
             "_id": filename
         })
 
     await test_manager_instance.handle_close(filename)
 
-    document = await test_dbi.files.find_one()
+    document = await dbi.files.find_one()
 
     path = os.path.join(test_manager_instance.files_path, filename)
 
@@ -200,17 +202,17 @@ async def test_handle_close(tracked, mocker, test_dbi, test_manager_instance):
         m_remove.assert_called_with(path)
 
 
-async def test_handle_delete(test_motor, test_manager_instance):
+async def test_handle_delete(dbi, test_manager_instance):
     """
     Test the the correspond database document for a file is deleted when the file is deleted.
 
     """
     filename = "foobar-test.fq"
 
-    await test_motor.files.insert({
+    await dbi.files.insert_one({
         "_id": filename
     })
 
     await test_manager_instance.handle_delete(filename)
 
-    assert not await test_motor.files.count()
+    assert not await dbi.files.count()

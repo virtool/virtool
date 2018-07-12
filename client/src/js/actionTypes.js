@@ -53,14 +53,23 @@ export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
-export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
-export const GET_ANALYSIS_PROGRESS = "GET_ANALYSIS_PROGRESS";
-export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
-export const ANALYZE = createRequestActionType("ANALYZE");
-export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
-export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
+
+// Analysis
+export const ANALYZE = createRequestActionType("ANALYZE");
+export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
+export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
+export const COLLAPSE_ANALYSIS = "COLLAPSE_ANALYSIS";
+export const CROP_PATHOSCOPE = "CROP_PATHOSCOPE";
+export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
+export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
+export const SET_PATHOSCOPE_FILTER = "SET_PATHOSCOPE_FILTER";
+export const SET_PATHOSCOPE_SORT_KEY = "SET_PATHOSCOPE_SORT_KEY";
+export const TOGGLE_ANALYSIS_EXPANDED = "TOGGLE_ANALYSIS_EXPANDED";
+export const TOGGLE_SORT_PATHOSCOPE_DESCENDING = "TOGGLE_PATHOSCOPE_SORT_DIRECTION";
+export const TOGGLE_SHOW_PATHOSCOPE_MEDIAN = "TOGGLE_SHOW_PATHOSCOPE_MEDIAN";
+export const TOGGLE_SHOW_PATHOSCOPE_READS = "TOGGLE_SHOW_PATHOSCOPE_READS";
 
 // Refs
 export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
@@ -88,8 +97,6 @@ export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
 export const GET_PROCESS = createRequestActionType("GET_PROCESS");
 
 // OTU
-export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
-export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
 export const FETCH_OTUS = createRequestActionType("FETCH_OTUS");
 export const FIND_OTUS = createRequestActionType("FIND_OTUS");
 export const GET_OTU = createRequestActionType("GET_OTU");
@@ -106,9 +113,7 @@ export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
 export const REMOVE_SEQUENCE = createRequestActionType("REMOVE_SEQUENCE");
 export const REVERT = createRequestActionType("REVERT");
 export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
-export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
 export const SELECT_ISOLATE = "SELECT_ISOLATE";
-export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
 export const SHOW_EDIT_OTU = "SHOW_EDIT_OTU";
 export const SHOW_REMOVE_OTU = "SHOW_REMOVE_OTU";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
@@ -137,7 +142,6 @@ export const LIST_READY_INDEXES = createRequestActionType("LIST_READY_INDEXES");
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
-export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 
 export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
@@ -156,7 +160,6 @@ export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
 export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 
 // Account
-export const WS_UPDATE_ACCOUNT = createRequestActionType("WS_UPDATE_ACCOUNT");
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
 export const UPDATE_ACCOUNT = createRequestActionType("UPDATE_ACCOUNT");
 export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
@@ -177,9 +180,11 @@ export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const FILTER_USERS = "FILTER_USERS";
+export const FILTER_USERS = createRequestActionType("FILTER_USERS");
+export const GET_USER = createRequestActionType("GET_USER");
 export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
+export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
@@ -190,5 +195,4 @@ export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 // Updates
 export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
-export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");

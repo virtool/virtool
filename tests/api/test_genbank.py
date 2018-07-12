@@ -3,7 +3,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-@pytest.mark.parametrize("error", [False, True])
+@pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, mocker, resp_is, spawn_client):
     client = await spawn_client(authorize=True)
 

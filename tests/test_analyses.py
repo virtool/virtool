@@ -14,9 +14,18 @@ import virtool.analyses
     )
 ])
 def test_collapse_pathoscope_coverage(coverage, expected):
+    """
+    Test that two sample coverage data sets are correctly converted to coordinates.
+
+    """
     assert virtool.analyses.coverage_to_coordinates(coverage) == expected
 
 
 def test_get_nuvs_json_path():
+    """
+    Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
+    and `analysis_id` arguments.
+
+    """
     path = virtool.analyses.get_nuvs_json_path("data_foo", "foobar", "baz")
     assert path == "data_foo/samples/foobar/analysis/baz/nuvs.json"

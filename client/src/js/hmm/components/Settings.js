@@ -1,6 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Button, ViewHeader, Alert } from "../../base";
+import { push } from "react-router-redux";
+import { ViewHeader, Alert, RemoveBanner } from "../../base";
 import { purgeHMMs } from "../actions";
 import { checkAdminOrPermission } from "../../utils";
 
@@ -11,16 +12,11 @@ export const HMMSettings = ({ canPurge, onPurge }) => (
         </ViewHeader>
 
         { canPurge ? (
-            <Alert bsStyle="danger">
-                <div style={{ textAlign: "right" }}>
-                    <span style={{ float: "left", marginTop: "7px" }}>
-                        Delete all HMM profile annotations and data files.
-                    </span>
-                    <Button bsStyle="danger" onClick={onPurge}>
-                        Purge
-                    </Button>
-                </div>
-            </Alert>
+            <RemoveBanner
+                message="Delete all HMM profile annotations and data files."
+                buttonText="Purge"
+                onClick={onPurge}
+            />
         ) : (
             <Alert bsStyle="warning" icon="exclamation-circle">
                 <strong>You do not have permission to modify HMMs.</strong>
@@ -37,6 +33,7 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
     onPurge: () => {
         dispatch(purgeHMMs());
+        dispatch(push("/hmm"));
     }
 });
 

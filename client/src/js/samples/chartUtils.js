@@ -1,8 +1,8 @@
-import { select } from "d3-selection";
-import { map } from "lodash-es";
-import { symbol, symbolSquare } from "d3-shape";
-import { scaleOrdinal } from "d3-scale";
-import { legendColor } from "d3-svg-legend";
+import {scaleOrdinal} from "d3-scale";
+import {select} from "d3-selection";
+import {symbol, symbolSquare} from "d3-shape";
+import {legendColor} from "d3-svg-legend";
+import {map} from "lodash-es";
 
 const height = 300;
 

@@ -1,5 +1,5 @@
 import AccountSettings from "./Settings";
-import { AlgorithmSelect, Checkbox } from "../../base";
+import { Checkbox } from "../../base";
 import * as actions from "../actions";
 
 describe("<Settings />", () => {
@@ -11,7 +11,7 @@ describe("<Settings />", () => {
             account: {
                 settings: {
                     show_ids: false,
-                    skip_quick_analyze_dialog: false,
+                    skip_quick_analyze_dialog: false
                 }
             }
         };
@@ -43,7 +43,7 @@ describe("<Settings />", () => {
             expect(wrapper.find(Checkbox).at(0).exists()).toBe(true);
 
             const checkboxWrapper = wrapper.find(Checkbox).at(0).shallow();
-            checkboxWrapper.simulate('click');
+            checkboxWrapper.simulate("click");
 
             expected = {
                 show_ids: !initialState.account.settings.show_ids

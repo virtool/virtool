@@ -7,12 +7,12 @@ import virtool.db.history
 
 class TestAdd:
 
-    async def test(self, test_motor, static_time, test_otu_edit, test_change):
+    async def test(self, dbi, static_time, test_otu_edit, test_change):
 
         old, new = test_otu_edit
 
         returned_change = await virtool.db.history.add(
-            test_motor,
+            dbi,
             "edit",
             old,
             new,
@@ -20,7 +20,7 @@ class TestAdd:
             "test"
         )
 
-        document = await test_motor.history.find_one()
+        document = await dbi.history.find_one()
 
         # Sort the real and expected diffs so they are directly comparable.
         returned_change["diff"].sort()
@@ -56,7 +56,7 @@ class TestAdd:
             }
         }
 
-    async def test_create(self, test_motor, static_time, test_otu_edit, test_change):
+    async def test_create(self, dbi, static_time, test_otu_edit, test_change):
         # There is no old document because this is a change document for a otu creation operation.
         old = None
 
@@ -65,7 +65,7 @@ class TestAdd:
         description = "Created {}".format(new["name"])
 
         returned_change = await virtool.db.history.add(
-            test_motor,
+            dbi,
             "create",
             old,
             new,
@@ -73,7 +73,7 @@ class TestAdd:
             "test"
         )
 
-        document = await test_motor.history.find_one()
+        document = await dbi.history.find_one()
 
         # Update the base test_change document to verify the real added change document.
         test_change.update({
@@ -97,7 +97,7 @@ class TestAdd:
 
         assert returned_change == test_change
 
-    async def test_remove(self, test_motor, static_time, test_otu_edit, test_change):
+    async def test_remove(self, dbi, static_time, test_otu_edit, test_change):
         """
         Test that the addition of a change due to otu removal inserts the expected change document.
 
@@ -110,7 +110,7 @@ class TestAdd:
         description = "Removed {}".format(old["name"])
 
         returned_change = await virtool.db.history.add(
-            test_motor,
+            dbi,
             "remove",
             old,
             new,
@@ -118,7 +118,7 @@ class TestAdd:
             "test"
         )
 
-        document = await test_motor.history.find_one()
+        document = await dbi.history.find_one()
 
         # Update the base test_change document to verify the real added change document.
         test_change.update({
@@ -144,11 +144,11 @@ class TestAdd:
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, test_motor, test_merged_otu, create_mock_history):
+async def test_patch_to_version(remove, dbi, test_merged_otu, create_mock_history):
     expected_current = await create_mock_history(remove)
 
     current, patched, reverted_change_ids = await virtool.db.history.patch_to_version(
-        test_motor,
+        dbi,
         "6116cba1",
         1
     )
@@ -166,7 +166,7 @@ async def test_patch_to_version(remove, test_motor, test_merged_otu, create_mock
 
 
 @pytest.mark.parametrize("exists", [True, False])
-async def test_get_most_recent_change(exists, test_motor, static_time):
+async def test_get_most_recent_change(exists, dbi, static_time):
     """
     Test that the most recent change document is returned for the given ``otu_id``.
 
@@ -175,7 +175,7 @@ async def test_get_most_recent_change(exists, test_motor, static_time):
     delta = datetime.timedelta(3)
 
     if exists:
-        await test_motor.history.insert_many([
+        await dbi.history.insert_many([
             {
                 "_id": "6116cba1.1",
                 "description": "Description",
@@ -212,7 +212,7 @@ async def test_get_most_recent_change(exists, test_motor, static_time):
             }
         ])
 
-    most_recent = await virtool.db.history.get_most_recent_change(test_motor, "6116cba1")
+    most_recent = await virtool.db.history.get_most_recent_change(dbi, "6116cba1")
 
     if exists:
         assert most_recent == {

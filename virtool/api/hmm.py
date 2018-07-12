@@ -1,16 +1,19 @@
 import os
 
+import aiohttp
 import aiojobs.aiohttp
 
 import virtool.db.hmm
 import virtool.db.processes
 import virtool.db.status
 import virtool.db.utils
+import virtool.errors
 import virtool.github
 import virtool.hmm
 import virtool.http.routes
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate
+from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, conflict, json_response, no_content, \
+    not_found, paginate
 
 routes = virtool.http.routes.Routes()
 
@@ -54,7 +57,21 @@ async def get_status(req):
 
 @routes.get("/api/hmms/status/release")
 async def get_release(req):
-    release = await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+    try:
+        release = await virtool.db.hmm.fetch_and_update_release(req.app)
+
+    except virtool.errors.GitHubError as err:
+        if "404" in str(err):
+            return bad_gateway("GitHub repository does not exist")
+
+        raise
+
+    except aiohttp.ClientConnectorError:
+        return bad_gateway("Could not reach GitHub")
+
+    if release is None:
+        return not_found("Release not found")
+
     return json_response(release)
 
 
@@ -72,11 +89,7 @@ async def list_updates(req):
     return json_response(updates)
 
 
-@routes.post("/api/hmms/status/updates", permission="modify_hmm", schema={
-    "release_id": {
-        "type": ["integer", "string"]
-    }
-})
+@routes.post("/api/hmms/status/updates", permission="modify_hmm")
 async def install(req):
     """
     Install the latest official HMM database from GitHub.
@@ -88,8 +101,6 @@ async def install(req):
 
     if await db.status.count({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
-
-    release_id = req["data"].get("release_id", None)
 
     process = await virtool.db.processes.register(
         db,
@@ -106,16 +117,8 @@ async def install(req):
 
     release = document.get("release", None)
 
-    if not release or not release_id or release_id != release["id"]:
-        release = await virtool.github.get_release(
-            req.app["settings"],
-            req.app["client"],
-            "virtool/virtool-hmm",
-            None,
-            release_id or "latest"
-        )
-
-        release = virtool.github.format_release(release)
+    if release is None:
+        return bad_request("Target release does not exist")
 
     update = virtool.github.create_update_subdocument(release, False, user_id)
 
@@ -174,6 +177,6 @@ async def purge(req):
         }
     })
 
-    await virtool.db.hmm.fetch_and_update_hmm_release(req.app)
+    await virtool.db.hmm.fetch_and_update_release(req.app)
 
     return no_content()

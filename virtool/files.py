@@ -144,7 +144,7 @@ class Manager:
         except asyncio.CancelledError:
             pass
 
-        logging.debug("Stopped file manager")
+        logging.debug("Closed file manager")
 
     async def handle_watch(self, filename):
         """

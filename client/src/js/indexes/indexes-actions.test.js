@@ -18,7 +18,7 @@ describe("Indexes Action Creators:", () => {
     it("findIndexes: returns simple action", () => {
         const result = findIndexes();
         const expected = {
-            type: "FIND_INDEXES_REQUESTED"
+            type: FIND_INDEXES.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -28,7 +28,7 @@ describe("Indexes Action Creators:", () => {
         const indexId = "abc123";
         const result = getIndex(indexId);
         const expected = {
-            type: "GET_INDEX_REQUESTED",
+            type: GET_INDEX.REQUESTED,
             indexId
         };
 
@@ -38,7 +38,7 @@ describe("Indexes Action Creators:", () => {
     it("getUnbuilt: returns simple action", () => {
         const result = getUnbuilt();
         const expected = {
-            type: "GET_UNBUILT_REQUESTED"
+            type: GET_UNBUILT.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -47,7 +47,7 @@ describe("Indexes Action Creators:", () => {
     it("createIndex: returns simple action", () => {
         const result = createIndex();
         const expected = {
-            type: "CREATE_INDEX_REQUESTED"
+            type: CREATE_INDEX.REQUESTED
         };
 
         expect(result).toEqual(expected);
@@ -58,7 +58,7 @@ describe("Indexes Action Creators:", () => {
         const page = "1";
         const result = getIndexHistory(indexId, page);
         const expected = {
-            type: "GET_INDEX_HISTORY_REQUESTED",
+            type: GET_INDEX_HISTORY.REQUESTED,
             indexId,
             page
         };

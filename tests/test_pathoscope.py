@@ -7,16 +7,15 @@ import filecmp
 
 import virtool.pathoscope
 
-
-SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
-VTA_PATH = os.path.join(sys.path[0], "tests", "test_files", "test.vta")
-MATRIX_PATH = os.path.join(sys.path[0], "tests", "test_files", "ps_matrix")
 BEST_HIT_PATH = os.path.join(sys.path[0], "tests", "test_files", "best_hit")
-SCORES = os.path.join(sys.path[0], "tests", "test_files", "scores")
 EM_PATH = os.path.join(sys.path[0], "tests", "test_files", "em")
+MATRIX_PATH = os.path.join(sys.path[0], "tests", "test_files", "ps_matrix")
+SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
+SCORES = os.path.join(sys.path[0], "tests", "test_files", "scores")
 TSV_PATH = os.path.join(sys.path[0], "tests", "test_files", "report.tsv")
 UNU_PATH = os.path.join(sys.path[0], "tests", "test_files", "unu")
 UPDATED_VTA_PATH = os.path.join(sys.path[0], "tests", "test_files", "updated.vta")
+VTA_PATH = os.path.join(sys.path[0], "tests", "test_files", "test.vta")
 
 
 @pytest.fixture("session")
@@ -65,6 +64,10 @@ def test_em(tmpdir, theta_prior, pi_prior, epsilon, max_iter, expected_em):
 
 
 def test_compute_best_hit():
+    """
+    Test that :meth:`compute_best_hit` gives the expected result given some input data.
+
+    """
     with open(MATRIX_PATH, "rb") as handle:
         matrix_tuple = pickle.load(handle)
 

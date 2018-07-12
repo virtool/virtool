@@ -5,11 +5,13 @@ import os
 import shutil
 
 import aiofiles
+import aiohttp.client_exceptions
 import semver
 
 import virtool.db.processes
 import virtool.db.status
 import virtool.db.utils
+import virtool.errors
 import virtool.github
 import virtool.hmm
 import virtool.http.utils
@@ -57,53 +59,83 @@ async def delete_unreferenced_hmms(db):
     logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
 
 
-async def fetch_and_update_hmm_release(app):
+async def fetch_and_update_release(app, ignore_errors=False):
     """
     Return the HMM install status document or create one if none exists.
 
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
+    :param ignore_errors: ignore possible errors when making GitHub request
+    :type ignore_errors: bool
+
     """
     db = app["db"]
     settings = app["settings"]
     session = app["client"]
 
-    etag = None
+    document = await db.status.find_one("hmm", ["release", "installed"])
 
-    document = await db.status.find_one("hmm", ["release", "updates"])
+    release = document.get("release", None)
 
-    existing = document.get("release", None)
+    installed = bool(document.get("installed", False))
 
     try:
-        installed = document["updates"][-1]
-    except (IndexError, KeyError):
-        installed = None
+        etag = release["etag"]
+    except (KeyError, TypeError):
+        etag = None
 
-    if existing:
-        etag = existing.get("etag", None)
+    errors = list()
 
-    release = await virtool.github.get_release(settings, session, "virtool/virtool-hmm", etag)
-
-    if release:
-        release = virtool.github.format_release(release)
-    else:
-        release = existing
-
-    release["newer"] = bool(
-        release is None or (
-            installed and
-            semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+    try:
+        updated = await virtool.github.get_release(
+            settings,
+            session,
+            settings["hmm_slug"],
+            etag
         )
-    )
 
-    await db.status.update_one({"_id": "hmm"}, {
-        "$set": {
-            "release": release
-        }
-    }, upsert=True)
+        # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
+        # has not changed and `None` is returned from `get_release()`.
+        if updated:
+            release = virtool.github.format_release(release)
 
-    return release
+            release["newer"] = bool(
+                release is None or (
+                    installed and
+                    semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+                )
+            )
+
+        release["retrieved_at"] = virtool.utils.timestamp()
+
+        # The `errors` list is emptied and the
+        await db.status.update_one({"_id": "hmm"}, {
+            "$set": {
+                "errors": errors,
+                "release": release
+            }
+        }, upsert=True)
+
+        return release
+
+    except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+        if "ClientConnectorError" in str(err):
+            errors = ["Could not reach GitHub"]
+
+        if "404" in str(err):
+            errors = ["GitHub repository or release does not exist"]
+
+        if errors and not ignore_errors:
+            raise
+
+        await db.status.update_one({"_id": "hmm"}, {
+            "$set": {
+                "errors": errors
+            }
+        })
+
+        return release
 
 
 async def get_status(db):
@@ -165,12 +197,20 @@ async def install(app, process_id, release, user_id):
 
         path = os.path.join(temp_path, "hmm.tar.gz")
 
-        await virtool.http.utils.download_file(
-            app,
-            release["download_url"],
-            path,
-            progress_tracker.add
-        )
+        try:
+            await virtool.http.utils.download_file(
+                app,
+                release["download_url"],
+                path,
+                progress_tracker.add
+            )
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            await virtool.db.processes.update(
+                db,
+                process_id,
+                errors=["Could not download HMM data"],
+                step="unpack"
+            )
 
         await virtool.db.processes.update(
             db,
@@ -259,8 +299,12 @@ async def purge(db):
 
 async def refresh(app):
     try:
+        logging.debug("Started HMM refresher")
+
         while True:
-            await fetch_and_update_hmm_release(app)
+            await fetch_and_update_release(app)
             await asyncio.sleep(600, loop=app.loop)
     except asyncio.CancelledError:
         pass
+
+    logging.debug("Stopped HMM refresher")

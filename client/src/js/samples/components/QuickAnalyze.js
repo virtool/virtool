@@ -13,7 +13,7 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { analyze } from "../actions";
+import { analyze } from "../../analyses/actions";
 import { updateAccountSettings } from "../../account/actions";
 import { AlgorithmSelect, InputError, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, some, reduce } from "lodash-es";
+import { map, filter, some } from "lodash-es";
 import MemberEntry from "./MemberEntry";
 import MemberSetting from "./MemberSetting";
 import AddReferenceMember from "./AddMember";
@@ -16,41 +16,17 @@ import {
 import { listUsers } from "../../../users/actions";
 import { listGroups } from "../../../groups/actions";
 
-const getOtherMembers = (list, members) => {
-    const otherMembers = filter(list, member => (
-        !some(members, ["id", member.id])
-    ));
-    return otherMembers;
-};
-
 const getInitialState = () => ({
     value: "",
     selected: "",
     showAdd: false
 });
 
-const getCurrentMembers = (list, members, noun) => {
-
-    if (noun === "groups") {
-        return members;
-    }
-
-    const takenUsers = filter(list, user => (
-        some(members, ["id", user.id])
+const getOtherMembers = (list, members) => {
+    const otherMembers = filter(list, member => (
+        !some(members, ["id", member.id])
     ));
-
-    const currentList = members.slice();
-
-    map(takenUsers, (takenUser, index) => (
-        reduce(takenUser, (result, value, key) => {
-            if (key === "identicon") {
-                result[key] = value;
-            }
-            return result;
-        }, currentList[index])
-    ));
-
-    return currentList;
+    return otherMembers;
 };
 
 class ReferenceMembers extends React.Component {
@@ -111,10 +87,8 @@ class ReferenceMembers extends React.Component {
         }
 
         const list = (this.props.noun === "users") ? this.props.userList : this.props.groupList;
-        const members = (this.props.noun === "users") ? this.props.users : this.props.groups;
-
-        const otherMembers = getOtherMembers(list, members);
-        const currentMembers = getCurrentMembers(list, members, this.props.noun);
+        const currentMembers = (this.props.noun === "users") ? this.props.users : this.props.groups;
+        const otherMembers = getOtherMembers(list, currentMembers);
 
         const listComponents = currentMembers.length
             ? map(currentMembers, member =>
@@ -157,7 +131,7 @@ class ReferenceMembers extends React.Component {
 const mapStateToProps = (state) => ({
     refId: state.references.detail.id,
     users: state.references.detail.users,
-    userList: state.users.list,
+    userList: state.users.list ? state.users.list.documents : null,
     groups: state.references.detail.groups,
     groupList: state.groups.list
 });
@@ -190,7 +164,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onList: (noun) => {
         if (noun === "users") {
-            dispatch(listUsers());
+            dispatch(listUsers(1));
         } else {
             dispatch(listGroups());
         }

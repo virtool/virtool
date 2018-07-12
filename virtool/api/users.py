@@ -1,5 +1,4 @@
-from cerberus import Validator
-
+import virtool.db.hmm
 import virtool.db.users
 import virtool.db.utils
 import virtool.errors
@@ -7,7 +6,8 @@ import virtool.groups
 import virtool.http.routes
 import virtool.users
 import virtool.utils
-from virtool.api.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found
+from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found,\
+    paginate
 
 
 routes = virtool.http.routes.Routes()
@@ -19,9 +19,24 @@ async def find(req):
     Get a list of all user documents in the database.
 
     """
-    users = await req.app["db"].users.find({}, virtool.db.users.PROJECTION).to_list(None)
+    db = req.app["db"]
 
-    return json_response([virtool.utils.base_processor(user) for user in users])
+    term = req.query.get("find", None)
+
+    db_query = dict()
+
+    if term:
+        db_query.update(compose_regex_query(term, ["_id"]))
+
+    data = await paginate(
+        db.users,
+        db_query,
+        req.query,
+        sort="_id",
+        projection=virtool.db.users.PROJECTION
+    )
+
+    return json_response(data)
 
 
 @routes.get("/api/users/{user_id}", admin=True)
@@ -117,7 +132,9 @@ async def edit(req):
         if missing:
             return bad_request("Groups do not exist: " + ", ".join(missing))
 
-    if "primary_group" in data and data["primary_group"] not in groups:
+    primary_group = data.get("primary_group", None)
+
+    if primary_group and primary_group not in groups:
         return bad_request("Primary group does not exist")
 
     user_id = req.match_info["user_id"]

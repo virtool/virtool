@@ -1,9 +1,8 @@
 import os
 
 import aiohttp
-import aiohttp.client_exceptions
 
-import virtool.app_settings
+import virtool.settings
 import virtool.http.routes
 import virtool.resources
 import virtool.utils
@@ -17,7 +16,7 @@ async def get(req):
     return json_response(req.app["settings"].data)
 
 
-@routes.patch("/api/settings", admin=True, schema=virtool.app_settings.SCHEMA)
+@routes.patch("/api/settings", admin=True, schema=virtool.settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
@@ -31,7 +30,7 @@ async def update(req):
 
     settings = req.app["settings"]
 
-    error_message = virtool.app_settings.check_resource_limits(proc, mem, settings.data)
+    error_message = virtool.settings.check_resource_limits(proc, mem, settings.data)
 
     if error_message:
         return conflict(error_message)
@@ -39,7 +38,7 @@ async def update(req):
     proc = proc or settings["proc"]
     mem = mem or settings["mem"]
 
-    error_message = virtool.app_settings.check_task_specific_limits(proc, mem, data)
+    error_message = virtool.settings.check_task_specific_limits(proc, mem, data)
 
     if error_message:
         return conflict(error_message)
@@ -107,7 +106,7 @@ async def check_proxy(req):
 
                         return json_response(dict(body, message="Could not reach internet"), status=400)
 
-                except aiohttp.client_exceptions.ClientProxyConnectionError:
+                except aiohttp.ClientProxyConnectionError:
                     return json_response(dict(body, message="Could not connect to proxy"), status=400)
 
     return json_response(dict(body, message="Proxy use is not enabled"), status=400)

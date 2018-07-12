@@ -11,7 +11,7 @@ describe("<HMMItem />", () => {
         names: ["string1", "string2", "string3"]
     };
 
-    let wrapper = shallow(<Item {...props} />);
+    const wrapper = shallow(<Item {...props} />);
 
     it("renders without error", () => {
         expect(wrapper).toMatchSnapshot();
@@ -26,7 +26,7 @@ describe("<HMMItem />", () => {
     });
 
     it("renders a Row grandchild component", () => {
-        expect(wrapper.find(Row).length).toEqual(1);   
+        expect(wrapper.find(Row).length).toEqual(1);
     });
 
     it("renders three Col components", () => {

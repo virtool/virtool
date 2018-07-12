@@ -1,18 +1,16 @@
 import React from "react";
-import { map } from "lodash-es";
 import { AlgorithmSelect, algorithms } from "./AlgorithmSelect";
-import { Input } from "./";
 
-const setup = (props) => {
-    return shallow(
+const setup = (props) => (
+    shallow(
         <AlgorithmSelect
             noLabel={props.noLabel}
             value={props.value}
             onChange={props.onChange}
             hasHmm={props.hasHmm}
         />
-    );
-};
+    )
+);
 
 describe("<AlgorithmSelect />", () => {
     let wrapper;
@@ -29,7 +27,7 @@ describe("<AlgorithmSelect />", () => {
         wrapper = setup(props);
 
         inputProps = wrapper.find("Input").props();
-        
+
         expect(wrapper).toMatchSnapshot();
 
         expect(inputProps.name).toEqual("algorithm");
@@ -55,15 +53,15 @@ describe("<AlgorithmSelect />", () => {
         wrapper = mount(
             <AlgorithmSelect
                 noLabel={true}
-                value={"nuvs"}
+                value="nuvs"
                 onChange={jest.fn()}
                 hasHmm={false}
             />
         );
 
-        expect(wrapper.find('option').length).toEqual(algorithms.length);
+        expect(wrapper.find("option").length).toEqual(algorithms.length);
 
-        wrapper.find('option').forEach((node, index) => {
+        wrapper.find("option").forEach((node, index) => {
             expect(node.props().value).toEqual(algorithms[index]);
         });
     });

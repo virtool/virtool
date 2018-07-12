@@ -12,7 +12,7 @@ import aiofiles
 import collections
 import pymongo.errors
 
-import virtool.app_settings
+import virtool.settings
 import virtool.bio
 import virtool.db.history
 import virtool.db.indexes

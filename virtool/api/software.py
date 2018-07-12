@@ -1,3 +1,4 @@
+import aiohttp
 import aiojobs.aiohttp
 
 import virtool.db.hmm
@@ -9,7 +10,7 @@ import virtool.github
 import virtool.http.routes
 import virtool.software
 import virtool.utils
-from virtool.api.utils import json_response, not_found
+from virtool.api.utils import bad_gateway, json_response, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -18,7 +19,7 @@ routes = virtool.http.routes.Routes()
 async def get(req):
     db = req.app["db"]
 
-    await virtool.db.software.fetch_and_update_software_releases(req.app)
+    await virtool.db.software.fetch_and_update_releases(req.app, ignore_errors=True)
 
     document = await db.status.find_one("software")
 
@@ -27,7 +28,11 @@ async def get(req):
 
 @routes.get("/api/software/releases")
 async def list_releases(req):
-    releases = await virtool.db.software.fetch_and_update_software_releases(req.app)
+    try:
+        releases = await virtool.db.software.fetch_and_update_releases(req.app)
+    except aiohttp.ClientConnectorError:
+        return bad_gateway("Could not connection to www.virtool.ca")
+
     return json_response(releases)
 
 

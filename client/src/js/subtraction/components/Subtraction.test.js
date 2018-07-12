@@ -1,7 +1,4 @@
 import Subtraction, { SubtractionFileManager } from "./Subtraction";
-import { StaticRouter } from "react-router-dom";
-import FileManager from "../../files/components/Manager";
-import { Switch, Route } from "react-router-dom";
 
 describe("<Subtraction />", () => {
 
