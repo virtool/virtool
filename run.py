@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import ssl
 import json
 import uvloop
 import asyncio
@@ -36,16 +35,6 @@ except FileNotFoundError:
     settings_temp = dict()
 
 if __name__ == "__main__":
-    ssl_context = None
-
-    if settings_temp.get("use_ssl", False):
-        cert_path = settings_temp.get("cert_path", None)
-        key_path = settings_temp.get("key_path", None)
-
-        if cert_path and key_path:
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ssl_context.load_cert_chain(cert_path, key_path)
-
     app = create_app(
         loop,
         skip_setup=skip_setup,
@@ -60,4 +49,4 @@ if __name__ == "__main__":
     else:
         port = settings_temp.get("server_port", 9950)
 
-    web.run_app(app, host=host, port=port, ssl_context=ssl_context)
+    web.run_app(app, host=host, port=port)
