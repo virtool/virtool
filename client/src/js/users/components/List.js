@@ -33,7 +33,7 @@ const UserEntry = ({ id, identicon, isAdmin }) => (
 );
 
 class UsersList extends React.Component {
-
+/*
     constructor (props) {
         super(props);
         this.state = {
@@ -42,13 +42,29 @@ class UsersList extends React.Component {
             page: this.props.page
         };
     }
-
+*/
     componentDidMount () {
-        this.props.loadNextPage(1);
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
+        }
     }
-
+/*
     static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
+        //return getUpdatedScrollListState(nextProps, prevState);
+
+        if (!nextProps.documents) {
+            return null;
+        }
+
+        if (!prevState.masterList || nextProps.documents.length !== prevState.masterList.length) {
+            return {
+                masterList: nextProps.documents,
+                list: nextProps.documents,
+                page: nextProps.page
+            };
+        }
+
+        return null;
     }
 
     rowRenderer = (index) => (
@@ -58,16 +74,25 @@ class UsersList extends React.Component {
             isAdmin={this.state.masterList[index].administrator}
         />
     );
+*/
+    rowRenderer = (index) => (
+        <UserEntry
+            key={this.props.documents[index].id}
+            {...this.props.documents[index]}
+            isAdmin={this.props.documents[index].administrator}
+        />
+    );
 
     render () {
+
         return (
             <ScrollList
                 hasNextPage={this.props.page < this.props.page_count}
                 isNextPageLoading={this.props.isLoading}
                 isLoadError={this.props.errorLoad}
-                list={this.state.masterList}
+                list={this.props.documents}
                 loadNextPage={this.props.loadNextPage}
-                page={this.state.page}
+                page={this.props.page}
                 rowRenderer={this.rowRenderer}
             />
         );
@@ -75,12 +100,14 @@ class UsersList extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    ...state.users.list
+    ...state.users.list,
+    fetched: state.users.fetched
 });
 
 const mapDispatchToProps = (dispatch) => ({
     loadNextPage: (page) => {
         if (page) {
+            console.log("dispatch: ", page);
             dispatch(listUsers(page));
         }
     }
