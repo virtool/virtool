@@ -33,48 +33,13 @@ const UserEntry = ({ id, identicon, isAdmin }) => (
 );
 
 class UsersList extends React.Component {
-/*
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-    }
-*/
+
     componentDidMount () {
         if (!this.props.fetched) {
             this.props.loadNextPage(1);
         }
     }
-/*
-    static getDerivedStateFromProps (nextProps, prevState) {
-        //return getUpdatedScrollListState(nextProps, prevState);
 
-        if (!nextProps.documents) {
-            return null;
-        }
-
-        if (!prevState.masterList || nextProps.documents.length !== prevState.masterList.length) {
-            return {
-                masterList: nextProps.documents,
-                list: nextProps.documents,
-                page: nextProps.page
-            };
-        }
-
-        return null;
-    }
-
-    rowRenderer = (index) => (
-        <UserEntry
-            key={this.state.masterList[index].id}
-            {...this.state.masterList[index]}
-            isAdmin={this.state.masterList[index].administrator}
-        />
-    );
-*/
     rowRenderer = (index) => (
         <UserEntry
             key={this.props.documents[index].id}
@@ -84,7 +49,6 @@ class UsersList extends React.Component {
     );
 
     render () {
-
         return (
             <ScrollList
                 hasNextPage={this.props.page < this.props.page_count}
@@ -107,7 +71,6 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = (dispatch) => ({
     loadNextPage: (page) => {
         if (page) {
-            console.log("dispatch: ", page);
             dispatch(listUsers(page));
         }
     }
