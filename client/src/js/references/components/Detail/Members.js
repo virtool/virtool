@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, some, reduce } from "lodash-es";
+import { map, filter, some } from "lodash-es";
 import MemberEntry from "./MemberEntry";
 import MemberSetting from "./MemberSetting";
 import AddReferenceMember from "./AddMember";
