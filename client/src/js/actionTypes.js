@@ -179,6 +179,9 @@ export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAH
 export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Users
+export const WS_INSERT_USER = "WS_INSERT_USER";
+export const WS_UPDATE_USER = "WS_UPDATE_USER";
+export const WS_REMOVE_USER = "WS_REMOVE_USER";
 export const LIST_USERS = createRequestActionType("LIST_USERS");
 export const FILTER_USERS = createRequestActionType("FILTER_USERS");
 export const GET_USER = createRequestActionType("GET_USER");

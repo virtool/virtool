@@ -8,9 +8,11 @@ import { wsUpdateProcess, wsInsertProcess } from "./processes/actions";
 import { wsUpdateReference } from "./references/actions";
 import { wsUpdateStatus } from "./status/actions";
 import { wsUpdateSubtraction } from "./subtraction/actions";
+import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "./users/actions";
 
 const documentInserters = {
-    processes: wsInsertProcess
+    processes: wsInsertProcess,
+    users: wsInsertUser
 };
 
 const documentUpdaters = {
@@ -22,14 +24,16 @@ const documentUpdaters = {
     references: wsUpdateReference,
     samples: wsUpdateSample,
     status: wsUpdateStatus,
-    subtraction: wsUpdateSubtraction
+    subtraction: wsUpdateSubtraction,
+    users: wsUpdateUser
 };
 
 const documentRemovers = {
     analyses: wsRemoveAnalysis,
     files: wsRemoveFile,
     jobs: wsRemoveJob,
-    samples: wsRemoveSample
+    samples: wsRemoveSample,
+    users: wsRemoveUser
 };
 
 export default function WSConnection (dispatch) {
