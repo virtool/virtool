@@ -293,6 +293,8 @@ async def on_shutdown(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    logger.debug("Shutting down")
+
     await app["client"].close()
 
     app["process_executor"].shutdown(wait=True)

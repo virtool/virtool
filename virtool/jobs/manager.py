@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import virtool.db.jobs
 import virtool.db.utils
@@ -32,6 +33,8 @@ class Manager:
         return iter(self._jobs_dict.keys())
 
     async def run(self):
+        logging.debug("Started job manager")
+
         try:
             while True:
                 to_delete = list()
@@ -54,8 +57,12 @@ class Manager:
                 await asyncio.sleep(0.1, loop=self.loop)
 
         except asyncio.CancelledError:
+            logging.debug("Cancelling running jobs")
+
             for job in self._jobs_dict.values():
                 await job.cancel()
+
+        logging.debug("Closed job manager")
 
     async def new(self, task_name, task_args, user_id, job_id=None):
 

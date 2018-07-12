@@ -1,5 +1,6 @@
 import asyncio
 import json.decoder
+import logging
 import os
 
 import aiohttp
@@ -1050,6 +1051,8 @@ async def refresh_remotes(app):
     db = app["db"]
 
     try:
+        logging.debug("Started reference refresher")
+
         while True:
             for ref_id in await db.references.distinct("_id", {"remotes_from": {"$exists": True}}):
                 await fetch_and_update_release(
@@ -1061,6 +1064,8 @@ async def refresh_remotes(app):
             await asyncio.sleep(600, loop=app.loop)
     except asyncio.CancelledError:
         pass
+
+    logging.debug("Stopped reference refresher")
 
 
 async def update(app, process_id, ref_id, release, user_id):

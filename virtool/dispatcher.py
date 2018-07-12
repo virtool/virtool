@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from copy import deepcopy
 
 import virtool.api.utils
@@ -35,6 +36,7 @@ class Dispatcher:
 
     async def run(self):
         to_remove = list()
+        logging.debug("Started dispatcher")
 
         try:
             while True:
@@ -53,8 +55,12 @@ class Dispatcher:
                 await asyncio.sleep(5, loop=self.loop)
 
         except asyncio.CancelledError:
+            logging.debug("Closing dispatcher")
+
             for connection in self.connections:
                 await connection.close()
+
+        logging.debug("Closed dispatcher")
 
     def add_connection(self, connection):
         """
@@ -62,6 +68,7 @@ class Dispatcher:
 
         """
         self.connections.append(connection)
+        logging.debug("Added connection to dispatcher: " + connection.user_id)
 
     def remove_connection(self, connection):
         """
@@ -73,6 +80,7 @@ class Dispatcher:
         """
         try:
             self.connections.remove(connection)
+            logging.debug("Removed connection from dispatcher: " + connection.user_id)
         except ValueError:
             pass
 
@@ -140,3 +148,5 @@ class Dispatcher:
 
         for connection in connections_to_remove:
             self.remove_connection(connection)
+
+        logging.debug("Dispatched {}.{}".format(interface, operation))

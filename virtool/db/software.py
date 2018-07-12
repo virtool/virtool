@@ -185,11 +185,15 @@ async def refresh(app):
 
     """
     try:
+        logging.debug("Started software refresher")
+
         while True:
             await fetch_and_update_releases(app, ignore_errors=True)
             await asyncio.sleep(43200, loop=app.loop)
     except asyncio.CancelledError:
         pass
+
+    logging.debug("Started HMM refresher")
 
 
 async def update_software_process(db, progress, step=None):
