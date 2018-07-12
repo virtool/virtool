@@ -286,9 +286,6 @@ async def test_organize_status(has_software, has_software_update, has_version, d
 
     result = await dbi.status.find({}, sort=[("_id", pymongo.ASCENDING)]).to_list(None)
 
-    import pprint
-    pprint.pprint(result)
-
     expected_software = {
         "_id": "software",
         "process": None,

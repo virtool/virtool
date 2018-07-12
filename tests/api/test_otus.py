@@ -1523,7 +1523,6 @@ async def test_get_sequence(error, spawn_client, resp_is, test_otu, test_sequenc
     resp = await client.get("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
 
     if error:
-        print(resp.status)
         assert await resp_is.not_found(resp)
         return
 
@@ -1744,9 +1743,6 @@ async def test_remove_sequence(error, spawn_client, check_ref_right, resp_is, te
     old = await virtool.db.otus.join(client.db, test_otu["_id"])
 
     resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360/sequences/KX269872")
-
-    import pprint
-    print(resp.status)
 
     if error:
         assert await resp_is.not_found(resp)

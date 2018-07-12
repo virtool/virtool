@@ -159,7 +159,6 @@ class TestCreate:
         resp = await client.post("/api/refs/foo/indexes")
 
         if not check_ref_right:
-            print(resp.status)
             assert await resp_is.insufficient_rights(resp)
             return
 
