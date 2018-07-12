@@ -53,8 +53,6 @@ class Dispatcher:
                 await asyncio.sleep(5, loop=self.loop)
 
         except asyncio.CancelledError:
-            logging.debug("Closing dispatcher")
-
             for connection in self.connections:
                 await connection.close()
 
