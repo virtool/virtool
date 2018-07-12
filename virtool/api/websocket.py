@@ -2,7 +2,7 @@ import logging
 
 from aiohttp import web
 
-import virtool.app_dispatcher
+import virtool.dispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +12,11 @@ async def root(req):
     Handles requests for WebSocket connections.
 
     """
-    ws = web.WebSocketResponse()
+    ws = web.WebSocketResponse(autoping=True, heartbeat=5)
 
     await ws.prepare(req)
 
-    connection = virtool.app_dispatcher.Connection(ws, req["client"])
+    connection = virtool.dispatcher.Connection(ws, req["client"])
 
     req.app["dispatcher"].add_connection(connection)
 

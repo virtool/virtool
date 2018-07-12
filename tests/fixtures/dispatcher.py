@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import web
 
-from virtool.app_dispatcher import Connection
+from virtool.dispatcher import Connection
 from virtool.app_auth import Client
 
 

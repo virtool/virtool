@@ -10,7 +10,7 @@ from mako.template import Template
 from cerberus import Validator
 from urllib.parse import quote_plus
 
-import virtool.app_settings
+import virtool.settings
 import virtool.users
 import virtool.utils
 from virtool.api.utils import json_response
@@ -418,7 +418,7 @@ async def save_and_reload(req):
 
     settings_path = os.path.join(sys.path[0], "settings.json")
 
-    await virtool.app_settings.write_settings_file(settings_path, settings_dict)
+    await virtool.settings.write_settings_file(settings_path, settings_dict)
 
     await virtool.utils.reload(req.app)
 

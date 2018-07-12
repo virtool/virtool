@@ -299,8 +299,12 @@ async def purge(db):
 
 async def refresh(app):
     try:
+        logging.debug("Started HMM refresher")
+
         while True:
             await fetch_and_update_release(app)
             await asyncio.sleep(600, loop=app.loop)
     except asyncio.CancelledError:
         pass
+
+    logging.debug("Stopped HMM refresher")

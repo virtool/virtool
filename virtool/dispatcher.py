@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from copy import deepcopy
 
 import virtool.api.utils
@@ -31,30 +32,8 @@ class Dispatcher:
 
         #: A dict of all active connections.
         self.connections = list()
-        self.alive = True
 
-    async def run(self):
-        to_remove = list()
-
-        try:
-            while True:
-                for connection in to_remove:
-                    self.remove_connection(connection)
-
-                to_remove = list()
-
-                for connection in self.connections:
-                    try:
-                        await connection.ping()
-                    except RuntimeError as err:
-                        if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                            to_remove.append(connection)
-
-                await asyncio.sleep(5, loop=self.loop)
-
-        except asyncio.CancelledError:
-            for connection in self.connections:
-                await connection.close()
+        logging.debug("Initialized dispatcher")
 
     def add_connection(self, connection):
         """
@@ -62,6 +41,7 @@ class Dispatcher:
 
         """
         self.connections.append(connection)
+        logging.debug("Added connection to dispatcher: {}".format(connection.user_id))
 
     def remove_connection(self, connection):
         """
@@ -73,6 +53,7 @@ class Dispatcher:
         """
         try:
             self.connections.remove(connection)
+            logging.debug("Removed connection from dispatcher: {}".format(connection.user_id))
         except ValueError:
             pass
 
@@ -140,3 +121,11 @@ class Dispatcher:
 
         for connection in connections_to_remove:
             self.remove_connection(connection)
+
+        logging.debug("Dispatched {}.{}".format(interface, operation))
+
+    async def close(self):
+        for connection in self.connections:
+            await connection.close()
+
+        logging.debug("Closed dispatcher")
