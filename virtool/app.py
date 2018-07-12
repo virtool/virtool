@@ -297,6 +297,7 @@ async def on_shutdown(app):
 
     await app["client"].close()
 
+    app["executor"].shutdown(wait=True)
     app["process_executor"].shutdown(wait=True)
 
 
