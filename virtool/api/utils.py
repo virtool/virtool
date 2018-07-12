@@ -217,8 +217,15 @@ def invalid_query(errors):
 async def paginate(collection, db_query, url_query, sort=None, projection=None, base_query=None,
                    processor=virtool.utils.base_processor, reverse=False):
 
-    page = int(url_query.get("page", 1))
-    per_page = int(url_query.get("per_page", 25))
+    try:
+        page = int(url_query["page"])
+    except (KeyError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(url_query["per_page"])
+    except (KeyError, ValueError):
+        per_page = 25
 
     base_query = base_query or {}
 
