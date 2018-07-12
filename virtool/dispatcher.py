@@ -34,14 +34,10 @@ class Dispatcher:
         self.connections = list()
 
     async def run(self):
-        to_remove = list()
         logging.debug("Started dispatcher")
 
         try:
             while True:
-                for connection in to_remove:
-                    self.remove_connection(connection)
-
                 to_remove = list()
 
                 for connection in self.connections:
@@ -50,6 +46,9 @@ class Dispatcher:
                     except RuntimeError as err:
                         if "unable to perform operation on <TCPTransport closed=True" in str(err):
                             to_remove.append(connection)
+
+                for connection in to_remove:
+                    self.remove_connection(connection)
 
                 await asyncio.sleep(5, loop=self.loop)
 
