@@ -33,30 +33,7 @@ class Dispatcher:
         #: A dict of all active connections.
         self.connections = list()
 
-    async def run(self):
-        logging.debug("Started dispatcher")
-
-        try:
-            while True:
-                to_remove = list()
-
-                for connection in self.connections:
-                    try:
-                        await connection.ping()
-                    except RuntimeError as err:
-                        if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                            to_remove.append(connection)
-
-                for connection in to_remove:
-                    self.remove_connection(connection)
-
-                await asyncio.sleep(5, loop=self.loop)
-
-        except asyncio.CancelledError:
-            for connection in self.connections:
-                await connection.close()
-
-        logging.debug("Closed dispatcher")
+        logging.debug("Initialized dispatcher")
 
     def add_connection(self, connection):
         """
@@ -146,3 +123,9 @@ class Dispatcher:
             self.remove_connection(connection)
 
         logging.debug("Dispatched {}.{}".format(interface, operation))
+
+    async def close(self):
+        for connection in self.connections:
+            await connection.close()
+
+        logging.debug("Closed dispatcher")

@@ -12,7 +12,7 @@ async def root(req):
     Handles requests for WebSocket connections.
 
     """
-    ws = web.WebSocketResponse()
+    ws = web.WebSocketResponse(autoping=True, heartbeat=5)
 
     await ws.prepare(req)
 
