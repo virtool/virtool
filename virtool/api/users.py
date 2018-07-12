@@ -132,7 +132,9 @@ async def edit(req):
         if missing:
             return bad_request("Groups do not exist: " + ", ".join(missing))
 
-    if "primary_group" in data and data["primary_group"] not in groups:
+    primary_group = data.get("primary_group", None)
+
+    if primary_group and primary_group not in groups:
         return bad_request("Primary group does not exist")
 
     user_id = req.match_info["user_id"]
