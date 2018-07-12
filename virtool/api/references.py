@@ -9,6 +9,7 @@ import virtool.db.indexes
 import virtool.db.otus
 import virtool.db.processes
 import virtool.db.references
+import virtool.db.users
 import virtool.db.utils
 import virtool.errors
 import virtool.github
@@ -95,6 +96,8 @@ async def get(req):
         internal_control_id = None
 
     document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
+
+    document["users"] = await virtool.db.users.attach_identicons(db, document["users"])
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -515,6 +518,8 @@ async def edit(req):
             }
         })
 
+    document["users"] = await virtool.db.users.attach_identicons(db, document["users"])
+
     return json_response(document)
 
 
@@ -657,6 +662,8 @@ async def add_user(req):
         "Location": "/api/refs/{}/users/{}".format(ref_id, subdocument["id"])
     }
 
+    subdocument = await virtool.db.users.attach_identicons(db, subdocument)
+
     return json_response(subdocument, headers=headers, status=201)
 
 
@@ -700,6 +707,8 @@ async def edit_user(req):
     if subdocument is None:
         return not_found()
 
+    subdocument = await virtool.db.users.attach_identicons(db, subdocument)
+
     return json_response(subdocument)
 
 
@@ -717,7 +726,7 @@ async def delete_group(req):
     if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
-    deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
+    await virtool.db.references.delete_group_or_user(db, ref_id, group_id, "groups")
 
     return no_content()
 
@@ -736,9 +745,6 @@ async def delete_user(req):
     if not await virtool.db.references.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
-    deleted_id = await virtool.db.references.delete_group_or_user(db, ref_id, user_id, "users")
-
-    if not deleted_id:
-        return not_found()
+    await virtool.db.references.delete_group_or_user(db, ref_id, user_id, "users")
 
     return no_content()

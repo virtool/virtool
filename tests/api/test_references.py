@@ -386,7 +386,8 @@ async def test_add_group_or_user(error, field, spawn_client, check_ref_right, re
         })
 
         await client.db.users.insert_one({
-            "_id": "fred"
+            "_id": "fred",
+            "identicon": "foo_identicon"
         })
 
     # Don't insert the ref document if we want to trigger a 404.
@@ -418,7 +419,7 @@ async def test_add_group_or_user(error, field, spawn_client, check_ref_right, re
 
     assert resp.status == 201
 
-    assert await resp.json() == {
+    expected = {
         "id": "tech" if field == "group" else "fred",
         "created_at": static_time.iso,
         "build": False,
@@ -426,6 +427,11 @@ async def test_add_group_or_user(error, field, spawn_client, check_ref_right, re
         "modify_otu": False,
         "remove": False
     }
+
+    if field == "user":
+        expected["identicon"] = "foo_identicon"
+
+    assert await resp.json() == expected
 
 
 @pytest.mark.parametrize("error", [None, "404_field", "404_ref"])
@@ -459,6 +465,11 @@ async def test_edit_group_or_user(error, field, spawn_client, check_ref_right, r
     if error != "404_ref":
         await client.db.references.insert_one(document)
 
+    await client.db.users.insert_one({
+        "_id": "fred",
+        "identicon": "foo_identicon"
+    })
+
     subdocument_id = "tech" if field == "group" else "fred"
 
     url = "/api/refs/foo/{}s/{}".format(field, subdocument_id)
@@ -477,13 +488,18 @@ async def test_edit_group_or_user(error, field, spawn_client, check_ref_right, r
 
     assert resp.status == 200
 
-    assert await resp.json() == {
+    expected = {
         "id": subdocument_id,
         "build": False,
         "modify": False,
         "modify_otu": False,
         "remove": True
     }
+
+    if field == "user":
+        expected["identicon"] = "foo_identicon"
+
+    assert await resp.json() == expected
 
     assert await client.db.references.find_one() == {
         "_id": "foo",
