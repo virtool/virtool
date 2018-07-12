@@ -1,12 +1,12 @@
 import pytest
 
-import virtool.app_settings
+import virtool.settings
 import virtool.utils
 
 
 @pytest.mark.parametrize("default", [True, False])
 def test_get_default_boolean(default):
-    assert virtool.app_settings.get_default_boolean(default) == {
+    assert virtool.settings.get_default_boolean(default) == {
         "type": "boolean",
         "coerce": virtool.utils.to_bool,
         "default": default
@@ -15,7 +15,7 @@ def test_get_default_boolean(default):
 
 @pytest.mark.parametrize("default", [1, 3, 4, 5])
 def test_get_default_integer(default):
-    assert virtool.app_settings.get_default_integer(default) == {
+    assert virtool.settings.get_default_integer(default) == {
         "type": "integer",
         "coerce": int,
         "default": default
@@ -52,4 +52,4 @@ def test_check_resource_limits(proc, mem, error_message, mocker):
 
     mocker.patch("virtool.resources.get", return_value=return_value)
 
-    assert virtool.app_settings.check_resource_limits(proc, mem, settings) == error_message
+    assert virtool.settings.check_resource_limits(proc, mem, settings) == error_message

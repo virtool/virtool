@@ -13,9 +13,9 @@ from motor import motor_asyncio
 from urllib.parse import quote_plus
 
 import virtool.app_auth
-import virtool.app_dispatcher
+import virtool.dispatcher
 import virtool.app_routes
-import virtool.app_settings
+import virtool.settings
 import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
@@ -96,7 +96,7 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["settings"] = virtool.app_settings.Settings()
+    app["settings"] = virtool.settings.Settings()
     await app["settings"].load()
 
 
@@ -114,7 +114,7 @@ async def init_dispatcher(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
+    app["dispatcher"] = virtool.dispatcher.Dispatcher(app.loop)
 
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 

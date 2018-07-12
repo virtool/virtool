@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.api.utils
-from virtool.app_dispatcher import Dispatcher
+from virtool.dispatcher import Dispatcher
 
 
 class TestConnection:
