@@ -23,7 +23,7 @@ dictdiffer==0.7.1
 execnet==1.5.0
 humanfriendly==4.7
 idna==2.6
-idna-ssl==1.0.1
+idna-ssl==1.1.0
 jsonschema==2.6.0
 Mako==1.0.7
 MarkupSafe==1.0
