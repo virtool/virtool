@@ -106,7 +106,7 @@ describe("<InputSave />", () => {
             expect(wrapper.state("value")).toEqual(props.initialValue);
 
             wrapper.find(FormControl).simulate("change", mockEvent);
-            
+
             expect(spy.calledOnce).toBe(true);
             expect(props.onChange).toHaveBeenCalled();
 
