@@ -7,8 +7,7 @@ import {
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS,
-    GET_ANALYSIS_PROGRESS
+    REMOVE_ANALYSIS
 } from "../actionTypes";
 
 describe("Analyses Reducer", () => {

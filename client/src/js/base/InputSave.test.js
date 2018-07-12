@@ -99,7 +99,7 @@ describe("<InputSave />", () => {
                 }
             };
             wrapper = mount(<InputSave {...props} />);
-    
+
             spy = sinon.spy(wrapper.instance(), "handleChange");
             wrapper.instance().forceUpdate();
 
