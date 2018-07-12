@@ -14,9 +14,10 @@ import {
 describe("Users Action Creators:", () => {
 
     it("listUsers: returns action to list all users", () => {
-        const result = listUsers();
+        const result = listUsers(1);
         const expected = {
-            type: LIST_USERS.REQUESTED
+            type: LIST_USERS.REQUESTED,
+            page: 1
         };
 
         expect(result).toEqual(expected);

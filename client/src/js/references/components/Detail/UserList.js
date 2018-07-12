@@ -79,7 +79,9 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = (dispatch) => ({
     loadNextPage: (page) => {
-        dispatch(listUsers(page));
+        if (page) {
+            dispatch(listUsers(page));
+        }
     }
 });
 

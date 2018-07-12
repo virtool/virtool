@@ -99,7 +99,7 @@ describe("<RelativeTime />", () => {
 
         it("should not force an update in componentDidUpdate if timestamp remains the same", () => {
             const clock = sinon.useFakeTimers();
-            
+
             const currentTime = Moment().toISOString();
             wrapper = mount(<RelativeTime time={`${currentTime}`} />);
             spyCDU.resetHistory();

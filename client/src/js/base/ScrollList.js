@@ -27,7 +27,6 @@ export class ScrollList extends React.Component {
     onScroll = () => {
         // Scroll bar reaches the bottom of page when ratio = 1
         // Want to load available page when scroll bar nears the bottom
-
         const ratio = this.props.isElement
             ? getScrollRatio(
                 this.scrollList.current.clientHeight,
@@ -36,7 +35,7 @@ export class ScrollList extends React.Component {
             ) : getScrollRatio(
                 window.innerHeight,
                 window.scrollY,
-                document.body.scrollHeight
+                document.documentElement.scrollHeight
             );
 
         if (this.props.list.length
