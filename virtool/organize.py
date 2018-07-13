@@ -102,6 +102,14 @@ async def organize_groups(db):
 async def organize_history(db):
     logger.info(" • history")
 
+    await db.history.update_many({}, {
+        "$set": {
+            "reference": {
+                "id": "original"
+            }
+        }
+    }, silent=True)
+
     document_ids = await db.history.distinct("_id", {"reference": {"$exists": False}})
 
     document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
