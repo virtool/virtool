@@ -53,5 +53,5 @@ async def test_format_analysis(algorithm, mocker):
         assert not m_format_pathoscope.called
 
     elif algorithm == "pathoscope":
-        m_format_pathoscope.assert_called_with("db", document)
+        m_format_pathoscope.assert_called_with("db", "settings", document)
         assert not m_format_nuvs.called

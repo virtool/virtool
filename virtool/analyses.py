@@ -34,6 +34,17 @@ def get_nuvs_json_path(data_path, analysis_id, sample_id):
     )
 
 
+def get_pathoscope_json_path(data_path, analysis_id, sample_id):
+    return os.path.join(
+        data_path,
+        "samples",
+        analysis_id,
+        "analysis",
+        sample_id,
+        "pathoscope.json"
+    )
+
+
 def get_nuvs_sequence_by_index(document, sequence_index):
     """
     Get a sequence from a NuVs analysis document by its sequence index.

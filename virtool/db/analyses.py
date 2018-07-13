@@ -46,7 +46,7 @@ async def format_analysis(db, settings, document):
         return await format_nuvs(db, settings, document)
 
     if algorithm and "pathoscope" in algorithm:
-        return await format_pathoscope(db, document)
+        return await format_pathoscope(db, settings, document)
 
     raise ValueError("Could not determine analysis algorithm")
 
@@ -73,7 +73,18 @@ async def format_nuvs(db, settings, document):
     return document
 
 
-async def format_pathoscope(db, document):
+async def format_pathoscope(db, settings, document):
+    if document["diagnosis"] == "file":
+        path = virtool.analyses.get_pathoscope_json_path(
+            settings["data_path"],
+            document["_id"],
+            document["sample"]["id"]
+        )
+
+        async with aiofiles.open(path, "r") as f:
+            json_string = await f.read()
+            document.update(json.loads(json_string))
+
     formatted = dict()
 
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["diagnosis"]}
