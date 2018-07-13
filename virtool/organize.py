@@ -2,6 +2,7 @@ import logging
 import os
 import pymongo.errors
 import shutil
+from pymongo import UpdateOne
 
 import virtool.db.references
 import virtool.db.utils
@@ -68,12 +69,42 @@ async def organize_analyses(db):
     await delete_unready(db.analyses)
     await add_original_reference(db.analyses)
 
-    async for document in db.references.find({}, ["name"]):
+    motor_client = db.motor_client
+
+    async for document in motor_client.references.find({}, ["name"]):
         await db.analyses.update_many({"reference.id": document["_id"], "reference.name": {"$ne": document["name"]}}, {
             "$set": {
                 "reference.name": document["name"]
             }
         }, silent=True)
+
+    query = {
+        "algorithm": "pathoscope_bowtie",
+        "diagnosis.virus": {
+            "$exists": True
+        }
+    }
+
+    buffer = list()
+
+    async for document in db.analyses.find(query, ["diagnosis"]):
+        for hit in document["diagnosis"]:
+            hit["otu"] = hit.pop("virus")
+
+        op = UpdateOne({"_id": document["_id"]}, {
+            "$set": {
+                "diagnosis": document["diagnosis"]
+            }
+        })
+
+        buffer.append(op)
+
+        if len(buffer) == 40:
+            await db.motor_client.analyses.bulk_write(buffer)
+            buffer = list()
+
+    if len(buffer):
+        await db.motor_client.analyses.bulk_write(buffer)
 
 
 async def organize_files(db):
