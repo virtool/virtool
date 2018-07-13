@@ -73,7 +73,7 @@ async def organize_analyses(db):
             "$set": {
                 "reference.name": document["name"]
             }
-        })
+        }, silent=True)
 
 
 async def organize_files(db):
@@ -83,7 +83,7 @@ async def organize_files(db):
         "$set": {
             "reserved": False
         }
-    })
+    }, silent=True)
 
 
 async def organize_groups(db):
@@ -96,7 +96,7 @@ async def organize_groups(db):
             "$set": {
                 "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
             }
-        })
+        }, silent=True)
 
 
 async def organize_history(db):
@@ -118,12 +118,9 @@ async def organize_history(db):
         "$set": {
             "diff.reference": {
                 "id": "original"
-            },
-            "reference": {
-                "id": "original"
             }
         }
-    })
+    }, silent=True)
 
 
 async def organize_indexes(db):
@@ -198,7 +195,7 @@ async def organize_sequences(db):
             }
         })
 
-        await db.sequences.insert_one(document)
+        await db.sequences.insert_one(document, silent=True)
 
     await db.sequences.delete_many(REFERENCE_QUERY)
 
@@ -259,4 +256,4 @@ async def organize_users(db):
             "$pull": {
                 "groups": "administrator"
             }
-        })
+        }, silent=True)
