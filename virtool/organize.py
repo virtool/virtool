@@ -279,10 +279,10 @@ async def organize_subtraction(db):
 async def organize_users(db):
     logger.info(" • users")
 
-    async for document in db.users.find({"groups": "administrator"}):
+    async for document in db.users.find({}, ["groups"]):
         await db.users.update_one({"_id": document["_id"]}, {
             "$set": {
-                "administrator": True
+                "administrator": "administrator" in document["groups"]
             },
             "$pull": {
                 "groups": "administrator"
