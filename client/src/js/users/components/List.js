@@ -14,7 +14,6 @@ import { LinkContainer } from "react-router-bootstrap";
 import { ListGroupItem } from "react-bootstrap";
 import { ScrollList, Flex, FlexItem, Identicon, Icon } from "../../base";
 import { listUsers } from "../actions";
-import { getUpdatedScrollListState } from "../../utils";
 
 const UserEntry = ({ id, identicon, isAdmin }) => (
     <LinkContainer to={`/administration/users/${id}`} style={{paddingLeft: "10px"}}>
@@ -55,6 +54,7 @@ class UsersList extends React.Component {
                 isNextPageLoading={this.props.isLoading}
                 isLoadError={this.props.errorLoad}
                 list={this.props.documents}
+                refetchPage={this.props.refetchPage}
                 loadNextPage={this.props.loadNextPage}
                 page={this.props.page}
                 rowRenderer={this.rowRenderer}
@@ -65,7 +65,10 @@ class UsersList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.users.list,
-    fetched: state.users.fetched
+    fetched: state.users.fetched,
+    refetchPage: state.users.refetchPage,
+    isLoading: state.users.isLoading,
+    errorLoad: state.users.errorLoad
 });
 
 const mapDispatchToProps = (dispatch) => ({

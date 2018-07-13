@@ -28,7 +28,7 @@ export class ManageUsers extends React.Component {
         super(props);
 
         this.state = {
-            filter: "",
+            filter: this.props.filter,
             error: ""
         };
     }
@@ -113,6 +113,7 @@ export class ManageUsers extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    filter: state.users.filter,
     groups: state.groups.list,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });

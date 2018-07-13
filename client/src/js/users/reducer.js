@@ -14,7 +14,9 @@ export const initialState = {
     list: null,
     detail: null,
     createPending: false,
-    fetched: false
+    fetched: false,
+    refetchPage: false,
+    filter: ""
 };
 
 const reducer = (state = initialState, action) => {
@@ -40,30 +42,40 @@ const reducer = (state = initialState, action) => {
                 list: {
                     ...state.list,
                     documents: edit(state.list.documents, action)
-                },
-                detail: action.data
+                }
             };
 
         case WS_REMOVE_USER:
-            return {...state, list: {...state.list, documents: remove(state.list.documents, action)}};
+            return {
+                ...state,
+                list: {
+                    ...state.list,
+                    documents: remove(state.list.documents, action)
+                },
+                refetchPage: (state.list.page < state.list.page_count)
+            };
 
         case LIST_USERS.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};
 
         case LIST_USERS.SUCCEEDED: {
-            const list = state.list ? state.list.documents : null;
+            const documents = state.list ? state.list.documents : null;
+            const page = state.list ? state.list.page : 0;
             return {
                 ...state,
-                list: updateList(list, action),
+                list: updateList(documents, action, page),
                 isLoading: false,
                 errorLoad: false,
-                fetched: true
+                fetched: true,
+                refetchPage: false
             };
         }
 
-        case LIST_USERS.FAILED: {
+        case LIST_USERS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
-        }
+
+        case FILTER_USERS.REQUESTED:
+            return {...state, filter: action.term};
 
         case FILTER_USERS.SUCCEEDED: {
             return {...state, list: action.data};
@@ -72,22 +84,12 @@ const reducer = (state = initialState, action) => {
         case GET_USER.REQUESTED:
             return {...state, detail: null};
 
-        case GET_USER.SUCCEEDED: {
+        case GET_USER.SUCCEEDED:
             return {...state, detail: action.data};
-        }
-
-        //case EDIT_USER.SUCCEEDED:
-        //    return {...state, detail: action.data};
 
         case CREATE_USER.REQUESTED:
             return {...state, createPending: true};
 
-/*        case CREATE_USER.SUCCEEDED:
-            return {...state, list: {
-                ...state.list,
-                documents: state.list.documents.concat([action.data])
-            }};
-*/
         case CREATE_USER.FAILED:
             return {...state, createPending: false};
 
@@ -97,6 +99,9 @@ const reducer = (state = initialState, action) => {
             }
             return state;
         }
+
+        case EDIT_USER.SUCCEEDED:
+            return {...state, detail: action.data};
 
         default:
             return state;
