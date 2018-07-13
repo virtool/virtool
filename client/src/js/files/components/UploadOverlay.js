@@ -1,7 +1,7 @@
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
-import { reduce, sortBy } from "lodash-es";
+import { reduce, concat } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
@@ -27,12 +27,20 @@ const UploadOverlay = (props) => {
 
     const classNames = CX("upload-overlay", {hidden: !props.showUploadOverlay});
 
-    const uploadComponents = reduce(sortBy(props.uploads, "progress").reverse(), (result, upload) => {
-        if (upload.fileType !== "reference" && upload.progress !== 100) {
+    const pendingEntries = [];
+
+    const loadingEntries = reduce(props.uploads, (result, upload) => {
+        if (upload.progress === 100 || upload.fileType === "reference") {
+            return result;
+        } else if (upload.progress === 0) {
+            pendingEntries.push(<UploadItem key={upload.localId} {...upload} />);
+        } else {
             result.push(<UploadItem key={upload.localId} {...upload} />);
         }
         return result;
     }, []);
+
+    const uploadComponents = concat(loadingEntries, pendingEntries);
 
     const content = (props.uploadsComplete || !uploadComponents.length) ? null : (
         <div className={classNames}>
