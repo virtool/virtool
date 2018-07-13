@@ -126,7 +126,7 @@ class CreateSample(virtool.jobs.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        self.loop.run_in_executor(None, os.mkdir, os.path.join(self.sample_path, "fastqc"))
+        await self.loop.run_in_executor(None, os.mkdir, os.path.join(self.sample_path, "fastqc"))
 
         command = [
             "fastqc",
