@@ -303,9 +303,21 @@ class Pathoscope(Base):
         any otu indexes that may become unused when this analysis completes.
 
         """
-        await self.db.analyses.update_one({"_id": self.analysis_id}, {
-            "$set": self.results
-        })
+        try:
+            await self.db.analyses.update_one({"_id": self.analysis_id}, {
+                "$set": self.results
+            })
+        except pymongo.errors.DocumentTooLarge:
+            async with aiofiles.open(os.path.join(self.analysis_path, "pathoscope.json"), "w") as f:
+                json_string = json.dumps(self.results)
+                await f.write(json_string)
+
+            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+                "$set": {
+                    "diagnosis": "file",
+                    "ready": True
+                }
+            })
 
         await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
 
