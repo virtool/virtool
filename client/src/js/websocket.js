@@ -7,11 +7,12 @@ import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateProcess, wsInsertProcess } from "./processes/actions";
 import { wsUpdateReference } from "./references/actions";
 import { wsUpdateStatus } from "./status/actions";
-import { wsUpdateSubtraction } from "./subtraction/actions";
+import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from "./subtraction/actions";
 import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "./users/actions";
 
 const documentInserters = {
     processes: wsInsertProcess,
+    subtraction: wsInsertSubtraction,
     users: wsInsertUser
 };
 
@@ -33,6 +34,7 @@ const documentRemovers = {
     files: wsRemoveFile,
     jobs: wsRemoveJob,
     samples: wsRemoveSample,
+    subtraction: wsRemoveSubtraction,
     users: wsRemoveUser
 };
 
