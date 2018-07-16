@@ -5,6 +5,14 @@ export const find = () => (
     Request.get(`/api/subtractions${window.location.search}`)
 );
 
+export const list = ({ page }) => (
+    Request.get(`/api/subtractions?page=${page}`)
+);
+
+export const filter = ({ term }) => (
+    Request.get(`/api/subtractions?find=${term}`)
+);
+
 export const listIds = () => (
     Request.get("/api/subtractions")
         .query({ids: true})
