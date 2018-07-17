@@ -1,11 +1,11 @@
 import Request from "superagent";
 
-export const find = () => (
-    Request.get(`/api/samples${window.location.search}`)
+export const list = ({ page }) => (
+    Request.get(`/api/samples?page=${page}`)
 );
 
-export const fetch = ({ page }) => (
-    Request.get(`/api/samples?page=${page}`)
+export const filter = ({ term }) => (
+    Request.get(`/api/samples?find=${term}`)
 );
 
 export const findReadyHosts = () => (

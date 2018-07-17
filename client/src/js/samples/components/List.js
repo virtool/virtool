@@ -8,11 +8,10 @@ import CreateSample from "./Create/Create";
 import CreateAnalysis from "../../analyses/components/Create";
 import QuickAnalyze from "./QuickAnalyze";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } from "../../base";
-import { fetchSamples } from "../actions";
+import { listSamples } from "../actions";
 import { analyze } from "../../analyses/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { fetchHmms } from "../../hmm/actions";
-import { getUpdatedScrollListState } from "../../utils";
 
 const SummaryToolbar = ({clearAll, summary, showModal}) => (
     <div key="toolbar" className="toolbar">
@@ -50,9 +49,6 @@ export class SamplesList extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page,
             selected: createSelection(this.props.documents, []),
             lastChecked: null,
             show: false,
@@ -63,32 +59,10 @@ export class SamplesList extends React.Component {
     componentDidMount () {
         this.props.onFetchHMMs();
         this.props.onListReadyIndexes();
-    }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        const newState = getUpdatedScrollListState(nextProps, prevState);
-
-        if (!newState) {
-            return null;
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
         }
-
-        if (newState.masterList && newState.masterList.length) {
-
-            const newSelected = createSelection(newState.masterList, prevState.selected);
-
-            return {
-                ...prevState,
-                ...newState,
-                selected: newSelected
-            };
-
-        }
-
-        return {
-            ...prevState,
-            ...newState,
-            selected: prevState.selected
-        };
     }
 
     onSelect = (index, isShiftKey) => {
@@ -145,15 +119,15 @@ export class SamplesList extends React.Component {
 
     rowRenderer = (index) => (
         <SampleEntry
-            key={this.state.masterList[index].id}
+            key={this.props.documents[index].id}
             index={index}
-            id={this.state.masterList[index].id}
-            userId={this.state.masterList[index].user.id}
+            id={this.props.documents[index].id}
+            userId={this.props.documents[index].user.id}
             isChecked={this.state.selected[index] ? this.state.selected[index].check : false}
             onSelect={this.onSelect}
             isHidden={!!filter(this.state.selected, ["check", true]).length}
             quickAnalyze={this.handleQuickAnalyze}
-            {...this.state.masterList[index]}
+            {...this.props.documents[index]}
         />
     );
 
@@ -165,7 +139,7 @@ export class SamplesList extends React.Component {
 
         let noSamples;
 
-        if (!this.state.masterList.length) {
+        if (!this.props.documents.length) {
             noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
         }
 
@@ -184,17 +158,16 @@ export class SamplesList extends React.Component {
                     />
                 ) : <SampleToolbar />}
 
-                {noSamples}
-
-                <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
-                    loadNextPage={this.props.onNextPage}
-                    page={this.state.page}
-                    rowRenderer={this.rowRenderer}
-                />
+                {noSamples || (
+                    <ScrollList
+                        hasNextPage={this.props.page < this.props.page_count}
+                        isNextPageLoading={this.props.isLoading}
+                        isLoadError={this.props.errorLoad}
+                        list={this.props.documents}
+                        loadNextPage={this.props.loadNextPage}
+                        page={this.props.page}
+                        rowRenderer={this.rowRenderer}
+                    />)}
 
                 <CreateSample />
 
@@ -222,8 +195,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onNextPage: (page) => {
-        dispatch(fetchSamples(page));
+    loadNextPage: (page) => {
+        dispatch(listSamples(page));
     },
 
     onAnalyze: (sampleId, references, algorithm) => {

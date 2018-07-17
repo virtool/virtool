@@ -1,14 +1,12 @@
 import { get, includes } from "lodash-es";
-import { LOCATION_CHANGE, push } from "react-router-redux";
-import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { push } from "react-router-redux";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as samplesAPI from "./api";
 import * as filesAPI from "../files/api";
-import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
+import { apiCall, putGenericError, setPending } from "../sagaUtils";
 import {
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    FIND_SAMPLES,
+    FILTER_SAMPLES,
     FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -16,17 +14,15 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
-    FETCH_SAMPLES,
+    LIST_SAMPLES,
     FIND_ANALYSES
 } from "../actionTypes";
 
 export const getSampleDetailId = (state) => get(state, "samples.detail.id", null);
 
 export function* watchSamples () {
-    yield throttle(200, LOCATION_CHANGE, findSamples);
-    yield takeLatest(FETCH_SAMPLES.REQUESTED, fetchSamples);
-    yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
-    yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
+    yield takeLatest(LIST_SAMPLES.REQUESTED, listSamples);
+    yield takeLatest(FILTER_SAMPLES.REQUESTED, filterSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
@@ -36,26 +32,12 @@ export function* watchSamples () {
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
 }
 
-export function* wsSample () {
-    yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
+export function* filterSamples (action) {
+    yield apiCall(samplesAPI.filter, action, FILTER_SAMPLES);
 }
 
-export function* wsUpdateSample (action) {
-    yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
-
-    const currentSampleId = yield select(getSampleDetailId);
-
-    if (currentSampleId === action.update.id) {
-        yield getSample({ sampleId: currentSampleId });
-    }
-}
-
-export function* findSamples (action) {
-    yield apiFind("/samples", samplesAPI.find, action, FIND_SAMPLES);
-}
-
-export function* fetchSamples (action) {
-    yield apiCall(samplesAPI.fetch, action, FETCH_SAMPLES);
+export function* listSamples (action) {
+    yield apiCall(samplesAPI.list, action, LIST_SAMPLES);
 }
 
 export function* findReadFiles () {
@@ -97,17 +79,12 @@ export function* createSample (action) {
 }
 
 export function* updateSample (action) {
-    const extraFunc = {
-        refetchSample: call(getSample, action),
-        closeModal: call(pushHistoryState, {editSample: false})
-    };
-
+    const extraFunc = { closeModal: put(push({editSample: false})) };
     yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE, {}, extraFunc));
 }
 
 export function* updateSampleRights (action) {
     yield setPending(apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS));
-    yield getSample(action);
 }
 
 export function* removeSample (action) {
