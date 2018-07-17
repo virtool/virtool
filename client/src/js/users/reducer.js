@@ -33,7 +33,9 @@ const reducer = (state = initialState, action) => {
                         state.list.documents,
                         state.list.page,
                         state.list.per_page,
-                        action)
+                        action,
+                        "id"
+                    )
                 }
             };
 
