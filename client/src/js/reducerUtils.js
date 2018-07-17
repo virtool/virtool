@@ -22,9 +22,13 @@ export const updateList = (documents, action, page) => {
     return {...action.data, documents: newList};
 };
 
-export const insert = (documents, page, per_page, action) => {
+export const insert = (documents, page, per_page, action, sortKey) => {
+    if (!documents) {
+        return documents;
+    }
+
     let newList = concat(documents, {...action.data});
-    newList = sortBy(newList, "id");
+    newList = sortBy(newList, sortKey);
 
     // Only display listings that would be included in the
     // current pages, to synchronize with database pages
@@ -32,6 +36,10 @@ export const insert = (documents, page, per_page, action) => {
 };
 
 export const edit = (documents, action) => {
+    if (!documents) {
+        return documents;
+    }
+
     const newList = documents.slice();
 
     forEach(newList, (entry, index) => {
