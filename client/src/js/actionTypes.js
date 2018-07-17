@@ -146,7 +146,6 @@ export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
 export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 export const LIST_SUBTRACTIONS = createRequestActionType("LIST_SUBTRACTIONS");
 export const FILTER_SUBTRACTIONS = createRequestActionType("FILTER_SUBTRACTIONS");
-export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
 export const UPDATE_SUBTRACTION = createRequestActionType("UPDATE_SUBTRACTION");

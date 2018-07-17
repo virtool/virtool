@@ -3,7 +3,6 @@ import {
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
     LIST_SUBTRACTIONS,
-    LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     FILTER_SUBTRACTIONS
 } from "../actionTypes";
@@ -13,7 +12,6 @@ export const initialState = {
     documents: null,
     page: 0,
     detail: null,
-    ids: null,
     filter: "",
     fetched: false,
     refetchPage: false
@@ -62,9 +60,6 @@ export default function subtractionsReducer (state = initialState, action) {
 
         case LIST_SUBTRACTIONS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
-
-        case LIST_SUBTRACTION_IDS.SUCCEEDED:
-            return {...state, ids: action.data};
 
         case GET_SUBTRACTION.REQUESTED:
             return {...state, detail: null};

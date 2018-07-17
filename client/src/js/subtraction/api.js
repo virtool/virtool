@@ -13,11 +13,6 @@ export const filter = ({ term }) => (
     Request.get(`/api/subtractions?find=${term}`)
 );
 
-export const listIds = () => (
-    Request.get("/api/subtractions")
-        .query({ids: true})
-);
-
 export const get = ({ subtractionId }) => (
     Request.get(`/api/subtractions/${subtractionId}`)
 );

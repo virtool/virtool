@@ -6,7 +6,6 @@ import { apiCall, pushHistoryState, setPending } from "../sagaUtils";
 import {
     LIST_SUBTRACTIONS,
     FILTER_SUBTRACTIONS,
-    LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
     UPDATE_SUBTRACTION,
@@ -15,10 +14,6 @@ import {
 
 export function* listSubtractions (action) {
     yield apiCall(subtractionAPI.list, action, LIST_SUBTRACTIONS);
-}
-
-export function* listSubtractionIds (action) {
-    yield apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS);
 }
 
 export function* filterSubtractions (action) {
@@ -49,7 +44,6 @@ export function* removeSubtraction (action) {
 export function* watchSubtraction () {
     yield takeLatest(LIST_SUBTRACTIONS.REQUESTED, listSubtractions);
     yield takeLatest(FILTER_SUBTRACTIONS.REQUESTED, filterSubtractions);
-    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
     yield takeLatest(UPDATE_SUBTRACTION.REQUESTED, updateSubtraction);
