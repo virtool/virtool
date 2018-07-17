@@ -57,6 +57,23 @@ describe("Utility functions for reducers", () => {
             expect(result).toEqual(expected);
         });
 
+        it("handles [documents=null]", () => {
+            documents = null;
+            page = 0;
+            action = {
+                type: "UPDATE_LIST",
+                data: {
+                    documents: [{ id: "bar" }, { id: "foo" }, { id: "world" }],
+                    page: 1,
+                    per_page: 3
+                }
+            };
+            result = reducerUtils.updateList(documents, action, page);
+            expected = action.data;
+
+            expect(result).toEqual(expected);
+        });
+
     });
 
     describe("insert: inserts new entry into documents array", () => {
@@ -72,7 +89,7 @@ describe("Utility functions for reducers", () => {
             };
             page = 1;
             per_page = 3;
-            result = reducerUtils.insert(documents, page, per_page, action);
+            result = reducerUtils.insert(documents, page, per_page, action, "id");
             expected = [{ id: "bar" }, { id: "foo" }, { id: "test" }];
             expect(result).toEqual(expected);
 
@@ -81,6 +98,20 @@ describe("Utility functions for reducers", () => {
             documents = [{ id: "bar" }, { id: "foo" }, { id: "hello" }];
             result = reducerUtils.insert(documents, page, per_page, action);
             expected = documents;
+            expect(result).toEqual(expected);
+        });
+
+        it("handles [documents=null]", () => {
+            documents = null;
+            action = {
+                type: "WS_INSERT_ENTRY",
+                data: { id: "test" }
+            };
+            page = 0;
+            per_page: undefined;
+            result = reducerUtils.insert(documents, page, per_page, action, "id");
+            expected = null;
+
             expect(result).toEqual(expected);
         });
 
@@ -123,6 +154,17 @@ describe("Utility functions for reducers", () => {
             expect(result).toEqual(expected);
         });
 
+        it("handles [documents=null]", () => {
+            documents = null;
+            action = {
+                type: "WS_UPDATE_ENTRY",
+                data: { id: "test", name: "TEST"}
+            };
+            result = reducerUtils.edit(documents, action);
+            expected = null;
+            expect(result).toEqual(expected);
+        });
+
     });
 
     describe("remove: removes entry from documents array", () => {
@@ -153,6 +195,13 @@ describe("Utility functions for reducers", () => {
             documents = [{ id: "foo" }, { id: "test"}, { id: "bar" }];
             result = reducerUtils.remove(documents, action);
             expected = [{ id: "foo" }, { id: "bar" }];
+            expect(result).toEqual(expected);
+        });
+
+        it("handles [documents=null]", () => {
+            documents = null;
+            result = reducerUtils.remove(documents, action);
+            expected = null;
             expect(result).toEqual(expected);
         });
 
