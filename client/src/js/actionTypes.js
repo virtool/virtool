@@ -28,6 +28,7 @@ export const WS_CLOSED = "WS_CLOSED";
 export const CLEAR_ERROR = "CLEAR_ERROR";
 
 // Jobs
+export const WS_INSERT_JOB = "WS_INSERT_JOB";
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
 export const WS_REMOVE_JOB = "WS_REMOVE_JOB";
 export const FIND_JOBS = createRequestActionType("FIND_JOBS");
@@ -39,12 +40,11 @@ export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
 
 // Samples
+export const WS_INSERT_SAMPLE = "WS_INSERT_SAMPLE";
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
-export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
-export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
-export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
-export const FETCH_SAMPLES = createRequestActionType("FETCH_SAMPLES");
+export const FILTER_SAMPLES = createRequestActionType("FILTER_SAMPLES");
+export const LIST_SAMPLES = createRequestActionType("LIST_SAMPLES");
 export const FIND_READ_FILES = createRequestActionType("FIND_READ_FILES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
@@ -52,11 +52,14 @@ export const CREATE_SAMPLE = createRequestActionType("CREATE_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
-export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
 // Analysis
+export const WS_INSERT_ANALYSIS = "WS_INSERT_ANALYSIS";
+export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
+export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
+export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
@@ -72,7 +75,9 @@ export const TOGGLE_SHOW_PATHOSCOPE_MEDIAN = "TOGGLE_SHOW_PATHOSCOPE_MEDIAN";
 export const TOGGLE_SHOW_PATHOSCOPE_READS = "TOGGLE_SHOW_PATHOSCOPE_READS";
 
 // Refs
+export const WS_INSERT_REFERENCE = "WS_INSERT_REFERENCE";
 export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
+export const WS_REMOVE_REFERENCE = "WS_REMOVE_REFERENCE";
 export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
@@ -132,7 +137,9 @@ export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
 export const PURGE_HMMS = createRequestActionType("PURGE_HMMS");
 
 // Indexes
+export const WS_INSERT_INDEX = "WS_INSERT_INDEX";
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
+export const WS_REMOVE_INDEX = "WS_REMOVE_INDEX";
 export const FIND_INDEXES = createRequestActionType("FIND_INDEXES");
 export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");
@@ -152,6 +159,7 @@ export const UPDATE_SUBTRACTION = createRequestActionType("UPDATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
 // Files
+export const WS_INSERT_FILE = "WS_INSERT_FILE";
 export const WS_UPDATE_FILE = "WS_UPDATE_FILE";
 export const WS_REMOVE_FILE = "WS_REMOVE_FILE";
 export const FIND_FILES = createRequestActionType("FIND_FILES");
