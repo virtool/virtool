@@ -98,7 +98,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
         # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
         # has not changed and `None` is returned from `get_release()`.
         if updated:
-            release = virtool.github.format_release(release)
+            release = virtool.github.format_release(updated)
 
             release["newer"] = bool(
                 release is None or (
@@ -120,6 +120,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
         return release
 
     except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach GitHub"]
 
