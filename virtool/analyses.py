@@ -27,9 +27,9 @@ def get_nuvs_json_path(data_path, analysis_id, sample_id):
     return os.path.join(
         data_path,
         "samples",
-        analysis_id,
-        "analysis",
         sample_id,
+        "analysis",
+        analysis_id,
         "nuvs.json"
     )
 
@@ -38,9 +38,9 @@ def get_pathoscope_json_path(data_path, analysis_id, sample_id):
     return os.path.join(
         data_path,
         "samples",
-        analysis_id,
-        "analysis",
         sample_id,
+        "analysis",
+        analysis_id,
         "pathoscope.json"
     )
 

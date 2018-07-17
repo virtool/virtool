@@ -21,11 +21,15 @@ def test_collapse_pathoscope_coverage(coverage, expected):
     assert virtool.analyses.coverage_to_coordinates(coverage) == expected
 
 
-def test_get_nuvs_json_path():
+@pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
+def test_get_json_path(name):
     """
     Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
     and `analysis_id` arguments.
 
     """
-    path = virtool.analyses.get_nuvs_json_path("data_foo", "foobar", "baz")
-    assert path == "data_foo/samples/foobar/analysis/baz/nuvs.json"
+    func = virtool.analyses.get_nuvs_json_path if name == "nuvs" else virtool.analyses.get_pathoscope_json_path
+
+    path = func("data_foo", "analysis_bar", "sample_foo")
+
+    assert path == "data_foo/samples/sample_foo/analysis/analysis_bar/{}.json".format(name)
