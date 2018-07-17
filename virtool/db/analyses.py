@@ -53,7 +53,11 @@ async def format_analysis(db, settings, document):
 
 async def format_nuvs(db, settings, document):
     if document["results"] == "file":
-        path = virtool.analyses.get_nuvs_json_path(settings.get("data_path"), document["_id"], document["sample"]["id"])
+        path = virtool.analyses.get_nuvs_json_path(
+            settings.get("data_path"),
+            document["_id"],
+            document["sample"]["id"]
+        )
 
         async with aiofiles.open(path, "r") as f:
             json_string = await f.read()
