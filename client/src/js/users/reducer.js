@@ -14,6 +14,7 @@ export const initialState = {
     list: null,
     detail: null,
     createPending: false,
+    passwordPending: false,
     fetched: false,
     refetchPage: false,
     filter: ""
@@ -90,6 +91,7 @@ const reducer = (state = initialState, action) => {
         case CREATE_USER.REQUESTED:
             return {...state, createPending: true};
 
+        case CREATE_USER.SUCCEEDED:
         case CREATE_USER.FAILED:
             return {...state, createPending: false};
 
