@@ -1,10 +1,5 @@
 import Request from "superagent";
 
-
-export const find = () => (
-    Request.get(`/api/subtractions${window.location.search}`)
-);
-
 export const list = ({ page }) => (
     Request.get(`/api/subtractions?page=${page}`)
 );

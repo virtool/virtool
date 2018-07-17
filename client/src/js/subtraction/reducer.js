@@ -28,7 +28,9 @@ export default function subtractionsReducer (state = initialState, action) {
                     state.documents,
                     state.page,
                     state.per_page,
-                    action)
+                    action,
+                    "id"
+                )
             };
 
         case WS_UPDATE_SUBTRACTION:
