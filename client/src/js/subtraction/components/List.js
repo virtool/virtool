@@ -5,7 +5,7 @@ import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
 import SubtractionItem from "./Item";
-import { Alert, Button, Icon, NoneFound, ViewHeader, ScrollList } from "../../base";
+import { Alert, Button, Icon, NoneFound, ViewHeader, ScrollList, LoadingPlaceholder } from "../../base";
 import { checkAdminOrPermission } from "../../utils";
 import { filterSubtractions, listSubtractions } from "../actions";
 
@@ -50,16 +50,14 @@ class SubtractionList extends React.Component {
 
     render () {
 
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
         let subtractionComponents;
         let alert;
 
-        if (this.props.documents && !this.props.documents.length) {
-            subtractionComponents = (
-                <div className="list-group">
-                    <NoneFound noun="subtractions" noListGroup />
-                </div>
-            );
-        } else {
+        if (this.props.documents.length) {
             subtractionComponents = (
                 <ScrollList
                     hasNextPage={this.props.page < this.props.page_count}
@@ -71,6 +69,12 @@ class SubtractionList extends React.Component {
                     page={this.props.page}
                     rowRenderer={this.rowRenderer}
                 />
+            );
+        } else {
+            subtractionComponents = (
+                <div className="list-group">
+                    <NoneFound noun="subtractions" noListGroup />
+                </div>
             );
         }
 
