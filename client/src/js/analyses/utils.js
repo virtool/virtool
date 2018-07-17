@@ -13,10 +13,8 @@ export const fillAlign = ({ align, length }) => {
     let prev = 0;
 
     return map(filled, (depth, i) => {
-        const next = coords[i];
-
-        if (next) {
-            prev = next;
+        if (coords.hasOwnProperty(i)) {
+            prev = coords[i];
         }
 
         return prev;
