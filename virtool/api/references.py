@@ -518,7 +518,9 @@ async def edit(req):
             }
         })
 
-    document["users"] = await virtool.db.users.attach_identicons(db, document["users"])
+    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
+
+    document["users"] = await virtool.db.users.attach_identicons(db, users)
 
     return json_response(document)
 
