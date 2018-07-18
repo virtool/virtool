@@ -656,6 +656,7 @@ async def create_original(db, settings):
         "genome",
         created_at=created_at,
         ref_id="original",
+        user_id="virtool",
         users=users
     )
 
