@@ -1,5 +1,8 @@
 import {filter, isEqual, map, reject} from "lodash-es";
 import {
+    WS_INSERT_ANALYSIS,
+    WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     CLEAR_ANALYSIS,
@@ -15,6 +18,7 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
 import {formatData} from "./utils";
+import { updateList, insert, edit, remove } from "../reducerUtils";
 
 export const initialState = {
     documents: null,
@@ -105,6 +109,30 @@ export const toggleExpanded = (state, id) => (
 export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
+
+        case WS_INSERT_ANALYSIS:
+            return {
+                ...state,
+                documents: insert(
+                    state.documents,
+                    1,
+                    100,
+                    action,
+                    "id"
+                )
+            };
+
+        case WS_UPDATE_ANALYSIS:
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
+        
+        case WS_REMOVE_ANALYSIS:
+            return {
+                ...state,
+                documents: remove(state.documents, action)
+            };
 
         case COLLAPSE_ANALYSIS:
             return {...state, data: collapse(state)};
@@ -201,16 +229,6 @@ export default function samplesReducer (state = initialState, action) {
 
         case BLAST_NUVS.SUCCEEDED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);
-
-        case REMOVE_ANALYSIS.SUCCEEDED:
-            if (state.documents === null) {
-                return state;
-            }
-
-            return {
-                ...state,
-                documents: reject(state.documents, {id: action.id})
-            };
 
         default:
             return state;

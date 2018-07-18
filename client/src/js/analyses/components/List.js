@@ -12,14 +12,19 @@ import { listReadyIndexes } from "../../indexes/actions";
 import { fetchHmms } from "../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../base/index";
 
-const AnalysesToolbar = ({ onClick, isDisabled }) => (
+const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
                     <Icon name="search" />
                 </InputGroup.Addon>
-                <FormControl type="text" />
+                <FormControl
+                    type="text"
+                    value={term}
+                    onChange={onFilter}
+                    placeholder="Index"
+                />
             </InputGroup>
         </FormGroup>
         <Button
@@ -85,10 +90,12 @@ class AnalysesList extends React.Component {
             <div>
                 {hmmAlert}
 
-                {this.props.canModify ?
-                    <AnalysesToolbar
-                        onClick={() => this.setState({show: true})}
-                    /> : null}
+                <AnalysesToolbar
+                    term={this.props.filter}
+                    onFilter={this.props.onFilter}
+                    onClick={() => this.setState({show: true})}
+                    isDisabled={!this.props.canModify}
+                />
 
                 <ListGroup>
                     {listContent}
@@ -110,12 +117,17 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.analyses.documents,
+    filter: state.analyses.filter,
     indexes: state.analyses.readyIndexes,
     hmms: state.hmms,
     canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onFilter: (e) => {
+        console.log(e.target.value);
+    },
 
     onAnalyze: (sampleId, references, algorithm) => {
         forEach(references, (entry) =>
