@@ -23,16 +23,16 @@ export const updateList = (documents, action, page) => {
 };
 
 export const insert = (documents, page, per_page, action, sortKey) => {
-    if (!documents) {
-        return documents;
-    }
+    const beforeList = documents ? documents.slice() : [];
+    const newPage = page || 1;
+    const perPage = per_page || 25;
 
-    let newList = concat(documents, {...action.data});
+    let newList = concat(beforeList, [{...action.data}]);
     newList = sortBy(newList, sortKey);
 
     // Only display listings that would be included in the
     // current pages, to synchronize with database pages
-    return slice(newList, 0, (per_page * page));
+    return slice(newList, 0, (perPage * newPage));
 };
 
 export const edit = (documents, action) => {

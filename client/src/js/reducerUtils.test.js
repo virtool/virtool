@@ -108,10 +108,9 @@ describe("Utility functions for reducers", () => {
                 data: { id: "test" }
             };
             page = 0;
-            per_page: undefined;
+            per_page = undefined;
             result = reducerUtils.insert(documents, page, per_page, action, "id");
-            expected = null;
-
+            expected = [{ id: "test" }];
             expect(result).toEqual(expected);
         });
 
