@@ -122,7 +122,7 @@ async def find(db, req_query, base_query=None):
         {},
         req_query,
         base_query=base_query,
-        sort="created_at",
+        sort="otu.version",
         projection=LIST_PROJECTION,
         reverse=True
     )
@@ -172,7 +172,7 @@ async def get_most_recent_change(db, otu_id):
     return await db.history.find_one({
         "otu.id": otu_id,
         "index.id": "unbuilt"
-    }, MOST_RECENT_PROJECTION, sort=[("created_at", -1)])
+    }, MOST_RECENT_PROJECTION, sort=[("otu.version", -1)])
 
 
 async def patch_to_verified(db, otu_id):
@@ -183,7 +183,7 @@ async def patch_to_verified(db, otu_id):
 
     patched = deepcopy(current)
 
-    async for change in db.history.find({"otu.id": otu_id}, sort=[("created_at", -1)]):
+    async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
         if change["method_name"] == "remove":
             patched = change["diff"]
 
@@ -227,7 +227,7 @@ async def patch_to_version(db, otu_id, version):
     patched = deepcopy(current)
 
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"otu.id": otu_id}, sort=[("created_at", -1)]):
+    async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
 
