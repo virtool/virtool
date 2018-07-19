@@ -261,7 +261,7 @@ async def organize_history(db):
 async def organize_indexes(db):
     logger.info(" • indexes")
 
-    await add_original_reference(db.indexes)
+    await add_original_reference(db.motor_client.indexes)
 
 
 async def organize_otus(db):
