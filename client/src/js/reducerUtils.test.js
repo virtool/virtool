@@ -197,6 +197,17 @@ describe("Utility functions for reducers", () => {
             expect(result).toEqual(expected);
         });
 
+        it("removes multiple entries", () => {
+            documents = [{ id: "test1" }, { id: "test2"}, { id: "test3" }];
+            action = {
+                type: "WS_REMOVE_ENTRY",
+                data: ["test1", "test2"]
+            };
+            result = reducerUtils.remove(documents, action);
+            expected = [{ id: "test3"}];
+            expect(result).toEqual(expected);
+        });
+
         it("handles [documents=null]", () => {
             documents = null;
             result = reducerUtils.remove(documents, action);

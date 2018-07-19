@@ -53,12 +53,19 @@ export const edit = (documents, action) => {
 };
 
 export const remove = (documents, action) => {
-    const target = find(documents, ["id", action.data[0]]);
-
-    if (!target) {
+    if (!documents) {
         return documents;
     }
 
-    const newList = differenceWith(documents, [target], isEqual);
+    let newList = slice(documents, 0, documents.length);
+    let target;
+
+    forEach(action.data, id => {
+        target = find(documents, ["id", id]);
+        if (target) {
+            newList = differenceWith(newList, [target], isEqual);
+        }
+    });
+
     return newList;
 };
