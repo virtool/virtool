@@ -326,18 +326,35 @@ async def organize_samples(db):
 async def organize_sequences(db):
     logger.info(" • sequences")
 
-    async for document in db.sequences.find(REFERENCE_QUERY):
-        document.update({
-            "_id": await virtool.db.utils.get_new_id(db.sequences),
-            "accession": document["_id"],
-            "reference": {
-                "id": "original"
+    motor_client = db.motor_client
+
+    buffer = list()
+
+    async for document in motor_client.sequences.find(REFERENCE_QUERY, ["virus_id"]):
+
+        otu_id = document.pop("virus_id")
+
+        op = UpdateOne({"_id": document["_id"]}, {
+            "$set": {
+                "accession": document["_id"],
+                "otu_id": otu_id,
+                "reference": {
+                    "id": "original"
+                }
+            },
+            "$unset": {
+                "virus_id": ""
             }
         })
 
-        await db.sequences.insert_one(document, silent=True)
+        buffer.append(op)
 
-    await db.sequences.delete_many(REFERENCE_QUERY)
+        if len(buffer) == 50:
+            await motor_client.sequences.bulk_write(buffer)
+            buffer = list()
+
+    if len(buffer):
+        await motor_client.sequences.bulk_write(buffer)
 
 
 async def organize_status(db, server_version):
