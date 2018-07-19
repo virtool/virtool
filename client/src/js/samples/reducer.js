@@ -35,6 +35,9 @@ export default function samplesReducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_INSERT_SAMPLE:
+            if (!state.fetched) {
+                return state;
+            }
             return {
                 ...state,
                 documents: insert(

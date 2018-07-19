@@ -25,6 +25,9 @@ const reducer = (state = initialState, action) => {
     switch (action.type) {
 
         case WS_INSERT_USER:
+            if (!state.fetched) {
+                return state;
+            }
             return {
                 ...state,
                 list: {

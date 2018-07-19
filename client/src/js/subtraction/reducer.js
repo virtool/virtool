@@ -22,6 +22,9 @@ export default function subtractionsReducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_INSERT_SUBTRACTION:
+            if (!state.fetched) {
+                return state;
+            }
             return {
                 ...state,
                 documents: insert(

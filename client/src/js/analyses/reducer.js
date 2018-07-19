@@ -1,4 +1,4 @@
-import {filter, isEqual, map} from "lodash-es";
+import { reject, sortBy, map, concat } from "lodash-es";
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
@@ -16,10 +16,11 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
-import {formatData} from "./utils";
-import { insert, edit, remove } from "../reducerUtils";
+import { formatData } from "./utils";
+import { edit, remove } from "../reducerUtils";
 
 export const initialState = {
+    sampleId: "",
     documents: null,
     data: null,
     detail: null,
@@ -105,20 +106,28 @@ export const toggleExpanded = (state, id) => (
     })
 );
 
+export const insert = (documents, action) => {
+    const beforeList = documents
+        ? reject(documents, entry => (entry.placeholder))
+        : [];
+
+    let newList = concat(beforeList, [{...action.data}]);
+    newList = sortBy(newList, "created_at");
+
+    return newList;
+};
+
 export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case WS_INSERT_ANALYSIS:
+            if (action.data.sample.id !== state.sampleId) {
+                return state;
+            }
             return {
                 ...state,
-                documents: insert(
-                    state.documents,
-                    1,
-                    100,
-                    action,
-                    "created_at"
-                )
+                documents: insert(state.documents, action)
             };
 
         case WS_UPDATE_ANALYSIS:
@@ -131,6 +140,12 @@ export default function samplesReducer (state = initialState, action) {
             return {
                 ...state,
                 documents: remove(state.documents, action)
+            };
+
+        case ANALYZE.REQUESTED:
+            return {
+                ...state,
+                documents: state.documents === null ? null : state.documents.concat([action.placeholder])
             };
 
         case COLLAPSE_ANALYSIS:
@@ -158,7 +173,7 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, readyIndexes: action.data};
 
         case FIND_ANALYSES.REQUESTED:
-            return {...state, documents: null, detail: null};
+            return {...state, sampleId: action.sampleId, documents: null, detail: null};
 
         case FIND_ANALYSES.SUCCEEDED:
             return {...state, documents: action.data.documents};
@@ -191,36 +206,6 @@ export default function samplesReducer (state = initialState, action) {
                 ...state,
                 data: null,
                 detail: null
-            };
-
-        case ANALYZE.REQUESTED:
-            return {
-                ...state,
-                documents: state.documents === null ? null : state.documents.concat([action.placeholder])
-            };
-
-        case ANALYZE.SUCCEEDED: {
-            let analyses = state.documents;
-
-            if (analyses !== null) {
-                analyses = map(analyses, analysis => {
-                    if (isEqual(analysis, action.placeholder)) {
-                        return action.data;
-                    }
-
-                    return analysis;
-                });
-            }
-
-            return {...state, documents: analyses};
-        }
-
-        case ANALYZE.FAILED:
-            return {
-                ...state,
-                documents: state.documents === null ? null : filter(state.documents,
-                    analysis => !isEqual(analysis, action.placeholder)
-                )
             };
 
         case BLAST_NUVS.REQUESTED:
