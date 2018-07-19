@@ -5,7 +5,7 @@ import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { listJobs } from "../actions";
-import { getUpdatedScrollListState, checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils";
 
 export class JobsList extends React.Component {
 
@@ -40,7 +40,7 @@ export class JobsList extends React.Component {
             <div>
                 <ViewHeader title="Jobs" totalCount={this.props.total_count} />
 
-                <JobsToolbar />
+                <JobsToolbar canRemove={this.props.canRemove} />
 
                 {noJobs}
 
