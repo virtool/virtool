@@ -1,4 +1,4 @@
-import {filter, isEqual, map, reject} from "lodash-es";
+import {filter, isEqual, map} from "lodash-es";
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
@@ -10,7 +10,6 @@ import {
     FIND_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    REMOVE_ANALYSIS,
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
@@ -18,7 +17,7 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
 import {formatData} from "./utils";
-import { updateList, insert, edit, remove } from "../reducerUtils";
+import { insert, edit, remove } from "../reducerUtils";
 
 export const initialState = {
     documents: null,
@@ -127,7 +126,7 @@ export default function samplesReducer (state = initialState, action) {
                 ...state,
                 documents: edit(state.documents, action)
             };
-        
+
         case WS_REMOVE_ANALYSIS:
             return {
                 ...state,
