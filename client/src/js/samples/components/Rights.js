@@ -14,7 +14,9 @@ class SampleRights extends React.Component {
     }
 
     isOwnerOrAdministrator = () => (
-        includes(this.props.groups, this.props.group) || this.props.accountId === this.props.ownerId
+        includes(this.props.groups, this.props.group)
+        || this.props.accountId === this.props.ownerId
+        || this.props.isAdmin
     );
 
     handleChangeGroup = (e) => {
@@ -103,6 +105,7 @@ const mapStateToProps = state => {
 
     return {
         accountId: state.account.id,
+        isAdmin: state.account.administrator,
         groups: state.groups.list,
         ownerId: user.id,
         sampleId: id,
