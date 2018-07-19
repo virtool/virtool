@@ -1,15 +1,21 @@
 import { simpleActionCreator } from "../utils";
 import {
+    WS_INJECT_JOB,
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
     FIND_JOBS,
-    FETCH_JOBS,
+    LIST_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES
 } from "../actionTypes";
+
+export const wsInsertJob = (data) => ({
+    type: WS_INSERT_JOB,
+    data
+});
 
 /**
  * Returns an action that should be dispatched when a job document is updated via websocket.
@@ -43,8 +49,8 @@ export const wsRemoveJob = (jobId) => ({
  */
 export const findJobs = simpleActionCreator(FIND_JOBS.REQUESTED);
 
-export const fetchJobs = (page) => ({
-    type: FETCH_JOBS.REQUESTED,
+export const listJobs = (page) => ({
+    type: LIST_JOBS.REQUESTED,
     page
 });
 

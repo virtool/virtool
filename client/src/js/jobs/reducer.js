@@ -3,7 +3,7 @@ import {
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
     FIND_JOBS,
-    FETCH_JOBS,
+    LIST_JOBS,
     GET_JOB,
     CANCEL_JOB,
     GET_RESOURCES
@@ -33,13 +33,13 @@ export default function jobsReducer (state = initialState, action) {
         case FIND_JOBS.SUCCEEDED:
             return {...state, ...action.data};
 
-        case FETCH_JOBS.REQUESTED:
+        case LIST_JOBS.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};
 
-        case FETCH_JOBS.SUCCEEDED:
+        case LIST_JOBS.SUCCEEDED:
             return {...state, ...action.data, isLoading: false, errorLoad: false};
 
-        case FETCH_JOBS.FAILED:
+        case LIST_JOBS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
 
         case GET_JOB.REQUESTED:

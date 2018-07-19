@@ -6,7 +6,7 @@ import { apiCall, apiFind, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_JOB,
     FIND_JOBS,
-    FETCH_JOBS,
+    LIST_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
@@ -17,7 +17,7 @@ import {
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
     yield throttle(300, LOCATION_CHANGE, findJobs);
-    yield takeLatest(FETCH_JOBS.REQUESTED, fetchJobs);
+    yield takeLatest(LIST_JOBS.REQUESTED, listJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
@@ -39,8 +39,8 @@ export function* findJobs (action) {
     yield apiFind("/jobs", jobsAPI.find, action, FIND_JOBS);
 }
 
-export function* fetchJobs (action) {
-    yield apiCall(jobsAPI.fetch, action, FETCH_JOBS);
+export function* listJobs (action) {
+    yield apiCall(jobsAPI.fetch, action, LIST_JOBS);
 }
 
 export function* getJobWithPending (action) {
