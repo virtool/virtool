@@ -144,7 +144,13 @@ export default function samplesReducer (state = initialState, action) {
             };
 
         case GET_ANALYSIS.SUCCEEDED: {
-            const data = addDepth(formatData(action.data), state.showMedian);
+            let data;
+
+            if (action.data.algorithm === "pathoscope_bowtie") {
+                data = addDepth(formatData(action.data), state.showMedian);
+            } else {
+                data = action.data;
+            }
 
             return {
                 ...state,

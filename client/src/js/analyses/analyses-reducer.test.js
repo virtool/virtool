@@ -80,11 +80,31 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle GET_ANALYSIS_SUCCEEDED", () => {
+    it("should handle GET_ANALYSIS_SUCCEEDED for nuvs", () => {
+        state = {};
+        action = {
+            type: "GET_ANALYSIS_SUCCEEDED",
+            algorithm: "nuvs",
+            data: {
+                diagnosis: []
+            }
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            detail: action.data,
+            data: action.data
+        };
+
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle GET_ANALYSIS_SUCCEEDED for pathoscope", () => {
         state = {};
         action = {
             type: "GET_ANALYSIS_SUCCEEDED",
             data: {
+                algorithm: "pathoscope_bowtie",
                 diagnosis: []
             }
         };
