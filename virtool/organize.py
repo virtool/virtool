@@ -1,12 +1,17 @@
+import dictdiffer
 import logging
 import os
 import pymongo.errors
 import shutil
 from pymongo import UpdateOne
 
+import virtool.db.history
+import virtool.db.otus
 import virtool.db.references
+import virtool.db.samples
 import virtool.db.utils
 import virtool.references
+import virtool.otus
 import virtool.users
 import virtool.utils
 
@@ -276,8 +281,6 @@ async def organize_otus(db):
     if "kinds" in await db.collection_names():
         await db.kinds.rename("otus")
 
-    await add_original_reference(db.otus)
-
 
 async def organize_paths(db, settings):
     logger.info("Checking paths...")
@@ -315,7 +318,9 @@ async def organize_references(db, settings):
     logger.info(" • references")
 
     if await db.otus.count() and not await db.references.count():
-        await virtool.db.references.create_original(db, settings)
+        await virtool.db.references.create_original(db.motor_client, settings)
+
+
 async def organize_samples(db):
     motor_client = db.motor_client
 
@@ -393,7 +398,12 @@ async def organize_status(db, server_version):
             "release": None
         })
     except pymongo.errors.DuplicateKeyError:
-        pass
+        if await db.hmm.count():
+            await db.status.update_one({"_id": "hmm"}, {
+                "$set": {
+                    "installed": True
+                }
+            })
 
 
 async def organize_subtraction(db):
