@@ -118,7 +118,7 @@ export default function samplesReducer (state = initialState, action) {
                     1,
                     100,
                     action,
-                    "id"
+                    "created_at"
                 )
             };
 

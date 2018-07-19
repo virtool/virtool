@@ -1,17 +1,32 @@
 import reducer, {
     initialState as reducerInitialState,
-    setNuvsBLAST
+    addDepth,
+    collapse,
+    toggleMedian,
+    setFilter,
+    setNuvsBLAST,
+    toggleExpanded
 } from "./reducer";
 import {
-    FIND_ANALYSES,
-    GET_ANALYSIS,
+    WS_INSERT_ANALYSIS,
+    WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS
+    CLEAR_ANALYSIS,
+    COLLAPSE_ANALYSIS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    LIST_READY_INDEXES,
+    REMOVE_ANALYSIS,
+    SET_PATHOSCOPE_SORT_KEY,
+    TOGGLE_ANALYSIS_EXPANDED,
+    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
+    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
+    TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
 
 describe("Analyses Reducer", () => {
-
     const initialState = reducerInitialState;
     let state;
     let action;
@@ -21,17 +36,159 @@ describe("Analyses Reducer", () => {
     it("should return the initial state on first pass", () => {
         result = reducer(undefined, {});
         expected = initialState;
-
         expect(result).toEqual(expected);
     });
 
     it("should return the given state on other action types", () => {
-        action = {
-            type: "UNHANDLED_ACTION"
-        };
+        action = { type: "UNHANDLED_ACTION" };
         result = reducer(initialState, action);
         expected = initialState;
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle WS_INSERT_ANALYSIS", () => {
+        state = {
+            ...initialState,
+            documents: null
+        };
+        action = {
+            type: WS_INSERT_ANALYSIS,
+            data: { id: "123abc", created_at: "2018-01-01T00:00:00.000000Z" }
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            documents: [action.data]
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle WS_UPDATE_ANALYSIS", () => {
+        state = {
+            ...initialState,
+            documents: [{
+                id: "123abc",
+                created_at: "2018-01-01T00:00:00.000000Z",
+                foo: "test"
+            }]
+        };
+        action = {
+            type: WS_UPDATE_ANALYSIS,
+            data: {
+                id: "123abc",
+                created_at: "2018-01-01T00:00:00.000000Z",
+                foo: "bar"
+            }
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            documents: [action.data]
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle WS_REMOVE_ANALYSIS", () => {
+        state = {
+            ...initialState,
+            documents: [{
+                id: "test"
+            }]
+        };
+        action = {
+            type: WS_REMOVE_ANALYSIS,
+            data: ["test"]
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            documents: []
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle COLLAPSE_ANALYSIS", () => {
+        state = {
+            ...initialState,
+            data: []
+        };
+        action = { type: COLLAPSE_ANALYSIS };
+        result = reducer(state, action);
+        expected = state;
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle SET_PATHOSCOPE_FILTER", () => {
+        state = {
+            ...initialState,
+            filterIsolates: false,
+            filterOTUs: false
+        };
+        action = { type: SET_PATHOSCOPE_FILTER, key: undefined };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            filterIsolates: true,
+            filterOTUs: true
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle TOGGLE_SHOW_PATHOSCOPE_MEDIAN", () => {
+        state = initialState;
+        action = { type: TOGGLE_SHOW_PATHOSCOPE_MEDIAN };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            data: [],
+            showMedian: !state.showMedian
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle TOGGLE_SHOW_PATHOSCOPE_READS", () => {
+        state = initialState;
+        action = { type: TOGGLE_SHOW_PATHOSCOPE_READS };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            showReads: !state.showReads
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle TOGGLE_SORT_PATHOSCOPE_DESCENDING", () => {
+        state = initialState;
+        action = { type: TOGGLE_SORT_PATHOSCOPE_DESCENDING };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            sortDescending: !state.sortDescending
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle SET_PATHOSCOPE_SORT_KEY", () => {
+        state = initialState;
+        action = { type: SET_PATHOSCOPE_SORT_KEY, key: "test" };
+        result = reducer(state, action);
+        expected = {...state, sortKey: action.key};
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle TOGGLE_ANALYSIS_EXPANDED", () => {
+        state = {...initialState, data: []};
+        action = { type: TOGGLE_ANALYSIS_EXPANDED, id: "test" };
+        result = reducer(state, action);
+        expected = {...state, data: []};
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_READY_INDEXES_SUCCEEDED", () => {
+        state = initialState;
+        action = { type: LIST_READY_INDEXES.SUCCEEDED, data: [] };
+        result = reducer(state, action);
+        expected = {...state, readyIndexes: []};
         expect(result).toEqual(expected);
     });
 
@@ -44,7 +201,6 @@ describe("Analyses Reducer", () => {
             detail: null,
             documents: null
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -115,6 +271,14 @@ describe("Analyses Reducer", () => {
             data: []
         };
 
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle CLEAR_ANALYSIS", () => {
+        state = { data: [], detail: {} };
+        action = { type: CLEAR_ANALYSIS };
+        result = reducer(state, action);
+        expected = { data: null, detail: null };
         expect(result).toEqual(expected);
     });
 
@@ -292,43 +456,223 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    describe("should handle REMOVE_ANALYSIS_SUCCEEDED", () => {
+    describe("Analyses Reducer Helper Functions", () => {
 
-        it("when [state.documents=null], return state", () => {
-            state = {
-                documents: null
-            };
-            action = {
-                type: REMOVE_ANALYSIS.SUCCEEDED
-            };
-            result = reducer(state, action);
-            expected = state;
+        describe("addDepth", () => {
+            const data = [
+                {
+                    id: "test1",
+                    medianDepth: 1,
+                    meanDepth: 2,
+                    isolates: [{ id: "a", medianDepth: 3, meanDepth: 4 }]
+                },
+                {
+                    id: "test2",
+                    medianDepth: 1,
+                    meanDepth: 2,
+                    isolates: [{ id: "b", medianDepth: 3, meanDepth: 4 }]
+                },
+                {
+                    id: "test3",
+                    medianDepth: 1,
+                    meanDepth: 2,
+                    isolates: [{ id: "c", medianDepth: 3, meanDepth: 4 }]
+                }
+            ];
+            let showMedian;
 
-            expect(result).toEqual(expected);
+            it("when [showMedian=true], depth = medianDepth", () => {
+                showMedian = true;
+                result = addDepth(data, showMedian);
+                expected = [
+                    {
+                        id: "test1",
+                        depth: 1,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "a",
+                            depth: 3,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    },
+                    {
+                        id: "test2",
+                        depth: 1,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "b",
+                            depth: 3,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    },
+                    {
+                        id: "test3",
+                        depth: 1,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "c",
+                            depth: 3,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    }
+                ];
+                expect(result).toEqual(expected);
+            });
+
+            it("otherwise, depth = meanDepth", () => {
+                showMedian = false;
+                result = addDepth(data, showMedian);
+                expected = [
+                    {
+                        id: "test1",
+                        depth: 2,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "a",
+                            depth: 4,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    },
+                    {
+                        id: "test2",
+                        depth: 2,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "b",
+                            depth: 4,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    },
+                    {
+                        id: "test3",
+                        depth: 2,
+                        medianDepth: 1,
+                        meanDepth: 2,
+                        isolates: [{
+                            id: "c",
+                            depth: 4,
+                            medianDepth: 3,
+                            meanDepth: 4
+                        }]
+                    }
+                ];
+                expect(result).toEqual(expected);
+            });
+
         });
 
-        it("otherwise remove target analysis by id", () => {
-            state = {
-                documents: [
-                    { id: "test_target" },
-                    { id: "pathoscope_bowtie" }
+        describe("collapse", () => {
+            const state = {
+                data: [
+                    { id: "test1", expanded: true },
+                    { id: "test2", expanded: false },
+                    { id: "test3", expanded: true }
                 ]
             };
-            action = {
-                type: REMOVE_ANALYSIS.SUCCEEDED,
-                id: "test_target"
-            };
-            result = reducer(state, action);
-            expected = {
-                documents: [{ id: "pathoscope_bowtie" }]
-            };
 
-            expect(result).toEqual(expected);
+            it("should set all entries 'expanded' to false", () => {
+                result = collapse(state);
+                expected = [
+                    { id: "test1", expanded: false },
+                    { id: "test2", expanded: false },
+                    { id: "test3", expanded: false }
+                ];
+                expect(result).toEqual(expected);
+            });
+
         });
 
-    });
+        describe("toggleMedian", () => {
+            const state = {};
 
-    describe("Analyses Reducer Helper Functions", () => {
+            it("toggles showMedian value in state", () => {
+                state.showMedian = true;
+                state.data = [];
+                result = toggleMedian(state);
+                expected = {
+                    data: [],
+                    showMedian: false
+                };
+                expect(result).toEqual(expected);
+            });
+
+        });
+
+        describe("setFilter", () => {
+            const state = {
+                filterIsolates: false,
+                filterOTUs: false
+            };
+
+            it("toggles filterIsolates when [key='isolates']", () => {
+                result = setFilter(state, "isolates");
+                expected = {
+                    filterIsolates: true,
+                    filterOTUs: false
+                };
+                expect(result).toEqual(expected);
+            });
+
+            it("toggles filterOTUs when [key='OTUs']", () => {
+                result = setFilter(state, "OTUs");
+                expected = {
+                    filterIsolates: false,
+                    filterOTUs: true
+                };
+                expect(result).toEqual(expected);
+            });
+
+            it("toggles both to true when no key is specified and both are false", () => {
+                result = setFilter(state, undefined);
+                expected = {
+                    filterIsolates: true,
+                    filterOTUs: true
+                };
+                expect(result).toEqual(expected);
+            });
+
+            it("toggles both to false when no key is specified and either/both are true", () => {
+                state.filterIsolates = true;
+                result = setFilter(state, undefined);
+                expected = {
+                    filterIsolates: false,
+                    filterOTUs: false
+                };
+                expect(result).toEqual(expected);
+            });
+
+        });
+
+        describe("toggleExpanded", () => {
+            const state = {
+                data: [
+                    { id: "test1", expanded: true },
+                    { id: "test2", expanded: false },
+                    { id: "test3", expanded: true }
+                ]
+            };
+
+            it("should toggle specific entry's 'expanded' value", () => {
+                const id = "test1";
+                result = toggleExpanded(state, id);
+                expected = [
+                    { id: "test1", expanded: false },
+                    { id: "test2", expanded: false },
+                    { id: "test3", expanded: true }
+                ];
+                expect(result).toEqual(expected);
+            });
+        });
 
         describe("setNuvsBLAST", () => {
             let analysisId;
