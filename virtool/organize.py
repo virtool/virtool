@@ -66,45 +66,55 @@ async def organize_analyses(db):
     """
     logger.info(" • analyses")
 
-    await delete_unready(db.analyses)
-    await add_original_reference(db.analyses)
-
     motor_client = db.motor_client
 
-    async for document in motor_client.references.find({}, ["name"]):
-        await db.analyses.update_many({"reference.id": document["_id"], "reference.name": {"$ne": document["name"]}}, {
-            "$set": {
-                "reference.name": document["name"]
-            }
-        }, silent=True)
+    await delete_unready(motor_client.analyses)
+    await add_original_reference(motor_client.analyses)
 
-    query = {
-        "algorithm": "pathoscope_bowtie",
-        "diagnosis.virus": {
-            "$exists": True
+    if await motor_client.analyses.count({"diagnosis.virus": {"$exists": True}}):
+        async for document in motor_client.references.find({}, ["name"]):
+            query = {
+                "reference.id": document["_id"],
+                "reference.name": {
+                    "$ne": document["name"]
+                }
+            }
+
+            await motor_client.analyses.update_many(query, {
+                "$set": {
+                    "reference.name": document["name"]
+                }
+            })
+
+        query = {
+            "algorithm": "pathoscope_bowtie",
+            "diagnosis.virus": {
+                "$exists": True
+            }
         }
-    }
 
-    buffer = list()
+        buffer = list()
 
-    async for document in db.analyses.find(query, ["diagnosis"]):
-        for hit in document["diagnosis"]:
-            hit["otu"] = hit.pop("virus")
+        async for document in motor_client.analyses.find(query, ["diagnosis"]):
+            diagnosis = document["diagnosis"]
 
-        op = UpdateOne({"_id": document["_id"]}, {
-            "$set": {
-                "diagnosis": document["diagnosis"]
-            }
-        })
+            for hit in diagnosis:
+                hit["otu"] = hit.pop("virus")
 
-        buffer.append(op)
+            op = UpdateOne({"_id": document["_id"]}, {
+                "$set": {
+                    "diagnosis": diagnosis
+                }
+            })
 
-        if len(buffer) == 40:
+            buffer.append(op)
+
+            if len(buffer) == 40:
+                await db.motor_client.analyses.bulk_write(buffer)
+                buffer = list()
+
+        if len(buffer):
             await db.motor_client.analyses.bulk_write(buffer)
-            buffer = list()
-
-    if len(buffer):
-        await db.motor_client.analyses.bulk_write(buffer)
 
 
 async def organize_files(db):
