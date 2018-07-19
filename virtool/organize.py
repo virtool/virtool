@@ -222,6 +222,11 @@ async def organize_references(db, settings):
 
     if await db.otus.count() and not await db.references.count():
         await virtool.db.references.create_original(db, settings)
+async def organize_samples(db):
+    motor_client = db.motor_client
+
+    for sample_id in await motor_client.samples.distinct("_id"):
+        await virtool.db.samples.recalculate_algorithm_tags(motor_client, sample_id)
 
 
 async def organize_sequences(db):
