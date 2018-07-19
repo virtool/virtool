@@ -156,7 +156,7 @@ async def test_organize_indexes(mocker):
 
     await virtool.organize.organize_indexes(m_db)
 
-    m_add_original_reference.assert_called_with(m_db.indexes)
+    m_add_original_reference.assert_called_with(m_db.motor_client.indexes)
 
 
 @pytest.mark.parametrize("has_otu", [True, False])
@@ -187,7 +187,7 @@ async def test_organize_references(has_references, has_otu, mocker, dbi):
 
     if has_otu and not has_references:
         assert document is None
-        m.assert_called_with(dbi, settings)
+        m.assert_called_with(dbi.motor_client, settings)
 
     else:
         assert not m.called
@@ -196,41 +196,6 @@ async def test_organize_references(has_references, has_otu, mocker, dbi):
         assert await dbi.references.find_one() == {
             "_id": "baz"
         }
-
-
-async def test_organize_sequences(dbi, test_random_alphanumeric):
-
-    await dbi.sequences.insert_many([
-        {
-            "_id": "foo"
-        },
-        {
-            "_id": "bar"
-        },
-        {
-            "_id": "baz"
-        }
-    ])
-
-    await virtool.organize.organize_sequences(dbi)
-
-    assert await dbi.sequences.find().to_list(None) == [
-        {
-            "_id": test_random_alphanumeric.history[0],
-            "accession": "foo",
-            "reference": ORIGINAL_REFERENCE
-        },
-        {
-            "_id": test_random_alphanumeric.history[1],
-            "accession": "bar",
-            "reference": ORIGINAL_REFERENCE
-        },
-        {
-            "_id": test_random_alphanumeric.history[2],
-            "accession": "baz",
-            "reference": ORIGINAL_REFERENCE
-        }
-    ]
 
 
 @pytest.mark.parametrize("collection_name", [None, "viruses", "kinds"])
@@ -252,12 +217,10 @@ async def test_organize_otus(collection_name, test_motor):
     if collection_name:
         assert results == [
             {
-                "_id": 1,
-                "reference": ORIGINAL_REFERENCE
+                "_id": 1
             },
             {
-                "_id": 2,
-                "reference": ORIGINAL_REFERENCE
+                "_id": 2
             }
         ]
     else:
@@ -339,6 +302,11 @@ async def test_organize_users(dbi):
     await dbi.users.insert_many(documents)
 
     await virtool.organize.organize_users(dbi)
+
+    documents[0].update({
+        "groups": ["test"],
+        "administrator": False
+    })
 
     documents[1].update({
         "groups": ["test"],
