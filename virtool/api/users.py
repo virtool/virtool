@@ -78,6 +78,9 @@ async def create(req):
     data = await req.json()
     settings = req.app["settings"]
 
+    if data["user_id"] == "virtool":
+        return bad_request("Reserved user name: virtool")
+
     if len(data["password"]) < settings["minimum_password_length"]:
         return bad_request("Password does not meet length requirement")
 

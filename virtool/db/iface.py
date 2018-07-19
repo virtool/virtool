@@ -177,7 +177,7 @@ class DB:
         for collection_name in COLLECTION_NAMES:
             setattr(self, collection_name, None)
 
-        self._client = client
+        self.motor_client = client
 
     async def connect(self):
         await self.bind_collection("analyses", projection=virtool.db.analyses.PROJECTION)
@@ -198,11 +198,12 @@ class DB:
         await self.bind_collection("status")
         await self.bind_collection("subtraction", projection=virtool.db.subtractions.PROJECTION)
         await self.bind_collection("users", projection=virtool.db.users.PROJECTION)
+        await self.bind_collection("viruses", projection=virtool.db.otus.PROJECTION)
 
     async def bind_collection(self, name, processor=None, projection=None, silent=False):
         collection = Collection(
             name,
-            self._client[name],
+            self.motor_client[name],
             self.dispatch,
             processor or virtool.utils.base_processor,
             projection,
@@ -212,4 +213,4 @@ class DB:
         setattr(self, name, collection)
 
     async def collection_names(self):
-        return await self._client.collection_names()
+        return await self.motor_client.collection_names()

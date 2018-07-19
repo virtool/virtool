@@ -5,7 +5,7 @@ import {apiCall} from "../sagaUtils";
 
 import * as analysesAPI from "./api";
 
-export const getAnalysisDetailId = (state) => get(state, "samples.analysisDetail.id", null);
+export const getAnalysisDetailId = (state) => get(state, "analysis.detail.id", null);
 
 export function* watchAnalyses () {
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);

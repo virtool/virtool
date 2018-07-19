@@ -1,11 +1,17 @@
+import dictdiffer
 import logging
 import os
 import pymongo.errors
 import shutil
+from pymongo import UpdateOne
 
+import virtool.db.history
+import virtool.db.otus
 import virtool.db.references
+import virtool.db.samples
 import virtool.db.utils
 import virtool.references
+import virtool.otus
 import virtool.users
 import virtool.utils
 
@@ -32,21 +38,48 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
+async def join_legacy_virus(db, virus_id):
+        """
+        Join the otu associated with the supplied ``virus_id`` with its sequences. If a otu entry is also passed,
+        the database will not be queried for the otu based on its id.
+
+        :param db: the application database client
+        :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+        :param virus_id: the id of the virus to join
+        :type virus_id: str
+
+        :return: the joined otu document
+        :rtype: Coroutine[dict]
+
+        """
+        # Get the otu entry if a ``document`` parameter was not passed.
+        document = await db.otus.find_one(virus_id)
+
+        if document is None:
+            return None
+
+        # Get the sequence entries associated with the isolate ids.
+        sequences = await db.sequences.find({"virus_id": document["_id"]}).to_list(None) or list()
+
+        # Merge the sequence entries into the otu entry.
+        return virtool.otus.merge_otu(document, sequences)
+
+
 async def organize(db, settings, server_version):
-    await organize_analyses(db)
     await organize_files(db)
+    await organize_otus(db)
     await organize_history(db)
     await organize_indexes(db)
     await organize_users(db)
     await organize_groups(db)
     await organize_references(db, settings)
-    await organize_otus(db)
     await organize_sequences(db)
+    await organize_analyses(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
-
+    await organize_samples(db)
     await organize_paths(db, settings)
-
     await organize_dev(db)
 
 
@@ -65,15 +98,55 @@ async def organize_analyses(db):
     """
     logger.info(" • analyses")
 
-    await delete_unready(db.analyses)
-    await add_original_reference(db.analyses)
+    motor_client = db.motor_client
 
-    async for document in db.references.find({}, ["name"]):
-        await db.analyses.update_many({"reference.id": document["_id"], "reference.name": {"$ne": document["name"]}}, {
-            "$set": {
-                "reference.name": document["name"]
+    await delete_unready(motor_client.analyses)
+    await add_original_reference(motor_client.analyses)
+
+    if await motor_client.analyses.count({"diagnosis.virus": {"$exists": True}}):
+        async for document in motor_client.references.find({}, ["name"]):
+            query = {
+                "reference.id": document["_id"],
+                "reference.name": {
+                    "$ne": document["name"]
+                }
             }
-        })
+
+            await motor_client.analyses.update_many(query, {
+                "$set": {
+                    "reference.name": document["name"]
+                }
+            })
+
+        query = {
+            "algorithm": "pathoscope_bowtie",
+            "diagnosis.virus": {
+                "$exists": True
+            }
+        }
+
+        buffer = list()
+
+        async for document in motor_client.analyses.find(query, ["diagnosis"]):
+            diagnosis = document["diagnosis"]
+
+            for hit in diagnosis:
+                hit["otu"] = hit.pop("virus")
+
+            op = UpdateOne({"_id": document["_id"]}, {
+                "$set": {
+                    "diagnosis": diagnosis
+                }
+            })
+
+            buffer.append(op)
+
+            if len(buffer) == 40:
+                await db.motor_client.analyses.bulk_write(buffer)
+                buffer = list()
+
+        if len(buffer):
+            await db.motor_client.analyses.bulk_write(buffer)
 
 
 async def organize_files(db):
@@ -83,7 +156,7 @@ async def organize_files(db):
         "$set": {
             "reserved": False
         }
-    })
+    }, silent=True)
 
 
 async def organize_groups(db):
@@ -96,32 +169,104 @@ async def organize_groups(db):
             "$set": {
                 "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
             }
-        })
+        }, silent=True)
 
 
 async def organize_history(db):
     logger.info(" • history")
 
-    document_ids = await db.history.distinct("_id", {"reference": {"$exists": False}})
+    motor_client = db.motor_client
 
-    document_ids = [_id for _id in document_ids if ".removed" in _id or ".0" in _id]
-
-    await db.history.update_many({"_id": {"$in": document_ids}}, {
-        "$set": {
-            "diff.reference": {
-                "id": "original"
+    if await motor_client.analyses.count({"reference": {"$exists": False}}):
+        await motor_client.history.update_many({"virus": {"$exists": True}}, {
+            "$rename": {
+                "virus": "otu"
             },
-            "reference": {
-                "id": "original"
+            "$set": {
+                "reference": {
+                    "id": "original"
+                }
             }
-        }
-    })
+        })
+
+        # Get all OTU ids that have ever existed.
+        historical_otu_ids = await db.history.distinct("otu.id")
+
+        for otu_id in historical_otu_ids:
+
+            versions = list()
+
+            patched = await join_legacy_virus(db, otu_id) or dict()
+
+            first_version = patched.get("version", None)
+
+            versions.append(patched or None)
+
+            async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
+                if first_version is not None and change["otu"]["version"] == first_version:
+                    continue
+
+                elif change["method_name"] == "remove":
+                    patched = change["diff"]
+                    versions.append(patched)
+
+                elif change["method_name"] == "create":
+                    patched = change["diff"]
+                    versions.append(patched)
+
+                else:
+                    patched = dictdiffer.revert(change["diff"], patched)
+                    versions.append(patched)
+
+            versions.reverse()
+
+            versions = [revise_otu(otu) for otu in versions]
+
+            previous = versions[0]
+
+            updates = list()
+
+            for otu in versions:
+                if otu is None:
+                    change_id = "{}.removed".format(otu_id)
+
+                    updates.append(UpdateOne({"_id": change_id}, {
+                        "$set": {
+                            "diff": previous
+                        }
+                    }))
+
+                    break
+
+                change_id = "{}.{}".format(otu_id, otu["version"])
+
+                if otu["version"] == 0:
+                    updates.append(UpdateOne({"_id": change_id}, {
+                        "$set": {
+                            "diff": previous
+                        }
+                    }))
+
+                    continue
+
+                diff = list(dictdiffer.diff(previous, otu))
+
+                updates.append(UpdateOne({"_id": change_id}, {
+                    "$set": {
+                        "diff": diff
+                    }
+
+                }))
+
+            await motor_client.history.bulk_write(updates)
+
+        await add_original_reference(db.motor_client.otus)
 
 
 async def organize_indexes(db):
     logger.info(" • indexes")
 
-    await add_original_reference(db.indexes)
+    await add_original_reference(db.motor_client.indexes)
 
 
 async def organize_otus(db):
@@ -135,8 +280,6 @@ async def organize_otus(db):
 
     if "kinds" in await db.collection_names():
         await db.kinds.rename("otus")
-
-    await add_original_reference(db.otus)
 
 
 async def organize_paths(db, settings):
@@ -175,24 +318,48 @@ async def organize_references(db, settings):
     logger.info(" • references")
 
     if await db.otus.count() and not await db.references.count():
-        await virtool.db.references.create_original(db, settings)
+        await virtool.db.references.create_original(db.motor_client, settings)
+
+
+async def organize_samples(db):
+    motor_client = db.motor_client
+
+    for sample_id in await motor_client.samples.distinct("_id"):
+        await virtool.db.samples.recalculate_algorithm_tags(motor_client, sample_id)
 
 
 async def organize_sequences(db):
     logger.info(" • sequences")
 
-    async for document in db.sequences.find(REFERENCE_QUERY):
-        document.update({
-            "_id": await virtool.db.utils.get_new_id(db.sequences),
-            "accession": document["_id"],
-            "reference": {
-                "id": "original"
+    motor_client = db.motor_client
+
+    buffer = list()
+
+    async for document in motor_client.sequences.find(REFERENCE_QUERY, ["virus_id"]):
+
+        otu_id = document.pop("virus_id")
+
+        op = UpdateOne({"_id": document["_id"]}, {
+            "$set": {
+                "accession": document["_id"],
+                "otu_id": otu_id,
+                "reference": {
+                    "id": "original"
+                }
+            },
+            "$unset": {
+                "virus_id": ""
             }
         })
 
-        await db.sequences.insert_one(document)
+        buffer.append(op)
 
-    await db.sequences.delete_many(REFERENCE_QUERY)
+        if len(buffer) == 50:
+            await motor_client.sequences.bulk_write(buffer)
+            buffer = list()
+
+    if len(buffer):
+        await motor_client.sequences.bulk_write(buffer)
 
 
 async def organize_status(db, server_version):
@@ -231,7 +398,12 @@ async def organize_status(db, server_version):
             "release": None
         })
     except pymongo.errors.DuplicateKeyError:
-        pass
+        if await db.hmm.count():
+            await db.status.update_one({"_id": "hmm"}, {
+                "$set": {
+                    "installed": True
+                }
+            })
 
 
 async def organize_subtraction(db):
@@ -243,12 +415,31 @@ async def organize_subtraction(db):
 async def organize_users(db):
     logger.info(" • users")
 
-    async for document in db.users.find({"groups": "administrator"}):
+    async for document in db.users.find({}, ["groups"]):
         await db.users.update_one({"_id": document["_id"]}, {
             "$set": {
-                "administrator": True
+                "administrator": "administrator" in document["groups"]
             },
             "$pull": {
                 "groups": "administrator"
             }
-        })
+        }, silent=True)
+
+
+def revise_otu(otu):
+    if otu is None:
+        return None
+
+    reference = {
+        "id": "original"
+    }
+
+    otu["reference"] = reference
+
+    for isolate in otu["isolates"]:
+        for sequence in isolate["sequences"]:
+            sequence["accession"] = sequence["_id"]
+            sequence["reference"] = reference
+            sequence["otu_id"] = sequence.pop("virus_id")
+
+    return otu

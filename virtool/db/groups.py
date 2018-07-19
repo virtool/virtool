@@ -4,6 +4,18 @@ import virtool.utils
 
 
 async def get_merged_permissions(db, id_list):
+    """
+    Get the merged permissions that are inherited as a result of membership in the groups defined in `id_list`.
+
+    :param db: the application database interface
+
+    :param id_list: a list of group ids
+    :type id_list: list
+
+    :return: the merged permissions
+    :rtype: dict
+
+    """
     groups = await db.groups.find({
         "_id": {
             "$in": id_list

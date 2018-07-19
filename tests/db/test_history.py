@@ -204,7 +204,7 @@ async def test_get_most_recent_change(exists, dbi, static_time):
                 "otu": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
-                    "version": 1
+                    "version": 2
                 },
                 "index": {
                     "id": "unbuilt"
@@ -226,7 +226,7 @@ async def test_get_most_recent_change(exists, dbi, static_time):
             "otu": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
-                "version": 1
+                "version": 2
             }
         }
     else:

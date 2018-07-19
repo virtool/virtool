@@ -149,7 +149,7 @@ const NuVsBLAST = (props) => {
 };
 
 const mapStateToProps = (state) => ({
-    analysisId: state.samples.analysisDetail.id
+    analysisId: state.analyses.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({
