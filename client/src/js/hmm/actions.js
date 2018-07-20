@@ -1,16 +1,19 @@
 import { simpleActionCreator } from "../utils";
-import { GET_HMM, INSTALL_HMMS, FETCH_HMMS, FIND_HMMS, PURGE_HMMS } from "../actionTypes";
+import {
+    GET_HMM,
+    INSTALL_HMMS,
+    FILTER_HMMS,
+    LIST_HMMS,
+    PURGE_HMMS
+} from "../actionTypes";
 
-/**
- * Returns action for fetching available HMMs.
- *
- * @func
- * @returns {object}
- */
-export const fetchHmms = simpleActionCreator(FETCH_HMMS);
+export const filterHmms = (term) => ({
+    type: FILTER_HMMS.REQUESTED,
+    term
+});
 
-export const findHmms = (page) => ({
-    type: FIND_HMMS.REQUESTED,
+export const listHmms = (page) => ({
+    type: LIST_HMMS.REQUESTED,
     page
 });
 

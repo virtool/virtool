@@ -130,8 +130,8 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_OTU_MODAL = "HIDE_OTU_MODAL";
 
 // HMMs
-export const FETCH_HMMS = "FETCH_HMMS";
-export const FIND_HMMS = createRequestActionType("FIND_HMMS");
+export const LIST_HMMS = createRequestActionType("LIST_HMMS");
+export const FILTER_HMMS = createRequestActionType("FILTER_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
 export const INSTALL_HMMS = createRequestActionType("INSTALL_HMMS");
 export const PURGE_HMMS = createRequestActionType("PURGE_HMMS");

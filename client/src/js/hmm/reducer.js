@@ -1,9 +1,18 @@
-import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
+import {
+    WS_UPDATE_STATUS,
+    LIST_HMMS,
+    GET_HMM,
+    FILTER_HMMS
+} from "../actionTypes";
+import { updateList } from "../reducerUtils";
 
 export const initialState = {
+    process: null,
     documents: null,
+    page: 0,
     detail: null,
-    process: null
+    filter: "",
+    fetched: false
 };
 
 export default function hmmsReducer (state = initialState, action) {
@@ -22,16 +31,22 @@ export default function hmmsReducer (state = initialState, action) {
                     }
                 };
             }
-
             return state;
 
-        case FIND_HMMS.REQUESTED:
+        case LIST_HMMS.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};
 
-        case FIND_HMMS.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false, errorLoad: false};
+        case LIST_HMMS.SUCCEEDED: {
+            return {
+                ...state,
+                ...updateList(state.documents, action, state.page),
+                isLoading: false,
+                errorLoad: false,
+                fetched: true
+            };
+        }
 
-        case FIND_HMMS.FAILED:
+        case LIST_HMMS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
 
         case GET_HMM.REQUESTED:
@@ -39,6 +54,13 @@ export default function hmmsReducer (state = initialState, action) {
 
         case GET_HMM.SUCCEEDED:
             return {...state, detail: action.data};
+
+        case FILTER_HMMS.REQUESTED:
+            return {...state, filter: action.term};
+
+        case FILTER_HMMS.SUCCEEDED: {
+            return {...state, ...action.data};
+        }
 
         default:
             return state;
