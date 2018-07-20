@@ -40,7 +40,7 @@ export class ManageUsers extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
+        if (!nextProps.isAdmin && prevState.error !== nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
@@ -113,6 +113,7 @@ export class ManageUsers extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    isAdmin: state.account.administrator,
     filter: state.users.filter,
     groups: state.groups.list,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")

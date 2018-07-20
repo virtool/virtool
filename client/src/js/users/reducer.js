@@ -43,6 +43,9 @@ const reducer = (state = initialState, action) => {
             };
 
         case WS_UPDATE_USER:
+            if (!state.list) {
+                return state;
+            }
             return {
                 ...state,
                 list: {
@@ -52,6 +55,9 @@ const reducer = (state = initialState, action) => {
             };
 
         case WS_REMOVE_USER:
+            if (!state.list) {
+                return state;
+            }
             return {
                 ...state,
                 list: {
