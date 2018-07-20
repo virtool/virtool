@@ -156,6 +156,8 @@ async def edit(req):
     if document is None:
         return not_found()
 
+    document["linked_samples"] = await virtool.db.subtractions.get_linked_samples(db, subtraction_id)
+
     return json_response(virtool.utils.base_processor(document))
 
 
