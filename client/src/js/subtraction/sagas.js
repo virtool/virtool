@@ -28,7 +28,6 @@ export function* createSubtraction (action) {
     const extraFunc = {
         closeModal: call(pushHistoryState, {createSubtraction: false})
     };
-
     yield setPending(apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION, {}, extraFunc));
 }
 
@@ -37,8 +36,10 @@ export function* updateSubtraction (action) {
 }
 
 export function* removeSubtraction (action) {
-    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
-    yield put(push("/subtraction"));
+    const extraFunc = {
+        goBack: put(push("/subtraction"))
+    };
+    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION, {}, extraFunc);
 }
 
 export function* watchSubtraction () {

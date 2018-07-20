@@ -4,6 +4,7 @@ import {
     WS_REMOVE_SUBTRACTION,
     LIST_SUBTRACTIONS,
     GET_SUBTRACTION,
+    UPDATE_SUBTRACTION,
     FILTER_SUBTRACTIONS
 } from "../actionTypes";
 import { updateList, insert, edit, remove } from "../reducerUtils";
@@ -70,6 +71,9 @@ export default function subtractionsReducer (state = initialState, action) {
             return {...state, detail: null};
 
         case GET_SUBTRACTION.SUCCEEDED:
+            return {...state, detail: action.data};
+
+        case UPDATE_SUBTRACTION.SUCCEEDED:
             return {...state, detail: action.data};
 
         case FILTER_SUBTRACTIONS.REQUESTED:
