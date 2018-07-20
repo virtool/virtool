@@ -1,18 +1,27 @@
-import { find } from "lodash-es";
+import { find, forEach } from "lodash-es";
 import {
+    WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
+    WS_REMOVE_REFERENCE,
     LIST_REFERENCES,
+    FILTER_REFERENCES,
     GET_REFERENCE,
+    EDIT_REFERENCE,
     REMOVE_REFERENCE,
     UPLOAD,
     CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
 } from "../actionTypes";
+import { updateList, insert, edit, remove } from "../reducerUtils";
 
 const initialState = {
+    history: null,
     documents: null,
+    page: 0,
     detail: null,
-    history: null
+    filter: "",
+    fetched: false,
+    refetchPage: false
 };
 
 const checkHasOfficialRemote = (list) => {
@@ -24,17 +33,74 @@ const checkHasOfficialRemote = (list) => {
     return !!hasOfficialRemote;
 };
 
+const checkRemoveOfficialRemote = (list, removedIds) => {
+    let isRemoved = false;
+
+    forEach(removedIds, id => {
+        if (find(list, ["id", id])) {
+            isRemoved = true;
+        }
+    });
+
+    return !isRemoved;
+};
+
 export default function referenceReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case WS_UPDATE_REFERENCE:
-            return {...state, detail: {...state.detail, process: action.data.process, release: action.data.release}};
+        case WS_INSERT_REFERENCE:
+            if (!state.fetched) {
+                return state;
+            }
+            return {
+                ...state,
+                installOfficial: checkHasOfficialRemote([action.data]),
+                documents: insert(
+                    state.documents,
+                    state.page,
+                    state.per_page,
+                    action,
+                    "name"
+                )
+            };
 
-        case LIST_REFERENCES.SUCCEEDED:
-            return {...state, ...action.data, installOfficial: checkHasOfficialRemote(action.data.documents)};
+        case WS_UPDATE_REFERENCE:
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
+
+        case WS_REMOVE_REFERENCE:
+            return {
+                ...state,
+                installOfficial: checkRemoveOfficialRemote(state.documents, action.data),
+                documents: remove(state.documents, action),
+                refetchPage: (state.page < state.page_count)
+            };
+
+        case LIST_REFERENCES.REQUESTED:
+            return {...state, isLoading: true, errorLoad: false};
+
+        case LIST_REFERENCES.SUCCEEDED: {
+            return {
+                ...state,
+                installOfficial: checkHasOfficialRemote(action.data.documents),
+                ...updateList(state.documents, action, state.page),
+                isLoading: false,
+                errorLoad: false,
+                fetched: true,
+                refetchPage: false
+            };
+        }
+
+        case LIST_REFERENCES.FAILED:
+            return {...state, isLoading: false, errorLoad: true};
 
         case GET_REFERENCE.SUCCEEDED:
+            return {...state, detail: action.data};
+
+        case EDIT_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};
 
         case REMOVE_REFERENCE.SUCCEEDED:
@@ -54,6 +120,13 @@ export default function referenceReducer (state = initialState, action) {
 
         case UPDATE_REMOTE_REFERENCE.SUCCEEDED:
             return {...state, detail: {...state.detail, release: action.data}};
+
+        case FILTER_REFERENCES.REQUESTED:
+            return {...state, filter: action.term};
+
+        case FILTER_REFERENCES.SUCCEEDED: {
+            return {...state, ...action.data};
+        }
 
         default:
             return state;

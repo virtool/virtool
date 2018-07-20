@@ -3,7 +3,7 @@ import { find, get, replace } from "lodash-es";
 import { Col, Panel, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { installHMMs, fetchHmms } from "../actions";
+import { installHMMs } from "../actions";
 import { Button, Flex, FlexItem, Alert } from "../../base";
 import { checkAdminOrPermission } from "../../utils";
 
@@ -105,10 +105,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onInstall: (releaseId) => {
         dispatch(installHMMs(releaseId));
-    },
-
-    onRefresh: () => {
-        dispatch(fetchHmms());
     }
 
 });

@@ -1,8 +1,11 @@
 import Request from "superagent";
 
-export const list = () => (
-    Request.get("/api/refs")
-        .query({ per_page: 100 })
+export const list = ({ page }) => (
+    Request.get(`/api/refs?page=${page}`)
+);
+
+export const filter = ({ term }) => (
+    Request.get(`/api/refs?find=${term}`)
 );
 
 export const get = ({ referenceId }) => (

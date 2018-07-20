@@ -79,6 +79,7 @@ export const WS_INSERT_REFERENCE = "WS_INSERT_REFERENCE";
 export const WS_UPDATE_REFERENCE = "WS_UPDATE_REFERENCE";
 export const WS_REMOVE_REFERENCE = "WS_REMOVE_REFERENCE";
 export const LIST_REFERENCES = createRequestActionType("LIST_REFERENCES");
+export const FILTER_REFERENCES = createRequestActionType("FILTER_REFERENCES");
 export const GET_REFERENCE = createRequestActionType("GET_REFERENCE");
 export const CREATE_REFERENCE = createRequestActionType("CREATE_REFERENCE");
 export const EDIT_REFERENCE = createRequestActionType("EDIT_REFERENCE");

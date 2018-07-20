@@ -63,13 +63,23 @@ export class ScrollList extends React.Component {
     };
 
     render () {
-        const { list, rowRenderer, isNextPageLoading, hasNextPage } = this.props;
+        const { list, rowRenderer, isNextPageLoading, hasNextPage, noContainer } = this.props;
 
-        return (
+        const entries = map(list, (item, index) => rowRenderer(index));
+        const isLoading = (isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null;
+
+        const renderOption = noContainer ? (
+            <React.Fragment>
+                {entries}
+                {isLoading}
+            </React.Fragment>
+        ) : (
             <div ref={this.scrollList} style={this.props.style}>
-                {map(list, (item, index) => rowRenderer(index))}
-                {(isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null}
+                {entries}
+                {isLoading}
             </div>
         );
+
+        return renderOption;
     }
 }
