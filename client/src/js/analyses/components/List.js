@@ -9,7 +9,7 @@ import CreateAnalysis from "./Create";
 import { analyze } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 import { listReadyIndexes } from "../../indexes/actions";
-import { fetchHmms } from "../../hmm/actions";
+import { listHmms } from "../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../base/index";
 
 const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
@@ -47,7 +47,7 @@ class AnalysesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFetchHMMs();
+        this.props.onListHMMs();
         this.props.onListReadyIndexes();
     }
 
@@ -135,8 +135,8 @@ const mapDispatchToProps = (dispatch) => ({
         );
     },
 
-    onFetchHMMs: () => {
-        dispatch(fetchHmms());
+    onListHMMs: () => {
+        dispatch(listHmms());
     },
 
     onListReadyIndexes: () => {

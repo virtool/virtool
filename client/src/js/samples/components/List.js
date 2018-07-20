@@ -11,7 +11,7 @@ import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } f
 import { listSamples } from "../actions";
 import { analyze } from "../../analyses/actions";
 import { listReadyIndexes } from "../../indexes/actions";
-import { fetchHmms } from "../../hmm/actions";
+import { listHmms } from "../../hmm/actions";
 
 const SummaryToolbar = ({clearAll, summary, showModal}) => (
     <div key="toolbar" className="toolbar">
@@ -57,7 +57,7 @@ export class SamplesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFetchHMMs();
+        this.props.onListHMMs();
         this.props.onListReadyIndexes();
 
         if (!this.props.fetched) {
@@ -205,8 +205,8 @@ const mapDispatchToProps = (dispatch) => ({
         });
     },
 
-    onFetchHMMs: () => {
-        dispatch(fetchHmms());
+    onListHMMs: () => {
+        dispatch(listHmms());
     },
 
     onListReadyIndexes: () => {
