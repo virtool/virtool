@@ -873,4 +873,4 @@ async def list_history(req):
 
     cursor = await db.history.find({"otu.id": otu_id})
 
-    return json_response([d async for d in cursor)
+    return json_response([d async for d in cursor])
