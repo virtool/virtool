@@ -1,9 +1,12 @@
 import { find, map } from "lodash-es";
-
+import { updateList, insert, edit, remove } from "../reducerUtils";
 import { formatIsolateName } from "../utils";
 import {
+    WS_INSERT_OTU,
+    WS_UPDATE_OTU,
+    WS_REMOVE_OTU,
     WS_UPDATE_STATUS,
-    FETCH_OTUS,
+    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     EDIT_OTU,
@@ -33,6 +36,9 @@ import {
 export const initialState = {
     documents: null,
     detail: null,
+    page: 0,
+    fetched: false,
+    refetchPage: false,
     detailHistory: null,
     edit: false,
     remove: false,
@@ -98,13 +104,62 @@ export default function OTUsReducer (state = initialState, action) {
 
             return state;
 
-        case FETCH_OTUS.REQUESTED:
-            return {...state, isLoading: true, errorLoad: false};
+        case WS_INSERT_OTU:
+            if (!state.fetched) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: insert(
+                    state.documents,
+                    state.page,
+                    state.per_page,
+                    action,
+                    "id"
+                )
+            };
 
-        case FETCH_OTUS.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false, errorLoad: false};
+        case WS_UPDATE_OTU:
+            if (!state.fetched) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
 
-        case FETCH_OTUS.FAILED:
+        case WS_REMOVE_OTU:
+            if (!state.fetched) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: remove(state.documents, action),
+                refetchPage: (state.page < state.page_count)
+            };
+
+        case LIST_OTUS.REQUESTED:
+            return {
+                ...state,
+                documents: null,
+                page: 0,
+                fetched: false,
+                refetchPage: false,
+                isLoading: true,
+                errorLoad: false
+            };
+
+        case LIST_OTUS.SUCCEEDED:
+            return {
+                ...state,
+                ...updateList(state.documents, action, state.page),
+                isLoading: false,
+                errorLoad: false,
+                fetched: true,
+                refetchPage: false
+            };
+
+        case LIST_OTUS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
 
         case FIND_OTUS.SUCCEEDED:

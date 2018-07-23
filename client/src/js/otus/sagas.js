@@ -4,7 +4,7 @@ import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import * as otusAPI from "./api";
 import {apiCall, apiFind, putGenericError, setPending} from "../sagaUtils";
 import {
-    FETCH_OTUS,
+    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
@@ -33,8 +33,8 @@ export function* updateAndGetOTU (apiMethod, action, actionType) {
     })(action));
 }
 
-export function* fetchOTUs (action) {
-    yield apiCall(otusAPI.fetch, action, FETCH_OTUS);
+export function* listOTUs (action) {
+    yield apiCall(otusAPI.list, action, LIST_OTUS);
 }
 
 export function* findOTUs (action) {
@@ -104,7 +104,7 @@ export function* revert (action) {
 
 export function* watchOTUs () {
     yield throttle(300, LOCATION_CHANGE, findOTUs);
-    yield takeLatest(FETCH_OTUS.REQUESTED, fetchOTUs);
+    yield takeLatest(LIST_OTUS.REQUESTED, listOTUs);
     yield takeLatest(GET_OTU.REQUESTED, getOTU);
     yield takeLatest(GET_OTU_HISTORY.REQUESTED, getOTUHistory);
     yield takeEvery(CREATE_OTU.REQUESTED, createOTU);

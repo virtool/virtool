@@ -1,6 +1,9 @@
 import { simpleActionCreator } from "../utils";
 import {
-    FETCH_OTUS,
+    WS_INSERT_OTU,
+    WS_UPDATE_OTU,
+    WS_REMOVE_OTU,
+    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
@@ -27,14 +30,29 @@ import {
     HIDE_OTU_MODAL
 } from "../actionTypes";
 
+export const wsInsertOTU = (data) => ({
+    type: WS_INSERT_OTU,
+    data
+});
+
+export const wsUpdateOTU = (data) => ({
+    type: WS_UPDATE_OTU,
+    data
+});
+
+export const wsRemoveOTU = (data) => ({
+    type: WS_REMOVE_OTU,
+    data
+});
+
 /**
  * Returns action for retrieving all available OTUs.
  *
  * @func
  * @returns {object}
  */
-export const fetchOTUs = (refId, page) => ({
-    type: FETCH_OTUS.REQUESTED,
+export const listOTUs = (refId, page) => ({
+    type: LIST_OTUS.REQUESTED,
     refId,
     page
 });

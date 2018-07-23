@@ -18,7 +18,6 @@ import {
 import { checkUserRefPermission, followDownload } from "../../../utils";
 
 import { findIndexes } from "../../../indexes/actions";
-import { fetchOTUs } from "../../../otus/actions";
 import { getReference } from "../../actions";
 import EditReference from "./Edit";
 import Manage from "./Manage";
@@ -90,7 +89,6 @@ class ReferenceDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetReference(this.props.match.params.refId);
-        this.props.onOTUFirstPage(this.props.match.params.refId, 1);
         this.props.onFindIndexes(this.props.match.params.refId, 1);
     }
 
@@ -104,7 +102,6 @@ class ReferenceDetail extends React.Component {
 
         if (oldProgress !== 100 && newProgress === 100) {
             this.props.onGetReference(this.props.match.params.refId);
-            this.props.onOTUFirstPage(this.props.match.params.refId, 1);
             this.props.onFindIndexes(this.props.match.params.refId, 1);
         }
     }
@@ -272,10 +269,6 @@ const mapDispatchToProps = dispatch => ({
 
     onGetReference: (refId) => {
         dispatch(getReference(refId));
-    },
-
-    onOTUFirstPage: (refId, page) => {
-        dispatch(fetchOTUs(refId, page));
     },
 
     onEdit: () => {

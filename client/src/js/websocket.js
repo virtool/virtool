@@ -4,6 +4,7 @@ import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "./groups/actions";
 import { wsInsertIndex, wsUpdateIndex, wsRemoveIndex } from "./indexes/actions";
 import { wsInsertJob, wsUpdateJob, wsRemoveJob } from "./jobs/actions";
+import { wsInsertOTU, wsUpdateOTU, wsRemoveOTU } from "./otus/actions";
 import { wsInsertProcess, wsUpdateProcess } from "./processes/actions";
 import { wsInsertReference, wsUpdateReference, wsRemoveReference } from "./references/actions";
 import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "./samples/actions";
@@ -17,6 +18,7 @@ const documentInserters = {
     groups: wsInsertGroup,
     indexes: wsInsertIndex,
     jobs: wsInsertJob,
+    otus: wsInsertOTU,
     processes: wsInsertProcess,
     references: wsInsertReference,
     samples: wsInsertSample,
@@ -30,6 +32,7 @@ const documentUpdaters = {
     groups: wsUpdateGroup,
     indexes: wsUpdateIndex,
     jobs: wsUpdateJob,
+    otus: wsUpdateOTU,
     processes: wsUpdateProcess,
     references: wsUpdateReference,
     samples: wsUpdateSample,
@@ -44,6 +47,7 @@ const documentRemovers = {
     groups: wsRemoveGroup,
     indexes: wsRemoveIndex,
     jobs: wsRemoveJob,
+    otus: wsRemoveOTU,
     references: wsRemoveReference,
     samples: wsRemoveSample,
     subtraction: wsRemoveSubtraction,

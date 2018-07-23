@@ -16,8 +16,8 @@ import {
 } from "../../base";
 import OTUToolbar from "./Toolbar";
 import CreateOTU from "./Create";
-import { checkUserRefPermission, getUpdatedScrollListState } from "../../utils";
-import { fetchOTUs } from "../actions";
+import { checkUserRefPermission } from "../../utils";
+import { listOTUs } from "../actions";
 
 const OTUItem = ({ refId, abbreviation, id, name, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
@@ -40,17 +40,10 @@ const OTUItem = ({ refId, abbreviation, id, name, verified }) => (
 
 class OTUsList extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-    }
-
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
+    componentDidMount () {
+        if (!this.props.fetched) {
+            this.props.loadNextPage(this.props.refId, 1);
+        }
     }
 
     handleNextPage = (page) => {
@@ -59,9 +52,9 @@ class OTUsList extends React.Component {
 
     rowRenderer = (index) => (
         <OTUItem
-            key={this.state.masterList[index].id}
+            key={this.props.documents[index].id}
             refId={this.props.refId}
-            {...this.state.masterList[index]}
+            {...this.props.documents[index]}
         />
     );
 
@@ -73,7 +66,7 @@ class OTUsList extends React.Component {
 
         let noOTUs;
 
-        if (!this.state.masterList.length) {
+        if (!this.props.documents.length) {
             noOTUs = <NoneFound noun="otus" />;
         }
 
@@ -114,7 +107,7 @@ class OTUsList extends React.Component {
             <div>
                 {alert}
 
-                <OTUToolbar hasRemoveOTU={hasRemoveOTU} />
+                <OTUToolbar hasRemoveOTU={hasRemoveOTU} refId={this.props.refId} />
 
                 <CreateOTU {...this.props} />
 
@@ -124,9 +117,9 @@ class OTUsList extends React.Component {
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
+                    list={this.props.documents}
                     loadNextPage={this.handleNextPage}
-                    page={this.state.page}
+                    page={this.props.page}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -152,7 +145,7 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     loadNextPage: (refId, page) => {
-        dispatch(fetchOTUs(refId, page));
+        dispatch(listOTUs(refId, page));
     }
 });
 
