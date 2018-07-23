@@ -10,10 +10,11 @@ from virtool.api.utils import compose_regex_query, paginate
 
 PROJECTION = [
     "_id",
-    "name",
     "abbreviation",
-    "version",
-    "verified"
+    "name",
+    "reference",
+    "verified",
+    "version"
 ]
 
 SEQUENCE_PROJECTION = [
