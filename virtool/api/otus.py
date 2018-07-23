@@ -624,9 +624,9 @@ async def list_sequences(req):
     projection.remove("otu_id")
     projection.remove("isolate_id")
 
-    documents = await db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, projection).to_list(None)
+    cursor = db.sequences.find({"otu_id": otu_id, "isolate_id": isolate_id}, projection)
 
-    return json_response([virtool.utils.base_processor(d) for d in documents])
+    return json_response([virtool.utils.base_processor(d) async for d in cursor])
 
 
 @routes.get("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
@@ -871,6 +871,6 @@ async def list_history(req):
     if not await db.otus.find({"_id": otu_id}).count():
         return not_found()
 
-    documents = await db.history.find({"otu.id": otu_id}).to_list(None)
+    cursor = await db.history.find({"otu.id": otu_id})
 
-    return json_response(documents)
+    return json_response([d async for d in cursor)

@@ -161,7 +161,7 @@ async def get_otus(db, index_id):
     :rtype: List[dict]
 
     """
-    otus = await db.history.aggregate([
+    cursor = db.history.aggregate([
         {"$match": {
             "index.id": index_id
         }},
@@ -180,9 +180,9 @@ async def get_otus(db, index_id):
         {"$sort": {
             "name": 1
         }}
-    ]).to_list(None)
+    ])
 
-    return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in otus]
+    return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} async for v in cursor]
 
 
 async def get_modification_stats(db, index_id):

@@ -59,11 +59,10 @@ async def join_legacy_virus(db, virus_id):
         if document is None:
             return None
 
-        # Get the sequence entries associated with the isolate ids.
-        sequences = await db.sequences.find({"virus_id": document["_id"]}).to_list(None) or list()
+        cursor = db.sequences.find({"virus_id": document["_id"]})
 
         # Merge the sequence entries into the otu entry.
-        return virtool.otus.merge_otu(document, sequences)
+        return virtool.otus.merge_otu(document, [d async for d in cursor])
 
 
 async def organize(db, settings, server_version):
