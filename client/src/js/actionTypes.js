@@ -70,7 +70,7 @@ export const CLEAR_ERROR = "CLEAR_ERROR";
 export const WS_INSERT_FILE = "WS_INSERT_FILE";
 export const WS_UPDATE_FILE = "WS_UPDATE_FILE";
 export const WS_REMOVE_FILE = "WS_REMOVE_FILE";
-export const FIND_FILES = createRequestActionType("FIND_FILES");
+export const LIST_FILES = createRequestActionType("LIST_FILES");
 export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
 export const UPLOAD = createRequestActionType("UPLOAD");
 export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
@@ -116,7 +116,10 @@ export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
 
 // OTU
-export const FETCH_OTUS = createRequestActionType("FETCH_OTUS");
+export const WS_INSERT_OTU = "WS_INSERT_OTU";
+export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
+export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
+export const LIST_OTUS = createRequestActionType("LIST_OTUS");
 export const FIND_OTUS = createRequestActionType("FIND_OTUS");
 export const GET_OTU = createRequestActionType("GET_OTU");
 export const CREATE_OTU = createRequestActionType("CREATE_OTU");

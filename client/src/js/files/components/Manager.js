@@ -1,54 +1,23 @@
 import React from "react";
-import { capitalize, forEach, map } from "lodash-es";
+import { capitalize, forEach } from "lodash-es";
 import { connect } from "react-redux";
 
 import File from "./File";
-import { findFiles, removeFile, upload } from "../actions";
+import { listFiles, removeFile, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
-import { createRandomString, checkAdminOrPermission, getUpdatedScrollListState } from "../../utils";
+import { createRandomString, checkAdminOrPermission } from "../../utils";
 
 class FileManager extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-    }
-
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
+    componentDidMount () {
+        if (!this.props.fetched) {
+            this.handlePage(1);
+        }
     }
 
     handleRemove = (fileId) => {
-        const newArray = map(this.state.masterList, item => {
-            if (item.id === fileId) {
-                item.pending = "remove";
-            }
-            return item;
-        });
-
-        this.setState({ masterList: newArray });
-
         this.props.onRemove(fileId);
     };
-
-    rowRenderer = (index) => (
-        this.state.masterList[index].pending ? null : (
-            <File
-                key={this.state.masterList[index].id}
-                {...this.state.masterList[index]}
-                onRemove={this.handleRemove}
-                canRemove={this.props.canRemove}
-            />
-        )
-    );
-
-    componentDidMount () {
-        this.props.onFind(this.props.fileType);
-    }
 
     handleDrop = (acceptedFiles) => {
         if (this.props.canUpload) {
@@ -57,8 +26,17 @@ class FileManager extends React.Component {
     };
 
     handlePage = (page) => {
-        this.props.onFind(this.props.fileType, page);
+        this.props.onList(this.props.fileType, page);
     };
+
+    rowRenderer = (index) => (
+        <File
+            key={this.props.documents[index].id}
+            {...this.props.documents[index]}
+            onRemove={this.handleRemove}
+            canRemove={this.props.canRemove}
+        />
+    );
 
     render () {
 
@@ -98,9 +76,10 @@ class FileManager extends React.Component {
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
+                    list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
                     loadNextPage={this.handlePage}
-                    page={this.state.page}
+                    page={this.props.page}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -109,7 +88,17 @@ class FileManager extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    const { documents, found_count, page, page_count, total_count } = state.files;
+    const {
+        documents,
+        found_count,
+        page,
+        page_count,
+        total_count,
+        fetched,
+        errorLoad,
+        isLoading,
+        refetchPage
+    } = state.files;
 
     return {
         documents,
@@ -117,6 +106,10 @@ const mapStateToProps = (state) => {
         page,
         page_count,
         total_count,
+        fetched,
+        errorLoad,
+        isLoading,
+        refetchPage,
         canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file"),
         canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_file")
     };
@@ -131,8 +124,8 @@ const mapDispatchToProps = (dispatch) => ({
         });
     },
 
-    onFind: (fileType, page = 1) => {
-        dispatch(findFiles(fileType, page));
+    onList: (fileType, page = 1) => {
+        dispatch(listFiles(fileType, page));
     },
 
     onRemove: (fileId) => {

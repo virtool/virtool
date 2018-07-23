@@ -6,14 +6,20 @@
 
 import { simpleActionCreator } from "../utils";
 import {
+    WS_INSERT_FILE,
     WS_UPDATE_FILE,
     WS_REMOVE_FILE,
-    FIND_FILES,
+    LIST_FILES,
     REMOVE_FILE,
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
+
+export const wsInsertFile = (data) => ({
+    type: WS_INSERT_FILE,
+    data
+});
 
 /**
  * Returns an action that should be dispatched when a file document is updated via websocket.
@@ -47,8 +53,8 @@ export const wsRemoveFile = (data) => ({
  * @param page {number} which page of results to return
  * @returns {object}
  */
-export const findFiles = (fileType, page) => ({
-    type: FIND_FILES.REQUESTED,
+export const listFiles = (fileType, page) => ({
+    type: LIST_FILES.REQUESTED,
     fileType,
     page
 });
