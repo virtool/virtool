@@ -16,6 +16,17 @@ def force_makedirs(path):
         os.makedirs(os.path.join(path, "analysis"))
 
 
+def handle_base_quality_nan(values):
+    for value in values:
+        try:
+            value = round(int(value.split(".")[0]), 1)
+            return [value for _ in values]
+        except ValueError:
+            pass
+
+    raise ValueError("Could not parse base quality values")
+
+
 def move_trimming_results(path, paired):
     if paired:
         shutil.move(
@@ -248,7 +259,11 @@ class CreateSample(virtool.jobs.job.Job):
                     split = line.rstrip().split()
 
                     # Convert all fields except first to 2-decimal floats.
-                    values = [round(int(value.split(".")[0]), 1) for value in split[1:]]
+                    try:
+                        values = [round(int(value.split(".")[0]), 1) for value in split[1:]]
+                    except ValueError as err:
+                        if "NaN" in str(err):
+                            values = handle_base_quality_nan(values)
 
                     # Convert to position field to a one- or two-member tuple.
                     pos = [int(x) for x in split[0].split('-')]
