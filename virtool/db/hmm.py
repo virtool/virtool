@@ -78,7 +78,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
 
     release = document.get("release", None)
 
-    installed = bool(document.get("installed", False))
+    installed = document.get("installed", None)
 
     try:
         etag = release["etag"]
@@ -101,7 +101,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
             release = virtool.github.format_release(updated)
 
             release["newer"] = bool(
-                release is None or (
+                release is None or installed is None or (
                     installed and
                     semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
                 )
