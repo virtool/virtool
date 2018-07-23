@@ -329,8 +329,7 @@ async def test_edit(control_exists, control_id, mocker, spawn_client, check_ref_
         },
         {
             "$set": update
-        },
-        projection=virtool.db.references.PROJECTION
+        }
     )
 
     m_get_computed.assert_called_with(
