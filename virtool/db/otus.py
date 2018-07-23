@@ -141,8 +141,8 @@ async def find(db, names, term, req_query, verified, ref_id=None):
         }
 
     if names is True or names == "true":
-        data = await db.otus.find({**db_query, **base_query}, ["name"], sort=[("name", 1)]).to_list(None)
-        return [virtool.utils.base_processor(d) for d in data]
+        cursor = db.otus.find({**db_query, **base_query}, ["name"], sort=[("name", 1)])
+        return [virtool.utils.base_processor(d) async for d in cursor]
 
     data = await paginate(
         db.otus,
@@ -182,11 +182,10 @@ async def join(db, query, document=None):
     if document is None:
         return None
 
-    # Get the sequence entries associated with the isolate ids.
-    sequences = await db.sequences.find({"otu_id": document["_id"]}).to_list(None) or list()
+    cursor = db.sequences.find({"otu_id": document["_id"]})
 
     # Merge the sequence entries into the otu entry.
-    return virtool.otus.merge_otu(document, sequences)
+    return virtool.otus.merge_otu(document, [d async for d in cursor])
 
 
 async def join_and_format(db, otu_id, joined=None, issues=False):

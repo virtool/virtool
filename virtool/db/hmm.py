@@ -37,7 +37,7 @@ async def delete_unreferenced_hmms(db):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     """
-    agg = await db.analyses.aggregate([
+    cursor = db.analyses.aggregate([
         {"$match": {
             "algorithm": "nuvs"
         }},
@@ -50,9 +50,9 @@ async def delete_unreferenced_hmms(db):
         {"$group": {
             "_id": "$results.orfs.hits.hit"
         }}
-    ]).to_list(None)
+    ])
 
-    referenced_ids = list(set(a["_id"] for a in agg))
+    referenced_ids = list(set(a["_id"] async for a in cursor))
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 

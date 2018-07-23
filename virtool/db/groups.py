@@ -1,3 +1,4 @@
+import asyncio
 import virtool.db.users
 import virtool.groups
 import virtool.utils
@@ -16,17 +17,12 @@ async def get_merged_permissions(db, id_list):
     :rtype: dict
 
     """
-    groups = await db.groups.find({
-        "_id": {
-            "$in": id_list
-        }
-    }, {"_id": False}).to_list(None)
-
+    groups = await asyncio.shield(db.groups.find({"_id": {"$in": id_list}}, {"_id": False}).to_list(None))
     return virtool.groups.merge_group_permissions(groups)
 
 
 async def update_member_users(db, group_id, remove=False):
-    groups = await db.groups.find().to_list(None)
+    groups = await asyncio.shield(db.groups.find().to_list(None))
 
     async for user in db.users.find({"groups": group_id}, ["administrator", "groups", "permissions", "primary_group"]):
         if remove:
