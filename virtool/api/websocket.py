@@ -20,8 +20,12 @@ async def root(req):
 
     req.app["dispatcher"].add_connection(connection)
 
-    async for _ in ws:
-        pass
+    try:
+        async for _ in ws:
+            pass
+    except RuntimeError as err:
+        if "TCPTransport" not in str(err):
+            raise
 
     logger.info("Connection closed")
 
