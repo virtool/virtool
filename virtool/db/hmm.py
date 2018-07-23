@@ -189,7 +189,8 @@ async def install(app, process_id, release, user_id):
         db,
         process_id,
         release["size"],
-        0.4
+        factor=0.4,
+        increment=0.01
     )
 
     with virtool.utils.get_temp_dir() as tempdir:
