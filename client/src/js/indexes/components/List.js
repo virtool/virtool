@@ -3,9 +3,9 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkUserRefPermission, getUpdatedScrollListState } from "../../utils";
+import { checkUserRefPermission } from "../../utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
-import { findIndexes } from "../actions";
+import { listIndexes } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
 
@@ -13,37 +13,33 @@ class IndexesList extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-
         this.firstReady = false;
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
+    componentDidMount () {
+        if (!this.props.fetched || this.props.refId !== this.props.referenceId) {
+            this.handleNextPage(1);
+        }
     }
 
     handleNextPage = (page) => {
-        this.props.onFind(this.props.refId, page);
+        this.props.onList(this.props.refId, page);
     };
 
     rowRenderer = (index) => {
 
         let isActive = false;
 
-        if (!this.firstReady && this.state.masterList[index].ready) {
+        if (!this.firstReady && this.props.documents[index].ready) {
             isActive = true;
             this.firstReady = true;
         }
 
         return (
             <IndexEntry
-                key={this.state.masterList[index].id}
-                showReady={!this.state.masterList[index].ready || isActive}
-                {...this.state.masterList[index]}
+                key={this.props.documents[index].id}
+                showReady={!this.props.documents[index].ready || isActive}
+                {...this.props.documents[index]}
                 refId={this.props.refId}
             />
         );
@@ -51,9 +47,7 @@ class IndexesList extends React.Component {
 
     render () {
 
-        if (this.props.documents === null ||
-                (this.props.documents.length &&
-                    this.props.documents[0].reference.id !== this.props.refId)) {
+        if (this.props.documents === null || this.props.refId !== this.props.referenceId) {
             return <LoadingPlaceholder />;
         }
 
@@ -62,7 +56,7 @@ class IndexesList extends React.Component {
         let noIndexes;
         let alert;
 
-        if (!this.state.masterList.length) {
+        if (!this.props.documents.length) {
             noIndexes = <NoneFound noun="indexes" />;
         }
 
@@ -118,9 +112,10 @@ class IndexesList extends React.Component {
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
+                    list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
                     loadNextPage={this.handleNextPage}
-                    page={this.state.page}
+                    page={this.props.page}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -139,8 +134,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (refId, page) => {
-        dispatch(findIndexes(refId, page));
+    onList: (refId, page) => {
+        dispatch(listIndexes(refId, page));
     }
 
 });

@@ -2,7 +2,7 @@ import { WS_CLOSED } from "./actionTypes";
 import { wsInsertAnalysis, wsUpdateAnalysis, wsRemoveAnalysis } from "./analyses/actions";
 import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "./groups/actions";
-import { wsInsertIndex, wsUpdateIndex, wsRemoveIndex } from "./indexes/actions";
+import { wsInsertIndex, wsUpdateIndex, wsInsertHistory } from "./indexes/actions";
 import { wsInsertJob, wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsInsertOTU, wsUpdateOTU, wsRemoveOTU } from "./otus/actions";
 import { wsInsertProcess, wsUpdateProcess } from "./processes/actions";
@@ -16,6 +16,7 @@ const documentInserters = {
     analyses: wsInsertAnalysis,
     files: wsInsertFile,
     groups: wsInsertGroup,
+    history: wsInsertHistory,
     indexes: wsInsertIndex,
     jobs: wsInsertJob,
     otus: wsInsertOTU,
@@ -45,7 +46,6 @@ const documentRemovers = {
     analyses: wsRemoveAnalysis,
     files: wsRemoveFile,
     groups: wsRemoveGroup,
-    indexes: wsRemoveIndex,
     jobs: wsRemoveJob,
     otus: wsRemoveOTU,
     references: wsRemoveReference,
