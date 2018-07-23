@@ -17,7 +17,7 @@ async def find(req):
     Get a list of all existing group documents.
 
     """
-    cursor = await req.app["db"].groups.find()
+    cursor = req.app["db"].groups.find()
     return json_response([virtool.utils.base_processor(d) async for d in cursor])
 
 

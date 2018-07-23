@@ -13,9 +13,7 @@ import virtool.utils
 
 class Job:
 
-    def __init__(self, loop, executor, db, settings, capture_exception, job_id, task_name, task_args, proc,
-                 mem):
-
+    def __init__(self, loop, executor, db, settings, capture_exception, job_id, task_name, task_args, proc, mem):
         self.loop = loop
         self.executor = executor
         self.db = db
