@@ -34,7 +34,7 @@ export class ManageUsers extends React.Component {
     }
 
     componentDidMount () {
-        if (this.props.groups === null) {
+        if (!this.props.groupsFetched) {
             this.props.onListGroups();
         }
     }
@@ -116,6 +116,7 @@ const mapStateToProps = state => ({
     isAdmin: state.account.administrator,
     filter: state.users.filter,
     groups: state.groups.list,
+    groupsFetched: state.groups.fetched,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 

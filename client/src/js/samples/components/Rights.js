@@ -10,7 +10,9 @@ import { updateSampleRights } from "../actions";
 class SampleRights extends React.Component {
 
     componentDidMount () {
-        this.props.onListGroups();
+        if (!this.props.groupsFetched) {
+            this.props.onListGroups();
+        }
     }
 
     isOwnerOrAdministrator = () => (
@@ -107,6 +109,7 @@ const mapStateToProps = state => {
         accountId: state.account.id,
         isAdmin: state.account.administrator,
         groups: state.groups.list,
+        groupsFetched: state.groups.fetched,
         ownerId: user.id,
         sampleId: id,
         group,

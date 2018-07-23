@@ -1,11 +1,12 @@
 import { WS_CLOSED } from "./actionTypes";
 import { wsInsertAnalysis, wsUpdateAnalysis, wsRemoveAnalysis } from "./analyses/actions";
-import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "./samples/actions";
 import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "./files/actions";
+import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "./groups/actions";
 import { wsInsertIndex, wsUpdateIndex, wsRemoveIndex } from "./indexes/actions";
 import { wsInsertJob, wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsInsertProcess, wsUpdateProcess } from "./processes/actions";
 import { wsInsertReference, wsUpdateReference, wsRemoveReference } from "./references/actions";
+import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "./samples/actions";
 import { wsUpdateStatus } from "./status/actions";
 import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from "./subtraction/actions";
 import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "./users/actions";
@@ -13,6 +14,7 @@ import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "./users/actions";
 const documentInserters = {
     analyses: wsInsertAnalysis,
     files: wsInsertFile,
+    groups: wsInsertGroup,
     indexes: wsInsertIndex,
     jobs: wsInsertJob,
     processes: wsInsertProcess,
@@ -25,6 +27,7 @@ const documentInserters = {
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
     files: wsUpdateFile,
+    groups: wsUpdateGroup,
     indexes: wsUpdateIndex,
     jobs: wsUpdateJob,
     processes: wsUpdateProcess,
@@ -38,6 +41,7 @@ const documentUpdaters = {
 const documentRemovers = {
     analyses: wsRemoveAnalysis,
     files: wsRemoveFile,
+    groups: wsRemoveGroup,
     indexes: wsRemoveIndex,
     jobs: wsRemoveJob,
     references: wsRemoveReference,
