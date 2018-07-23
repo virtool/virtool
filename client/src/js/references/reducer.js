@@ -1,4 +1,4 @@
-import { find, forEach } from "lodash-es";
+import { find, forEach, concat, get } from "lodash-es";
 import {
     WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
@@ -7,7 +7,6 @@ import {
     FILTER_REFERENCES,
     GET_REFERENCE,
     EDIT_REFERENCE,
-    REMOVE_REFERENCE,
     UPLOAD,
     CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
@@ -33,16 +32,22 @@ const checkHasOfficialRemote = (list) => {
     return !!hasOfficialRemote;
 };
 
-const checkRemoveOfficialRemote = (list, removedIds) => {
+const checkRemoveOfficialRemote = (list, removedIds, hasOfficial) => {
+    if (!hasOfficial) {
+        return false;
+    }
+
     let isRemoved = false;
 
     forEach(removedIds, id => {
-        if (find(list, ["id", id])) {
+        const target = find(list, ["id", id]);
+
+        if (get(target, "remotes_from.slug", "") === "virtool/ref-plant-viruses") {
             isRemoved = true;
         }
     });
 
-    return !isRemoved;
+    return isRemoved ? !hasOfficial : hasOfficial;
 };
 
 export default function referenceReducer (state = initialState, action) {
@@ -55,7 +60,7 @@ export default function referenceReducer (state = initialState, action) {
             }
             return {
                 ...state,
-                installOfficial: checkHasOfficialRemote([action.data]),
+                installOfficial: checkHasOfficialRemote(concat(state.documents, [action.data])),
                 documents: insert(
                     state.documents,
                     state.page,
@@ -74,7 +79,7 @@ export default function referenceReducer (state = initialState, action) {
         case WS_REMOVE_REFERENCE:
             return {
                 ...state,
-                installOfficial: checkRemoveOfficialRemote(state.documents, action.data),
+                installOfficial: checkRemoveOfficialRemote(state.documents, action.data, state.installOfficial),
                 documents: remove(state.documents, action),
                 refetchPage: (state.page < state.page_count)
             };
@@ -97,14 +102,14 @@ export default function referenceReducer (state = initialState, action) {
         case LIST_REFERENCES.FAILED:
             return {...state, isLoading: false, errorLoad: true};
 
+        case GET_REFERENCE.REQUESTED:
+            return {...state, detail: null};
+
         case GET_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};
 
         case EDIT_REFERENCE.SUCCEEDED:
             return {...state, detail: action.data};
-
-        case REMOVE_REFERENCE.SUCCEEDED:
-            return {...state, detail: null};
 
         case UPLOAD.SUCCEEDED:
             return {...state, importData: {...action.data}};
