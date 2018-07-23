@@ -108,6 +108,7 @@ async def install(app, release, process_id):
             process_id,
             release["size"],
             factor=0.5,
+            increment=0.03,
             initial=0
         )
 
