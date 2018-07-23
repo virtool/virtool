@@ -118,6 +118,7 @@ class OTUsList extends React.Component {
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
                     list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
                     loadNextPage={this.handleNextPage}
                     page={this.props.page}
                     rowRenderer={this.rowRenderer}
@@ -140,6 +141,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
     onHide: () => {
         dispatch(push({state: {createOTU: false}}));
     },

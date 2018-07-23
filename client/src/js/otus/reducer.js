@@ -34,6 +34,7 @@ import {
 } from "../actionTypes";
 
 export const initialState = {
+    referenceId: "",
     documents: null,
     detail: null,
     page: 0,
@@ -105,7 +106,7 @@ export default function OTUsReducer (state = initialState, action) {
             return state;
 
         case WS_INSERT_OTU:
-            if (!state.fetched) {
+            if (!state.fetched || action.data.reference.id !== state.referenceId) {
                 return state;
             }
             return {
@@ -115,12 +116,12 @@ export default function OTUsReducer (state = initialState, action) {
                     state.page,
                     state.per_page,
                     action,
-                    "id"
+                    "name"
                 )
             };
 
         case WS_UPDATE_OTU:
-            if (!state.fetched) {
+            if (!state.fetched || action.data.reference.id !== state.referenceId) {
                 return state;
             }
             return {
@@ -141,6 +142,7 @@ export default function OTUsReducer (state = initialState, action) {
         case LIST_OTUS.REQUESTED:
             return {
                 ...state,
+                referenceId: action.refId,
                 documents: null,
                 page: 0,
                 fetched: false,
