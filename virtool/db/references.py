@@ -635,7 +635,7 @@ async def create_original(db, settings):
     first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
     created_at = first_change["created_at"]
 
-    users = await db.users.find({}, ["_id", "administrator", "permissions"]).to_list(None)
+    users = await asyncio.shield(db.users.find({}, ["_id", "administrator", "permissions"]).to_list(None))
 
     for user in users:
         permissions = user.pop("permissions")
@@ -877,7 +877,7 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         process_id,
         release["size"],
         factor=0.3,
-        increment=0.1
+        increment=0.03
     )
 
     try:

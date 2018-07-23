@@ -505,7 +505,7 @@ async def edit(req):
 
     document = await db.references.find_one_and_update({"_id": ref_id}, {
         "$set": data
-    }, projection=virtool.db.references.PROJECTION)
+    })
 
     document = virtool.utils.base_processor(document)
 

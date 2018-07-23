@@ -37,7 +37,7 @@ async def delete_unreferenced_hmms(db):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     """
-    agg = await db.analyses.aggregate([
+    cursor = db.analyses.aggregate([
         {"$match": {
             "algorithm": "nuvs"
         }},
@@ -50,9 +50,9 @@ async def delete_unreferenced_hmms(db):
         {"$group": {
             "_id": "$results.orfs.hits.hit"
         }}
-    ]).to_list(None)
+    ])
 
-    referenced_ids = list(set(a["_id"] for a in agg))
+    referenced_ids = list(set(a["_id"] async for a in cursor))
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
@@ -78,7 +78,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
 
     release = document.get("release", None)
 
-    installed = bool(document.get("installed", False))
+    installed = document.get("installed", None)
 
     try:
         etag = release["etag"]
@@ -101,7 +101,7 @@ async def fetch_and_update_release(app, ignore_errors=False):
             release = virtool.github.format_release(updated)
 
             release["newer"] = bool(
-                release is None or (
+                release is None or installed is None or (
                     installed and
                     semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
                 )
@@ -189,7 +189,8 @@ async def install(app, process_id, release, user_id):
         db,
         process_id,
         release["size"],
-        0.4
+        factor=0.4,
+        increment=0.01
     )
 
     with virtool.utils.get_temp_dir() as tempdir:
