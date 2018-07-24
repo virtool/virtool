@@ -44,7 +44,7 @@ class SampleEntry extends React.Component {
 
     handleCheck = (e) => {
         e.preventDefault();
-        this.props.onSelect(this.props.index, e.shiftKey);
+        this.props.onSelect(this.props.id, this.props.index, e.shiftKey);
     };
 
     handleQuickAnalyze = (e) => {

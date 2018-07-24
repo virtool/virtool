@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, forEach } from "lodash-es";
+import { map, filter, forEach, slice, includes, without } from "lodash-es";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
@@ -37,19 +37,12 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
     </div>
 );
 
-const createSelection = (list, selected) => (
-    map(list, (entry, index) => ({
-        sampleId: list[index].id,
-        check: selected[index] ? selected[index].check : false
-    }))
-);
-
 export class SamplesList extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = {
-            selected: createSelection(this.props.documents, []),
+            selected: [],
             lastChecked: null,
             show: false,
             sampleId: ""
@@ -65,31 +58,33 @@ export class SamplesList extends React.Component {
         }
     }
 
-    onSelect = (index, isShiftKey) => {
-
-        let newSelected = this.state.selected.slice();
+    onSelect = (id, index, isShiftKey) => {
+        let newSelected = [...this.state.selected];
+        let selectedSegment;
 
         if (isShiftKey && this.state.lastChecked !== null && this.state.lastChecked !== index) {
 
             const startIndex = (index < this.state.lastChecked) ? index : this.state.lastChecked;
             const endIndex = (startIndex === index) ? this.state.lastChecked : index;
 
-            newSelected = map(newSelected, (entry, i) => {
-                if (i < startIndex || i > endIndex) {
-                    return entry;
-                }
-                return newSelected[index].check ? {...entry, check: false} : {...entry, check: true};
-            });
+            selectedSegment = slice(this.props.documents, startIndex + 1, endIndex + 1);
 
         } else {
-            newSelected[index].check = !newSelected[index].check;
+            selectedSegment = [this.props.documents[index]];
         }
+
+        forEach(selectedSegment, entry => {
+            if (includes(newSelected, entry.id)) {
+                newSelected = without(newSelected, entry.id);
+            } else {
+                newSelected.push(entry.id);
+            }
+        });
 
         this.setState({
             lastChecked: index,
             selected: newSelected
         });
-
     };
 
     onClearSelected = () => {
@@ -123,9 +118,9 @@ export class SamplesList extends React.Component {
             index={index}
             id={this.props.documents[index].id}
             userId={this.props.documents[index].user.id}
-            isChecked={this.state.selected[index] ? this.state.selected[index].check : false}
+            isChecked={!!includes(this.state.selected, this.props.documents[index].id)}
             onSelect={this.onSelect}
-            isHidden={!!filter(this.state.selected, ["check", true]).length}
+            isHidden={!!this.state.selected.length}
             quickAnalyze={this.handleQuickAnalyze}
             {...this.props.documents[index]}
         />
