@@ -45,7 +45,8 @@ export default function samplesReducer (state = initialState, action) {
                     state.page,
                     state.per_page,
                     action,
-                    "name"
+                    "created_at",
+                    true
                 )
             };
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, forEach, slice, includes, without } from "lodash-es";
+import { forEach, slice, includes, without } from "lodash-es";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
@@ -88,18 +88,15 @@ export class SamplesList extends React.Component {
     };
 
     onClearSelected = () => {
-        const newSelected = map(this.state.selected, entry => (
-            {...entry, check: false}
-        ));
-        this.setState({ selected: newSelected });
+        this.setState({ selected: [] });
     };
 
     handleAnalyses = (sampleId, references, algorithm) => {
         if (sampleId) {
             this.props.onAnalyze(sampleId, references, algorithm);
         } else {
-            forEach(filter(this.state.selected, ["check", true]), entry => {
-                this.props.onAnalyze(entry.sampleId, references, algorithm);
+            forEach(this.state.selected, entry => {
+                this.props.onAnalyze(entry, references, algorithm);
             });
         }
         this.onClearSelected();
@@ -110,6 +107,10 @@ export class SamplesList extends React.Component {
             show: true,
             sampleId
         });
+    };
+
+    handleShow = () => {
+        this.setState({ show: !this.state.show });
     };
 
     rowRenderer = (index) => (
@@ -138,18 +139,18 @@ export class SamplesList extends React.Component {
             noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
         }
 
-        const multiSelect = filter(this.state.selected, ["check", true]);
-        const message = `Selected ${multiSelect.length} ${(multiSelect.length > 1) ? "samples" : "sample"} to analyze`;
+        const message = `Selected ${this.state.selected.length} ${(this.state.selected.length > 1)
+            ? "samples" : "sample"} to analyze`;
 
         return (
             <div>
                 <ViewHeader title="Samples" totalCount={this.props.total_count} />
 
-                {multiSelect.length ? (
+                {this.state.selected.length ? (
                     <SummaryToolbar
                         clearAll={this.onClearSelected}
                         summary={message}
-                        showModal={() => this.setState({ show: true })}
+                        showModal={this.handleShow}
                     />
                 ) : <SampleToolbar />}
 
@@ -159,6 +160,7 @@ export class SamplesList extends React.Component {
                         isNextPageLoading={this.props.isLoading}
                         isLoadError={this.props.errorLoad}
                         list={this.props.documents}
+                        refetchPage={this.props.refetchPage}
                         loadNextPage={this.props.loadNextPage}
                         page={this.props.page}
                         rowRenderer={this.rowRenderer}
@@ -168,9 +170,9 @@ export class SamplesList extends React.Component {
 
                 <CreateAnalysis
                     id={this.state.sampleId}
-                    samples={multiSelect.length ? multiSelect : null}
+                    samples={this.state.selected.length ? this.state.selected : null}
                     show={this.state.show}
-                    onHide={() => this.setState({show: false})}
+                    onHide={this.handleShow}
                     onSubmit={this.handleAnalyses}
                     hasHmm={!!this.props.hmms.status.installed}
                     refIndexes={this.props.indexes}

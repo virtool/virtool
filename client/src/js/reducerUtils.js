@@ -22,13 +22,17 @@ export const updateList = (documents, action, page) => {
     return {...action.data, documents: newList};
 };
 
-export const insert = (documents, page, per_page, action, sortKey) => {
+export const insert = (documents, page, per_page, action, sortKey, sortReverse) => {
     const beforeList = documents ? documents.slice() : [];
     const newPage = page || 1;
     const perPage = per_page || 25;
 
     let newList = concat(beforeList, [{...action.data}]);
     newList = sortBy(newList, sortKey);
+
+    if (sortReverse) {
+        newList = newList.reverse();
+    }
 
     // Only display listings that would be included in the
     // current pages, to synchronize with database pages

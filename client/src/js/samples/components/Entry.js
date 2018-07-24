@@ -29,13 +29,6 @@ const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
 
 class SampleEntry extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            pendingQuickAnalyze: false
-        };
-    }
-
     onClick = (e) => {
         if (e.target.nodeName !== "I") {
             this.props.onNavigate(this.props.id);
