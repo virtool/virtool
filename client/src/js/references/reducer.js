@@ -17,6 +17,7 @@ const initialState = {
     history: null,
     documents: null,
     page: 0,
+    total_count: 0,
     detail: null,
     filter: "",
     fetched: false,
@@ -67,7 +68,8 @@ export default function referenceReducer (state = initialState, action) {
                     state.per_page,
                     action,
                     "name"
-                )
+                ),
+                total_count: state.total_count + 1
             };
 
         case WS_UPDATE_REFERENCE:
@@ -81,6 +83,7 @@ export default function referenceReducer (state = initialState, action) {
                 ...state,
                 installOfficial: checkRemoveOfficialRemote(state.documents, action.data, state.installOfficial),
                 documents: remove(state.documents, action),
+                total_count: state.total_count - 1,
                 refetchPage: (state.page < state.page_count)
             };
 
