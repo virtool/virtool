@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
-import { analyze } from "../actions";
+import { analyze, filterAnalyses } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 import { listReadyIndexes } from "../../indexes/actions";
 import { listHmms } from "../../hmm/actions";
@@ -51,6 +51,10 @@ class AnalysesList extends React.Component {
         this.props.onListReadyIndexes();
     }
 
+    handleFilter = (e) => {
+        this.props.onFilter(this.props.sampleId, e.target.value);
+    };
+
     render () {
 
         if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexes === null) {
@@ -92,7 +96,7 @@ class AnalysesList extends React.Component {
 
                 <AnalysesToolbar
                     term={this.props.filter}
-                    onFilter={this.props.onFilter}
+                    onFilter={this.handleFilter}
                     onClick={() => this.setState({show: true})}
                     isDisabled={!this.props.canModify}
                 />
@@ -115,6 +119,7 @@ class AnalysesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    sampleId: state.analyses.sampleId,
     detail: state.samples.detail,
     analyses: state.analyses.documents,
     filter: state.analyses.filter,
@@ -125,8 +130,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFilter: (e) => {
-        console.log(e.target.value);
+    onFilter: (sampleId, term) => {
+        dispatch(filterAnalyses(sampleId, term));
     },
 
     onAnalyze: (sampleId, references, algorithm) => {

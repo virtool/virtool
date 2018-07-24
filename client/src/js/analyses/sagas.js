@@ -1,6 +1,13 @@
 import {get} from "lodash-es";
 import {takeEvery, takeLatest, throttle} from "redux-saga/effects";
-import {ANALYZE, BLAST_NUVS, FIND_ANALYSES, GET_ANALYSIS, REMOVE_ANALYSIS} from "../actionTypes";
+import {
+    ANALYZE,
+    BLAST_NUVS,
+    FIND_ANALYSES,
+    FILTER_ANALYSES,
+    GET_ANALYSIS,
+    REMOVE_ANALYSIS
+} from "../actionTypes";
 import {apiCall} from "../sagaUtils";
 
 import * as analysesAPI from "./api";
@@ -9,6 +16,7 @@ export const getAnalysisDetailId = (state) => get(state, "analysis.detail.id", n
 
 export function* watchAnalyses () {
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
+    yield takeLatest(FILTER_ANALYSES.REQUESTED, filterAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
     yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
@@ -17,6 +25,10 @@ export function* watchAnalyses () {
 
 export function* findAnalyses (action) {
     yield apiCall(analysesAPI.findAnalyses, action, FIND_ANALYSES);
+}
+
+export function* filterAnalyses (action) {
+    yield apiCall(analysesAPI.filter, action, FILTER_ANALYSES);
 }
 
 export function* getAnalysis (action) {

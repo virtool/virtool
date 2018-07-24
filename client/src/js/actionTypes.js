@@ -49,6 +49,7 @@ export const WS_INSERT_ANALYSIS = "WS_INSERT_ANALYSIS";
 export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
 export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
+export const FILTER_ANALYSES = createRequestActionType("FILTER_ANALYSES");
 export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";

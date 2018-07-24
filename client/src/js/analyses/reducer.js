@@ -8,6 +8,7 @@ import {
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
+    FILTER_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
     SET_PATHOSCOPE_SORT_KEY,
@@ -27,6 +28,7 @@ export const initialState = {
     readyIndexes: null,
     sortKey: "coverage",
     sortDescending: true,
+    filter: "",
 
     // Pathoscope-specific
     filterOTUs: true,
@@ -176,6 +178,12 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, sampleId: action.sampleId, documents: null, detail: null};
 
         case FIND_ANALYSES.SUCCEEDED:
+            return {...state, documents: action.data.documents};
+
+        case FILTER_ANALYSES.REQUESTED:
+            return {...state, filter: action.term};
+
+        case FILTER_ANALYSES.SUCCEEDED:
             return {...state, documents: action.data.documents};
 
         case GET_ANALYSIS.REQUESTED:

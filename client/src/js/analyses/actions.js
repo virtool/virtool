@@ -3,6 +3,7 @@ import {
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
     FIND_ANALYSES,
+    FILTER_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
@@ -73,6 +74,12 @@ export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSC
 export const findAnalyses = (sampleId) => ({
     type: FIND_ANALYSES.REQUESTED,
     sampleId
+});
+
+export const filterAnalyses = (sampleId, term) => ({
+    type: FILTER_ANALYSES.REQUESTED,
+    sampleId,
+    term
 });
 
 /**
