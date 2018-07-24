@@ -10,5 +10,5 @@ PROJECTION = [
 
 
 async def get_linked_samples(db, subtraction_id):
-    cursor = await db.samples.find({"subtraction.id": subtraction_id}, ["name"])
+    cursor = db.samples.find({"subtraction.id": subtraction_id}, ["name"])
     return [virtool.utils.base_processor(d) async for d in cursor]
