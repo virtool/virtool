@@ -10,7 +10,7 @@ import { createRandomString, checkAdminOrPermission } from "../../utils";
 class FileManager extends React.Component {
 
     componentDidMount () {
-        if (!this.props.fetched) {
+        if (!this.props.fetched || (this.props.fileType !== this.props.storedFileType)) {
             this.handlePage(1);
         }
     }
@@ -40,7 +40,9 @@ class FileManager extends React.Component {
 
     render () {
 
-        if (this.props.documents === null) {
+        if (this.props.documents === null ||
+            (this.props.storedFileType &&
+                this.props.fileType !== this.props.storedFileType)) {
             return <LoadingPlaceholder />;
         }
 
@@ -111,7 +113,8 @@ const mapStateToProps = (state) => {
         isLoading,
         refetchPage,
         canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file"),
-        canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_file")
+        canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_file"),
+        storedFileType: state.files.fileType
     };
 };
 
