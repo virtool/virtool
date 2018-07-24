@@ -58,7 +58,7 @@ export default function fileReducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_INSERT_FILE:
-            if (!state.fetched) {
+            if (!state.fetched || action.data.type !== state.fileType) {
                 return state;
             }
             return {
