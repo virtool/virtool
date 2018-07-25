@@ -1,4 +1,4 @@
-import { find, forEach, concat, get } from "lodash-es";
+import { find, forEach, concat, get, pull, reject } from "lodash-es";
 import {
     WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
@@ -9,7 +9,13 @@ import {
     EDIT_REFERENCE,
     UPLOAD,
     CHECK_REMOTE_UPDATES,
-    UPDATE_REMOTE_REFERENCE
+    UPDATE_REMOTE_REFERENCE,
+    ADD_REFERENCE_USER,
+    EDIT_REFERENCE_USER,
+    REMOVE_REFERENCE_USER,
+    ADD_REFERENCE_GROUP,
+    EDIT_REFERENCE_GROUP,
+    REMOVE_REFERENCE_GROUP
 } from "../actionTypes";
 import { updateList, insert, edit, remove } from "../reducerUtils";
 
@@ -49,6 +55,13 @@ const checkRemoveOfficialRemote = (list, removedIds, hasOfficial) => {
     });
 
     return isRemoved ? !hasOfficial : hasOfficial;
+};
+
+const removeMember = (list, pendingRemoves) => {
+    const target = pendingRemoves[0];
+    pull(pendingRemoves, target);
+
+    return reject(list, ["id", target]);
 };
 
 export default function referenceReducer (state = initialState, action) {
@@ -135,6 +148,56 @@ export default function referenceReducer (state = initialState, action) {
         case FILTER_REFERENCES.SUCCEEDED: {
             return {...state, ...action.data};
         }
+
+        case ADD_REFERENCE_USER.SUCCEEDED:
+            return {...state, detail: {...state.detail, users: concat(state.detail.users, [action.data])}};
+
+        case EDIT_REFERENCE_USER.SUCCEEDED:
+            return {...state, detail: {...state.detail, users: edit(state.detail.users, action)}};
+
+        case REMOVE_REFERENCE_USER.REQUESTED:
+            return {
+                ...state,
+                detail: {
+                    ...state.detail,
+                    pendingUserRemove: (action.refId === state.detail.id)
+                        ? concat([], [action.userId]) : state.detail.pendingUserRemove
+                }
+            };
+
+        case REMOVE_REFERENCE_USER.SUCCEEDED:
+            return {
+                ...state,
+                detail: {
+                    ...state.detail,
+                    users: removeMember(state.detail.users, state.detail.pendingUserRemove)
+                }
+            };
+
+        case ADD_REFERENCE_GROUP.SUCCEEDED:
+            return {...state, detail: {...state.detail, groups: concat(state.detail.groups, [action.data])}};
+
+        case EDIT_REFERENCE_GROUP.SUCCEEDED:
+            return {...state, detail: {...state.detail, groups: edit(state.detail.groups, action)}};
+
+        case REMOVE_REFERENCE_GROUP.REQUESTED:
+            return {
+                ...state,
+                detail: {
+                    ...state.detail,
+                    pendingGroupRemove: (action.refId === state.detail.id)
+                        ? concat([], [action.groupId]) : state.detail.pendingGroupRemove
+                }
+            };
+
+        case REMOVE_REFERENCE_GROUP.SUCCEEDED:
+            return {
+                ...state,
+                detail: {
+                    ...state.detail,
+                    groups: removeMember(state.detail.groups, state.detail.pendingRemove)
+                }
+            };
 
         default:
             return state;
