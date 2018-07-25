@@ -10,6 +10,7 @@ import {
     toggleShowPathoscopeMedian,
     toggleShowPathoscopeReads,
     findAnalyses,
+    filterAnalyses,
     getAnalysis,
     clearAnalysis,
     analyze,
@@ -21,6 +22,7 @@ import {
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
     FIND_ANALYSES,
+    FILTER_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
@@ -132,6 +134,18 @@ describe("Analyses Action Creators:", () => {
         expected = {
             type: FIND_ANALYSES.REQUESTED,
             sampleId
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("filterAnalyses: returns action to filter list by search term", () => {
+        sampleId: "testid";
+        const term = "search";
+        result = filterAnalyses(sampleId, term);
+        expected = {
+            type: FILTER_ANALYSES.REQUESTED,
+            sampleId,
+            term
         };
         expect(result).toEqual(expected);
     });

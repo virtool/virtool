@@ -5,7 +5,8 @@ import reducer, {
     toggleMedian,
     setFilter,
     setNuvsBLAST,
-    toggleExpanded
+    toggleExpanded,
+    insert
 } from "./reducer";
 import {
     WS_INSERT_ANALYSIS,
@@ -16,14 +17,15 @@ import {
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
+    FILTER_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    REMOVE_ANALYSIS,
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
-    TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
 
 describe("Analyses Reducer", () => {
@@ -46,21 +48,41 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle WS_INSERT_ANALYSIS", () => {
-        state = {
-            ...initialState,
-            documents: null
-        };
-        action = {
-            type: WS_INSERT_ANALYSIS,
-            data: { id: "123abc", created_at: "2018-01-01T00:00:00.000000Z" }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            documents: [action.data]
-        };
-        expect(result).toEqual(expected);
+    describe("should handle WS_INSERT_ANALYSIS", () => {
+
+        it("", () => {
+            state = { sampleId: "testSample" };
+            action = {
+                type: WS_INSERT_ANALYSIS,
+                data: { sample: { id: "differentSample" } }
+            };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
+
+        it("", () => {
+            state = {
+                ...initialState,
+                documents: null,
+                sampleId: "testSample"
+            };
+            action = {
+                type: WS_INSERT_ANALYSIS,
+                data: {
+                    sample: { id: "testSample" },
+                    id: "123abc",
+                    created_at: "2018-01-01T00:00:00.000000Z"
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                documents: [action.data]
+            };
+            expect(result).toEqual(expected);
+        });
+
     });
 
     it("should handle WS_UPDATE_ANALYSIS", () => {
@@ -199,7 +221,8 @@ describe("Analyses Reducer", () => {
         expected = {
             ...state,
             detail: null,
-            documents: null
+            documents: null,
+            sampleId: "tester"
         };
         expect(result).toEqual(expected);
     });
@@ -255,23 +278,42 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle GET_ANALYSIS_SUCCEEDED for pathoscope", () => {
-        state = {};
-        action = {
-            type: "GET_ANALYSIS_SUCCEEDED",
-            data: {
-                algorithm: "pathoscope_bowtie",
-                diagnosis: []
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            detail: action.data,
-            data: []
-        };
+    describe("should handle GET_ANALYSIS_SUCCEEDED for pathoscope", () => {
+        it("adds formatted data for ready pathoscope analyses", () => {
+            state = {};
+            action = {
+                type: "GET_ANALYSIS_SUCCEEDED",
+                data: {
+                    algorithm: "pathoscope_bowtie",
+                    diagnosis: [],
+                    ready: true
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                detail: action.data,
+                data: []
+            };
+            expect(result).toEqual(expected);
+        });
 
-        expect(result).toEqual(expected);
+        it("otherwise adds unformatted data", () => {
+            state = {};
+            action = {
+                type: "GET_ANALYSIS_SUCCEEDED",
+                data: {
+                    algorithm: "pathoscope_bowtie",
+                    diagnosis: [],
+                    ready: false
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                detail: action.data,
+                data: action.data
+            };
+            expect(result).toEqual(expected);
+        });
     });
 
     it("should handle CLEAR_ANALYSIS", () => {
@@ -309,83 +351,6 @@ describe("Analyses Reducer", () => {
             expected = {
                 ...state,
                 documents: [{}]
-            };
-
-            expect(result).toEqual(expected);
-        });
-
-    });
-
-    describe("should handle ANALYZE_SUCCEEDED", () => {
-
-        it("when [state.documents=null], return state", () => {
-            state = {
-                documents: null
-            };
-            action = {
-                type: ANALYZE.SUCCEEDED
-            };
-            result = reducer(state, action);
-            expected = state;
-
-            expect(result).toEqual(expected);
-        });
-
-        it("otherwise replace placeholder with proper data", () => {
-            state = {
-                documents: [
-                    { id: "test_placeholder" },
-                    { id: "random_string" }
-                ]
-            };
-            action = {
-                type: ANALYZE.SUCCEEDED,
-                placeholder: { id: "test_placeholder" },
-                data: {
-                    id: "test_replacement"
-                }
-            };
-            result = reducer(state, action);
-            expected = {
-                documents: [
-                    { id: "test_replacement" },
-                    { id: "random_string" }
-                ]
-            };
-
-            expect(result).toEqual(expected);
-        });
-
-    });
-
-    describe("should handle ANALYZE_FAILED", () => {
-
-        it("when [state.documents=null], return state", () => {
-            state = {
-                documents: null
-            };
-            action = {
-                type: ANALYZE.FAILED
-            };
-            result = reducer(state, action);
-            expected = state;
-
-            expect(result).toEqual(expected);
-        });
-
-        it("otherwise return state with placeholder removed", () => {
-            state = {
-                documents: [{ id: "test_placeholder" }, { id: "random_string" }]
-            };
-            action = {
-                type: ANALYZE.FAILED,
-                placeholder: {
-                    id: "test_placeholder"
-                }
-            };
-            result = reducer(state, action);
-            expected = {
-                documents: [{ id: "random_string" }]
             };
 
             expect(result).toEqual(expected);
@@ -728,5 +693,80 @@ describe("Analyses Reducer", () => {
             });
 
         });
+
+        describe("insert", () => {
+            let documents;
+            const action = {
+                type: "INSERT_ENTRY",
+                data: {
+                    user: {
+                        id: "foo"
+                    },
+                    created_at: "2018-01-01T00:00:00.000000Z"
+                }
+            };
+            const sampleId = "testSample";
+
+            it("insert new entry on empty list", () => {
+                documents = null;
+                result = insert(documents, action, sampleId);
+                expected = [{...action.data}];
+                expect(result).toEqual(expected);
+            });
+
+            it("replace placeholder with new entry", () => {
+                documents = [
+                    {
+                        userId: "foo",
+                        placeholder: true,
+                        created_at: "2018-01-01T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    },
+                    {
+                        userId: "bar",
+                        placeholder: true,
+                        created_at: "2018-01-02T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    },
+                    {
+                        userId: "foo",
+                        placeholder: false,
+                        created_at: "2018-01-03T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    },
+                    {
+                        userId: "foo",
+                        placeholder: true,
+                        created_at: "2018-01-04T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    }
+                ];
+                result = insert(documents, action, sampleId);
+                expected = [
+                    {...action.data},
+                    {
+                        userId: "bar",
+                        placeholder: true,
+                        created_at: "2018-01-02T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    },
+                    {
+                        userId: "foo",
+                        placeholder: false,
+                        created_at: "2018-01-03T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    },
+                    {
+                        userId: "foo",
+                        placeholder: true,
+                        created_at: "2018-01-04T00:00:00.000000Z",
+                        sampleId: "testSample"
+                    }
+                ];
+                expect(result).toEqual(expected);
+            });
+
+        });
+
     });
 });

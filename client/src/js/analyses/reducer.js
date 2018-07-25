@@ -15,7 +15,8 @@ import {
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
-    TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
 import { formatData } from "./utils";
 import { edit, remove } from "../reducerUtils";
@@ -112,7 +113,9 @@ export const insert = (documents, action, sampleId) => {
     const beforeList = documents ? slice(documents, 0, documents.length) : [];
 
     forEach(documents, (entry, i) => {
-        if (entry.placeholder && (entry.sampleId === sampleId) && (entry.userId === action.data.user.id)) {
+        if (entry.placeholder
+            && (entry.sampleId === sampleId)
+            && (entry.userId === action.data.user.id)) {
             beforeList.splice(i, 1);
             return false;
         }
