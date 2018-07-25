@@ -36,21 +36,31 @@ describe("Samples Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle WS_INSERT_SAMPLE", () => {
-        state = initialState;
-        action = {
-            type: WS_INSERT_SAMPLE,
-            data: {
-                id: "abc123",
-                name: "test"
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            documents: [{...action.data}]
-        };
-        expect(result).toEqual(expected);
+    describe("should handle WS_INSERT_SAMPLE", () => {
+        it("returns state if documents have not been fetched", () => {
+            state = { fetched: false };
+            action = { type: WS_INSERT_SAMPLE };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
+
+        it("inserts entry into current list otherwise", () => {
+            state = { fetched: true, documents: [], page: 1, per_page: 3 };
+            action = {
+                type: WS_INSERT_SAMPLE,
+                data: {
+                    id: "abc123",
+                    name: "test"
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                documents: [{...action.data}]
+            };
+            expect(result).toEqual(expected);
+        });
     });
 
     it("should handle WS_UPDATE_SAMPLE", () => {
@@ -102,6 +112,17 @@ describe("Samples Reducer", () => {
             ...state,
             filter: action.term
         };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_SAMPLES_SUCCEEDED", () => {
+        state = {};
+        action = {
+            type: FILTER_SAMPLES.SUCCEEDED,
+            data: { documents: [] }
+        };
+        result = reducer(state, action);
+        expected = {...state, ...action.data};
         expect(result).toEqual(expected);
     });
 
