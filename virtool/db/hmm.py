@@ -52,7 +52,7 @@ async def delete_unreferenced_hmms(db):
         }}
     ])
 
-    referenced_ids = list(set(a["_id"] async for a in cursor))
+    referenced_ids = list(set([a["_id"] async for a in cursor]))
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 

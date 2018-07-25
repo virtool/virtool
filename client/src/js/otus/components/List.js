@@ -79,6 +79,7 @@ class OTUsList extends React.Component {
 
         const hasBuild = checkUserRefPermission(this.props, "build");
         const hasRemoveOTU = checkUserRefPermission(this.props, "modify_otu");
+
         let alert;
 
         if (this.props.unbuiltChangeCount && hasBuild) {
@@ -87,9 +88,9 @@ class OTUsList extends React.Component {
                     <Flex alignItems="center">
                         <Icon name="info-circle" />
                         <FlexItem pad={5}>
-                            <span>The OTU database has changed. </span>
+                            <span>There are unbuilt changes. </span>
                             <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>
-                            <span> to use the changes in further analyses.</span>
+                            <span> to use the changes in future analyses.</span>
                         </FlexItem>
                     </Flex>
                 </Alert>
