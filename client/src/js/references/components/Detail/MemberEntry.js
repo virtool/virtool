@@ -5,7 +5,7 @@ import { ListGroupItem, Icon, Identicon, Flex, FlexItem } from "../../../base";
 
 const MemberEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, permissions, isSelected }) => (
     <div style={{marginBottom: "-1px"}}>
-        <ListGroupItem key={id} onClick={() => onToggleSelect(id)}>
+        <div className="list-group-item" key={id} onClick={() => onToggleSelect(id)}>
             <Flex alignItems="center">
                 {identicon ? <Identicon size={32} hash={identicon} /> : null}
                 <FlexItem pad={10}>
@@ -33,7 +33,7 @@ const MemberEntry = ({ onEdit, onRemove, onToggleSelect, add, id, identicon, per
                         : null}
                 </FlexItem>
             </Flex>
-        </ListGroupItem>
+        </div>
         {isSelected
             ? (
                 <Panel style={{margin: "0"}}>
