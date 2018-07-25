@@ -143,10 +143,6 @@ export default function OTUsReducer (state = initialState, action) {
             return {
                 ...state,
                 referenceId: action.refId,
-                documents: null,
-                page: 0,
-                fetched: false,
-                refetchPage: false,
                 isLoading: true,
                 errorLoad: false
             };
