@@ -5,6 +5,7 @@ import {
     WS_REMOVE_SUBTRACTION,
     LIST_SUBTRACTIONS,
     GET_SUBTRACTION,
+    UPDATE_SUBTRACTION,
     FILTER_SUBTRACTIONS
 } from "../actionTypes";
 
@@ -33,32 +34,42 @@ describe("Subtraction Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle WS_INSERT_SUBTRACTION", () => {
-        state = {
-            ...initialState,
-            documents: [],
-            page: 1,
-            per_page: 25
-        };
-        action = {
-            type: WS_INSERT_SUBTRACTION,
-            data: {
-                file: {
-                    id: "abc123-file.171",
-                    name: "file.171"
-                },
-                id: "testSubtraction",
-                job: { id: "jobId" },
-                ready: false
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            documents: [{ ...action.data }]
-        };
+    describe("should handle WS_INSERT_SUBTRACTION", () => {
+        it("returns state if documents not yet fetched", () => {
+            state = { fetched: false };
+            action = { type: WS_INSERT_SUBTRACTION };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
 
-        expect(result).toEqual(expected);
+        it("inserts entry into list otherwise", () => {
+            state = {
+                ...initialState,
+                documents: [],
+                page: 1,
+                per_page: 25,
+                fetched: true
+            };
+            action = {
+                type: WS_INSERT_SUBTRACTION,
+                data: {
+                    file: {
+                        id: "abc123-file.171",
+                        name: "file.171"
+                    },
+                    id: "testSubtraction",
+                    job: { id: "jobId" },
+                    ready: false
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                documents: [{ ...action.data }]
+            };
+            expect(result).toEqual(expected);
+        });
     });
 
     it("should handle WS_UPDATE_SUBTRACTION", () => {
@@ -85,7 +96,6 @@ describe("Subtraction Reducer", () => {
             ...state,
             documents: [{ ...action.data }]
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -109,7 +119,6 @@ describe("Subtraction Reducer", () => {
             documents: [],
             refetchPage: false
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -153,7 +162,6 @@ describe("Subtraction Reducer", () => {
             fetched: true,
             refetchPage: false
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -170,7 +178,6 @@ describe("Subtraction Reducer", () => {
             isLoading: false,
             errorLoad: true
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -185,7 +192,6 @@ describe("Subtraction Reducer", () => {
             ...state,
             detail: null
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -217,7 +223,17 @@ describe("Subtraction Reducer", () => {
             ...state,
             detail: action.data
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle UPDATE_SUBTRACTION_SUCCEEDED", () => {
+        state = { detail: null };
+        action = {
+            type: UPDATE_SUBTRACTION.SUCCEEDED,
+            data: { foo: "bar" }
+        };
+        result = reducer(state, action);
+        expected = { detail: action.data };
         expect(result).toEqual(expected);
     });
 
@@ -232,7 +248,6 @@ describe("Subtraction Reducer", () => {
             ...state,
             filter: action.term
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -256,7 +271,6 @@ describe("Subtraction Reducer", () => {
             ...state,
             ...action.data
         };
-
         expect(result).toEqual(expected);
     });
 
