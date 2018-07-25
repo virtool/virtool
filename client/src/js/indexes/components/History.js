@@ -46,9 +46,7 @@ export default function RebuildHistory ({ unbuilt, error }) {
     return (
         <Panel className={panelStyle}>
             <Panel.Heading>Changes</Panel.Heading>
-            <Panel.Body>
-                {content}
-            </Panel.Body>
+            {content}
         </Panel>
     );
 }
