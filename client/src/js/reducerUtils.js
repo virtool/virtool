@@ -8,7 +8,7 @@ import {
     forEach
 } from "lodash-es";
 
-export const updateList = (documents, action, page) => {
+export const updateList = (documents, action, page = 1) => {
     let beforeList = documents ? documents.slice() : [];
 
     // Current page has changed due to deletion,
