@@ -65,9 +65,9 @@ async def format_nuvs(db, settings, document):
 
     hit_ids = list({h["hit"] for s in document["results"] for o in s["orfs"] for h in o["hits"]})
 
-    hmms = await db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"]).to_list(None)
+    cursor = db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
 
-    hmms = {hmm.pop("_id"): hmm for hmm in hmms}
+    hmms = {d.pop("_id"): d async for d in cursor}
 
     for sequence in document["results"]:
         for orf in sequence["orfs"]:

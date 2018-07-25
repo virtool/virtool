@@ -109,7 +109,17 @@ class Manager:
         return virtool.utils.base_processor(document)
 
     async def cancel(self, job_id):
-        await self._jobs_dict[job_id].cancel()
+        """
+        Cancel the job with the given `job_id` if it is in the `_jobs_dict`.
+
+        :param job_id: the id of the job to cancel
+        :type job_id: str
+
+        """
+        job = self._jobs_dict.get(job_id, None)
+
+        if job:
+            await job.cancel()
 
 
 def get_available_resources(settings, jobs):

@@ -144,15 +144,15 @@ async def get_contributors(db, query):
     :rtype: List[dict]
 
     """
-    contributors = await db.history.aggregate([
+    cursor = db.history.aggregate([
         {"$match": query},
         {"$group": {
             "_id": "$user.id",
             "count": {"$sum": 1}
         }}
-    ]).to_list(None)
+    ])
 
-    return [{"id": c["_id"], "count": c["count"]} for c in contributors]
+    return [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
 
 async def get_most_recent_change(db, otu_id):

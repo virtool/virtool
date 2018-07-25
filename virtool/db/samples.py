@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import virtool.errors
@@ -106,7 +107,7 @@ async def recalculate_algorithm_tags(db, sample_id):
     :type sample_id: str
 
     """
-    analyses = await db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None)
+    analyses = await asyncio.shield(db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None))
 
     update = virtool.samples.calculate_algorithm_tags(analyses)
 

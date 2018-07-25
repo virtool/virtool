@@ -140,9 +140,9 @@ async def get_api_keys(req):
 
     user_id = req["client"].user_id
 
-    api_keys = await db.keys.find({"user.id": user_id}, API_KEY_PROJECTION).to_list(None)
+    cursor = db.keys.find({"user.id": user_id}, API_KEY_PROJECTION)
 
-    return json_response(api_keys, status=200)
+    return json_response([d async for d in cursor] , status=200)
 
 
 @routes.get("/api/account/keys/{key_id}")

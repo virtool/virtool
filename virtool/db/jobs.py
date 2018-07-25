@@ -42,7 +42,7 @@ async def clear(db, complete=False, failed=False):
 
 
 async def get_waiting_and_running_ids(db):
-    agg = await db.jobs.aggregate([
+    cursor = db.jobs.aggregate([
         {"$project": {
             "status": {
                 "$arrayElemAt": ["$status", -1]
@@ -59,9 +59,9 @@ async def get_waiting_and_running_ids(db):
         {"$project": {
             "_id": True
         }}
-    ]).to_list(None)
+    ])
 
-    return [a["_id"] for a in agg]
+    return [a["_id"] async for a in cursor]
 
 
 def processor(document):
