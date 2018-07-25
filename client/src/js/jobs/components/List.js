@@ -49,6 +49,7 @@ export class JobsList extends React.Component {
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
                     list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
                     loadNextPage={this.props.loadNextPage}
                     page={this.props.page}
                     rowRenderer={this.rowRenderer}
