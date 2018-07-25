@@ -130,8 +130,6 @@ class Manager:
                 else:
                     event_type = get_event_type(event)
 
-                    print(event_type)
-
                     if event_type == "delete":
                         await self.handle_delete(filename)
 
