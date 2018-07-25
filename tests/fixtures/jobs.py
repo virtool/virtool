@@ -1,8 +1,5 @@
 import pytest
-import multiprocessing
-
 import virtool.jobs.job
-import virtool.jobs.dummy
 import virtool.jobs.manager
 
 
@@ -34,7 +31,7 @@ class MockSettings:
 @pytest.fixture
 def test_job_manager(mocker, loop, dbi):
 
-    manager = virtool.jobs.manager.Manager(
+    manager = virtool.jobs.manager.IntegratedManager(
         loop,
         dbi,
         MockSettings(),
