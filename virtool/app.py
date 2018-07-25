@@ -132,30 +132,29 @@ async def init_db(app):
 
     db_host = settings.get("db_host", "localhost")
     db_port = settings.get("db_port", 27017)
-    db_use_auth = settings.get("db_use_auth", False)
 
-    if db_use_auth:
+    auth_string = ""
+
+    if settings.get("db_use_auth", False):
         db_username = quote_plus(settings["db_username"])
         db_password = quote_plus(settings["db_password"])
 
-        string = "mongodb://{}:{}@{}:{}/{}".format(db_username, db_password, db_host, db_port, app["db_name"])
+        auth_string = "{}:{}@".format(db_username, db_password)
 
-        if settings["db_use_ssl"]:
-            string += "?ssl=true"
+    ssl_string = ""
 
-        db_client = motor_asyncio.AsyncIOMotorClient(
-            string,
-            serverSelectionTimeoutMS=6000,
-            io_loop=app.loop
-        )
+    if settings["db_use_ssl"]:
+        ssl_string += "?ssl=true"
 
-    else:
-        db_client = motor_asyncio.AsyncIOMotorClient(
-            db_host,
-            db_port,
-            serverSelectionTimeoutMS=6000,
-            io_loop=app.loop
-        )
+    string = "mongodb://{}{}:{}/{}{}".format(auth_string, db_host, db_port, app["db_name"], ssl_string)
+
+    app["db_connection_string"] = string
+
+    db_client = motor_asyncio.AsyncIOMotorClient(
+        string,
+        serverSelectionTimeoutMS=6000,
+        io_loop=app.loop
+    )
 
     try:
         await db_client.database_names()
