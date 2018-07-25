@@ -45,8 +45,6 @@ async def find(db, req_query, ref_id=None):
 
 
 async def get_active_index_ids(db, ref_id):
-    active_indexes = set()
-
     pipeline = [
         {
             "$match": {
@@ -61,8 +59,11 @@ async def get_active_index_ids(db, ref_id):
         }
     ]
 
-    async for agg in db.analyses.aggregate(pipeline):
-        active_indexes.add(agg["_id"])
+    cursor = db.analyses.aggregate(pipeline)
+
+    active_indexes = [a["_id"] for a in cursor]
+
+    active_indexes = set(active_indexes)
 
     current_index_id, _ = await get_current_id_and_version(db, ref_id)
 
