@@ -112,6 +112,7 @@ class AnalysesList extends React.Component {
                     onSubmit={this.props.onAnalyze}
                     hasHmm={!!this.props.hmms.status.installed}
                     refIndexes={this.props.indexes}
+                    userId={this.props.userId}
                 />
             </div>
         );
@@ -119,6 +120,7 @@ class AnalysesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    userId: state.account.id,
     sampleId: state.analyses.sampleId,
     detail: state.samples.detail,
     analyses: state.analyses.documents,
@@ -134,9 +136,9 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(filterAnalyses(sampleId, term));
     },
 
-    onAnalyze: (sampleId, references, algorithm) => {
+    onAnalyze: (sampleId, references, algorithm, userId) => {
         forEach(references, (entry) =>
-            dispatch(analyze(sampleId, entry.refId, algorithm))
+            dispatch(analyze(sampleId, entry.refId, algorithm, userId))
         );
     },
 

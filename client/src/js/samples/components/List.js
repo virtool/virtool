@@ -93,10 +93,10 @@ export class SamplesList extends React.Component {
 
     handleAnalyses = (sampleId, references, algorithm) => {
         if (sampleId) {
-            this.props.onAnalyze(sampleId, references, algorithm);
+            this.props.onAnalyze(sampleId, references, algorithm, this.props.userId);
         } else {
             forEach(this.state.selected, entry => {
-                this.props.onAnalyze(entry, references, algorithm);
+                this.props.onAnalyze(entry, references, algorithm, this.props.userId);
             });
         }
         this.onClearSelected();
@@ -185,6 +185,7 @@ export class SamplesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    userId: state.account.id,
     ...state.samples,
     indexes: state.analyses.readyIndexes,
     hmms: state.hmms
@@ -196,9 +197,9 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(listSamples(page));
     },
 
-    onAnalyze: (sampleId, references, algorithm) => {
+    onAnalyze: (sampleId, references, algorithm, userId) => {
         forEach(references, (entry) => {
-            dispatch(analyze(sampleId, entry.refId, algorithm));
+            dispatch(analyze(sampleId, entry.refId, algorithm, userId));
         });
     },
 

@@ -1,4 +1,4 @@
-import { reject, sortBy, map, concat } from "lodash-es";
+import { sortBy, map, concat, forEach, slice } from "lodash-es";
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
@@ -108,10 +108,15 @@ export const toggleExpanded = (state, id) => (
     })
 );
 
-export const insert = (documents, action) => {
-    const beforeList = documents
-        ? reject(documents, entry => (entry.placeholder))
-        : [];
+export const insert = (documents, action, sampleId) => {
+    const beforeList = documents ? slice(documents, 0, documents.length) : [];
+
+    forEach(documents, (entry, i) => {
+        if (entry.placeholder && (entry.sampleId === sampleId) && (entry.userId === action.data.user.id)) {
+            beforeList.splice(i, 1);
+            return false;
+        }
+    });
 
     let newList = concat(beforeList, [{...action.data}]);
     newList = sortBy(newList, "created_at");
@@ -129,7 +134,7 @@ export default function samplesReducer (state = initialState, action) {
             }
             return {
                 ...state,
-                documents: insert(state.documents, action)
+                documents: insert(state.documents, action, state.sampleId)
             };
 
         case WS_UPDATE_ANALYSIS:
@@ -147,7 +152,14 @@ export default function samplesReducer (state = initialState, action) {
         case ANALYZE.REQUESTED:
             return {
                 ...state,
-                documents: state.documents === null ? null : state.documents.concat([action.placeholder])
+                documents: (state.documents === null)
+                    ? null : concat(state.documents, [
+                        {
+                            ...action.placeholder,
+                            userId: action.userId,
+                            sampleId: action.sampleId
+                        }
+                    ])
             };
 
         case COLLAPSE_ANALYSIS:
@@ -194,9 +206,10 @@ export default function samplesReducer (state = initialState, action) {
             };
 
         case GET_ANALYSIS.SUCCEEDED: {
+
             let data;
 
-            if (action.data.algorithm === "pathoscope_bowtie") {
+            if (action.data.algorithm === "pathoscope_bowtie" && action.data.ready) {
                 data = addDepth(formatData(action.data), state.showMedian);
             } else {
                 data = action.data;

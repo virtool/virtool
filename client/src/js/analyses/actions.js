@@ -104,7 +104,7 @@ export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
  * @param algorithm {string} algorithm type
  * @returns {object}
  */
-export const analyze = (sampleId, refId, algorithm) => {
+export const analyze = (sampleId, refId, algorithm, userId) => {
     const createdAt = new Date();
 
     const placeholder = {
@@ -119,7 +119,8 @@ export const analyze = (sampleId, refId, algorithm) => {
         algorithm,
         placeholder,
         refId,
-        sampleId
+        sampleId,
+        userId
     };
 };
 
