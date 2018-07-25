@@ -88,8 +88,8 @@ class IndexesList extends React.Component {
                                 <Flex alignItems="center">
                                     <Icon name="exclamation-circle" />
                                     <FlexItem pad={10}>
-                                        The OTU reference database has changed and the index must be rebuilt before
-                                        the new information will be included in future analyses.
+                                        The reference has unbuilt changes. A new index must be built before the
+                                        information will be included in future analyses.
                                     </FlexItem>
                                 </Flex>
                             </FlexItem>
