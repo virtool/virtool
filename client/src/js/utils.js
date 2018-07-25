@@ -236,26 +236,3 @@ export const checkUserRefPermission = (props, permission) => {
 
     return false;
 };
-
-export const getUpdatedScrollListState = (nextProps, prevState) => {
-    if (prevState.masterList === null || nextProps.page === 1) {
-        return {
-            masterList: nextProps.documents,
-            list: nextProps.documents,
-            page: nextProps.page
-        };
-    }
-    if (prevState.page !== nextProps.page) {
-        return {
-            masterList: prevState.masterList.concat(nextProps.documents),
-            list: nextProps.documents,
-            page: nextProps.page
-        };
-    } else if (!isArrayEqual(prevState.list, nextProps.documents)) {
-        return {
-            masterList: nextProps.documents,
-            list: nextProps.documents
-        };
-    }
-    return null;
-};
