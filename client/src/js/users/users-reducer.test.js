@@ -37,46 +37,28 @@ describe("Users Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle WS_INSERT_USER", () => {
-        state = {
-            ...initialState,
-            list: {
-                documents: [],
-                page: 1,
-                per_page: 25
-            }
-        };
-        action = {
-            type: WS_INSERT_USER,
-            data: {
-                administrator: false,
-                force_reset: false,
-                groups: [],
-                id: "newUser",
-                identicon: "123newHash",
-                last_password_change: "2018-01-01T00:00:00.000000Z",
-                permissions: {},
-                primary_group: ""
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            list: {
-                ...state.list,
-                documents: [{...action.data}]
-            }
-        };
+    describe("should handle WS_INSERT_USER", () => {
+        it("return state if list is not yet fetched", () => {
+            state = { fetched: false };
+            action = { type: WS_INSERT_USER };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
 
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle WS_UPDATE_USER", () => {
-        state = {
-            ...initialState,
-            list: {
-                ...state.list,
-                documents: [{
+        it("insert entry into current list", () => {
+            state = {
+                ...initialState,
+                list: {
+                    documents: [],
+                    page: 1,
+                    per_page: 25
+                },
+                fetched: true
+            };
+            action = {
+                type: WS_INSERT_USER,
+                data: {
                     administrator: false,
                     force_reset: false,
                     groups: [],
@@ -85,58 +67,108 @@ describe("Users Reducer", () => {
                     last_password_change: "2018-01-01T00:00:00.000000Z",
                     permissions: {},
                     primary_group: ""
-                }]
-            }
-        };
-        action = {
-            type: WS_UPDATE_USER,
-            data: {
-                administrator: true,
-                force_reset: false,
-                groups: [],
-                id: "newUser",
-                identicon: "123newHash",
-                last_password_change: "2018-01-01T00:00:00.000000Z",
-                permissions: {},
-                primary_group: ""
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            list: {
-                ...state.list,
-                documents: [{...action.data}]
-            }
-        };
-
-        expect(result).toEqual(expected);
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                list: {
+                    ...state.list,
+                    documents: [{...action.data}]
+                }
+            };
+            expect(result).toEqual(expected);
+        });
     });
 
-    it("should handle WS_REMOVE_USER", () => {
-        state = {
-            ...initialState,
-            list: {
-                documents: [{
-                    id: "testUser"
-                }]
-            }
-        };
-        action = {
-            type: WS_REMOVE_USER,
-            data: ["testUser"]
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            list: {
-                ...state.list,
-                documents: []
-            },
-            refetchPage: false
-        };
+    describe("should handle WS_UPDATE_USER", () => {
+        it("returns state if list is null", () => {
+            state = { list: null };
+            action = { type: WS_UPDATE_USER };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
 
-        expect(result).toEqual(expected);
+        it("update entry if present in list", () => {
+            state = {
+                ...initialState,
+                list: {
+                    ...state.list,
+                    documents: [{
+                        administrator: false,
+                        force_reset: false,
+                        groups: [],
+                        id: "newUser",
+                        identicon: "123newHash",
+                        last_password_change: "2018-01-01T00:00:00.000000Z",
+                        permissions: {},
+                        primary_group: ""
+                    }]
+                },
+                fetched: true
+            };
+            action = {
+                type: WS_UPDATE_USER,
+                data: {
+                    administrator: true,
+                    force_reset: false,
+                    groups: [],
+                    id: "newUser",
+                    identicon: "123newHash",
+                    last_password_change: "2018-01-01T00:00:00.000000Z",
+                    permissions: {},
+                    primary_group: ""
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                list: {
+                    ...state.list,
+                    documents: [{...action.data}]
+                }
+            };
+
+            expect(result).toEqual(expected);
+        });
+    });
+
+    describe("should handle WS_REMOVE_USER", () => {
+        it("returns state if list is null", () => {
+            state = { list: null };
+            action = { type: WS_REMOVE_USER };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
+
+        it("remove entry if present in list", () => {
+            state = {
+                ...initialState,
+                list: {
+                    documents: [{
+                        id: "testUser"
+                    }]
+                },
+                fetched: true
+            };
+            action = {
+                type: WS_REMOVE_USER,
+                data: ["testUser"]
+            };
+            result = reducer(state, action);
+            expected = {
+                ...state,
+                list: {
+                    ...state.list,
+                    documents: []
+                },
+                refetchPage: false
+            };
+
+            expect(result).toEqual(expected);
+        });
     });
 
     it("should handle LIST_USERS_REQUESTED", () => {
