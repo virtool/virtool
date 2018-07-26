@@ -46,7 +46,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
         """
-        await self.run_in_executor(os.mkdir, self.index_path)
+        os.mkdir(self.index_path)
 
     async def set_stats(self):
         """
@@ -54,7 +54,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         length distribution, and sequence count.
 
         """
-        gc, count = await self.run_in_executor(virtool.subtractions.calculate_fasta_gc, self.fasta_path)
+        gc, count = virtool.subtractions.calculate_fasta_gc(self.fasta_path)
 
         await self.db.subtraction.update_one({"_id": self.subtraction_id}, {
             "$set": {
@@ -96,7 +96,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         """
         # Remove the nascent index directory and fail silently if it doesn't exist.
         try:
-            await self.run_in_executor(virtool.utils.rm, self.index_path, True)
+            virtool.utils.rm(self.index_path, True)
         except FileNotFoundError:
             pass
 

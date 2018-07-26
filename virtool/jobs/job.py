@@ -15,7 +15,6 @@ class Job:
 
     def __init__(self, loop, executor, db, settings, capture_exception, job_id, task_name, task_args, proc, mem):
         self.loop = loop
-        self.executor = executor
         self.db = db
         self.settings = settings
         self.capture_exception = capture_exception
@@ -39,10 +38,6 @@ class Job:
         self._log_path = os.path.join(self.settings.get("data_path"), "logs", "jobs", self.id)
         self._log_buffer = list()
 
-    def start(self):
-        self._task = asyncio.ensure_future(self.run(), loop=self.loop)
-        self.started = True
-
     async def run(self):
         for method in self._stage_list:
             name = method.__name__
@@ -55,9 +50,6 @@ class Job:
             except asyncio.CancelledError:
                 self._cancelled = True
             except:
-                if self.capture_exception:
-                    self.capture_exception()
-
                 self._error = handle_exception()
 
             if self._error or self._cancelled:
@@ -77,14 +69,6 @@ class Job:
         await self.flush_log()
 
         self.finished = True
-
-    async def run_in_executor(self, func, *args):
-        await self.add_log("Process: {}".format(func.__name__))
-        self._process_task = self.loop.run_in_executor(self.executor, func, *args)
-        result = await self._process_task
-        self._process_task = None
-
-        return result
 
     async def run_subprocess(self, command, stdout_handler=None, stderr_handler=None, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))

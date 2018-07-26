@@ -43,11 +43,11 @@ class BuildIndex(virtool.jobs.job.Job):
 
         """
         try:
-            await self.run_in_executor(os.mkdir, self.reference_path)
+            os.mkdir(self.reference_path)
         except FileExistsError:
             pass
 
-        await self.run_in_executor(os.mkdir, self.index_path)
+        await os.mkdir(self.index_path)
 
     @virtool.jobs.job.stage_method
     async def write_fasta(self):
@@ -82,7 +82,7 @@ class BuildIndex(virtool.jobs.job.Job):
 
         fasta_path = os.path.join(self.index_path, "ref.fa")
 
-        await self.run_in_executor(write_fasta_dict_to_file, fasta_path, fasta_dict)
+        await write_fasta_dict_to_file(fasta_path, fasta_dict)
 
     @virtool.jobs.job.stage_method
     async def bowtie_build(self):
@@ -121,7 +121,7 @@ class BuildIndex(virtool.jobs.job.Job):
             self.ref_id
         )
 
-        await self.run_in_executor(remove_unused_index_files, base_path, active_indexes)
+        remove_unused_index_files(base_path, active_indexes)
 
         await self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
             "$set": {
@@ -170,7 +170,7 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        await self.run_in_executor(virtool.utils.rm, self.index_path, True)
+        virtool.utils.rm(self.index_path, True)
 
 
 def remove_unused_index_files(base_path, retained):

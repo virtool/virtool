@@ -142,7 +142,7 @@ class Base(virtool.jobs.job.Job):
         Make a directory for the analysis in the sample/analysis directory.
 
         """
-        await self.run_in_executor(os.mkdir, self.analysis_path)
+        os.mkdir(self.analysis_path)
 
     async def cleanup(self):
         """
@@ -153,7 +153,7 @@ class Base(virtool.jobs.job.Job):
         await self.db.analyses.delete_one({"_id": self.analysis_id})
 
         try:
-            await self.loop.run_in_executor(None, shutil.rmtree, self.analysis_path)
+            shutil.rmtree(self.analysis_path)
         except FileNotFoundError:
             pass
 
@@ -200,8 +200,7 @@ class Pathoscope(Base):
 
     @virtool.jobs.job.stage_method
     async def subtract_mapping(self):
-        subtracted_count = await self.run_in_executor(
-            virtool.pathoscope.subtract,
+        subtracted_count = virtool.pathoscope.subtract(
             self.analysis_path,
             self.intermediate["to_subtraction"]
         )
@@ -233,12 +232,11 @@ class Pathoscope(Base):
             pi,
             refs,
             reads
-        ) = await self.run_in_executor(run_patho, vta_path, reassigned_path)
+        ) = run_patho(vta_path, reassigned_path)
 
         read_count = len(reads)
 
-        report = await self.run_in_executor(
-            virtool.pathoscope.write_report,
+        report = virtool.pathoscope.write_report(
             os.path.join(self.analysis_path, "report.tsv"),
             pi,
             refs,
@@ -254,8 +252,7 @@ class Pathoscope(Base):
             level_2_final
         )
 
-        self.intermediate["coverage"] = await self.run_in_executor(
-            virtool.pathoscope.calculate_coverage,
+        self.intermediate["coverage"] = virtool.pathoscope.calculate_coverage(
             reassigned_path,
             self.intermediate["ref_lengths"]
         )
@@ -584,7 +581,19 @@ class NuVs(Base):
     async def reunite_pairs(self):
         if self.paired:
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
-            await self.run_in_executor(run_reunion, self.analysis_path, self.read_paths, unmapped_path)
+            headers = virtool.bio.read_fastq_headers(unmapped_path)
+
+            unmapped_roots = {h.split(" ")[0] for h in headers}
+
+            with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as f:
+                for header, seq, quality in virtool.bio.read_fastq(self.read_paths[0]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
+
+            with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as f:
+                for header, seq, quality in virtool.bio.read_fastq(self.read_paths[1]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
     @virtool.jobs.job.stage_method
     async def assemble(self):
@@ -630,8 +639,7 @@ class NuVs(Base):
 
             raise
 
-        await self.run_in_executor(
-            shutil.copyfile,
+        shutil.copyfile(
             os.path.join(temp_path, "scaffolds.fasta"),
             os.path.join(self.analysis_path, "assembly.fa")
         )
@@ -650,7 +658,7 @@ class NuVs(Base):
 
         assembly_path = os.path.join(self.analysis_path, "assembly.fa")
 
-        assembly = await self.run_in_executor(virtool.bio.read_fasta, assembly_path)
+        assembly = virtool.bio.read_fasta(assembly_path)
 
         for _, sequence in assembly:
 
@@ -837,19 +845,3 @@ def run_patho(vta_path, reassigned_path):
         refs,
         reads
     )
-
-
-def run_reunion(analysis_path, read_paths, unmapped_path):
-    headers = virtool.bio.read_fastq_headers(unmapped_path)
-
-    unmapped_roots = {h.split(" ")[0] for h in headers}
-
-    with open(os.path.join(analysis_path, "unmapped_1.fq"), "w") as f:
-        for header, seq, quality in virtool.bio.read_fastq(read_paths[0]):
-            if header.split(" ")[0] in unmapped_roots:
-                f.write("\n".join([header, seq, "+", quality]) + "\n")
-
-    with open(os.path.join(analysis_path, "unmapped_2.fq"), "w") as f:
-        for header, seq, quality in virtool.bio.read_fastq(read_paths[1]):
-            if header.split(" ")[0] in unmapped_roots:
-                f.write("\n".join([header, seq, "+", quality]) + "\n")
