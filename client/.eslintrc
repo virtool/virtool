@@ -155,7 +155,8 @@
         "react/react-in-jsx-scope": "off",
         "lodash/prefer-lodash-method": "off",
         "lodash/prefer-noop": "off",
-        "no-undef": "off"
+        "no-undef": "off",
+        "array-bracket-newline": "off"
       }
     }
   ]
