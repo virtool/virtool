@@ -50,7 +50,7 @@ describe("Analyses Reducer", () => {
 
     describe("should handle WS_INSERT_ANALYSIS", () => {
 
-        it("", () => {
+        it("return state if sample id does not match current sample", () => {
             state = { sampleId: "testSample" };
             action = {
                 type: WS_INSERT_ANALYSIS,
@@ -61,7 +61,7 @@ describe("Analyses Reducer", () => {
             expect(result).toEqual(expected);
         });
 
-        it("", () => {
+        it("otherwise insert entry into current list", () => {
             state = {
                 ...initialState,
                 documents: null,
@@ -88,11 +88,13 @@ describe("Analyses Reducer", () => {
     it("should handle WS_UPDATE_ANALYSIS", () => {
         state = {
             ...initialState,
-            documents: [{
-                id: "123abc",
-                created_at: "2018-01-01T00:00:00.000000Z",
-                foo: "test"
-            }]
+            documents: [
+                {
+                    id: "123abc",
+                    created_at: "2018-01-01T00:00:00.000000Z",
+                    foo: "test"
+                }
+            ]
         };
         action = {
             type: WS_UPDATE_ANALYSIS,
@@ -241,6 +243,25 @@ describe("Analyses Reducer", () => {
             documents: action.data.documents
         };
 
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_ANALYSES_REQUESTED", () => {
+        state = { filter: "" };
+        action = { type: FILTER_ANALYSES.REQUESTED, term: "search" };
+        result = reducer(state, action);
+        expected = {...state, filter: "search" };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_ANALYSES_SUCCEEDED", () => {
+        state = { documents: null };
+        action = {
+            type: FILTER_ANALYSES.SUCCEEDED,
+            data: { documents: [] }
+        };
+        result = reducer(state, action);
+        expected = {...state, documents: [] };
         expect(result).toEqual(expected);
     });
 
@@ -429,19 +450,25 @@ describe("Analyses Reducer", () => {
                     id: "test1",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [{ id: "a", medianDepth: 3, meanDepth: 4 }]
+                    isolates: [
+                        { id: "a", medianDepth: 3, meanDepth: 4 }
+                    ]
                 },
                 {
                     id: "test2",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [{ id: "b", medianDepth: 3, meanDepth: 4 }]
+                    isolates: [
+                        { id: "b", medianDepth: 3, meanDepth: 4 }
+                    ]
                 },
                 {
                     id: "test3",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [{ id: "c", medianDepth: 3, meanDepth: 4 }]
+                    isolates: [
+                        { id: "c", medianDepth: 3, meanDepth: 4 }
+                    ]
                 }
             ];
             let showMedian;
@@ -455,36 +482,42 @@ describe("Analyses Reducer", () => {
                         depth: 1,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "a",
-                            depth: 3,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "a",
+                                depth: 3,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     },
                     {
                         id: "test2",
                         depth: 1,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "b",
-                            depth: 3,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "b",
+                                depth: 3,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     },
                     {
                         id: "test3",
                         depth: 1,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "c",
-                            depth: 3,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "c",
+                                depth: 3,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     }
                 ];
                 expect(result).toEqual(expected);
@@ -499,36 +532,42 @@ describe("Analyses Reducer", () => {
                         depth: 2,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "a",
-                            depth: 4,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "a",
+                                depth: 4,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     },
                     {
                         id: "test2",
                         depth: 2,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "b",
-                            depth: 4,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "b",
+                                depth: 4,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     },
                     {
                         id: "test3",
                         depth: 2,
                         medianDepth: 1,
                         meanDepth: 2,
-                        isolates: [{
-                            id: "c",
-                            depth: 4,
-                            medianDepth: 3,
-                            meanDepth: 4
-                        }]
+                        isolates: [
+                            {
+                                id: "c",
+                                depth: 4,
+                                medianDepth: 3,
+                                meanDepth: 4
+                            }
+                        ]
                     }
                 ];
                 expect(result).toEqual(expected);

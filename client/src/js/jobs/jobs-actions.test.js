@@ -69,6 +69,16 @@ describe("Jobs Action Creators:", () => {
         expect(result).toEqual(expected);
     });
 
+    it("filterJobs: returns action for filtering search results", () => {
+        const term = "search";
+        result = filterJobs(term);
+        expected = {
+            type: FILTER_JOBS.REQUESTED,
+            term
+        };
+        expect(result).toEqual(expected);
+    });
+
     it("getJob: returns action for getting a specific job", () => {
         jobId = "tester";
         result = getJob(jobId);

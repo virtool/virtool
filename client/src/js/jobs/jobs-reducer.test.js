@@ -100,7 +100,10 @@ describe("Job Reducer", () => {
         state = {
             page: 1,
             page_count: 3,
-            documents: [{ id: "test1" },{ id: "test2" }]
+            documents: [
+                { id: "test1" },
+                { id: "test2" }
+            ]
         };
         action = {
             type: WS_REMOVE_JOB,
@@ -142,19 +145,6 @@ describe("Job Reducer", () => {
         action = { type: LIST_JOBS.FAILED };
         result = reducer(state, action);
         expected = { isLoading: false, errorLoad: true };
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle GET_JOB_REQUESTED", () => {
-        state = {};
-        action = {
-            type: GET_JOB.REQUESTED
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            detail: null
-        };
         expect(result).toEqual(expected);
     });
 

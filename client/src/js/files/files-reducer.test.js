@@ -11,7 +11,6 @@ import {
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
-import { reject } from "lodash-es";
 
 describe("Files Reducer", () => {
     const initialState = reducerInitialState;

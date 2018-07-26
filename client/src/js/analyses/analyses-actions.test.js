@@ -45,7 +45,7 @@ describe("Analyses Action Creators:", () => {
     let expected;
 
     it("wsInsertAnalysis: returns action to insert analysis via websocket", () => {
-        data = { id: "test" }
+        data = { id: "test" };
         result = wsInsertAnalysis(data);
         expected = {
             type: WS_INSERT_ANALYSIS,
@@ -65,7 +65,7 @@ describe("Analyses Action Creators:", () => {
     });
 
     it("wsRemoveAnalysis: returns action for analysis removal via websocket", () => {
-        data = ["test"]
+        data = ["test"];
         result = wsRemoveAnalysis(data);
         expected = {
             type: WS_REMOVE_ANALYSIS,
@@ -139,7 +139,7 @@ describe("Analyses Action Creators:", () => {
     });
 
     it("filterAnalyses: returns action to filter list by search term", () => {
-        sampleId: "testid";
+        sampleId = "testid";
         const term = "search";
         result = filterAnalyses(sampleId, term);
         expected = {

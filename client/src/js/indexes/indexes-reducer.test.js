@@ -36,8 +36,7 @@ describe("Indexes Reducer", () => {
 
     describe("should handle WS_INSERT_HISTORY", () => {
 
-        it(`if insert occurs in currently viewed reference,
-            increment modified_otu_count`, () => {
+        it(`increment modified_otu_count if insert into current ref`, () => {
             state = { referenceId: "123abc", modified_otu_count: 3 };
             action = {
                 type: WS_INSERT_HISTORY,
@@ -63,8 +62,7 @@ describe("Indexes Reducer", () => {
 
     describe("should handle WS_INSERT_INDEX", () => {
 
-        it(`if indexes list is empty or insert is for a different reference,
-            return state`, () => {
+        it("return state if list empty or insert in different ref", () => {
             state = { fetched: true, referenceId: "123abc" };
             action = {
                 type: WS_INSERT_INDEX,
@@ -77,7 +75,7 @@ describe("Indexes Reducer", () => {
             expect(result).toEqual(expected);
         });
 
-        it(`if insert is for current reference index, insert into list`, () => {
+        it("if insert is for current reference index, insert into list", () => {
             state = {
                 fetched: true,
                 referenceId: "123abc",
@@ -243,7 +241,7 @@ describe("Indexes Reducer", () => {
         state = { history: { documents: null } };
         action = {
             type: GET_INDEX_HISTORY.SUCCEEDED,
-            data: { documents: [{ foo: "bar" }], page: 1,  per_page: 3 }
+            data: { documents: [{ foo: "bar" }], page: 1, per_page: 3 }
         };
         result = reducer(state, action);
         expected = {

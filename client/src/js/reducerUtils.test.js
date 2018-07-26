@@ -11,10 +11,9 @@ describe("Utility functions for reducers", () => {
     describe("updateList: updates documents array with action data", () => {
         documents = [{ id: "bar" }, { id: "baz" }, { id: "foo" }];
         page = 1;
-        per_page: 3;
-        
-        it(`If response data page is the same as current state page,
-            replace page`, () => {
+        per_page = 3;
+
+        it("replace page if page number matches", () => {
             action = {
                 type: "UPDATE_LIST",
                 data: {
@@ -78,9 +77,8 @@ describe("Utility functions for reducers", () => {
 
     describe("insert: inserts new entry into documents array", () => {
 
-        it(`insert entry into current documents,
-            display sublist that holds currently viewable pages`, () => {
-            // Return new list if addition of new entry is contained 
+        it("insert entry and return currently viewable pages", () => {
+            // Return new list if addition of new entry is contained
             // within the currently stored number of pages
             documents = [{ id: "bar" }, { id: "foo" }];
             action = {

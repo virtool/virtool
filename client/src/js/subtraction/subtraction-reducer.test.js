@@ -75,12 +75,14 @@ describe("Subtraction Reducer", () => {
     it("should handle WS_UPDATE_SUBTRACTION", () => {
         state = {
             ...initialState,
-            documents: [{
-                file: { id: "abc123-file.171", name: "file.171" },
-                id: "testSubtraction",
-                job: { id: "jobId" },
-                ready: false
-            }]
+            documents: [
+                {
+                    file: { id: "abc123-file.171", name: "file.171" },
+                    id: "testSubtraction",
+                    job: { id: "jobId" },
+                    ready: false
+                }
+            ]
         };
         action = {
             type: WS_UPDATE_SUBTRACTION,
@@ -241,7 +243,7 @@ describe("Subtraction Reducer", () => {
         state = initialState;
         action = {
             type: FILTER_SUBTRACTIONS.REQUESTED,
-            term: "test" 
+            term: "test"
         };
         result = reducer(state, action);
         expected = {

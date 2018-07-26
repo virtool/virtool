@@ -95,16 +95,18 @@ describe("Users Reducer", () => {
                 ...initialState,
                 list: {
                     ...state.list,
-                    documents: [{
-                        administrator: false,
-                        force_reset: false,
-                        groups: [],
-                        id: "newUser",
-                        identicon: "123newHash",
-                        last_password_change: "2018-01-01T00:00:00.000000Z",
-                        permissions: {},
-                        primary_group: ""
-                    }]
+                    documents: [
+                        {
+                            administrator: false,
+                            force_reset: false,
+                            groups: [],
+                            id: "newUser",
+                            identicon: "123newHash",
+                            last_password_change: "2018-01-01T00:00:00.000000Z",
+                            permissions: {},
+                            primary_group: ""
+                        }
+                    ]
                 },
                 fetched: true
             };
