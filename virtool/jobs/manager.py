@@ -64,32 +64,6 @@ class Manager:
 
         logging.debug("Closed job manager")
 
-    async def new(self, task_name, task_args, user_id, job_id=None):
-
-        job_id = job_id or await virtool.db.utils.get_new_id(self.db.jobs)
-
-        proc = self.settings.get("{}_proc".format(task_name))
-        mem = self.settings.get("{}_mem".format(task_name))
-
-        await self.db.jobs.insert_one({
-            "_id": job_id,
-            "task": task_name,
-            "args": task_args,
-            "proc": proc,
-            "mem": mem,
-            "user": {
-                "id": user_id
-            },
-            "status": [
-                {
-                    "state": "waiting",
-                    "stage": None,
-                    "error": None,
-                    "progress": 0,
-                    "timestamp": virtool.utils.timestamp()
-                }
-            ]
-        })
 
         self._jobs_dict[job_id] = virtool.jobs.classes.TASK_CLASSES[task_name](
             self.loop,
