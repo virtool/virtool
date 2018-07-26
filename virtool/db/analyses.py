@@ -6,6 +6,7 @@ import virtool.analyses
 import virtool.bio
 import virtool.db.history
 import virtool.db.indexes
+import virtool.db.jobs
 import virtool.db.samples
 import virtool.db.utils
 import virtool.utils
@@ -162,12 +163,15 @@ async def format_pathoscope(db, settings, document):
     return document
 
 
-async def new(db, manager, sample_id, ref_id, user_id, algorithm):
+async def new(app, sample_id, ref_id, user_id, algorithm):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
 
     """
+    db = app["db"]
+    settings = app["settings"]
+
     # Get the current id and version of the otu index currently being used for analysis.
     index_id, index_version = await virtool.db.indexes.get_current_id_and_version(db, ref_id)
 
@@ -244,14 +248,28 @@ async def new(db, manager, sample_id, ref_id, user_id, algorithm):
 
     await db.analyses.insert_one(document)
 
-    # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
-    # _id. This dictionary will be passed the the new analysis job.
-    await manager.new(
+    # Create job document.
+    job = await virtool.db.jobs.create(
+        db,
+        settings,
+        "create_sample",
+        task_args,
+        user_id
+    )
+
+    await app["jobs"].enqueue(job["_id"])
+
+    # Create job document.
+    job = await virtool.db.jobs.create(
+        db,
+        settings,
         document["algorithm"],
         task_args,
         user_id,
         job_id=job_id
     )
+
+    await app["jobs"].enqueue(job["_id"])
 
     await virtool.db.samples.recalculate_algorithm_tags(db, sample_id)
 
