@@ -149,7 +149,7 @@ describe("Users Reducer", () => {
             state = {
                 ...initialState,
                 list: {
-                    documents: [{  id: "testUser" }]
+                    documents: [{ id: "testUser" }]
                 },
                 fetched: true
             };
