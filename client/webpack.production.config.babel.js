@@ -1,10 +1,10 @@
 /* global module, __dirname */
-const path = require("path");
-const webpack = require("webpack");
-const HTMLPlugin = require("html-webpack-plugin");
-const CleanPlugin = require("clean-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const UglifyJSPlugin = require("uglifyjs-webpack-plugin");
+import path from "path";
+import webpack from "webpack";
+import HTMLPlugin from "html-webpack-plugin";
+import CleanPlugin from "clean-webpack-plugin";
+import ExtractTextPlugin from "extract-text-webpack-plugin";
+import UglifyJSPlugin from "uglifyjs-webpack-plugin";
 
 module.exports = {
 
@@ -70,9 +70,7 @@ module.exports = {
 
     plugins: [
         new webpack.DefinePlugin({
-            "process.env": {
-                NODE_ENV: JSON.stringify("production")
-            }
+            "process.env.NODE_ENV": JSON.stringify("production")
         }),
 
         new ExtractTextPlugin("style.[hash:8].css"),
