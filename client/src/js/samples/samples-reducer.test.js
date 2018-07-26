@@ -102,7 +102,7 @@ describe("Samples Reducer", () => {
     });
 
     it("should handle FILTER_SAMPLES_REQUESTED", () => {
-        state = initialState,
+        state = initialState;
         action = {
             type: FILTER_SAMPLES.REQUESTED,
             term: "abc"

@@ -133,7 +133,7 @@ describe("<InputSave />", () => {
             InputSave.getDerivedStateFromProps = () => (null);
 
             wrapper = mount(<InputSave {...props} />);
-    
+
             spy = sinon.spy(wrapper.instance(), "handleChange");
             wrapper.instance().forceUpdate();
 
@@ -141,7 +141,7 @@ describe("<InputSave />", () => {
             expect(wrapper.state("value")).toEqual(props.initialValue);
 
             wrapper.find("input").simulate("change", mockEvent);
-            
+
             expect(spy.calledOnce).toBe(true);
             expect(wrapper.state("value")).toEqual(mockEvent.target.value);
 
@@ -162,7 +162,7 @@ describe("<InputSave />", () => {
                 }
             };
             wrapper = mount(<InputSave {...props} />);
-    
+
             spy = sinon.spy(wrapper.instance(), "handleChange");
             wrapper.instance().forceUpdate();
 
@@ -186,7 +186,7 @@ describe("<InputSave />", () => {
                 initialValue: "test"
             };
             wrapper = mount(<InputSave {...props} />);
-    
+
             spy = jest.spyOn(wrapper.instance(), "handleBlur");
             wrapper.instance().forceUpdate();
         });
@@ -235,7 +235,7 @@ describe("<InputSave />", () => {
                 initialValue: "test"
             };
             wrapper = mount(<InputSave {...props} />);
-    
+
             const spyAlternate = jest.spyOn(wrapper.instance(), "handleBlur");
             wrapper.instance().forceUpdate();
 
