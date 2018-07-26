@@ -1,11 +1,10 @@
 import {
-    find,
-    differenceWith,
-    isEqual,
+    reject,
+    map,
+    includes,
     concat,
     sortBy,
-    slice,
-    forEach
+    slice
 } from "lodash-es";
 
 export const updateList = (documents, action, page = 1) => {
@@ -44,16 +43,12 @@ export const edit = (documents, action) => {
         return documents;
     }
 
-    const newList = documents.slice();
-
-    forEach(newList, (entry, index) => {
+    return map(documents, entry => {
         if (entry.id === action.data.id) {
-            newList[index] = {...action.data};
-            return false;
+            return action.data;
         }
+        return entry;
     });
-
-    return newList;
 };
 
 export const remove = (documents, action) => {
@@ -61,15 +56,5 @@ export const remove = (documents, action) => {
         return documents;
     }
 
-    let newList = slice(documents, 0, documents.length);
-    let target;
-
-    forEach(action.data, id => {
-        target = find(documents, ["id", id]);
-        if (target) {
-            newList = differenceWith(newList, [target], isEqual);
-        }
-    });
-
-    return newList;
+    return reject(documents, ({ id }) => includes(action.data, id));
 };

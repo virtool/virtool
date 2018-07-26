@@ -68,18 +68,20 @@ export class ScrollList extends React.Component {
         const entries = map(list, (item, index) => rowRenderer(index));
         const isLoading = (isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null;
 
-        const renderOption = noContainer ? (
-            <React.Fragment>
-                {entries}
-                {isLoading}
-            </React.Fragment>
-        ) : (
+        if (noContainer) {
+            return (
+                <React.Fragment>
+                    {entries}
+                    {isLoading}
+                </React.Fragment>
+            );
+        }
+
+        return (
             <div ref={this.scrollList} style={this.props.style}>
                 {entries}
                 {isLoading}
             </div>
         );
-
-        return renderOption;
     }
 }
