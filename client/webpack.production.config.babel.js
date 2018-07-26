@@ -1,4 +1,4 @@
-/* global module, __dirname */
+/* global __dirname */
 import path from "path";
 import webpack from "webpack";
 import HTMLPlugin from "html-webpack-plugin";
@@ -6,7 +6,7 @@ import CleanPlugin from "clean-webpack-plugin";
 import ExtractTextPlugin from "extract-text-webpack-plugin";
 import UglifyJSPlugin from "uglifyjs-webpack-plugin";
 
-module.exports = {
+export default {
 
     entry: ["babel-polyfill", "./src/js/index.js"],
 
