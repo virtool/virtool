@@ -115,9 +115,9 @@ describe("Analyses Reducer", () => {
     it("should handle WS_REMOVE_ANALYSIS", () => {
         state = {
             ...initialState,
-            documents: [{
-                id: "test"
-            }]
+            documents: [
+                { id: "test" }
+            ]
         };
         action = {
             type: WS_REMOVE_ANALYSIS,
@@ -450,25 +450,19 @@ describe("Analyses Reducer", () => {
                     id: "test1",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [
-                        { id: "a", medianDepth: 3, meanDepth: 4 }
-                    ]
+                    isolates: [{ id: "a", medianDepth: 3, meanDepth: 4 }]
                 },
                 {
                     id: "test2",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [
-                        { id: "b", medianDepth: 3, meanDepth: 4 }
-                    ]
+                    isolates: [{ id: "b", medianDepth: 3, meanDepth: 4 }]
                 },
                 {
                     id: "test3",
                     medianDepth: 1,
                     meanDepth: 2,
-                    isolates: [
-                        { id: "c", medianDepth: 3, meanDepth: 4 }
-                    ]
+                    isolates: [{ id: "c", medianDepth: 3, meanDepth: 4 }]
                 }
             ];
             let showMedian;

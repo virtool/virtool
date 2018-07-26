@@ -36,7 +36,7 @@ describe("Indexes Reducer", () => {
 
     describe("should handle WS_INSERT_HISTORY", () => {
 
-        it(`increment modified_otu_count if insert into current ref`, () => {
+        it("increment modified_otu_count if insert into current ref", () => {
             state = { referenceId: "123abc", modified_otu_count: 3 };
             action = {
                 type: WS_INSERT_HISTORY,

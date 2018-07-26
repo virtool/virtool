@@ -104,12 +104,14 @@ describe("Subtraction Reducer", () => {
     it("should handle WS_REMOVE_SUBTRACTION", () => {
         state = {
             ...initialState,
-            documents: [{
-                file: { id: "abc123-file.171", name: "file.171" },
-                id: "testSubtraction",
-                job: { id: "jobId" },
-                ready: true
-            }]
+            documents: [
+                {
+                    file: { id: "abc123-file.171", name: "file.171" },
+                    id: "testSubtraction",
+                    job: { id: "jobId" },
+                    ready: true
+                }
+            ]
         };
         action = {
             type: WS_REMOVE_SUBTRACTION,
