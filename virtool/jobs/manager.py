@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import motor.motor_asyncio
 
+import virtool.db.iface
 import virtool.db.jobs
 import virtool.db.utils
 import virtool.errors
@@ -9,14 +11,15 @@ import virtool.jobs.job
 import virtool.utils
 
 
-class Manager:
+class BaseManager:
 
-    def __init__(self, loop, executor, db, settings, capture_exception):
+    def __init__(self, loop, dbi, settings, capture_exception):
+
         #: The application IO loop
         self.loop = loop
 
         #: The application database client
-        self.db = db
+        self.dbi = dbi
 
         #: The settings object
         self.settings = settings
@@ -24,13 +27,70 @@ class Manager:
         #: A reference to Sentry client's `captureException` method.
         self.capture_exception = capture_exception
 
-        self.executor = executor
-
         #: A dict to store all the tracked job objects in.
-        self._jobs_dict = dict()
+        self._jobs = dict()
 
-    def __iter__(self):
-        return iter(self._jobs_dict.keys())
+
+class DedicatedClient:
+
+    def __init__(self, dbi, messaging):
+        self.dbi = dbi
+        self.messaging = messaging
+
+    def enqueue(self, job_id):
+        self.messaging.add(job_id)
+
+    def cancel(self, job_id):
+        pass
+
+
+class DedicatedManager:
+    """
+    A job manager that can run as a dedicated process and communicate with Virtool API servers over the network.
+
+    """
+    def __init__(self, loop, db_connection_string, settings):
+
+        dbi = virtool.db.iface.DB(
+            motor.motor_asyncio.AsyncIOMotorClient(db_connection_string),
+            self.dispatch,
+            loop
+        )
+
+        super().__init__(loop, dbi, settings, self.capture_exception)
+
+    def capture_exception(self):
+        print("Captured exception")
+
+    def dispatch(self):
+        """
+        Will pass a message to the dispatcher.
+
+        """
+        pass
+
+
+class IntegratedManager(BaseManager):
+    """
+    A job manager that can be integrated into a monolithic Virtool process.
+
+    The integrated manager makes use of the shared application process and thread pool executors.
+
+    """
+    def __init__(self, loop, dbi, settings, capture_exception):
+        super().__init__(loop, dbi, settings, capture_exception)
+
+        #: The application IO loop
+        self.loop = loop
+
+        #: The application database interface.
+        self.dbi = dbi
+
+        #: The settings dict.
+        self.settings = settings
+
+        #: A reference to Sentry client's `captureException` method.
+        self.capture_exception = capture_exception
 
     async def run(self):
         logging.debug("Started job manager")
@@ -39,10 +99,10 @@ class Manager:
             while True:
                 to_delete = list()
 
-                if len(self._jobs_dict):
-                    available = get_available_resources(self.settings, self._jobs_dict)
+                if len(self._jobs):
+                    available = get_available_resources(self.settings, self._jobs)
 
-                    for job_id, job in self._jobs_dict.items():
+                    for job_id, job in self._jobs.items():
                         if not job.started:
                             if job.proc <= available["proc"] and job.mem <= available["mem"]:
                                 job.start()
@@ -52,35 +112,32 @@ class Manager:
                             to_delete.append(job.id)
 
                 for job_id in to_delete:
-                    del self._jobs_dict[job_id]
+                    del self._jobs[job_id]
 
                 await asyncio.sleep(0.1, loop=self.loop)
 
         except asyncio.CancelledError:
             logging.debug("Cancelling running jobs")
 
-            for job in self._jobs_dict.values():
+            for job in self._jobs.values():
                 await job.cancel()
 
         logging.debug("Closed job manager")
 
+    async def enqueue(self, job_id):
+        document = await self.dbi.jobs.find_one(job_id)
 
-        self._jobs_dict[job_id] = virtool.jobs.classes.TASK_CLASSES[task_name](
+        task_name = document["task_name"]
+        task_args = document["task_args"]
+
+        self._jobs[job_id] = virtool.jobs.classes.TASK_CLASSES[task_name](
             self.loop,
-            self.executor,
-            self.db,
             self.settings,
             self.capture_exception,
             job_id,
             task_name,
-            task_args,
-            proc,
-            mem
+            task_args
         )
-
-        document = await self.db.jobs.find_one(job_id, virtool.db.jobs.PROJECTION)
-
-        return virtool.utils.base_processor(document)
 
     async def cancel(self, job_id):
         """
@@ -90,7 +147,7 @@ class Manager:
         :type job_id: str
 
         """
-        job = self._jobs_dict.get(job_id, None)
+        job = self._jobs.get(job_id, None)
 
         if job:
             await job.cancel()

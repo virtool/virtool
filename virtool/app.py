@@ -218,9 +218,8 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["job_manager"] = virtool.jobs.manager.Manager(
+    app["jobs"] = virtool.jobs.manager.IntegratedManager(
         app.loop,
-        app["process_executor"],
         app["db"],
         app["settings"],
         capture_exception
