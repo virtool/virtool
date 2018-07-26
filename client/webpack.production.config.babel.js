@@ -1,9 +1,10 @@
-var path = require("path");
-var webpack = require("webpack");
-var HTMLPlugin = require("html-webpack-plugin");
-var CleanPlugin = require("clean-webpack-plugin");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var UglifyJSPlugin = require("uglifyjs-webpack-plugin");
+/* global module, __dirname */
+const path = require("path");
+const webpack = require("webpack");
+const HTMLPlugin = require("html-webpack-plugin");
+const CleanPlugin = require("clean-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const UglifyJSPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
 
@@ -70,7 +71,7 @@ module.exports = {
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
-                "NODE_ENV": JSON.stringify("production")
+                NODE_ENV: JSON.stringify("production")
             }
         }),
 
@@ -86,6 +87,10 @@ module.exports = {
 
         new CleanPlugin(["dist"], {
             verbose: true
+        }),
+
+        new UglifyJSPlugin({
+            sourceMap: true
         })
     ]
 };
