@@ -115,9 +115,7 @@ describe("Analyses Reducer", () => {
     it("should handle WS_REMOVE_ANALYSIS", () => {
         state = {
             ...initialState,
-            documents: [
-                { id: "test" }
-            ]
+            documents: [{ id: "test" }]
         };
         action = {
             type: WS_REMOVE_ANALYSIS,
