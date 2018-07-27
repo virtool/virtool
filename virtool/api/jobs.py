@@ -73,7 +73,7 @@ async def cancel(req):
     if not virtool.jobs.utils.is_running_or_waiting(document):
         return conflict("Not cancellable")
 
-    await req.app["job_manager"].cancel(job_id)
+    await req.app["jobs"].cancel(job_id)
 
     document = await db.jobs.find_one(job_id)
 

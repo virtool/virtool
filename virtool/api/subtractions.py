@@ -120,7 +120,7 @@ async def create(req):
         "file_id": file_id
     }
 
-    await req.app["job_manager"].new(
+    await req.app["jobs"].new(
         "create_subtraction",
         task_args,
         user_id,

@@ -287,7 +287,7 @@ class CreateSample(virtool.jobs.job.Job):
 
                     fastqc["sequences"][quality] += int(line[1].split(".")[0])
 
-        await self.db.samples.update_one({"_id": self.sample_id}, {
+        await self.dbi.samples.update_one({"_id": self.sample_id}, {
             "$set": {
                 "quality": fastqc,
                 "imported": False
@@ -308,4 +308,4 @@ class CreateSample(virtool.jobs.job.Job):
         except FileNotFoundError:
             pass
 
-        await self.db.samples.delete_one({"_id": self.sample_id})
+        await self.dbi.samples.delete_one({"_id": self.sample_id})

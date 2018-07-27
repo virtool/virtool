@@ -110,7 +110,7 @@ class Base(virtool.jobs.job.Job):
 
         """
         # Get the complete sample document from the database.
-        self.sample = await self.db.samples.find_one({"_id": self.sample_id})
+        self.sample = await self.dbi.samples.find_one({"_id": self.sample_id})
 
         # Extract the sample read count from the sample document.
         self.read_count = int(self.sample["quality"]["count"])
@@ -127,7 +127,7 @@ class Base(virtool.jobs.job.Job):
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
-        self.subtraction = await self.db.subtraction.find_one({"_id": self.sample["subtraction"]["id"]})
+        self.subtraction = await self.dbi.subtraction.find_one({"_id": self.sample["subtraction"]["id"]})
 
         self.subtraction_path = os.path.join(
             self.data_path,
@@ -150,14 +150,14 @@ class Base(virtool.jobs.job.Job):
         algorithm tags for the sample document.
 
         """
-        await self.db.analyses.delete_one({"_id": self.analysis_id})
+        await self.dbi.analyses.delete_one({"_id": self.analysis_id})
 
         try:
             shutil.rmtree(self.analysis_path)
         except FileNotFoundError:
             pass
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
+        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
 
 
 class Pathoscope(Base):
@@ -188,9 +188,9 @@ class Pathoscope(Base):
         # Get the database documents for the sequences
         async with aiofiles.open(fasta_path, "w") as handle:
             # Iterate through each otu id referenced by the hit sequence ids.
-            for otu_id in await self.db.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
+            for otu_id in await self.dbi.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
                 # Write all of the sequences for each otu to a FASTA file.
-                async for document in self.db.sequences.find({"otu_id": otu_id}, ["sequence"]):
+                async for document in self.dbi.sequences.find({"otu_id": otu_id}, ["sequence"]):
                     await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
                     ref_lengths[document["_id"]] = len(document["sequence"])
 
@@ -301,7 +301,7 @@ class Pathoscope(Base):
 
         """
         try:
-            await self.db.analyses.update_one({"_id": self.analysis_id}, {
+            await self.dbi.analyses.update_one({"_id": self.analysis_id}, {
                 "$set": self.results
             })
         except pymongo.errors.DocumentTooLarge:
@@ -309,14 +309,14 @@ class Pathoscope(Base):
                 json_string = json.dumps(self.results)
                 await f.write(json_string)
 
-            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "diagnosis": "file",
                     "ready": True
                 }
             })
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
+        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
 
     @virtool.jobs.job.stage_method
     async def cleanup_indexes(self):
@@ -747,7 +747,7 @@ class NuVs(Base):
                     line = line.split()
 
                     cluster_id = int(line[0].split("_")[1])
-                    annotation_id = (await self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
+                    annotation_id = (await self.dbi.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
                     # Expecting sequence_0.0
                     sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
@@ -781,7 +781,7 @@ class NuVs(Base):
 
         """
         try:
-            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "results": self.results,
                     "ready": True
@@ -792,14 +792,14 @@ class NuVs(Base):
                 json_string = json.dumps(self.results)
                 await f.write(json_string)
 
-            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "results": "file",
                     "ready": True
                 }
             })
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.db, self.sample_id)
+        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
 
     async def cleanup(self):
         try:

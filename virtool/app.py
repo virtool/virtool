@@ -218,16 +218,11 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["jobs"] = virtool.jobs.manager.IntegratedManager(
-        app.loop,
-        app["db"],
-        app["settings"],
-        capture_exception
-    )
+    app["jobs"] = virtool.jobs.manager.IntegratedManager(app, capture_exception)
 
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 
-    await scheduler.spawn(app["job_manager"].run())
+    await scheduler.spawn(app["jobs"].run())
 
 
 async def init_file_manager(app):

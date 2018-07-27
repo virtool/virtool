@@ -60,12 +60,12 @@ class BuildIndex(virtool.jobs.job.Job):
         fasta_dict = dict()
 
         for patch_id, patch_version in self.task_args["manifest"].items():
-            document = await self.db.otus.find_one(patch_id)
+            document = await self.dbi.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = await virtool.db.otus.join(self.db, patch_id)
+                joined = await virtool.db.otus.join(self.dbi, patch_id)
             else:
-                _, joined, _ = await virtool.db.history.patch_to_version(self.db, patch_id, patch_version)
+                _, joined, _ = await virtool.db.history.patch_to_version(self.dbi, patch_id, patch_version)
 
             # Extract the list of sequences from the joined patched patch.
             sequences = virtool.otus.extract_default_sequences(joined)
@@ -107,13 +107,13 @@ class BuildIndex(virtool.jobs.job.Job):
 
         """
         # Tell the client the index is ready to be used and to no longer show it as building.
-        await self.db.indexes.update_one({"_id": self.index_id}, {
+        await self.dbi.indexes.update_one({"_id": self.index_id}, {
             "$set": {
                 "ready": True
             }
         })
 
-        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db, self.ref_id)
+        active_indexes = await virtool.db.indexes.get_active_index_ids(self.dbi, self.ref_id)
 
         base_path = os.path.join(
             self.settings["data_path"],
@@ -123,7 +123,7 @@ class BuildIndex(virtool.jobs.job.Job):
 
         remove_unused_index_files(base_path, active_indexes)
 
-        await self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
+        await self.dbi.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
             "$set": {
                 "has_files": False
             }
@@ -143,8 +143,8 @@ class BuildIndex(virtool.jobs.job.Job):
             }}
         ]
 
-        async for agg in self.db.otus.aggregate(pipeline):
-            await self.db.otus.update_one({"_id": agg["_id"]}, {
+        async for agg in self.dbi.otus.aggregate(pipeline):
+            await self.dbi.otus.update_one({"_id": agg["_id"]}, {
                 "$set": {
                     "last_indexed_version": agg["version"]
                 }
@@ -158,10 +158,10 @@ class BuildIndex(virtool.jobs.job.Job):
 
         """
         # Remove the index document from the database.
-        await self.db.indexes.delete_one({"_id": self.index_id})
+        await self.dbi.indexes.delete_one({"_id": self.index_id})
 
         # Set all the otus included in the build to "unbuilt" again.
-        await self.db.history.update_many({"index.id": self.index_id}, {
+        await self.dbi.history.update_many({"index.id": self.index_id}, {
             "$set": {
                 "index": {
                     "id": "unbuilt",

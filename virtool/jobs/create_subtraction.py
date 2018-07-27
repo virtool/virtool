@@ -56,7 +56,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         """
         gc, count = virtool.subtractions.calculate_fasta_gc(self.fasta_path)
 
-        await self.db.subtraction.update_one({"_id": self.subtraction_id}, {
+        await self.dbi.subtraction.update_one({"_id": self.subtraction_id}, {
             "$set": {
                 "gc": gc,
                 "count": count
@@ -82,7 +82,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         Set the ``ready`` on the subtraction document ``True``.
 
         """
-        await self.db.subtraction.update_one({"_id": self.subtraction_id}, {
+        await self.dbi.subtraction.update_one({"_id": self.subtraction_id}, {
             "$set": {
                 "ready": True
             }
@@ -101,4 +101,4 @@ class CreateSubtraction(virtool.jobs.job.Job):
             pass
 
         # Remove the associated subtraction document.
-        await self.db.subtraction.delete_one({"_id": self.subtraction_id})
+        await self.dbi.subtraction.delete_one({"_id": self.subtraction_id})
