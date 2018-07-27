@@ -20,7 +20,7 @@ const JobsToolbar = (props) => {
     if (props.canRemove) {
         removalDropdown = (
             <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-                <Button onClick={() => props.onClear()} tip="Clear Finished">
+                <Button name="finished" onClick={props.onClear} tip="Clear Finished">
                     <Icon name="trash" />
                 </Button>
                 <Dropdown.Toggle />
