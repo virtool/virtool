@@ -20,7 +20,7 @@ exports[`<UploadBar /> renders correctly 1`] = `
   </t>
   <Button
     bsStyle="default"
-    icon="folder-open"
+    icon="folder-open fa-fw"
     onClick={[Function]}
     pullRight={false}
     tipPlacement="top"
@@ -49,7 +49,7 @@ exports[`<UploadBar /> renders optional message instead 1`] = `
   </t>
   <Button
     bsStyle="default"
-    icon="folder-open"
+    icon="folder-open fa-fw"
     onClick={[Function]}
     pullRight={false}
     tipPlacement="top"
