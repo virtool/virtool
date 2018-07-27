@@ -27,7 +27,7 @@ const getInitialState = (props) => {
 
         return {
             definition: sequence.definition,
-            host: sequence.host,
+            host: sequence.host || "",
             sequence: sequence.sequence,
             segment: sequence.segment,
             autofillPending: false,
