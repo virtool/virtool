@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
 import { filterReferences } from "../actions";
 
@@ -23,11 +23,13 @@ const ReferenceToolbar = ({ filter, onFilter, canCreate }) => (
         </div>
 
         {canCreate ? (
-            <Link to={{state: {newReference: true, createReference: true}}}>
-                <Button bsStyle="primary" tip="Create">
-                    <Icon name="plus-square" />
-                </Button>
-            </Link>
+            <LinkContainer to={{state: {newReference: true, createReference: true}}}>
+                <Button
+                    bsStyle="primary"
+                    tip="Create"
+                    icon="plus-square fa-fw"
+                />
+            </LinkContainer>
         ) : null}
     </div>
 );
