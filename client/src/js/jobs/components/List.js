@@ -4,32 +4,21 @@ import { connect } from "react-redux";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
-import { fetchJobs } from "../actions";
-import { getUpdatedScrollListState, checkAdminOrPermission } from "../../utils";
+import { listJobs } from "../actions";
+import { checkAdminOrPermission } from "../../utils";
 
 export class JobsList extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-    }
-
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
-    }
-
     componentDidMount () {
-        this.props.onNextPage(1);
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
+        }
     }
 
     rowRenderer = (index) => (
         <Job
-            key={this.state.masterList[index].id}
-            {...this.state.masterList[index]}
+            key={this.props.documents[index].id}
+            {...this.props.documents[index]}
             canRemove={this.props.canRemove}
             canCancel={this.props.canCancel}
         />
@@ -43,7 +32,7 @@ export class JobsList extends React.Component {
 
         let noJobs;
 
-        if (!this.state.masterList.length) {
+        if (!this.props.documents.length) {
             noJobs = <NoneFound noun="jobs" noListGroup />;
         }
 
@@ -51,7 +40,7 @@ export class JobsList extends React.Component {
             <div>
                 <ViewHeader title="Jobs" totalCount={this.props.total_count} />
 
-                <JobsToolbar />
+                <JobsToolbar canRemove={this.props.canRemove} />
 
                 {noJobs}
 
@@ -59,9 +48,10 @@ export class JobsList extends React.Component {
                     hasNextPage={this.props.page < this.props.page_count}
                     isNextPageLoading={this.props.isLoading}
                     isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
-                    loadNextPage={this.props.onNextPage}
-                    page={this.state.page}
+                    list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
+                    loadNextPage={this.props.loadNextPage}
+                    page={this.props.page}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -77,8 +67,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onNextPage: (page) => {
-        dispatch(fetchJobs(page));
+    loadNextPage: (page) => {
+        dispatch(listJobs(page));
     }
 
 });

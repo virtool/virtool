@@ -30,7 +30,6 @@ class SubtractionDetail extends React.Component {
 
     handleExit = () => {
         this.setState({showEdit: false});
-        this.props.onGet(this.props.match.params.subtractionId);
     };
 
     render () {

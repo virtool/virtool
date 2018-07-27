@@ -74,10 +74,10 @@ class CreateSample extends React.Component {
         return null;
     }
 
-    modalEnter = () => {
+    componentDidMount () {
         this.props.onFindHosts();
         this.props.onFindFiles();
-    };
+    }
 
     handleHide = () => {
         this.props.onHide();
@@ -147,7 +147,7 @@ class CreateSample extends React.Component {
 
     render () {
 
-        if (this.props.readyHosts === null || this.props.readFiles) {
+        if (this.props.readyHosts === null || !this.props.readyReads.length) {
             return (
                 <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>

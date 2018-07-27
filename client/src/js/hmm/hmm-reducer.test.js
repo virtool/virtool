@@ -1,8 +1,12 @@
 import reducer, { initialState as reducerInitialState } from "./reducer";
-import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
+import {
+    WS_UPDATE_STATUS,
+    LIST_HMMS,
+    GET_HMM,
+    FILTER_HMMS
+} from "../actionTypes";
 
 describe("HMM Reducer", () => {
-
     const initialState = reducerInitialState;
     let state;
     let action;
@@ -28,34 +32,74 @@ describe("HMM Reducer", () => {
 
     describe("should handle WS_UPDATE_STATUS", () => {
 
+        it("if status update id === 'hmm'", () => {
+            state = {};
+            action = {
+                type: WS_UPDATE_STATUS,
+                data: {
+                    id: "hmm",
+                    installed: {},
+                    process: {},
+                    release: {}
+                }
+            };
+            result = reducer(state, action);
+            expected = {
+                status: {
+                    installed: {},
+                    process: {},
+                    release: {}
+                }
+            };
+            expect(result).toEqual(expected);
+        });
+
         it("otherwise return state", () => {
             state = {};
             action = {
                 type: WS_UPDATE_STATUS,
-                data: { id: "other_id" }
+                data: { id: "not_hmm" }
             };
             result = reducer(state, action);
             expected = state;
-
             expect(result).toEqual(expected);
         });
 
     });
 
-    it("should handle FIND_HMMS_SUCCEEDED", () => {
+    it("should handle LIST_HMMS_REQUESTED", () => {
         state = {};
+        action = { type: LIST_HMMS.REQUESTED };
+        result = reducer(state, action);
+        expected = {
+            isLoading: true,
+            errorLoad: false
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_HMMS_SUCCEEDED", () => {
+        state = { documents: null, page: 0 };
         action = {
-            type: FIND_HMMS.SUCCEEDED,
-            data: {}
+            type: LIST_HMMS.SUCCEEDED,
+            data: { documents: [], page: 1 }
         };
         result = reducer(state, action);
         expected = {
             ...state,
             ...action.data,
             isLoading: false,
-            errorLoad: false
+            errorLoad: false,
+            fetched: true
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle LIST_HMMS_FAILED", () => {
+        state = {};
+        action = { type: LIST_HMMS.FAILED };
+        result = reducer(state, action);
+        expected = { isLoading: false, errorLoad: true };
         expect(result).toEqual(expected);
     });
 
@@ -69,7 +113,6 @@ describe("HMM Reducer", () => {
             ...state,
             detail: null
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -84,7 +127,28 @@ describe("HMM Reducer", () => {
             ...state,
             detail: action.data
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle FILTER_HMMS_REQUESTED", () => {
+        state = {};
+        action = {
+            type: FILTER_HMMS.REQUESTED,
+            term: "search"
+        };
+        result = reducer(state, action);
+        expected = { filter: "search" };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_HMMS_SUCCEEDED", () => {
+        state = {};
+        action = {
+            type: FILTER_HMMS.SUCCEEDED,
+            data: { documents: [] }
+        };
+        result = reducer(state, action);
+        expected = { documents: [] };
         expect(result).toEqual(expected);
     });
 

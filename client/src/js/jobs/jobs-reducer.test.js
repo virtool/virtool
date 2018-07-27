@@ -1,13 +1,11 @@
-import reducer, {
-    initialState as reducerInitialState,
-    updateJob
-} from "./reducer";
+import reducer, { initialState as reducerInitialState } from "./reducer";
 import {
+    WS_INSERT_JOB,
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
-    FIND_JOBS,
+    LIST_JOBS,
+    FILTER_JOBS,
     GET_JOB,
-    CANCEL_JOB,
     GET_RESOURCES
 } from "../actionTypes";
 
@@ -36,100 +34,144 @@ describe("Job Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    describe("should handle WS_UPDATE_JOB", () => {
-
-        it("when [documents=null], return state", () => {
-            state = {
-                documents: null
-            };
-            action = {
-                type: WS_UPDATE_JOB
-            };
+    describe("should handle WS_INSERT_JOB", () => {
+        it("when documents are not yet fetched, returns state", () => {
+            state = { fetched: false };
+            action = { type: WS_INSERT_JOB };
             result = reducer(state, action);
             expected = state;
-
             expect(result).toEqual(expected);
         });
 
-        it("otherwise update job", () => {
+        it("otherwise insert entry into list", () => {
             state = {
-                documents: [
-                    {
-                        id: "testid",
-                        task: "test_job"
-                    },
-                    {
-                        id: "anotherid",
-                        task: "update_job"
-                    }
-                ]
+                fetched: true,
+                documents: null,
+                page: 0,
+                per_page: 3
             };
-            action = {
-                type: WS_UPDATE_JOB,
-                data: {
-                    id: "anotherid",
-                    update: "update"
-                }
-            };
+            action = { type: WS_INSERT_JOB, data: { id: "test" } };
             result = reducer(state, action);
             expected = {
                 ...state,
-                documents: [
-                    {
-                        id: "testid",
-                        task: "test_job"
-                    },
-                    {
-                        id: "anotherid",
-                        task: "update_job",
-                        update: "update"
-                    }
-                ]
+                documents: []
             };
-
-            expect(result).toEqual(expected);
         });
-
     });
 
-    it("should handle WS_REMOVE_JOB", () => {
-        state = { documents: [{id: "test1"}, {id: "test2"}] };
-        action = {
-            type: WS_REMOVE_JOB,
-            jobId: "test2"
+    it("should handle WS_UPDATE_JOB", () => {
+        state = {
+            documents: [
+                {
+                    id: "foo",
+                    task: "test_job"
+                },
+                {
+                    id: "bar",
+                    task: "running_job"
+                }
+            ]
         };
-        result = reducer(state, action);
-        expected = { documents: [{ id: "test1" }] };
-
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle FIND_JOBS_SUCCEEDED", () => {
-        state = {};
         action = {
-            type: FIND_JOBS.SUCCEEDED,
-            data: {}
+            type: WS_UPDATE_JOB,
+            data: {
+                id: "bar",
+                task: "finish_job"
+            }
         };
         result = reducer(state, action);
         expected = {
             ...state,
-            ...action.data
+            documents: [
+                {
+                    id: "foo",
+                    task: "test_job"
+                },
+                {
+                    id: "bar",
+                    task: "finish_job"
+                }
+            ]
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle WS_REMOVE_JOB", () => {
+        state = {
+            page: 1,
+            page_count: 3,
+            documents: [
+                { id: "test1" },
+                { id: "test2" }
+            ]
+        };
+        action = {
+            type: WS_REMOVE_JOB,
+            data: ["test2"]
+        };
+        result = reducer(state, action);
+        expected = {...state, documents: [{ id: "test1" }], refetchPage: true };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_JOBS_REQUESTED", () => {
+        state = {};
+        action = { type: LIST_JOBS.REQUESTED };
+        result = reducer(state, action);
+        expected = { isLoading: true, errorLoad: false };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_JOBS_SUCCEEDED", () => {
+        state = { documents: null, page: 0 };
+        action = {
+            type: LIST_JOBS.SUCCEEDED,
+            data: { documents: [] }
+        };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            documents: [],
+            isLoading: false,
+            errorLoad: false,
+            fetched: true,
+            refetchPage: false
+        };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_JOBS_FAILED", () => {
+        state = {};
+        action = { type: LIST_JOBS.FAILED };
+        result = reducer(state, action);
+        expected = { isLoading: false, errorLoad: true };
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_JOBS_REQUESTED", () => {
+        state = {};
+        action = { type: FILTER_JOBS.REQUESTED, term: "search" };
+        result = reducer(state, action);
+        expected = {...state, filter: "search"};
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle FILTER_JOBS_SUCCEEDED", () => {
+        state = { documents: null };
+        action = {
+            type: FILTER_JOBS.SUCCEEDED,
+            data: { documents: [] }
+        };
+        result = reducer(state, action);
+        expected = {...state, documents: []};
         expect(result).toEqual(expected);
     });
 
     it("should handle GET_JOB_REQUESTED", () => {
-        state = {};
-        action = {
-            type: GET_JOB.REQUESTED
-        };
+        state = { detail: { foo: "bar" } };
+        action = { type: GET_JOB.REQUESTED };
         result = reducer(state, action);
-        expected = {
-            ...state,
-            detail: null
-        };
-
+        expected = {...state, detail: null};
         expect(result).toEqual(expected);
     });
 
@@ -148,45 +190,6 @@ describe("Job Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle CANCEL_JOB_SUCCEEDED", () => {
-        state = {
-            documents: [
-                {
-                    id: "testid",
-                    task: "test_job"
-                },
-                {
-                    id: "anotherid",
-                    task: "update_job"
-                }
-            ]
-        };
-        action = {
-            type: CANCEL_JOB.SUCCEEDED,
-            data: {
-                id: "testid",
-                update: "cancelled"
-            }
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            documents: [
-                {
-                    id: "testid",
-                    task: "test_job",
-                    update: "cancelled"
-                },
-                {
-                    id: "anotherid",
-                    task: "update_job"
-                }
-            ]
-        };
-
-        expect(result).toEqual(expected);
-    });
-
     it("should handle GET_RESOURCES_SUCCEEDED", () => {
         state = {};
         action = {
@@ -200,40 +203,6 @@ describe("Job Reducer", () => {
         };
 
         expect(result).toEqual(expected);
-    });
-
-    describe("Job Reducer Helper Functions", () => {
-
-        describe("updateJob", () => {
-
-            it("updates a specific job", () => {
-                state = {
-                    documents: [
-                        { id: "test1" },
-                        { id: "test2" },
-                        { id: "test3" }
-                    ]
-                };
-                action = {
-                    data: {
-                        id: "test2",
-                        update: "test_update"
-                    }
-                };
-                result = updateJob(state, action);
-                expected = {
-                    ...state,
-                    documents: [
-                        { id: "test1" },
-                        { id: "test2", update: "test_update" },
-                        { id: "test3" }
-                    ]
-                };
-
-                expect(result).toEqual(expected);
-            });
-
-        });
     });
 
 });

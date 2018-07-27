@@ -5,6 +5,9 @@
  */
 
 import {
+    WS_INSERT_USER,
+    WS_UPDATE_USER,
+    WS_REMOVE_USER,
     LIST_USERS,
     FILTER_USERS,
     GET_USER,
@@ -12,6 +15,21 @@ import {
     EDIT_USER,
     REMOVE_USER
 } from "../actionTypes";
+
+export const wsInsertUser = (data) => ({
+    type: WS_INSERT_USER,
+    data
+});
+
+export const wsUpdateUser = (data) => ({
+    type: WS_UPDATE_USER,
+    data
+});
+
+export const wsRemoveUser = (data) => ({
+    type: WS_REMOVE_USER,
+    data
+});
 
 /**
  * Returns action that can trigger an API call for retrieving all users.

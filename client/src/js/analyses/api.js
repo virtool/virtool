@@ -4,6 +4,10 @@ export const findAnalyses = ({ sampleId }) => (
     Request.get(`/api/samples/${sampleId}/analyses`)
 );
 
+export const filter = ({ sampleId, term }) => (
+    Request.get(`/api/samples/${sampleId}/analyses?find=${term}`)
+);
+
 export const getAnalysis = ({ analysisId }) => (
     Request.get(`/api/analyses/${analysisId}`)
 );

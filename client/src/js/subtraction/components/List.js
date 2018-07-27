@@ -1,92 +1,128 @@
 import React from "react";
-import { map } from "lodash-es";
-import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
 import SubtractionItem from "./Item";
-import { Alert, Button, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
-import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
+import { Alert, Button, Icon, NoneFound, ViewHeader, ScrollList, LoadingPlaceholder } from "../../base";
+import { checkAdminOrPermission } from "../../utils";
+import { filterSubtractions, listSubtractions } from "../actions";
 
-const SubtractionList = (props) => {
+const SubtractionToolbar = ({ term, onFilter, canModify }) => (
+    <div key="toolbar" className="toolbar">
+        <FormGroup>
+            <InputGroup>
+                <InputGroup.Addon>
+                    <Icon name="search" />
+                </InputGroup.Addon>
+                <FormControl
+                    type="text"
+                    value={term}
+                    onChange={onFilter}
+                    placeholder="Name"
+                />
+            </InputGroup>
+        </FormGroup>
 
-    if (props.documents === null) {
-        return <LoadingPlaceholder />;
+        {canModify ? (
+            <LinkContainer to={{state: {createSubtraction: true}}}>
+                <Button bsStyle="primary" icon="plus-square" tip="Create" />
+            </LinkContainer>
+        ) : null}
+    </div>
+);
+
+class SubtractionList extends React.Component {
+
+    componentDidMount () {
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
+        }
     }
 
-    let subtractionComponents = map(props.documents, document =>
+    rowRenderer = (index) => (
         <SubtractionItem
-            key={document.id}
-            {...document}
+            key={this.props.documents[index].id}
+            {...this.props.documents[index]}
         />
     );
 
-    if (!subtractionComponents.length) {
-        subtractionComponents = <NoneFound noun="subtractions" noListGroup />;
-    }
+    render () {
 
-    let alert;
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
 
-    if (!props.ready_host_count && !props.total_count) {
-        alert = (
-            <Alert bsStyle="warning" icon="info-circle">
-                <strong>
-                    A host genome must be added before samples can be created and analyzed.
-                </strong>
-            </Alert>
+        let subtractionComponents;
+        let alert;
+
+        if (this.props.documents.length) {
+            subtractionComponents = (
+                <ScrollList
+                    hasNextPage={this.props.page < this.props.page_count}
+                    isNextPageLoading={this.props.isLoading}
+                    isLoadError={this.props.errorLoad}
+                    list={this.props.documents}
+                    refetchPage={this.props.refetchPage}
+                    loadNextPage={this.props.loadNextPage}
+                    page={this.props.page}
+                    rowRenderer={this.rowRenderer}
+                />
+            );
+        } else {
+            subtractionComponents = (
+                <div className="list-group">
+                    <NoneFound noun="subtractions" noListGroup />
+                </div>
+            );
+        }
+
+        if (!this.props.ready_host_count && !this.props.total_count) {
+            alert = (
+                <Alert bsStyle="warning" icon="info-circle">
+                    <strong>
+                        A host genome must be added before samples can be created and analyzed.
+                    </strong>
+                </Alert>
+            );
+        }
+
+        return (
+            <div>
+                <ViewHeader title="Subtraction" totalCount={this.props.total_count} />
+
+                {alert}
+
+                <SubtractionToolbar
+                    term={this.props.filter}
+                    onFilter={this.props.onFilter}
+                    canModify={this.props.canModify}
+                />
+
+                {subtractionComponents}
+
+                <CreateSubtraction />
+            </div>
         );
     }
-
-    return (
-        <div>
-            <ViewHeader title="Subtraction" totalCount={props.total_count} />
-
-            {alert}
-
-            <div key="toolbar" className="toolbar">
-                <FormGroup>
-                    <InputGroup>
-                        <InputGroup.Addon>
-                            <Icon name="search" />
-                        </InputGroup.Addon>
-                        <FormControl
-                            type="text"
-                            value={props.term}
-                            onChange={props.onFind}
-                            placeholder="Name"
-                        />
-                    </InputGroup>
-                </FormGroup>
-
-                {props.canModify ? (
-                    <LinkContainer to={{state: {createSubtraction: true}}}>
-                        <Button bsStyle="primary" icon="plus-square" tip="Create" />
-                    </LinkContainer>
-                ) : null}
-            </div>
-
-            <div className="list-group">
-                {subtractionComponents}
-            </div>
-
-            <CreateSubtraction />
-        </div>
-    );
-};
+}
 
 const mapStateToProps = (state) => ({
     ...state.subtraction,
-    term: getFindTerm(),
     canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction")
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (e) => {
-        const url = createFindURL({find: e.target.value});
-        dispatch(push(url.pathname + url.search));
+    onFilter: (e) => {
+        dispatch(filterSubtractions(e.target.value));
+    },
+
+    loadNextPage: (page) => {
+        if (page) {
+            dispatch(listSubtractions(page));
+        }
     }
 
 });

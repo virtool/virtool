@@ -3,16 +3,16 @@ import reducer, {
     checkUploadsComplete
 } from "./reducer";
 import {
-    FIND_FILES,
-    REMOVE_FILE,
+    WS_INSERT_FILE,
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    LIST_FILES,
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
-import { reject } from "lodash-es";
 
 describe("Files Reducer", () => {
-
     const initialState = reducerInitialState;
     let state;
     let action;
@@ -22,7 +22,6 @@ describe("Files Reducer", () => {
     it("should return the initial state on first pass", () => {
         result = reducer(undefined, {});
         expected = initialState;
-
         expect(result).toEqual(expected);
     });
 
@@ -32,33 +31,76 @@ describe("Files Reducer", () => {
         };
         result = reducer(initialState, action);
         expected = initialState;
-
         expect(result).toEqual(expected);
     });
 
-    it("should handle FIND_FILES_REQUESTED", () => {
+    describe("should handle WS_INSERT_FILE", () => {
+
+        it("if list is empty or fileType doesn't match, return state", () => {
+            state = { fetched: true, fileType: "reads" };
+            action = {
+                type: WS_INSERT_FILE,
+                data: { type: "subtraction" }
+            };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
+
+        it("otherwise insert entry into list", () => {
+            state = { fetched: true, fileType: "reads", documents: [], page: 1, per_page: 3 };
+            action = {
+                type: WS_INSERT_FILE,
+                data: { type: "reads", id: "test" }
+            };
+            result = reducer(state, action);
+            expected = {...state, documents: [action.data]};
+            expect(result).toEqual(expected);
+        });
+
+    });
+
+    it("should handle WS_UPDATE_FILE", () => {
+        state = { documents: [{ id: "test", foo: "bar" }] };
+        action = {
+            type: WS_UPDATE_FILE,
+            data: { id: "test", foo: "not-bar"}
+        };
+        result = reducer(state, action);
+        expected = {...state, documents: [action.data]};
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle WS_REMOVE_FILE", () => {
+        state = { documents: [{ id: "test", foo: "bar" }] };
+        action = {
+            type: WS_REMOVE_FILE,
+            data: ["test"]
+        };
+        result = reducer(state, action);
+        expected = {...state, documents: [], refetchPage: false};
+        expect(result).toEqual(expected);
+    });
+
+    it("should handle LIST_FILES_REQUESTED", () => {
         state = initialState;
         action = {
-            type: FIND_FILES.REQUESTED
+            type: LIST_FILES.REQUESTED
         };
         result = reducer(state, action);
         expected = {
             ...initialState,
-            showUploadOverlay: state.showUploadOverlay,
-            uploads: state.uploads,
-            uploadsComplete: state.uploadsComplete,
             isLoading: true,
             errorLoad: false
         };
-
         expect(result).toEqual(expected);
     });
 
-    it("should handle FIND_FILES_SUCCEEDED", () => {
-        state = {};
+    it("should handle LIST_FILES_SUCCEEDED", () => {
+        state = { documents: [], page: 0 };
         action = {
-            type: FIND_FILES.SUCCEEDED,
-            data: {},
+            type: LIST_FILES.SUCCEEDED,
+            data: { documents: [] },
             fileType: "test"
         };
         result = reducer(state, action);
@@ -67,31 +109,19 @@ describe("Files Reducer", () => {
             ...action.data,
             fileType: action.fileType,
             isLoading: false,
-            errorLoad: false
+            errorLoad: false,
+            fetched: true,
+            refetchPage: false
         };
 
         expect(result).toEqual(expected);
     });
 
-    it("should handle REMOVE_FILE_SUCCEEDED", () => {
-        state = {
-            documents: [
-                { id: "test_file" },
-                { id: "another_test_file" }
-            ]
-        };
-        action = {
-            type: REMOVE_FILE.SUCCEEDED,
-            data: {
-                file_id: "test_file"
-            }
-        };
+    it("should handle LIST_FILES_FAILED", () => {
+        state = {};
+        action = { type: LIST_FILES.FAILED };
         result = reducer(state, action);
-        expected = {
-            ...state,
-            documents: reject(state.documents, {id: action.data.file_id})
-        };
-
+        expected = { isLoading: false, errorLoad: true };
         expect(result).toEqual(expected);
     });
 
@@ -116,7 +146,6 @@ describe("Files Reducer", () => {
             showUploadOverlay: true,
             uploadsComplete: false
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -136,7 +165,6 @@ describe("Files Reducer", () => {
                 ...state,
                 uploadsComplete: true
             };
-
             expect(result).toEqual(expected);
         });
 
@@ -162,7 +190,6 @@ describe("Files Reducer", () => {
                 ],
                 uploadsComplete: false
             };
-
             expect(result).toEqual(expected);
         });
 
@@ -188,7 +215,6 @@ describe("Files Reducer", () => {
                 ],
                 uploadsComplete: true
             };
-
             expect(result).toEqual(expected);
         });
 
@@ -204,7 +230,6 @@ describe("Files Reducer", () => {
             ...state,
             showUploadOverlay: false
         };
-
         expect(result).toEqual(expected);
     });
 

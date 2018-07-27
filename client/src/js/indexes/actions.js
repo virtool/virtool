@@ -1,12 +1,24 @@
 import {
+    WS_INSERT_INDEX,
     WS_UPDATE_INDEX,
-    FIND_INDEXES,
+    LIST_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    LIST_READY_INDEXES
+    LIST_READY_INDEXES,
+    WS_INSERT_HISTORY
 } from "../actionTypes";
+
+export const wsInsertHistory = (data) => ({
+    type: WS_INSERT_HISTORY,
+    data
+});
+
+export const wsInsertIndex = (data) => ({
+    type: WS_INSERT_INDEX,
+    data
+});
 
 /**
  * Returns an action that should be dispatched when an index document is updated via websocket.
@@ -26,8 +38,8 @@ export const wsUpdateIndex = (data) => ({
  * @func
  * @returns {object}
  */
-export const findIndexes = (refId, page) => ({
-    type: FIND_INDEXES.REQUESTED,
+export const listIndexes = (refId, page) => ({
+    type: LIST_INDEXES.REQUESTED,
     refId,
     page
 });

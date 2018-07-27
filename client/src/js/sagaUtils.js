@@ -21,7 +21,7 @@ import { matchPath } from "react-router-dom";
  * @param actionType {object} a request-style action type
  * @param extra {object} extra properties to assign to the SUCCEEDED action
  */
-export function* apiCall (apiMethod, action, actionType, extra = {}, extraFunctions = {}) {
+export function* apiCall (apiMethod, action, actionType, extra = {}, extraFunctions) {
     try {
         const response = yield apiMethod(action);
         yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});

@@ -1,10 +1,9 @@
-import { put, takeEvery, takeLatest, select } from "redux-saga/effects";
+import { push } from "react-router-redux";
+import { put, takeEvery, takeLatest } from "redux-saga/effects";
 import * as indexesAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import {
-    GET_REFERENCE,
-    WS_UPDATE_INDEX,
-    FIND_INDEXES,
+    LIST_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
@@ -13,8 +12,7 @@ import {
 } from "../actionTypes";
 
 export function* watchIndexes () {
-    yield takeLatest(WS_UPDATE_INDEX, wsUpdateIndex);
-    yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
+    yield takeLatest(LIST_INDEXES.REQUESTED, listIndexes);
     yield takeLatest(GET_INDEX.REQUESTED, getIndex);
     yield takeLatest(GET_UNBUILT.REQUESTED, getUnbuilt);
     yield takeEvery(CREATE_INDEX.REQUESTED, createIndex);
@@ -22,24 +20,8 @@ export function* watchIndexes () {
     yield takeLatest(LIST_READY_INDEXES.REQUESTED, listReadyIndexes);
 }
 
-export function* wsUpdateIndex (action) {
-    const refId = yield select(state => state.references.detail.id);
-
-    if (refId === action.data.reference.id && action.data.has_files) {
-        yield put({
-            type: FIND_INDEXES.REQUESTED,
-            refId: action.data.reference.id,
-            page: 1
-        });
-        yield put({
-            type: GET_REFERENCE.REQUESTED,
-            referenceId: action.data.reference.id
-        });
-    }
-}
-
-export function* findIndexes (action) {
-    yield apiCall(indexesAPI.find, action, FIND_INDEXES);
+export function* listIndexes (action) {
+    yield apiCall(indexesAPI.list, action, LIST_INDEXES);
 }
 
 export function* getIndex (action) {
@@ -55,12 +37,10 @@ export function* listReadyIndexes (action) {
 }
 
 export function* createIndex (action) {
-    yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX));
-    yield put({
-        type: FIND_INDEXES.REQUESTED,
-        refId: action.refId,
-        page: 1
-    });
+    const extraFunc = {
+        closeModal: put(push({state: {rebuild: false}}))
+    };
+    yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX, {}, extraFunc));
 }
 
 export function* getIndexHistory (action) {

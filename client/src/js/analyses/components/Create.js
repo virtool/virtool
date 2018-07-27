@@ -68,7 +68,8 @@ export default class CreateAnalysis extends React.Component {
         onHide: PropTypes.func,
         hasHmm: PropTypes.bool,
         refIndexes: PropTypes.array,
-        selected: PropTypes.array
+        selected: PropTypes.array,
+        userId: PropTypes.string
     };
 
     handleSelect = (newEntry) => {
@@ -90,7 +91,7 @@ export default class CreateAnalysis extends React.Component {
             return this.setState({ errorRef: "Please select reference(s)" });
         }
 
-        this.props.onSubmit(this.props.id, this.state.selected, this.state.algorithm);
+        this.props.onSubmit(this.props.id, this.state.selected, this.state.algorithm, this.props.userId);
         this.props.onHide();
     };
 

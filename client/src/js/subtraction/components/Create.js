@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { push } from "react-router-redux";
 
-import { findFiles } from "../../files/actions";
+import { listFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
@@ -73,7 +73,7 @@ class CreateSubtraction extends React.Component {
     };
 
     handleModalEnter = () => {
-        this.props.onFindFiles();
+        this.props.onListFiles();
     };
 
     handleModalExited = () => {
@@ -216,8 +216,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(createSubtraction(subtractionId, fileId, nickname));
     },
 
-    onFindFiles: () => {
-        dispatch(findFiles("subtraction"));
+    onListFiles: () => {
+        dispatch(listFiles("subtraction"));
     },
 
     onHide: () => {

@@ -1,11 +1,12 @@
-var path = require("path");
-var webpack = require("webpack");
-var HTMLPlugin = require("html-webpack-plugin");
-var CleanPlugin = require("clean-webpack-plugin");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var UglifyJSPlugin = require("uglifyjs-webpack-plugin");
+/* global __dirname */
+import path from "path";
+import webpack from "webpack";
+import HTMLPlugin from "html-webpack-plugin";
+import CleanPlugin from "clean-webpack-plugin";
+import ExtractTextPlugin from "extract-text-webpack-plugin";
+import UglifyJSPlugin from "uglifyjs-webpack-plugin";
 
-module.exports = {
+export default {
 
     entry: ["babel-polyfill", "./src/js/index.js"],
 
@@ -69,9 +70,7 @@ module.exports = {
 
     plugins: [
         new webpack.DefinePlugin({
-            "process.env": {
-                "NODE_ENV": JSON.stringify("production")
-            }
+            "process.env.NODE_ENV": JSON.stringify("production")
         }),
 
         new ExtractTextPlugin("style.[hash:8].css"),
@@ -86,6 +85,10 @@ module.exports = {
 
         new CleanPlugin(["dist"], {
             verbose: true
+        }),
+
+        new UglifyJSPlugin({
+            sourceMap: true
         })
     ]
 };

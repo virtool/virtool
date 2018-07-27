@@ -37,7 +37,7 @@ export class UserItem extends React.Component {
     componentDidMount () {
         this.props.onGetUser(this.props.match.params.userId);
 
-        if (this.props.groups === null) {
+        if (!this.props.groupsFetched) {
             this.props.onListGroups();
         }
     }
@@ -159,6 +159,7 @@ const mapStateToProps = state => ({
     activeUser: state.account.id,
     activeUserIsAdmin: state.account.administrator,
     groups: state.groups.list,
+    groupsFetched: state.groups.fetched,
     error: get(state, "errors.GET_USER_ERROR.message", "")
 });
 

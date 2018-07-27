@@ -1,55 +1,83 @@
-import { map, reject } from "lodash-es";
 import {
+    WS_INSERT_JOB,
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
-    FIND_JOBS,
-    FETCH_JOBS,
+    LIST_JOBS,
+    FILTER_JOBS,
     GET_JOB,
-    CANCEL_JOB,
     GET_RESOURCES
 } from "../actionTypes";
+import { updateList, insert, edit, remove } from "../reducerUtils";
 
 export const initialState = {
     documents: null,
+    page: 0,
     detail: null,
+    filter: "",
+    fetched: false,
+    refetchPage: false,
     resources: null
 };
-
-export const updateJob = (state, action) => ({
-    ...state,
-    documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
-});
 
 export default function jobsReducer (state = initialState, action) {
 
     switch (action.type) {
 
+        case WS_INSERT_JOB:
+            if (!state.fetched) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: insert(
+                    state.documents,
+                    state.page,
+                    state.per_page,
+                    action,
+                    "created_at"
+                )
+            };
+
         case WS_UPDATE_JOB:
-            return state.documents === null ? state : updateJob(state, action);
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
 
         case WS_REMOVE_JOB:
-            return {...state, documents: reject(state.documents, {id: action.jobId})};
+            return {
+                ...state,
+                documents: remove(state.documents, action),
+                refetchPage: (state.page < state.page_count)
+            };
 
-        case FIND_JOBS.SUCCEEDED:
-            return {...state, ...action.data};
-
-        case FETCH_JOBS.REQUESTED:
+        case LIST_JOBS.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};
 
-        case FETCH_JOBS.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false, errorLoad: false};
+        case LIST_JOBS.SUCCEEDED:
+            return {
+                ...state,
+                ...updateList(state.documents, action, state.page),
+                isLoading: false,
+                errorLoad: false,
+                fetched: true,
+                refetchPage: false
+            };
 
-        case FETCH_JOBS.FAILED:
+        case LIST_JOBS.FAILED:
             return {...state, isLoading: false, errorLoad: true};
+
+        case FILTER_JOBS.REQUESTED:
+            return {...state, filter: action.term};
+
+        case FILTER_JOBS.SUCCEEDED:
+            return {...state, ...action.data};
 
         case GET_JOB.REQUESTED:
             return {...state, detail: null};
 
         case GET_JOB.SUCCEEDED:
             return {...state, detail: action.data};
-
-        case CANCEL_JOB.SUCCEEDED:
-            return updateJob(state, action);
 
         case GET_RESOURCES.SUCCEEDED:
             return {...state, resources: action.data};

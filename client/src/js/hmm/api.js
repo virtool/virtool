@@ -1,10 +1,10 @@
 import Request from "superagent";
 
-export const find = () => (
-    Request.get(`/api/hmms${window.location.search}`)
+export const filter = ({ term }) => (
+    Request.get(`/api/hmms?find=${term}`)
 );
 
-export const nextPage = ({ page }) => (
+export const list = ({ page }) => (
     Request.get(`/api/hmms?page=${page}`)
 );
 

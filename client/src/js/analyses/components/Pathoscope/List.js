@@ -1,9 +1,9 @@
-import {filter, flatten, forIn, map, sortBy, split} from "lodash-es";
+import { filter, flatten, forIn, map, sortBy, split } from "lodash-es";
 import React from "react";
-import {Panel} from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 import FlipMove from "react-flip-move";
-import {connect} from "react-redux";
-import {Icon} from "../../../base/index";
+import { connect } from "react-redux";
+import { Icon } from "../../../base/index";
 import PathoscopeIsolate from "./Isolate";
 import PathoscopeItem from "./Item";
 

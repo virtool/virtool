@@ -1,7 +1,9 @@
 import {simpleActionCreator} from "../utils";
 import {
+    WS_INSERT_SAMPLE,
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
+    FILTER_SAMPLES,
     FIND_READ_FILES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -9,10 +11,15 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
-    FETCH_SAMPLES,
+    LIST_SAMPLES,
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
+
+export const wsInsertSample = (data) => ({
+    type: WS_INSERT_SAMPLE,
+    data
+});
 
 /**
  * Returns an action that should be dispatched when a sample document is updated via websocket.
@@ -21,9 +28,9 @@ import {
  * @param update {object} update data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateSample = (update) => ({
+export const wsUpdateSample = (data) => ({
     type: WS_UPDATE_SAMPLE,
-    update
+    data
 });
 
 /**
@@ -33,9 +40,14 @@ export const wsUpdateSample = (update) => ({
  * @param removed {string} the id for the specific sample
  * @returns {object}
  */
-export const wsRemoveSample = (removed) => ({
+export const wsRemoveSample = (data) => ({
     type: WS_REMOVE_SAMPLE,
-    removed
+    data
+});
+
+export const filterSamples = (term) => ({
+    type: FILTER_SAMPLES.REQUESTED,
+    term
 });
 
 export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);
@@ -124,8 +136,8 @@ export const removeSample = (sampleId) => ({
     sampleId
 });
 
-export const fetchSamples = (page) => ({
-    type: FETCH_SAMPLES.REQUESTED,
+export const listSamples = (page) => ({
+    type: LIST_SAMPLES.REQUESTED,
     page
 });
 

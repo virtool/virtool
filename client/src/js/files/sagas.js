@@ -1,27 +1,19 @@
 import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
-import { call, put, select, take, takeEvery, takeLatest } from "redux-saga/effects";
-
+import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
 import * as filesAPI from "./api";
 import { putGenericError, setPending, apiCall } from "../sagaUtils";
-import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
+import { LIST_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 import { uploadProgress } from "./actions";
 
 export function* watchFiles () {
-    yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
-    yield takeLatest(WS_UPDATE_FILE, wsUpdateFile);
-    yield takeLatest(FIND_FILES.REQUESTED, findFiles);
+    yield takeLatest(LIST_FILES.REQUESTED, listFiles);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
     yield takeEvery(UPLOAD.REQUESTED, upload);
 }
 
-export function* wsUpdateFile () {
-    const fileType = yield select(state => state.files.fileType);
-    yield findFiles({fileType});
-}
-
-export function* findFiles (action) {
-    yield apiCall(filesAPI.find, action, FIND_FILES, {fileType: action.fileType});
+export function* listFiles (action) {
+    yield apiCall(filesAPI.list, action, LIST_FILES, {fileType: action.fileType});
 }
 
 export function* removeFile (action) {
@@ -42,8 +34,7 @@ export function* upload (action) {
         }
 
         if (response) {
-            yield put({type: UPLOAD.SUCCEEDED, data: response.body});
-            return yield findFiles(action);
+            return yield put({type: UPLOAD.SUCCEEDED, data: response.body});
         }
 
         yield put(uploadProgress(localId, progress));

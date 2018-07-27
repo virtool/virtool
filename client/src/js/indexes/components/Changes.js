@@ -4,35 +4,27 @@ import { connect } from "react-redux";
 
 import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ScrollList } from "../../base";
-import { getUpdatedScrollListState } from "../../utils";
 
 class IndexChanges extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.history ? this.props.history.documents : null,
-            list: this.props.history ? this.props.history.documents : null,
-            page: this.props.history ? this.props.history.page : 1
-        };
-    }
-
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps.history, prevState);
+    componentDidMount () {
+        if (!this.props.history) {
+            this.props.handlePage(1);
+        }
     }
 
     handlePage = (page) => {
-        this.props.onGet(this.props.detail.id, page);
+        this.props.loadNextPage(this.props.detail.id, page);
     };
 
     rowRenderer = (index) => (
-        <ListGroupItem key={this.state.masterList[index].id} className="spaced">
+        <ListGroupItem key={this.props.history.documents[index].id} className="spaced">
             <Row>
                 <Col xs={12} md={6}>
-                    <strong>{this.state.masterList[index].otu.name}</strong>
+                    <strong>{this.props.history.documents[index].otu.name}</strong>
                 </Col>
                 <Col xs={12} md={6}>
-                    {this.state.masterList[index].description}
+                    {this.props.history.documents[index].description}
                 </Col>
             </Row>
         </ListGroupItem>
@@ -48,11 +40,11 @@ class IndexChanges extends React.Component {
             <div>
                 <ScrollList
                     hasNextPage={this.props.history.page < this.props.history.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
+                    isNextPageLoading={this.props.history.isLoading}
+                    isLoadError={this.props.history.errorLoad}
+                    list={this.props.history.documents}
                     loadNextPage={this.handlePage}
-                    page={this.state.page}
+                    page={this.props.history.page}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -69,7 +61,7 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onGet: (indexId, page) => {
+    loadNextPage: (indexId, page) => {
         dispatch(getIndexHistory(indexId, page));
     }
 

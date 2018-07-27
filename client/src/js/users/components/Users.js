@@ -28,19 +28,19 @@ export class ManageUsers extends React.Component {
         super(props);
 
         this.state = {
-            filter: "",
+            filter: this.props.filter,
             error: ""
         };
     }
 
     componentDidMount () {
-        if (this.props.groups === null) {
+        if (!this.props.groupsFetched) {
             this.props.onListGroups();
         }
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
+        if (!nextProps.isAdmin && prevState.error !== nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
@@ -113,7 +113,10 @@ export class ManageUsers extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    isAdmin: state.account.administrator,
+    filter: state.users.filter,
     groups: state.groups.list,
+    groupsFetched: state.groups.fetched,
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 

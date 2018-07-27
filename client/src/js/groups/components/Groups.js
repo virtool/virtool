@@ -1,5 +1,5 @@
 import React from "react";
-import { difference, filter, find, includes, map, sortBy, transform, get, toLower } from "lodash-es";
+import { filter, find, includes, map, sortBy, transform, get, toLower } from "lodash-es";
 import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
@@ -71,7 +71,8 @@ class Groups extends React.Component {
 
         if (prevState.groups.length < nextProps.groups.length) {
             return {
-                activeId: toLower(prevState.createGroupId),
+                activeId: prevState.createGroupId
+                    ? toLower(prevState.createGroupId) : prevState.activeId,
                 createGroupId: "",
                 groups: nextProps.groups
             };
@@ -79,8 +80,9 @@ class Groups extends React.Component {
 
         if (nextProps.groups.length < prevState.groups.length) {
             return {
-                activeId: difference(nextProps.groups, prevState.groups)[0].id,
-                createGroupId: ""
+                activeId: nextProps.groups[0].id,
+                createGroupId: "",
+                groups: nextProps.groups
             };
         }
 
@@ -107,7 +109,6 @@ class Groups extends React.Component {
     };
 
     handleChange = (e) => {
-
         this.setState({
             createGroupId: e.target.value,
             spaceError: this.state.spaceError && includes(e.target.value, " "),

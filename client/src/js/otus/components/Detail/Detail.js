@@ -31,7 +31,7 @@ class OTUDetail extends React.Component {
     }
 
     componentDidUpdate (prevProps) {
-        if (this.props.otuDetail !== null && prevProps.otuDetail !== this.props.otuDetail) {
+        if (prevProps.otuDetail === null && this.props.otuDetail !== null) {
             this.props.onGetReference(this.props.otuDetail.reference.id);
         }
     }
