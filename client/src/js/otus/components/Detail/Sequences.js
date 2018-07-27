@@ -1,5 +1,5 @@
 import React from "react";
-import { find, map, filter, differenceWith, isEqual } from "lodash-es";
+import { find, map, filter, differenceWith, isEqual, get, sortBy, indexOf } from "lodash-es";
 import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
@@ -17,9 +17,22 @@ const getInitialState = (props) => {
     const segmentsInUse = map(sequencesWithSegment, "segment");
     const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
 
+    let index;
+
+    const sortedSequences = sortBy(props.sequences, [
+        (entry) => {
+            index = indexOf(originalSchema, entry.segment);
+            if (index !== -1) {
+                return index;
+            }
+            return originalSchema.length;
+        }
+    ]);
+
     return {
         schema: remainingSchema,
-        sequences: props.sequences
+        sequences: sortedSequences,
+        error: props.error
     };
 };
 
@@ -27,13 +40,15 @@ class IsolateSequences extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = getInitialState(this.props);
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.sequences !== nextProps.sequences) {
+        if (prevState.sequences !== nextProps.sequences || !prevState.error && nextProps.error) {
             return getInitialState(nextProps);
+        }
+        if (prevState.error && !nextProps.error) {
+            return { error: "" };
         }
         return null;
     }
@@ -41,8 +56,8 @@ class IsolateSequences extends React.Component {
     render () {
         let sequenceComponents;
 
-        if (this.props.sequences.length) {
-            sequenceComponents = map(this.props.sequences, sequence =>
+        if (this.state.sequences.length) {
+            sequenceComponents = map(this.state.sequences, sequence =>
                 <Sequence
                     key={sequence.id}
                     active={sequence.accession === this.props.activeSequenceId}
@@ -85,6 +100,7 @@ class IsolateSequences extends React.Component {
                     otuId={this.props.otuId}
                     isolateId={this.props.activeIsolateId}
                     schema={this.state.schema}
+                    error={this.props.error}
                 />
 
                 <RemoveSequence
@@ -117,7 +133,8 @@ const mapStateToProps = (state) => {
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        isRemote: state.references.detail.remotes_from
+        isRemote: state.references.detail.remotes_from,
+        error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
     };
 };
 
