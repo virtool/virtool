@@ -28,7 +28,7 @@ const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
             </InputGroup>
         </FormGroup>
         <Button
-            icon="plus-square"
+            icon="plus-square fa-fw"
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}

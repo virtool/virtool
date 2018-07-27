@@ -27,7 +27,7 @@ const SubtractionToolbar = ({ term, onFilter, canModify }) => (
 
         {canModify ? (
             <LinkContainer to={{state: {createSubtraction: true}}}>
-                <Button bsStyle="primary" icon="plus-square" tip="Create" />
+                <Button bsStyle="primary" icon="plus-square fa-fw" tip="Create" />
             </LinkContainer>
         ) : null}
     </div>
