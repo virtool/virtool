@@ -202,7 +202,7 @@ def handle_exception(max_tb=50):
     }
 
 
-def handle_sigterm():
+def handle_sigterm(*args):
     """
     A handler for SIGTERM signals. Raises a TerminationError that allows the job to clean-up after itself.
 
