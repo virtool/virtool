@@ -315,7 +315,7 @@ async def update_last_indexed_version(db, id_list, version):
 
 
 async def update_sequence_segments(db, old, new):
-    if old is None or new is None:
+    if old is None or new is None or "schema" not in old:
         return
 
     old_names = {s["name"] for s in old["schema"]}
