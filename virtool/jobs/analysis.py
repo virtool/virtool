@@ -151,8 +151,6 @@ class Base(virtool.jobs.job.Job):
         algorithm tags for the sample document.
 
         """
-        return
-
         self.db.analyses.delete_one({"_id": self.analysis_id})
 
         try:
@@ -793,13 +791,13 @@ class NuVs(Base):
 
         self.dispatch("analyses", "update", virtool.utils.base_processor(document))
 
-    async def cleanup(self):
+    def cleanup(self):
         try:
             self.temp_dir.cleanup()
         except AttributeError:
             pass
 
-        await super().cleanup()
+        super().cleanup()
 
 
 def run_patho(vta_path, reassigned_path):
