@@ -1,4 +1,5 @@
 import os
+import pymongo
 
 import virtool.db.subtractions
 import virtool.jobs.job
@@ -17,13 +18,36 @@ class CreateSubtraction(virtool.jobs.job.Job):
         super().__init__(*args, **task_args)
 
         #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
-        self.subtraction_id = self.task_args["subtraction_id"]
+        self.subtraction_id = None
+
+        #: The path to the FASTA file being added as a host reference.
+        self.fasta_path = None
+
+        #: The path to the directory the Bowtie2 index will be written to.
+        self.index_path = None
+
+        #: The job stages.
+        self._stage_list = [
+            self.check_db,
+            self.mk_subtraction_dir,
+            self.set_stats,
+            self.bowtie_build,
+            self.update_db
+        ]
+
+    def check_db(self):
+        document = self.db.jobs.find_one(self.id)
+
+        task_args = document["args"]
+
+        #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
+        self.subtraction_id = task_args["subtraction_id"]
 
         #: The path to the FASTA file being added as a host reference.
         self.fasta_path = os.path.join(
-            self.settings.get("data_path"),
+            self.settings["data_path"],
             "files",
-            self.task_args["file_id"]
+            task_args["file_id"]
         )
 
         #: The path to the directory the Bowtie2 index will be written to.
@@ -33,22 +57,14 @@ class CreateSubtraction(virtool.jobs.job.Job):
             self.subtraction_id.lower().replace(" ", "_")
         )
 
-        #: The job stages.
-        self._stage_list = [
-            self.mk_subtraction_dir,
-            self.set_stats,
-            self.bowtie_build,
-            self.update_db
-        ]
-
-    async def mk_subtraction_dir(self):
+    def mk_subtraction_dir(self):
         """
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
         """
         os.mkdir(self.index_path)
 
-    async def set_stats(self):
+    def set_stats(self):
         """
         Generate some stats for the FASTA file associated with this job. These numbers include nucleotide distribution,
         length distribution, and sequence count.
@@ -56,14 +72,16 @@ class CreateSubtraction(virtool.jobs.job.Job):
         """
         gc, count = virtool.subtractions.calculate_fasta_gc(self.fasta_path)
 
-        await self.dbi.subtraction.update_one({"_id": self.subtraction_id}, {
+        document = self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
             "$set": {
                 "gc": gc,
                 "count": count
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.subtractions.PROJECTION)
 
-    async def bowtie_build(self):
+        self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+
+    def bowtie_build(self):
         """
         Call *bowtie2-build* using :meth:`~.Job.run_process` to build a Bowtie2 index for the host.
 
@@ -75,20 +93,22 @@ class CreateSubtraction(virtool.jobs.job.Job):
             os.path.join(self.index_path, "reference")
         ]
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
-    async def update_db(self):
+    def update_db(self):
         """
         Set the ``ready`` on the subtraction document ``True``.
 
         """
-        await self.dbi.subtraction.update_one({"_id": self.subtraction_id}, {
+        document = self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
             "$set": {
                 "ready": True
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.subtractions.PROJECTION)
 
-    async def cleanup(self):
+        self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+
+    def cleanup(self):
         """
         Clean up if the job process encounters an error or is cancelled. Removes the host document from the database
         and deletes any index files.
@@ -101,4 +121,6 @@ class CreateSubtraction(virtool.jobs.job.Job):
             pass
 
         # Remove the associated subtraction document.
-        await self.dbi.subtraction.delete_one({"_id": self.subtraction_id})
+        self.db.subtraction.delete_one({"_id": self.subtraction_id})
+
+        self.dispatch("subtraction", "delete", [self.subtraction_id])
