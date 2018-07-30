@@ -10,26 +10,11 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { ListGroupItem } from "react-bootstrap";
-import { ScrollList, Flex, FlexItem, Identicon, Icon } from "../../base";
+import { ScrollList } from "../../base";
 import { listUsers } from "../actions";
-
-const UserEntry = ({ id, identicon, isAdmin }) => (
-    <LinkContainer to={`/administration/users/${id}`} style={{paddingLeft: "10px"}}>
-        <ListGroupItem className="spaced">
-            <Flex alignItems="center">
-                <Identicon size={32} hash={identicon} />
-                <FlexItem pad={10}>
-                    {id}
-                </FlexItem>
-                <FlexItem pad={10}>
-                    {isAdmin ? <Icon name="user-shield" bsStyle="primary" /> : null}
-                </FlexItem>
-            </Flex>
-        </ListGroupItem>
-    </LinkContainer>
-);
+import { isEqual } from "lodash-es";
+import { usersSelector } from "../../listSelectors";
+import UserEntry from "./Entry";
 
 class UsersList extends React.Component {
 
@@ -39,12 +24,12 @@ class UsersList extends React.Component {
         }
     }
 
+    shouldComponentUpdate (nextProps) {
+        return !isEqual(nextProps.documents, this.props.documents);
+    }
+
     rowRenderer = (index) => (
-        <UserEntry
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
-            isAdmin={this.props.documents[index].administrator}
-        />
+        <UserEntry key={index} index={index} />
     );
 
     render () {
@@ -63,13 +48,20 @@ class UsersList extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
-    ...state.users.list,
-    fetched: state.users.fetched,
-    refetchPage: state.users.refetchPage,
-    isLoading: state.users.isLoading,
-    errorLoad: state.users.errorLoad
-});
+const mapStateToProps = state => {
+
+    const { documents, page, page_count } = usersSelector(state);
+
+    return {
+        documents,
+        page,
+        page_count,
+        fetched: state.users.fetched,
+        refetchPage: state.users.refetchPage,
+        isLoading: state.users.isLoading,
+        errorLoad: state.users.errorLoad
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
     loadNextPage: (page) => {
