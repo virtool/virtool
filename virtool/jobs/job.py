@@ -1,4 +1,6 @@
 import multiprocessing
+import threading
+import queue
 import os
 import signal
 import subprocess
@@ -102,21 +104,40 @@ class Job(multiprocessing.Process):
 
         self._process = subprocess.Popen(command, stdout=stdout, stderr=subprocess.PIPE, env=env)
 
+        stdout_queue = None
+
+        if stdout_handler:
+            stdout_queue = queue.Queue()
+
+            stdout_thread = threading.Thread(
+                target=watch_pipe,
+                args=(self._process.stdout, stdout_queue),
+                daemon=True
+            )
+
+            stdout_thread.start()
+
+        stderr_queue = queue.Queue()
+
+        stderr_thread = threading.Thread(
+            target=watch_pipe,
+            args=(self._process.stderr, stderr_queue),
+            daemon=True
+        )
+
+        stderr_thread.start()
+
         while True:
             if self._process.poll() is not None:
                 break
 
-            if stdout_handler:
-                out = self._process.stdout.readline()
+            if stdout_queue and not stdout_queue.empty():
+                out = stdout_queue.get()
+                stdout_handler(out)
 
-                if out:
-                    stdout_handler(out)
-
-            if _stderr_handler:
-                err = self._process.stderr.readline()
-
-                if err:
-                    _stderr_handler(err)
+            if not stderr_queue.empty():
+                err = stderr_queue.get()
+                _stderr_handler(err)
 
         if self._process.returncode != 0:
             raise virtool.errors.SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
@@ -192,3 +213,13 @@ def handle_sigterm():
 def stage_method(func):
     func.is_stage_method = True
     return func
+
+
+def watch_pipe(stream, queue):
+    while True:
+        line = stream.readline()
+
+        if not line:
+            return
+
+        queue.put(line)
