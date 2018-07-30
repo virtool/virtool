@@ -1,30 +1,28 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { get } from "lodash-es";
+import { connect } from "react-redux";
 import { Col, Row } from "react-bootstrap";
-
+import { removeFile } from "../actions";
 import { byteSize } from "../../utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
-export default class File extends React.Component {
+export class File extends React.Component {
 
     static propTypes = {
-        id: PropTypes.string,
-        name: PropTypes.string,
-        size: PropTypes.number,
-        file: PropTypes.object,
-        uploaded_at: PropTypes.string,
-        user: PropTypes.object,
-        onRemove: PropTypes.func,
-        canRemove: PropTypes.bool
+        index: PropTypes.number,
+        entry: PropTypes.object,
+        canRemove: PropTypes.bool,
+        onRemove: PropTypes.func
     };
 
     handleRemove = () => {
-        this.props.onRemove(this.props.id);
+        this.props.onRemove(this.props.entry.id);
     };
 
     render () {
 
-        const { name, size, uploaded_at, user, canRemove } = this.props;
+        const { name, size, uploaded_at, user } = this.props.entry;
 
         let creation;
 
@@ -55,7 +53,7 @@ export default class File extends React.Component {
                         {creation}
                     </Col>
                     <Col md={1}>
-                        {canRemove ? (
+                        {this.props.canRemove ? (
                             <Icon
                                 name="trash"
                                 bsStyle="danger"
@@ -70,3 +68,15 @@ export default class File extends React.Component {
         );
     }
 }
+
+const mapStateToProps = (state, props) => ({
+    entry: get(state, `files.documents[${props.index}]`, null)
+});
+
+const mapDispatchToProps = (dispatch) => ({
+    onRemove: (fileId) => {
+        dispatch(removeFile(fileId));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(File);

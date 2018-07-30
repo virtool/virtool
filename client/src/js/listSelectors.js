@@ -2,6 +2,9 @@ import { createSelector } from "reselect";
 import { map } from "lodash-es";
 
 const getUsers = state => state.users.list;
+const getFiles = state => state.files.documents;
+
+const mapIds = (list) => (map(list, entry => entry.id));
 
 export const usersSelector = createSelector(
     [ getUsers ],
@@ -19,3 +22,5 @@ export const usersSelector = createSelector(
 
     }
 );
+
+export const filesSelector = createSelector([ getFiles ], mapIds);
