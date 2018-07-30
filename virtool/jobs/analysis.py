@@ -8,12 +8,13 @@ import shlex
 import shutil
 import tempfile
 
-import aiofiles
 import collections
+import pymongo
 import pymongo.errors
 
 import virtool.settings
 import virtool.bio
+import virtool.db.analyses
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.samples
@@ -43,14 +44,6 @@ class Base(virtool.jobs.job.Job):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
-        self.sample_id = self.task_args["sample_id"]
-
-        #: The document id for the analysis being run.
-        self.analysis_id = self.task_args["analysis_id"]
-
-        self.ref_id = self.task_args["ref_id"]
-
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
 
@@ -66,6 +59,39 @@ class Base(virtool.jobs.job.Job):
 
         #: The number of reads in the sample library. Assigned after database connection is made.
         self.read_count = None
+
+        self.subtraction_path = None
+
+        self.sample = None
+
+        self.paired = None
+
+        self.read_paths = None
+
+        #: The document for the host associated with the sample being analyzed. Assigned after job start.
+        self.subtraction = None
+
+        #: The number of reads in the sample library. Assigned after job start.
+        self.read_count = None
+
+        self._stage_list = [
+            self.check_db,
+            self.mk_analysis_dir
+        ]
+
+    @virtool.jobs.job.stage_method
+    def check_db(self):
+        """
+        Get some initial information from the database that will be required during the course of the job.
+
+        """
+        #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
+        self.sample_id = self.task_args["sample_id"]
+
+        #: The document id for the analysis being run.
+        self.analysis_id = self.task_args["analysis_id"]
+
+        self.ref_id = self.task_args["ref_id"]
 
         # The path to the general data directory
         self.data_path = self.settings.get("data_path")
@@ -84,33 +110,8 @@ class Base(virtool.jobs.job.Job):
             "reference"
         )
 
-        self.subtraction_path = None
-
-        self._stage_list = [
-            self.check_db,
-            self.mk_analysis_dir
-        ]
-
-        self.sample = None
-
-        self.paired = None
-
-        self.read_paths = None
-
-        #: The document for the host associated with the sample being analyzed. Assigned after job start.
-        self.subtraction = None
-
-        #: The number of reads in the sample library. Assigned after job start.
-        self.read_count = None
-
-    @virtool.jobs.job.stage_method
-    async def check_db(self):
-        """
-        Get some initial information from the database that will be required during the course of the job.
-
-        """
         # Get the complete sample document from the database.
-        self.sample = await self.dbi.samples.find_one({"_id": self.sample_id})
+        self.sample = self.db.samples.find_one(self.sample_id)
 
         # Extract the sample read count from the sample document.
         self.read_count = int(self.sample["quality"]["count"])
@@ -127,7 +128,7 @@ class Base(virtool.jobs.job.Job):
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
-        self.subtraction = await self.dbi.subtraction.find_one({"_id": self.sample["subtraction"]["id"]})
+        self.subtraction = self.db.subtraction.find_one(self.sample["subtraction"]["id"])
 
         self.subtraction_path = os.path.join(
             self.data_path,
@@ -137,30 +138,30 @@ class Base(virtool.jobs.job.Job):
         )
 
     @virtool.jobs.job.stage_method
-    async def mk_analysis_dir(self):
+    def mk_analysis_dir(self):
         """
         Make a directory for the analysis in the sample/analysis directory.
 
         """
         os.mkdir(self.analysis_path)
 
-    async def cleanup(self):
+    def cleanup(self):
         """
         Remove the analysis document and the analysis files. Dispatch the removal op. Recalculate and update the
         algorithm tags for the sample document.
 
         """
-        await self.dbi.analyses.delete_one({"_id": self.analysis_id})
+        return
+
+        self.db.analyses.delete_one({"_id": self.analysis_id})
 
         try:
             shutil.rmtree(self.analysis_path)
         except FileNotFoundError:
             pass
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
 
-
-class Pathoscope(Base):
+class PathoscopeBowtie(Base):
     """
     A base class for all Pathoscope-based tasks. Subclass of :class:`.sample_analysis.Base`.
 
@@ -169,29 +170,95 @@ class Pathoscope(Base):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.sequence_otu_map = {item[0]: item[1] for item in self.task_args["sequence_otu_map"]}
+        self.otu_dict = None
+        self.sequence_otu_map = None
 
-        self.otu_dict = self.task_args["otu_dict"]
+        self._stage_list = [
+            self.check_db,
+            self.mk_analysis_dir,
+            self.map_otus,
+            self.generate_isolate_fasta,
+            self.build_isolate_index,
+            self.map_isolates,
+            self.map_subtraction,
+            self.subtract_mapping,
+            self.pathoscope,
+            self.import_results,
+            self.cleanup_indexes
+        ]
 
     @virtool.jobs.job.stage_method
-    async def generate_isolate_fasta(self):
+    def map_otus(self):
+        """
+        Using ``bowtie2``, maps reads to the main otu reference. This mapping is used to identify candidate otus.
+
+        """
+        command = [
+            "bowtie2",
+            "-p", str(self.proc),
+            "--no-unal",
+            "--local",
+            "--score-min", "L,20,1.0",
+            "-N", "0",
+            "-L", "15",
+            "-x", self.index_path,
+            "-U", ",".join(self.read_paths)
+        ]
+
+        to_otus = set()
+
+        def stdout_handler(line):
+            line = line.decode()
+
+            if line[0] == "#" or line[0] == "@":
+                return
+
+            fields = line.split("\t")
+
+            # Bitwise FLAG - 0x4: segment unmapped
+            if int(fields[1]) & 0x4 == 4:
+                return
+
+            ref_id = fields[2]
+
+            if ref_id == "*":
+                return
+
+            # Skip if the p_score does not meet the minimum cutoff.
+            if virtool.pathoscope.find_sam_align_score(fields) < 0.01:
+                return
+
+            to_otus.add(ref_id)
+
+        self.run_subprocess(command, stdout_handler=stdout_handler)
+
+        self.intermediate["to_otus"] = to_otus
+
+    @virtool.jobs.job.stage_method
+    def generate_isolate_fasta(self):
         """
         Identifies otu hits from the initial default otu mapping.
 
         """
+        self.otu_dict = self.task_args["otu_dict"]
+
+        self.sequence_otu_map = {item[0]: item[1] for item in self.task_args["sequence_otu_map"]}
+
         fasta_path = os.path.join(self.analysis_path, "isolate_index.fa")
 
         sequence_ids = list(self.intermediate["to_otus"])
 
         ref_lengths = dict()
 
+        print(sequence_ids)
+
         # Get the database documents for the sequences
-        async with aiofiles.open(fasta_path, "w") as handle:
+        with open(fasta_path, "w") as handle:
             # Iterate through each otu id referenced by the hit sequence ids.
-            for otu_id in await self.dbi.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
+            for otu_id in self.db.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
                 # Write all of the sequences for each otu to a FASTA file.
-                async for document in self.dbi.sequences.find({"otu_id": otu_id}, ["sequence"]):
-                    await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
+                for document in self.db.sequences.find({"otu_id": otu_id}, ["sequence"]):
+                    handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
                     ref_lengths[document["_id"]] = len(document["sequence"])
 
         del self.intermediate["to_otus"]
@@ -199,7 +266,116 @@ class Pathoscope(Base):
         self.intermediate["ref_lengths"] = ref_lengths
 
     @virtool.jobs.job.stage_method
-    async def subtract_mapping(self):
+    def build_isolate_index(self):
+        """
+        Build an index with ``bowtie2-build`` from the FASTA file generated by
+        :meth:`Pathoscope.generate_isolate_fasta`.
+
+        """
+        command = [
+            "bowtie2-build",
+            os.path.join(self.analysis_path, "isolate_index.fa"),
+            os.path.join(self.analysis_path, "isolates")
+        ]
+
+        self.run_subprocess(command)
+
+    @virtool.jobs.job.stage_method
+    def map_isolates(self):
+        """
+        Using ``bowtie2``, map the sample reads to the index built using :meth:`.build_isolate_index`.
+
+        """
+        command = [
+            "bowtie2",
+            "-p", str(self.proc - 1),
+            "--no-unal",
+            "--local",
+            "--score-min", "L,20,1.0",
+            "-N", "0",
+            "-L", "15",
+            "-k", "100",
+            "--al", os.path.join(self.analysis_path, "mapped.fastq"),
+            "-x", os.path.join(self.analysis_path, "isolates"),
+            "-U", ",".join(self.read_paths)
+        ]
+
+        with open(os.path.join(self.analysis_path, "to_isolates.vta"), "w") as f:
+            def stdout_handler(line, p_score_cutoff=0.01):
+                line = line.decode()
+
+                if line[0] == "@" or line == "#":
+                    return
+
+                fields = line.split("\t")
+
+                # Bitwise FLAG - 0x4 : segment unmapped
+                if int(fields[1]) & 0x4 == 4:
+                    return
+
+                ref_id = fields[2]
+
+                if ref_id == "*":
+                    return
+
+                p_score = virtool.pathoscope.find_sam_align_score(fields)
+
+                # Skip if the p_score does not meet the minimum cutoff.
+                if p_score < p_score_cutoff:
+                    return
+
+                f.write(",".join([
+                    fields[0],  # read_id
+                    ref_id,
+                    fields[3],  # pos
+                    str(len(fields[9])),  # length
+                    str(p_score)
+                ]) + "\n")
+
+            self.run_subprocess(command, stdout_handler=stdout_handler)
+
+    @virtool.jobs.job.stage_method
+    def map_subtraction(self):
+        """
+        Using ``bowtie2``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction host
+        for the sample.
+
+        """
+        command = [
+            "bowtie2",
+            "--local",
+            "-N", "0",
+            "-p", str(self.proc - 1),
+            "-x", shlex.quote(self.subtraction_path),
+            "-U", os.path.join(self.analysis_path, "mapped.fastq")
+        ]
+
+        to_subtraction = dict()
+
+        def stdout_handler(line):
+            line = line.decode()
+
+            if line[0] == "@" or line == "#":
+                return
+
+            fields = line.split("\t")
+
+            # Bitwise FLAG - 0x4 : segment unmapped
+            if int(fields[1]) & 0x4 == 4:
+                return
+
+            # No ref_id assigned.
+            if fields[2] == "*":
+                return
+
+            to_subtraction[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
+
+        self.run_subprocess(command, stdout_handler=stdout_handler)
+
+        self.intermediate["to_subtraction"] = to_subtraction
+
+    @virtool.jobs.job.stage_method
+    def subtract_mapping(self):
         subtracted_count = virtool.pathoscope.subtract(
             self.analysis_path,
             self.intermediate["to_subtraction"]
@@ -210,7 +386,7 @@ class Pathoscope(Base):
         self.results["subtracted_count"] = subtracted_count
 
     @virtool.jobs.job.stage_method
-    async def pathoscope(self):
+    def pathoscope(self):
         """
         Run the Pathoscope reassignment algorithm. Tab-separated output is written to ``pathoscope.tsv``. Results are
         also parsed and saved to :attr:`intermediate`.
@@ -291,7 +467,7 @@ class Pathoscope(Base):
             self.results["diagnosis"].append(hit)
 
     @virtool.jobs.job.stage_method
-    async def import_results(self):
+    def import_results(self):
         """
         Commits the results to the database. Data includes the output of Pathoscope, final mapped read count,
         and viral genome coverage maps.
@@ -301,210 +477,26 @@ class Pathoscope(Base):
 
         """
         try:
-            await self.dbi.analyses.update_one({"_id": self.analysis_id}, {
+            self.db.analyses.update_one({"_id": self.analysis_id}, {
                 "$set": self.results
             })
         except pymongo.errors.DocumentTooLarge:
-            async with aiofiles.open(os.path.join(self.analysis_path, "pathoscope.json"), "w") as f:
+            with open(os.path.join(self.analysis_path, "pathoscope.json"), "w") as f:
                 json_string = json.dumps(self.results)
-                await f.write(json_string)
+                f.write(json_string)
 
-            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            document = self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "diagnosis": "file",
                     "ready": True
                 }
-            })
+            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.analyses.PROJECTION)
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
+            self.dispatch("analyses", "update", virtool.utils.base_processor(document))
 
     @virtool.jobs.job.stage_method
-    async def cleanup_indexes(self):
+    def cleanup_indexes(self):
         pass
-
-
-class PathoscopeBowtie(Pathoscope):
-    """
-    A Pathoscope analysis job that uses Bowtie2 to map reads to viral and host references. The ad-hoc isolate index
-    is built using ``bowtie2-build``.
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._stage_list = [
-            self.check_db,
-            self.mk_analysis_dir,
-            self.map_otus,
-            self.generate_isolate_fasta,
-            self.build_isolate_index,
-            self.map_isolates,
-            self.map_subtraction,
-            self.subtract_mapping,
-            self.pathoscope,
-            self.import_results,
-            self.cleanup_indexes
-        ]
-
-    @virtool.jobs.job.stage_method
-    async def map_otus(self):
-        """
-        Using ``bowtie2``, maps reads to the main otu reference. This mapping is used to identify candidate otus.
-
-        """
-        command = [
-            "bowtie2",
-            "-p", str(self.proc),
-            "--no-unal",
-            "--local",
-            "--score-min", "L,20,1.0",
-            "-N", "0",
-            "-L", "15",
-            "-x", self.index_path,
-            "-U", ",".join(self.read_paths)
-        ]
-
-        to_otus = set()
-
-        async def stdout_handler(line):
-            line = line.decode()
-
-            if line[0] == "#" or line[0] == "@":
-                return
-
-            fields = line.split("\t")
-
-            # Bitwise FLAG - 0x4: segment unmapped
-            if int(fields[1]) & 0x4 == 4:
-                return
-
-            ref_id = fields[2]
-
-            if ref_id == "*":
-                return
-
-            # Skip if the p_score does not meet the minimum cutoff.
-            if virtool.pathoscope.find_sam_align_score(fields) < 0.01:
-                return
-
-            to_otus.add(ref_id)
-
-        await self.run_subprocess(command, stdout_handler=stdout_handler)
-
-        self.intermediate["to_otus"] = to_otus
-
-    @virtool.jobs.job.stage_method
-    async def build_isolate_index(self):
-        """
-        Build an index with ``bowtie2-build`` from the FASTA file generated by
-        :meth:`Pathoscope.generate_isolate_fasta`.
-
-        """
-        command = [
-            "bowtie2-build",
-            os.path.join(self.analysis_path, "isolate_index.fa"),
-            os.path.join(self.analysis_path, "isolates")
-        ]
-
-        await self.run_subprocess(command)
-
-    @virtool.jobs.job.stage_method
-    async def map_isolates(self):
-        """
-        Using ``bowtie2``, map the sample reads to the index built using :meth:`.build_isolate_index`.
-
-        """
-        command = [
-            "bowtie2",
-            "-p", str(self.proc - 1),
-            "--no-unal",
-            "--local",
-            "--score-min", "L,20,1.0",
-            "-N", "0",
-            "-L", "15",
-            "-k", "100",
-            "--al", os.path.join(self.analysis_path, "mapped.fastq"),
-            "-x", os.path.join(self.analysis_path, "isolates"),
-            "-U", ",".join(self.read_paths)
-        ]
-
-        out_handle = await aiofiles.open(os.path.join(self.analysis_path, "to_isolates.vta"), "w")
-
-        async def stdout_handler(line, p_score_cutoff=0.01):
-            line = line.decode()
-
-            if line[0] == "@" or line == "#":
-                return
-
-            fields = line.split("\t")
-
-            # Bitwise FLAG - 0x4 : segment unmapped
-            if int(fields[1]) & 0x4 == 4:
-                return
-
-            ref_id = fields[2]
-
-            if ref_id == "*":
-                return
-
-            p_score = virtool.pathoscope.find_sam_align_score(fields)
-
-            # Skip if the p_score does not meet the minimum cutoff.
-            if p_score < p_score_cutoff:
-                return
-
-            await out_handle.write(",".join([
-                fields[0],  # read_id
-                ref_id,
-                fields[3],  # pos
-                str(len(fields[9])),  # length
-                str(p_score)
-            ]) + "\n")
-
-        await self.run_subprocess(command, stdout_handler=stdout_handler)
-
-        await out_handle.close()
-
-    @virtool.jobs.job.stage_method
-    async def map_subtraction(self):
-        """
-        Using ``bowtie2``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction host
-        for the sample.
-
-        """
-        command = [
-            "bowtie2",
-            "--local",
-            "-N", "0",
-            "-p", str(self.proc - 1),
-            "-x", shlex.quote(self.subtraction_path),
-            "-U", os.path.join(self.analysis_path, "mapped.fastq")
-        ]
-
-        to_subtraction = dict()
-
-        async def stdout_handler(line):
-            line = line.decode()
-
-            if line[0] == "@" or line == "#":
-                return
-
-            fields = line.split("\t")
-
-            # Bitwise FLAG - 0x4 : segment unmapped
-            if int(fields[1]) & 0x4 == 4:
-                return
-
-            # No ref_id assigned.
-            if fields[2] == "*":
-                return
-
-            to_subtraction[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
-
-        await self.run_subprocess(command, stdout_handler=stdout_handler)
-
-        self.intermediate["to_subtraction"] = to_subtraction
 
 
 class NuVs(Base):
@@ -539,7 +531,7 @@ class NuVs(Base):
         self.temp_dir = None
 
     @virtool.jobs.job.stage_method
-    async def map_otus(self):
+    def map_otus(self):
         """
         Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
         ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
@@ -555,10 +547,10 @@ class NuVs(Base):
             "-U", ",".join(self.read_paths)
         ]
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
     @virtool.jobs.job.stage_method
-    async def map_subtraction(self):
+    def map_subtraction(self):
         """
         Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -575,10 +567,10 @@ class NuVs(Base):
             "-U", os.path.join(self.analysis_path, "unmapped_otus.fq"),
         ]
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
     @virtool.jobs.job.stage_method
-    async def reunite_pairs(self):
+    def reunite_pairs(self):
         if self.paired:
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
             headers = virtool.bio.read_fastq_headers(unmapped_path)
@@ -596,7 +588,7 @@ class NuVs(Base):
                         f.write("\n".join([header, seq, "+", quality]) + "\n")
 
     @virtool.jobs.job.stage_method
-    async def assemble(self):
+    def assemble(self):
         """
         Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
         argument.
@@ -628,13 +620,13 @@ class NuVs(Base):
         ]
 
         try:
-            await self.run_subprocess(command)
+            self.run_subprocess(command)
         except virtool.errors.SubprocessError:
             spades_log_path = os.path.join(temp_path, "spades.log")
 
             if os.path.isfile(spades_log_path):
-                async with aiofiles.open(spades_log_path, "r") as f:
-                    if "Error in malloc(): out of memory" in await f.read():
+                with open(spades_log_path, "r") as f:
+                    if "Error in malloc(): out of memory" in f.read():
                         raise virtool.errors.SubprocessError("Out of memory")
 
             raise
@@ -647,7 +639,7 @@ class NuVs(Base):
         self.temp_dir.cleanup()
 
     @virtool.jobs.job.stage_method
-    async def process_fasta(self):
+    def process_fasta(self):
         """
         Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
         Contigs with no acceptable ORFs are discarded.
@@ -690,13 +682,13 @@ class NuVs(Base):
             })
 
         # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
-        async with aiofiles.open(os.path.join(self.analysis_path, "orfs.fa"), "w") as f:
+        with open(os.path.join(self.analysis_path, "orfs.fa"), "w") as f:
             for entry in self.results:
                 for orf in entry["orfs"]:
-                    await f.write(">sequence_{}.{}\n{}\n".format(entry["index"], orf["index"], orf["pro"]))
+                    f.write(">sequence_{}.{}\n{}\n".format(entry["index"], orf["index"], orf["pro"]))
 
     @virtool.jobs.job.stage_method
-    async def press_hmm(self):
+    def press_hmm(self):
 
         shutil.copy(os.path.join(self.data_path, "hmm", "profiles.hmm"), self.analysis_path)
 
@@ -707,12 +699,12 @@ class NuVs(Base):
             hmm_path
         ]
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
         os.remove(hmm_path)
 
     @virtool.jobs.job.stage_method
-    async def vfam(self):
+    def vfam(self):
         """
         Searches for viral motifs in ORF translations generated by :meth:`.process_fasta`. Calls ``hmmscan`` and
         searches against ``candidates.fa`` using the profile HMMs in ``data_path/hmm/vFam.hmm``.
@@ -736,18 +728,18 @@ class NuVs(Base):
             os.path.join(self.analysis_path, "orfs.fa")
         ]
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
         hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
         # Go through the raw HMMER results and annotate the HMM hits with data from the database.
-        async with aiofiles.open(tsv_path, "r") as hmm_file:
-            async for line in hmm_file:
+        with open(tsv_path, "r") as hmm_file:
+            for line in hmm_file:
                 if line.startswith("vFam"):
                     line = line.split()
 
                     cluster_id = int(line[0].split("_")[1])
-                    annotation_id = (await self.dbi.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
+                    annotation_id = (self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
                     # Expecting sequence_0.0
                     sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
@@ -772,7 +764,7 @@ class NuVs(Base):
                 self.results.remove(sequence)
 
     @virtool.jobs.job.stage_method
-    async def import_results(self):
+    def import_results(self):
         """
         Save the results to the analysis document and set the ``ready`` field to ``True``.
 
@@ -781,25 +773,25 @@ class NuVs(Base):
 
         """
         try:
-            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            document = self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "results": self.results,
                     "ready": True
                 }
-            })
+            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.analyses.PROJECTION)
         except pymongo.errors.DocumentTooLarge:
-            async with aiofiles.open(os.path.join(self.analysis_path, "nuvs.json"), "w") as f:
+            with open(os.path.join(self.analysis_path, "nuvs.json"), "w") as f:
                 json_string = json.dumps(self.results)
-                await f.write(json_string)
+                f.write(json_string)
 
-            await self.dbi.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            document = self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
                 "$set": {
                     "results": "file",
                     "ready": True
                 }
-            })
+            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.analyses.PROJECTION)
 
-        await virtool.db.samples.recalculate_algorithm_tags(self.dbi, self.sample_id)
+        self.dispatch("analyses", "update", virtool.utils.base_processor(document))
 
     async def cleanup(self):
         try:

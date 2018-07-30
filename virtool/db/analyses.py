@@ -252,21 +252,9 @@ async def new(app, sample_id, ref_id, user_id, algorithm):
     job = await virtool.db.jobs.create(
         db,
         settings,
-        "create_sample",
-        task_args,
-        user_id
-    )
-
-    await app["jobs"].enqueue(job["_id"])
-
-    # Create job document.
-    job = await virtool.db.jobs.create(
-        db,
-        settings,
         document["algorithm"],
         task_args,
-        user_id,
-        job_id=job_id
+        user_id
     )
 
     await app["jobs"].enqueue(job["_id"])
