@@ -29,18 +29,18 @@ class MockSettings:
 
 
 @pytest.fixture
-def test_job_manager(mocker, loop, dbi):
+def test_job_manager(mocker, dbs):
+    app = {
+        "db": dbs,
+        "settings": {}
+    }
 
     manager = virtool.jobs.manager.IntegratedManager(
-        loop,
-        dbi,
-        MockSettings(),
-        mocker.stub(name="capture_exception")
+        app,
+        MockSettings()
     )
 
     yield manager
-
-    loop.run_until_complete(manager.close())
 
 
 @pytest.fixture
