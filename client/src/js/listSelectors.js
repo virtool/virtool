@@ -3,6 +3,7 @@ import { map } from "lodash-es";
 
 const getUsers = state => state.users.list;
 const getFiles = state => state.files.documents;
+const getSubtractions = state => state.subtraction.documents;
 
 const mapIds = (list) => (map(list, entry => entry.id));
 
@@ -15,7 +16,7 @@ export const usersSelector = createSelector(
         }
 
         return {
-            documents: map(list.documents, entry => entry.id),
+            documents: mapIds(list.documents),
             page: list.page,
             page_count: list.page_count
         };
@@ -24,3 +25,4 @@ export const usersSelector = createSelector(
 );
 
 export const filesSelector = createSelector([ getFiles ], mapIds);
+export const subtractionsSelector = createSelector([ getSubtractions ], mapIds);

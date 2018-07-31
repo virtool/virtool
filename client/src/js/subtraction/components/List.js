@@ -1,37 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
-
+import { isEqual } from "lodash-es";
 import CreateSubtraction from "./Create";
+import SubtractionToolbar from "./Toolbar";
 import SubtractionItem from "./Item";
-import { Alert, Button, Icon, NoneFound, ViewHeader, ScrollList, LoadingPlaceholder } from "../../base";
+import { Alert, NoneFound, ViewHeader, ScrollList, LoadingPlaceholder } from "../../base";
 import { checkAdminOrPermission } from "../../utils";
+import { subtractionsSelector } from "../../listSelectors";
 import { filterSubtractions, listSubtractions } from "../actions";
-
-const SubtractionToolbar = ({ term, onFilter, canModify }) => (
-    <div key="toolbar" className="toolbar">
-        <FormGroup>
-            <InputGroup>
-                <InputGroup.Addon>
-                    <Icon name="search" />
-                </InputGroup.Addon>
-                <FormControl
-                    type="text"
-                    value={term}
-                    onChange={onFilter}
-                    placeholder="Name"
-                />
-            </InputGroup>
-        </FormGroup>
-
-        {canModify ? (
-            <LinkContainer to={{state: {createSubtraction: true}}}>
-                <Button bsStyle="primary" icon="plus-square fa-fw" tip="Create" />
-            </LinkContainer>
-        ) : null}
-    </div>
-);
 
 class SubtractionList extends React.Component {
 
@@ -41,11 +17,12 @@ class SubtractionList extends React.Component {
         }
     }
 
+    shouldComponentUpdate (nextProps) {
+        return !isEqual(nextProps.documents, this.props.documents);
+    }
+
     rowRenderer = (index) => (
-        <SubtractionItem
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
-        />
+        <SubtractionItem key={index} index={index} />
     );
 
     render () {
@@ -78,7 +55,7 @@ class SubtractionList extends React.Component {
             );
         }
 
-        if (!this.props.ready_host_count && !this.props.total_count) {
+        if (!this.props.ready_host_count && !this.props.total_count && this.props.fetched) {
             alert = (
                 <Alert bsStyle="warning" icon="info-circle">
                     <strong>
@@ -110,6 +87,7 @@ class SubtractionList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.subtraction,
+    documents: subtractionsSelector(state),
     canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction")
 });
 

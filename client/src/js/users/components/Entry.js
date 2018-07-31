@@ -25,4 +25,4 @@ const mapStateToProps = (state, props) => ({
     entry: get(state, `users.list.documents[${props.index}]`, null)
 });
 
-export default connect(mapStateToProps, null)(UserEntry);
+export default connect(mapStateToProps)(UserEntry);
