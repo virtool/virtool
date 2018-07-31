@@ -49,7 +49,8 @@ describe("Subtraction Reducer", () => {
                 documents: [],
                 page: 1,
                 per_page: 25,
-                fetched: true
+                fetched: true,
+                total_count: 0
             };
             action = {
                 type: WS_INSERT_SUBTRACTION,
@@ -66,7 +67,8 @@ describe("Subtraction Reducer", () => {
             result = reducer(state, action);
             expected = {
                 ...state,
-                documents: [{ ...action.data }]
+                documents: [{ ...action.data }],
+                total_count: 1
             };
             expect(result).toEqual(expected);
         });
@@ -111,7 +113,8 @@ describe("Subtraction Reducer", () => {
                     job: { id: "jobId" },
                     ready: true
                 }
-            ]
+            ],
+            total_count: 1
         };
         action = {
             type: WS_REMOVE_SUBTRACTION,
@@ -121,7 +124,8 @@ describe("Subtraction Reducer", () => {
         expected = {
             ...state,
             documents: [],
-            refetchPage: false
+            refetchPage: false,
+            total_count: 0
         };
         expect(result).toEqual(expected);
     });

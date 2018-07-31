@@ -1,11 +1,12 @@
 import React from "react";
-import { capitalize, forEach } from "lodash-es";
+import { capitalize, forEach, isEqual } from "lodash-es";
 import { connect } from "react-redux";
 
 import File from "./File";
-import { listFiles, removeFile, upload } from "../actions";
+import { listFiles, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
 import { createRandomString, checkAdminOrPermission } from "../../utils";
+import { filesSelector } from "../../listSelectors";
 
 class FileManager extends React.Component {
 
@@ -15,9 +16,13 @@ class FileManager extends React.Component {
         }
     }
 
-    handleRemove = (fileId) => {
-        this.props.onRemove(fileId);
-    };
+    shouldComponentUpdate (nextProps) {
+        return (
+            !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.isLoading, this.props.isLoading)
+            || !isEqual(nextProps.total_count, this.props.total_count)
+        );
+    }
 
     handleDrop = (acceptedFiles) => {
         if (this.props.canUpload) {
@@ -31,9 +36,8 @@ class FileManager extends React.Component {
 
     rowRenderer = (index) => (
         <File
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
-            onRemove={this.handleRemove}
+            key={index}
+            index={index}
             canRemove={this.props.canRemove}
         />
     );
@@ -91,7 +95,6 @@ class FileManager extends React.Component {
 
 const mapStateToProps = (state) => {
     const {
-        documents,
         found_count,
         page,
         page_count,
@@ -103,7 +106,7 @@ const mapStateToProps = (state) => {
     } = state.files;
 
     return {
-        documents,
+        documents: filesSelector(state),
         found_count,
         page,
         page_count,
@@ -129,10 +132,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onList: (fileType, page = 1) => {
         dispatch(listFiles(fileType, page));
-    },
-
-    onRemove: (fileId) => {
-        dispatch(removeFile(fileId));
     }
 
 });

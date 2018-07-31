@@ -1,11 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
-
+import { isEqual } from "lodash-es";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { listJobs } from "../actions";
 import { checkAdminOrPermission } from "../../utils";
+import { jobsSelector } from "../../listSelectors";
 
 export class JobsList extends React.Component {
 
@@ -15,10 +16,18 @@ export class JobsList extends React.Component {
         }
     }
 
+    shouldComponentUpdate (nextProps) {
+        return (
+            !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.isLoading, this.props.isLoading)
+            || !isEqual(nextProps.total_count, this.props.total_count)
+        );
+    }
+
     rowRenderer = (index) => (
         <Job
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
+            key={index}
+            index={index}
             canRemove={this.props.canRemove}
             canCancel={this.props.canCancel}
         />
@@ -61,6 +70,7 @@ export class JobsList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.jobs,
+    documents: jobsSelector(state),
     canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job"),
     canCancel: checkAdminOrPermission(state.account.administrator, state.account.permissions, "cancel_job")
 });
