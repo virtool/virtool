@@ -9,15 +9,6 @@ import virtool.samples
 import virtool.utils
 
 
-def force_makedirs(path):
-    try:
-        os.makedirs(os.path.join(path, "analysis"))
-    except OSError:
-        # If the path already exists, remove it and try again.
-        shutil.rmtree(path)
-        os.makedirs(os.path.join(path, "analysis"))
-
-
 def handle_base_quality_nan(values):
     for value in values:
         try:
@@ -84,28 +75,32 @@ class CreateSample(virtool.jobs.job.Job):
         self.paired = None
 
     @virtool.jobs.job.stage_method
+    def check_db(self):
+        self.sample_id = self.task_args["sample_id"]
+
+        self.sample_path = os.path.join(self.settings.get("data_path"), "samples", str(self.sample_id))
+
+        self.fastqc_path = os.path.join(self.sample_path, "fastqc")
+
+        self.files = self.task_args["files"]
+
+        self.paired = len(self.files) == 2
+
+    @virtool.jobs.job.stage_method
     def make_sample_dir(self):
         """
         Make a data directory for the sample and a subdirectory for analyses. Read files, quality data from FastQC, and
         analysis data will be stored here.
 
         """
-        #: The id assigned to the new sample.
-        self.sample_id = self.task_args["sample_id"]
+        analysis_path = os.path.join(self.sample_path, "analysis")
 
-        #: The path where the files for this sample are stored.
-        self.sample_path = os.path.join(self.settings.get("data_path"), "samples", str(self.sample_id))
-
-        #: The path where FASTQC results will be written.
-        self.fastqc_path = os.path.join(self.sample_path, "fastqc")
-
-        #: The names of the reads files in the files path used to create the sample.
-        self.files = self.task_args["files"]
-
-        #: Is the sample library paired or not.
-        self.paired = len(self.files) == 2
-
-        force_makedirs(self.sample_path)
+        try:
+            os.makedirs(analysis_path)
+        except OSError:
+            # If the path already exists, remove it and try again.
+            shutil.rmtree(self.sample_path)
+            os.makedirs(analysis_path)
 
     @virtool.jobs.job.stage_method
     def trim_reads(self):

@@ -204,9 +204,14 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test_create(self, group_setting, mocker, spawn_client, static_time, test_random_alphanumeric):
+    async def test(self, group_setting, mocker, spawn_client, static_time, test_random_alphanumeric):
 
-        client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"].update({
+            "create_sample_proc": 2,
+            "create_sample_mem": 4,
+        })
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
@@ -233,7 +238,9 @@ class TestCreate:
 
         m_reserve = mocker.patch("virtool.db.files.reserve", make_mocked_coro())
 
-        m_new = mocker.patch.object(client.app["job_manager"], "new", make_mocked_coro())
+        mocker.patch.dict(client.app, {"jobs": mocker.Mock()})
+
+        m_enqueue = mocker.patch.object(client.app["jobs"], "enqueue", make_mocked_coro())
 
         request_data = {
             "name": "Foobar",
@@ -248,7 +255,7 @@ class TestCreate:
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.last_choice
+        assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.history[0]
 
         expected_group = "none"
 
@@ -282,7 +289,7 @@ class TestCreate:
             "user": {
                 "id": "test"
             },
-            "id": test_random_alphanumeric.last_choice
+            "id": test_random_alphanumeric.history[0]
         }
 
         assert await resp.json() == expected
@@ -300,16 +307,7 @@ class TestCreate:
             ["test.fq"]
         )
 
-        # Check call to job_manager.new.
-        m_new.assert_called_with(
-            "create_sample",
-            {
-                "files": ["test.fq"],
-                "sample_id": test_random_alphanumeric.last_choice,
-                "srna": False
-            },
-            "test"
-        )
+        m_enqueue.assert_called_with(test_random_alphanumeric.history[1])
 
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
@@ -690,8 +688,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     assert await resp.json() == test_analysis
 
     m_new.assert_called_with(
-        client.db,
-        client.app["job_manager"],
+        client.app,
         "test",
         "foo",
         "test",

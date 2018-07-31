@@ -44,14 +44,10 @@ class Job(multiprocessing.Process):
         self._log_path = os.path.join(self.settings["data_path"], "logs", "jobs", self.id)
         self._log_buffer = list()
 
-    def run(self):
-        # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
+    def init_db(self):
+        db_name = self.settings["db_name"]
 
-        # When the manager terminates jobs, run the handle_sigterm method.
-        signal.signal(signal.SIGTERM, handle_sigterm)
-
-        self.db = pymongo.MongoClient(self.db_connection_string, serverSelectionTimeoutMS=6000)["vt3"]
+        self.db = pymongo.MongoClient(self.db_connection_string, serverSelectionTimeoutMS=6000)[db_name]
 
         document = self.db.jobs.find_one(self.id)
 
@@ -59,6 +55,15 @@ class Job(multiprocessing.Process):
         self.task_args = document["args"]
         self.proc = document["proc"]
         self.mem = document["mem"]
+
+    def run(self):
+        # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+        # When the manager terminates jobs, run the handle_sigterm method.
+        signal.signal(signal.SIGTERM, handle_sigterm)
+
+        self.init_db()
 
         try:
             for method in self._stage_list:

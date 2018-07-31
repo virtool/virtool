@@ -143,7 +143,7 @@ async def init_db(app):
 
     ssl_string = ""
 
-    if settings["db_use_ssl"]:
+    if settings.get("db_use_ssl", False):
         ssl_string += "?ssl=true"
 
     string = "mongodb://{}{}:{}/{}{}".format(auth_string, db_host, db_port, app["db_name"], ssl_string)

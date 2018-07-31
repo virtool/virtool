@@ -50,6 +50,24 @@ class Base(virtool.jobs.job.Job):
         #: Intermediate data dict.
         self.intermediate = dict()
 
+        self.sample_id = None
+
+        #: The document id for the analysis being run.
+        self.analysis_id = None
+
+        self.ref_id = None
+
+        # The path to the general data directory
+        self.data_path = None
+
+        # The parent folder for all data associated with the sample
+        self.sample_path = None
+
+        # The path to the directory where all analysis result files will be written.
+        self.analysis_path = None
+
+        self.index_path = None
+
         #: The document for the sample being analyzed. Assigned after database connection is made.
         self.sample = None
 

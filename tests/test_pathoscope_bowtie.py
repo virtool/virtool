@@ -4,7 +4,6 @@ import json
 import shutil
 import pytest
 import filecmp
-from concurrent.futures import ProcessPoolExecutor
 
 import virtool.jobs.job
 import virtool.jobs.analysis
@@ -45,7 +44,7 @@ def otu_resource():
 
 
 @pytest.fixture
-async def mock_job(loop, mocker, tmpdir, dbi, otu_resource):
+def mock_job(loop, tmpdir, mocker, dbs, test_db_name, otu_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
@@ -58,41 +57,44 @@ async def mock_job(loop, mocker, tmpdir, dbi, otu_resource):
     # Copy read files.
     shutil.copyfile(FASTQ_PATH, os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq"))
 
-    executor = ProcessPoolExecutor()
-
     settings = {
-        "data_path": str(tmpdir)
+        "data_path": str(tmpdir),
+        "db_name": test_db_name
     }
 
     sequence_otu_map, otu_dict = otu_resource
 
-    task_args = {
-        "sample_id": "foobar",
-        "analysis_id": "baz",
-        "ref_id": "original",
-        "index_id": "index3",
-        "sequence_otu_map": sequence_otu_map,
-        "otu_dict": otu_dict
-    }
+    dbs.jobs.insert_one({
+        "_id": "foobar",
+        "task": "pathoscope_bowtie",
+        "args": {
+            "sample_id": "foobar",
+            "analysis_id": "baz",
+            "ref_id": "original",
+            "index_id": "index3",
+            "sequence_otu_map": sequence_otu_map,
+            "otu_dict": otu_dict
+        },
+        "proc": 2,
+        "mem": 8
+    })
+
+    queue = mocker.Mock()
 
     job = virtool.jobs.analysis.PathoscopeBowtie(
-        loop,
-        executor,
-        dbi,
+        "mongodb://localhost:27017",
         settings,
-        mocker.stub("capture_exception"),
         "foobar",
-        "pathoscope_bowtie",
-        task_args,
-        1,
-        4
+        queue
     )
+
+    job.init_db()
 
     return job
 
 
 @pytest.mark.parametrize("paired", [False, True])
-async def test_check_db(tmpdir, paired, dbi, mock_job):
+def test_check_db(tmpdir, paired, dbs, mock_job):
     """
     Check that the method assigns various job attributes based on information from the database.
 
@@ -101,7 +103,7 @@ async def test_check_db(tmpdir, paired, dbi, mock_job):
     assert mock_job.read_paths is None
     assert mock_job.subtraction is None
 
-    await dbi.samples.insert_one({
+    dbs.samples.insert_one({
         "_id": "foobar",
         "paired": paired,
         "subtraction": {
@@ -112,11 +114,11 @@ async def test_check_db(tmpdir, paired, dbi, mock_job):
         }
     })
 
-    await dbi.subtraction.insert_one({
+    dbs.subtraction.insert_one({
         "_id": "Arabidopsis thaliana"
     })
 
-    await mock_job.check_db()
+    mock_job.check_db()
 
     assert mock_job.sample == {
         "_id": "foobar",
@@ -150,22 +152,48 @@ async def test_check_db(tmpdir, paired, dbi, mock_job):
     )
 
 
-async def test_mk_analysis_dir(mock_job):
+def test_mk_analysis_dir(dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     assert not os.path.isdir(mock_job.analysis_path)
 
-    await mock_job.mk_analysis_dir()
+    mock_job.mk_analysis_dir()
 
     assert os.path.isdir(mock_job.analysis_path)
 
 
-async def test_map_otus(tmpdir, mock_job):
+def test_map_otus(tmpdir, dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     os.makedirs(mock_job.analysis_path)
 
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
-    await mock_job.map_otus()
+    mock_job.map_otus()
 
     assert mock_job.intermediate["to_otus"] == {
         "NC_013110",
@@ -188,7 +216,20 @@ async def test_map_otus(tmpdir, mock_job):
     }
 
 
-async def test_map_isolates(tmpdir, mock_job):
+def test_map_isolates(tmpdir, dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     os.makedirs(mock_job.analysis_path)
 
     mock_job.read_paths = [
@@ -206,13 +247,26 @@ async def test_map_isolates(tmpdir, mock_job):
 
     mock_job.proc = 2
 
-    await mock_job.map_isolates()
+    mock_job.map_isolates()
 
     vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
     assert os.path.getsize(vta_path) == 50090
 
 
-async def test_map_subtraction(mock_job):
+def test_map_subtraction(dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     mock_job.proc = 2
     mock_job.subtraction_path = HOST_PATH
 
@@ -220,13 +274,26 @@ async def test_map_subtraction(mock_job):
 
     shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.analysis_path, "mapped.fastq"))
 
-    await mock_job.map_subtraction()
+    mock_job.map_subtraction()
 
     with open(TO_SUBTRACTION_PATH, "r") as handle:
         assert mock_job.intermediate["to_subtraction"] == json.load(handle)
 
 
-async def test_subtract_mapping(mock_job):
+def test_subtract_mapping(dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     os.makedirs(mock_job.analysis_path)
 
     with open(TO_SUBTRACTION_PATH, "r") as handle:
@@ -234,12 +301,25 @@ async def test_subtract_mapping(mock_job):
 
     shutil.copyfile(VTA_PATH, os.path.join(mock_job.analysis_path, "to_isolates.vta"))
 
-    await mock_job.subtract_mapping()
+    mock_job.subtract_mapping()
 
     assert mock_job.results["subtracted_count"] == 4
 
 
-async def test_pathoscope(mock_job):
+def test_pathoscope(dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
     os.makedirs(mock_job.analysis_path)
 
     with open(REF_LENGTHS_PATH, "r") as handle:
@@ -293,7 +373,7 @@ async def test_pathoscope(mock_job):
         }
     }
 
-    await mock_job.pathoscope()
+    mock_job.pathoscope()
 
     # Check that a new VTA is written.
     assert filecmp.cmp(
@@ -315,8 +395,21 @@ async def test_pathoscope(mock_job):
         }
 
 
-async def test_import_results(dbi, mock_job):
-    await dbi.analyses.insert_one({
+def test_import_results(dbs, mock_job):
+    dbs.samples.insert_one({
+        "_id": "foobar",
+        "paired": False,
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    mock_job.check_db()
+
+    dbs.analyses.insert_one({
         "_id": "baz",
         "algorithm": "pathoscope_bowtie",
         "ready": False,
@@ -325,20 +418,15 @@ async def test_import_results(dbi, mock_job):
         }
     })
 
-    await dbi.samples.insert_one({
-        "_id": "foobar",
-        "pathoscope": False
-    })
-
     mock_job.results = {
         "diagnosis": "diagnosis will be here",
         "read_count": 1337,
         "ready": True
     }
 
-    await mock_job.import_results()
+    mock_job.import_results()
 
-    assert await dbi.analyses.find_one() == {
+    assert dbs.analyses.find_one() == {
         "_id": "baz",
         "ready": True,
         "algorithm": "pathoscope_bowtie",
@@ -349,8 +437,13 @@ async def test_import_results(dbi, mock_job):
         }
     }
 
-    assert await dbi.samples.find_one() == {
+    assert dbs.samples.find_one() == {
         "_id": "foobar",
-        "nuvs": False,
-        "pathoscope": True
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
+        "quality": {
+            "count": 1337
+        },
+        "paired": False
     }
