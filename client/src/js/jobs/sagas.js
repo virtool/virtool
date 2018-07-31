@@ -1,12 +1,9 @@
-import { getLocation, LOCATION_CHANGE } from "react-router-redux";
-import { select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-
+import { takeEvery, takeLatest } from "redux-saga/effects";
 import * as jobsAPI from "./api";
-import { apiCall, apiFind, setPending } from "../sagaUtils";
+import { apiCall, setPending } from "../sagaUtils";
 import {
-    WS_UPDATE_JOB,
-    FIND_JOBS,
-    FETCH_JOBS,
+    LIST_JOBS,
+    FILTER_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
@@ -15,40 +12,25 @@ import {
 } from "../actionTypes";
 
 export function* watchJobs () {
-    yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
-    yield throttle(300, LOCATION_CHANGE, findJobs);
-    yield takeLatest(FETCH_JOBS.REQUESTED, fetchJobs);
-    yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
+    yield takeLatest(LIST_JOBS.REQUESTED, listJobs);
+    yield takeLatest(FILTER_JOBS.REQUESTED, filterJobs);
+    yield takeLatest(GET_JOB.REQUESTED, getJob);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
 }
 
-export function* wsUpdateJob (action) {
-    yield findJobs({payload: yield select(getLocation)});
-
-    const detail = yield select(state => state.jobs.detail);
-
-    if (detail !== null && detail.id === action.data.id) {
-        yield getJob({jobId: detail.id});
-    }
+export function* listJobs (action) {
+    yield apiCall(jobsAPI.list, action, LIST_JOBS);
 }
 
-export function* findJobs (action) {
-    yield apiFind("/jobs", jobsAPI.find, action, FIND_JOBS);
-}
-
-export function* fetchJobs (action) {
-    yield apiCall(jobsAPI.fetch, action, FETCH_JOBS);
-}
-
-export function* getJobWithPending (action) {
-    yield setPending(getJob(action));
+export function* filterJobs (action) {
+    yield apiCall(jobsAPI.filter, action, FILTER_JOBS);
 }
 
 export function* getJob (action) {
-    yield apiCall(jobsAPI.get, action, GET_JOB);
+    yield setPending(apiCall(jobsAPI.get, action, GET_JOB));
 }
 
 export function* cancelJob (action) {
@@ -57,12 +39,10 @@ export function* cancelJob (action) {
 
 export function* removeJob (action) {
     yield setPending(apiCall(jobsAPI.remove, action, REMOVE_JOB));
-    yield apiCall(jobsAPI.find, {}, FIND_JOBS);
 }
 
 export function* clearJobs (action) {
     yield setPending(apiCall(jobsAPI.clear, action, REMOVE_JOB));
-    yield apiCall(jobsAPI.find, {}, FIND_JOBS);
 }
 
 export function* getResources () {

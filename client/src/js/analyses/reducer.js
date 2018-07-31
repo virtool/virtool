@@ -1,28 +1,35 @@
-import {filter, isEqual, map, reject} from "lodash-es";
+import { sortBy, map, concat, forEach, slice } from "lodash-es";
 import {
+    WS_INSERT_ANALYSIS,
+    WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
+    FILTER_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    REMOVE_ANALYSIS,
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
-    TOGGLE_SHOW_PATHOSCOPE_READS, SET_PATHOSCOPE_FILTER
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    SET_PATHOSCOPE_FILTER
 } from "../actionTypes";
-import {formatData} from "./utils";
+import { formatData } from "./utils";
+import { edit, remove } from "../reducerUtils";
 
 export const initialState = {
+    sampleId: "",
     documents: null,
     data: null,
     detail: null,
     readyIndexes: null,
     sortKey: "coverage",
     sortDescending: true,
+    filter: "",
 
     // Pathoscope-specific
     filterOTUs: true,
@@ -102,9 +109,61 @@ export const toggleExpanded = (state, id) => (
     })
 );
 
+export const insert = (documents, action, sampleId) => {
+    const beforeList = documents ? slice(documents, 0, documents.length) : [];
+
+    forEach(documents, (entry, i) => {
+        if (entry.placeholder
+            && (entry.sampleId === sampleId)
+            && (entry.userId === action.data.user.id)) {
+            beforeList.splice(i, 1);
+            return false;
+        }
+    });
+
+    let newList = concat(beforeList, [{...action.data}]);
+    newList = sortBy(newList, "created_at");
+
+    return newList;
+};
+
 export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
+
+        case WS_INSERT_ANALYSIS:
+            if (action.data.sample.id !== state.sampleId) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: insert(state.documents, action, state.sampleId)
+            };
+
+        case WS_UPDATE_ANALYSIS:
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
+
+        case WS_REMOVE_ANALYSIS:
+            return {
+                ...state,
+                documents: remove(state.documents, action)
+            };
+
+        case ANALYZE.REQUESTED:
+            return {
+                ...state,
+                documents: (state.documents === null)
+                    ? null : concat(state.documents, [
+                        {
+                            ...action.placeholder,
+                            userId: action.userId,
+                            sampleId: action.sampleId
+                        }
+                    ])
+            };
 
         case COLLAPSE_ANALYSIS:
             return {...state, data: collapse(state)};
@@ -131,9 +190,15 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, readyIndexes: action.data};
 
         case FIND_ANALYSES.REQUESTED:
-            return {...state, documents: null, detail: null};
+            return {...state, sampleId: action.sampleId, documents: null, detail: null};
 
         case FIND_ANALYSES.SUCCEEDED:
+            return {...state, documents: action.data.documents};
+
+        case FILTER_ANALYSES.REQUESTED:
+            return {...state, filter: action.term};
+
+        case FILTER_ANALYSES.SUCCEEDED:
             return {...state, documents: action.data.documents};
 
         case GET_ANALYSIS.REQUESTED:
@@ -144,9 +209,10 @@ export default function samplesReducer (state = initialState, action) {
             };
 
         case GET_ANALYSIS.SUCCEEDED: {
+
             let data;
 
-            if (action.data.algorithm === "pathoscope_bowtie") {
+            if (action.data.algorithm === "pathoscope_bowtie" && action.data.ready) {
                 data = addDepth(formatData(action.data), state.showMedian);
             } else {
                 data = action.data;
@@ -166,51 +232,11 @@ export default function samplesReducer (state = initialState, action) {
                 detail: null
             };
 
-        case ANALYZE.REQUESTED:
-            return {
-                ...state,
-                documents: state.documents === null ? null : state.documents.concat([action.placeholder])
-            };
-
-        case ANALYZE.SUCCEEDED: {
-            let analyses = state.documents;
-
-            if (analyses !== null) {
-                analyses = map(analyses, analysis => {
-                    if (isEqual(analysis, action.placeholder)) {
-                        return action.data;
-                    }
-
-                    return analysis;
-                });
-            }
-
-            return {...state, documents: analyses};
-        }
-
-        case ANALYZE.FAILED:
-            return {
-                ...state,
-                documents: state.documents === null ? null : filter(state.documents,
-                    analysis => !isEqual(analysis, action.placeholder)
-                )
-            };
-
         case BLAST_NUVS.REQUESTED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});
 
         case BLAST_NUVS.SUCCEEDED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);
-
-        case REMOVE_ANALYSIS.SUCCEEDED:
-            if (state.documents === null) {
-                return state;
-            }
-
-            return {
-                ...state,
-                documents: reject(state.documents, {id: action.id})
-            };
 
         default:
             return state;

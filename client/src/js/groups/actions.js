@@ -1,5 +1,28 @@
 import { simpleActionCreator } from "../utils";
-import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
+import {
+    WS_INSERT_GROUP,
+    WS_UPDATE_GROUP,
+    WS_REMOVE_GROUP,
+    LIST_GROUPS,
+    CREATE_GROUP,
+    SET_GROUP_PERMISSION,
+    REMOVE_GROUP
+} from "../actionTypes";
+
+export const wsInsertGroup = (data) => ({
+    type: WS_INSERT_GROUP,
+    data
+});
+
+export const wsUpdateGroup = (data) => ({
+    type: WS_UPDATE_GROUP,
+    data
+});
+
+export const wsRemoveGroup = (data) => ({
+    type: WS_REMOVE_GROUP,
+    data
+});
 
 /**
  * Returns an action that triggers a request for all groups from the API.

@@ -1,7 +1,7 @@
 import React from "react";
-import {Dropdown, FormControl, FormGroup, InputGroup, MenuItem} from "react-bootstrap";
-import {connect} from "react-redux";
-import {Button, Checkbox, Flex, FlexItem, Icon} from "../../../base/index";
+import { Dropdown, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Button, Checkbox, Flex, FlexItem, Icon } from "../../../base/index";
 import {
     collapseAnalysis,
     setPathoscopeFilter,

@@ -37,7 +37,9 @@ class ReferenceMembers extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onList(this.props.noun);
+        if (!this.props[`${this.props.noun}Fetched`]) {
+            this.props.onList(this.props.noun);
+        }
     }
 
     add = () => {
@@ -132,8 +134,10 @@ const mapStateToProps = (state) => ({
     refId: state.references.detail.id,
     users: state.references.detail.users,
     userList: state.users.list ? state.users.list.documents : null,
+    usersFetched: state.users.fetched,
     groups: state.references.detail.groups,
-    groupList: state.groups.list
+    groupList: state.groups.list,
+    groupsFetched: state.groups.fetched
 });
 
 const mapDispatchToProps = (dispatch) => ({

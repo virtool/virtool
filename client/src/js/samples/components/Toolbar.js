@@ -2,12 +2,12 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
-import { push } from "react-router-redux";
+import { filterSamples } from "../actions";
 
-const SampleToolbar = ({canCreate, onFind, term}) => (
+const SampleToolbar = ({canCreate, onFilter, filter}) => (
     <div key="toolbar" className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -16,8 +16,8 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
-                    value={term}
-                    onChange={(e) => onFind(e.target.value)}
+                    value={filter}
+                    onChange={onFilter}
                     placeholder="Sample name"
                 />
             </InputGroup>
@@ -36,15 +36,14 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
 );
 
 const mapStateToProps = (state) => ({
-    term: getFindTerm(),
+    filter: state.samples.filter,
     canCreate: checkAdminOrPermission(state.account.administrator, state.account.permissions, "create_sample")
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (term) => {
-        const url = createFindURL({ find: term });
-        dispatch(push(url.pathname + url.search));
+    onFilter: (e) => {
+        dispatch(filterSamples(e.target.value));
     }
 
 });

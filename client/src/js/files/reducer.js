@@ -3,11 +3,13 @@
  *
  * @module files/reducer
  */
-import { every, map, reject } from "lodash-es";
-
+import { every, map } from "lodash-es";
+import { updateList, insert, edit, remove } from "../reducerUtils";
 import {
-    FIND_FILES,
-    REMOVE_FILE,
+    WS_INSERT_FILE,
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    LIST_FILES,
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
@@ -25,6 +27,8 @@ export const initialState = {
     found_count: 0,
     page: 0,
     total_count: 0,
+    fetched: false,
+    refetchPage: false,
     uploads: [],
     uploadsComplete: true,
     showUploadOverlay: false
@@ -53,28 +57,58 @@ export default function fileReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case FIND_FILES.REQUESTED:
+        case WS_INSERT_FILE:
+            if (!state.fetched || action.data.type !== state.fileType) {
+                return state;
+            }
             return {
                 ...state,
-                showUploadOverlay: state.showUploadOverlay,
-                uploads: state.uploads,
-                uploadsComplete: state.uploadsComplete,
+                documents: insert(
+                    state.documents,
+                    state.page,
+                    state.per_page,
+                    action,
+                    "created_at"
+                )
+            };
+
+        case WS_UPDATE_FILE:
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
+
+        case WS_REMOVE_FILE:
+            return {
+                ...state,
+                documents: remove(state.documents, action),
+                refetchPage: (state.page < state.page_count)
+            };
+
+        case LIST_FILES.REQUESTED:
+            return {
+                ...state,
                 isLoading: true,
                 errorLoad: false
             };
 
-        case FIND_FILES.FAILED:
+        case LIST_FILES.SUCCEEDED:
+            return {
+                ...state,
+                ...updateList(state.documents, action, state.page),
+                fileType: action.fileType,
+                isLoading: false,
+                errorLoad: false,
+                fetched: true,
+                refetchPage: false
+            };
+
+        case LIST_FILES.FAILED:
             return {
                 ...state,
                 isLoading: false,
                 errorLoad: true
             };
-
-        case FIND_FILES.SUCCEEDED:
-            return {...state, ...action.data, fileType: action.fileType, isLoading: false, errorLoad: false };
-
-        case REMOVE_FILE.SUCCEEDED:
-            return {...state, documents: reject(state.documents, {id: action.data.file_id})};
 
         case UPLOAD.REQUESTED: {
             const { name, size, type } = action.file;

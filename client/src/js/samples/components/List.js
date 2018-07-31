@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, filter, forEach } from "lodash-es";
+import { forEach, slice, includes, without } from "lodash-es";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
@@ -8,11 +8,10 @@ import CreateSample from "./Create/Create";
 import CreateAnalysis from "../../analyses/components/Create";
 import QuickAnalyze from "./QuickAnalyze";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, Icon, Button } from "../../base";
-import { fetchSamples } from "../actions";
+import { listSamples } from "../actions";
 import { analyze } from "../../analyses/actions";
 import { listReadyIndexes } from "../../indexes/actions";
-import { fetchHmms } from "../../hmm/actions";
-import { getUpdatedScrollListState } from "../../utils";
+import { listHmms } from "../../hmm/actions";
 
 const SummaryToolbar = ({clearAll, summary, showModal}) => (
     <div key="toolbar" className="toolbar">
@@ -38,22 +37,12 @@ const SummaryToolbar = ({clearAll, summary, showModal}) => (
     </div>
 );
 
-const createSelection = (list, selected) => (
-    map(list, (entry, index) => ({
-        sampleId: list[index].id,
-        check: selected[index] ? selected[index].check : false
-    }))
-);
-
 export class SamplesList extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page,
-            selected: createSelection(this.props.documents, []),
+            selected: [],
             lastChecked: null,
             show: false,
             sampleId: ""
@@ -61,76 +50,53 @@ export class SamplesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFetchHMMs();
+        this.props.onListHMMs();
         this.props.onListReadyIndexes();
+
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
+        }
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        const newState = getUpdatedScrollListState(nextProps, prevState);
-
-        if (!newState) {
-            return null;
-        }
-
-        if (newState.masterList && newState.masterList.length) {
-
-            const newSelected = createSelection(newState.masterList, prevState.selected);
-
-            return {
-                ...prevState,
-                ...newState,
-                selected: newSelected
-            };
-
-        }
-
-        return {
-            ...prevState,
-            ...newState,
-            selected: prevState.selected
-        };
-    }
-
-    onSelect = (index, isShiftKey) => {
-
-        let newSelected = this.state.selected.slice();
+    onSelect = (id, index, isShiftKey) => {
+        let newSelected = [...this.state.selected];
+        let selectedSegment;
 
         if (isShiftKey && this.state.lastChecked !== null && this.state.lastChecked !== index) {
 
             const startIndex = (index < this.state.lastChecked) ? index : this.state.lastChecked;
             const endIndex = (startIndex === index) ? this.state.lastChecked : index;
 
-            newSelected = map(newSelected, (entry, i) => {
-                if (i < startIndex || i > endIndex) {
-                    return entry;
-                }
-                return newSelected[index].check ? {...entry, check: false} : {...entry, check: true};
-            });
+            selectedSegment = slice(this.props.documents, startIndex + 1, endIndex + 1);
 
         } else {
-            newSelected[index].check = !newSelected[index].check;
+            selectedSegment = [this.props.documents[index]];
         }
+
+        forEach(selectedSegment, entry => {
+            if (includes(newSelected, entry.id)) {
+                newSelected = without(newSelected, entry.id);
+            } else {
+                newSelected.push(entry.id);
+            }
+        });
 
         this.setState({
             lastChecked: index,
             selected: newSelected
         });
-
     };
 
     onClearSelected = () => {
-        const newSelected = map(this.state.selected, entry => (
-            {...entry, check: false}
-        ));
-        this.setState({ selected: newSelected });
+        this.setState({ selected: [] });
     };
 
     handleAnalyses = (sampleId, references, algorithm) => {
         if (sampleId) {
-            this.props.onAnalyze(sampleId, references, algorithm);
+            this.props.onAnalyze(sampleId, references, algorithm, this.props.userId);
         } else {
-            forEach(filter(this.state.selected, ["check", true]), entry => {
-                this.props.onAnalyze(entry.sampleId, references, algorithm);
+            forEach(this.state.selected, entry => {
+                this.props.onAnalyze(entry, references, algorithm, this.props.userId);
             });
         }
         this.onClearSelected();
@@ -143,17 +109,21 @@ export class SamplesList extends React.Component {
         });
     };
 
+    handleShow = () => {
+        this.setState({ show: !this.state.show });
+    };
+
     rowRenderer = (index) => (
         <SampleEntry
-            key={this.state.masterList[index].id}
+            key={this.props.documents[index].id}
             index={index}
-            id={this.state.masterList[index].id}
-            userId={this.state.masterList[index].user.id}
-            isChecked={this.state.selected[index] ? this.state.selected[index].check : false}
+            id={this.props.documents[index].id}
+            userId={this.props.documents[index].user.id}
+            isChecked={!!includes(this.state.selected, this.props.documents[index].id)}
             onSelect={this.onSelect}
-            isHidden={!!filter(this.state.selected, ["check", true]).length}
+            isHidden={!!this.state.selected.length}
             quickAnalyze={this.handleQuickAnalyze}
-            {...this.state.masterList[index]}
+            {...this.props.documents[index]}
         />
     );
 
@@ -165,44 +135,44 @@ export class SamplesList extends React.Component {
 
         let noSamples;
 
-        if (!this.state.masterList.length) {
+        if (!this.props.documents.length) {
             noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
         }
 
-        const multiSelect = filter(this.state.selected, ["check", true]);
-        const message = `Selected ${multiSelect.length} ${(multiSelect.length > 1) ? "samples" : "sample"} to analyze`;
+        const message = `Selected ${this.state.selected.length} ${(this.state.selected.length > 1)
+            ? "samples" : "sample"} to analyze`;
 
         return (
             <div>
                 <ViewHeader title="Samples" totalCount={this.props.total_count} />
 
-                {multiSelect.length ? (
+                {this.state.selected.length ? (
                     <SummaryToolbar
                         clearAll={this.onClearSelected}
                         summary={message}
-                        showModal={() => this.setState({ show: true })}
+                        showModal={this.handleShow}
                     />
                 ) : <SampleToolbar />}
 
-                {noSamples}
-
-                <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.state.masterList}
-                    loadNextPage={this.props.onNextPage}
-                    page={this.state.page}
-                    rowRenderer={this.rowRenderer}
-                />
+                {noSamples || (
+                    <ScrollList
+                        hasNextPage={this.props.page < this.props.page_count}
+                        isNextPageLoading={this.props.isLoading}
+                        isLoadError={this.props.errorLoad}
+                        list={this.props.documents}
+                        refetchPage={this.props.refetchPage}
+                        loadNextPage={this.props.loadNextPage}
+                        page={this.props.page}
+                        rowRenderer={this.rowRenderer}
+                    />)}
 
                 <CreateSample />
 
                 <CreateAnalysis
                     id={this.state.sampleId}
-                    samples={multiSelect.length ? multiSelect : null}
+                    samples={this.state.selected.length ? this.state.selected : null}
                     show={this.state.show}
-                    onHide={() => this.setState({show: false})}
+                    onHide={this.handleShow}
                     onSubmit={this.handleAnalyses}
                     hasHmm={!!this.props.hmms.status.installed}
                     refIndexes={this.props.indexes}
@@ -215,6 +185,7 @@ export class SamplesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    userId: state.account.id,
     ...state.samples,
     indexes: state.analyses.readyIndexes,
     hmms: state.hmms
@@ -222,18 +193,18 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onNextPage: (page) => {
-        dispatch(fetchSamples(page));
+    loadNextPage: (page) => {
+        dispatch(listSamples(page));
     },
 
-    onAnalyze: (sampleId, references, algorithm) => {
+    onAnalyze: (sampleId, references, algorithm, userId) => {
         forEach(references, (entry) => {
-            dispatch(analyze(sampleId, entry.refId, algorithm));
+            dispatch(analyze(sampleId, entry.refId, algorithm, userId));
         });
     },
 
-    onFetchHMMs: () => {
-        dispatch(fetchHmms());
+    onListHMMs: () => {
+        dispatch(listHmms());
     },
 
     onListReadyIndexes: () => {

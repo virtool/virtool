@@ -1,7 +1,9 @@
 import {
+    wsInsertJob,
     wsUpdateJob,
     wsRemoveJob,
-    findJobs,
+    listJobs,
+    filterJobs,
     getJob,
     cancelJob,
     removeJob,
@@ -9,9 +11,11 @@ import {
     getResources
 } from "./actions";
 import {
+    WS_INSERT_JOB,
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
-    FIND_JOBS,
+    LIST_JOBS,
+    FILTER_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
@@ -20,88 +24,106 @@ import {
 } from "../actionTypes";
 
 describe("Jobs Action Creators:", () => {
+    let data;
+    let jobId;
+    let result;
+    let expected;
+
+    it("wsInsertJob: returns action for job insert via websocket", () => {
+        data = {};
+        result = wsInsertJob(data);
+        expected = {
+            type: WS_INSERT_JOB,
+            data
+        };
+        expect(result).toEqual(expected);
+    });
 
     it("wsUpdateJob: returns action for job update via websocket", () => {
-        const data = {};
-        const result = wsUpdateJob(data);
-        const expected = {
+        data = {};
+        result = wsUpdateJob(data);
+        expected = {
             type: WS_UPDATE_JOB,
             data
         };
-
         expect(result).toEqual(expected);
     });
 
     it("wsRemoveJob: returns action for job removal via websocket", () => {
-        const jobId = "tester";
-        const result = wsRemoveJob(jobId);
-        const expected = {
+        data = ["tester"];
+        result = wsRemoveJob(data);
+        expected = {
             type: WS_REMOVE_JOB,
-            jobId
+            data
         };
-
         expect(result).toEqual(expected);
     });
 
-    it("findJobs: returns simple action", () => {
-        const result = findJobs();
-        const expected = {
-            type: FIND_JOBS.REQUESTED
+    it("listJobs: returns action to retrieve specific page of job documents", () => {
+        const page = 1;
+        result = listJobs(page);
+        expected = {
+            type: LIST_JOBS.REQUESTED,
+            page
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("filterJobs: returns action for filtering search results", () => {
+        const term = "search";
+        result = filterJobs(term);
+        expected = {
+            type: FILTER_JOBS.REQUESTED,
+            term
+        };
         expect(result).toEqual(expected);
     });
 
     it("getJob: returns action for getting a specific job", () => {
-        const jobId = "tester";
-        const result = getJob(jobId);
-        const expected = {
+        jobId = "tester";
+        result = getJob(jobId);
+        expected = {
             type: GET_JOB.REQUESTED,
             jobId
         };
-
         expect(result).toEqual(expected);
     });
 
     it("cancelJob: returns action for cancelling running job", () => {
-        const jobId = "tester";
-        const result = cancelJob(jobId);
-        const expected = {
+        jobId = "tester";
+        result = cancelJob(jobId);
+        expected = {
             type: CANCEL_JOB.REQUESTED,
             jobId
         };
-
         expect(result).toEqual(expected);
     });
 
     it("removeJob: returns action for removing a specific job", () => {
-        const jobId = "tester";
-        const result = removeJob(jobId);
-        const expected = {
+        jobId = "tester";
+        result = removeJob(jobId);
+        expected = {
             type: REMOVE_JOB.REQUESTED,
             jobId
         };
-
         expect(result).toEqual(expected);
     });
 
     it("clearJobs: returns action to clear a subset of jobs", () => {
         const scope = "filter";
-        const result = clearJobs(scope);
-        const expected = {
+        result = clearJobs(scope);
+        expected = {
             type: CLEAR_JOBS.REQUESTED,
             scope
         };
-
         expect(result).toEqual(expected);
     });
 
     it("getResources: returns action to retrieve computing resources data", () => {
-        const result = getResources();
-        const expected = {
+        result = getResources();
+        expected = {
             type: GET_RESOURCES.REQUESTED
         };
-
         expect(result).toEqual(expected);
     });
 

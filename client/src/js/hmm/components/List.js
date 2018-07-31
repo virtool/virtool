@@ -1,27 +1,17 @@
 import React from "react";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
 import { Icon, LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
-import { createFindURL, getFindTerm, getUpdatedScrollListState } from "../../utils";
-import { findHmms } from "../actions";
+import { listHmms, filterHmms } from "../actions";
 
 class HMMList extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            masterList: this.props.documents,
-            list: this.props.documents,
-            page: this.props.page
-        };
-    }
-
-    static getDerivedStateFromProps (nextProps, prevState) {
-        return getUpdatedScrollListState(nextProps, prevState);
+    componentDidMount () {
+        if (!this.props.fetched) {
+            this.props.loadNextPage(1);
+        }
     }
 
     componentDidUpdate (prevProps) {
@@ -32,8 +22,8 @@ class HMMList extends React.Component {
 
     rowRenderer = (index) => (
         <HMMItem
-            key={this.state.masterList[index].id}
-            {...this.state.masterList[index]}
+            key={this.props.documents[index].id}
+            {...this.props.documents[index]}
         />
     );
 
@@ -42,7 +32,7 @@ class HMMList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        if (this.props.status.installed && this.props.status.installed.ready) {
+        if (this.props.status.installed) {
             return (
                 <div>
                     <ViewHeader title="HMMs" totalCount={this.props.found_count} />
@@ -55,9 +45,9 @@ class HMMList extends React.Component {
 
                             <FormControl
                                 type="text"
-                                placeholder="Definition, cluster, family"
-                                onChange={(e) => this.props.onFind({find: e.target.value})}
-                                value={this.props.term}
+                                placeholder="Definition"
+                                onChange={this.props.onFilter}
+                                value={this.props.filter}
                             />
                         </InputGroup>
                     </FormGroup>
@@ -67,9 +57,9 @@ class HMMList extends React.Component {
                             hasNextPage={this.props.page < this.props.page_count}
                             isNextPageLoading={this.props.isLoading}
                             isLoadError={this.props.errorLoad}
-                            list={this.state.masterList}
+                            list={this.props.documents}
                             loadNextPage={this.props.loadNextPage}
-                            page={this.state.page}
+                            page={this.props.page}
                             rowRenderer={this.rowRenderer}
                         />
                     ) : <NoneFound noun="HMMs" />}
@@ -92,18 +82,17 @@ class HMMList extends React.Component {
 
 const mapStateToProps = (state) => ({
     ...state.hmms,
-    term: getFindTerm()
+    filter: state.hmms.filter
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: ({find, page}) => {
-        const url = createFindURL({find, page});
-        dispatch(push(url.pathname + url.search));
+    onFilter: (e) => {
+        dispatch(filterHmms(e.target.value));
     },
 
     loadNextPage: (page) => {
-        dispatch(findHmms(page));
+        dispatch(listHmms(page));
     }
 
 });

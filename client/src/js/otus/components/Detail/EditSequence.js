@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { find, map, get, upperFirst } from "lodash-es";
+import { find, map, upperFirst, concat, union } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
@@ -27,9 +27,10 @@ const getInitialState = (props) => {
 
         return {
             definition: sequence.definition,
-            host: sequence.host,
+            host: sequence.host || "",
             sequence: sequence.sequence,
             segment: sequence.segment,
+            schema: sequence.segment ? union([sequence.segment], props.schema) : props.schema,
             autofillPending: false,
             errorDefinition: "",
             errorSequence: "",
@@ -58,7 +59,7 @@ class EditSequence extends React.Component {
 
     static getDerivedStateFromProps (nextProps, prevState) {
         if (prevState.error !== nextProps.error) {
-            return { error: nextProps.error };
+            return getInitialState(nextProps);
         }
         return null;
     }
@@ -125,15 +126,12 @@ class EditSequence extends React.Component {
             );
         }
 
-        const currentOption = this.state.segment
-            ? (<option key={this.state.segment} value={this.state.segment}>{this.state.segment}</option>)
-            : null;
-        const defaultOption = (<option key="" value=""> - None - </option>);
-        const segmentNames = map(this.props.schema, (segment) =>
+        const defaultOption = <option key="None" value=""> - None - </option>;
+        const segmentNames = concat(defaultOption, map(this.state.schema, (segment) => (
             <option key={segment} value={segment}>
                 {segment}
             </option>
-        );
+        )));
 
         return (
             <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
@@ -162,8 +160,6 @@ class EditSequence extends React.Component {
                                     onChange={this.handleChange}
                                     error={this.state.error}
                                 >
-                                    {defaultOption}
-                                    {currentOption}
                                     {segmentNames}
                                 </InputError>
                             </Col>
@@ -215,8 +211,7 @@ const mapStateToProps = state => ({
     detail: state.otus.detail,
     isolate: state.otus.activeIsolate,
     sequenceId: state.otus.editSequence,
-    otuId: state.otus.detail.id,
-    error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
+    otuId: state.otus.detail.id
 });
 
 const mapDispatchToProps = dispatch => ({

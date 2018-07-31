@@ -1,6 +1,6 @@
 import Request from "superagent";
 
-export const find = ({ refId, page }) => (
+export const list = ({ refId, page }) => (
     Request.get(`/api/refs/${refId}/indexes?page=${page}`)
 );
 

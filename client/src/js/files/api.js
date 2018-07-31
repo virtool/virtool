@@ -5,6 +5,15 @@
  */
 import Request from "superagent";
 
+export const find = ({ fileType, page, perPage }) => (
+    Request.get("/api/files")
+        .query({
+            type: fileType,
+            per_page: perPage,
+            page
+        })
+);
+
 /**
  * Get files of the given ``fileType``. Get a specific page of results using the ``page`` argument.
  *
@@ -13,11 +22,10 @@ import Request from "superagent";
  * @param page {number} the page of results to get
  * @returns {promise}
  */
-export const find = ({ fileType, page, perPage }) => (
+export const list = ({ fileType, page }) => (
     Request.get("/api/files")
         .query({
             type: fileType,
-            per_page: perPage,
             page
         })
 );

@@ -1,6 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
 import { ViewHeader, Alert, RemoveBanner } from "../../base";
 import { purgeHMMs } from "../actions";
 import { checkAdminOrPermission } from "../../utils";
@@ -33,7 +32,6 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) => ({
     onPurge: () => {
         dispatch(purgeHMMs());
-        dispatch(push("/hmm"));
     }
 });
 

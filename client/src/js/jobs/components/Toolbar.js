@@ -5,11 +5,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
-
-import { clearJobs } from "../actions";
+import { clearJobs, filterJobs } from "../actions";
 import { Icon, Button } from "../../base";
-import { push } from "react-router-redux";
-import { createFindURL, getFindTerm, checkAdminOrPermission } from "../../utils";
 
 /**
  * A toolbar component for the jobs list view.
@@ -23,15 +20,15 @@ const JobsToolbar = (props) => {
     if (props.canRemove) {
         removalDropdown = (
             <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-                <Button onClick={() => props.onClear()} tip="Clear Finished">
+                <Button name="finished" onClick={props.onClear} tip="Clear Finished">
                     <Icon name="trash" />
                 </Button>
                 <Dropdown.Toggle />
                 <Dropdown.Menu>
-                    <MenuItem eventKey="removeFailed" onClick={() => props.onClear("failed")}>
+                    <MenuItem eventKey="removeFailed" name="failed" onClick={props.onClear}>
                         Failed
                     </MenuItem>
-                    <MenuItem eventKey="removeComplete" onClick={() => props.onClear("complete")}>
+                    <MenuItem eventKey="removeComplete" name="complete" onClick={props.onClear}>
                         Complete
                     </MenuItem>
                 </Dropdown.Menu>
@@ -46,7 +43,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl value={props.term} onChange={(e) => props.onFind(e.target.value)} />
+                    <FormControl value={props.filter} onChange={props.onFilter} />
                 </InputGroup>
             </FormGroup>
 
@@ -56,19 +53,17 @@ const JobsToolbar = (props) => {
 };
 
 const mapStateToProps = (state) => ({
-    term: getFindTerm(),
-    canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job")
+    filter: state.jobs.filter
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (find) => {
-        const url = createFindURL({ find });
-        dispatch(push(url.pathname + url.search));
+    onFilter: (e) => {
+        dispatch(filterJobs(e.target.value));
     },
 
-    onClear: (scope) => {
-        dispatch(clearJobs(scope));
+    onClear: (e) => {
+        dispatch(clearJobs(e.target.name));
     }
 
 });

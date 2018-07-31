@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-import { Link } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
-import {createFindURL, getFindTerm} from "../../utils";
+import { filterReferences } from "../actions";
 
-const ReferenceToolbar = ({ onFind, term, canCreate }) => (
+const ReferenceToolbar = ({ filter, onFilter, canCreate }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -17,32 +16,32 @@ const ReferenceToolbar = ({ onFind, term, canCreate }) => (
                     className="form-control"
                     type="text"
                     placeholder="Reference name"
-                    value={term}
-                    onChange={onFind}
+                    value={filter}
+                    onChange={onFilter}
                 />
             </div>
         </div>
 
         {canCreate ? (
-            <Link to={{state: {newReference: true, createReference: true}}}>
-                <Button bsStyle="primary" tip="Create">
-                    <Icon name="plus-square" />
-                </Button>
-            </Link>
+            <LinkContainer to={{state: {newReference: true, createReference: true}}}>
+                <Button
+                    bsStyle="primary"
+                    tip="Create"
+                    icon="plus-square fa-fw"
+                />
+            </LinkContainer>
         ) : null}
     </div>
 );
 
 const mapStateToProps = (state) => ({
-    term: getFindTerm(),
-    search: state.router.location.search
+    filter: state.references.filter
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (e) => {
-        const url = createFindURL({ find: e.target.value });
-        dispatch(push(url.pathname + url.search));
+    onFilter: (e) => {
+        dispatch(filterReferences(e.target.value));
     }
 
 });

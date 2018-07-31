@@ -6,24 +6,29 @@ import { Link } from "react-router-dom";
 
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
-import { analyze } from "../actions";
+import { analyze, filterAnalyses } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 import { listReadyIndexes } from "../../indexes/actions";
-import { fetchHmms } from "../../hmm/actions";
+import { listHmms } from "../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../base/index";
 
-const AnalysesToolbar = ({ onClick, isDisabled }) => (
+const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
                     <Icon name="search" />
                 </InputGroup.Addon>
-                <FormControl type="text" />
+                <FormControl
+                    type="text"
+                    value={term}
+                    onChange={onFilter}
+                    placeholder="Index"
+                />
             </InputGroup>
         </FormGroup>
         <Button
-            icon="plus-square"
+            icon="plus-square fa-fw"
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}
@@ -42,9 +47,13 @@ class AnalysesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFetchHMMs();
+        this.props.onListHMMs();
         this.props.onListReadyIndexes();
     }
+
+    handleFilter = (e) => {
+        this.props.onFilter(this.props.sampleId, e.target.value);
+    };
 
     render () {
 
@@ -85,10 +94,12 @@ class AnalysesList extends React.Component {
             <div>
                 {hmmAlert}
 
-                {this.props.canModify ?
-                    <AnalysesToolbar
-                        onClick={() => this.setState({show: true})}
-                    /> : null}
+                <AnalysesToolbar
+                    term={this.props.filter}
+                    onFilter={this.handleFilter}
+                    onClick={() => this.setState({show: true})}
+                    isDisabled={!this.props.canModify}
+                />
 
                 <ListGroup>
                     {listContent}
@@ -101,6 +112,7 @@ class AnalysesList extends React.Component {
                     onSubmit={this.props.onAnalyze}
                     hasHmm={!!this.props.hmms.status.installed}
                     refIndexes={this.props.indexes}
+                    userId={this.props.userId}
                 />
             </div>
         );
@@ -108,8 +120,11 @@ class AnalysesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    userId: state.account.id,
+    sampleId: state.analyses.sampleId,
     detail: state.samples.detail,
     analyses: state.analyses.documents,
+    filter: state.analyses.filter,
     indexes: state.analyses.readyIndexes,
     hmms: state.hmms,
     canModify: getCanModify(state)
@@ -117,14 +132,18 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onAnalyze: (sampleId, references, algorithm) => {
+    onFilter: (sampleId, term) => {
+        dispatch(filterAnalyses(sampleId, term));
+    },
+
+    onAnalyze: (sampleId, references, algorithm, userId) => {
         forEach(references, (entry) =>
-            dispatch(analyze(sampleId, entry.refId, algorithm))
+            dispatch(analyze(sampleId, entry.refId, algorithm, userId))
         );
     },
 
-    onFetchHMMs: () => {
-        dispatch(fetchHmms());
+    onListHMMs: () => {
+        dispatch(listHmms());
     },
 
     onListReadyIndexes: () => {

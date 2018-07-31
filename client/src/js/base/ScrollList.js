@@ -18,6 +18,19 @@ export class ScrollList extends React.Component {
             : window.addEventListener("scroll", this.onScroll, false);
     }
 
+    componentDidUpdate () {
+        if (this.props.refetchPage
+            && !this.props.isElement
+            && window.innerHeight === document.documentElement.scrollHeight
+            && this.props.hasNextPage
+            && !this.props.isNextPageLoading) {
+
+            // Reload first page when entry deletion results in
+            // loss of scrollbars (list same/shorter than window height)
+            this.props.loadNextPage(this.props.page);
+        }
+    }
+
     componentWillUnmount () {
         return this.props.isElement
             ? this.scrollList.current.removeEventListener("scroll", this.onScroll)
@@ -43,17 +56,31 @@ export class ScrollList extends React.Component {
             && !this.props.isNextPageLoading
             && (ratio > 0.8)
         ) {
-            this.props.loadNextPage(this.props.page + 1);
+            // If entry deletion has occurred, must reload latest page
+            // to synchronize page entries with database
+            this.props.loadNextPage(this.props.refetchPage ? this.props.page : this.props.page + 1);
         }
     };
 
     render () {
-        const { list, rowRenderer, isNextPageLoading, hasNextPage } = this.props;
+        const { list, rowRenderer, isNextPageLoading, hasNextPage, noContainer } = this.props;
+
+        const entries = map(list, (item, index) => rowRenderer(index));
+        const isLoading = (isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null;
+
+        if (noContainer) {
+            return (
+                <React.Fragment>
+                    {entries}
+                    {isLoading}
+                </React.Fragment>
+            );
+        }
 
         return (
             <div ref={this.scrollList} style={this.props.style}>
-                {map(list, (item, index) => rowRenderer(index))}
-                {(isNextPageLoading && hasNextPage) ? <LoadingPlaceholder margin="20px" /> : null}
+                {entries}
+                {isLoading}
             </div>
         );
     }

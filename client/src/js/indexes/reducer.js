@@ -1,12 +1,20 @@
 import {
-    FIND_INDEXES,
+    WS_INSERT_INDEX,
+    WS_UPDATE_INDEX,
+    LIST_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
-    GET_INDEX_HISTORY
+    GET_INDEX_HISTORY,
+    WS_INSERT_HISTORY
 } from "../actionTypes";
+import { updateList, insert, edit } from "../reducerUtils";
 
 export const initialState = {
+    referenceId: "",
     documents: null,
+    page: 0,
+    fetched: false,
+    refetchPage: false,
     modified_count: 0,
     total_otu_count: 0,
     detail: null,
@@ -19,13 +27,51 @@ export default function indexesReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case FIND_INDEXES.REQUESTED:
-            return {...state, isLoading: true, errorLoad: false};
+        case WS_INSERT_HISTORY:
+            if (action.data.reference.id === state.referenceId) {
+                return {...state, modified_otu_count: (state.modified_otu_count + 1)};
+            }
+            return state;
 
-        case FIND_INDEXES.SUCCEEDED:
-            return {...state, ...action.data, isLoading: false, errorLoad: false};
+        case WS_INSERT_INDEX:
+            if (!state.fetched || action.data.reference.id !== state.referenceId) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: insert(
+                    state.documents,
+                    state.page,
+                    state.per_page,
+                    action,
+                    "version"
+                ).reverse(),
+                modified_otu_count: 0
+            };
 
-        case FIND_INDEXES.FAILED:
+        case WS_UPDATE_INDEX:
+            if (action.data.reference.id !== state.referenceId) {
+                return state;
+            }
+            return {
+                ...state,
+                documents: edit(state.documents, action)
+            };
+
+        case LIST_INDEXES.REQUESTED:
+            return {...state, referenceId: action.refId, isLoading: true, errorLoad: false};
+
+        case LIST_INDEXES.SUCCEEDED:
+            return {
+                ...state,
+                ...updateList(state.documents, action, state.page),
+                isLoading: false,
+                errorLoad: false,
+                fetched: true,
+                refetchPage: false
+            };
+
+        case LIST_INDEXES.FAILED:
             return {...state, isLoading: false, errorLoad: true};
 
         case GET_INDEX.REQUESTED:
@@ -38,13 +84,35 @@ export default function indexesReducer (state = initialState, action) {
             return {...state, unbuilt: action.data};
 
         case GET_INDEX_HISTORY.REQUESTED:
-            return {...state, isLoading: true, errorLoad: false};
+            return {
+                ...state,
+                history: {
+                    ...state.history,
+                    isLoading: true,
+                    errorLoad: false
+                }
+            };
 
         case GET_INDEX_HISTORY.SUCCEEDED:
-            return {...state, history: action.data, isLoading: false, errorLoad: false};
+            return {
+                ...state,
+                history: {
+                    ...state.history,
+                    ...updateList(state.history.documents, action),
+                    isLoading: false,
+                    errorLoad: false
+                }
+            };
 
         case GET_INDEX_HISTORY.FAILED:
-            return {...state, isLoading: false, errorLoad: true};
+            return {
+                ...state,
+                history: {
+                    ...state.history,
+                    isLoading: false,
+                    errorLoad: true
+                }
+            };
 
         default:
             return state;

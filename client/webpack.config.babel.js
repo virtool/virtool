@@ -1,3 +1,4 @@
+/* global __dirname */
 import path from "path";
 import HTMLPlugin from "html-webpack-plugin";
 import CleanPlugin from "clean-webpack-plugin";

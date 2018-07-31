@@ -1,12 +1,11 @@
 import Request from "superagent";
 
-
-export const find = () => (
-    Request.get(`/api/jobs${window.location.search}`)
+export const list = ({ page }) => (
+    Request.get(`/api/jobs?page=${page}`)
 );
 
-export const fetch = ({ page }) => (
-    Request.get(`/api/jobs?page=${page}`)
+export const filter = ({ term }) => (
+    Request.get(`/api/jobs?find=${term}`)
 );
 
 export const get = ({ jobId }) => (

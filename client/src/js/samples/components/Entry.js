@@ -10,7 +10,9 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
     <Flex>
         <FlexItem className={CX("sample-label", {"bg-primary": ready})}>
             <Flex alignItems="center">
-                {ready === "ip" ? <ClipLoader size="10px" color="white" /> : <Icon name={icon} />}
+                {ready === "ip"
+                    ? <ClipLoader size="10px" color="white" verticalAlign="middle" />
+                    : <Icon name={icon} style={{lineHeight: "inherit"}} />}
                 <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
                     {label}
                 </span>
@@ -20,7 +22,7 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
 );
 
 const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
-    <Flex>
+    <Flex style={{height: "20px"}}>
         <SampleEntryLabel icon="archive" label="Import" ready={imported || true} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
@@ -28,13 +30,6 @@ const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
 );
 
 class SampleEntry extends React.Component {
-
-    constructor (props) {
-        super(props);
-        this.state = {
-            pendingQuickAnalyze: false
-        };
-    }
 
     onClick = (e) => {
         if (e.target.nodeName !== "I") {
@@ -44,7 +39,7 @@ class SampleEntry extends React.Component {
 
     handleCheck = (e) => {
         e.preventDefault();
-        this.props.onSelect(this.props.index, e.shiftKey);
+        this.props.onSelect(this.props.id, this.props.index, e.shiftKey);
     };
 
     handleQuickAnalyze = (e) => {
