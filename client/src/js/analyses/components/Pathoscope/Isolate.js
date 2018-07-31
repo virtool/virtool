@@ -1,4 +1,4 @@
-import {map, sortBy} from "lodash-es";
+import {map} from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import {Flex, FlexItem} from "../../../base/index";
@@ -51,7 +51,7 @@ export default class PathoscopeIsolate extends React.Component {
             whiteSpace: "nowrap"
         };
 
-        const hitComponents = map(sortBy(this.props.sequences, hit => hit.length), (hit, i) =>
+        const hitComponents = map(this.props.sequences, (hit, i) =>
             <Coverage
                 key={i}
                 data={hit.align}

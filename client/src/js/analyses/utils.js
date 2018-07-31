@@ -1,4 +1,4 @@
-import {compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy} from "lodash-es";
+import {compact, countBy, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip} from "lodash-es";
 import {formatIsolateName} from "../utils";
 
 export const fillAlign = ({ align, length }) => {
@@ -39,7 +39,7 @@ export const formatData = (detail) => {
                 name = "Unnamed Isolate";
             }
 
-            const sequences = map(isolate.sequences, sequence => {
+            const sequences = sortBy(map(isolate.sequences, sequence => {
                 const filled = fillAlign(sequence);
 
                 return {
@@ -50,7 +50,7 @@ export const formatData = (detail) => {
                     sumDepth: sum(filled),
                     filled
                 };
-            });
+            }), "length");
 
             const filled = flatMap(sequences, "filled");
 
@@ -61,8 +61,10 @@ export const formatData = (detail) => {
             return {
                 ...isolate,
                 name,
+                filled,
                 length,
                 coverage,
+                sequences,
                 pi: sumBy(sequences, "pi"),
                 reads: sumBy(sequences, "reads"),
                 maxDepth: max(filled),
@@ -75,29 +77,40 @@ export const formatData = (detail) => {
 
         const pi = sumBy(isolates, "pi");
 
+        const zipped = unzip(map(isolates, "sequences"));
+
+        const maxByMean = map(zipped, sequences => maxBy(sequences, "meanDepth"));
+
+        const maxByMedian = map(zipped, sequences => maxBy(sequences, "medianDepth"));
+
+        const meanFilled = flatMap(maxByMean, "filled");
+        const medianFilled = flatMap(maxByMedian, "filled");
+
         return {
             ...otu,
-            coverage: maxBy(isolates, "coverage").coverage,
             isolates,
+            pi,
+            coverage: maxBy(isolates, "coverage").coverage,
             maxGenomeLength: maxBy(isolates, "length").length,
             maxDepth: maxBy(isolates, "maxDepth").maxDepth,
-            meanDepth: maxBy(isolates, "meanDepth").meanDepth,
-            medianDepth: maxBy(isolates, "medianDepth").medianDepth,
-            pi,
+            meanDepth: mean(meanFilled), //maxBy(isolates, "meanDepth").meanDepth,
+            medianDepth: median(medianFilled), //maxBy(isolates, "medianDepth").medianDepth,
             reads: pi * mappedReadCount
         };
     });
 };
 
 export const median = (values) => {
-    const midIndex = (values.length - 1) / 2;
+    const sorted = values.slice().sort();
+
+    const midIndex = (sorted.length - 1) / 2;
 
     if (midIndex % 1 === 0) {
-        return values[midIndex];
+        return sorted[midIndex];
     }
 
     const lowerIndex = Math.floor(midIndex);
     const upperIndex = Math.ceil(midIndex);
 
-    return (values[lowerIndex] + values[upperIndex]) / 2;
+    return (sorted[lowerIndex] + sorted[upperIndex]) / 2;
 };
