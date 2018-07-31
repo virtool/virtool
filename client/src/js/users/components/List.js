@@ -25,7 +25,10 @@ class UsersList extends React.Component {
     }
 
     shouldComponentUpdate (nextProps) {
-        return !isEqual(nextProps.documents, this.props.documents);
+        return (
+            !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.isLoading, this.props.isLoading)
+        );
     }
 
     rowRenderer = (index) => (

@@ -15,7 +15,9 @@ import {
     REMOVE_REFERENCE_USER,
     ADD_REFERENCE_GROUP,
     EDIT_REFERENCE_GROUP,
-    REMOVE_REFERENCE_GROUP
+    REMOVE_REFERENCE_GROUP,
+    WS_INSERT_OTU,
+    WS_REMOVE_OTU
 } from "../actionTypes";
 import { updateList, insert, edit, remove } from "../reducerUtils";
 
@@ -99,6 +101,12 @@ export default function referenceReducer (state = initialState, action) {
                 total_count: state.total_count - 1,
                 refetchPage: (state.page < state.page_count)
             };
+
+        case WS_INSERT_OTU:
+            return {...state, detail: {...state.detail, otu_count: state.detail.otu_count + 1}};
+
+        case WS_REMOVE_OTU:
+            return {...state, detail: {...state.detail, otu_count: state.detail.otu_count - 1}};
 
         case LIST_REFERENCES.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};

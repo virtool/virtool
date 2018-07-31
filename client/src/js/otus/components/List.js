@@ -30,6 +30,7 @@ class OTUsList extends React.Component {
     shouldComponentUpdate (nextProps) {
         return (
             !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.isLoading, this.props.isLoading)
             || !isEqual(nextProps.unbuiltChangeCount, this.props.unbuiltChangeCount)
         );
     }

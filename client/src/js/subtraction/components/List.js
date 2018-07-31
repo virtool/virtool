@@ -18,7 +18,11 @@ class SubtractionList extends React.Component {
     }
 
     shouldComponentUpdate (nextProps) {
-        return !isEqual(nextProps.documents, this.props.documents);
+        return (
+            !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.isLoading, this.props.isLoading)
+            || !isEqual(nextProps.total_count, this.props.total_count)
+        );
     }
 
     rowRenderer = (index) => (
