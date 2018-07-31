@@ -1,42 +1,23 @@
 import React from "react";
-import { find } from "lodash-es";
+import { isEqual } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Row, Col, Panel } from "react-bootstrap";
+import { Alert } from "react-bootstrap";
 import {
     Flex,
     FlexItem,
     Icon,
-    ListGroupItem,
     LoadingPlaceholder,
     ScrollList,
     NoneFound
 } from "../../base";
 import OTUToolbar from "./Toolbar";
+import OTUItem from "./Item";
 import CreateOTU from "./Create";
 import { checkUserRefPermission } from "../../utils";
+import { otusSelector } from "../../listSelectors";
 import { listOTUs } from "../actions";
-
-const OTUItem = ({ refId, abbreviation, id, name, verified }) => (
-    <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
-        <ListGroupItem bsStyle={verified ? null : "warning"}>
-            <Row>
-                <Col xs={11} md={7}>
-                    <strong>{name}</strong>
-                    <small className="hidden-md hidden-lg text-muted" style={{marginLeft: "5px"}}>
-                        {abbreviation}
-                    </small>
-                </Col>
-                <Col xsHidden md={4}>
-                    {abbreviation}
-                </Col>
-                {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
-            </Row>
-        </ListGroupItem>
-    </LinkContainer>
-);
 
 class OTUsList extends React.Component {
 
@@ -46,15 +27,22 @@ class OTUsList extends React.Component {
         }
     }
 
+    shouldComponentUpdate (nextProps) {
+        return (
+            !isEqual(nextProps.documents, this.props.documents)
+            || !isEqual(nextProps.unbuiltChangeCount, this.props.unbuiltChangeCount)
+        );
+    }
+
     handleNextPage = (page) => {
         this.props.loadNextPage(this.props.refId, page);
     };
 
     rowRenderer = (index) => (
         <OTUItem
-            key={this.props.documents[index].id}
+            key={index}
             refId={this.props.refId}
-            {...this.props.documents[index]}
+            index={index}
         />
     );
 
@@ -90,20 +78,6 @@ class OTUsList extends React.Component {
             );
         }
 
-        const importProgress = this.props.process
-            ? find(this.props.processes, { id: this.props.process.id }).progress
-            : 1;
-
-        if (importProgress < 1) {
-            return (
-                <Panel>
-                    <Panel.Body>
-                        <LoadingPlaceholder message="Import in progress" margin="1.2rem" />
-                    </Panel.Body>
-                </Panel>
-            );
-        }
-
         return (
             <div>
                 {alert}
@@ -131,9 +105,8 @@ class OTUsList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.otus,
+    documents: otusSelector(state),
     refId: state.references.detail.id,
-    process: state.references.detail.process,
-    processes: state.processes.documents,
     unbuiltChangeCount: state.references.detail.unbuilt_change_count,
     isAdmin: state.account.administrator,
     userId: state.account.id,
