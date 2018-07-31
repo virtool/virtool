@@ -1,4 +1,4 @@
-import {compact, countBy, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip} from "lodash-es";
+import {compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip} from "lodash-es";
 import {formatIsolateName} from "../utils";
 
 export const fillAlign = ({ align, length }) => {
@@ -93,8 +93,8 @@ export const formatData = (detail) => {
             coverage: maxBy(isolates, "coverage").coverage,
             maxGenomeLength: maxBy(isolates, "length").length,
             maxDepth: maxBy(isolates, "maxDepth").maxDepth,
-            meanDepth: mean(meanFilled), //maxBy(isolates, "meanDepth").meanDepth,
-            medianDepth: median(medianFilled), //maxBy(isolates, "medianDepth").medianDepth,
+            meanDepth: mean(meanFilled),
+            medianDepth: median(medianFilled),
             reads: pi * mappedReadCount
         };
     });
