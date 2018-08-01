@@ -109,6 +109,7 @@ class Job(multiprocessing.Process):
 
         self._process = subprocess.Popen(command, stdout=stdout, stderr=subprocess.PIPE, env=env)
 
+        stdout_thread = None
         stdout_queue = None
 
         if stdout_handler:
@@ -141,7 +142,11 @@ class Job(multiprocessing.Process):
                 err = stderr_queue.get()
                 _stderr_handler(err)
 
-            if stdout_queue.empty() and stderr_queue.empty() and self._process.poll() is not None:
+            alive = (stdout_thread and stdout_thread.is_alive()) or stderr_thread.is_alive()
+
+            queue_empty = (stdout_queue and stdout_queue.empty()) and stderr_queue.empty()
+
+            if not alive and queue_empty and self._process.poll() is not None:
                 break
 
         if self._process.returncode != 0:
