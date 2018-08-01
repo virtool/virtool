@@ -1,3 +1,4 @@
+import pymongo
 import motor.motor_asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -22,6 +23,14 @@ def test_motor(test_db_name, loop):
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
     loop.run_until_complete(client.drop_database(test_db_name))
+
+
+@pytest.fixture
+def dbs(test_db_name):
+    client = pymongo.MongoClient()
+    client.drop_database(test_db_name)
+    yield client[test_db_name]
+    client.drop_database(test_db_name)
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import shutil
 
+import virtool.db.jobs
 import virtool.db.subtractions
 import virtool.db.utils
 import virtool.http.routes
@@ -120,12 +121,16 @@ async def create(req):
         "file_id": file_id
     }
 
-    await req.app["job_manager"].new(
+    await virtool.db.jobs.create(
+        db,
+        req.app["settings"],
         "create_subtraction",
         task_args,
         user_id,
         job_id=job_id
     )
+
+    await req.app["jobs"].enqueue(job_id)
 
     headers = {
         "Location": "/api/account/keys/{}".format(data["subtraction_id"])

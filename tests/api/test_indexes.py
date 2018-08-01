@@ -130,6 +130,11 @@ class TestCreate:
     async def test(self, mocker, spawn_client, static_time, test_random_alphanumeric, check_ref_right, resp_is):
         client = await spawn_client(authorize=True)
 
+        client.app["settings"].update({
+            "build_index_proc": 1,
+            "build_index_mem": 2
+        })
+
         await client.db.references.insert_one({
             "_id": "foo"
         })
@@ -146,10 +151,9 @@ class TestCreate:
         })
 
         # Define mocks.
-        m_job_manager = client.app["job_manager"] = mocker.Mock()
+        m_job_manager = client.app["jobs"] = mocker.Mock()
         mocker.patch.object(m_job_manager, "close", make_mocked_coro())
-
-        m_new_job = mocker.patch.object(m_job_manager, "new", make_mocked_coro())
+        m_enqueue = mocker.patch.object(m_job_manager, "enqueue", make_mocked_coro())
 
         m_get_next_version = mocker.patch("virtool.db.indexes.get_next_version", new=make_mocked_coro(9))
 
@@ -186,15 +190,33 @@ class TestCreate:
             }
         }
 
-        expected_task_args = {
-            "ref_id": "foo",
-            "user_id": "test",
-            "index_id": expected_id,
-            "index_version": 9,
-            "manifest": "manifest"
-        }
-
         assert resp.headers["Location"] == "/api/indexes/{}".format(expected_id)
+
+        assert await client.db.jobs.find_one() == {
+            "_id": test_random_alphanumeric.history[2],
+            "args": {
+                "index_id": "u3cuwaoq",
+                "index_version": 9,
+                "manifest": "manifest",
+                "ref_id": "foo",
+                "user_id": "test"
+            },
+            "mem": 2,
+            "proc": 1,
+            "status": [
+                {
+                    "error": None,
+                    "progress": 0,
+                    "stage": None,
+                    "state": "waiting",
+                    "timestamp": static_time.datetime
+                }
+            ],
+            "task": "build_index",
+            "user": {
+                "id": "test"
+            }
+        }
 
         assert await client.db.indexes.find_one() == expected
 
@@ -208,12 +230,7 @@ class TestCreate:
         m_create_manifest.assert_called_with(client.db, "foo")
 
         # Check that appropriate mocks were called.
-        m_new_job.assert_called_with(
-            "build_index",
-            expected_task_args,
-            "test",
-            job_id=expected_job_id
-        )
+        m_enqueue.assert_called_with(expected_job_id)
 
     @pytest.mark.parametrize("error", [None, "400_unbuilt", "400_unverified", "409_running"])
     async def test_checks(self, error, resp_is, spawn_client, check_ref_right):

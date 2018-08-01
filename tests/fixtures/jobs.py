@@ -1,8 +1,5 @@
 import pytest
-import multiprocessing
-
 import virtool.jobs.job
-import virtool.jobs.dummy
 import virtool.jobs.manager
 
 
@@ -32,18 +29,18 @@ class MockSettings:
 
 
 @pytest.fixture
-def test_job_manager(mocker, loop, dbi):
+def test_job_manager(mocker, dbs):
+    app = {
+        "db": dbs,
+        "settings": {}
+    }
 
-    manager = virtool.jobs.manager.Manager(
-        loop,
-        dbi,
-        MockSettings(),
-        mocker.stub(name="capture_exception")
+    manager = virtool.jobs.manager.IntegratedManager(
+        app,
+        MockSettings()
     )
 
     yield manager
-
-    loop.run_until_complete(manager.close())
 
 
 @pytest.fixture
