@@ -133,9 +133,6 @@ class Job(multiprocessing.Process):
         stderr_thread.start()
 
         while True:
-            if self._process.poll() is not None:
-                break
-
             if stdout_queue and not stdout_queue.empty():
                 out = stdout_queue.get()
                 stdout_handler(out)
@@ -143,6 +140,9 @@ class Job(multiprocessing.Process):
             if not stderr_queue.empty():
                 err = stderr_queue.get()
                 _stderr_handler(err)
+
+            if stdout_queue.empty() and stderr_queue.empty() and self._process.poll() is not None:
+                break
 
         if self._process.returncode != 0:
             raise virtool.errors.SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
