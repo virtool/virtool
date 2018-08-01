@@ -14,6 +14,7 @@ INDEX_PATH = os.path.join(TEST_FILES_PATH, "index")
 FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
 VTA_PATH = os.path.join(TEST_FILES_PATH, "test.vta")
 UPDATED_VTA_PATH = os.path.join(TEST_FILES_PATH, "updated.vta")
+ISOLATES_VTA_PATH = os.path.join(TEST_FILES_PATH, "pathoscope_bowtie/to_isolates.vta")
 TSV_PATH = os.path.join(TEST_FILES_PATH, "report.tsv")
 REF_LENGTHS_PATH = os.path.join(TEST_FILES_PATH, "ref_lengths.json")
 COVERAGE_PATH = os.path.join(TEST_FILES_PATH, "coverage.json")
@@ -250,7 +251,14 @@ def test_map_isolates(tmpdir, dbs, mock_job):
     mock_job.map_isolates()
 
     vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
-    assert os.path.getsize(vta_path) == 50090
+
+    with open(vta_path, "r") as f:
+        observed = {line.rstrip() for line in f}
+
+    with open(ISOLATES_VTA_PATH, "r") as f:
+        expected = {line.rstrip() for line in f}
+
+    assert observed == expected
 
 
 def test_map_subtraction(dbs, mock_job):
