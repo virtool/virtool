@@ -152,6 +152,7 @@
       },
       "rules": {
         "jest/prefer-to-have-length": "off",
+        "jest/no-focused-tests": "warn",
         "react/react-in-jsx-scope": "off",
         "lodash/prefer-lodash-method": "off",
         "lodash/prefer-noop": "off",

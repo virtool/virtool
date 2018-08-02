@@ -20,7 +20,6 @@ describe("Settings Reducer", () => {
     it("should return the initial state on first pass", () => {
         result = reducer(undefined, {});
         expected = initialState;
-
         expect(result).toEqual(expected);
     });
 
@@ -30,7 +29,6 @@ describe("Settings Reducer", () => {
         };
         result = reducer(initialState, action);
         expected = initialState;
-
         expect(result).toEqual(expected);
     });
 
@@ -38,7 +36,7 @@ describe("Settings Reducer", () => {
         state = {};
         action = {
             type: GET_SETTINGS.SUCCEEDED,
-            data: {}
+            data: { foo: "bar" }
         };
         result = reducer(state, action);
         expected = {
@@ -46,16 +44,11 @@ describe("Settings Reducer", () => {
             data: action.data,
             ...proxyTestClear
         };
-
         expect(result).toEqual(expected);
     });
 
     it("should handle UPDATE_SETTINGS_SUCCEEDED", () => {
-        state = {
-            data: {
-                test: "target"
-            }
-        };
+        state = { data: { test: "target" } };
         action = {
             type: UPDATE_SETTINGS.SUCCEEDED,
             update: {
@@ -71,7 +64,18 @@ describe("Settings Reducer", () => {
             },
             ...proxyTestClear
         };
+        expect(result).toEqual(expected);
+    });
 
+    it("should handle UPDATE_SETTINGS_FAILED", () => {
+        state = { data: { test: "target" } };
+        action = { type: UPDATE_SETTINGS.FAILED };
+        result = reducer(state, action);
+        expected = {
+            ...state,
+            data: { ...state.data },
+            ...proxyTestClear
+        };
         expect(result).toEqual(expected);
     });
 
@@ -85,7 +89,6 @@ describe("Settings Reducer", () => {
             ...state,
             readaheadPending: true
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -101,7 +104,6 @@ describe("Settings Reducer", () => {
             readahead: action.data,
             readaheadPending: false
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -114,7 +116,6 @@ describe("Settings Reducer", () => {
         expected = {
             readaheadPending: false
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -129,7 +130,6 @@ describe("Settings Reducer", () => {
             ...proxyTestClear,
             proxyTestPending: true
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -144,7 +144,6 @@ describe("Settings Reducer", () => {
             ...proxyTestClear,
             proxyTestSucceeded: true
         };
-
         expect(result).toEqual(expected);
     });
 
@@ -160,7 +159,6 @@ describe("Settings Reducer", () => {
             ...proxyTestClear,
             proxyTestFailed: action.message
         };
-
         expect(result).toEqual(expected);
     });
 

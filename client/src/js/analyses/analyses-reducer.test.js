@@ -730,9 +730,7 @@ describe("Analyses Reducer", () => {
             const action = {
                 type: "INSERT_ENTRY",
                 data: {
-                    user: {
-                        id: "foo"
-                    },
+                    user: { id: "foo" },
                     created_at: "2018-01-01T00:00:00.000000Z"
                 }
             };
@@ -748,51 +746,47 @@ describe("Analyses Reducer", () => {
             it("replace placeholder with new entry", () => {
                 documents = [
                     {
-                        userId: "foo",
-                        placeholder: true,
-                        created_at: "2018-01-01T00:00:00.000000Z",
-                        sampleId: "testSample"
+                        user: { id: "foo" },
+                        created_at: "2018-02-01T00:00:00.000000Z"
                     },
                     {
                         userId: "bar",
                         placeholder: true,
-                        created_at: "2018-01-02T00:00:00.000000Z",
+                        created_at: "2018-03-02T00:00:00.000000Z",
                         sampleId: "testSample"
                     },
                     {
-                        userId: "foo",
-                        placeholder: false,
-                        created_at: "2018-01-03T00:00:00.000000Z",
-                        sampleId: "testSample"
+                        user: { id: "foo" },
+                        created_at: "2018-04-01T00:00:00.000000Z"
                     },
                     {
                         userId: "foo",
                         placeholder: true,
-                        created_at: "2018-01-04T00:00:00.000000Z",
+                        created_at: "2018-05-04T00:00:00.000000Z",
                         sampleId: "testSample"
                     }
                 ];
                 result = insert(documents, action, sampleId);
                 expected = [
-                    {...action.data},
+                    {
+                        user: { id: "foo" },
+                        created_at: "2018-01-01T00:00:00.000000Z"
+                    },
+                    {
+                        user: { id: "foo" },
+                        created_at: "2018-02-01T00:00:00.000000Z"
+                    },
                     {
                         userId: "bar",
                         placeholder: true,
-                        created_at: "2018-01-02T00:00:00.000000Z",
+                        created_at: "2018-03-02T00:00:00.000000Z",
                         sampleId: "testSample"
                     },
                     {
-                        userId: "foo",
-                        placeholder: false,
-                        created_at: "2018-01-03T00:00:00.000000Z",
-                        sampleId: "testSample"
-                    },
-                    {
-                        userId: "foo",
-                        placeholder: true,
-                        created_at: "2018-01-04T00:00:00.000000Z",
-                        sampleId: "testSample"
+                        user: { id: "foo" },
+                        created_at: "2018-04-01T00:00:00.000000Z"
                     }
+
                 ];
                 expect(result).toEqual(expected);
             });

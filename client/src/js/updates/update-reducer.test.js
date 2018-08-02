@@ -1,5 +1,5 @@
 import reducer, { initialState as reducerInitialState } from "./reducer";
-import { WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../actionTypes";
+import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../actionTypes";
 
 describe("Updates Reducer", () => {
 
@@ -24,6 +24,27 @@ describe("Updates Reducer", () => {
         expected = initialState;
 
         expect(result).toEqual(expected);
+    });
+
+    describe("should handle WS_UPDATE_PROCESS", () => {
+
+        it(`when action id matches process.id in state,
+        update process with websocket data`, () => {
+            state = { process: { id: "123abc" }};
+            action = { type: WS_UPDATE_PROCESS, data: { id: "123abc" } };
+            result = reducer(state, action);
+            expected = { process: action.data };
+            expect(result).toEqual(expected);
+        });
+
+        it("otherwise return state", () => {
+            state = {};
+            action = { type: WS_UPDATE_PROCESS, data: { id: "test" } };
+            result = reducer(state, action);
+            expected = state;
+            expect(result).toEqual(expected);
+        });
+
     });
 
     describe("should handle WS_UPDATE_STATUS", () => {

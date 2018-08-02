@@ -1,5 +1,10 @@
 import { map } from "lodash-es";
-import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
+import {
+    WS_INSERT_PROCESS,
+    WS_UPDATE_PROCESS,
+    LIST_PROCESSES,
+    GET_PROCESS
+} from "../actionTypes";
 
 export const initialState = {
     documents: [],
