@@ -112,8 +112,7 @@ describe("OTUs Reducer:", () => {
 
     describe("should handle WS_UPDATE_OTU", () => {
 
-        it(`if list is not yet fetched or reference ids do not match,
-        return state`, () => {
+        it("if list is not yet fetched or reference ids do not match, return state", () => {
             state = { fetched: false, referenceId: "123abc" };
             action = {
                 type: WS_UPDATE_OTU,
