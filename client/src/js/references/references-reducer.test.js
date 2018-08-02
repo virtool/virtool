@@ -441,8 +441,7 @@ describe("References Reducer", () => {
                 expect(result).toBe(false);
             });
 
-            it(`if list contains official remote and
-            the official remote is set to be removed, return false`, () => {
+            it("list contains official remote and the official remote pending removal, return false", () => {
                 list = [{ id: "official", remotes_from: { slug: "virtool/ref-plant-viruses" } }];
                 removedIds = ["official"];
                 hasOfficial = true;
@@ -450,8 +449,7 @@ describe("References Reducer", () => {
                 expect(result).toBe(false);
             });
 
-            it(`if list contains official remote and
-            the official remote is not set to be removed, return true`, () => {
+            it("list contains official remote and the official remote not pending removal, return true", () => {
                 list = [{ id: "official" }];
                 removedIds = ["test"];
                 hasOfficial = true;

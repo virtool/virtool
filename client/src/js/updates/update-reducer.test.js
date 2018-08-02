@@ -28,8 +28,7 @@ describe("Updates Reducer", () => {
 
     describe("should handle WS_UPDATE_PROCESS", () => {
 
-        it(`when action id matches process.id in state,
-        update process with websocket data`, () => {
+        it("when action id matches process.id in state, update process with websocket data", () => {
             state = { process: { id: "123abc" }};
             action = { type: WS_UPDATE_PROCESS, data: { id: "123abc" } };
             result = reducer(state, action);

@@ -80,8 +80,7 @@ describe("OTUs Reducer:", () => {
 
     describe("should handle WS_INSERT_OTU", () => {
 
-        it(`if list is not yet fetched or reference ids do not match,
-        return state`, () => {
+        it("if list is not yet fetched or reference ids do not match, return state", () => {
             state = { fetched: false, referenceId: "test" };
             action = {
                 type: WS_INSERT_OTU,
