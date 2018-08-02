@@ -12,7 +12,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
-import { get, upperFirst } from "lodash-es";
+import { get, upperFirst, find } from "lodash-es";
 
 import SequenceForm from "./SequenceForm";
 import { addSequence, hideOTUModal } from "../../actions";
@@ -77,7 +77,11 @@ class AddSequence extends React.Component {
                     autofillPending: false,
                     definition,
                     host,
-                    sequence
+                    sequence,
+                    errorId: "",
+                    errorSegment: "",
+                    errorDefinition: "",
+                    errorSequence: ""
                 });
             }, (err) => {
                 this.setState({
@@ -93,17 +97,16 @@ class AddSequence extends React.Component {
         const { name, value } = e.target;
 
         if (name === "host") {
-            return this.setState({
-                [name]: value
-            });
+            return this.setState({ [name]: value });
         }
 
         const error = `error${upperFirst(name)}`;
 
-        this.setState({
-            [name]: value,
-            [error]: ""
-        });
+        if (name === "id" && !!find(this.props.sequences, ["accession", value])) {
+            return this.setState({ [name]: value, [error]: "Note: entry with this id already exists" });
+        }
+
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("ADD_SEQUENCE_ERROR");
@@ -197,6 +200,7 @@ class AddSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    sequences: state.otus.activeIsolate.sequences,
     show: state.otus.addSequence,
     otuId: state.otus.detail.id,
     isolateId: state.otus.activeIsolateId,
