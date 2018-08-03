@@ -8,8 +8,8 @@ export const filter = ({ term }) => (
     Request.get(`/api/refs?find=${term}`)
 );
 
-export const get = ({ referenceId }) => (
-    Request.get(`/api/refs/${referenceId}`)
+export const get = ({ refId }) => (
+    Request.get(`/api/refs/${refId}`)
 );
 
 export const create = ({ name, description, dataType, organism }) => (
@@ -22,8 +22,8 @@ export const create = ({ name, description, dataType, organism }) => (
         })
 );
 
-export const edit = ({ referenceId, update }) => (
-    Request.patch(`/api/refs/${referenceId}`)
+export const edit = ({ refId, update }) => (
+    Request.patch(`/api/refs/${refId}`)
         .send(update)
 );
 

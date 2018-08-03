@@ -209,7 +209,17 @@ describe("Users Reducer", () => {
             fetched: true,
             refetchPage: false
         };
+        expect(result).toEqual(expected);
 
+        state = { list: { documents: [{ id: "test" }], page: 1 } };
+        result = reducer(state, action);
+        expected = {
+            list: {...action.data},
+            isLoading: false,
+            errorLoad: false,
+            fetched: true,
+            refetchPage: false
+        };
         expect(result).toEqual(expected);
     });
 
