@@ -10,11 +10,11 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
+import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
-import { map, get, upperFirst } from "lodash-es";
+import { get, upperFirst, find } from "lodash-es";
 
-import SequenceField from "./SequenceField";
+import SequenceForm from "./SequenceForm";
 import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
@@ -77,7 +77,11 @@ class AddSequence extends React.Component {
                     autofillPending: false,
                     definition,
                     host,
-                    sequence
+                    sequence,
+                    errorId: "",
+                    errorSegment: "",
+                    errorDefinition: "",
+                    errorSequence: ""
                 });
             }, (err) => {
                 this.setState({
@@ -93,17 +97,16 @@ class AddSequence extends React.Component {
         const { name, value } = e.target;
 
         if (name === "host") {
-            return this.setState({
-                [name]: value
-            });
+            return this.setState({ [name]: value });
         }
 
         const error = `error${upperFirst(name)}`;
 
-        this.setState({
-            [name]: value,
-            [error]: ""
-        });
+        if (name === "id" && !!find(this.props.sequences, ["accession", value])) {
+            return this.setState({ [name]: value, [error]: "Note: entry with this id already exists" });
+        }
+
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("ADD_SEQUENCE_ERROR");
@@ -153,12 +156,23 @@ class AddSequence extends React.Component {
             );
         }
 
-        const defaultOption = (<option key="" value=""> - None - </option>);
-
-        const segmentNames = map(this.props.schema, (segment) =>
-            <option key={segment} value={segment}>
-                {segment}
-            </option>
+        const accessionCol = (
+            <Col xs={12} md={6}>
+                <ControlLabel>Accession (ID)</ControlLabel>
+                <InputGroup>
+                    <InputError
+                        name="id"
+                        value={this.state.id}
+                        onChange={this.handleChange}
+                        error={this.state.errorId}
+                    />
+                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                        <Button type="button" onClick={this.handleAutofill}>
+                            <Icon name="magic" />
+                        </Button>
+                    </InputGroup.Button>
+                </InputGroup>
+            </Col>
         );
 
         return (
@@ -166,86 +180,27 @@ class AddSequence extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
-
-                <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        {overlay}
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <ControlLabel>Accession (ID)</ControlLabel>
-                                <InputGroup>
-                                    <InputError
-                                        name="id"
-                                        value={this.state.id}
-                                        onChange={this.handleChange}
-                                        error={this.state.errorId}
-                                    />
-                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
-                                        <Button type="button" onClick={this.handleAutofill}>
-                                            <Icon name="magic" />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    type="select"
-                                    label="Segment"
-                                    name="segment"
-                                    value={this.state.segment}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorSegment}
-                                >
-                                    {defaultOption}
-                                    {segmentNames}
-                                </InputError>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Host"
-                                    name="host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Definition"
-                                    name="definition"
-                                    value={this.state.definition}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorDefinition}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <SequenceField
-                                    name="sequence"
-                                    sequence={this.state.sequence}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorSequence}
-                                />
-                            </Col>
-                        </Row>
-
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="save">
-                            Save
-                        </Button>
-                    </Modal.Footer>
-                </form>
+                <SequenceForm
+                    host={this.state.host}
+                    definition={this.state.definition}
+                    sequence={this.state.sequence}
+                    segment={this.state.segment}
+                    schema={this.props.schema}
+                    overlay={overlay}
+                    accessionCol={accessionCol}
+                    handleChange={this.handleChange}
+                    handleSubmit={this.handleSubmit}
+                    errorSegment={this.state.errorSegment}
+                    errorDefinition={this.state.errorDefinition}
+                    errorSequence={this.state.errorSequence}
+                />
             </Modal>
         );
     }
 }
 
 const mapStateToProps = state => ({
+    sequences: state.otus.activeIsolate.sequences,
     show: state.otus.addSequence,
     otuId: state.otus.detail.id,
     isolateId: state.otus.activeIsolateId,
