@@ -8,6 +8,7 @@ import { getResources } from "../../../jobs/actions";
 import { maxResourcesSelector, minResourcesSelector, checkTaskUpperLimits } from "../../selectors";
 import { updateSetting } from "../../actions";
 import { clearError } from "../../../errors/actions";
+import { getTargetChange } from "../../../utils";
 
 const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
@@ -89,21 +90,20 @@ class Resources extends React.Component {
     };
 
     handleSave = (e) => {
-        const name = e.name;
-        const value = toNumber(e.value);
-        const error = `error${upperFirst(name)}`;
+        const { value, error } = getTargetChange(e);
+        const val = toNumber(value);
 
-        if (value <= e.max && value >= e.min) {
+        if (val <= e.max && val >= e.min) {
             this.props.onUpdate(e);
         } else {
             this.setState({ [error]: true });
         }
     };
 
-    setError = (e, value) => {
+    setError = (e, val) => {
         e.preventDefault();
         this.setState({
-            [`error${upperFirst(e.target.name)}`]: value
+            [`error${upperFirst(e.target.name)}`]: val
         });
     };
 

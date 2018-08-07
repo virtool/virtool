@@ -2,12 +2,12 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Row, Col, Modal } from "react-bootstrap";
-import { pick, get, upperFirst } from "lodash-es";
+import { pick, get } from "lodash-es";
 
 import { createUser } from "../actions";
 import { clearError } from "../../errors/actions";
 import { InputError, Checkbox, SaveButton } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils";
 
 const getInitialState = () => ({
     userId: "",
@@ -34,13 +34,9 @@ export class CreateUser extends React.PureComponent {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const errorType = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
-        this.setState({
-            [name]: value,
-            [errorType]: ""
-        });
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("CREATE_USER_ERROR");

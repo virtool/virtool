@@ -14,9 +14,7 @@ import {
     startCase,
     filter,
     find,
-    differenceWith,
-    isEqual,
-    isEmpty
+    upperFirst
 } from "lodash-es";
 
 /**
@@ -35,14 +33,6 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  */
 export const byteSize = bytes => (
     Numeral(bytes).format("0.0 b")
-);
-
-/*
- * Deep comparison of two arrays of objects.
- * Returns true if contents are identical.
- */
-export const isArrayEqual = (x, y) => (
-    isEmpty(differenceWith(x, y, isEqual))
 );
 
 /**
@@ -174,6 +164,12 @@ export const simpleActionCreator = (type) => (
         return {type};
     }
 );
+
+export const getTargetChange = (target) => ({
+    name: target.name,
+    value: target.value,
+    error: `error${upperFirst(target.name)}`
+});
 
 /**
  * Object that maps algorithm names (task names) to human-readable names.

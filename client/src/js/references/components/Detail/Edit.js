@@ -2,12 +2,11 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Modal } from "react-bootstrap";
-import { upperFirst } from "lodash-es";
 import ReferenceForm from "../Form";
 import { editReference } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { SaveButton } from "../../../base";
-import { routerLocationHasState } from "../../../utils";
+import { routerLocationHasState, getTargetChange } from "../../../utils";
 
 const getInitialState = (detail) => ({
     name: detail.name,
@@ -26,17 +25,15 @@ export class EditReference extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, error } = getTargetChange(e.target);
 
         if (name !== "name" && name !== "dataType") {
             return this.setState({ [name]: value });
         }
 
-        const errorType = `error${upperFirst(e.target.name)}`;
-
         this.setState({
             [name]: value,
-            [errorType]: ""
+            [error]: ""
         });
     };
 

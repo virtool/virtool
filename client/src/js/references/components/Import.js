@@ -2,10 +2,10 @@ import React from "react";
 import { Alert, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { upperFirst, find } from "lodash-es";
+import { find } from "lodash-es";
 import ReferenceForm from "./Form";
 import { SaveButton, UploadBar, ProgressBar } from "../../base";
-import { createRandomString } from "../../utils";
+import { createRandomString, getTargetChange } from "../../utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
@@ -42,14 +42,8 @@ class ImportReference extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-
-        const errorType = `error${upperFirst(e.target.name)}`;
-
-        this.setState({
-            [name]: value,
-            [errorType]: ""
-        });
+        const { name, value, error } = getTargetChange(e.target);
+        this.setState({ [name]: value, [error]: "" });
     };
 
     handleDrop = (file) => {

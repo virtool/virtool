@@ -1,11 +1,12 @@
 import React from "react";
 import { Alert, Modal, ListGroup, Col, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
-import { upperFirst, find, map } from "lodash-es";
+import { find, map } from "lodash-es";
 import ReferenceForm from "./Form";
 import { SaveButton, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
+import { getTargetChange } from "../../utils";
 
 const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {
 
@@ -80,14 +81,12 @@ class CloneReference extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "dataType") {
-            const errorType = `error${upperFirst(e.target.name)}`;
-
             this.setState({
                 [name]: value,
-                [errorType]: ""
+                [error]: ""
             });
         } else if (name === "reference") {
             this.setState({

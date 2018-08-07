@@ -1,11 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
-import { get, upperFirst } from "lodash-es";
+import { get } from "lodash-es";
 import OTUForm from "../OTUForm";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { getNextState } from "../../otusUtils";
+import { getTargetChange } from "../../../utils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -27,8 +28,7 @@ class EditOTU extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
             [name]: value,

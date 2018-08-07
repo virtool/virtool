@@ -3,11 +3,12 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
 import { Modal } from "react-bootstrap";
-import { get, upperFirst } from "lodash-es";
+import { get } from "lodash-es";
 import OTUForm from "./OTUForm";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
 import { getNextState } from "../otusUtils";
+import { getTargetChange } from "../../utils";
 
 const getInitialState = () => ({
     name: "",
@@ -29,13 +30,9 @@ class CreateOTU extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
-        this.setState({
-            [name]: value,
-            [error]: ""
-        });
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("CREATE_OTU_ERROR");

@@ -12,13 +12,14 @@ import React from "react";
 import { connect } from "react-redux";
 import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
-import { get, upperFirst, find } from "lodash-es";
+import { get, find } from "lodash-es";
 
 import SequenceForm from "./SequenceForm";
 import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
+import { getTargetChange } from "../../../utils";
 
 const getInitialState = () => ({
     id: "",
@@ -94,13 +95,11 @@ class AddSequence extends React.Component {
     };
 
     handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, error } = getTargetChange(e.target);
 
         if (name === "host") {
             return this.setState({ [name]: value });
         }
-
-        const error = `error${upperFirst(name)}`;
 
         if (name === "id" && !!find(this.props.sequences, ["accession", value])) {
             return this.setState({ [name]: value, [error]: "Note: entry with this id already exists" });
