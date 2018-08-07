@@ -1,5 +1,5 @@
 import React from "react";
-import { includes } from "lodash-es";
+import { includes, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 import { updateSetting, updateSettings } from "../../actions";
@@ -7,6 +7,16 @@ import { Help, InputError } from "../../../base";
 import AdministrationSection from "../Section";
 
 const SampleRights = (props) => {
+
+    const rights = [
+        { label: "None", value: "" },
+        { label: "Read", value: "r" },
+        { label: "Read & write", value: "rw" }
+    ];
+
+    const options = map(rights, (entry, index) => (
+        <option key={index} value={entry.value}>{entry.label}</option>
+    ));
 
     const content = (
         <Panel.Body>
@@ -43,9 +53,7 @@ const SampleRights = (props) => {
                 value={props.group}
                 onChange={(e) => props.onChangeRights("group", e.target.value)}
             >
-                <option value="">None</option>
-                <option value="r">Read</option>
-                <option value="rw">Read & write</option>
+                {options}
             </InputError>
 
             <InputError
@@ -55,9 +63,7 @@ const SampleRights = (props) => {
                 value={props.all}
                 onChange={(e) => props.onChangeRights("all", e.target.value)}
             >
-                <option value="">None</option>
-                <option value="r">Read</option>
-                <option value="rw">Read & write</option>
+                {options}
             </InputError>
         </Panel.Body>
     );
