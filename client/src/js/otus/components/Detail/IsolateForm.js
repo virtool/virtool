@@ -15,7 +15,7 @@ import { map, toLower } from "lodash-es";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
-import { InputError, Button } from "../../../base";
+import { InputError, SaveButton } from "../../../base";
 
 export default class IsolateForm extends React.Component {
 
@@ -96,9 +96,7 @@ export default class IsolateForm extends React.Component {
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button type="submit" bsStyle="primary" icon="save">
-                        Save
-                    </Button>
+                    <SaveButton />
                 </Modal.Footer>
             </form>
         );

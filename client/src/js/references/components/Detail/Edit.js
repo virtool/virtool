@@ -1,12 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Modal, ButtonToolbar } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { upperFirst } from "lodash-es";
 import ReferenceForm from "../Form";
 import { editReference } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button } from "../../../base";
+import { SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils";
 
 const getInitialState = (detail) => ({
@@ -88,11 +88,7 @@ export class EditReference extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <ButtonToolbar className="pull-right">
-                            <Button icon="save" type="submit" bsStyle="primary">
-                                Save
-                            </Button>
-                        </ButtonToolbar>
+                        <SaveButton pullRight />
                     </Modal.Footer>
                 </form>
             </Modal>

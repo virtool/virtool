@@ -6,7 +6,7 @@ import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSample } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Button, InputError } from "../../base";
+import { SaveButton, InputError } from "../../base";
 
 const getInitialState = ({ name, isolate, host, locale }) => ({
     name: name || "",
@@ -118,9 +118,7 @@ class EditSample extends React.Component {
 
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="save">
-                            Save
-                        </Button>
+                        <SaveButton />
                     </Modal.Footer>
                 </form>
             </Modal>

@@ -5,7 +5,8 @@ import { get, upperFirst } from "lodash-es";
 
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, InputError } from "../../../base";
+import { InputError, SaveButton } from "../../../base";
+import { getNextState } from "../../otusUtils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -23,21 +24,7 @@ class EditOTU extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            if (nextProps.error === "Name already exists") {
-                return { errorName: nextProps.error, error: nextProps.error };
-            } else if (nextProps.error === "Abbreviation already exists") {
-                return { errorAbbreviation: nextProps.error, error: nextProps.error };
-            } else if (!nextProps.error.length) {
-                return { error: "" };
-            }
-            return {
-                errorName: "Name already exists",
-                errorAbbreviation: "Abbreviation already exists",
-                error: nextProps.error
-            };
-        }
-        return null;
+        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = (e) => {
@@ -110,9 +97,7 @@ class EditOTU extends React.Component {
                         </Row>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="save">
-                            Save
-                        </Button>
+                        <SaveButton />
                     </Modal.Footer>
                 </form>
             </Modal>

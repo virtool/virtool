@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { ButtonToolbar, Col, Panel, Row } from "react-bootstrap";
 import { find } from "lodash-es";
 import { editUser } from "../actions";
-import { Alert, Button, Checkbox, InputError, RelativeTime } from "../../base";
+import { Alert, Button, SaveButton, Checkbox, InputError, RelativeTime } from "../../base";
 
 const getInitialState = (props) => ({
     password: "",
@@ -151,13 +151,7 @@ class Password extends React.Component {
                                         Clear
                                     </Button>
 
-                                    <Button
-                                        icon="save"
-                                        type="submit"
-                                        bsStyle="primary"
-                                    >
-                                        Save
-                                    </Button>
+                                    <SaveButton />
                                 </ButtonToolbar>
                             </Col>
 

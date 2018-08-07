@@ -5,9 +5,10 @@ import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 import { get, upperFirst } from "lodash-es";
 
-import { InputError, Button } from "../../base";
+import { InputError, SaveButton } from "../../base";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
+import { getNextState } from "../otusUtils";
 
 const getInitialState = () => ({
     name: "",
@@ -25,21 +26,7 @@ class CreateOTU extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            if (nextProps.error === "Name already exists") {
-                return { errorName: nextProps.error, error: nextProps.error };
-            } else if (nextProps.error === "Abbreviation already exists") {
-                return { errorAbbreviation: nextProps.error, error: nextProps.error };
-            } else if (!nextProps.error.length) {
-                return { error: "" };
-            }
-            return {
-                errorName: "Name already exists",
-                errorAbbreviation: "Abbrevation already exists",
-                error: nextProps.error
-            };
-        }
-        return null;
+        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = (e) => {
@@ -117,9 +104,7 @@ class CreateOTU extends React.Component {
 
                     <Modal.Footer>
                         <ButtonToolbar className="pull-right">
-                            <Button icon="save" type="submit" bsStyle="primary">
-                                Save
-                            </Button>
+                            <SaveButton />
                         </ButtonToolbar>
                     </Modal.Footer>
                 </form>

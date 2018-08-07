@@ -13,7 +13,7 @@ import { push } from "react-router-redux";
 import ReadSelector from "./ReadSelector";
 import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, Icon, InputError, LoadingPlaceholder } from "../../../base";
+import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils";
 
 const getReadyHosts = (props) => (
@@ -290,9 +290,7 @@ class CreateSample extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary">
-                            <Icon name="save" /> Save
-                        </Button>
+                        <SaveButton />
                     </Modal.Footer>
                 </form>
             </Modal>

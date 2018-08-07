@@ -5,7 +5,7 @@ import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Button, InputError, RelativeTime } from "../../base";
+import { SaveButton, InputError, RelativeTime } from "../../base";
 
 const getInitialState = (props) => ({
     oldPassword: "",
@@ -130,9 +130,7 @@ export class ChangePassword extends React.Component {
                                             Last changed <RelativeTime time={this.props.lastPasswordChange} />
                                         </Col>
                                         <Col xs={12} md={6}>
-                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
-                                                Change
-                                            </Button>
+                                            <SaveButton altText="Change" pullRight />
                                         </Col>
                                     </Row>
                                 </div>

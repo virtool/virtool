@@ -1,10 +1,10 @@
 import React from "react";
-import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
+import { Alert, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { upperFirst, find } from "lodash-es";
 import ReferenceForm from "./Form";
-import { Button, UploadBar, ProgressBar } from "../../base";
+import { SaveButton, UploadBar, ProgressBar } from "../../base";
 import { createRandomString } from "../../utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
@@ -141,16 +141,10 @@ class ImportReference extends React.Component {
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <ButtonToolbar className="pull-right">
-                        <Button
-                            icon="save"
-                            type="submit"
-                            bsStyle="primary"
-                            disabled={progress !== 100 && progress !== 0}
-                        >
-                            Import
-                        </Button>
-                    </ButtonToolbar>
+                    <SaveButton
+                        disabled={progress !== 100 && progress !== 0}
+                        altText="Import"
+                    />
                 </Modal.Footer>
             </form>
         );

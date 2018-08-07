@@ -5,7 +5,7 @@ import { Col, Panel, Row } from "react-bootstrap";
 
 import { updateAccount } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Button, InputError } from "../../base";
+import { SaveButton, InputError } from "../../base";
 
 const getInitialState = (email) => ({
     email: email || "",
@@ -82,9 +82,7 @@ export class Email extends React.Component {
                                 <div style={{marginTop: "20px"}}>
                                     <Row>
                                         <Col xs={24} md={12}>
-                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
-                                                Save
-                                            </Button>
+                                            <SaveButton pullRight />
                                         </Col>
                                     </Row>
                                 </div>

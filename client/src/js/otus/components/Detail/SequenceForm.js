@@ -2,7 +2,7 @@ import React from "react";
 import SequenceField from "./SequenceField";
 import { Row, Col, Modal } from "react-bootstrap";
 import { map, concat } from "lodash-es";
-import { Button, InputError } from "../../../base";
+import { SaveButton, InputError } from "../../../base";
 
 const SegmentForm = (props) => {
 
@@ -66,9 +66,7 @@ const SegmentForm = (props) => {
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button type="submit" bsStyle="primary" icon="save">
-                        Save
-                    </Button>
+                    <SaveButton />
                 </Modal.Footer>
             </form>
         </React.Fragment>
