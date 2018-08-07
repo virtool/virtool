@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
-
+import { Panel } from "react-bootstrap";
+import AdministrationSection from "../Section";
 import { updateSetting } from "../../actions";
 import { Button, Icon, Checkbox } from "../../../base";
 
@@ -11,37 +11,28 @@ const SentryFooter = () => (
     </small>
 );
 
-const SentryOptions = ({ enabled, onToggle }) => (
-    <div>
-        <Row>
-            <Col xs={12}>
-                <label>Sentry</label>
-            </Col>
-        </Row>
-        <Row>
-            <Col xs={12} md={6} mdPush={6}>
-                <Panel>
-                    <Panel.Body>
-                        Enable or disable Sentry error reporting.
-                         Error reporting allows the developers to prevent future errors.
-                    </Panel.Body>
-                    <Panel.Footer>
-                        <SentryFooter />
-                    </Panel.Footer>
-                </Panel>
-            </Col>
-            <Col xs={12} md={6} mdPull={6}>
-                <Panel>
-                    <Panel.Body>
-                        <Button onClick={() => {onToggle(!enabled)}} block>
-                            <Checkbox checked={enabled} /> Enable
-                        </Button>
-                    </Panel.Body>
-                </Panel>
-            </Col>
-        </Row>
-    </div>
-);
+const SentryOptions = ({ enabled, onToggle }) => {
+
+    const description = `Enable or disable Sentry error reporting.
+        Error reporting allows the developers to prevent future errors.`;
+
+    const content = (
+        <Panel.Body>
+            <Button onClick={() => {onToggle(!enabled)}} block>
+                <Checkbox checked={enabled} /> Enable
+            </Button>
+        </Panel.Body>
+    );
+
+    return (
+        <AdministrationSection
+            title="Sentry"
+            description={description}
+            footerComponent={<SentryFooter />}
+            content={content}
+        />
+    );
+};
 
 const mapStateToProps = (state) => ({
     enabled: state.settings.data.enable_sentry
