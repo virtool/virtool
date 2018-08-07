@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { get, upperFirst } from "lodash-es";
-
+import OTUForm from "../OTUForm";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { InputError, SaveButton } from "../../../base";
 import { getNextState } from "../../otusUtils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
@@ -73,33 +72,14 @@ class EditOTU extends React.Component {
                 <Modal.Header onHide={this.handleHide} closeButton>
                     Edit OTU
                 </Modal.Header>
-                <form onSubmit={this.handleSave}>
-                    <Modal.Body>
-                        <Row>
-                            <Col md={8} xs={12}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorName}
-                                />
-                            </Col>
-                            <Col md={4} xs={12}>
-                                <InputError
-                                    label="Abbreviation"
-                                    name="abbreviation"
-                                    value={this.state.abbreviation}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorAbbreviation}
-                                />
-                            </Col>
-                        </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <SaveButton />
-                    </Modal.Footer>
-                </form>
+                <OTUForm
+                    name={this.state.name}
+                    abbreviation={this.state.abbreviation}
+                    handleSubmit={this.handleSave}
+                    handleChange={this.handleChange}
+                    errorName={this.state.errorName}
+                    errorAbbreviation={this.state.errorAbbreviation}
+                />
             </Modal>
         );
     }
