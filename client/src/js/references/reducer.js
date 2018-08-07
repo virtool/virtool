@@ -103,9 +103,15 @@ export default function referenceReducer (state = initialState, action) {
             };
 
         case WS_INSERT_OTU:
+            if (!state.detail) {
+                return state;
+            }
             return {...state, detail: {...state.detail, otu_count: state.detail.otu_count + 1}};
 
         case WS_REMOVE_OTU:
+            if (!state.detail) {
+                return state;
+            }
             return {...state, detail: {...state.detail, otu_count: state.detail.otu_count - 1}};
 
         case LIST_REFERENCES.REQUESTED:
