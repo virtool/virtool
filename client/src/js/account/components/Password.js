@@ -1,11 +1,12 @@
 import React from "react";
-import { get, upperFirst } from "lodash-es";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Button, InputError, RelativeTime } from "../../base";
+import { SaveButton, InputError, RelativeTime } from "../../base";
+import { getTargetChange } from "../../utils";
 
 const getInitialState = (props) => ({
     oldPassword: "",
@@ -45,8 +46,9 @@ export class ChangePassword extends React.Component {
     }
 
     handleChange = (e) => {
-        const errorType = `error${upperFirst(e.target.name)}`;
-        this.setState({[e.target.name]: e.target.value, [errorType]: ""});
+        const { name, value, error } = getTargetChange(e.target);
+
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("CHANGE_ACCOUNT_PASSWORD_ERROR");
@@ -130,9 +132,7 @@ export class ChangePassword extends React.Component {
                                             Last changed <RelativeTime time={this.props.lastPasswordChange} />
                                         </Col>
                                         <Col xs={12} md={6}>
-                                            <Button type="submit" bsStyle="primary" icon="save" pullRight>
-                                                Change
-                                            </Button>
+                                            <SaveButton altText="Change" pullRight />
                                         </Col>
                                     </Row>
                                 </div>

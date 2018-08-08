@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { find, upperFirst, union } from "lodash-es";
+import { find, union } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Modal } from "react-bootstrap";
 
@@ -18,6 +18,7 @@ import SequenceForm from "./SequenceForm";
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { InputError } from "../../../base";
+import { getTargetChange } from "../../../utils";
 
 const getInitialState = (props) => {
 
@@ -65,8 +66,7 @@ class EditSequence extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
             [name]: value,

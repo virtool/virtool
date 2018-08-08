@@ -1,79 +1,81 @@
 import React from "react";
-import { includes } from "lodash-es";
+import { includes, map } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 import { updateSetting, updateSettings } from "../../actions";
 import { Help, InputError } from "../../../base";
+import AdministrationSection from "../Section";
 
-const SampleRights = (props) => (
-    <Row>
-        <Col md={12}>
-            <h5><strong>Default Sample Rights</strong></h5>
-        </Col>
-        <Col xs={12} md={6} mdPush={6}>
-            <Panel>
-                <Panel.Body>
-                    Set the method used to assign groups to new samples and the default rights.
-                </Panel.Body>
-            </Panel>
-        </Col>
-        <Col xs={12} md={6} mdPull={6}>
-            <Panel>
-                <Panel.Body>
-                    <label className="control-label" style={{width: "100%"}}>
-                        <span>Sample Group</span>
-                        <Help pullRight>
-                            <p>
-                                <strong>None</strong>: samples are assigned no group and only
-                                <em> all {"users'"}</em> rights apply
-                            </p>
-                            <p>
-                                <strong>{"User's"} primary group</strong>: samples are automatically assigned the
-                                creating {"user's"} primary group
-                            </p>
-                            <p>
-                                <strong>Choose</strong>: samples are assigned by the user in the creation form
-                            </p>
-                        </Help>
-                    </label>
+const SampleRights = (props) => {
 
-                    <InputError
-                        type="select"
-                        value={props.sampleGroup}
-                        onChange={(e) => props.onChangeSampleGroup(e.target.value)}
-                    >
-                        <option value="none">None</option>
-                        <option value="force_choice">Force choice</option>
-                        <option value="users_primary_group">{"User's"} primary group</option>
-                    </InputError>
+    const rights = [
+        { label: "None", value: "" },
+        { label: "Read", value: "r" },
+        { label: "Read & write", value: "rw" }
+    ];
 
-                    <InputError
-                        type="select"
-                        label="Group Rights"
-                        value={props.group}
-                        onChange={(e) => props.onChangeRights("group", e.target.value)}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </InputError>
+    const options = map(rights, (entry, index) => (
+        <option key={index} value={entry.value}>{entry.label}</option>
+    ));
 
-                    <InputError
-                        name="all"
-                        type="select"
-                        label="All Users' Rights"
-                        value={props.all}
-                        onChange={(e) => props.onChangeRights("all", e.target.value)}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </InputError>
-                </Panel.Body>
-            </Panel>
-        </Col>
-    </Row>
-);
+    const content = (
+        <Panel.Body>
+            <label className="control-label" style={{width: "100%"}}>
+                <span>Sample Group</span>
+                <Help pullRight>
+                    <p>
+                        <strong>None</strong>: samples are assigned no group and only
+                        <em> all {"users'"}</em> rights apply
+                    </p>
+                    <p>
+                        <strong>{"User's"} primary group</strong>: samples are automatically assigned the
+                        creating {"user's"} primary group
+                    </p>
+                    <p>
+                        <strong>Choose</strong>: samples are assigned by the user in the creation form
+                    </p>
+                </Help>
+            </label>
+
+            <InputError
+                type="select"
+                value={props.sampleGroup}
+                onChange={(e) => props.onChangeSampleGroup(e.target.value)}
+            >
+                <option value="none">None</option>
+                <option value="force_choice">Force choice</option>
+                <option value="users_primary_group">{"User's"} primary group</option>
+            </InputError>
+
+            <InputError
+                type="select"
+                label="Group Rights"
+                value={props.group}
+                onChange={(e) => props.onChangeRights("group", e.target.value)}
+            >
+                {options}
+            </InputError>
+
+            <InputError
+                name="all"
+                type="select"
+                label="All Users' Rights"
+                value={props.all}
+                onChange={(e) => props.onChangeRights("all", e.target.value)}
+            >
+                {options}
+            </InputError>
+        </Panel.Body>
+    );
+
+    return (
+        <AdministrationSection
+            title="Default Sample Rights"
+            description="Set the method used to assign groups to new samples and the default rights."
+            content={content}
+        />
+    );
+};
 
 const mapStateToProps = state => {
     const settings = state.settings.data;

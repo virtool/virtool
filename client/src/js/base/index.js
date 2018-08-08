@@ -21,11 +21,11 @@ import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveBanner } from "./RemoveBanner";
 import { RemoveModal } from "./RemoveModal";
+import { SaveButton } from "./SaveButton";
+import { ScrollList } from "./ScrollList";
 import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
-
-import { ScrollList } from "./ScrollList";
 
 export {
     Alert,
@@ -52,9 +52,10 @@ export {
     RelativeTime,
     RemoveBanner,
     RemoveModal,
+    SaveButton,
+    ScrollList,
     Tooltip,
     UploadBar,
     ViewHeader,
-    VTLogo,
-    ScrollList
+    VTLogo
 };

@@ -1,8 +1,8 @@
 import React from "react";
 import { toNumber } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
-
+import { Panel } from "react-bootstrap";
+import AdministrationSection from "../Section";
 import { updateSetting } from "../../actions";
 import { Checkbox, Icon, InputError } from "../../../base";
 
@@ -18,51 +18,44 @@ const HTTPFooter = () => (
     </small>
 );
 
-const HTTPOptions = (props) => (
-    <Row>
-        <Col xs={12}>
-            <h5><strong>HTTP Server</strong></h5>
-        </Col>
-        <Col xs={12} md={6} mdPush={6}>
-            <Panel>
-                <Panel.Body>
-                    Change the address and port the the web server listens on.
-                </Panel.Body>
-                <Panel.Footer>
-                    <HTTPFooter />
-                </Panel.Footer>
-            </Panel>
-        </Col>
-        <Col xs={12} md={6} mdPull={6}>
-            <Panel>
-                <Panel.Body>
-                    <InputError
-                        label="Host"
-                        autoComplete={false}
-                        onSave={props.onUpdateHost}
-                        initialValue={props.host}
-                        noMargin
-                        withButton
-                    />
-                    <InputError
-                        label="Port"
-                        type="number"
-                        autoComplete={false}
-                        onSave={props.onUpdatePort}
-                        initialValue={props.port}
-                        noMargin
-                        withButton
-                    />
-                    <Checkbox
-                        label={<HTTPCheckboxLabel />}
-                        checked={props.enableApi}
-                        onClick={() => props.onUpdateAPI(!props.enableApi)}
-                    />
-                </Panel.Body>
-            </Panel>
-        </Col>
-    </Row>
-);
+const HTTPOptions = (props) => {
+
+    const content = (
+        <Panel.Body>
+            <InputError
+                label="Host"
+                autoComplete={false}
+                onSave={props.onUpdateHost}
+                initialValue={props.host}
+                noMargin
+                withButton
+            />
+            <InputError
+                label="Port"
+                type="number"
+                autoComplete={false}
+                onSave={props.onUpdatePort}
+                initialValue={props.port}
+                noMargin
+                withButton
+            />
+            <Checkbox
+                label={<HTTPCheckboxLabel />}
+                checked={props.enableApi}
+                onClick={() => props.onUpdateAPI(!props.enableApi)}
+            />
+        </Panel.Body>
+    );
+
+    return (
+        <AdministrationSection
+            title="HTTP Server"
+            description="Change the address and port the the web server listens on."
+            footerComponent={<HTTPFooter />}
+            content={content}
+        />
+    );
+};
 
 const mapStateToProps = (state) => ({
     host: state.settings.data.server_host,
