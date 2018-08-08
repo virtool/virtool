@@ -21,6 +21,8 @@ export const AccountGeneral = ({ id, groups, hash, isAdmin }) => {
         </Label>
     );
 
+    console.log("isAdmin? ", isAdmin);
+
     return (
         <div>
             <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
