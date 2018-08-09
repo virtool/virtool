@@ -13,7 +13,7 @@ import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder, ViewHeader } from "../../base";
 
-const Server = () => (
+export const Server = () => (
     <div className="settings-container">
         <HTTP />
         <Proxy />
@@ -21,7 +21,7 @@ const Server = () => (
     </div>
 );
 
-const Settings = ({ settings }) => {
+export const Settings = ({ settings }) => {
     let content;
 
     if (settings === null) {
