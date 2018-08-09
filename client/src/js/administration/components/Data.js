@@ -5,13 +5,13 @@ import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { Icon, InputError } from "../../base";
 
-const WarningFooter = () => (
+export const WarningFooter = () => (
     <small className="text-danger">
-        <Icon name="warning" /> Changing these settings can make Virtool non-functional
+        <Icon name="exclamation-triangle" /> Changing these settings can make Virtool non-functional
     </small>
 );
 
-const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave }) => {
+export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave }) => {
 
     const contentDatabase = (
         <Panel.Body>

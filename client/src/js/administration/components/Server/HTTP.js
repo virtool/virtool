@@ -14,7 +14,9 @@ const HTTPCheckboxLabel = () => (
 
 const HTTPFooter = () => (
     <small className="text-warning">
-        <Icon name="warning" /> Changes to these settings will only take effect when the server is reloaded.
+        <Icon
+            name="exclamation-triangle"
+        /> Changes to these settings will only take effect when the server is reloaded.
     </small>
 );
 
