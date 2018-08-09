@@ -44,7 +44,7 @@ export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, 
         <Panel.Body>
             <InputError
                 label="Virtool Data"
-                onSave={(e) => onSave("watch_path", e.value)}
+                onSave={(e) => onSave("data_path", e.value)}
                 initialValue={data_path}
                 noMargin
                 withButton

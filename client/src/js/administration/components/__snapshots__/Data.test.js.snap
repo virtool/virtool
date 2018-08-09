@@ -11,21 +11,18 @@ exports[`<Describe /> renders <DataOptions /> correctly 1`] = `
         collapsible={false}
       >
         <InputError
-          initialValue="virtool"
           label="Database Name"
           noMargin={true}
           onSave={[Function]}
           withButton={true}
         />
         <InputError
-          initialValue="test"
           label="MongoDB Host"
           noMargin={true}
           onSave={[Function]}
           withButton={true}
         />
         <InputError
-          initialValue="1"
           label="MongoDB Port"
           noMargin={true}
           onSave={[Function]}
@@ -45,14 +42,12 @@ exports[`<Describe /> renders <DataOptions /> correctly 1`] = `
         collapsible={false}
       >
         <InputError
-          initialValue="/"
           label="Virtool Data"
           noMargin={true}
           onSave={[Function]}
           withButton={true}
         />
         <InputError
-          initialValue="/"
           label="Watch Folder"
           noMargin={true}
           onSave={[Function]}
