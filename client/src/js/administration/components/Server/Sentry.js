@@ -5,7 +5,7 @@ import AdministrationSection from "../Section";
 import { updateSetting } from "../../actions";
 import { Button, Icon, Checkbox } from "../../../base";
 
-const SentryFooter = () => (
+export const SentryFooter = () => (
     <small className="text-warning">
         <Icon
             name="exclamation-triangle"
@@ -13,7 +13,7 @@ const SentryFooter = () => (
     </small>
 );
 
-const SentryOptions = ({ enabled, onToggle }) => {
+export const SentryOptions = ({ enabled, onToggle }) => {
 
     const description = `Enable or disable Sentry error reporting.
         Error reporting allows the developers to prevent future errors.`;
