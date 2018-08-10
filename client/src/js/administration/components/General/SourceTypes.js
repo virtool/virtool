@@ -12,7 +12,7 @@ const getInitialState = () => ({
     error: null
 });
 
-const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
+export const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
     <ListGroupItem key={sourceType} disabled={!isDisabled}>
         <span className="text-capitalize">{sourceType}</span>
         {isDisabled
@@ -21,7 +21,7 @@ const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
     </ListGroupItem>
 );
 
-class SourceTypes extends React.Component {
+export class SourceTypes extends React.Component {
 
     constructor (props) {
         super(props);
