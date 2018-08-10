@@ -6,13 +6,13 @@ import AdministrationSection from "../Section";
 import { updateSetting } from "../../actions";
 import { Checkbox, Icon, InputError } from "../../../base";
 
-const HTTPCheckboxLabel = () => (
+export const HTTPCheckboxLabel = () => (
     <span>
         Enable <a rel="noopener noreferrer" href="https://www.virtool.ca/docs/api/" target="_blank">API</a>
     </span>
 );
 
-const HTTPFooter = () => (
+export const HTTPFooter = () => (
     <small className="text-warning">
         <Icon
             name="exclamation-triangle"
@@ -20,7 +20,7 @@ const HTTPFooter = () => (
     </small>
 );
 
-const HTTPOptions = (props) => {
+export const HTTPOptions = (props) => {
 
     const content = (
         <Panel.Body>

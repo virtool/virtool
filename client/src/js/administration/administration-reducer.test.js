@@ -157,7 +157,7 @@ describe("Settings Reducer", () => {
         expected = {
             ...state,
             ...proxyTestClear,
-            proxyTestFailed: action.message
+            proxyTestFailed: true
         };
         expect(result).toEqual(expected);
     });

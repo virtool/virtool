@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AnalysisItem /> renders correctly 1`] = `
+<div
+  className="list-group-item spaced"
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <strong>
+        Test Algorithm
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+    >
+      Started 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    />
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={2}
+    >
+      <strong
+        className="pull-right"
+      >
+        <ClipLoader
+          color="#3c8786"
+          loading={true}
+          size="14px"
+          style={
+            Object {
+              "display": "inline",
+            }
+          }
+        />
+         In Progress
+      </strong>
+    </Col>
+  </Row>
+</div>
+`;

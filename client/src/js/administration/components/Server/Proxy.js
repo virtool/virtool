@@ -6,13 +6,13 @@ import AdministrationSection from "../Section";
 import { testProxy, updateSetting } from "../../actions";
 import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
 
-const ProxyFooter = () => (
+export const ProxyFooter = () => (
     <small className="text-danger">
         <Icon name="exclamation-triangle" /> Proxy authentication is stored in plain text in the settings file.
     </small>
 );
 
-const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }) => {
+export const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }) => {
 
     if (proxyTestPending) {
         return (
@@ -39,11 +39,12 @@ const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }
 
 };
 
-const ProxyOptions = (props) => {
+export const ProxyOptions = (props) => {
 
     const disableInputs = !props.enabled || props.trust;
 
-    const errorProxyAddress = props.proxyTestFailed || null;
+    const errorProxyAddress = props.proxyTestFailed
+        ? "Proxy address is invalid" : null;
 
     const checkboxComponent = (
         <Checkbox
