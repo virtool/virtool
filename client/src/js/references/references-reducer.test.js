@@ -122,6 +122,11 @@ describe("References Reducer", () => {
         result = reducer(state, action);
         expected = { detail: { otu_count: 4 } };
         expect(result).toEqual(expected);
+
+        state = { detail: null };
+        action = { type: WS_INSERT_OTU };
+        result = reducer(state, action);
+        expect(result).toEqual(state);
     });
 
     it("should handle WS_REMOVE_OTU", () => {
@@ -130,6 +135,11 @@ describe("References Reducer", () => {
         result = reducer(state, action);
         expected = { detail: { otu_count: 2 } };
         expect(result).toEqual(expected);
+
+        state = { detail: null };
+        action = { type: WS_REMOVE_OTU };
+        result = reducer(state, action);
+        expect(result).toEqual(state);
     });
 
     it("should handle LIST_REFERENCES_REQUESTED", () => {
