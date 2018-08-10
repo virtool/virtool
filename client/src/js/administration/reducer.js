@@ -55,7 +55,7 @@ export default function settingsReducer (state = initialState, action) {
             return {...state, ...proxyTestClear, proxyTestSucceeded: true};
 
         case TEST_PROXY.FAILED:
-            return {...state, ...proxyTestClear, proxyTestFailed: action.message};
+            return {...state, ...proxyTestClear, proxyTestFailed: true};
 
         default:
             return state;
