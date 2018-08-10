@@ -42,6 +42,10 @@ describe("Selectors tests", () => {
         result = computeMaximums(state.jobs.resources);
         expected = { maxProc: 3, maxMem: 1 };
         expect(result).toEqual(expected);
+
+        result = computeMaximums(null);
+        expected = { maxProc: 1, maxMem: 1 };
+        expect(result).toEqual(expected);
     });
 
     it("maxResourcesSelector: returns max proc and mem values from state", () => {
