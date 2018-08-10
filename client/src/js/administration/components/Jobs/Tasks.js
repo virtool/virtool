@@ -16,7 +16,7 @@ const taskNames = [
     "nuvs"
 ];
 
-const TasksFooter = () => (
+export const TasksFooter = () => (
     <small className="text-warning">
         <Icon
             name="exclamation-triangle"
@@ -24,7 +24,7 @@ const TasksFooter = () => (
     </small>
 );
 
-const TaskLimits = (props) => {
+export const TaskLimits = (props) => {
 
     const taskComponents = map(taskNames, taskPrefix =>
         <Task
@@ -80,8 +80,6 @@ const mapStateToProps = (state) => {
     const { minProc, minMem } = minResourcesSelector(state);
 
     const settings = {
-        procLowerLimit: state.settings.data.rebuild_index_proc,
-        memLowerLimit: state.settings.data.rebuild_index_mem,
         resourceProc: state.settings.data.proc,
         resourceMem: state.settings.data.mem,
         maxProc,
