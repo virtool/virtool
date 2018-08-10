@@ -8,7 +8,7 @@ import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../bas
 
 const ProxyFooter = () => (
     <small className="text-danger">
-        <Icon name="warning" /> Proxy authentication is stored in plain text in the settings file.
+        <Icon name="exclamation-triangle" /> Proxy authentication is stored in plain text in the settings file.
     </small>
 );
 

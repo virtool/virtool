@@ -18,8 +18,9 @@ const taskNames = [
 
 const TasksFooter = () => (
     <small className="text-warning">
-        <Icon name="warning" />
-        Changing CPU and memory settings will not affect jobs that have already been initialized.
+        <Icon
+            name="exclamation-triangle"
+        /> Changing CPU and memory settings will not affect jobs that have already been initialized.
     </small>
 );
 
