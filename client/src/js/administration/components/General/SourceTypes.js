@@ -1,5 +1,5 @@
 import React from "react";
-import { includes, map, toLower, without } from "lodash-es";
+import { includes, map, toLower, without, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import AdministrationSection from "../Section";
@@ -151,7 +151,7 @@ const mapStateToProps = (state) => {
 
     const sourceTypesArray = isGlobalSettings
         ? state.settings.data.default_source_types
-        : state.references.detail.source_types;
+        : get(state, "references.detail.source_types", []);
 
     const restrictSourceTypes = state.references.detail ? state.references.detail.restrict_source_types : null;
     const refId = state.references.detail ? state.references.detail.id : null;

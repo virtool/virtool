@@ -18,7 +18,7 @@ import Account from "./account/components/Account";
 import UploadOverlay from "./files/components/UploadOverlay";
 import { LoadingPlaceholder } from "./base";
 
-const Inner = (props) => {
+export const Inner = (props) => {
     if (props.ready) {
         return (
             <div>
@@ -52,7 +52,7 @@ const mapStateToProps = state => ({
     ready: state.account.ready && Boolean(keys(state.settings).length)
 });
 
-const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
+export const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
 
 const App = ({ store, history }) => (
     <Provider store={store}>
