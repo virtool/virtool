@@ -81,7 +81,7 @@ export default class Task extends React.Component {
         );
 
         return (
-            <ListGroupItem allowFocus bsStyle={this.state.error ? "danger" : null}>
+            <ListGroupItem allowFocus>
                 <h5><strong>{getTaskDisplayName(taskPrefix)}</strong></h5>
                 <Row>
                     <Col md={4}>
