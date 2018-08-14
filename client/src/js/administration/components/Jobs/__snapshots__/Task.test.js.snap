@@ -3,7 +3,6 @@
 exports[`<Task /> renders correctly 1`] = `
 <ListGroupItem
   allowFocus={true}
-  bsStyle={null}
 >
   <h5>
     <strong>
