@@ -2,6 +2,8 @@ import SentryOptionsContainer, {
     SentryFooter,
     SentryOptions
 } from "./Sentry";
+import * as actions from "../../actions";
+import { Button } from "../../../base";
 
 describe("<Sentry />", () => {
     const initialState = { settings: { data: { enable_sentry: false } } };
@@ -25,6 +27,18 @@ describe("<Sentry />", () => {
         };
         wrapper = shallow(<SentryOptions {...props} />);
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("dispatches updateSetting() action on checkbox toggle to update 'enable_sentry' field", () => {
+        const spy = sinon.spy(actions, "updateSetting");
+        expect(spy.called).toBe(false);
+
+        wrapper = mount(<SentryOptionsContainer store={store} />);
+        wrapper.find(Button).prop("onClick")();
+
+        expect(spy.calledWith("enable_sentry", true)).toBe(true);
+
+        spy.restore();
     });
 
 });
