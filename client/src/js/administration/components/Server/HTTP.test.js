@@ -3,6 +3,8 @@ import HTTPOptionsContainer, {
     HTTPFooter,
     HTTPCheckboxLabel
 } from "./HTTP";
+import { Checkbox, InputError } from "../../../base";
+import * as actions from "../../actions";
 
 describe("<HTTPOptions />", () => {
     const initialState = {
@@ -43,6 +45,42 @@ describe("<HTTPOptions />", () => {
         };
         wrapper = shallow(<HTTPOptions {...props} />);
         expect(wrapper).toMatchSnapshot();
+    });
+
+    describe("dispatch functions", () => {
+        let spy;
+
+        beforeAll(() => {
+            spy = sinon.spy(actions, "updateSetting");
+            wrapper = mount(<HTTPOptionsContainer store={store} />);
+        });
+
+        afterEach(() => {
+            spy.resetHistory();
+        });
+
+        afterAll(() => {
+            spy.restore();
+        });
+
+        it("Host input submit dispatches updateSetting() action to update 'server_host' field", () => {
+            expect(spy.called).toBe(false);
+            wrapper.find(InputError).at(0).prop("onSave")({ value: "bar" });
+            expect(spy.calledWith("server_host", "bar")).toBe(true);
+        });
+
+        it("Port input submit dispatches updateSetting() action to update 'server_port' field", () => {
+            expect(spy.called).toBe(false);
+            wrapper.find(InputError).at(1).prop("onSave")({ value: "88" });
+            expect(spy.calledWith("server_port", 88)).toBe(true);
+        });
+
+        it("Enable API checkbox toggle dispatches updateSetting() action to update 'enable_api' field", () => {
+            expect(spy.called).toBe(false);
+            wrapper.find(Checkbox).prop("onClick")();
+            expect(spy.calledWith("enable_api", false)).toBe(true);
+        });
+
     });
 
 });
