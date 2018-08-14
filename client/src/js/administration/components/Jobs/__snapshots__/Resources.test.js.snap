@@ -89,6 +89,58 @@ exports[`<Resources /> renders Resources component and calls onGet prop on mount
 </div>
 `;
 
+exports[`<Resources /> renders a <LoadingPlaceholder /> component when resources data are not yet fetched 1`] = `<LoadingPlaceholder />`;
+
+exports[`<Resources /> renders an alert if the error props is set 1`] = `
+<div>
+  <Alert
+    bsStyle="danger"
+    icon="exclamation-circle"
+  >
+    Resource Limit values cannot be lower than corresponding Task-specific Limits.
+  </Alert>
+  <AdministrationSection
+    content={
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <LimitLabel
+          label="CPU Limit"
+          unit="cores"
+        />
+        <InputError
+          error={null}
+          name="proc"
+          noMargin={true}
+          onChange={[Function]}
+          onInvalid={[Function]}
+          onSave={[Function]}
+          type="number"
+          withButton={true}
+        />
+        <LimitLabel
+          label="Memory Limit (GB)"
+          unit="GB"
+        />
+        <InputError
+          error={null}
+          name="mem"
+          noMargin={true}
+          onChange={[Function]}
+          onInvalid={[Function]}
+          onSave={[Function]}
+          type="number"
+          withButton={true}
+        />
+      </PanelBody>
+    }
+    description="Set limits on the computing resources Virtool can use on the host server."
+    title="Resource Limits"
+  />
+</div>
+`;
+
 exports[`<Resources /> renders correctly 1`] = `
 <div>
   <AdministrationSection

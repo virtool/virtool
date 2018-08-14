@@ -3,7 +3,7 @@ import ResourcesContainer, {
     LimitLabel,
     Resources
 } from "./Resources";
-import { InputError } from "../../../base";
+import { InputError, Alert } from "../../../base";
 import * as actions from "../../actions";
 import * as jobActions from "../../../jobs/actions";
 import * as errorActions from "../../../errors/actions";
@@ -67,6 +67,63 @@ describe("<Resources />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
+    it("getDerivedStateFromProps", () => {
+        let nextProps = { mem: 3, proc: 2 };
+        let prevState = { mem: 1, proc: 2 };
+        let result = Resources.getDerivedStateFromProps(nextProps, prevState);
+        let expected = { errorMem: false };
+        expect(result).toEqual(expected);
+
+        nextProps = { mem: 1, proc: 4 };
+        prevState = { mem: 1, proc: 2 };
+        result = Resources.getDerivedStateFromProps(nextProps, prevState);
+        expected = { errorProc: false };
+        expect(result).toEqual(expected);
+
+        nextProps = { mem: 1, proc: 2 };
+        prevState = { mem: 1, proc: 2 };
+        result = Resources.getDerivedStateFromProps(nextProps, prevState);
+        expect(result).toEqual(null);
+    });
+
+    describe("componentDidUpdate", () => {
+
+        it("Update entry values whose server default values exceed resource maximums", () => {
+            props = {
+                onGet: jest.fn(),
+                onUpdate: sinon.spy(),
+                maxMem: 10,
+                maxProc: 10
+            };
+            wrapper = shallow(<Resources {...props} />);
+
+            wrapper.setProps({ overResourceMax: { test_proc: 100, test_mem: 100 } });
+            expect(props.onUpdate.calledWith({ name: "test_proc", value: 10 })).toBe(true);
+        });
+
+        it("Update entry values whose values exceed resource maximums", () => {
+            props = {
+                onGet: jest.fn(),
+                onUpdate: sinon.spy(),
+                overResourceMax: { test_mem: 100 },
+                maxMem: 10,
+                maxProc: 10,
+                proc: 1,
+                mem: 30
+            };
+            wrapper = shallow(<Resources {...props} />);
+            wrapper.setProps({ overResourceMax: {} });
+            expect(props.onUpdate.calledWith({ name: "mem", value: 10 })).toBe(true);
+
+            wrapper.setProps({ overResourceMax: { foo: "bar" } });
+            wrapper.setState({ mem: 1, proc: 30 });
+
+            wrapper.setProps({ overResourceMax: {} });
+            expect(props.onUpdate.calledWith({ name: "proc", value: 10 })).toBe(true);
+        });
+
+    });
+
     it("renders Resources component and calls onGet prop on mount", () => {
         props = {
             onGet: jest.fn(),
@@ -89,6 +146,29 @@ describe("<Resources />", () => {
         expect(props.onGet).toHaveBeenCalled();
     });
 
+    it("renders a <LoadingPlaceholder /> component when resources data are not yet fetched", () => {
+        wrapper = shallow(<Resources onGet={jest.fn()} resources={null} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders an alert if the error props is set", () => {
+        wrapper = shallow(<Resources onGet={jest.fn()} error="test-error" />);
+        expect(wrapper).toMatchSnapshot();
+        expect(wrapper.find(Alert).exists()).toBe(true);
+    });
+
+    it("calls setError when input is invalid", () => {
+        const mockEvent = {
+            preventDefault: jest.fn(),
+            target: { name: "test", value: 0 }
+        };
+
+        wrapper = mount(<Resources onGet={jest.fn()} />);
+        wrapper.find(InputError).at(0).prop("onInvalid")(mockEvent);
+
+        expect(wrapper.state("errorTest")).toBe(true);
+    });
+
     describe("dispatch functions", () => {
         let spy;
         let mockEvent;
@@ -109,8 +189,11 @@ describe("<Resources />", () => {
                 max: 10,
                 min: 1
             };
-            wrapper.find(InputError).at(0).prop("onSave")(mockEvent);
 
+            wrapper.find(InputError).at(0).prop("onSave")({...mockEvent, value: 100});
+            expect(spy.called).toBe(false);
+
+            wrapper.find(InputError).at(0).prop("onSave")(mockEvent);
             expect(spy.calledWith("test", 5)).toBe(true);
         });
 
