@@ -129,8 +129,7 @@ describe("<Proxy />", () => {
             expect(spyUpdateSetting.calledWith("proxy_password", "123abc")).toBe(true);
         });
 
-        it(`Toggling Trust Environmental Variables checkbox dispatches updateSetting() action
-         to update 'proxy_trust' field`, () => {
+        it("Toggling Trust Env Var checkbox dispatches updateSetting() to update 'proxy_trust' field", () => {
             expect(spyUpdateSetting.called).toBe(false);
             wrapper.find(Checkbox).at(1).prop("onClick")();
             expect(spyUpdateSetting.calledWith("proxy_trust", true)).toBe(true);

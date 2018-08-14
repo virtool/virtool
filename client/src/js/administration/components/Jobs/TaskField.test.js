@@ -74,8 +74,7 @@ describe("<TaskField />", () => {
         expect(spy.calledWith(mockEvent)).toBe(true);
     });
 
-    it(`handleSubmit: form submission calls props.onChange callback when state.value is set,
-    otherwise calls props.onInvalid callback`, () => {
+    it("handleSubmit: form submit calls props.onChange & props.onInvalid callback when state.value is set", () => {
         props = {
             onInvalid: jest.fn(),
             onChange: sinon.spy(),
