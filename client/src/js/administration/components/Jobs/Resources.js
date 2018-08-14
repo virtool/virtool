@@ -10,11 +10,11 @@ import { updateSetting } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { getTargetChange } from "../../../utils";
 
-const getErrorMessage = (isError, min, max) => (
+export const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
 );
 
-const LimitLabel = ({ label, available, unit }) => (
+export const LimitLabel = ({ label, available, unit }) => (
     <h5>
         <Flex alignItems="center">
             <FlexItem grow={1} shrink={0}>
@@ -29,7 +29,7 @@ const LimitLabel = ({ label, available, unit }) => (
     </h5>
 );
 
-class Resources extends React.Component {
+export class Resources extends React.Component {
 
     constructor (props) {
         super(props);

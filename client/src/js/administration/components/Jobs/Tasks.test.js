@@ -2,6 +2,8 @@ import TaskLimitsContainer, {
     TasksFooter,
     TaskLimits
 } from "./Tasks";
+import Task from "./Task";
+import * as actions from "../../actions";
 
 describe("<TaskLimits />", () => {
     const initialState = {
@@ -65,5 +67,17 @@ describe("<TaskLimits />", () => {
         };
         wrapper = shallow(<TaskLimits {...props} />);
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("dispatches updateSetting when limits are changed", () => {
+        const spy = sinon.spy(actions, "updateSetting");
+        expect(spy.called).toBe(false);
+
+        wrapper = mount(<TaskLimitsContainer store={store} />);
+        wrapper.find(Task).at(0).prop("onChangeLimit")("test", "proc", 5);
+
+        expect(spy.calledWith("test_proc", 5)).toBe(true);
+
+        spy.restore();
     });
 });
