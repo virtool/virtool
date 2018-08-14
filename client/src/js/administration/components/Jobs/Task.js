@@ -4,7 +4,6 @@ import { includes } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { ListGroupItem } from "../../../base";
 import { getTaskDisplayName } from "../../../utils";
-
 import TaskField from "./TaskField";
 
 const getInitialState = () => ({
@@ -12,7 +11,7 @@ const getInitialState = () => ({
     zeroError: false
 });
 
-class Task extends React.Component {
+export default class Task extends React.Component {
 
     constructor (props) {
         super(props);
@@ -141,5 +140,3 @@ Task.propTypes = {
     resourceMem: PropTypes.number,
     readOnlyFields: PropTypes.array
 };
-
-export default Task;
