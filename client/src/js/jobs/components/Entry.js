@@ -5,7 +5,7 @@ import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
-import { Icon, RelativeTime, ProgressBar } from "../../base";
+import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
 import { getTaskDisplayName } from "../../utils";
 import { cancelJob, removeJob } from "../actions";
 
@@ -76,28 +76,28 @@ export class JobEntry extends React.Component {
         // Create the option components for the selected fields.
         return (
             <div className="spaced job list-group-item" onClick={this.handleNavigate}>
-
-                <div className="job-overlay">
-                    <Row>
-                        <Col md={3} mdOffset={9}>
-                            <strong className="pull-right">
-                                {capitalize(this.props.entry.state)}
-                            </strong>
-                        </Col>
-                    </Row>
-                </div>
-
                 <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
 
                 <Row>
-                    <Col md={4}>
+                    <Col xs={4} md={4}>
                         <strong>{getTaskDisplayName(this.props.entry.task)}</strong>
                     </Col>
-                    <Col md={5}>
+                    <Col xs={6} md={6}>
                         Started <RelativeTime time={this.props.entry.created_at} /> by {this.props.entry.user.id}
                     </Col>
-                    <Col md={3}>
-                        {icon}
+                    <Col xs={2} md={2}>
+                        <Flex justifyContent="flex-end">
+                            <FlexItem>
+                                <strong>
+                                    {capitalize(this.props.entry.state)}
+                                </strong>
+                            </FlexItem>
+                            {icon ? (
+                                <FlexItem pad={10}>
+                                    {icon}
+                                </FlexItem>
+                            ) : null}
+                        </Flex>
                     </Col>
                 </Row>
             </div>
