@@ -267,15 +267,6 @@ div.hoverable:hover {
   &.job {
     cursor: pointer;
 
-    &:hover {
-      background: #f5f5f5;
-
-      .job-overlay {
-        display: none;
-        z-index: -1000;
-      }
-    }
-
     i {
       color: lighten(@brand-danger, 6%);
       font-size: 17px;
@@ -285,25 +276,6 @@ div.hoverable:hover {
       }
     }
 
-    .job-overlay {
-      position: absolute;
-
-      z-index: 1000;
-
-      top: 0;
-      bottom: 0;
-      right: 0;
-      left: 0;
-
-      margin: 10px 0;
-      padding: 0 15px;
-
-      background-color: transparent;
-
-      div.col-md-3 {
-        background-color: white;
-      }
-    }
   }
 
   &.spaced {
