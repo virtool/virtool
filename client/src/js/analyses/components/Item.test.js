@@ -1,4 +1,7 @@
-import AnalysisItemContainer from "./Item";
+import AnalysisItemContainer, { AnalysisItem } from "./Item";
+import { MemoryRouter } from "react-router";
+import * as actions from "../actions";
+import { Icon } from "../../base";
 
 describe("<AnalysisItem />", () => {
     const initialState = {
@@ -11,7 +14,7 @@ describe("<AnalysisItem />", () => {
             }
         },
         account: {
-            administrator: false,
+            administrator: true,
             groups: []
         },
         settings: {
@@ -20,7 +23,7 @@ describe("<AnalysisItem />", () => {
             }
         },
         samples: {
-            detail: null
+            detail: { all_write: false, group_write: false, group: "" }
         }
     };
     const store = mockStore(initialState);
@@ -37,6 +40,48 @@ describe("<AnalysisItem />", () => {
         };
         wrapper = shallow(<AnalysisItemContainer store={store} {...props} />).dive();
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders base component correctly", () => {
+        props = {
+            id: "test_analysis",
+            ready: true,
+            placeholder: false,
+            algorithm: "test_algorithm",
+            created_at: "2018-02-14T17:12:00.000000Z",
+            reference: { name: "123abc" },
+            index: { version: 123 },
+            user: { id: "test-user" }
+        };
+        wrapper = shallow(<AnalysisItem {...props} />);
+
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("Clicking trash icon dispatches removeAnalysis() action to delete entry", () => {
+        const spy = sinon.spy(actions, "removeAnalysis");
+        expect(spy.called).toBe(false);
+
+        props = {
+            id: "test_analysis",
+            ready: true,
+            placeholder: false,
+            algorithm: "test_algorithm",
+            created_at: "2018-02-14T17:12:00.000000Z",
+            reference: { name: "123abc" },
+            index: { version: 123 },
+            user: { id: "test-user" }
+        };
+        wrapper = mount(
+            <MemoryRouter>
+                <AnalysisItemContainer store={store} {...props} />
+            </MemoryRouter>
+        );
+
+        wrapper.find(Icon).prop("onClick")();
+        expect(spy.calledWith(props.id)).toBe(true);
+
+        spy.restore();
     });
 
 });
