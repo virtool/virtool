@@ -7,11 +7,11 @@ import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";
-import { Button, Icon, Input, InputError, Flex, FlexItem, SaveButton } from "../../../base/index";
+import { Button, Icon, Input, InputError, Flex, FlexItem, SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 
-const getInitialState = (props) => ({
+export const getInitialState = (props) => ({
     name: "",
     permissions: mapValues(props.permissions, () => false),
     submitted: false,
