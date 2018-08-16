@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
 
 import { findAnalyses } from "../actions";
-import { LoadingPlaceholder } from "../../base/index";
+import { LoadingPlaceholder } from "../../base";
 import AnalysesList from "./List";
 import AnalysisDetail from "./Detail";
 

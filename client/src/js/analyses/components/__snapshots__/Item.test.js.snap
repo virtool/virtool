@@ -1,5 +1,70 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<AnalysisItem /> renders base component correctly 1`] = `
+<LinkContainer
+  activeClassName="active"
+  exact={false}
+  replace={false}
+  strict={false}
+  to="/samples/undefined/analyses/test_analysis"
+>
+  <div
+    className="list-group-item spaced hoverable"
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={3}
+      >
+        <strong>
+          Test Algorithm
+        </strong>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+      >
+        Started 
+        <RelativeTime
+          time="2018-02-14T17:12:00.000000Z"
+        />
+         by test-user
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={3}
+      >
+        <span>
+          123abc
+          <Label
+            bsClass="label"
+            bsStyle="default"
+            style={
+              Object {
+                "marginLeft": "5px",
+              }
+            }
+          >
+            123
+          </Label>
+        </span>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={2}
+      />
+    </Row>
+  </div>
+</LinkContainer>
+`;
+
 exports[`<AnalysisItem /> renders correctly 1`] = `
 <div
   className="list-group-item spaced"
