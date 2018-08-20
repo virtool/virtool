@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
-
 import { Button } from "./Button";
 
 /**
@@ -14,13 +13,13 @@ import { Button } from "./Button";
  * @param onConfirm {function} a function to call on confirmation
  * @param onHide {function} a function that hides the modal
  */
-export const RemoveModal = ({ name, noun, show, onConfirm, onHide }) => (
+export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) => (
     <Modal show={show} onHide={onHide} dialogClassName="modal-danger">
         <Modal.Header onHide={onHide} closeButton>
             Remove {noun}
         </Modal.Header>
         <Modal.Body>
-            Are you sure you want to remove <strong>{name}</strong>?
+            {message || (<span>Are you sure you want to remove <strong>{name}</strong>?</span>)}
         </Modal.Body>
         <Modal.Footer>
             <Button bsStyle="danger" icon="check" onClick={onConfirm}>
@@ -35,5 +34,6 @@ RemoveModal.propTypes = {
     name: PropTypes.string,
     show: PropTypes.bool,
     onHide: PropTypes.func,
-    onConfirm: PropTypes.func
+    onConfirm: PropTypes.func,
+    message: PropTypes.node
 };

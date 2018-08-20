@@ -1,0 +1,110 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
+<LinkContainer
+  activeClassName="active"
+  className="spaced"
+  exact={false}
+  key="test-1"
+  replace={false}
+  strict={false}
+  to="/refs/123abc/otus/test-1"
+>
+  <ListGroupItem
+    allowFocus={false}
+    bsStyle="warning"
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={7}
+        xs={11}
+      >
+        <strong>
+          test-otu-1
+        </strong>
+        <small
+          className="hidden-md hidden-lg text-muted"
+          style={
+            Object {
+              "marginLeft": "5px",
+            }
+          }
+        >
+          TO1
+        </small>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        xsHidden={true}
+      >
+        TO1
+      </Col>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="tag"
+        pullRight={true}
+        tip="This OTU is unverified"
+      />
+    </Row>
+  </ListGroupItem>
+</LinkContainer>
+`;
+
+exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
+<LinkContainer
+  activeClassName="active"
+  className="spaced"
+  exact={false}
+  key="test-2"
+  replace={false}
+  strict={false}
+  to="/refs/123abc/otus/test-2"
+>
+  <ListGroupItem
+    allowFocus={false}
+    bsStyle={null}
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={7}
+        xs={11}
+      >
+        <strong>
+          test-otu-2
+        </strong>
+        <small
+          className="hidden-md hidden-lg text-muted"
+          style={
+            Object {
+              "marginLeft": "5px",
+            }
+          }
+        >
+          TO2
+        </small>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        xsHidden={true}
+      >
+        TO2
+      </Col>
+    </Row>
+  </ListGroupItem>
+</LinkContainer>
+`;

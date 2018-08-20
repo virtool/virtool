@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RemoveOTU /> renders correctly 1`] = `
+<RemoveModal
+  name="test-otu"
+  noun="OTU"
+  onConfirm={[Function]}
+  onHide={[Function]}
+  show={true}
+/>
+`;
