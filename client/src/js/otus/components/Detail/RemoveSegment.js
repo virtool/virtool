@@ -1,44 +1,27 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { reject } from "lodash-es";
-import { Button } from "../../../base";
+import { RemoveModal } from "../../../base";
 
 class RemoveSegment extends React.Component {
 
     handleSubmit = () => {
         let newArray = this.props.schema.slice();
         newArray = reject(newArray, ["name", this.props.curSeg.name]);
-
         this.props.onSubmit(newArray);
     }
 
     render () {
 
         return (
-            <Modal
-                show={this.props.show}
-                onExited={this.handleExited}
-                dialogClassName="modal-danger"
+            <RemoveModal
+                name={this.props.curSeg.name}
+                noun="Segment"
+                onConfirm={this.handleSubmit}
                 onHide={this.props.onHide}
-            >
-                <Modal.Header closeButton>
-                    Remove Segment
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to remove the segment <strong>{this.props.curSeg.name}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button
-                        bsStyle="danger"
-                        icon="check"
-                        onClick={this.handleSubmit}
-                    >
-                        Confirm
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                show={this.props.show}
+            />
         );
     }
 }
