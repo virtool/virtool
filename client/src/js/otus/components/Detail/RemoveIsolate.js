@@ -1,6 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-
 import { removeIsolate, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
@@ -14,7 +13,7 @@ export class RemoveIsolate extends React.Component {
         return (
             <RemoveModal
                 name={this.props.isolateName}
-                noun="isolate"
+                noun="Isolate"
                 onConfirm={this.handleConfirm}
                 onHide={this.props.onHide}
                 show={this.props.show}
