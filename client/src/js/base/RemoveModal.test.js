@@ -8,7 +8,6 @@ describe("<RemoveModal />", () => {
 
     it("renders correctly", () => {
         wrapper = shallow(<RemoveModal />);
-
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -58,7 +57,12 @@ describe("<RemoveModal />", () => {
         };
         wrapper = shallow(<RemoveModal {...props} />);
 
-        expect(wrapper.find(Modal.Body).childAt(1).text()).toEqual(props.name);
+        expect(wrapper.find("strong").text()).toEqual(props.name);
+
+        const message = <span>Remove <strong>test-name-2</strong></span>;
+        wrapper = shallow(<RemoveModal {...props} message={message} />);
+
+        expect(wrapper.find("strong").text()).toEqual("test-name-2");
     });
 
     it("Modal.Footer renders a confirmation button", () => {
