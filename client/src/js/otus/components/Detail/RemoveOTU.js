@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
-
 import { removeOTU, hideOTUModal } from "../../actions";
 import { Button } from "../../../base";
 
