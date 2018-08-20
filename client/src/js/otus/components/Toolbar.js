@@ -3,9 +3,9 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
-import {createFindURL, getFindTerm} from "../../utils";
+import { createFindURL, getFindTerm } from "../../utils";
 
-const OTUToolbar = ({ hasRemoveOTU, canModify, onFind, term, onFilter, search }) => (
+export const OTUToolbar = ({ hasRemoveOTU, canModify, onFind, term, onFilter, search }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
