@@ -27,6 +27,8 @@ describe("<RemoveReference />", () => {
 
         wrapper.find(RemoveBanner).prop("onClick")();
         expect(spy.calledWith("test")).toBe(true);
+
+        spy.restore();
     });
 
 });
