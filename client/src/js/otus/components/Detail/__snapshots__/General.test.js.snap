@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<OTUGeneral /> renders correctly with issues 1`] = `
+<div>
+  <OTUIssues
+    isolates={
+      Array [
+        Object {
+          "id": "456def",
+        },
+      ]
+    }
+    issues={
+      Object {
+        "empty_isolate": Array [
+          "456def",
+        ],
+        "empty_otu": false,
+        "empty_sequence": false,
+        "isolate_inconsistency": false,
+      }
+    }
+  />
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-xs-4"
+        >
+          Name
+        </th>
+        <td
+          className="col-xs-8"
+        >
+          test-virus
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Abbreviation
+        </th>
+        <td>
+          TV
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Version
+        </th>
+        <td>
+          3
+        </td>
+      </tr>
+      <Connect(IDRowComponent)
+        id="123abc"
+      />
+    </tbody>
+  </Table>
+</div>
+`;
+
+exports[`<OTUGeneral /> renders correctly without issues 1`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-xs-4"
+        >
+          Name
+        </th>
+        <td
+          className="col-xs-8"
+        >
+          test-virus
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Abbreviation
+        </th>
+        <td>
+          TV
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Version
+        </th>
+        <td>
+          3
+        </td>
+      </tr>
+      <Connect(IDRowComponent)
+        id="123abc"
+      />
+    </tbody>
+  </Table>
+</div>
+`;
