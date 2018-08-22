@@ -34,8 +34,8 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={5}
-        sm={5}
+        md={4}
+        sm={4}
         xs={5}
       >
         Started 
@@ -69,10 +69,49 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={1}
-        sm={1}
+        lgHidden={true}
+        mdHidden={true}
+        smHidden={true}
         xs={1}
-      />
+      >
+        <span
+          className="pull-right"
+        >
+          <ClipLoader
+            color="#3c8786"
+            loading={true}
+            size="14px"
+            style={
+              Object {
+                "display": "inline",
+              }
+            }
+          />
+        </span>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={2}
+        sm={2}
+        xsHidden={true}
+      >
+        <strong
+          className="pull-right"
+        >
+          <ClipLoader
+            color="#3c8786"
+            loading={true}
+            size="14px"
+            style={
+              Object {
+                "display": "inline",
+              }
+            }
+          />
+           In Progress
+        </strong>
+      </Col>
     </Row>
   </div>
 </LinkContainer>
@@ -105,8 +144,8 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={5}
-      sm={5}
+      md={4}
+      sm={4}
       xs={5}
     >
       Started 
@@ -124,9 +163,32 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={1}
-      sm={1}
+      lgHidden={true}
+      mdHidden={true}
+      smHidden={true}
       xs={1}
+    >
+      <span
+        className="pull-right"
+      >
+        <ClipLoader
+          color="#3c8786"
+          loading={true}
+          size="14px"
+          style={
+            Object {
+              "display": "inline",
+            }
+          }
+        />
+      </span>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={2}
+      sm={2}
+      xsHidden={true}
     >
       <strong
         className="pull-right"
