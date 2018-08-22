@@ -7,7 +7,7 @@ import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found
 
-CHUNK_SIZE = 32768
+CHUNK_SIZE = 131072
 
 FILE_TYPES = [
     "reference",
