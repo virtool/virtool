@@ -43,18 +43,16 @@ export class File extends React.Component {
         return (
             <ListGroupItem className="spaced" style={{ color: "#555" }}>
                 <Row>
-                    <Col xs={6} md={5}>
+                    <Col xs={4} sm={4} md={4}>
                         <strong>{name}</strong>
                     </Col>
-                    <Col xs={6} md={2} >
-                        <div style={{float: "right"}}>
-                            {byteSize(size)}
-                        </div>
+                    <Col xs={2} sm={2} md={2} >
+                        {byteSize(size)}
                     </Col>
-                    <Col xs={11} md={4}>
+                    <Col xs={5} sm={5} md={5}>
                         {creation}
                     </Col>
-                    <Col xs={1} md={1}>
+                    <Col xs={1} sm={1} md={1}>
                         {this.props.canRemove ? (
                             <Icon
                                 name="trash"
