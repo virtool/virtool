@@ -1,6 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-
 import { removeSample } from "../actions";
 import { RemoveModal } from "../../base";
 

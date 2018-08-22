@@ -1,9 +1,7 @@
 import React from "react";
-import {Col, Row} from "react-bootstrap";
-import {connect} from "react-redux";
-import {updateSetting} from "../../administration/actions";
-import {LoadingPlaceholder} from "../../base";
-
+import { Col, Row } from "react-bootstrap";
+import { connect } from "react-redux";
+import { LoadingPlaceholder } from "../../base";
 import Channels from "./Channels";
 import Releases from "./Releases";
 import { getSoftwareUpdates } from "../actions";
@@ -48,10 +46,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onGet: () => {
         dispatch(getSoftwareUpdates());
-    },
-
-    onSetSoftwareChannel: (value) => {
-        dispatch(updateSetting("software_channel", value));
     }
 
 });

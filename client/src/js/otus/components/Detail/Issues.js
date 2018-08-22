@@ -65,7 +65,6 @@ const OTUIssues = (props) => {
         const emptySequences = map(props.issues.empty_sequence, (errorObject, index) => {
             // Get the entire isolate object identified by the isolate_id.
             const isolate = find(props.isolates, {id: errorObject.isolate_id});
-
             return (
                 <li key={index}>
                     <span><em>{errorObject._id}</em> in isolate <em>{formatIsolateName(isolate)}</em></span>
@@ -82,7 +81,7 @@ const OTUIssues = (props) => {
     }
 
     return (
-        <Alert bsStyle={props.issues ? "danger" : "warning"} className="clearfix">
+        <Alert bsStyle="danger" className="clearfix">
             <h5>
                 <strong>
                     There are some issues that must be resolved before this OTU can be included in the next index

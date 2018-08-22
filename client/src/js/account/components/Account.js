@@ -46,10 +46,6 @@ class Account extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    account: state.account
-});
-
 const mapDispatchToProps = (dispatch) => ({
 
     onGet: () => {
@@ -58,4 +54,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Account);
+export default connect(null, mapDispatchToProps)(Account);

@@ -9,11 +9,11 @@ import UniqueNames from "../../administration/components/General/UniqueNames";
 import SampleRights from "../../administration/components/General/SampleRights";
 import { LoadingPlaceholder } from "../../base";
 
-const SampleFileManager = () => (
+export const SampleFileManager = () => (
     <FileManager fileType="reads" />
 );
 
-const SampleSettings = () => (
+export const SampleSettings = () => (
     <div className="settings-container">
         <h3 className="view-header">
             <strong>

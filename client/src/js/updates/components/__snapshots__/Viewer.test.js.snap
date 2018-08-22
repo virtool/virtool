@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SoftwareUpdateViewer /> renders <LoadingPlaceholder /> when releases data not available 1`] = `<LoadingPlaceholder />`;
+
+exports[`<SoftwareUpdateViewer /> renders correctly when releases data available 1`] = `
+<div
+  className="settings-container"
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={12}
+    >
+      <h5>
+        <strong>
+          Software Updates
+        </strong>
+      </h5>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={8}
+      xs={12}
+    >
+      <Connect(Releases) />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+      xs={12}
+    >
+      <Connect(SoftwareChannels) />
+    </Col>
+  </Row>
+</div>
+`;

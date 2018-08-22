@@ -55,7 +55,7 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
     onShowInstall: () => {
-        dispatch(push({state: {install: true}}));
+        dispatch(push({ state: { install: true } }));
     }
 });
 
