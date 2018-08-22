@@ -51,18 +51,18 @@ export const AnalysisItem = (props) => {
     }
 
     const content = (
-        <div className={itemClass}>
+        <div className={itemClass} style={{ color: "#555" }}>
             <Row>
-                <Col md={3}>
+                <Col xs={4} sm={4} md={4}>
                     <strong>{getTaskDisplayName(props.algorithm)}</strong>
                 </Col>
-                <Col md={4}>
+                <Col xs={5} sm={5} md={5}>
                     Started <RelativeTime time={props.created_at} />{props.placeholder ? null : ` by ${props.user.id}`}
                 </Col>
-                <Col md={3}>
+                <Col xs={2} sm={2} md={2}>
                     {reference}
                 </Col>
-                <Col md={2}>
+                <Col xs={1} sm={1} md={1}>
                     {end}
                 </Col>
             </Row>
