@@ -4,7 +4,7 @@ import { capitalize, get } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-
+import { ClipLoader } from "halogenium";
 import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
 import { getTaskDisplayName } from "../../utils";
 import { cancelJob, removeJob } from "../actions";
@@ -38,11 +38,12 @@ export class JobEntry extends React.Component {
 
     render () {
 
-        let icon;
+        let actionIcon;
+        let statusIcon;
 
         if ((this.props.entry.state === "waiting" || this.props.entry.state === "running")
             && this.props.canCancel) {
-            icon = (
+            actionIcon = (
                 <Icon
                     bsStyle="danger"
                     name="ban"
@@ -50,8 +51,10 @@ export class JobEntry extends React.Component {
                     pullRight
                 />
             );
+
+            statusIcon = <ClipLoader size="14px" color="#3c8786" />;
         } else if (this.props.canRemove) {
-            icon = (
+            actionIcon = (
                 <Icon
                     bsStyle="danger"
                     name="trash"
@@ -59,6 +62,10 @@ export class JobEntry extends React.Component {
                     pullRight
                 />
             );
+            
+            statusIcon = this.props.entry.state === "complete"
+                ? (<Icon name="check" bsStyle="success" />)
+                : (<Icon name="times" bsStyle="danger" />);
         }
 
         let progressStyle = "success";
@@ -82,19 +89,22 @@ export class JobEntry extends React.Component {
                     <Col xs={4} md={4}>
                         <strong>{getTaskDisplayName(this.props.entry.task)}</strong>
                     </Col>
-                    <Col xs={6} md={6}>
+                    <Col xs={5} md={5}>
                         Started <RelativeTime time={this.props.entry.created_at} /> by {this.props.entry.user.id}
                     </Col>
-                    <Col xs={2} md={2}>
+                    <Col xs={3} md={3}>
                         <Flex justifyContent="flex-end">
                             <FlexItem>
+                                {statusIcon}
+                            </FlexItem>
+                            <FlexItem pad={5}>
                                 <strong>
                                     {capitalize(this.props.entry.state)}
                                 </strong>
                             </FlexItem>
-                            {icon ? (
-                                <FlexItem pad={10}>
-                                    {icon}
+                            {actionIcon ? (
+                                <FlexItem pad={30}>
+                                    {actionIcon}
                                 </FlexItem>
                             ) : null}
                         </Flex>
