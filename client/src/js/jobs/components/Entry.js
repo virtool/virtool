@@ -92,13 +92,13 @@ export class JobEntry extends React.Component {
                 <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
 
                 <Row>
-                    <Col xs={4} md={4}>
+                    <Col xs={6} sm={4} md={4}>
                         <strong>{getTaskDisplayName(this.props.entry.task)}</strong>
                     </Col>
-                    <Col xs={5} md={5}>
+                    <Col xs={5} sm={5} md={5}>
                         Started <RelativeTime time={this.props.entry.created_at} /> by {this.props.entry.user.id}
                     </Col>
-                    <Col xs={2} md={2}>
+                    <Col xsHidden sm={2} md={2}>
                         <Flex justifyContent="flex-end">
                             <FlexItem>
                                 {statusIcon}
@@ -110,7 +110,7 @@ export class JobEntry extends React.Component {
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col xs={1} md={1}>
+                    <Col xs={1} sm={1} md={1}>
                         {actionIcon || null}
                     </Col>
                 </Row>
