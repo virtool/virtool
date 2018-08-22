@@ -41,7 +41,7 @@ export class File extends React.Component {
         }
 
         return (
-            <ListGroupItem className="spaced">
+            <ListGroupItem className="spaced" style={{ color: "#555" }}>
                 <Row>
                     <Col xs={6} md={5}>
                         <strong>{name}</strong>

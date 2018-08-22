@@ -48,6 +48,7 @@ export class JobEntry extends React.Component {
                     bsStyle="danger"
                     name="ban"
                     onClick={this.handleCancel}
+                    style={{fontSize: "17px"}}
                     pullRight
                 />
             );
@@ -59,13 +60,14 @@ export class JobEntry extends React.Component {
                     bsStyle="danger"
                     name="trash"
                     onClick={this.handleRemove}
+                    style={{fontSize: "17px"}}
                     pullRight
                 />
             );
-            
+
             statusIcon = this.props.entry.state === "complete"
-                ? (<Icon name="check" bsStyle="success" />)
-                : (<Icon name="times" bsStyle="danger" />);
+                ? (<Icon name="check fa-fw" bsStyle="success" />)
+                : (<Icon name="times fa-fw" bsStyle="danger" />);
         }
 
         let progressStyle = "success";
@@ -82,7 +84,11 @@ export class JobEntry extends React.Component {
 
         // Create the option components for the selected fields.
         return (
-            <div className="spaced job list-group-item" onClick={this.handleNavigate}>
+            <div
+                className="list-group-item hoverable spaced job"
+                onClick={this.handleNavigate}
+                style={{ color: "#555" }}
+            >
                 <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
 
                 <Row>

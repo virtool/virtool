@@ -78,33 +78,27 @@ class SampleEntry extends React.Component {
                 <Flex alignItems="center">
                     <FlexItem grow={1}>
                         <Row>
-                            <Col xs={6} md={4}>
+                            <Col xs={1} sm={1} md={1}>
                                 <Checkbox
                                     className="no-select"
                                     checked={this.props.isChecked}
                                     onClick={this.handleCheck}
                                 />
-                                <strong>&nbsp;{this.props.name}</strong>
+                            </Col>
+                            <Col xs={3} sm={4} md={3}>
+                                <strong>{this.props.name}</strong>
                             </Col>
 
-                            <Col xs={3} md={3}>
+                            <Col xsHidden smHidden md={3}>
                                 <SampleEntryLabels {...this.props} />
                             </Col>
 
-                            <Col xs={6} md={4} xsHidden smHidden>
+                            <Col xs={5} sm={5} md={4}>
                                 Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                             </Col>
 
-                            <Col xs={3} md={1}>
+                            <Col xs={3} sm={2} md={1}>
                                 {statusIcon}
-                            </Col>
-
-                            <Col xs={6} md={3} mdHidden lgHidden>
-                                <Icon name="clock" /> <RelativeTime time={this.props.created_at} />
-                            </Col>
-
-                            <Col xs={3} mdHidden lgHidden>
-                                <Icon name="user" /> {this.props.userId}
                             </Col>
                         </Row>
                     </FlexItem>
