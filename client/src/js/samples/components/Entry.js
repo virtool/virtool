@@ -78,15 +78,13 @@ class SampleEntry extends React.Component {
                 <Flex alignItems="center">
                     <FlexItem grow={1}>
                         <Row>
-                            <Col xs={1} sm={1} md={1}>
+                            <Col xs={4} sm={5} md={4}>
                                 <Checkbox
                                     className="no-select"
                                     checked={this.props.isChecked}
                                     onClick={this.handleCheck}
                                 />
-                            </Col>
-                            <Col xs={3} sm={4} md={3}>
-                                <strong>{this.props.name}</strong>
+                                <strong>&nbsp;{this.props.name}</strong>
                             </Col>
 
                             <Col xsHidden smHidden md={3}>
