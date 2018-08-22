@@ -51,6 +51,7 @@ class CreateSample(virtool.jobs.job.Job):
 
         #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
         self._stage_list = [
+            self.check_db,
             self.make_sample_dir,
             self.trim_reads,
             self.save_trimmed,
