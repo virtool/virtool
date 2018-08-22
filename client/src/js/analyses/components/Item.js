@@ -18,23 +18,23 @@ export const AnalysisItem = (props) => {
     const canRemove = (props.ready && props.canModify);
 
     const endIcon = canRemove ? (
-            <Icon
-                name="trash"
-                bsStyle="danger"
-                onClick={props.onRemove}
-                style={{fontSize: "17px"}}
-                pullRight
-            />
-        ) : <span className="pull-right">{loaderIcon}</span>;
+        <Icon
+            name="trash"
+            bsStyle="danger"
+            onClick={props.onRemove}
+            style={{fontSize: "17px"}}
+            pullRight
+        />
+    ) : <span className="pull-right">{loaderIcon}</span>;
 
-    const reference = !props.placeholder ? (
-            <span>
-                {props.reference.name}
-                <Label style={{marginLeft: "5px"}}>
-                    {props.index.version}
-                </Label>
-            </span>
-        ) : null;
+    const reference = props.placeholder ? null : (
+        <span>
+            {props.reference.name}
+            <Label style={{marginLeft: "5px"}}>
+                {props.index.version}
+            </Label>
+        </span>
+    );
 
     const content = (
         <div className={itemClass} style={{ color: "#555" }}>
