@@ -5,7 +5,6 @@ import { connect } from "react-redux";
 import { Flex, FlexItem } from "../../../base/index";
 import { toScientificNotation } from "../../../utils";
 import { toggleExpanded } from "../../actions";
-
 import AnalysisValueLabel from "../ValueLabel";
 
 export const PathoscopeItem = (props) => {
@@ -16,7 +15,7 @@ export const PathoscopeItem = (props) => {
 
     if (props.expanded) {
         closeButton = (
-            <button type="button" className="close" onClick={() => props.onExpand(props.id)}>
+            <button type="button" className="close pull-right" onClick={() => props.onExpand(props.id)}>
                 <span>×</span>
             </button>
         );
@@ -27,7 +26,7 @@ export const PathoscopeItem = (props) => {
     return (
         <div className={className} onClick={props.expanded ? null : () => props.onExpand(props.id)}>
             <Row>
-                <Col xs={12} md={6}>
+                <Col xs={12} sm={5} md={5}>
                     <Flex>
                         <FlexItem>
                             {props.name}
@@ -41,38 +40,29 @@ export const PathoscopeItem = (props) => {
                         </FlexItem>
                     </Flex>
                 </Col>
-
-                <Col xs={12} mdHidden lgHidden>
-                    <div style={{height: "20px"}} />
-                </Col>
-
-                <Col xs={6} sm={4} md={2}>
+                <Col xs={4} sm={2} md={2}>
                     <AnalysisValueLabel
                         bsStyle="success"
                         label={props.showReads ? "Reads" : "Weight"}
                         value={piValue}
                     />
                 </Col>
-                <Col xs={6} sm={4} md={2}>
+                <Col xs={3} sm={2} md={2}>
                     <AnalysisValueLabel
                         bsStyle="danger"
                         label="Depth"
                         value={props.depth.toFixed(1)}
                     />
                 </Col>
-                <Col xs={6} sm={4} md={2}>
-                    <Flex justifyContent="space-between">
-                        <FlexItem>
-                            <AnalysisValueLabel
-                                bsStyle="primary"
-                                label="Coverage"
-                                value={props.coverage.toFixed(3)}
-                            />
-                        </FlexItem>
-                        <FlexItem>
-                            {closeButton}
-                        </FlexItem>
-                    </Flex>
+                <Col xs={3} sm={2} md={2}>
+                    <AnalysisValueLabel
+                        bsStyle="primary"
+                        label="Coverage"
+                        value={props.coverage.toFixed(3)}
+                    />
+                </Col>
+                <Col xs={2} sm={1} md={1}>
+                    {closeButton}
                 </Col>
             </Row>
         </div>
