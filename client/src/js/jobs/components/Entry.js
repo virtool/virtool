@@ -92,22 +92,20 @@ export class JobEntry extends React.Component {
                     <Col xs={5} md={5}>
                         Started <RelativeTime time={this.props.entry.created_at} /> by {this.props.entry.user.id}
                     </Col>
-                    <Col xs={3} md={3}>
+                    <Col xs={2} md={2}>
                         <Flex justifyContent="flex-end">
                             <FlexItem>
                                 {statusIcon}
                             </FlexItem>
-                            <FlexItem pad={5}>
+                            <FlexItem pad>
                                 <strong>
                                     {capitalize(this.props.entry.state)}
                                 </strong>
                             </FlexItem>
-                            {actionIcon ? (
-                                <FlexItem pad={30}>
-                                    {actionIcon}
-                                </FlexItem>
-                            ) : null}
                         </Flex>
+                    </Col>
+                    <Col xs={1} md={1}>
+                        {actionIcon || null}
                     </Col>
                 </Row>
             </div>
