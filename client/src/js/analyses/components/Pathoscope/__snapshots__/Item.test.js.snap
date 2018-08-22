@@ -12,7 +12,8 @@ exports[`<PathoscopeItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={6}
+      md={5}
+      sm={5}
       xs={12}
     >
       <Flex
@@ -52,24 +53,9 @@ exports[`<PathoscopeItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      lgHidden={true}
-      mdHidden={true}
-      xs={12}
-    >
-      <div
-        style={
-          Object {
-            "height": "20px",
-          }
-        }
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
       md={2}
-      sm={4}
-      xs={6}
+      sm={2}
+      xs={4}
     >
       <AnalysisValueLabel
         bsStyle="success"
@@ -81,8 +67,8 @@ exports[`<PathoscopeItem /> renders correctly 1`] = `
       bsClass="col"
       componentClass="div"
       md={2}
-      sm={4}
-      xs={6}
+      sm={2}
+      xs={3}
     >
       <AnalysisValueLabel
         bsStyle="danger"
@@ -94,36 +80,22 @@ exports[`<PathoscopeItem /> renders correctly 1`] = `
       bsClass="col"
       componentClass="div"
       md={2}
-      sm={4}
-      xs={6}
+      sm={2}
+      xs={3}
     >
-      <Flex
-        alignContent="stretch"
-        alignItems="stretch"
-        direction="row"
-        justifyContent="space-between"
-        wrap="nowrap"
-      >
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          shrink={1}
-        >
-          <AnalysisValueLabel
-            bsStyle="primary"
-            label="Coverage"
-            value="0.001"
-          />
-        </FlexItem>
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          shrink={1}
-        />
-      </Flex>
+      <AnalysisValueLabel
+        bsStyle="primary"
+        label="Coverage"
+        value="0.001"
+      />
     </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={1}
+      sm={1}
+      xs={2}
+    />
   </Row>
 </div>
 `;

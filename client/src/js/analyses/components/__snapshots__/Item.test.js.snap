@@ -10,6 +10,11 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
 >
   <div
     className="list-group-item spaced hoverable"
+    style={
+      Object {
+        "color": "#555",
+      }
+    }
   >
     <Row
       bsClass="row"
@@ -18,7 +23,9 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={3}
+        md={4}
+        sm={4}
+        xs={4}
       >
         <strong>
           Test Algorithm
@@ -27,7 +34,9 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={4}
+        md={5}
+        sm={5}
+        xs={5}
       >
         Started 
         <RelativeTime
@@ -38,7 +47,9 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={3}
+        md={2}
+        sm={2}
+        xs={2}
       >
         <span>
           123abc
@@ -58,7 +69,9 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
       <Col
         bsClass="col"
         componentClass="div"
-        md={2}
+        md={1}
+        sm={1}
+        xs={1}
       />
     </Row>
   </div>
@@ -68,6 +81,11 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
 exports[`<AnalysisItem /> renders correctly 1`] = `
 <div
   className="list-group-item spaced"
+  style={
+    Object {
+      "color": "#555",
+    }
+  }
 >
   <Row
     bsClass="row"
@@ -76,7 +94,9 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={3}
+      md={4}
+      sm={4}
+      xs={4}
     >
       <strong>
         Test Algorithm
@@ -85,7 +105,9 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={4}
+      md={5}
+      sm={5}
+      xs={5}
     >
       Started 
       <RelativeTime
@@ -95,12 +117,16 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
     <Col
       bsClass="col"
       componentClass="div"
-      md={3}
+      md={2}
+      sm={2}
+      xs={2}
     />
     <Col
       bsClass="col"
       componentClass="div"
-      md={2}
+      md={1}
+      sm={1}
+      xs={1}
     >
       <strong
         className="pull-right"
