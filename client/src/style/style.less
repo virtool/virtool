@@ -133,23 +133,25 @@ td.sequence-cell > textarea {
   background-color: #edf7f6;
 }
 
-@media (max-width: @grid-float-breakpoint - 1) {
-  &.collapsing {
-    position: absolute;
-    right: 0;
-    margin-top: 0 !important;
-    max-width: 150px;
-    min-width: 150px;
-    background-color: #60af98;
-  }
+.navbar-collapse {
+  @media (max-width: @grid-float-breakpoint - 1) {
+    &.collapsing {
+      position: absolute;
+      right: 0;
+      margin-top: 0 !important;
+      max-width: 150px;
+      min-width: 150px;
+      background-color: #60af98;
+    }
 
-  &.in {
-    position: absolute;
-    right: 0;
-    margin-top: 0 !important;
-    max-width: 150px;
-    min-width: 150px;
-    background-color: #60af98;
+    &.in {
+      position: absolute;
+      right: 0;
+      margin-top: 0 !important;
+      max-width: 150px;
+      min-width: 150px;
+      background-color: #60af98;
+    }
   }
 }
 
