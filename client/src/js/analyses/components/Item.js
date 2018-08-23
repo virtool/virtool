@@ -14,56 +14,49 @@ import { getCanModify } from "../../samples/selectors";
 export const AnalysisItem = (props) => {
 
     const itemClass = CX("list-group-item spaced", {hoverable: props.ready});
+    const loaderIcon = <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} />;
+    const canRemove = (props.ready && props.canModify);
 
-    let end;
+    const endIcon = canRemove ? (
+        <Icon
+            name="trash"
+            bsStyle="danger"
+            onClick={props.onRemove}
+            style={{fontSize: "17px"}}
+            pullRight
+        />
+    ) : <span className="pull-right">{loaderIcon}</span>;
 
-    if (props.ready) {
-        if (props.canModify) {
-            end = (
-                <Icon
-                    name="trash"
-                    bsStyle="danger"
-                    onClick={props.onRemove}
-                    style={{fontSize: "17px"}}
-                    pullRight
-                />
-            );
-        }
-    } else {
-        end = (
-            <strong className="pull-right">
-                <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} /> In Progress
-            </strong>
-        );
-    }
-
-    let reference;
-
-    if (!props.placeholder) {
-        reference = (
-            <span>
-                {props.reference.name}
-                <Label style={{marginLeft: "5px"}}>
-                    {props.index.version}
-                </Label>
-            </span>
-        );
-    }
+    const reference = props.placeholder ? null : (
+        <span>
+            {props.reference.name}
+            <Label style={{marginLeft: "5px"}}>
+                {props.index.version}
+            </Label>
+        </span>
+    );
 
     const content = (
-        <div className={itemClass}>
+        <div className={itemClass} style={{ color: "#555" }}>
             <Row>
-                <Col md={3}>
+                <Col xs={4} sm={4} md={4}>
                     <strong>{getTaskDisplayName(props.algorithm)}</strong>
                 </Col>
-                <Col md={4}>
+                <Col xs={5} sm={4} md={4}>
                     Started <RelativeTime time={props.created_at} />{props.placeholder ? null : ` by ${props.user.id}`}
                 </Col>
-                <Col md={3}>
+                <Col xs={2} sm={2} md={2}>
                     {reference}
                 </Col>
-                <Col md={2}>
-                    {end}
+                <Col xs={1} smHidden mdHidden lgHidden>
+                    {endIcon}
+                </Col>
+                <Col xsHidden sm={2} md={2}>
+                    {canRemove ? endIcon : (
+                        <strong className="pull-right">
+                            {loaderIcon} In Progress
+                        </strong>
+                    )}
                 </Col>
             </Row>
         </div>

@@ -140,7 +140,7 @@ class CreateSample extends React.Component {
 
     render () {
 
-        if (this.props.readyHosts === null || !this.props.readyReads.length) {
+        if (this.props.readyHosts === null) {
             return (
                 <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>

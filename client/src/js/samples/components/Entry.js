@@ -21,9 +21,8 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
     </Flex>
 );
 
-const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
+const SampleEntryLabels = ({ nuvs, pathoscope }) => (
     <Flex style={{height: "20px"}}>
-        <SampleEntryLabel icon="archive" label="Import" ready={imported || true} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />&nbsp;
         <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
     </Flex>
@@ -48,12 +47,38 @@ class SampleEntry extends React.Component {
     };
 
     render () {
+
+        let statusIcon;
+
+        if (this.props.imported === "ip") {
+            statusIcon = (
+                <Flex alignItems="center" className="pull-right">
+                    <ClipLoader size="14px" color="#3c8786" />
+                    <FlexItem pad>
+                        <strong>Creating</strong>
+                    </FlexItem>
+                </Flex>
+            );
+        } else if (!this.props.isHidden) {
+            statusIcon = (
+                <Icon
+                    name="chart-area"
+                    tip="Quick Analyze"
+                    tipPlacement="left"
+                    bsStyle="success"
+                    onClick={this.handleQuickAnalyze}
+                    style={{fontSize: "17px", zIndex: 10000}}
+                    pullRight
+                />
+            );
+        }
+
         return (
-            <div className="list-group-item hoverable spaced" onClick={this.onClick}>
+            <div className="list-group-item hoverable spaced" onClick={this.onClick} style={{ color: "#555" }}>
                 <Flex alignItems="center">
                     <FlexItem grow={1}>
                         <Row>
-                            <Col xs={6} md={4}>
+                            <Col xs={4} sm={5} md={4}>
                                 <Checkbox
                                     className="no-select"
                                     checked={this.props.isChecked}
@@ -62,34 +87,16 @@ class SampleEntry extends React.Component {
                                 <strong>&nbsp;{this.props.name}</strong>
                             </Col>
 
-                            <Col xs={3} md={4}>
+                            <Col xsHidden smHidden md={3}>
                                 <SampleEntryLabels {...this.props} />
                             </Col>
 
-                            <Col xs={6} md={3} xsHidden smHidden>
+                            <Col xs={5} sm={5} md={4}>
                                 Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                             </Col>
 
-                            <Col xs={3} md={1}>
-                                {this.props.isHidden ? null : (
-                                    <Icon
-                                        name="chart-area"
-                                        tip="Quick Analyze"
-                                        tipPlacement="left"
-                                        bsStyle="success"
-                                        onClick={this.handleQuickAnalyze}
-                                        style={{fontSize: "17px", zIndex: 10000}}
-                                        pullRight
-                                    />
-                                )}
-                            </Col>
-
-                            <Col xs={6} md={3} mdHidden lgHidden>
-                                <Icon name="clock" /> <RelativeTime time={this.props.created_at} />
-                            </Col>
-
-                            <Col xs={3} mdHidden lgHidden>
-                                <Icon name="user" /> {this.props.userId}
+                            <Col xs={3} sm={2} md={1}>
+                                {statusIcon}
                             </Col>
                         </Row>
                     </FlexItem>

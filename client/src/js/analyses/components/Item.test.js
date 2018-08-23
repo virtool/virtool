@@ -1,7 +1,6 @@
 import AnalysisItemContainer, { AnalysisItem } from "./Item";
 import { MemoryRouter } from "react-router";
 import * as actions from "../actions";
-import { Icon } from "../../base";
 
 describe("<AnalysisItem />", () => {
     const initialState = {
@@ -78,7 +77,7 @@ describe("<AnalysisItem />", () => {
             </MemoryRouter>
         );
 
-        wrapper.find(Icon).prop("onClick")();
+        wrapper.find({ name: "trash" }).at(0).prop("onClick")();
         expect(spy.calledWith(props.id)).toBe(true);
 
         spy.restore();

@@ -6,7 +6,7 @@ import { RelativeTime, ProgressBar, Icon } from "../../base";
 import { find, get } from "lodash-es";
 import { Panel, Table, Row } from "react-bootstrap";
 
-const ReferenceHeader = ({ name, createdAt, user, refId }) => (
+export const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     <div style={{ marginLeft: "5px" }}>
         <Row>
             <strong>{name}</strong>
@@ -25,7 +25,7 @@ const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     </div>
 );
 
-const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, progress }) => {
+export const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, progress }) => {
 
     let buildInfo;
     let originData;
@@ -104,7 +104,7 @@ const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, prog
     );
 };
 
-const getOrigin = (props) => {
+export const getOrigin = (props) => {
     let origin;
 
     if (get(props, "imported_from", null)) {
@@ -132,7 +132,7 @@ const getOrigin = (props) => {
     return origin;
 };
 
-const ReferenceItem = (props) => {
+export const ReferenceItem = (props) => {
 
     const origin = getOrigin(props);
 

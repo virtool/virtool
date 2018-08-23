@@ -22,6 +22,7 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
         bsClass="col"
         componentClass="div"
         md={7}
+        sm={11}
         xs={11}
       >
         <strong>
@@ -42,17 +43,26 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
         bsClass="col"
         componentClass="div"
         md={4}
+        smHidden={true}
         xsHidden={true}
       >
         TO1
       </Col>
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="tag"
-        pullRight={true}
-        tip="This OTU is unverified"
-      />
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={1}
+        sm={1}
+        xs={1}
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="tag"
+          pullRight={true}
+          tip="This OTU is unverified"
+        />
+      </Col>
     </Row>
   </ListGroupItem>
 </LinkContainer>
@@ -80,6 +90,7 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
         bsClass="col"
         componentClass="div"
         md={7}
+        sm={11}
         xs={11}
       >
         <strong>
@@ -100,10 +111,18 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
         bsClass="col"
         componentClass="div"
         md={4}
+        smHidden={true}
         xsHidden={true}
       >
         TO2
       </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={1}
+        sm={1}
+        xs={1}
+      />
     </Row>
   </ListGroupItem>
 </LinkContainer>
