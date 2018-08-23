@@ -1,0 +1,161 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NuVsEntry /> renders correctly 1`] = `
+<div
+  className="list-group-item spaced hoverable"
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <strong>
+        Sequence 
+        0
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <AnalysisValueLabel
+        bsStyle="primary"
+        label="Length"
+        value={13}
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <AnalysisValueLabel
+        bsStyle="danger"
+        label="E-value"
+        value={3}
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={0}
+        >
+          <AnalysisValueLabel
+            bsStyle="success"
+            grow={1}
+            label="ORFs"
+            value={0}
+          />
+        </FlexItem>
+      </Flex>
+    </Col>
+  </Row>
+</div>
+`;
+
+exports[`<NuVsEntry /> renders correctly 2`] = `
+<div
+  className="list-group-item spaced"
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <strong>
+        Sequence 
+        0
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <AnalysisValueLabel
+        bsStyle="primary"
+        label="Length"
+        value={13}
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <AnalysisValueLabel
+        bsStyle="danger"
+        label="E-value"
+        value={3}
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={0}
+        >
+          <AnalysisValueLabel
+            bsStyle="success"
+            grow={1}
+            label="ORFs"
+            value={0}
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={0}
+        >
+          <button
+            className="close"
+            onClick={[Function]}
+            type="button"
+          >
+            <span>
+              ×
+            </span>
+          </button>
+        </FlexItem>
+      </Flex>
+    </Col>
+  </Row>
+</div>
+`;
