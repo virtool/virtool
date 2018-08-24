@@ -5,7 +5,7 @@ export const list = ({ page }) => (
 );
 
 export const filter = ({ term }) => (
-    Request.get(`/api/jobs?find=${term}`)
+    Request.get(`/api/jobs?term=${term}`)
 );
 
 export const get = ({ jobId }) => (
