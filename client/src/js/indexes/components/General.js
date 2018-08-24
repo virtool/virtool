@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Flex, FlexItem } from "../../base";
 
-const PanelBadgeHeader = ({ title, count }) => (
+export const PanelBadgeHeader = ({ title, count }) => (
     <Flex alignItems="center">
         <FlexItem>
             {title}
@@ -16,7 +16,7 @@ const PanelBadgeHeader = ({ title, count }) => (
     </Flex>
 );
 
-const IndexOTUEntry = ({ refId, changeCount, id, name}) => (
+export const IndexOTUEntry = ({ refId, changeCount, id, name}) => (
     <ListGroupItem>
         <Link to={`/refs/${refId}/otus/${id}`}>
             {name}
@@ -27,13 +27,13 @@ const IndexOTUEntry = ({ refId, changeCount, id, name}) => (
     </ListGroupItem>
 );
 
-const IndexGeneral = ({ detail }) => {
+export const IndexGeneral = ({ detail }) => {
 
     const refId = detail.reference.id;
 
     const contributors = map(detail.contributors, contributor =>
         <ListGroupItem key={contributor.id}>
-            {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s" : ""}`}</Badge>
+            {contributor.id} <Badge>{contributor.count} {`change${contributor.count === 1 ? "" : "s"}`}</Badge>
         </ListGroupItem>
     );
 
