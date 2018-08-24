@@ -10,7 +10,7 @@ import { getReference } from "../../references/actions";
 import { getIndex, getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 
-class IndexDetail extends React.Component {
+export class IndexDetail extends React.Component {
 
     componentDidMount () {
         this.props.onGetIndex(this.props.match.params.indexId);
