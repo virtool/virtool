@@ -460,7 +460,8 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
+@pytest.mark.parametrize("term", [None, "bob", "Baz"])
+async def test_find_analyses(error, term, mocker, spawn_client, resp_is, static_time):
 
     mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
@@ -477,7 +478,7 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
     await client.db.analyses.insert_many([
         {
             "_id": "test_1",
-            "algorithm": "pathopscope_bowtie",
+            "algorithm": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -488,16 +489,20 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
                 "id": "foo"
             },
             "user": {
-                "id": "fred"
+                "id": "bob"
             },
             "sample": {
                 "id": "test"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
             },
             "foobar": True
         },
         {
             "_id": "test_2",
-            "algorithm": "pathopscope_bowtie",
+            "algorithm": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -512,12 +517,16 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
             },
             "sample": {
                 "id": "test"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
             },
             "foobar": True
         },
         {
             "_id": "test_3",
-            "algorithm": "pathopscope_bowtie",
+            "algorithm": "pathoscope_bowtie",
             "created_at": static_time.datetime,
             "ready": True,
             "job": {
@@ -533,11 +542,20 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
             "sample": {
                 "id": "test"
             },
+            "reference": {
+                "id": "foo",
+                "name": "Foo"
+            },
             "foobar": False
         },
     ])
 
-    resp = await client.get("/api/samples/test/analyses")
+    url = "/api/samples/test/analyses"
+
+    if term:
+        url += "?term={}".format(term)
+
+    resp = await client.get(url)
 
     if error:
         assert await resp_is.not_found(resp)
@@ -545,67 +563,96 @@ async def test_list_analyses(error, mocker, spawn_client, resp_is, static_time):
 
     assert resp.status == 200
 
+    documents = [
+        {
+            "id": "test_1",
+            "algorithm": "pathoscope_bowtie",
+            "created_at": "2015-10-06T20:00:00Z",
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": "bob"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
+            },
+            "sample": {
+                "id": "test"
+            }
+        },
+        {
+            "id": "test_2",
+            "algorithm": "pathoscope_bowtie",
+            "created_at": "2015-10-06T20:00:00Z",
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": "fred"
+            },
+            "reference": {
+                "id": "baz",
+                "name": "Baz"
+            },
+            "sample": {
+                "id": "test"
+            }
+        },
+        {
+            "id": "test_3",
+            "algorithm": "pathoscope_bowtie",
+            "created_at": "2015-10-06T20:00:00Z",
+            "ready": True,
+            "job": {
+                "id": "test"
+            },
+            "index": {
+                "version": 2,
+                "id": "foo"
+            },
+            "user": {
+                "id": "fred"
+            },
+            "reference": {
+                "id": "foo",
+                "name": "Foo"
+            },
+            "sample": {
+                "id": "test"
+            }
+        }
+    ]
+
+    if term == "Baz":
+        documents = [
+            documents[0],
+            documents[1]
+        ]
+
+    if term == "bob":
+        documents = [
+            documents[0]
+        ]
+
     assert await resp.json() == {
         "total_count": 3,
-        "documents": [
-            {
-                "id": "test_1",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": "2015-10-06T20:00:00Z",
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                }
-            },
-            {
-                "id": "test_2",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": "2015-10-06T20:00:00Z",
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                }
-            },
-            {
-                "id": "test_3",
-                "algorithm": "pathopscope_bowtie",
-                "created_at": "2015-10-06T20:00:00Z",
-                "ready": True,
-                "job": {
-                    "id": "test"
-                },
-                "index": {
-                    "version": 2,
-                    "id": "foo"
-                },
-                "user": {
-                    "id": "fred"
-                },
-                "sample": {
-                    "id": "test"
-                }
-            }
-        ]
+        "found_count": len(documents),
+        "page": 1,
+        "page_count": 1,
+        "per_page": 25,
+        "documents": documents
     }
 
 
