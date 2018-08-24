@@ -31,7 +31,7 @@ const SampleEntryLabels = ({ nuvs, pathoscope }) => (
 class SampleEntry extends React.Component {
 
     onClick = (e) => {
-        if (e.target.nodeName !== "I") {
+        if (e.target.getAttribute("class") !== "sample-checkbox-overlay") {
             this.props.onNavigate(this.props.id);
         }
     };
@@ -75,6 +75,7 @@ class SampleEntry extends React.Component {
 
         return (
             <div className="list-group-item hoverable spaced" onClick={this.onClick} style={{ color: "#555" }}>
+                <div className="sample-checkbox-overlay" onClick={this.handleCheck} />
                 <Flex alignItems="center">
                     <FlexItem grow={1}>
                         <Row>
@@ -82,9 +83,9 @@ class SampleEntry extends React.Component {
                                 <Checkbox
                                     className="no-select"
                                     checked={this.props.isChecked}
-                                    onClick={this.handleCheck}
+                                    style={{ paddingRight: "12px" }}
                                 />
-                                <strong>&nbsp;{this.props.name}</strong>
+                                <strong>{this.props.name}</strong>
                             </Col>
 
                             <Col xsHidden smHidden md={3}>
