@@ -9,7 +9,7 @@ import shutil
 
 import pymongo
 import pymongo.errors
-from virtool.job import Job
+import virtool.job as job
 
 import virtool.bio
 import virtool.db.analyses
@@ -26,7 +26,7 @@ import virtool.settings
 import virtool.utils
 
 
-class PathoscopeBowtie(Job):
+class PathoscopeBowtie(job.Job):
     """
     A base class for all analysis job objects. Functions include:
 
