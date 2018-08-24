@@ -4,12 +4,11 @@ import PropTypes from "prop-types";
 import { reduce, concat } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-
 import { byteSize } from "../../utils";
 import { hideUploadOverlay } from "../actions";
 import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 
-const UploadItem = ({ localId, name, progress, size}) => (
+export const UploadItem = ({ localId, name, progress, size}) => (
     <ListGroupItem key={localId}>
         <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
         <Flex>
@@ -23,7 +22,7 @@ const UploadItem = ({ localId, name, progress, size}) => (
     </ListGroupItem>
 );
 
-const UploadOverlay = (props) => {
+export const UploadOverlay = (props) => {
 
     const classNames = CX("upload-overlay", {hidden: !props.showUploadOverlay});
 

@@ -1,0 +1,104 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UploadOverlay /> renders <UploadItem /> subcomponent correctly 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  key="123abc"
+>
+  <ProgressBar
+    affixed={true}
+    bsStyle="success"
+    now={25}
+  />
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      test-file
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={15}
+      shrink={0}
+    >
+      1.0 KB
+    </FlexItem>
+  </Flex>
+</ListGroupItem>
+`;
+
+exports[`<UploadOverlay /> renders correctly 1`] = `
+<div>
+  <div
+    className="upload-overlay"
+  >
+    <div
+      className="upload-overlay-content"
+    >
+      <h5>
+        <span>
+          <strong>
+            Uploads
+          </strong>
+           
+          <Badge
+            bsClass="badge"
+            pullRight={false}
+          >
+            2
+          </Badge>
+        </span>
+        <button
+          className="close pullRight"
+          onClick={[Function]}
+          type="button"
+        >
+          <span>
+            ×
+          </span>
+        </button>
+      </h5>
+      <ListGroup
+        bsClass="list-group"
+        style={
+          Object {
+            "height": "auto",
+            "maxHeight": "175px",
+            "overflowX": "hidden",
+          }
+        }
+      >
+        <UploadItem
+          fileType="reads"
+          key="789ghi"
+          localId="789ghi"
+          name="test_reads.fastq.gz"
+          progress={50}
+          size={1024}
+        />
+        <UploadItem
+          fileType="reads"
+          key="456def"
+          localId="456def"
+          name="test_reads.fastq.gz"
+          progress={0}
+          size={1024}
+        />
+      </ListGroup>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<UploadOverlay /> renders empty <div /> if no uploads or all uploads are complete 1`] = `<div />`;
