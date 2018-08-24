@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { forEach, slice, includes, without } from "lodash-es";
+import { forEach, slice, includes, pull } from "lodash-es";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
@@ -59,27 +59,37 @@ export class SamplesList extends React.Component {
     }
 
     onSelect = (id, index, isShiftKey) => {
-        let newSelected = [...this.state.selected];
+        const newSelected = [...this.state.selected];
         let selectedSegment;
 
-        if (isShiftKey && this.state.lastChecked !== null && this.state.lastChecked !== index) {
+        if (isShiftKey && (this.state.lastChecked !== index)) {
+            let startIndex;
+            let endIndex;
 
-            const startIndex = (index < this.state.lastChecked) ? index : this.state.lastChecked;
-            const endIndex = (startIndex === index) ? this.state.lastChecked : index;
+            if (this.state.lastChecked < index) {
+                startIndex = this.state.lastChecked;
+                endIndex = index;
+            } else {
+                startIndex = index;
+                endIndex = this.state.lastChecked;
+            }
 
-            selectedSegment = slice(this.props.documents, startIndex + 1, endIndex + 1);
-
+            selectedSegment = slice(this.props.documents, startIndex, endIndex + 1);
         } else {
             selectedSegment = [this.props.documents[index]];
         }
 
-        forEach(selectedSegment, entry => {
-            if (includes(newSelected, entry.id)) {
-                newSelected = without(newSelected, entry.id);
-            } else {
-                newSelected.push(entry.id);
-            }
-        });
+        if (includes(this.state.selected, this.props.documents[index].id)) {
+            forEach(selectedSegment, entry => {
+                pull(newSelected, entry.id);
+            });
+        } else {
+            forEach(selectedSegment, entry => {
+                if (!includes(newSelected, entry.id)) {
+                    newSelected.push(entry.id);
+                }
+            });
+        }
 
         this.setState({
             lastChecked: index,
