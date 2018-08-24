@@ -134,19 +134,20 @@ class Job(multiprocessing.Process):
         stderr_thread.start()
 
         while True:
-            if stdout_queue and not stdout_queue.empty():
-                out = stdout_queue.get()
-                stdout_handler(out)
+            if stdout_queue:
+                while not stdout_queue.empty():
+                    out = stdout_queue.get()
+                    stdout_handler(out)
 
-            if not stderr_queue.empty():
+            while not stderr_queue.empty():
                 err = stderr_queue.get()
                 _stderr_handler(err)
+
+            alive = (stdout_thread and stdout_thread.is_alive()) or stderr_thread.is_alive()
 
             # Continue to next iteration if queues are not empty (or stdout queue was not created).
             if not stderr_queue.empty() or (stdout_queue and not stdout_queue.empty()):
                 continue
-
-            alive = (stdout_thread and stdout_thread.is_alive()) or stderr_thread.is_alive()
 
             if not alive and self._process.poll() is not None:
                 break
