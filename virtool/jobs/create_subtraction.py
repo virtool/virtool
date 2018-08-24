@@ -1,13 +1,14 @@
 import os
+
 import pymongo
+from virtool.job import Job
 
 import virtool.db.subtractions
-import virtool.jobs.job
 import virtool.subtractions
 import virtool.utils
 
 
-class CreateSubtraction(virtool.jobs.job.Job):
+class CreateSubtraction(Job):
 
     """
     A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file.
@@ -16,19 +17,8 @@ class CreateSubtraction(virtool.jobs.job.Job):
 
     def __init__(self, *args, **task_args):
         super().__init__(*args, **task_args)
-
-        #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
-        self.subtraction_id = None
-
-        #: The path to the FASTA file being added as a host reference.
-        self.fasta_path = None
-
-        #: The path to the directory the Bowtie2 index will be written to.
-        self.index_path = None
-
         #: The job stages.
         self._stage_list = [
-            self.check_db,
             self.mk_subtraction_dir,
             self.set_stats,
             self.bowtie_build,
@@ -36,33 +26,30 @@ class CreateSubtraction(virtool.jobs.job.Job):
         ]
 
     def check_db(self):
-        document = self.db.jobs.find_one(self.id)
+        self.params = dict(self.task_args)
 
-        task_args = document["args"]
+        self.params.update({
+            # The path to the FASTA file being added as a host reference.
+            "fasta_path": os.path.join(
+                self.settings["data_path"],
+                "files",
+                self.params["file_id"]
+            ),
 
-        #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
-        self.subtraction_id = task_args["subtraction_id"]
-
-        #: The path to the FASTA file being added as a host reference.
-        self.fasta_path = os.path.join(
-            self.settings["data_path"],
-            "files",
-            task_args["file_id"]
-        )
-
-        #: The path to the directory the Bowtie2 index will be written to.
-        self.index_path = os.path.join(
-            self.settings.get("data_path"),
-            "subtractions",
-            self.subtraction_id.lower().replace(" ", "_")
-        )
+            # The path to the directory the Bowtie2 index will be written to.
+            "index_path": os.path.join(
+                self.settings["data_path"],
+                "subtractions",
+                self.params["subtraction_id"].lower().replace(" ", "_")
+            )
+        })
 
     def mk_subtraction_dir(self):
         """
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
         """
-        os.mkdir(self.index_path)
+        os.mkdir(self.params["index_path"])
 
     def set_stats(self):
         """
@@ -70,9 +57,9 @@ class CreateSubtraction(virtool.jobs.job.Job):
         length distribution, and sequence count.
 
         """
-        gc, count = virtool.subtractions.calculate_fasta_gc(self.fasta_path)
+        gc, count = virtool.subtractions.calculate_fasta_gc(self.params["fasta_path"])
 
-        document = self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+        document = self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "gc": gc,
                 "count": count
@@ -89,8 +76,8 @@ class CreateSubtraction(virtool.jobs.job.Job):
         command = [
             "bowtie2-build",
             "-f",
-            self.fasta_path,
-            os.path.join(self.index_path, "reference")
+            self.params["fasta_path"],
+            os.path.join(self.params["index_path"], "reference")
         ]
 
         self.run_subprocess(command)
@@ -100,7 +87,7 @@ class CreateSubtraction(virtool.jobs.job.Job):
         Set the ``ready`` on the subtraction document ``True``.
 
         """
-        document = self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+        document = self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "ready": True
             }
@@ -116,11 +103,11 @@ class CreateSubtraction(virtool.jobs.job.Job):
         """
         # Remove the nascent index directory and fail silently if it doesn't exist.
         try:
-            virtool.utils.rm(self.index_path, True)
+            virtool.utils.rm(self.params["index_path"], True)
         except FileNotFoundError:
             pass
 
         # Remove the associated subtraction document.
-        self.db.subtraction.delete_one({"_id": self.subtraction_id})
+        self.db.subtraction.delete_one({"_id": self.params["subtraction_id"]})
 
-        self.dispatch("subtraction", "delete", [self.subtraction_id])
+        self.dispatch("subtraction", "delete", [self.params["subtraction_id"]])
