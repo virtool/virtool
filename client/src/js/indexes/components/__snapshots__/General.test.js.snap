@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<General /> renders <IndexOTUEntry /> subcomponent 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  listItem={false}
+>
+  <Link
+    replace={false}
+    to="/refs/test-reference/otus/test-index"
+  >
+    test
+  </Link>
+  <Badge
+    bsClass="badge"
+    pullRight={false}
+  >
+    3
+     
+    changes
+  </Badge>
+</ListGroupItem>
+`;
+
+exports[`<General /> renders <PanelBadgeHeader /> subcomponent 1`] = `
+<Flex
+  alignContent="stretch"
+  alignItems="center"
+  direction="row"
+  justifyContent="flex-start"
+  wrap="nowrap"
+>
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    shrink={1}
+  >
+    test
+  </FlexItem>
+  <FlexItem
+    alignSelf={null}
+    basis="auto"
+    grow={0}
+    pad={true}
+    shrink={1}
+  >
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      10
+    </Badge>
+  </FlexItem>
+</Flex>
+`;
+
+exports[`<General /> renders correctly 1`] = `
+<div>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      <PanelBadgeHeader
+        count={1}
+        title="Contributors"
+      />
+    </PanelHeading>
+    <ListGroup
+      bsClass="list-group"
+    >
+      <ListGroupItem
+        bsClass="list-group-item"
+        key="test-user"
+        listItem={false}
+      >
+        test-user
+         
+        <Badge
+          bsClass="badge"
+          pullRight={false}
+        >
+          5
+           
+          changes
+        </Badge>
+      </ListGroupItem>
+    </ListGroup>
+  </Uncontrolled(Panel)>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      <PanelBadgeHeader
+        count={1}
+        title="OTUs"
+      />
+    </PanelHeading>
+    <ListGroup
+      bsClass="list-group"
+    >
+      <IndexOTUEntry
+        changeCount={1}
+        id="123abc"
+        key="123abc"
+        name="test-otu"
+        refId="test-reference"
+      />
+    </ListGroup>
+  </Uncontrolled(Panel)>
+</div>
+`;
