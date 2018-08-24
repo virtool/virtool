@@ -1,9 +1,9 @@
 import React from "react";
-import { includes, map, toLower, without } from "lodash-es";
+import { includes, map, toLower, without, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-
-import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
+import { Panel, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import AdministrationSection from "../Section";
+import { Icon, Button, Checkbox, ListGroupItem } from "../../../base";
 import { editReference } from "../../../references/actions";
 import { updateSetting } from "../../actions";
 
@@ -12,7 +12,7 @@ const getInitialState = () => ({
     error: null
 });
 
-const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
+export const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
     <ListGroupItem key={sourceType} disabled={!isDisabled}>
         <span className="text-capitalize">{sourceType}</span>
         {isDisabled
@@ -21,7 +21,7 @@ const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
     </ListGroupItem>
 );
 
-class SourceTypes extends React.Component {
+export class SourceTypes extends React.Component {
 
     constructor (props) {
         super(props);
@@ -74,16 +74,14 @@ class SourceTypes extends React.Component {
         let isDisabled = (this.props.isGlobalSettings && this.props.isAdmin) || this.props.restrictSourceTypes;
         isDisabled = this.props.isRemote ? false : isDisabled;
 
-        const enableCheckbox = this.props.isGlobalSettings || this.props.isRemote
+        const checkbox = this.props.isGlobalSettings || this.props.isRemote
             ? null
             : (
-                <FlexItem>
-                    <Checkbox
-                        label="Enable"
-                        checked={this.props.restrictSourceTypes}
-                        onClick={this.handleEnable}
-                    />
-                </FlexItem>
+                <Checkbox
+                    label="Enable"
+                    checked={this.props.restrictSourceTypes}
+                    onClick={this.handleEnable}
+                />
             );
 
         const listComponents = map(this.props.sourceTypesArray.sort(), sourceType =>
@@ -101,66 +99,48 @@ class SourceTypes extends React.Component {
             </div>
         );
 
+        const description = `Configure a list of allowable source types. When a user creates a new isolate they will
+        only be able to select a source type from this list. If this feature is disabled, users
+        will be able to enter any string as a source type.`;
+
+        const content = (
+            <Panel.Body>
+                <form onSubmit={this.handleSubmit}>
+                    <FormGroup>
+                        <InputGroup ref={(node) => this.containerNode = node}>
+                            <FormControl
+                                type="text"
+                                inputRef={(node) => this.inputNode = node}
+                                disabled={!isDisabled}
+                                onChange={(e) => this.setState({value: e.target.value, error: null})}
+                                value={this.state.value}
+                            />
+                            <InputGroup.Button>
+                                <Button
+                                    type="submit"
+                                    bsStyle="primary"
+                                    disabled={!isDisabled}
+                                >
+                                    <Icon name="plus-square" style={{paddingLeft: "3px"}} />
+                                </Button>
+                            </InputGroup.Button>
+                        </InputGroup>
+                        {errorMessage}
+                    </FormGroup>
+                </form>
+                <div>
+                    {listComponents}
+                </div>
+            </Panel.Body>
+        );
+
         return (
-            <div>
-                <Row>
-                    <Col xs={6} md={6}>
-                        <Flex alignItems="center">
-                            <FlexItem grow={1} >
-                                <h5><strong>Source Types</strong></h5>
-                            </FlexItem>
-                            {enableCheckbox}
-                        </Flex>
-                    </Col>
-
-                    <Col smHidden md={8} />
-                </Row>
-                <Row>
-                    <Col xs={12} md={6} mdPush={6}>
-                        <Panel>
-                            <Panel.Body>
-                                Configure a list of allowable source types. When a user creates a new isolate they will
-                                only be able to select a source type from this list. If this feature is disabled, users
-                                will be able to enter any string as a source type.
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col xs={12} md={6} mdPull={6}>
-                        <Panel>
-                            <Panel.Body>
-                                <form onSubmit={this.handleSubmit}>
-                                    <FormGroup>
-                                        <InputGroup ref={(node) => this.containerNode = node}>
-                                            <FormControl
-                                                type="text"
-                                                inputRef={(node) => this.inputNode = node}
-                                                disabled={!isDisabled}
-                                                onChange={(e) => this.setState({value: e.target.value, error: null})}
-                                                value={this.state.value}
-                                            />
-                                            <InputGroup.Button>
-                                                <Button
-                                                    type="submit"
-                                                    bsStyle="primary"
-                                                    disabled={!isDisabled}
-                                                >
-                                                    <Icon name="plus-square" style={{paddingLeft: "3px"}} />
-                                                </Button>
-                                            </InputGroup.Button>
-                                        </InputGroup>
-                                        {errorMessage}
-                                    </FormGroup>
-                                </form>
-
-                                <div>
-                                    {listComponents}
-                                </div>
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col smHidden md={6} />
-                </Row>
-            </div>
+            <AdministrationSection
+                title="Source Types"
+                description={description}
+                content={content}
+                extraIcon={checkbox}
+            />
         );
     }
 }
@@ -171,7 +151,7 @@ const mapStateToProps = (state) => {
 
     const sourceTypesArray = isGlobalSettings
         ? state.settings.data.default_source_types
-        : state.references.detail.source_types;
+        : get(state, "references.detail.source_types", []);
 
     const restrictSourceTypes = state.references.detail ? state.references.detail.restrict_source_types : null;
     const refId = state.references.detail ? state.references.detail.id : null;

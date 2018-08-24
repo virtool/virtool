@@ -15,11 +15,13 @@ import {
     REMOVE_REFERENCE_USER,
     ADD_REFERENCE_GROUP,
     EDIT_REFERENCE_GROUP,
-    REMOVE_REFERENCE_GROUP
+    REMOVE_REFERENCE_GROUP,
+    WS_INSERT_OTU,
+    WS_REMOVE_OTU
 } from "../actionTypes";
 import { updateList, insert, edit, remove } from "../reducerUtils";
 
-const initialState = {
+export const initialState = {
     history: null,
     documents: null,
     page: 0,
@@ -30,7 +32,7 @@ const initialState = {
     refetchPage: false
 };
 
-const checkHasOfficialRemote = (list) => {
+export const checkHasOfficialRemote = (list) => {
     const hasOfficialRemote = find(
         list,
         ["remotes_from", {slug: "virtool/ref-plant-viruses"}]
@@ -39,7 +41,7 @@ const checkHasOfficialRemote = (list) => {
     return !!hasOfficialRemote;
 };
 
-const checkRemoveOfficialRemote = (list, removedIds, hasOfficial) => {
+export const checkRemoveOfficialRemote = (list, removedIds, hasOfficial) => {
     if (!hasOfficial) {
         return false;
     }
@@ -57,7 +59,7 @@ const checkRemoveOfficialRemote = (list, removedIds, hasOfficial) => {
     return isRemoved ? !hasOfficial : hasOfficial;
 };
 
-const removeMember = (list, pendingRemoves) => {
+export const removeMember = (list, pendingRemoves) => {
     const target = pendingRemoves[0];
     pull(pendingRemoves, target);
 
@@ -99,6 +101,18 @@ export default function referenceReducer (state = initialState, action) {
                 total_count: state.total_count - 1,
                 refetchPage: (state.page < state.page_count)
             };
+
+        case WS_INSERT_OTU:
+            if (!state.detail) {
+                return state;
+            }
+            return {...state, detail: {...state.detail, otu_count: state.detail.otu_count + 1}};
+
+        case WS_REMOVE_OTU:
+            if (!state.detail) {
+                return state;
+            }
+            return {...state, detail: {...state.detail, otu_count: state.detail.otu_count - 1}};
 
         case LIST_REFERENCES.REQUESTED:
             return {...state, isLoading: true, errorLoad: false};
@@ -145,9 +159,8 @@ export default function referenceReducer (state = initialState, action) {
         case FILTER_REFERENCES.REQUESTED:
             return {...state, filter: action.term};
 
-        case FILTER_REFERENCES.SUCCEEDED: {
+        case FILTER_REFERENCES.SUCCEEDED:
             return {...state, ...action.data};
-        }
 
         case ADD_REFERENCE_USER.SUCCEEDED:
             return {...state, detail: {...state.detail, users: concat(state.detail.users, [action.data])}};

@@ -44,44 +44,6 @@ async def find(db, req_query, ref_id=None):
     return data
 
 
-async def get_active_index_ids(db, ref_id):
-    pipeline = [
-        {
-            "$match": {
-                "ready": False,
-                "reference.id": ref_id
-            }
-        },
-        {
-            "$group": {
-                "_id": "$index.id"
-            }
-        }
-    ]
-
-    cursor = db.analyses.aggregate(pipeline)
-
-    active_indexes = [a["_id"] for a in cursor]
-
-    active_indexes = set(active_indexes)
-
-    current_index_id, _ = await get_current_id_and_version(db, ref_id)
-
-    active_indexes.add(current_index_id)
-
-    unready_index = await db.indexes.find_one({"ready": False})
-
-    if unready_index:
-        active_indexes.add(unready_index["_id"])
-
-    try:
-        active_indexes.remove("unbuilt")
-    except KeyError:
-        pass
-
-    return list(active_indexes)
-
-
 async def get_contributors(db, index_id):
     """
     Return an list of contributors and their contribution count for a specific index.

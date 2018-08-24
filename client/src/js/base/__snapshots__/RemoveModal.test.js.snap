@@ -49,9 +49,11 @@ exports[`<RemoveModal /> renders a bootstrap Modal component when [show=true] 1`
     bsClass="modal-body"
     componentClass="div"
   >
-    Are you sure you want to remove 
-    <strong />
-    ?
+    <span>
+      Are you sure you want to remove 
+      <strong />
+      ?
+    </span>
   </ModalBody>
   <ModalFooter
     bsClass="modal-footer"
@@ -107,9 +109,11 @@ exports[`<RemoveModal /> renders correctly 1`] = `
     bsClass="modal-body"
     componentClass="div"
   >
-    Are you sure you want to remove 
-    <strong />
-    ?
+    <span>
+      Are you sure you want to remove 
+      <strong />
+      ?
+    </span>
   </ModalBody>
   <ModalFooter
     bsClass="modal-footer"

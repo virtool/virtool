@@ -1,10 +1,10 @@
 import React from "react";
 import { forEach, map } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, ListGroup, Panel } from "react-bootstrap";
-
+import { Row, Col, ListGroup } from "react-bootstrap";
+import AdministrationSection from "../Section";
 import { updateSetting } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, Icon } from "../../../base";
+import { ListGroupItem, Icon } from "../../../base";
 import { readOnlyFields, maxResourcesSelector, minResourcesSelector } from "../../selectors";
 import Task from "./Task";
 
@@ -16,20 +16,15 @@ const taskNames = [
     "nuvs"
 ];
 
-const TasksFooter = () => (
-    <small>
-        <Flex className="text-warning">
-            <FlexItem grow={0} shrink={0}>
-                <Icon name="warning" />
-            </FlexItem>
-            <FlexItem grow={1} pad>
-                Changing CPU and memory settings will not affect jobs that have already been initialized.
-            </FlexItem>
-        </Flex>
+export const TasksFooter = () => (
+    <small className="text-warning">
+        <Icon
+            name="exclamation-triangle"
+        /> Changing CPU and memory settings will not affect jobs that have already been initialized.
     </small>
 );
 
-const TaskLimits = (props) => {
+export const TaskLimits = (props) => {
 
     const taskComponents = map(taskNames, taskPrefix =>
         <Task
@@ -47,34 +42,26 @@ const TaskLimits = (props) => {
         />
     );
 
+    const content = (
+        <ListGroup>
+            <ListGroupItem key="title">
+                <Row>
+                    <Col md={4}>CPU</Col>
+                    <Col md={4}>Memory (GB)</Col>
+                    <Col md={4}>Instances</Col>
+                </Row>
+            </ListGroupItem>
+            {taskComponents}
+        </ListGroup>
+    );
+
     return (
-        <Row>
-            <Col md={12}>
-                <h5><strong>Task-specific Limits</strong></h5>
-            </Col>
-            <Col xs={12} md={6} mdPush={6}>
-                <Panel>
-                    <Panel.Body>
-                        Set limits on specific tasks.
-                    </Panel.Body>
-                    <Panel.Footer>
-                        <TasksFooter />
-                    </Panel.Footer>
-                </Panel>
-            </Col>
-            <Col xs={12} md={6} mdPull={6}>
-                <ListGroup>
-                    <ListGroupItem key="title">
-                        <Row>
-                            <Col md={4}>CPU</Col>
-                            <Col md={4}>Memory (GB)</Col>
-                            <Col md={4}>Instances</Col>
-                        </Row>
-                    </ListGroupItem>
-                    {taskComponents}
-                </ListGroup>
-            </Col>
-        </Row>
+        <AdministrationSection
+            title="Task-specific Limits"
+            description="Set limits on specific tasks."
+            footerComponent={<TasksFooter />}
+            content={content}
+        />
     );
 };
 
@@ -93,8 +80,6 @@ const mapStateToProps = (state) => {
     const { minProc, minMem } = minResourcesSelector(state);
 
     const settings = {
-        procLowerLimit: state.settings.data.rebuild_index_proc,
-        memLowerLimit: state.settings.data.rebuild_index_mem,
         resourceProc: state.settings.data.proc,
         resourceMem: state.settings.data.mem,
         maxProc,

@@ -46,9 +46,9 @@ export const filterReferences = (term) => ({
     term
 });
 
-export const getReference = (referenceId) => ({
+export const getReference = (refId) => ({
     type: GET_REFERENCE.REQUESTED,
-    referenceId
+    refId
 });
 
 export const createReference = (name, description, dataType, organism) => ({
@@ -59,9 +59,9 @@ export const createReference = (name, description, dataType, organism) => ({
     organism
 });
 
-export const editReference = (referenceId, update) => ({
+export const editReference = (refId, update) => ({
     type: EDIT_REFERENCE.REQUESTED,
-    referenceId,
+    refId,
     update
 });
 

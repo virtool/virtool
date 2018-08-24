@@ -2,7 +2,7 @@ import React from "react";
 import { Row, Col, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { updateSubtraction } from "../actions";
-import { Button, InputError } from "../../base";
+import { SaveButton, InputError } from "../../base";
 
 const getInitialState = (props) => ({
     subtractionId: props.entry.id,
@@ -69,14 +69,7 @@ class EditSubtraction extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer className="modal-footer">
-                        <Button
-                            type="submit"
-                            bsStyle="primary"
-                            icon="save"
-                            pullRight
-                        >
-                            Save
-                        </Button>
+                        <SaveButton pullRight />
                     </Modal.Footer>
                 </form>
             </Modal>

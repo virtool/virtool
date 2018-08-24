@@ -1,4 +1,9 @@
-import { GET_CONTROL_READAHEAD, GET_SETTINGS, TEST_PROXY, UPDATE_SETTINGS } from "../actionTypes";
+import {
+    GET_CONTROL_READAHEAD,
+    GET_SETTINGS,
+    TEST_PROXY,
+    UPDATE_SETTINGS
+} from "../actionTypes";
 
 export const initialState = {
     data: null,
@@ -50,7 +55,7 @@ export default function settingsReducer (state = initialState, action) {
             return {...state, ...proxyTestClear, proxyTestSucceeded: true};
 
         case TEST_PROXY.FAILED:
-            return {...state, ...proxyTestClear, proxyTestFailed: action.message};
+            return {...state, ...proxyTestClear, proxyTestFailed: true};
 
         default:
             return state;

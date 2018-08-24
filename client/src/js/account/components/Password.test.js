@@ -21,6 +21,20 @@ describe("<Password />", () => {
         wrapper = shallow(<PasswordContainer store={store} />).dive();
 
         expect(wrapper).toMatchSnapshot();
+
+        props = {
+            lastPasswordChange: "2016-02-14T12:00:00.000000Z",
+            settings: {
+                minimum_password_length: 8
+            },
+            error: {
+                status: 422,
+                message: "existing error"
+            }
+        };
+        wrapper.setProps(props);
+
+        expect(wrapper).toMatchSnapshot();
     });
 
     describe("handleChange", () => {

@@ -1,5 +1,5 @@
 import React from "react";
-import { filter, map, upperFirst, get } from "lodash-es";
+import { filter, map, get } from "lodash-es";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -9,7 +9,7 @@ import { listFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
-import {routerLocationHasState} from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils";
 
 class SubtractionFileItem extends React.Component {
 
@@ -59,13 +59,9 @@ class CreateSubtraction extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const errorType = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
-        this.setState({
-            [name]: value,
-            [errorType]: ""
-        });
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("CREATE_SUBTRACTION_ERROR");

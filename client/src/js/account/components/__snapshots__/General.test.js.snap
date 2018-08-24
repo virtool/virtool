@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AccountGeneral /> renders correctly 1`] = `
+exports[`<AccountGeneral /> renders correctly with admin icon when [isAdmin=true] 1`] = `
 <div>
   <Flex
     alignContent="stretch"
@@ -21,7 +21,84 @@ exports[`<AccountGeneral /> renders correctly 1`] = `
       shrink={1}
     >
       <Identicon
-        hash="randomhash"
+        hash="randomhashof15c"
+      />
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      <h5>
+        <strong>
+          testid
+           
+          <Icon
+            bsStyle="primary"
+            faStyle="fas"
+            fixedWidth={false}
+            name="user-shield"
+            pullRight={false}
+          />
+        </strong>
+      </h5>
+      <div>
+        <Label
+          bsClass="label"
+          bsStyle="primary"
+          key="virtool-admin"
+          style={
+            Object {
+              "marginRight": "3px",
+            }
+          }
+        >
+          Administrator
+        </Label>
+        <Label
+          bsClass="label"
+          bsStyle="default"
+          key="test"
+          style={
+            Object {
+              "marginRight": "3px",
+            }
+          }
+        >
+          Test
+        </Label>
+      </div>
+    </FlexItem>
+  </Flex>
+  <Connect(Email) />
+  <Connect(ChangePassword) />
+</div>
+`;
+
+exports[`<AccountGeneral /> renders correctly without icon otherwise 1`] = `
+<div>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "15px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={1}
+    >
+      <Identicon
+        hash="randomhashof15c"
       />
     </FlexItem>
     <FlexItem

@@ -1,12 +1,12 @@
-import {capitalize, map} from "lodash-es";
+import { capitalize, map } from "lodash-es";
 import React from "react";
-import {Panel} from "react-bootstrap";
-import {connect} from "react-redux";
-import {updateSetting} from "../../administration/actions";
-import {Radio} from "../../base";
+import { Panel } from "react-bootstrap";
+import { connect } from "react-redux";
+import { updateSetting } from "../../administration/actions";
+import { Radio } from "../../base";
 
 
-class ChannelButton extends React.Component {
+export class ChannelButton extends React.Component {
 
     handleClick = () => {
         this.props.onClick(this.props.channel);
@@ -27,7 +27,7 @@ class ChannelButton extends React.Component {
 }
 
 
-const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
+export const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
 
     const radioComponents = map(["stable", "beta", "alpha"], label =>
         <ChannelButton

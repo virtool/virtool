@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Samples /> renders <LoadingPlaceholder /> when settings data not available 1`] = `<LoadingPlaceholder />`;
+
+exports[`<Samples /> renders <SampleFileManager /> 1`] = `
+<Connect(FileManager)
+  fileType="reads"
+/>
+`;
+
+exports[`<Samples /> renders <SamplesSettings /> 1`] = `
+<div
+  className="settings-container"
+>
+  <h3
+    className="view-header"
+  >
+    <strong>
+      Sample Settings
+    </strong>
+  </h3>
+  <Connect(UniqueNames) />
+  <Connect(SampleRights) />
+</div>
+`;
+
+exports[`<Samples /> renders correctly when settings data available 1`] = `
+<div
+  className="container"
+>
+  <Switch>
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/samples"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/samples/files"
+    />
+    <Route
+      component={[Function]}
+      path="/samples/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/samples/:sampleId"
+    />
+  </Switch>
+</div>
+`;

@@ -51,15 +51,9 @@ exports[`<Email /> renders correctly 1`] = `
                 md={12}
                 xs={24}
               >
-                <Button
-                  bsStyle="primary"
-                  icon="save"
+                <SaveButton
                   pullRight={true}
-                  tipPlacement="top"
-                  type="submit"
-                >
-                  Save
-                </Button>
+                />
               </Col>
             </Row>
           </div>

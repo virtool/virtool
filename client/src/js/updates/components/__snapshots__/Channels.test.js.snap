@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SoftwareChannels /> <ChannelButton /> subcomponent renders correctly 1`] = `
+<Radio
+  checked={true}
+  label="Stable (recommended)"
+  onClick={[Function]}
+/>
+`;
+
+exports[`<SoftwareChannels /> <ChannelButton /> subcomponent renders correctly 2`] = `
+<Radio
+  checked={true}
+  label="Testing"
+  onClick={[Function]}
+/>
+`;
+
+exports[`<SoftwareChannels /> renders correctly 1`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <label>
+      Software Channel
+    </label>
+    <ChannelButton
+      channel="stable"
+      checked={false}
+      key="stable"
+      onClick={[Function]}
+    />
+    <ChannelButton
+      channel="beta"
+      checked={true}
+      key="beta"
+      onClick={[Function]}
+    />
+    <ChannelButton
+      channel="alpha"
+      checked={false}
+      key="alpha"
+      onClick={[Function]}
+    />
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;

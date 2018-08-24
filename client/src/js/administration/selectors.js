@@ -8,10 +8,9 @@ export const readOnlyFields = ["create_subtraction", "build_index"];
 const taskLimitKeys = flatMap(keys(taskDisplayNames), name => [`${name}_proc`, `${name}_mem`]);
 
 const taskSpecificLimitSelector = state => pick(state.settings.data, taskLimitKeys);
-
 const resourcesSelector = state => state.jobs.resources;
 
-const computeMaximums = (resources) => {
+export const computeMaximums = (resources) => {
     if (resources === null) {
         return {
             maxProc: 1,

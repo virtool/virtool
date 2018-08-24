@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Describe /> renders <DataOptions /> correctly 1`] = `
+<div
+  className="settings-container"
+>
+  <AdministrationSection
+    content={
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <InputError
+          label="Database Name"
+          noMargin={true}
+          onSave={[Function]}
+          withButton={true}
+        />
+        <InputError
+          label="MongoDB Host"
+          noMargin={true}
+          onSave={[Function]}
+          withButton={true}
+        />
+        <InputError
+          label="MongoDB Port"
+          noMargin={true}
+          onSave={[Function]}
+          type="number"
+          withButton={true}
+        />
+      </PanelBody>
+    }
+    description="Change the parameters for connecting to MongoDB"
+    footerComponent={<WarningFooter />}
+    title="Database"
+  />
+  <AdministrationSection
+    content={
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <InputError
+          label="Virtool Data"
+          noMargin={true}
+          onSave={[Function]}
+          withButton={true}
+        />
+        <InputError
+          label="Watch Folder"
+          noMargin={true}
+          onSave={[Function]}
+          withButton={true}
+        />
+      </PanelBody>
+    }
+    description="Set the paths where Virtool looks for its data files and for FASTQ files to import."
+    footerComponent={<WarningFooter />}
+    title="Paths"
+  />
+</div>
+`;
+
+exports[`<Describe /> renders <WarningFooter /> correctly 1`] = `
+<small
+  className="text-danger"
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="exclamation-triangle"
+    pullRight={false}
+  />
+   Changing these settings can make Virtool non-functional
+</small>
+`;

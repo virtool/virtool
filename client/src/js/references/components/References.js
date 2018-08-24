@@ -9,7 +9,7 @@ import ReferenceDetail from "./Detail/Detail";
 import { LoadingPlaceholder } from "../../base";
 import SourceTypes from "../../administration/components/General/SourceTypes";
 
-const ReferenceSettings = () => (
+export const ReferenceSettings = () => (
     <div className="settings-container">
         <h3 className="view-header">
             <strong>

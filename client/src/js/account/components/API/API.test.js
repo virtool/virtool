@@ -5,6 +5,12 @@ describe("<API />", () => {
     let store;
     let wrapper;
 
+    const testRenderedOutput = (initialState) => {
+        store = mockStore(initialState);
+        wrapper = shallow(<APIContainer store={store} />).dive();
+        expect(wrapper).toMatchSnapshot();
+    };
+
     it("renders correctly with existing API keys", () => {
         initialState = {
             account: {
@@ -14,37 +20,17 @@ describe("<API />", () => {
                 ]
             }
         };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<APIContainer store={store} />).dive();
-
-        expect(wrapper).toMatchSnapshot();
+        testRenderedOutput(initialState);
     });
 
     it("renders correctly without API keys", () => {
-        initialState = {
-            account: {
-                apiKeys: null
-            }
-        };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<APIContainer store={store} />).dive();
-
-        expect(wrapper).toMatchSnapshot();
+        initialState = { account: { apiKeys: null } };
+        testRenderedOutput(initialState);
     });
 
     it("renders correctly with 0 API keys", () => {
-        initialState = {
-            account: {
-                apiKeys: []
-            }
-        };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<APIContainer store={store} />).dive();
-
-        expect(wrapper).toMatchSnapshot();
+        initialState = { account: { apiKeys: [] } };
+        testRenderedOutput(initialState);
     });
 
 });

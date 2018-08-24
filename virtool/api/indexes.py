@@ -1,5 +1,6 @@
 import virtool.db.history
 import virtool.db.indexes
+import virtool.db.jobs
 import virtool.db.references
 import virtool.db.utils
 import virtool.history
@@ -169,8 +170,17 @@ async def create(req):
         "manifest": manifest
     }
 
-    # Start the job.
-    await req.app["job_manager"].new("build_index", task_args, user_id, job_id=job_id)
+    # Create job document.
+    job = await virtool.db.jobs.create(
+        db,
+        req.app["settings"],
+        "build_index",
+        task_args,
+        user_id,
+        job_id=job_id
+    )
+
+    await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
         "Location": "/api/indexes/" + index_id

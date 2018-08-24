@@ -10,14 +10,15 @@
  */
 
 import React from "react";
-import { find, map, upperFirst, concat, union } from "lodash-es";
+import { find, union } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Col, Modal } from "react-bootstrap";
 
+import SequenceForm from "./SequenceForm";
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, InputError } from "../../../base";
-import SequenceField from "./SequenceField";
+import { InputError } from "../../../base";
+import { getTargetChange } from "../../../utils";
 
 const getInitialState = (props) => {
 
@@ -65,8 +66,7 @@ class EditSequence extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
             [name]: value,
@@ -126,82 +126,36 @@ class EditSequence extends React.Component {
             );
         }
 
-        const defaultOption = <option key="None" value=""> - None - </option>;
-        const segmentNames = concat(defaultOption, map(this.state.schema, (segment) => (
-            <option key={segment} value={segment}>
-                {segment}
-            </option>
-        )));
+        const accessionCol = (
+            <Col xs={12} md={6}>
+                <InputError
+                    label="Accession (ID)"
+                    name="id"
+                    value={this.props.sequenceId}
+                    readOnly
+                />
+            </Col>
+        );
 
         return (
             <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
                 <Modal.Header onHide={this.handleHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
-
-                <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        {overlay}
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    label="Accession (ID)"
-                                    name="id"
-                                    value={this.props.sequenceId}
-                                    readOnly
-                                />
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    type="select"
-                                    label="Segment"
-                                    name="segment"
-                                    value={this.state.segment}
-                                    onChange={this.handleChange}
-                                    error={this.state.error}
-                                >
-                                    {segmentNames}
-                                </InputError>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Host"
-                                    name="host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Definition"
-                                    name="definition"
-                                    value={this.state.definition}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorDefinition}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <SequenceField
-                                    name="sequence"
-                                    sequence={this.state.sequence}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorSequence}
-                                />
-                            </Col>
-                        </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="save">
-                            Save
-                        </Button>
-                    </Modal.Footer>
-                </form>
+                <SequenceForm
+                    host={this.state.host}
+                    definition={this.state.definition}
+                    sequence={this.state.sequence}
+                    segment={this.state.segment}
+                    schema={this.state.schema}
+                    overlay={overlay}
+                    accessionCol={accessionCol}
+                    handleChange={this.handleChange}
+                    handleSubmit={this.handleSubmit}
+                    errorSegment={this.state.error}
+                    errorDefinition={this.state.errorDefinition}
+                    errorSequence={this.state.errorSequence}
+                />
             </Modal>
         );
     }
