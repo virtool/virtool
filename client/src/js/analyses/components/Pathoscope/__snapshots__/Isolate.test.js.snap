@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<PathoscopeIsolate /> renders correctly 1`] = `
+<div>
+  <div
+    className="pathoscope-isolate-header"
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="stretch"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <div
+        style={
+          Object {
+            "alignContent": "stretch",
+            "alignItems": "stretch",
+            "display": "flex",
+            "flexFlow": "row nowrap",
+            "justifyContent": "flex-start",
+          }
+        }
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <div
+            style={
+              Object {
+                "alignSelf": null,
+                "flex": "0 1 auto",
+              }
+            }
+          >
+            test-pathoscope
+          </div>
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={5}
+          shrink={1}
+        >
+          <div
+            style={
+              Object {
+                "alignSelf": null,
+                "flex": "0 1 auto",
+                "marginLeft": "5px",
+              }
+            }
+          >
+            <strong
+              className="small text-success"
+            >
+              1
+            </strong>
+          </div>
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={5}
+          shrink={1}
+        >
+          <div
+            style={
+              Object {
+                "alignSelf": null,
+                "flex": "0 1 auto",
+                "marginLeft": "5px",
+              }
+            }
+          >
+            <strong
+              className="small text-danger"
+            >
+              2.0
+            </strong>
+          </div>
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={5}
+          shrink={1}
+        >
+          <div
+            style={
+              Object {
+                "alignSelf": null,
+                "flex": "0 1 auto",
+                "marginLeft": "5px",
+              }
+            }
+          >
+            <strong
+              className="small text-primary"
+            >
+              0.00E0
+            </strong>
+          </div>
+        </FlexItem>
+      </div>
+    </Flex>
+  </div>
+  <div
+    style={
+      Object {
+        "boxShadow": "inset 0px 0px 3px 1px #dddddd",
+        "marginTop": "5px",
+        "overflowX": "scroll",
+      }
+    }
+  >
+    <div
+      style={
+        Object {
+          "whiteSpace": "nowrap",
+        }
+      }
+    />
+  </div>
+</div>
+`;

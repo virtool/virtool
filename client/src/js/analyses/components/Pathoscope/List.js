@@ -23,7 +23,7 @@ export class PathoscopeList extends React.Component {
     };
 
     handlePosition = (node) => {
-        const {left, top, right, bottom, height, width} = node.getBoundingClientRect();
+        const { left, top, right, bottom, height, width } = node.getBoundingClientRect();
         const scrollCorrection = window.pageYOffset;
 
         return {

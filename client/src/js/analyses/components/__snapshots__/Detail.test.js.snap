@@ -1,5 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<AnalysisDetail /> renders <LoadingPlaceholder /> when detail data is not available 1`] = `<LoadingPlaceholder />`;
+
+exports[`<AnalysisDetail /> renders <NotFound /> if GET_ANALYSIS_ERROR exists in store 1`] = `<NotFound />`;
+
 exports[`<AnalysisDetail /> renders correctly 1`] = `
 <div>
   <Table
@@ -102,5 +106,240 @@ exports[`<AnalysisDetail /> renders correctly 1`] = `
       />
     </PanelBody>
   </Uncontrolled(Panel)>
+</div>
+`;
+
+exports[`<AnalysisDetail /> renders correctly 2`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-md-3"
+        >
+          Algorithm
+        </th>
+        <td
+          className="col-md-9"
+        >
+          PathoscopeBowtie
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Reference
+        </th>
+        <td>
+          <Link
+            replace={false}
+            to="/refs/test-reference"
+          >
+            imported
+          </Link>
+          <Label
+            bsClass="label"
+            bsStyle="default"
+            style={
+              Object {
+                "marginLeft": "5px",
+              }
+            }
+          >
+            1
+          </Label>
+        </td>
+      </tr>
+      <Connect(IDRowComponent)
+        id="123abc"
+      />
+      <tr>
+        <th>
+          Mapped Reads
+        </th>
+        <td>
+          456
+          <span
+            style={
+              Object {
+                "paddingLeft": "5px",
+              }
+            }
+          >
+            (
+            370.73%
+            )
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Library Read Count
+        </th>
+        <td>
+          123
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Created
+        </th>
+        <td>
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+           by 
+          test-user
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <PathoscopeViewer
+    algorithm="pathoscope_bowtie"
+    created_at="2018-02-14T17:12:00.000000Z"
+    id="123abc"
+    index={
+      Object {
+        "version": 1,
+      }
+    }
+    maxReadLength={55}
+    read_count={456}
+    ready={true}
+    reference={
+      Object {
+        "id": "test-reference",
+        "name": "imported",
+      }
+    }
+    user={
+      Object {
+        "id": "test-user",
+      }
+    }
+  />
+</div>
+`;
+
+exports[`<AnalysisDetail /> renders correctly 3`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-md-3"
+        >
+          Algorithm
+        </th>
+        <td
+          className="col-md-9"
+        >
+          NuVs
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Reference
+        </th>
+        <td>
+          <Link
+            replace={false}
+            to="/refs/test-reference"
+          >
+            imported
+          </Link>
+          <Label
+            bsClass="label"
+            bsStyle="default"
+            style={
+              Object {
+                "marginLeft": "5px",
+              }
+            }
+          >
+            1
+          </Label>
+        </td>
+      </tr>
+      <Connect(IDRowComponent)
+        id="123abc"
+      />
+      <tr>
+        <th>
+          Mapped Reads
+        </th>
+        <td>
+          456
+          <span
+            style={
+              Object {
+                "paddingLeft": "5px",
+              }
+            }
+          >
+            (
+            370.73%
+            )
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Library Read Count
+        </th>
+        <td>
+          123
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Created
+        </th>
+        <td>
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+           by 
+          test-user
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <NuVsViewer
+    algorithm="nuvs"
+    created_at="2018-02-14T17:12:00.000000Z"
+    id="123abc"
+    index={
+      Object {
+        "version": 1,
+      }
+    }
+    read_count={456}
+    ready={true}
+    reference={
+      Object {
+        "id": "test-reference",
+        "name": "imported",
+      }
+    }
+    user={
+      Object {
+        "id": "test-user",
+      }
+    }
+  />
 </div>
 `;
