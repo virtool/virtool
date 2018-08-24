@@ -31,8 +31,6 @@ const SampleEntryLabels = ({ nuvs, pathoscope }) => (
 class SampleEntry extends React.Component {
 
     onClick = (e) => {
-        e.preventDefault();
-
         if (e.target.getAttribute("class") !== "sample-checkbox-overlay") {
             this.props.onNavigate(this.props.id);
         }
