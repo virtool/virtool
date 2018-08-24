@@ -24,7 +24,7 @@ exports[`<AnalysesList /> renders <AnalysesToolbar /> subcomponent 1`] = `
         bsClass="form-control"
         componentClass="input"
         onChange={[MockFunction]}
-        placeholder="Index"
+        placeholder="User or reference"
         type="text"
         value="test"
       />

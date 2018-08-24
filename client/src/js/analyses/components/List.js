@@ -23,7 +23,7 @@ export const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
                     type="text"
                     value={term}
                     onChange={onFilter}
-                    placeholder="Index"
+                    placeholder="User or reference"
                 />
             </InputGroup>
         </FormGroup>
