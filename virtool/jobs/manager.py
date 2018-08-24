@@ -35,6 +35,8 @@ class IntegratedManager:
 
         self.db_connection_string = app["db_connection_string"]
 
+        self.db_name = app["db_name"]
+
         self.process_executor = app["process_executor"]
 
         #: The settings dict.
@@ -61,6 +63,7 @@ class IntegratedManager:
                             if job["proc"] <= available["proc"] and job["mem"] <= available["mem"]:
                                 job["process"] = job["class"](
                                     self.db_connection_string,
+                                    self.db_name,
                                     self.settings.as_dict(),
                                     job_id,
                                     self.queue
