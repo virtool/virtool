@@ -43,7 +43,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl value={props.filter} onChange={props.onFilter} />
+                    <FormControl value={props.filter} onChange={props.onFilter} placeholder="User or task" />
                 </InputGroup>
             </FormGroup>
 
