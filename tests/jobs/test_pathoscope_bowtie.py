@@ -6,7 +6,7 @@ import pytest
 import filecmp
 
 import virtool.jobs.job
-import virtool.jobs.analysis
+import virtool.jobs.pathoscope_bowtie
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
@@ -82,7 +82,7 @@ def mock_job(loop, tmpdir, mocker, dbs, test_db_name, otu_resource):
 
     queue = mocker.Mock()
 
-    job = virtool.jobs.analysis.PathoscopeBowtie(
+    job = virtool.jobs.pathoscope_bowtie.PathoscopeBowtie(
         "mongodb://localhost:27017",
         settings,
         "foobar",

@@ -10,7 +10,7 @@ import virtool.db.analyses
 import virtool.db.samples
 import virtool.errors
 import virtool.http.routes
-import virtool.jobs.analysis
+import virtool.jobs.pathoscope_bowtie
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
