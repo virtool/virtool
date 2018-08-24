@@ -2,6 +2,7 @@ from cerberus import Validator
 
 import virtool.db.analyses
 import virtool.db.files
+import virtool.db.jobs
 import virtool.db.samples
 import virtool.db.utils
 import virtool.errors
@@ -219,7 +220,16 @@ async def create(req):
         "srna": data["srna"]
     }
 
-    await req.app["job_manager"].new("create_sample", task_args, document["user"]["id"])
+    # Create job document.
+    job = await virtool.db.jobs.create(
+        db,
+        req.app["settings"],
+        "create_sample",
+        task_args,
+        user_id
+    )
+
+    await req.app["jobs"].enqueue(job["_id"])
 
     headers = {
         "Location": "/api/samples/" + sample_id
@@ -392,8 +402,7 @@ async def analyze(req):
 
     # Generate a unique _id for the analysis entry
     document = await virtool.db.analyses.new(
-        db,
-        req.app["job_manager"],
+        req.app,
         sample_id,
         ref_id,
         req["client"].user_id,

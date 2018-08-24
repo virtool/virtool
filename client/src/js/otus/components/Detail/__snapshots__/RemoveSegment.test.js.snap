@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RemoveSegment /> renders correctly 1`] = `
+<RemoveModal
+  name="test"
+  noun="Segment"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+/>
+`;

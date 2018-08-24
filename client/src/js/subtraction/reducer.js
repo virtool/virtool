@@ -12,6 +12,7 @@ import { updateList, insert, edit, remove } from "../reducerUtils";
 export const initialState = {
     documents: null,
     page: 0,
+    total_count: 0,
     detail: null,
     filter: "",
     fetched: false,
@@ -34,7 +35,8 @@ export default function subtractionsReducer (state = initialState, action) {
                     state.per_page,
                     action,
                     "id"
-                )
+                ),
+                total_count: state.total_count + 1
             };
 
         case WS_UPDATE_SUBTRACTION:
@@ -47,7 +49,8 @@ export default function subtractionsReducer (state = initialState, action) {
             return {
                 ...state,
                 documents: remove(state.documents, action),
-                refetchPage: (state.page < state.page_count)
+                refetchPage: (state.page < state.page_count),
+                total_count: state.total_count - 1
             };
 
         case LIST_SUBTRACTIONS.REQUESTED:

@@ -48,13 +48,20 @@ describe("Files Reducer", () => {
         });
 
         it("otherwise insert entry into list", () => {
-            state = { fetched: true, fileType: "reads", documents: [], page: 1, per_page: 3 };
+            state = {
+                fetched: true,
+                fileType: "reads",
+                documents: [],
+                page: 1,
+                per_page: 3,
+                total_count: 0
+            };
             action = {
                 type: WS_INSERT_FILE,
                 data: { type: "reads", id: "test" }
             };
             result = reducer(state, action);
-            expected = {...state, documents: [action.data]};
+            expected = {...state, documents: [action.data], total_count: 1};
             expect(result).toEqual(expected);
         });
 
@@ -72,13 +79,13 @@ describe("Files Reducer", () => {
     });
 
     it("should handle WS_REMOVE_FILE", () => {
-        state = { documents: [{ id: "test", foo: "bar" }] };
+        state = { documents: [{ id: "test", foo: "bar" }], total_count: 1 };
         action = {
             type: WS_REMOVE_FILE,
             data: ["test"]
         };
         result = reducer(state, action);
-        expected = {...state, documents: [], refetchPage: false};
+        expected = {...state, documents: [], refetchPage: false, total_count: 0};
         expect(result).toEqual(expected);
     });
 

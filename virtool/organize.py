@@ -398,9 +398,9 @@ async def organize_status(db, server_version):
         })
     except pymongo.errors.DuplicateKeyError:
         if await db.hmm.count():
-            await db.status.update_one({"_id": "hmm"}, {
+            await db.status.update_one({"_id": "hmm", "installed": {"$exists": False}}, {
                 "$set": {
-                    "installed": True
+                    "installed": None
                 }
             })
 

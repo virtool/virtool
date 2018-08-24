@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<APIKey /> renders correctly 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  className="spaced"
+  key="123abc"
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <strong>
+        tester
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <span>
+        0
+         perm
+      </span>
+      <span
+        className="hidden-xs hidden-sm"
+      >
+        ission
+      </span>
+      s
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      smHidden={true}
+      xsHidden={true}
+    >
+      Created 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      lgHidden={true}
+      mdHidden={true}
+      xs={3}
+    >
+      18-02-14
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={1}
+    />
+  </Row>
+</ListGroupItem>
+`;

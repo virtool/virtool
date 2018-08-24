@@ -78,6 +78,44 @@ describe("<InputSave />", () => {
 
     });
 
+    describe("componentDidUpdate:", () => {
+        let spy;
+
+        beforeAll(() => {
+            spy = sinon.spy(InputSave.prototype, "componentDidUpdate");
+
+            props = { onSave: jest.fn(), initialValue: "foo" };
+            wrapper = shallow(<InputSave {...props} />);
+        });
+
+        afterAll(() => {
+            spy.restore();
+        });
+
+        it("if current and past props initialValue field are not equal, update state", () => {
+            spy.resetHistory();
+
+            expect(spy.called).toBe(false);
+            expect(wrapper.state("value")).toEqual("foo");
+
+            wrapper.setProps({ initialValue: "bar" });
+            expect(spy.called).toBe(true);
+            expect(wrapper.state("value")).toEqual("bar");
+        });
+
+        it("otherwise no change", () => {
+            wrapper.setState({ value: "test" });
+            spy.resetHistory();
+
+            expect(spy.called).toBe(false);
+
+            // No change in value with new props
+            wrapper.setProps({ initialValue: "test" });
+            expect(spy.called).toBe(true);
+            expect(wrapper.state("value")).toEqual("test");
+        });
+    });
+
     describe("handleChange:", () => {
         let spy;
         let mockEvent;

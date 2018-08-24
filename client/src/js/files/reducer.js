@@ -69,7 +69,8 @@ export default function fileReducer (state = initialState, action) {
                     state.per_page,
                     action,
                     "created_at"
-                )
+                ),
+                total_count: state.total_count + 1
             };
 
         case WS_UPDATE_FILE:
@@ -82,7 +83,8 @@ export default function fileReducer (state = initialState, action) {
             return {
                 ...state,
                 documents: remove(state.documents, action),
-                refetchPage: (state.page < state.page_count)
+                refetchPage: (state.page < state.page_count),
+                total_count: state.total_count - 1
             };
 
         case LIST_FILES.REQUESTED:

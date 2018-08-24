@@ -1,10 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
-import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem } from "../../../base";
+import { Panel } from "react-bootstrap";
 import { getControlReadahead } from "../../actions";
 import { editReference } from "../../../references/actions";
+import AdministrationSection from "../Section";
 
 class InternalControl extends React.Component {
 
@@ -12,46 +12,31 @@ class InternalControl extends React.Component {
 
         const selected = this.props.internalControlId ? [this.props.internalControlId] : [];
 
+        const description = `Set an OTU that is spiked into samples to be used as a positive control.
+        Viral abundances in a sample can be calculated as proportions relative to the control.`;
+
+        const content = (
+            <Panel.Body>
+                <AsyncTypeahead
+                    labelKey="name"
+                    allowNew={false}
+                    isLoading={this.props.readaheadPending}
+                    onSearch={this.props.onGetReadahead.bind(this, this.props.refId)}
+                    onChange={this.props.onUpdate.bind(this, this.props.refId)}
+                    selected={selected}
+                    options={this.props.readahead || []}
+                    renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
+                    disabled={!!this.props.isRemote}
+                />
+            </Panel.Body>
+        );
+
         return (
-            <div>
-                <Row>
-                    <Col xs={12} md={6}>
-                        <Flex alignItems="center" style={{marginBottom: "10px"}}>
-                            <FlexItem grow={1} >
-                                <strong>Internal Control</strong>
-                            </FlexItem>
-                        </Flex>
-                    </Col>
-                    <Col smHidden md={8} />
-                </Row>
-                <Row>
-                    <Col xs={12} mdPush={6} md={6}>
-                        <Panel>
-                            <Panel.Body>
-                                Set an OTU that is spiked into samples to be used as a positive control.
-                                Viral abundances in a sample can be calculated as proportions relative to the control.
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col xs={12} mdPull={6} md={6}>
-                        <Panel>
-                            <Panel.Body>
-                                <AsyncTypeahead
-                                    labelKey="name"
-                                    allowNew={false}
-                                    isLoading={this.props.readaheadPending}
-                                    onSearch={this.props.onGetReadahead.bind(this, this.props.refId)}
-                                    onChange={this.props.onUpdate.bind(this, this.props.refId)}
-                                    selected={selected}
-                                    options={this.props.readahead || []}
-                                    renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
-                                    disabled={!!this.props.isRemote}
-                                />
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                </Row>
-            </div>
+            <AdministrationSection
+                title="Internal Control"
+                description={description}
+                content={content}
+            />
         );
     }
 }

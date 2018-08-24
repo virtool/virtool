@@ -1,8 +1,10 @@
 import os
+import pymongo
 
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.otus
+import virtool.db.sync
 import virtool.errors
 import virtool.history
 import virtool.jobs.job
@@ -19,14 +21,32 @@ class BuildIndex(virtool.jobs.job.Job):
         super().__init__(*args, **kwargs)
 
         self._stage_list = [
+            self.check_db,
             self.mk_index_dir,
             self.write_fasta,
             self.bowtie_build,
             self.replace_old
         ]
 
-        self.ref_id = self.task_args["ref_id"]
+        self.index_id = None
+        self.index_path = None
+        self.manifest = None
+        self.ref_id = None
+        self.reference_path = None
+
+    @virtool.jobs.job.stage_method
+    def check_db(self):
+        """
+        Get job information from the database.
+
+        """
+        document = self.db.jobs.find_one(self.id)
+
+        task_args = document["args"]
+
+        self.ref_id = task_args["ref_id"]
         self.index_id = self.task_args["index_id"]
+        self.manifest = self.task_args["manifest"]
 
         self.reference_path = os.path.join(
             self.settings["data_path"],
@@ -37,35 +57,32 @@ class BuildIndex(virtool.jobs.job.Job):
         self.index_path = os.path.join(self.reference_path, self.index_id)
 
     @virtool.jobs.job.stage_method
-    async def mk_index_dir(self):
+    def mk_index_dir(self):
         """
         Make dir for the new index at ``<data_path/references/<index_id>``.
 
         """
         try:
-            await self.run_in_executor(os.mkdir, self.reference_path)
+            os.makedirs(self.index_path)
         except FileExistsError:
             pass
 
-        await self.run_in_executor(os.mkdir, self.index_path)
-
     @virtool.jobs.job.stage_method
-    async def write_fasta(self):
+    def write_fasta(self):
         """
         Generates a FASTA file of all sequences in the reference database. The FASTA headers are
-        the accession numbers. These can be used to refer to full reference descriptions in the
-        database after RSEM analysis and parsing
+        the accession numbers.
 
         """
         fasta_dict = dict()
 
-        for patch_id, patch_version in self.task_args["manifest"].items():
-            document = await self.db.otus.find_one(patch_id)
+        for patch_id, patch_version in self.manifest.items():
+            document = self.db.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = await virtool.db.otus.join(self.db, patch_id)
+                joined = virtool.db.sync.join_otu(self.db, patch_id)
             else:
-                _, joined, _ = await virtool.db.history.patch_to_version(self.db, patch_id, patch_version)
+                _, joined, _ = virtool.db.sync.patch_otu_to_version(self.db, patch_id, patch_version)
 
             # Extract the list of sequences from the joined patched patch.
             sequences = virtool.otus.extract_default_sequences(joined)
@@ -82,10 +99,10 @@ class BuildIndex(virtool.jobs.job.Job):
 
         fasta_path = os.path.join(self.index_path, "ref.fa")
 
-        await self.run_in_executor(write_fasta_dict_to_file, fasta_path, fasta_dict)
+        write_fasta_dict_to_file(fasta_path, fasta_dict)
 
     @virtool.jobs.job.stage_method
-    async def bowtie_build(self):
+    def bowtie_build(self):
         """
         Run a standard bowtie-build process using the previously generated FASTA reference.
         The root name for the new reference is 'reference'
@@ -98,22 +115,24 @@ class BuildIndex(virtool.jobs.job.Job):
             os.path.join(self.index_path, "reference")
         )
 
-        await self.run_subprocess(command)
+        self.run_subprocess(command)
 
     @virtool.jobs.job.stage_method
-    async def replace_old(self):
+    def replace_old(self):
         """
         Replaces the old index with the newly generated one.
 
         """
         # Tell the client the index is ready to be used and to no longer show it as building.
-        await self.db.indexes.update_one({"_id": self.index_id}, {
+        document = self.db.indexes.find_one_and_update({"_id": self.index_id}, {
             "$set": {
                 "ready": True
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.indexes.PROJECTION)
 
-        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db, self.ref_id)
+        self.dispatch("indexes", "update", virtool.utils.base_processor(document))
+
+        active_indexes = virtool.db.sync.get_active_index_ids(self.db, self.ref_id)
 
         base_path = os.path.join(
             self.settings["data_path"],
@@ -121,13 +140,18 @@ class BuildIndex(virtool.jobs.job.Job):
             self.ref_id
         )
 
-        await self.run_in_executor(remove_unused_index_files, base_path, active_indexes)
+        remove_unused_index_files(base_path, active_indexes)
 
-        await self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
+        self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
             "$set": {
                 "has_files": False
             }
         })
+
+        query = {"_id": {"$not": {"$in": active_indexes}}}
+
+        for index in self.db.indexes.find(query, projection=virtool.db.indexes.PROJECTION):
+            self.dispatch("indexes", "update", virtool.utils.base_processor(index))
 
         # Find otus with changes.
         pipeline = [
@@ -140,28 +164,45 @@ class BuildIndex(virtool.jobs.job.Job):
             {"$match": {
                 "reference.id": self.ref_id,
                 "comp": {"$ne": 0}
+            }},
+            {"$group": {
+                "_id": "$version",
+                "id_list": {
+                    "$addToSet": "$_id"
+                }
             }}
         ]
 
-        async for agg in self.db.otus.aggregate(pipeline):
-            await self.db.otus.update_one({"_id": agg["_id"]}, {
+        id_version_key = {agg["_id"]: agg["id_list"] for agg in self.db.otus.aggregate(pipeline)}
+
+        # For each version number
+        for version, id_list in id_version_key.items():
+            self.db.otus.update_many({"_id": {"$in": id_list}}, {
                 "$set": {
-                    "last_indexed_version": agg["version"]
+                    "last_indexed_version": version
                 }
             })
 
     @virtool.jobs.job.stage_method
-    async def cleanup(self):
+    def cleanup(self):
         """
         Cleanup if the job fails. Removes the nascent index document and change the *index_id* and *index_version*
         fields all history items being included in the new index to be 'unbuilt'.
 
         """
         # Remove the index document from the database.
-        await self.db.indexes.delete_one({"_id": self.index_id})
+        self.db.indexes.delete_one({"_id": self.index_id})
+
+        self.dispatch("indexes", "delete", [self.index_id])
+
+        query = {
+            "_id": {
+                "$in": self.db.history.distinct("_id", {"index.id": self.index_id})
+            }
+        }
 
         # Set all the otus included in the build to "unbuilt" again.
-        await self.db.history.update_many({"index.id": self.index_id}, {
+        self.db.history.update_many(query, {
             "$set": {
                 "index": {
                     "id": "unbuilt",
@@ -170,7 +211,10 @@ class BuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        await self.run_in_executor(virtool.utils.rm, self.index_path, True)
+        for document in self.db.history.find(query):
+            self.dispatch("history", "update", document)
+
+        virtool.utils.rm(self.index_path, True)
 
 
 def remove_unused_index_files(base_path, retained):

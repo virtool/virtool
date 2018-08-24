@@ -1,5 +1,5 @@
 import React from "react";
-import { filter, map, replace, split, upperFirst, get } from "lodash-es";
+import { filter, map, replace, split, get } from "lodash-es";
 import { connect } from "react-redux";
 import {
     Modal,
@@ -13,8 +13,8 @@ import { push } from "react-router-redux";
 import ReadSelector from "./ReadSelector";
 import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, Icon, InputError, LoadingPlaceholder } from "../../../base";
-import { routerLocationHasState } from "../../../utils";
+import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
+import { routerLocationHasState, getTargetChange } from "../../../utils";
 
 const getReadyHosts = (props) => (
     props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || "") : ""
@@ -91,19 +91,12 @@ class CreateSample extends React.Component {
     };
 
     handleChange = (e) => {
-        const name = e.target.name;
+        const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "subtraction") {
-            const errorType = `error${upperFirst(name)}`;
-
-            this.setState({
-                [name]: e.target.value,
-                [errorType]: ""
-            });
+            this.setState({ [name]: value, [error]: "" });
         } else {
-            this.setState({
-                [name]: e.target.value
-            });
+            this.setState({ [name]: value });
         }
 
     };
@@ -147,7 +140,7 @@ class CreateSample extends React.Component {
 
     render () {
 
-        if (this.props.readyHosts === null || !this.props.readyReads.length) {
+        if (this.props.readyHosts === null) {
             return (
                 <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>
@@ -290,9 +283,7 @@ class CreateSample extends React.Component {
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <Button type="submit" bsStyle="primary">
-                            <Icon name="save" /> Save
-                        </Button>
+                        <SaveButton />
                     </Modal.Footer>
                 </form>
             </Modal>

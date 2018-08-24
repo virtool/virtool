@@ -132,30 +132,29 @@ async def init_db(app):
 
     db_host = settings.get("db_host", "localhost")
     db_port = settings.get("db_port", 27017)
-    db_use_auth = settings.get("db_use_auth", False)
 
-    if db_use_auth:
+    auth_string = ""
+
+    if settings.get("db_use_auth", False):
         db_username = quote_plus(settings["db_username"])
         db_password = quote_plus(settings["db_password"])
 
-        string = "mongodb://{}:{}@{}:{}/{}".format(db_username, db_password, db_host, db_port, app["db_name"])
+        auth_string = "{}:{}@".format(db_username, db_password)
 
-        if settings["db_use_ssl"]:
-            string += "?ssl=true"
+    ssl_string = ""
 
-        db_client = motor_asyncio.AsyncIOMotorClient(
-            string,
-            serverSelectionTimeoutMS=6000,
-            io_loop=app.loop
-        )
+    if settings.get("db_use_ssl", False):
+        ssl_string += "?ssl=true"
 
-    else:
-        db_client = motor_asyncio.AsyncIOMotorClient(
-            db_host,
-            db_port,
-            serverSelectionTimeoutMS=6000,
-            io_loop=app.loop
-        )
+    string = "mongodb://{}{}:{}/{}{}".format(auth_string, db_host, db_port, app["db_name"], ssl_string)
+
+    app["db_connection_string"] = string
+
+    db_client = motor_asyncio.AsyncIOMotorClient(
+        string,
+        serverSelectionTimeoutMS=6000,
+        io_loop=app.loop
+    )
 
     try:
         await db_client.database_names()
@@ -219,17 +218,11 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["job_manager"] = virtool.jobs.manager.Manager(
-        app.loop,
-        app["process_executor"],
-        app["db"],
-        app["settings"],
-        capture_exception
-    )
+    app["jobs"] = virtool.jobs.manager.IntegratedManager(app, capture_exception)
 
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 
-    await scheduler.spawn(app["job_manager"].run())
+    await scheduler.spawn(app["jobs"].run())
 
 
 async def init_file_manager(app):

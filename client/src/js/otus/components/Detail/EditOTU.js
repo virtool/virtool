@@ -1,11 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal } from "react-bootstrap";
-import { get, upperFirst } from "lodash-es";
-
+import { Modal } from "react-bootstrap";
+import { get } from "lodash-es";
+import OTUForm from "../OTUForm";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, InputError } from "../../../base";
+import { getNextState } from "../../otusUtils";
+import { getTargetChange } from "../../../utils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -23,26 +24,11 @@ class EditOTU extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            if (nextProps.error === "Name already exists") {
-                return { errorName: nextProps.error, error: nextProps.error };
-            } else if (nextProps.error === "Abbreviation already exists") {
-                return { errorAbbreviation: nextProps.error, error: nextProps.error };
-            } else if (!nextProps.error.length) {
-                return { error: "" };
-            }
-            return {
-                errorName: "Name already exists",
-                errorAbbreviation: "Abbreviation already exists",
-                error: nextProps.error
-            };
-        }
-        return null;
+        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
             [name]: value,
@@ -86,35 +72,14 @@ class EditOTU extends React.Component {
                 <Modal.Header onHide={this.handleHide} closeButton>
                     Edit OTU
                 </Modal.Header>
-                <form onSubmit={this.handleSave}>
-                    <Modal.Body>
-                        <Row>
-                            <Col md={8} xs={12}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorName}
-                                />
-                            </Col>
-                            <Col md={4} xs={12}>
-                                <InputError
-                                    label="Abbreviation"
-                                    name="abbreviation"
-                                    value={this.state.abbreviation}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorAbbreviation}
-                                />
-                            </Col>
-                        </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button type="submit" bsStyle="primary" icon="save">
-                            Save
-                        </Button>
-                    </Modal.Footer>
-                </form>
+                <OTUForm
+                    name={this.state.name}
+                    abbreviation={this.state.abbreviation}
+                    handleSubmit={this.handleSave}
+                    handleChange={this.handleChange}
+                    errorName={this.state.errorName}
+                    errorAbbreviation={this.state.errorAbbreviation}
+                />
             </Modal>
         );
     }

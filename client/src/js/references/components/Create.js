@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
-import { upperFirst } from "lodash-es";
 import ReferenceForm from "./Form";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button } from "../../base";
+import { getTargetChange } from "../../utils";
 
 const getInitialState = () => ({
     name: "",
@@ -24,13 +24,11 @@ export class CreateReference extends React.Component {
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-
-        const errorType = `error${upperFirst(e.target.name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
             [name]: value,
-            [errorType]: ""
+            [error]: ""
         });
     };
 

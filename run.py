@@ -6,15 +6,12 @@ import uvloop
 import asyncio
 
 from aiohttp import web
-from setproctitle import setproctitle
 from virtool.app import create_app
 from virtool.app_init import get_args, configure
 
 sys.dont_write_bytecode = True
 
 logger = logging.getLogger("aiohttp.server")
-
-setproctitle("virtool")
 
 args = get_args()
 

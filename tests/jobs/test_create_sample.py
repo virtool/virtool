@@ -1,46 +1,59 @@
 import os
 import pytest
-from concurrent.futures import ProcessPoolExecutor
 
 import virtool.jobs.create_sample
 
 
 @pytest.fixture
-def test_create_sample_job(mocker, tmpdir, loop, dbi):
+def test_create_sample_job(mocker, tmpdir, loop, dbi, dbs, test_db_name):
     tmpdir.mkdir("samples")
     tmpdir.mkdir("logs").mkdir("jobs")
 
-    executor = ProcessPoolExecutor()
-
     settings = {
         "data_path": str(tmpdir),
+        "db_name": test_db_name,
         "create_sample_proc": 6
     }
 
+    q = mocker.Mock()
+
     job = virtool.jobs.create_sample.CreateSample(
-        loop,
-        executor,
-        dbi,
+        "mongodb://localhost:27017",
         settings,
-        mocker.stub("capture_exception"),
         "foobar",
-        "create_sample",
-        dict(sample_id="foobar", files=["foobar.fastq"], paired=False),
-        6,
-        12
+        q
     )
+
+    dbs.jobs.insert_one({
+        "_id": "foobar",
+        "task": "create_sample",
+        "args": {
+            "sample_id": "baz",
+            "files": [
+                "foo.fq.gz"
+            ]
+        },
+        "proc": 2,
+        "mem": 4
+    })
+
+    job.init_db()
 
     return job
 
 
 @pytest.mark.parametrize("exists", [None, "sample", "analysis"])
-def test_force_makedirs(exists, tmpdir):
+def test_make_sample_dir(exists, tmpdir, test_create_sample_job):
     """
     Test that the function makes the specified sample tree even if the sample path and/or the analysis path already
     exist.
 
     """
-    sample_path = os.path.join(str(tmpdir), "foobar")
+    test_create_sample_job.check_db()
+
+    samples_path = os.path.join(str(tmpdir), "samples")
+
+    sample_path = os.path.join(samples_path, "baz")
 
     if exists is not None:
         os.mkdir(sample_path)
@@ -48,9 +61,9 @@ def test_force_makedirs(exists, tmpdir):
         if exists == "analysis":
             os.mkdir(os.path.join(sample_path, "analysis"))
 
-    virtool.jobs.create_sample.force_makedirs(sample_path)
+    test_create_sample_job.make_sample_dir()
 
-    assert os.listdir(str(tmpdir)) == ["foobar"]
+    assert os.listdir(samples_path) == ["baz"]
     assert os.listdir(sample_path) == ["analysis"]
 
 
@@ -91,11 +104,4 @@ def test_move_trimming_results(paired, tmpdir):
         assert handle.read() == "This is the log file"
 
 
-async def test_make_sample_dir(tmpdir, test_create_sample_job):
-    await test_create_sample_job.make_sample_dir()
 
-    samples_path = os.path.join(str(tmpdir), "samples")
-
-    assert os.listdir(samples_path) == ["foobar"]
-
-    assert os.listdir(os.path.join(samples_path, "foobar")) == ["analysis"]

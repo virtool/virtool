@@ -1,5 +1,4 @@
 import React from "react";
-
 import PathoscopeList from "./List";
 import PathoscopeToolbar from "./Toolbar";
 

@@ -48,14 +48,17 @@ describe("Job Reducer", () => {
                 fetched: true,
                 documents: null,
                 page: 0,
-                per_page: 3
+                per_page: 3,
+                total_count: 0
             };
             action = { type: WS_INSERT_JOB, data: { id: "test" } };
             result = reducer(state, action);
             expected = {
                 ...state,
-                documents: []
+                documents: [{ id: "test" }],
+                total_count: 1
             };
+            expect(result).toEqual(expected);
         });
     });
 
@@ -103,14 +106,20 @@ describe("Job Reducer", () => {
             documents: [
                 { id: "test1" },
                 { id: "test2" }
-            ]
+            ],
+            total_count: 2
         };
         action = {
             type: WS_REMOVE_JOB,
             data: ["test2"]
         };
         result = reducer(state, action);
-        expected = {...state, documents: [{ id: "test1" }], refetchPage: true };
+        expected = {
+            ...state,
+            documents: [{ id: "test1" }],
+            refetchPage: true,
+            total_count: 1
+        };
         expect(result).toEqual(expected);
     });
 

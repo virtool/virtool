@@ -41,6 +41,36 @@ async def clear(db, complete=False, failed=False):
     return removed
 
 
+async def create(db, settings, task_name, task_args, user_id, job_id=None):
+
+    proc = settings[task_name + "_proc"]
+    mem = settings[task_name + "_mem"]
+
+    document = {
+        "task": task_name,
+        "args": task_args,
+        "proc": proc,
+        "mem": mem,
+        "user": {
+            "id": user_id
+        },
+        "status": [
+            {
+                "state": "waiting",
+                "stage": None,
+                "error": None,
+                "progress": 0,
+                "timestamp": virtool.utils.timestamp()
+            }
+        ]
+    }
+
+    if job_id:
+        document["_id"] = job_id
+
+    return await db.jobs.insert_one(document)
+
+
 async def get_waiting_and_running_ids(db):
     cursor = db.jobs.aggregate([
         {"$project": {

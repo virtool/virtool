@@ -2,7 +2,7 @@ import React from "react";
 import { map } from "lodash-es";
 import { LoadingPlaceholder } from "./index";
 
-const getScrollRatio = (innerHeight, scrollY, scrollHeight) => (
+export const getScrollRatio = (innerHeight, scrollY, scrollHeight) => (
     ((innerHeight + scrollY) / scrollHeight).toFixed(1)
 );
 

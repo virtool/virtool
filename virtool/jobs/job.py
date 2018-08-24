@@ -1,151 +1,162 @@
-import asyncio
-import inspect
+import multiprocessing
+import threading
+import queue
 import os
+import signal
+import subprocess
 import sys
 import traceback
 
-import aiofiles
+import pymongo
 
+import virtool.db.iface
 import virtool.db.jobs
 import virtool.errors
 import virtool.utils
 
 
-class Job:
+class TerminationError(Exception):
+    pass
 
-    def __init__(self, loop, executor, db, settings, capture_exception, job_id, task_name, task_args, proc, mem):
-        self.loop = loop
-        self.executor = executor
-        self.db = db
+
+class Job(multiprocessing.Process):
+
+    def __init__(self, db_connection_string, settings, job_id, queue):
+        super().__init__()
+
+        self.db_connection_string = db_connection_string
         self.settings = settings
-        self.capture_exception = capture_exception
         self.id = job_id
-        self.task_name = task_name
-        self.task_args = task_args
-        self.proc = proc
-        self.mem = mem
+        self.queue = queue
 
-        self.started = False
-        self.finished = False
+        self.db = None
+        self.task_name = None
+        self.task_args = None
+        self.proc = None
+        self.mem = None
 
         self._progress = 0
         self._state = "waiting"
         self._stage = None
         self._error = None
-        self._cancelled = False
-        self._task = None
-        self._process_task = None
+        self._process = None
         self._stage_list = None
-        self._log_path = os.path.join(self.settings.get("data_path"), "logs", "jobs", self.id)
+        self._log_path = os.path.join(self.settings["data_path"], "logs", "jobs", self.id)
         self._log_buffer = list()
 
-    def start(self):
-        self._task = asyncio.ensure_future(self.run(), loop=self.loop)
-        self.started = True
+    def init_db(self):
+        db_name = self.settings["db_name"]
 
-    async def run(self):
-        for method in self._stage_list:
-            name = method.__name__
+        self.db = pymongo.MongoClient(self.db_connection_string, serverSelectionTimeoutMS=6000)[db_name]
 
-            await self.add_status(stage=name, state="running")
+        document = self.db.jobs.find_one(self.id)
 
-            try:
-                await self.add_log("Stage: {}".format(name))
-                await method()
-            except asyncio.CancelledError:
-                self._cancelled = True
-            except:
-                if self.capture_exception:
-                    self.capture_exception()
+        self.task_name = document["task"]
+        self.task_args = document["args"]
+        self.proc = document["proc"]
+        self.mem = document["mem"]
 
-                self._error = handle_exception()
+    def run(self):
+        # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            if self._error or self._cancelled:
-                break
+        # When the manager terminates jobs, run the handle_sigterm method.
+        signal.signal(signal.SIGTERM, handle_sigterm)
 
-        self._progress = 1
-
-        if self._error:
-            await self.add_status(state="error")
-            await self.cleanup()
-        elif self._cancelled:
-            await self.add_status(state="cancelled")
-            await self.cleanup()
-        else:
-            await self.add_status(state="complete")
-
-        await self.flush_log()
-
-        self.finished = True
-
-    async def run_in_executor(self, func, *args):
-        await self.add_log("Process: {}".format(func.__name__))
-        self._process_task = self.loop.run_in_executor(self.executor, func, *args)
-        result = await self._process_task
-        self._process_task = None
-
-        return result
-
-    async def run_subprocess(self, command, stdout_handler=None, stderr_handler=None, env=None):
-        await self.add_log("Command: {}".format(" ".join(command)))
-
-        _stdout_handler = None
-
-        if stdout_handler:
-            stdout = asyncio.subprocess.PIPE
-
-            if not inspect.iscoroutinefunction(stdout_handler):
-                async def _stdout_handler(line):
-                    return stdout_handler(line)
-            else:
-                _stdout_handler = stdout_handler
-        else:
-            stdout = asyncio.subprocess.DEVNULL
-
-        stderr = asyncio.subprocess.PIPE
-
-        if stderr_handler:
-            if not inspect.iscoroutinefunction(stderr_handler):
-                async def arg_stderr_handler(line):
-                    await self.add_log(line)
-                    return stderr_handler(line)
-            else:
-                arg_stderr_handler = stderr_handler
-
-            async def _stderr_handler(line):
-                await arg_stderr_handler(line)
-                await self.add_log(line, indent=1)
-        else:
-            async def _stderr_handler(line):
-                await self.add_log(line, indent=1)
+        self.init_db()
 
         try:
-            asyncio.get_child_watcher().attach_loop(self.loop)
-        except NotImplementedError:
-            pass
+            for method in self._stage_list:
+                name = method.__name__
 
-        proc = await asyncio.create_subprocess_exec(
-            *command,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=stdout,
-            stderr=stderr,
-            loop=self.loop,
-            env=env
+                self.add_status(stage=name, state="running")
+                self.add_log("Stage: {}".format(name))
+
+                method()
+
+            self._progress = 1
+            self.add_status(state="complete")
+
+        except TerminationError:
+            self.add_status(state="cancelled")
+            self.cleanup()
+
+        except:
+            self._error = handle_exception()
+            self.add_status(state="error")
+            self.cleanup()
+
+        if self._process:
+            self._process.kill()
+
+        self.flush_log()
+
+    def run_subprocess(self, command, stdout_handler=None, stderr_handler=None, env=None):
+        self.add_log("Command: {}".format(" ".join(command)))
+
+        if stdout_handler:
+            stdout = subprocess.PIPE
+        else:
+            stdout = subprocess.DEVNULL
+
+        if stderr_handler:
+            def _stderr_handler(line):
+                stderr_handler(line)
+                self.add_log(line, indent=1)
+        else:
+            def _stderr_handler(line):
+                self.add_log(line, indent=1)
+
+        self._process = subprocess.Popen(command, stdout=stdout, stderr=subprocess.PIPE, env=env)
+
+        stdout_queue = None
+        stdout_thread = None
+
+        if stdout_handler:
+            stdout_queue = queue.Queue()
+
+            stdout_thread = threading.Thread(
+                target=watch_pipe,
+                args=(self._process.stdout, stdout_queue),
+                daemon=True
+            )
+
+            stdout_thread.start()
+
+        stderr_queue = queue.Queue()
+
+        stderr_thread = threading.Thread(
+            target=watch_pipe,
+            args=(self._process.stderr, stderr_queue),
+            daemon=True
         )
 
-        waits = [read_stream(proc.stderr, _stderr_handler)]
+        stderr_thread.start()
 
-        if _stdout_handler:
-            waits.append(read_stream(proc.stdout, _stdout_handler))
+        while True:
+            if stdout_queue and not stdout_queue.empty():
+                out = stdout_queue.get()
+                stdout_handler(out)
 
-        await asyncio.wait(waits)
+            if not stderr_queue.empty():
+                err = stderr_queue.get()
+                _stderr_handler(err)
 
-        await proc.wait()
+            # Continue to next iteration if queues are not empty (or stdout queue was not created).
+            if not stderr_queue.empty() or (stdout_queue and not stdout_queue.empty()):
+                continue
 
-        if proc.returncode != 0:
+            alive = (stdout_thread and stdout_thread.is_alive()) or stderr_thread.is_alive()
+
+            if not alive and self._process.poll() is not None:
+                break
+
+        if self._process.returncode != 0:
             raise virtool.errors.SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
 
-    async def add_status(self, state=None, stage=None):
+        self._process = None
+
+    def add_status(self, state=None, stage=None):
         self._state = state or self._state
         self._stage = stage or self._stage
 
@@ -153,7 +164,7 @@ class Job:
             stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
             self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
 
-        await self.db.jobs.update_one({"_id": self.id}, {
+        document = self.db.jobs.find_one_and_update({"_id": self.id}, {
             "$push": {
                 "status": {
                     "state": self._state,
@@ -163,35 +174,33 @@ class Job:
                     "timestamp": virtool.utils.timestamp()
                 }
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.jobs.PROJECTION)
 
-    async def add_log(self, line, indent=0):
+        self.dispatch("jobs", "update", virtool.db.jobs.processor(document))
+
+    def dispatch(self, interface, operation, data):
+        message = (
+            interface,
+            operation,
+            data
+        )
+
+        self.queue.put(message)
+
+    def add_log(self, line, indent=0):
         timestamp = virtool.utils.timestamp().isoformat()
 
         self._log_buffer.append("{}{}    {}".format(timestamp, " " * indent * 4, line.rstrip()))
 
         if len(self._log_buffer) == 15:
-            await self.flush_log()
+            self.flush_log()
             del self._log_buffer[:]
 
-    async def flush_log(self):
-        async with aiofiles.open(self._log_path, "a") as f:
-            await f.write("\n".join(self._log_buffer))
+    def flush_log(self):
+        with open(self._log_path, "a") as f:
+            f.write("\n".join(self._log_buffer))
 
-    async def cancel(self):
-        if self.started and not self.finished:
-            self._task.cancel()
-
-            while not self.finished:
-                await asyncio.sleep(0.1, loop=self.loop)
-
-        elif not self.started:
-            self._progress = 1
-            await self.add_status(state="cancelled")
-            await self.cleanup()
-            self.finished = True
-
-    async def cleanup(self):
+    def cleanup(self):
         pass
 
 
@@ -205,16 +214,24 @@ def handle_exception(max_tb=50):
     }
 
 
-async def read_stream(stream, cb):
-    while True:
-        line = await stream.readline()
+def handle_sigterm(*args):
+    """
+    A handler for SIGTERM signals. Raises a TerminationError that allows the job to clean-up after itself.
 
-        if line:
-            await cb(line)
-        else:
-            break
+    """
+    raise TerminationError
 
 
 def stage_method(func):
     func.is_stage_method = True
     return func
+
+
+def watch_pipe(stream, queue):
+    while True:
+        line = stream.readline()
+
+        if not line:
+            return
+
+        queue.put(line)

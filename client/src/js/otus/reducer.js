@@ -100,7 +100,14 @@ export default function OTUsReducer (state = initialState, action) {
 
         case WS_UPDATE_STATUS:
             if (action.data.id === "OTU_import") {
-                return {...state, importData: {...state.importData, ...action.data, inProgress: true}};
+                return {
+                    ...state,
+                    importData: {
+                        ...state.importData,
+                        ...action.data,
+                        inProgress: true
+                    }
+                };
             }
 
             return state;
@@ -175,9 +182,8 @@ export default function OTUsReducer (state = initialState, action) {
         case REMOVE_SEQUENCE.SUCCEEDED:
         case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
-        case REMOVE_ISOLATE.SUCCEEDED: {
+        case REMOVE_ISOLATE.SUCCEEDED:
             return hideOTUModal(receiveOTU(state, action));
-        }
 
         case GET_OTU_HISTORY.REQUESTED:
             return {...state, detailHistory: null};

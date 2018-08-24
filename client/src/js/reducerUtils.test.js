@@ -118,14 +118,12 @@ describe("Utility functions for reducers", () => {
 
         it("update entry with new data if found in documents", () => {
             // No change to empty list
-            documents = [];
             action = {
                 type: "WS_UPDATE_ENTRY",
                 data: { id: "test", name: "TEST"}
             };
-            result = reducerUtils.edit(documents, action);
-            expected = documents;
-            expect(result).toEqual(expected);
+            result = reducerUtils.edit([], action);
+            expect(result).toEqual([]);
 
             // No change when not present in list
             documents = [
@@ -133,19 +131,16 @@ describe("Utility functions for reducers", () => {
                 { id: "foo", name: "foo-entry" }
             ];
             result = reducerUtils.edit(documents, action);
-            expected = documents;
-            expect(result).toEqual(expected);
+            expect(result).toEqual(documents);
 
             // Update entry when present in list
-            documents = [
-                { id: "bar", name: "bar-entry" },
-                { id: "foo", name: "foo-entry" },
+            const documentsExist = [
+                ...documents,
                 { id: "test", name: "test-entry" }
             ];
-            result = reducerUtils.edit(documents, action);
+            result = reducerUtils.edit(documentsExist, action);
             expected = [
-                { id: "bar", name: "bar-entry" },
-                { id: "foo", name: "foo-entry" },
+                ...documents,
                 { id: "test", name: "TEST" }
             ];
             expect(result).toEqual(expected);

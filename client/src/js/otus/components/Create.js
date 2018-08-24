@@ -2,12 +2,13 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
-import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import { get, upperFirst } from "lodash-es";
-
-import { InputError, Button } from "../../base";
+import { Modal } from "react-bootstrap";
+import { get } from "lodash-es";
+import OTUForm from "./OTUForm";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
+import { getNextState } from "../otusUtils";
+import { getTargetChange } from "../../utils";
 
 const getInitialState = () => ({
     name: "",
@@ -25,31 +26,13 @@ class CreateOTU extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            if (nextProps.error === "Name already exists") {
-                return { errorName: nextProps.error, error: nextProps.error };
-            } else if (nextProps.error === "Abbreviation already exists") {
-                return { errorAbbreviation: nextProps.error, error: nextProps.error };
-            } else if (!nextProps.error.length) {
-                return { error: "" };
-            }
-            return {
-                errorName: "Name already exists",
-                errorAbbreviation: "Abbrevation already exists",
-                error: nextProps.error
-            };
-        }
-        return null;
+        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = (e) => {
-        const { name, value } = e.target;
-        const error = `error${upperFirst(name)}`;
+        const { name, value, error } = getTargetChange(e.target);
 
-        this.setState({
-            [name]: value,
-            [error]: ""
-        });
+        this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
             this.props.onClearError("CREATE_OTU_ERROR");
@@ -90,39 +73,14 @@ class CreateOTU extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create OTU
                 </Modal.Header>
-                <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <Row>
-                            <Col md={8}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorName}
-                                />
-                            </Col>
-                            <Col md={4}>
-                                <InputError
-                                    label="Abbreviation"
-                                    name="abbreviation"
-                                    value={this.state.abbreviation}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorAbbreviation}
-                                />
-                            </Col>
-                        </Row>
-
-                    </Modal.Body>
-
-                    <Modal.Footer>
-                        <ButtonToolbar className="pull-right">
-                            <Button icon="save" type="submit" bsStyle="primary">
-                                Save
-                            </Button>
-                        </ButtonToolbar>
-                    </Modal.Footer>
-                </form>
+                <OTUForm
+                    name={this.state.name}
+                    abbreviation={this.state.abbreviation}
+                    handleSubmit={this.handleSubmit}
+                    handleChange={this.handleChange}
+                    errorName={this.state.errorName}
+                    errorAbbreviation={this.state.errorAbbreviation}
+                />
             </Modal>
         );
     }

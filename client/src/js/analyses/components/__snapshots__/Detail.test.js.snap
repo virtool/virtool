@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AnalysisDetail /> renders correctly 1`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-md-3"
+        >
+          Algorithm
+        </th>
+        <td
+          className="col-md-9"
+        >
+          Test Algorithm
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Reference
+        </th>
+        <td>
+          <Link
+            replace={false}
+            to="/refs/test-reference"
+          >
+            imported
+          </Link>
+          <Label
+            bsClass="label"
+            bsStyle="default"
+            style={
+              Object {
+                "marginLeft": "5px",
+              }
+            }
+          >
+            1
+          </Label>
+        </td>
+      </tr>
+      <Connect(IDRowComponent)
+        id="123abc"
+      />
+      <tr>
+        <th>
+          Mapped Reads
+        </th>
+        <td>
+          456
+          <span
+            style={
+              Object {
+                "paddingLeft": "5px",
+              }
+            }
+          >
+            (
+            370.73%
+            )
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Library Read Count
+        </th>
+        <td>
+          123
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Created
+        </th>
+        <td>
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+           by 
+          test-user
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Uncontrolled(Panel)>
+    <PanelBody
+      bsClass="panel"
+      collapsible={false}
+    >
+      <LoadingPlaceholder
+        margin="1.2rem"
+        message="Analysis in progress"
+      />
+    </PanelBody>
+  </Uncontrolled(Panel)>
+</div>
+`;

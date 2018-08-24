@@ -112,7 +112,8 @@
     "setupTestFrameworkScriptFile": "./src/tests/setupTests.js",
     "snapshotSerializers": [
       "enzyme-to-json/serializer"
-    ]
+    ],
+    "testURL": "https://www.virtool.com/"
   },
   "version": "v1.7.0"
 }

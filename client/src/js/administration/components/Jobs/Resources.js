@@ -1,19 +1,20 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Col, Panel, Row } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 import { toNumber, upperFirst, forEach, endsWith, isEmpty, get } from "lodash-es";
-
+import AdministrationSection from "../Section";
 import { Alert, Flex, FlexItem, InputError, LoadingPlaceholder } from "../../../base";
 import { getResources } from "../../../jobs/actions";
 import { maxResourcesSelector, minResourcesSelector, checkTaskUpperLimits } from "../../selectors";
 import { updateSetting } from "../../actions";
 import { clearError } from "../../../errors/actions";
+import { getTargetChange } from "../../../utils";
 
-const getErrorMessage = (isError, min, max) => (
+export const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
 );
 
-const LimitLabel = ({ label, available, unit }) => (
+export const LimitLabel = ({ label, available, unit }) => (
     <h5>
         <Flex alignItems="center">
             <FlexItem grow={1} shrink={0}>
@@ -28,7 +29,7 @@ const LimitLabel = ({ label, available, unit }) => (
     </h5>
 );
 
-class Resources extends React.Component {
+export class Resources extends React.Component {
 
     constructor (props) {
         super(props);
@@ -89,21 +90,20 @@ class Resources extends React.Component {
     };
 
     handleSave = (e) => {
-        const name = e.name;
-        const value = toNumber(e.value);
-        const error = `error${upperFirst(name)}`;
+        const { value, error } = getTargetChange(e);
+        const val = toNumber(value);
 
-        if (value <= e.max && value >= e.min) {
+        if (val <= e.max && val >= e.min) {
             this.props.onUpdate(e);
         } else {
             this.setState({ [error]: true });
         }
     };
 
-    setError = (e, value) => {
+    setError = (e, val) => {
         e.preventDefault();
         this.setState({
-            [`error${upperFirst(e.target.name)}`]: value
+            [`error${upperFirst(e.target.name)}`]: val
         });
     };
 
@@ -135,56 +135,48 @@ class Resources extends React.Component {
             );
         }
 
+        const content = (
+            <Panel.Body>
+                <LimitLabel label="CPU Limit" available={this.props.maxProc} unit="cores" />
+                <InputError
+                    type="number"
+                    name="proc"
+                    min={this.props.minProc}
+                    max={this.props.maxProc}
+                    onSave={this.handleSave}
+                    onInvalid={this.handleInvalid}
+                    onChange={this.handleChange}
+                    initialValue={this.props.proc}
+                    error={errorMessageProc}
+                    noMargin
+                    withButton
+                />
+
+                <LimitLabel label="Memory Limit (GB)" available={this.props.maxMem} unit="GB" />
+                <InputError
+                    type="number"
+                    name="mem"
+                    min={this.props.minMem}
+                    max={this.props.maxMem}
+                    onSave={this.handleSave}
+                    onInvalid={this.handleInvalid}
+                    onChange={this.handleChange}
+                    initialValue={this.props.mem}
+                    error={errorMessageMem}
+                    noMargin
+                    withButton
+                />
+            </Panel.Body>
+        );
+
         return (
             <div>
                 {alert}
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Resource Limits</strong></h5>
-                    </Col>
-                    <Col xs={12} md={6} mdPush={6}>
-                        <Panel>
-                            <Panel.Body>
-                                Set limits on the computing resources Virtool can use on the host server.
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                    <Col xs={12} md={6} mdPull={6}>
-                        <Panel>
-                            <Panel.Body>
-                                <LimitLabel label="CPU Limit" available={this.props.maxProc} unit="cores" />
-                                <InputError
-                                    type="number"
-                                    name="proc"
-                                    min={this.props.minProc}
-                                    max={this.props.maxProc}
-                                    onSave={this.handleSave}
-                                    onInvalid={this.handleInvalid}
-                                    onChange={this.handleChange}
-                                    initialValue={this.props.proc}
-                                    error={errorMessageProc}
-                                    noMargin
-                                    withButton
-                                />
-
-                                <LimitLabel label="Memory Limit (GB)" available={this.props.maxMem} unit="GB" />
-                                <InputError
-                                    type="number"
-                                    name="mem"
-                                    min={this.props.minMem}
-                                    max={this.props.maxMem}
-                                    onSave={this.handleSave}
-                                    onInvalid={this.handleInvalid}
-                                    onChange={this.handleChange}
-                                    initialValue={this.props.mem}
-                                    error={errorMessageMem}
-                                    noMargin
-                                    withButton
-                                />
-                            </Panel.Body>
-                        </Panel>
-                    </Col>
-                </Row>
+                <AdministrationSection
+                    title="Resource Limits"
+                    description="Set limits on the computing resources Virtool can use on the host server."
+                    content={content}
+                />
             </div>
         );
     }
