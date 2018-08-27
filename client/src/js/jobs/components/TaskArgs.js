@@ -88,8 +88,7 @@ const TaskArgs = (props) => {
 
 TaskArgs.propTypes = {
     taskType: PropTypes.string,
-    taskArgs: PropTypes.object,
-    args: PropTypes.object
+    taskArgs: PropTypes.object
 };
 
 export default TaskArgs;

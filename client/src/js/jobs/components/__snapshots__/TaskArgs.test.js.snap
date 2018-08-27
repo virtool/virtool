@@ -1,0 +1,158 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<TaskArgs /> renders nuvs job 1`] = `
+<Table
+  bordered={true}
+  bsClass="table"
+  condensed={false}
+  hover={false}
+  responsive={false}
+  striped={false}
+>
+  <tbody>
+    <tr>
+      <th>
+        Sample
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/samples/123abc"
+        >
+          test-nuvs
+        </Link>
+      </td>
+    </tr>
+    <tr>
+      <th>
+        Analysis
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/samples/123abc/analyses"
+        >
+          test-analysis
+        </Link>
+      </td>
+    </tr>
+  </tbody>
+</Table>
+`;
+
+exports[`<TaskArgs /> renders other types of jobs 1`] = `
+<Table
+  bordered={true}
+  bsClass="table"
+  condensed={false}
+  hover={false}
+  responsive={false}
+  striped={false}
+>
+  <tbody>
+    <tr
+      key="test"
+    >
+      <th
+        className="col-xs-4"
+      >
+        <code>
+          test
+        </code>
+      </th>
+      <td
+        className="col-xs-8"
+      >
+        {"hello":"world"}
+      </td>
+    </tr>
+    <tr
+      key="manifest"
+    >
+      <th>
+        <code>
+          manifest
+        </code>
+      </th>
+      <td
+        className="sequence-cell"
+      >
+        <textarea
+          readOnly={true}
+          rows="5"
+          value="{\\"foo\\":\\"bar\\"}"
+        />
+      </td>
+    </tr>
+  </tbody>
+</Table>
+`;
+
+exports[`<TaskArgs /> renders pathoscope_bowtie job 1`] = `
+<Table
+  bordered={true}
+  bsClass="table"
+  condensed={false}
+  hover={false}
+  responsive={false}
+  striped={false}
+>
+  <tbody>
+    <tr>
+      <th>
+        Sample
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/samples/456def"
+        >
+          test-pathoscope
+        </Link>
+      </td>
+    </tr>
+    <tr>
+      <th>
+        Analysis
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/samples/456def/analyses"
+        >
+          test-analysis
+        </Link>
+      </td>
+    </tr>
+  </tbody>
+</Table>
+`;
+
+exports[`<TaskArgs /> renders rebuild_index job 1`] = `
+<Table
+  bordered={true}
+  bsClass="table"
+  condensed={false}
+  hover={false}
+  responsive={false}
+  striped={false}
+>
+  <tbody>
+    <tr>
+      <th>
+        Index Version
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/otus/indexes/0"
+        >
+          <span>
+            0
+          </span>
+        </Link>
+      </td>
+    </tr>
+  </tbody>
+</Table>
+`;
