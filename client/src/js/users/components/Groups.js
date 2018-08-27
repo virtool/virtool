@@ -3,10 +3,9 @@ import { includes, map, remove } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { ListGroupItem, Checkbox, NoneFound } from "../../base";
+import { editUser } from "../actions";
 
-import { editUser, listUsers } from "../actions";
-
-class UserGroup extends React.Component {
+export class UserGroup extends React.Component {
 
     handleClick = () => {
         const { userGroups, groupId, userId } = this.props;
@@ -40,18 +39,16 @@ class UserGroup extends React.Component {
     }
 }
 
-const UserGroups = ({ accountUserId, allGroups, memberGroups, EditGroup, userId, list }) => {
+export const UserGroups = ({ allGroups, memberGroups, onEditGroup, userId }) => {
 
     const groupComponents = map(allGroups, groupId =>
         <UserGroup
             key={groupId}
             groupId={groupId}
             userGroups={memberGroups}
-            accountUserId={accountUserId}
             userId={userId}
             toggled={includes(memberGroups, groupId)}
-            onEditGroup={EditGroup}
-            onListUsers={list}
+            onEditGroup={onEditGroup}
         />
     );
 
@@ -71,18 +68,13 @@ const UserGroups = ({ accountUserId, allGroups, memberGroups, EditGroup, userId,
 };
 
 const mapStateToProps = state => ({
-    accountUserId: state.account.id,
     allGroups: map(state.groups.list, "id")
 });
 
 const mapDispatchToProps = dispatch => ({
 
-    EditGroup: (userId, groups) => {
+    onEditGroup: (userId, groups) => {
         dispatch(editUser(userId, { groups }));
-    },
-
-    list: () => {
-        dispatch(listUsers(1));
     }
 
 });
