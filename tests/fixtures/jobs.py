@@ -1,5 +1,4 @@
 import pytest
-import virtool.jobs.job
 import virtool.jobs.manager
 
 
@@ -29,7 +28,7 @@ class MockSettings:
 
 
 @pytest.fixture
-def test_job_manager(mocker, dbs):
+def test_job_manager(dbs):
     app = {
         "db": dbs,
         "settings": {}

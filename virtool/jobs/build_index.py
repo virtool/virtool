@@ -1,18 +1,19 @@
 import os
 import pymongo
 
+from virtool.job import Job
+
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.otus
 import virtool.db.sync
 import virtool.errors
 import virtool.history
-import virtool.jobs.job
 import virtool.otus
 import virtool.utils
 
 
-class BuildIndex(virtool.jobs.job.Job):
+class BuildIndex(Job):
     """
     Job object that builds a new Bowtie2 index for a given reference.
 
@@ -21,53 +22,40 @@ class BuildIndex(virtool.jobs.job.Job):
         super().__init__(*args, **kwargs)
 
         self._stage_list = [
-            self.check_db,
             self.mk_index_dir,
             self.write_fasta,
             self.bowtie_build,
             self.replace_old
         ]
 
-        self.index_id = None
-        self.index_path = None
-        self.manifest = None
-        self.ref_id = None
-        self.reference_path = None
-
-    @virtool.jobs.job.stage_method
     def check_db(self):
         """
         Get job information from the database.
 
         """
-        document = self.db.jobs.find_one(self.id)
+        self.params = dict(self.task_args)
 
-        task_args = document["args"]
-
-        self.ref_id = task_args["ref_id"]
-        self.index_id = self.task_args["index_id"]
-        self.manifest = self.task_args["manifest"]
-
-        self.reference_path = os.path.join(
+        self.params["reference_path"] = os.path.join(
             self.settings["data_path"],
             "references",
-            self.ref_id
+            self.params["ref_id"]
         )
 
-        self.index_path = os.path.join(self.reference_path, self.index_id)
+        self. params["index_path"] = os.path.join(
+            self.params["reference_path"],
+            self.params["index_id"]
+        )
 
-    @virtool.jobs.job.stage_method
     def mk_index_dir(self):
         """
         Make dir for the new index at ``<data_path/references/<index_id>``.
 
         """
         try:
-            os.makedirs(self.index_path)
+            os.makedirs(self.params["index_path"])
         except FileExistsError:
             pass
 
-    @virtool.jobs.job.stage_method
     def write_fasta(self):
         """
         Generates a FASTA file of all sequences in the reference database. The FASTA headers are
@@ -76,7 +64,7 @@ class BuildIndex(virtool.jobs.job.Job):
         """
         fasta_dict = dict()
 
-        for patch_id, patch_version in self.manifest.items():
+        for patch_id, patch_version in self.params["manifest"].items():
             document = self.db.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
@@ -97,34 +85,32 @@ class BuildIndex(virtool.jobs.job.Job):
             except TypeError:
                 raise
 
-        fasta_path = os.path.join(self.index_path, "ref.fa")
+        fasta_path = os.path.join(self.params["index_path"], "ref.fa")
 
         write_fasta_dict_to_file(fasta_path, fasta_dict)
 
-    @virtool.jobs.job.stage_method
     def bowtie_build(self):
         """
         Run a standard bowtie-build process using the previously generated FASTA reference.
         The root name for the new reference is 'reference'
 
         """
-        command = (
+        command = [
             "bowtie2-build",
             "-f",
-            os.path.join(self.index_path, "ref.fa"),
-            os.path.join(self.index_path, "reference")
-        )
+            os.path.join(self.params["index_path"], "ref.fa"),
+            os.path.join(self.params["index_path"], "reference")
+        ]
 
         self.run_subprocess(command)
 
-    @virtool.jobs.job.stage_method
     def replace_old(self):
         """
         Replaces the old index with the newly generated one.
 
         """
         # Tell the client the index is ready to be used and to no longer show it as building.
-        document = self.db.indexes.find_one_and_update({"_id": self.index_id}, {
+        document = self.db.indexes.find_one_and_update({"_id": self.params["index_id"]}, {
             "$set": {
                 "ready": True
             }
@@ -132,15 +118,9 @@ class BuildIndex(virtool.jobs.job.Job):
 
         self.dispatch("indexes", "update", virtool.utils.base_processor(document))
 
-        active_indexes = virtool.db.sync.get_active_index_ids(self.db, self.ref_id)
+        active_indexes = virtool.db.sync.get_active_index_ids(self.db, self.params["ref_id"])
 
-        base_path = os.path.join(
-            self.settings["data_path"],
-            "references",
-            self.ref_id
-        )
-
-        remove_unused_index_files(base_path, active_indexes)
+        remove_unused_index_files(self.params["reference_path"], active_indexes)
 
         self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
             "$set": {
@@ -162,7 +142,7 @@ class BuildIndex(virtool.jobs.job.Job):
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]}
             }},
             {"$match": {
-                "reference.id": self.ref_id,
+                "reference.id": self.params["ref_id"],
                 "comp": {"$ne": 0}
             }},
             {"$group": {
@@ -183,21 +163,22 @@ class BuildIndex(virtool.jobs.job.Job):
                 }
             })
 
-    @virtool.jobs.job.stage_method
     def cleanup(self):
         """
         Cleanup if the job fails. Removes the nascent index document and change the *index_id* and *index_version*
         fields all history items being included in the new index to be 'unbuilt'.
 
         """
-        # Remove the index document from the database.
-        self.db.indexes.delete_one({"_id": self.index_id})
+        index_id = self.params["index_id"]
 
-        self.dispatch("indexes", "delete", [self.index_id])
+        # Remove the index document from the database.
+        self.db.indexes.delete_one({"_id": index_id})
+
+        self.dispatch("indexes", "delete", [index_id])
 
         query = {
             "_id": {
-                "$in": self.db.history.distinct("_id", {"index.id": self.index_id})
+                "$in": self.db.history.distinct("_id", {"index.id": index_id})
             }
         }
 
@@ -214,7 +195,7 @@ class BuildIndex(virtool.jobs.job.Job):
         for document in self.db.history.find(query):
             self.dispatch("history", "update", document)
 
-        virtool.utils.rm(self.index_path, True)
+        virtool.utils.rm(self.params["index_path"], True)
 
 
 def remove_unused_index_files(base_path, retained):

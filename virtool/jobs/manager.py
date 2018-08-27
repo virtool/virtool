@@ -8,7 +8,6 @@ import virtool.db.jobs
 import virtool.db.utils
 import virtool.errors
 import virtool.jobs.classes
-import virtool.jobs.job
 import virtool.utils
 
 
@@ -34,6 +33,8 @@ class IntegratedManager:
         self.dbi = app["db"]
 
         self.db_connection_string = app["db_connection_string"]
+
+        self.db_name = app["db_name"]
 
         self.process_executor = app["process_executor"]
 
@@ -61,6 +62,7 @@ class IntegratedManager:
                             if job["proc"] <= available["proc"] and job["mem"] <= available["mem"]:
                                 job["process"] = job["class"](
                                     self.db_connection_string,
+                                    self.db_name,
                                     self.settings.as_dict(),
                                     job_id,
                                     self.queue

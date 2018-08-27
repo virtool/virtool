@@ -1,7 +1,6 @@
 import pytest
 
 import virtool.db.jobs
-import virtool.jobs.job
 
 
 def test_processor(test_job, static_time):

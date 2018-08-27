@@ -7,7 +7,7 @@ import virtool.db.samples
 import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
-import virtool.jobs.analysis
+import virtool.jobs.pathoscope_bowtie
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
@@ -367,10 +367,15 @@ async def find_analyses(req):
     if term:
         db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
 
+    base_query = {
+        "sample.id": sample_id
+    }
+
     data = await paginate(
         db.analyses,
         db_query,
         req.query,
+        base_query=base_query,
         projection=virtool.db.analyses.PROJECTION,
         sort=[("created_at", -1)]
     )
