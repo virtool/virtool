@@ -5,7 +5,6 @@ import shutil
 import pytest
 import filecmp
 
-import virtool.jobs.job
 import virtool.jobs.pathoscope_bowtie
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")

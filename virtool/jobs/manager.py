@@ -8,7 +8,6 @@ import virtool.db.jobs
 import virtool.db.utils
 import virtool.errors
 import virtool.jobs.classes
-import virtool.jobs.job
 import virtool.utils
 
 
