@@ -83,6 +83,7 @@ def mock_job(loop, tmpdir, mocker, dbs, test_db_name, otu_resource):
 
     job = virtool.jobs.pathoscope_bowtie.PathoscopeBowtie(
         "mongodb://localhost:27017",
+        test_db_name,
         settings,
         "foobar",
         queue
@@ -99,10 +100,6 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     Check that the method assigns various job attributes based on information from the database.
 
     """
-    assert mock_job.sample is None
-    assert mock_job.read_paths is None
-    assert mock_job.subtraction is None
-
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": paired,
@@ -120,31 +117,20 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
 
     mock_job.check_db()
 
-    assert mock_job.sample == {
-        "_id": "foobar",
-        "paired": paired,
-        "subtraction": {
-            "id": "Arabidopsis thaliana"
-        },
-        "quality": {
-            "count": 1337
-        }
-    }
+    sample_path = os.path.join(tmpdir, "samples", "foobar")
 
-    assert mock_job.subtraction == {
-        "_id": "Arabidopsis thaliana"
-    }
-
-    assert mock_job.read_count == 1337
+    assert mock_job.params["read_count"] == 1337
 
     expected_read_filenames = ["reads_1.fastq"]
 
     if paired:
         expected_read_filenames.append("reads_2.fastq")
 
-    assert mock_job.read_paths == [os.path.join(mock_job.sample_path, filename) for filename in expected_read_filenames]
+    assert mock_job.params["read_paths"] == [
+        os.path.join(sample_path, filename) for filename in expected_read_filenames
+    ]
 
-    assert mock_job.subtraction_path == os.path.join(
+    assert mock_job.params["subtraction_path"] == os.path.join(
         str(tmpdir),
         "subtractions",
         "arabidopsis_thaliana",
@@ -166,11 +152,11 @@ def test_mk_analysis_dir(dbs, mock_job):
 
     mock_job.check_db()
 
-    assert not os.path.isdir(mock_job.analysis_path)
+    assert not os.path.isdir(mock_job.params["analysis_path"])
 
     mock_job.mk_analysis_dir()
 
-    assert os.path.isdir(mock_job.analysis_path)
+    assert os.path.isdir(mock_job.params["analysis_path"])
 
 
 def test_map_otus(tmpdir, dbs, mock_job):
@@ -187,9 +173,9 @@ def test_map_otus(tmpdir, dbs, mock_job):
 
     mock_job.check_db()
 
-    os.makedirs(mock_job.analysis_path)
+    os.makedirs(mock_job.params["analysis_path"])
 
-    mock_job.read_paths = [
+    mock_job.params["read_paths"] = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
@@ -230,9 +216,9 @@ def test_map_isolates(tmpdir, dbs, mock_job):
 
     mock_job.check_db()
 
-    os.makedirs(mock_job.analysis_path)
+    os.makedirs(mock_job.params["analysis_path"])
 
-    mock_job.read_paths = [
+    mock_job.params["read_paths"] = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
@@ -249,7 +235,7 @@ def test_map_isolates(tmpdir, dbs, mock_job):
 
     mock_job.map_isolates()
 
-    vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
+    vta_path = os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
 
     with open(vta_path, "r") as f:
         observed = {line.rstrip() for line in f}
@@ -275,11 +261,11 @@ def test_map_subtraction(dbs, mock_job):
     mock_job.check_db()
 
     mock_job.proc = 2
-    mock_job.subtraction_path = HOST_PATH
+    mock_job.params["subtraction_path"] = HOST_PATH
 
-    os.makedirs(mock_job.analysis_path)
+    os.makedirs(mock_job.params["analysis_path"])
 
-    shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.analysis_path, "mapped.fastq"))
+    shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.params["analysis_path"], "mapped.fastq"))
 
     mock_job.map_subtraction()
 
@@ -301,12 +287,12 @@ def test_subtract_mapping(dbs, mock_job):
 
     mock_job.check_db()
 
-    os.makedirs(mock_job.analysis_path)
+    os.makedirs(mock_job.params["analysis_path"])
 
     with open(TO_SUBTRACTION_PATH, "r") as handle:
         mock_job.intermediate["to_subtraction"] = json.load(handle)
 
-    shutil.copyfile(VTA_PATH, os.path.join(mock_job.analysis_path, "to_isolates.vta"))
+    shutil.copyfile(VTA_PATH, os.path.join(mock_job.params["analysis_path"], "to_isolates.vta"))
 
     mock_job.subtract_mapping()
 
@@ -327,17 +313,17 @@ def test_pathoscope(dbs, mock_job):
 
     mock_job.check_db()
 
-    os.makedirs(mock_job.analysis_path)
+    os.makedirs(mock_job.params["analysis_path"])
 
     with open(REF_LENGTHS_PATH, "r") as handle:
         mock_job.intermediate["ref_lengths"] = json.load(handle)
 
     shutil.copyfile(
         VTA_PATH,
-        os.path.join(mock_job.analysis_path, "to_isolates.vta")
+        os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
     )
 
-    mock_job.sequence_otu_map = {
+    mock_job.intermediate["sequence_otu_map"] = {
         "NC_016509": "foobar",
         "NC_001948": "foobar",
         "13TF149_Reovirus_TF1_Seg06": "reo",
@@ -365,7 +351,7 @@ def test_pathoscope(dbs, mock_job):
         "NC_007448": "foobar"
     }
 
-    mock_job.otu_dict = {
+    mock_job.intermediate["otu_dict"] = {
         "foobar": {
             "name": "Foobar",
             "version": 10
@@ -384,13 +370,13 @@ def test_pathoscope(dbs, mock_job):
 
     # Check that a new VTA is written.
     assert filecmp.cmp(
-        os.path.join(mock_job.analysis_path, "reassigned.vta"),
+        os.path.join(mock_job.params["analysis_path"], "reassigned.vta"),
         UPDATED_VTA_PATH
     )
 
     # Check that the correct report.tsv file is written.
     assert filecmp.cmp(
-        os.path.join(mock_job.analysis_path, "report.tsv"),
+        os.path.join(mock_job.params["analysis_path"], "report.tsv"),
         TSV_PATH
     )
 
