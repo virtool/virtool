@@ -85,10 +85,12 @@ class CreateSample(Job):
 
         try:
             os.makedirs(self.params["analysis_path"])
+            os.makedirs(self.params["fastqc_path"])
         except OSError:
             # If the path already exists, remove it and try again.
             shutil.rmtree(self.params["sample_path"])
             os.makedirs(self.params["analysis_path"])
+            os.makedirs(self.params["fastqc_path"])
 
     def trim_reads(self):
         """
