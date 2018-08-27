@@ -8,7 +8,7 @@ import Resources from "../../administration/components/Jobs/Resources";
 import Tasks from "../../administration/components/Jobs/Tasks";
 import { LoadingPlaceholder } from "../../base";
 
-const JobsSettings = () => (
+export const JobsSettings = () => (
     <div className="settings-container">
         <h3 className="view-header">
             <strong>
