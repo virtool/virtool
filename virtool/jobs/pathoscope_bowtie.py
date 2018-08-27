@@ -90,7 +90,7 @@ class PathoscopeBowtie(job.Job):
         # Get the complete sample document from the database.
         sample = self.db.samples.find_one(self.params["sample_id"])
 
-        read_paths = [os.path.join(self.params["sample_path"], "reads_1.fastq")]
+        read_paths = [os.path.join(sample_path, "reads_1.fastq")]
 
         paired = sample.get("paired", None)
 
@@ -98,7 +98,7 @@ class PathoscopeBowtie(job.Job):
             paired = len(sample["files"]) == 2
 
         if paired:
-            read_paths.append(os.path.join(self.params["sample_path"], "reads_2.fastq"))
+            read_paths.append(os.path.join(sample_path, "reads_2.fastq"))
 
         self.params.update({
             "paired": paired,
