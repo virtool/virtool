@@ -367,10 +367,15 @@ async def find_analyses(req):
     if term:
         db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
 
+    base_query = {
+        "sample.id": sample_id
+    }
+
     data = await paginate(
         db.analyses,
         db_query,
         req.query,
+        base_query=base_query,
         projection=virtool.db.analyses.PROJECTION,
         sort=[("created_at", -1)]
     )
