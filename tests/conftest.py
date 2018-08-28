@@ -7,7 +7,6 @@ from tests.fixtures.groups import *
 from tests.fixtures.history import *
 from tests.fixtures.indexes import *
 from tests.fixtures.jobs import *
-from tests.fixtures.nv import *
 from tests.fixtures.references import *
 from tests.fixtures.response import *
 from tests.fixtures.users import *
