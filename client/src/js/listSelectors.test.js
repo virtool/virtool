@@ -1,6 +1,5 @@
 import {
     filesSelector,
-    jobsSelector,
     otusSelector,
     subtractionsSelector,
     usersSelector
@@ -9,7 +8,6 @@ import {
 describe("Selectors tests", () => {
     const state = {
         files: { documents: [{ id: "foo" }, { id: "fud" }] },
-        jobs: { documents: [{ id: "bar" }, { id: "baz" }] },
         otus: { documents: [{ id: "qux" }, { id: "quark" }] },
         subtraction: { documents: [{ id: "hello" }, { id: "world" }] },
         users: {
@@ -26,12 +24,6 @@ describe("Selectors tests", () => {
     it("filesSelector: returns data used to render a list of files", () => {
         result = filesSelector(state);
         expected = ["foo", "fud"];
-        expect(result).toEqual(expected);
-    });
-
-    it("jobsSelector: returns data used to render a list of jobs", () => {
-        result = jobsSelector(state);
-        expected = ["bar", "baz"];
         expect(result).toEqual(expected);
     });
 
