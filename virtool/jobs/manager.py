@@ -88,7 +88,11 @@ class IntegratedManager:
             logging.debug("Cancelling running jobs")
 
             for job_id in self._jobs:
-                self._jobs[job_id]["process"].terminate()
+                job_process = self._jobs[job_id]["process"]
+
+                if job_process.is_alive():
+                    job_process.terminate()
+
 
         logging.debug("Closed job manager")
 
@@ -120,6 +124,7 @@ class IntegratedManager:
             if job["process"] and job["process"].is_alive():
                 job["process"].terminate()
             else:
+                await virtool.db.jobs.cancel(self.dbi, job_id)
                 del self._jobs[job_id]
 
 
