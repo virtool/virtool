@@ -24,8 +24,6 @@ class IntegratedManager:
 
         self.queue = multiprocessing.Queue()
 
-        self.scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
         #: The application IO loop
         self.loop = app.loop
 
