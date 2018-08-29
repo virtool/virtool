@@ -290,6 +290,9 @@ async def on_shutdown(app):
     app["executor"].shutdown(wait=True)
     app["process_executor"].shutdown(wait=True)
 
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+    await scheduler.close()
+
 
 def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, disable_refreshing=False,
                force_version=None, ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
