@@ -19,6 +19,24 @@ PROJECTION = [
 ]
 
 
+async def cancel(db, job_id):
+    document = await db.jobs.find_one(job_id, ["status"])
+
+    latest = document["status"][-1]
+
+    await db.jobs.update_one({"_id": job_id}, {
+        "$push": {
+            "status": {
+                "state": "cancelled",
+                "stage": latest["stage"],
+                "error": None,
+                "progress": latest["progress"],
+                "timestamp": virtool.utils.timestamp()
+            }
+        }
+    })
+
+
 async def clear(db, complete=False, failed=False):
     or_list = list()
 
