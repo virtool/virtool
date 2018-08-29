@@ -12,8 +12,8 @@ def parse_value(value):
 
 
 @web.middleware
-def middleware(req, handler):
+async def middleware(req, handler):
     if req.method == "GET":
         req["query"] = {key: parse_value(value) for key, value in req.query.items()}
 
-    return handler(req)
+    return await handler(req)
