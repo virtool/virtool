@@ -19,6 +19,7 @@ def test_create_sample_job(mocker, tmpdir, loop, dbi, dbs, test_db_name):
 
     job = virtool.jobs.create_sample.CreateSample(
         "mongodb://localhost:27017",
+        test_db_name,
         settings,
         "foobar",
         q
@@ -64,7 +65,7 @@ def test_make_sample_dir(exists, tmpdir, test_create_sample_job):
     test_create_sample_job.make_sample_dir()
 
     assert os.listdir(samples_path) == ["baz"]
-    assert os.listdir(sample_path) == ["analysis"]
+    assert os.listdir(sample_path) == ["analysis", "fastqc"]
 
 
 @pytest.mark.parametrize("paired", [True, False])

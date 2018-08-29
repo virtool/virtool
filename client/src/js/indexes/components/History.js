@@ -6,20 +6,20 @@ import { LoadingPlaceholder } from "../../base";
 
 export default function RebuildHistory ({ unbuilt, error }) {
 
-    const extraChanges = unbuilt.page_count > 1
-        ? (
-            <ListGroupItem key="last-item">
-                <div style={{textAlign: "right"}}>
-                    + {unbuilt.total_count - unbuilt.per_page} more changes
-                </div>
-            </ListGroupItem>
-        ) : null;
-
     let content;
 
     if (unbuilt === null) {
         content = <LoadingPlaceholder margin="22px" />;
     } else {
+        const extraChanges = unbuilt.page_count > 1
+            ? (
+                <ListGroupItem key="last-item">
+                    <div style={{textAlign: "right"}}>
+                        + {unbuilt.total_count - unbuilt.per_page} more changes
+                    </div>
+                </ListGroupItem>
+            ) : null;
+
         const historyComponents = map(sortBy(unbuilt.documents, "otu.name"), change =>
             <ListGroupItem key={change.id}>
                 <Row>

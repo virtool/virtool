@@ -124,6 +124,8 @@ class Dispatcher:
         logging.debug("Dispatched {}.{}".format(interface, operation))
 
     async def close(self):
+        logging.debug("Closing dispatcher")
+
         for connection in self.connections:
             await connection.close()
 

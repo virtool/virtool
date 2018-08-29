@@ -12,7 +12,7 @@ import { listReadyIndexes } from "../../indexes/actions";
 import { listHmms } from "../../hmm/actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../base/index";
 
-const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
+export const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -23,7 +23,7 @@ const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
                     type="text"
                     value={term}
                     onChange={onFilter}
-                    placeholder="Index"
+                    placeholder="User or reference"
                 />
             </InputGroup>
         </FormGroup>
@@ -37,7 +37,7 @@ const AnalysesToolbar = ({ term, onFilter, onClick, isDisabled }) => (
     </div>
 );
 
-class AnalysesList extends React.Component {
+export class AnalysesList extends React.Component {
 
     constructor (props) {
         super(props);
@@ -66,7 +66,7 @@ class AnalysesList extends React.Component {
 
         if (this.props.analyses.length) {
             // The components that detail individual analyses.
-            listContent = map(sortBy(this.props.analyses, "timestamp").reverse(), (document, index) =>
+            listContent = map(sortBy(this.props.analyses, "created_at").reverse(), (document, index) =>
                 <AnalysisItem key={index} {...document} />
             );
         } else {

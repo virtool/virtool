@@ -8,7 +8,6 @@ import virtool.db.jobs
 import virtool.db.utils
 import virtool.errors
 import virtool.jobs.classes
-import virtool.jobs.job
 import virtool.utils
 
 
@@ -25,8 +24,6 @@ class IntegratedManager:
 
         self.queue = multiprocessing.Queue()
 
-        self.scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
         #: The application IO loop
         self.loop = app.loop
 
@@ -34,6 +31,8 @@ class IntegratedManager:
         self.dbi = app["db"]
 
         self.db_connection_string = app["db_connection_string"]
+
+        self.db_name = app["db_name"]
 
         self.process_executor = app["process_executor"]
 
@@ -61,6 +60,7 @@ class IntegratedManager:
                             if job["proc"] <= available["proc"] and job["mem"] <= available["mem"]:
                                 job["process"] = job["class"](
                                     self.db_connection_string,
+                                    self.db_name,
                                     self.settings.as_dict(),
                                     job_id,
                                     self.queue
@@ -86,7 +86,11 @@ class IntegratedManager:
             logging.debug("Cancelling running jobs")
 
             for job_id in self._jobs:
-                self._jobs[job_id]["process"].terminate()
+                job_process = self._jobs[job_id]["process"]
+
+                if job_process.is_alive():
+                    job_process.terminate()
+
 
         logging.debug("Closed job manager")
 
@@ -118,6 +122,7 @@ class IntegratedManager:
             if job["process"] and job["process"].is_alive():
                 job["process"].terminate()
             else:
+                await virtool.db.jobs.cancel(self.dbi, job_id)
                 del self._jobs[job_id]
 
 

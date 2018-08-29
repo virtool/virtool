@@ -5,7 +5,7 @@ export const findAnalyses = ({ sampleId }) => (
 );
 
 export const filter = ({ sampleId, term }) => (
-    Request.get(`/api/samples/${sampleId}/analyses?find=${term}`)
+    Request.get(`/api/samples/${sampleId}/analyses?term=${term}`)
 );
 
 export const getAnalysis = ({ analysisId }) => (

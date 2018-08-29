@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobError /> renders correctly with error details 1`] = `
+<Alert
+  bsStyle="danger"
+>
+  <div>
+    Traceback (most recent call last):
+  </div>
+  <div
+    className="traceback-line"
+    key="0"
+  >
+    line one
+  </div>
+  <div
+    className="traceback-line"
+    key="1"
+  >
+    line two
+  </div>
+  <div
+    className="traceback-line"
+    key="2"
+  >
+    line three
+  </div>
+  <p>
+    TestErrorWithStackTrace
+    <span
+      style={
+        Object {
+          "display": "inline-block",
+          "wordBreak": "break-word",
+        }
+      }
+    >
+      : 
+      test error details
+    </span>
+  </p>
+</Alert>
+`;
+
+exports[`<JobError /> renders correctly without error details 1`] = `
+<Alert
+  bsStyle="danger"
+>
+  <div>
+    Traceback (most recent call last):
+  </div>
+  <p>
+    TestErrorWithoutStackTrace
+  </p>
+</Alert>
+`;

@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobSteps /> renders correctly 1`] = `
+<div
+  className="steps-container"
+>
+  <JobStep
+    isDone={true}
+    key="0"
+    step="one"
+  />
+  <JobStep
+    isDone={true}
+    key="1"
+    step="two"
+  />
+  <JobStep
+    isDone={false}
+    key="2"
+    step="three"
+  />
+</div>
+`;

@@ -2,7 +2,6 @@ import os
 
 import virtool.db.jobs
 import virtool.http.routes
-import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.resources
 import virtool.utils

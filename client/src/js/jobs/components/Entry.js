@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { capitalize, get } from "lodash-es";
+import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
@@ -12,8 +12,12 @@ import { cancelJob, removeJob } from "../actions";
 export class JobEntry extends React.Component {
 
     static propTypes = {
-        index: PropTypes.number,
-        entry: PropTypes.object,
+        id: PropTypes.string.isRequired,
+        task: PropTypes.string.isRequired,
+        state: PropTypes.string.isRequired,
+        progress: PropTypes.number.isRequired,
+        created_at: PropTypes.string.isRequired,
+        user: PropTypes.object.isRequired,
         onNavigate: PropTypes.func,
         onCancel: PropTypes.func,
         onRemove: PropTypes.func,
@@ -23,17 +27,17 @@ export class JobEntry extends React.Component {
 
     handleCancel = (e) => {
         e.stopPropagation();
-        this.props.onCancel(this.props.entry.id);
+        this.props.onCancel(this.props.id);
     };
 
     handleNavigate = (e) => {
         e.stopPropagation();
-        this.props.onNavigate(this.props.entry.id);
+        this.props.onNavigate(this.props.id);
     };
 
     handleRemove = (e) => {
         e.stopPropagation();
-        this.props.onRemove(this.props.entry.id);
+        this.props.onRemove(this.props.id);
     };
 
     render () {
@@ -41,8 +45,7 @@ export class JobEntry extends React.Component {
         let actionIcon;
         let statusIcon;
 
-        if ((this.props.entry.state === "waiting" || this.props.entry.state === "running")
-            && this.props.canCancel) {
+        if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
             actionIcon = (
                 <Icon
                     bsStyle="danger"
@@ -65,20 +68,20 @@ export class JobEntry extends React.Component {
                 />
             );
 
-            statusIcon = this.props.entry.state === "complete"
+            statusIcon = this.props.state === "complete"
                 ? (<Icon name="check fa-fw" bsStyle="success" />)
                 : (<Icon name="times fa-fw" bsStyle="danger" />);
         }
 
         let progressStyle = "success";
 
-        const progressValue = this.props.entry.progress * 100;
+        const progressValue = this.props.progress * 100;
 
-        if (this.props.entry.state === "running") {
+        if (this.props.state === "running") {
             progressStyle = "warning";
         }
 
-        if (this.props.entry.state === "error" || this.props.entry.state === "cancelled") {
+        if (this.props.state === "error" || this.props.state === "cancelled") {
             progressStyle = "danger";
         }
 
@@ -93,10 +96,10 @@ export class JobEntry extends React.Component {
 
                 <Row>
                     <Col xs={6} sm={4} md={4}>
-                        <strong>{getTaskDisplayName(this.props.entry.task)}</strong>
+                        <strong>{getTaskDisplayName(this.props.task)}</strong>
                     </Col>
                     <Col xs={5} sm={5} md={5}>
-                        Started <RelativeTime time={this.props.entry.created_at} /> by {this.props.entry.user.id}
+                        Started <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
                     </Col>
                     <Col xsHidden sm={2} md={2}>
                         <Flex justifyContent="flex-end">
@@ -105,7 +108,7 @@ export class JobEntry extends React.Component {
                             </FlexItem>
                             <FlexItem pad>
                                 <strong>
-                                    {capitalize(this.props.entry.state)}
+                                    {capitalize(this.props.state)}
                                 </strong>
                             </FlexItem>
                         </Flex>
@@ -118,10 +121,6 @@ export class JobEntry extends React.Component {
         );
     }
 }
-
-const mapStateToProps = (state, props) => ({
-    entry: get(state, `jobs.documents[${props.index}]`, null)
-});
 
 const mapDispatchToProps = (dispatch) => ({
 
@@ -138,4 +137,4 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobEntry);
+export default connect(null, mapDispatchToProps)(JobEntry);

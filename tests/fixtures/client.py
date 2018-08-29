@@ -52,7 +52,7 @@ class VTClient:
                 "_id": "foobar",
                 "ip": "127.0.0.1",
                 "administrator": administrator,
-                "user_agent": "Python/3.6 aiohttp/3.3.2",
+                "user_agent": "Python/3.6 aiohttp/3.4.1",
                 "user": {
                     "id": "test"
                 },

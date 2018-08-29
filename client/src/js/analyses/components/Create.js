@@ -5,7 +5,7 @@ import { Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../base/index";
 import { getTaskDisplayName } from "../../utils";
 
-const IndexSelect = ({ indexes, onSelect, selected, error }) => {
+export const IndexSelect = ({ indexes, onSelect, selected, error }) => {
 
     const errorStyle = error.length ? {border: "1px solid #d44b40"} : {border: "1px solid transparent"};
 

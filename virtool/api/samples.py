@@ -7,7 +7,7 @@ import virtool.db.samples
 import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
-import virtool.jobs.analysis
+import virtool.jobs.pathoscope_bowtie
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
@@ -342,7 +342,7 @@ async def remove(req):
 
 
 @routes.get("/api/samples/{sample_id}/analyses")
-async def list_analyses(req):
+async def find_analyses(req):
     """
     List the analyses associated with the given ``sample_id``.
 
@@ -360,14 +360,27 @@ async def list_analyses(req):
 
         raise
 
-    analysis_cursor = db.analyses.find({"sample.id": sample_id}, virtool.db.analyses.PROJECTION)
+    term = req.query.get("term", None)
 
-    documents = [virtool.utils.base_processor(d) async for d in analysis_cursor]
+    db_query = dict()
 
-    return json_response({
-        "total_count": len(documents),
-        "documents": documents
-    })
+    if term:
+        db_query.update(compose_regex_query(term, ["reference.name", "user.id"]))
+
+    base_query = {
+        "sample.id": sample_id
+    }
+
+    data = await paginate(
+        db.analyses,
+        db_query,
+        req.query,
+        base_query=base_query,
+        projection=virtool.db.analyses.PROJECTION,
+        sort=[("created_at", -1)]
+    )
+
+    return json_response(data)
 
 
 @routes.post("/api/samples/{sample_id}/analyses", schema={

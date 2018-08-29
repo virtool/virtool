@@ -1,0 +1,105 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobStep /> renders Cancelled step 1`] = `
+<div
+  className="step-entry"
+>
+  <div
+    className="step-entry-icon"
+  >
+    <Icon
+      bsStyle="danger"
+      faStyle="fas"
+      fixedWidth={false}
+      name="times fa-fw"
+      pullRight={false}
+    />
+  </div>
+  <div
+    className="step-entry-content"
+  >
+    Test
+  </div>
+  <div
+    className="step-entry-nobar"
+  />
+</div>
+`;
+
+exports[`<JobStep /> renders Complete step 1`] = `
+<div
+  className="step-entry"
+>
+  <div
+    className="step-entry-icon"
+  >
+    <Icon
+      bsStyle="success"
+      faStyle="fas"
+      fixedWidth={false}
+      name="check fa-fw"
+      pullRight={false}
+    />
+  </div>
+  <div
+    className="step-entry-content"
+  >
+    Test
+  </div>
+  <div
+    className="step-entry-nobar"
+  />
+</div>
+`;
+
+exports[`<JobStep /> renders Error step 1`] = `
+<div
+  className="step-entry"
+>
+  <div
+    className="step-entry-icon"
+  >
+    <Icon
+      bsStyle="danger"
+      faStyle="fas"
+      fixedWidth={false}
+      name="times fa-fw"
+      pullRight={false}
+    />
+  </div>
+  <div
+    className="step-entry-content"
+  >
+    Test
+  </div>
+  <div
+    className="step-entry-nobar"
+  />
+</div>
+`;
+
+exports[`<JobStep /> renders Running step 1`] = `
+<div
+  className="step-entry"
+>
+  <div
+    className="step-entry-icon"
+  >
+    <Icon
+      bsStyle="success"
+      faStyle="fas"
+      fixedWidth={false}
+      name="check fa-fw"
+      pullRight={false}
+    />
+  </div>
+  <div
+    className="step-entry-content"
+  >
+    Test
+  </div>
+  <div
+    className="step-entry-bar-success"
+  />
+</div>
+`;
