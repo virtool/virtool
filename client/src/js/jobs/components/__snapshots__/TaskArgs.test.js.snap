@@ -11,10 +11,14 @@ exports[`<TaskArgs /> renders nuvs job 1`] = `
 >
   <tbody>
     <tr>
-      <th>
+      <th
+        className="col-xs-4"
+      >
         Sample
       </th>
-      <td>
+      <td
+        className="col-xs-8"
+      >
         <Link
           replace={false}
           to="/samples/123abc"
@@ -99,10 +103,14 @@ exports[`<TaskArgs /> renders pathoscope_bowtie job 1`] = `
 >
   <tbody>
     <tr>
-      <th>
+      <th
+        className="col-xs-4"
+      >
         Sample
       </th>
-      <td>
+      <td
+        className="col-xs-8"
+      >
         <Link
           replace={false}
           to="/samples/456def"
