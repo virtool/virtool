@@ -1,0 +1,97 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ManageUsers /> renders correctly 1`] = `
+<div>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={12}
+    >
+      <div
+        className="toolbar"
+      >
+        <FormGroup
+          bsClass="form-group"
+        >
+          <InputGroup
+            bsClass="input-group"
+          >
+            <InputGroupAddon
+              bsClass="input-group-addon"
+            >
+              <Icon
+                faStyle="fas"
+                fixedWidth={false}
+                name="search"
+                pullRight={false}
+              />
+            </InputGroupAddon>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              onChange={[Function]}
+              type="text"
+              value="test"
+            />
+          </InputGroup>
+        </FormGroup>
+        <LinkContainer
+          activeClassName="active"
+          exact={false}
+          replace={false}
+          strict={false}
+          to={
+            Object {
+              "state": Object {
+                "groups": true,
+              },
+            }
+          }
+        >
+          <Button
+            bsStyle="default"
+            icon="users"
+            pullRight={false}
+            tip="Manage Groups"
+            tipPlacement="top"
+          />
+        </LinkContainer>
+        <LinkContainer
+          activeClassName="active"
+          exact={false}
+          replace={false}
+          strict={false}
+          to={
+            Object {
+              "state": Object {
+                "createUser": true,
+              },
+            }
+          }
+        >
+          <Button
+            bsStyle="primary"
+            icon="user-plus"
+            pullRight={false}
+            tip="Create User"
+            tipPlacement="top"
+          />
+        </LinkContainer>
+      </div>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={12}
+    >
+      <Connect(UsersList) />
+    </Col>
+  </Row>
+  <Connect(CreateUser) />
+  <Connect(Groups) />
+</div>
+`;
