@@ -9,7 +9,7 @@ import { checkAdminOrPermission } from "../../utils";
 import { subtractionsSelector } from "../../listSelectors";
 import { filterSubtractions, listSubtractions } from "../actions";
 
-class SubtractionList extends React.Component {
+export class SubtractionList extends React.Component {
 
     componentDidMount () {
         if (!this.props.fetched) {

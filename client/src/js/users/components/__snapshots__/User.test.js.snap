@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UserItem /> renders correctly 1`] = `
+<div>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="space-between"
+    wrap="nowrap"
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="center"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <Identicon
+        hash="randomhashof15c"
+        size={64}
+      />
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        pad={10}
+        shrink={1}
+      >
+        <h5>
+          <strong />
+        </h5>
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        pad={10}
+        shrink={1}
+      />
+    </Flex>
+    <Flex
+      alignContent="stretch"
+      alignItems="center"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={1}
+      >
+        <Link
+          replace={false}
+          to="/administration/users"
+        >
+          Back To List
+        </Link>
+      </FlexItem>
+    </Flex>
+  </Flex>
+  <div
+    style={
+      Object {
+        "marginTop": "20px",
+      }
+    }
+  >
+    <label>
+      Change Password
+    </label>
+    <Connect(Password)
+      activeUser="test-user"
+      activeUserIsAdmin={true}
+      detail={
+        Object {
+          "identicon": "randomhashof15c",
+        }
+      }
+      error=""
+      groups={Array []}
+      groupsFetched={true}
+      match={
+        Object {
+          "params": Object {
+            "userId": "test-user",
+          },
+        }
+      }
+      onClose={[MockFunction]}
+      onGetUser={
+        [MockFunction] {
+          "calls": Array [
+            Array [
+              "test-user",
+            ],
+          ],
+          "results": Array [
+            Object {
+              "isThrow": false,
+              "value": undefined,
+            },
+          ],
+        }
+      }
+      onListGroups={[MockFunction]}
+      onRemoveUser={[MockFunction]}
+      onSetPrimaryGroup={[MockFunction]}
+      onSetUserRole={[MockFunction]}
+    />
+    <label>
+      Groups
+    </label>
+    <Connect(UserGroups) />
+    <label>
+      Primary Group
+    </label>
+    <InputError
+      onChange={[Function]}
+      type="select"
+    >
+      <option
+        key="none"
+        value="none"
+      >
+        None
+      </option>
+    </InputError>
+    <Flex
+      alignContent="stretch"
+      alignItems="center"
+      direction="row"
+      justifyContent="space-between"
+      wrap="nowrap"
+    >
+      <label>
+        Permissions
+      </label>
+      <small
+        className="text-muted"
+      >
+        Change group membership to modify permissions
+      </small>
+    </Flex>
+    <UserPermissions />
+    <label>
+      User Role
+    </label>
+    <InputError
+      onChange={[Function]}
+      type="select"
+      value="Limited"
+    >
+      <option
+        key="admin"
+        value="Administrator"
+      >
+        Administrator
+      </option>
+      <option
+        key="limit"
+        value="Limited"
+      >
+        Limited
+      </option>
+    </InputError>
+    <RemoveBanner
+      buttonText="Delete"
+      message="Click the Delete button to permanently remove this user."
+      onClick={[Function]}
+    />
+  </div>
+</div>
+`;

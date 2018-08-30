@@ -11,7 +11,7 @@ import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
 import { routerLocationHasState, getTargetChange } from "../../utils";
 
-class SubtractionFileItem extends React.Component {
+export class SubtractionFileItem extends React.Component {
 
     handleClick = () => {
         this.props.onClick(this.props.id);
@@ -44,7 +44,7 @@ const getInitialState = () => ({
     errorFile: ""
 });
 
-class CreateSubtraction extends React.Component {
+export class CreateSubtraction extends React.Component {
 
     constructor (props) {
         super(props);
