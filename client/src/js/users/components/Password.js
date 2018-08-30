@@ -21,10 +21,10 @@ const getInitialState = (props) => ({
     password: "",
     confirm: "",
     errors: [],
-    lastPasswordChange: props.last_password_change
+    lastPasswordChange: props.detail.last_password_change
 });
 
-class Password extends React.Component {
+export class Password extends React.Component {
 
     constructor (props) {
         super(props);
@@ -60,7 +60,7 @@ class Password extends React.Component {
     };
 
     handleSetForceReset = () => {
-        this.props.onSetForceReset(this.props.id, !this.props.force_reset);
+        this.props.onSetForceReset(this.props.detail.id, !this.props.detail.force_reset);
     };
 
     handleSubmit = (e) => {
