@@ -1,0 +1,180 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateSubtraction /> renders <SubtractionFileItem /> subcomponent 1`] = `
+<ListGroupItem
+  active={true}
+  allowFocus={false}
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={7}
+    >
+      <strong>
+        test
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={5}
+    >
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      test-user
+    </Col>
+  </Row>
+</ListGroupItem>
+`;
+
+exports[`<CreateSubtraction /> renders correctly 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  bsSize="large"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onEnter={[Function]}
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    Create Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+      style={
+        Object {
+          "margin": "0 0 10px 0",
+        }
+      }
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={12}
+        >
+          <InputError
+            error=""
+            label="Unique Name"
+            name="subtractionId"
+            onChange={[Function]}
+            type="text"
+            value=""
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={12}
+        >
+          <InputError
+            label="Nickname"
+            name="nickname"
+            onChange={[Function]}
+            type="text"
+            value=""
+          />
+        </Col>
+      </Row>
+      <h5>
+        <strong>
+          Files
+        </strong>
+      </h5>
+      <ListGroup
+        bsClass="list-group"
+        className="panel-list-custom"
+      >
+        <ListGroupItem
+          allowFocus={false}
+          className="text-center"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="info-circle"
+            pullRight={false}
+          />
+           No files found. 
+          <Link
+            replace={false}
+            to="/subtraction/files"
+          >
+            Upload some
+          </Link>
+          .
+        </ListGroupItem>
+      </ListGroup>
+      <div
+        className="input-form-error-none"
+        style={
+          Object {
+            "margin": "3px 0 0 0",
+          }
+        }
+      >
+        None
+      </div>
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      className="modal-footer"
+      componentClass="div"
+    >
+      <Button
+        bsStyle="primary"
+        icon="play"
+        pullRight={true}
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </ModalFooter>
+  </form>
+</Modal>
+`;
