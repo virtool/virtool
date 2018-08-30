@@ -1,0 +1,112 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<EditSubtraction /> renders correctly 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[MockFunction]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+  >
+    Edit Subtraction
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+      style={
+        Object {
+          "margin": "0 0 10px 0",
+        }
+      }
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={12}
+        >
+          <InputError
+            label="Unique Name"
+            readOnly={true}
+            type="text"
+            value="123abc"
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={12}
+        >
+          <InputError
+            label="Nickname"
+            onChange={[Function]}
+            type="text"
+            value="test-nickname"
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={12}
+        >
+          <InputError
+            label="File"
+            readOnly={true}
+            type="text"
+            value="test-file"
+          />
+        </Col>
+      </Row>
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      className="modal-footer"
+      componentClass="div"
+    >
+      <SaveButton
+        pullRight={true}
+      />
+    </ModalFooter>
+  </form>
+</Modal>
+`;
