@@ -26,17 +26,11 @@ describe("<TaskField />", () => {
     });
 
     it("componentDidUpdate: change in props.value updates state", () => {
-        spy = sinon.spy(TaskField.prototype, "componentDidUpdate");
-        expect(spy.called).toBe(false);
-
         wrapper = shallow(<TaskField value={1} />);
         expect(wrapper.state()).toEqual({ value: 1, pending: false });
 
         wrapper.setProps({ value: 6 });
-        expect(spy.calledOnce).toBe(true);
         expect(wrapper.state()).toEqual({ value: 6, pending: false });
-
-        spy.restore();
     });
 
     it("handleBlur: if pending state is false, reset value; otherwise call props.clear callback", () => {

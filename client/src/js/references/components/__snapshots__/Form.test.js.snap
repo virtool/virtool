@@ -81,6 +81,7 @@ exports[`<ReferenceForm /> renders correctly with errors 1`] = `
         <option
           className="text-capitalize"
           hidden={true}
+          key=""
           value=""
         />
         <option
@@ -169,6 +170,7 @@ exports[`<ReferenceForm /> renders correctly without errors 1`] = `
         <option
           className="text-capitalize"
           hidden={true}
+          key=""
           value=""
         />
         <option

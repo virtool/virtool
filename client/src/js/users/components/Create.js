@@ -60,7 +60,6 @@ export class CreateUser extends React.PureComponent {
         e.preventDefault();
 
         let hasError = false;
-
         if (!this.state.userId) {
             hasError = true;
             this.setState({ errorUserId: "Please specify a username" });
