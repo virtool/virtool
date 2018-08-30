@@ -1,28 +1,41 @@
+import importlib
 from cx_Freeze import setup, Executable
+
+backend_path = importlib.import_module("bcrypt").__path__[0]
+
+backend_path = backend_path.replace("bcrypt", ".libs_cffi_backend")
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 build_exe_options = {
-    "bin_includes": [
-        "libcrypto.so.1.0.0",
-        "libssl.so.1.0.0"
+    "include_files": [
+        ("client/dist", "client"),
+        "LICENSE",
+        "templates",
+        "readme.md",
+        (backend_path, "lib/.libs_cffi_backend")
     ],
     "includes": [
+        "cffi",
         "numpy",
         "numpy.core._methods",
         "numpy.lib",
-        "numpy.lib.format"
+        "numpy.lib.format",
+        "virtool.job",
+        "virtool.nuvs"
+    ],
+    "namespace_packages": [
+        "virtool"
     ],
     "packages": [
         "_cffi_backend",
         "appdirs",
         "asyncio",
         "bcrypt",
-        "encodings",
+        "cffi",
         "idna",
         "motor",
         "packaging",
-        "raven",
         "uvloop"
     ]
 }
@@ -35,4 +48,8 @@ executables = [
     Executable('run.py', base="Console")
 ]
 
+importlib.import_module("virtool")
+
 setup(name='virtool', executables=executables, options=options)
+
+
