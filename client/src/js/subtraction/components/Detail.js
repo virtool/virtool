@@ -14,7 +14,7 @@ import { checkAdminOrPermission } from "../../utils";
 
 const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
-class SubtractionDetail extends React.Component {
+export class SubtractionDetail extends React.Component {
 
     constructor (props) {
         super(props);
