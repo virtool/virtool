@@ -1,6 +1,5 @@
 import React from "react";
 import { connect } from "react-redux";
-
 import { Button } from "../../../base";
 import Chart from "./Chart";
 import Bases from "./Bases";
