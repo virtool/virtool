@@ -49,5 +49,6 @@ six==1.11.0
 uvloop==0.11.2
 virtool.job==0.1.4
 virtool.nuvs==0.1.2
+virtool.pathoscope==0.1.2
 visvalingamwyatt==0.1.2
 yarl==1.2.6

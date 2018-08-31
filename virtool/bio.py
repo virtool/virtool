@@ -9,7 +9,6 @@ import aiohttp
 import virtool.analyses
 import virtool.errors
 import virtool.http.proxy
-import virtool.jobs.pathoscope_bowtie
 import virtool.utils
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"

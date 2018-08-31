@@ -17,7 +17,7 @@ class TestUpload:
         files_dir = tmpdir.mkdir("files")
 
         # This is the path to the file to be uploaded.
-        path = os.path.join(sys.path[0], "tests", "test_files", "files", "test.fq.gz")
+        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
 
         files = {
             "file": open(path, "rb")
@@ -44,7 +44,7 @@ class TestUpload:
     async def test_invalid_query(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        path = os.path.join(sys.path[0], "tests", "test_files", "files", "test.fq.gz")
+        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
 
         files = {
             "file": open(path, "rb")
@@ -59,7 +59,7 @@ class TestUpload:
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        path = os.path.join(sys.path[0], "tests", "test_files", "files", "test.fq.gz")
+        path = os.path.join(sys.path[0], "tests", "test_files", "test.fq.gz")
 
         files = {
             "file": open(path, "rb")
