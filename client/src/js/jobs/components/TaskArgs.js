@@ -14,8 +14,8 @@ const TaskArgs = (props) => {
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th>Sample</th>
-                            <td>
+                            <th className="col-xs-4">Sample</th>
+                            <td className="col-xs-8">
                                 <Link to={`/samples/${props.taskArgs.sample_id}`}>
                                     {props.taskArgs.sample_name}
                                 </Link>

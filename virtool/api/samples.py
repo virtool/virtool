@@ -7,7 +7,6 @@ import virtool.db.samples
 import virtool.db.utils
 import virtool.errors
 import virtool.http.routes
-import virtool.jobs.pathoscope_bowtie
 import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, invalid_query, \

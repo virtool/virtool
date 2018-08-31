@@ -13,7 +13,7 @@ RIGHTS = {
     "remove": False
 }
 
-TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "files", "import.json.gz")
+TEST_IMPORT_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files", "import.json.gz")
 
 
 @pytest.mark.parametrize("error", [None, "duplicate", "missing", "missing_member"])

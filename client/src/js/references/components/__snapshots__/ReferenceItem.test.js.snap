@@ -95,37 +95,35 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
         test-import
       </td>
     </tr>
-    <React.Fragment>
-      <tr>
-        <th>
-          Latest Build
-        </th>
-        <td>
-          <Link
-            replace={false}
-            to="/refs/test-reference-id/indexes/test-build"
-          >
-            Index 
-            0
-          </Link>
-          <div
-            className="text-muted"
-            style={
-              Object {
-                "fontSize": "12px",
-              }
+    <tr>
+      <th>
+        Latest Build
+      </th>
+      <td>
+        <Link
+          replace={false}
+          to="/refs/test-reference-id/indexes/test-build"
+        >
+          Index 
+          0
+        </Link>
+        <div
+          className="text-muted"
+          style={
+            Object {
+              "fontSize": "12px",
             }
-          >
-            Created 
-            <RelativeTime
-              time="2018-01-01T00:00:00.000000Z"
-            />
-             by 
-            test-user
-          </div>
-        </td>
-      </tr>
-    </React.Fragment>
+          }
+        >
+          Created 
+          <RelativeTime
+            time="2018-01-01T00:00:00.000000Z"
+          />
+           by 
+          test-user
+        </div>
+      </td>
+    </tr>
   </tbody>
 </Table>
 `;

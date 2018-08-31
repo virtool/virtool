@@ -35,24 +35,26 @@ const JobStep = ({ step, isDone }) => {
 
     }
 
-    const stepEntry = (
-        <div className="step-entry">
-            <div className="step-entry-icon">
-                {stateIcon.length
-                    ? <Icon name={stateIcon} bsStyle={entryStyle} />
-                    : <ClipLoader size="14px" color="#07689d" style={{padding: "0 1.5px"}} />
-                }
+    if (step.stage) {
+        return (
+            <div className="step-entry">
+                <div className="step-entry-icon">
+                    {stateIcon.length
+                        ? <Icon name={stateIcon} bsStyle={entryStyle} />
+                        : <ClipLoader size="14px" color="#07689d" style={{padding: "0 1.5px"}} />
+                    }
+                </div>
+                <div className="step-entry-content">
+                    {getTaskDisplayName(step.stage)}
+                </div>
+                <div
+                    className={hasBar ? `step-entry-bar-${entryStyle}` : "step-entry-nobar"}
+                />
             </div>
-            <div className="step-entry-content">
-                {getTaskDisplayName(step.stage)}
-            </div>
-            <div
-                className={hasBar ? `step-entry-bar-${entryStyle}` : "step-entry-nobar"}
-            />
-        </div>
-    );
+        );
+    }
 
-    return stepEntry;
+    return null;
 };
 
 export default JobStep;

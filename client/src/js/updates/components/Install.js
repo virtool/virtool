@@ -11,7 +11,7 @@ import { Button } from "../../base";
 import { ReleaseMarkdown } from "./Release";
 import {byteSize, routerLocationHasState} from "../../utils";
 
-const attemptReload = () => {
+export const attemptReload = () => {
     Request.get(`${window.location.origin}/api`)
         .end((err, res) => {
             if (!err && res.ok) {
@@ -20,7 +20,7 @@ const attemptReload = () => {
         });
 };
 
-const mergeBody = (releases) => {
+export const mergeBody = (releases) => {
 
     const result = {};
 
@@ -41,7 +41,7 @@ const mergeBody = (releases) => {
     return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
-const Process = ({ count, progress, size, step, updating }) => {
+export const Process = ({ count, progress, size, step, updating }) => {
 
     if (updating && progress === 1 && !window.reloadInterval) {
         window.setTimeout(() => {
@@ -74,7 +74,7 @@ const Process = ({ count, progress, size, step, updating }) => {
     );
 };
 
-const SoftwareInstall = ({ onHide, onInstall, process, releases, show, updating }) => {
+export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, updating }) => {
 
     const mergedBody = mergeBody(releases);
 

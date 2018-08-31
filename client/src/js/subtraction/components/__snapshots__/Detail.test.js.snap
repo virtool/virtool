@@ -1,0 +1,159 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SubtractionDetail /> renders correctly 1`] = `
+<div>
+  <ViewHeader
+    title="123abc - Subtraction"
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="flex-end"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={0}
+      >
+        <strong>
+          123abc
+        </strong>
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={0}
+      >
+        <small>
+          <div />
+        </small>
+        <small>
+          <Icon
+            bsStyle="warning"
+            faStyle="fas"
+            fixedWidth={false}
+            name="pencil-alt"
+            onClick={[Function]}
+            pullRight={true}
+          />
+        </small>
+      </FlexItem>
+    </Flex>
+  </ViewHeader>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          test-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          test-file
+        </td>
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <h4
+    className="section-header"
+  >
+    <strong>
+      Linked Samples
+    </strong>
+     
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      1
+    </Badge>
+  </h4>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      className="linked-sample-button"
+      componentClass="div"
+      key="456def"
+      lg={2}
+      md={3}
+      sm={4}
+      xs={6}
+    >
+      <LinkContainer
+        activeClassName="active"
+        exact={false}
+        replace={false}
+        strict={false}
+        to="/samples/456def"
+      >
+        <Button
+          block={true}
+          bsStyle="default"
+          pullRight={false}
+          tipPlacement="top"
+        >
+          test-sample
+        </Button>
+      </LinkContainer>
+    </Col>
+  </Row>
+  <Connect(EditSubtraction)
+    entry={
+      Object {
+        "file": Object {
+          "id": "test-file",
+        },
+        "gc": Object {
+          "a": 0.2,
+          "c": 0.2,
+          "g": 0.2,
+          "n": 0.2,
+          "t": 0.2,
+        },
+        "id": "123abc",
+        "linked_samples": Array [
+          Object {
+            "id": "456def",
+            "name": "test-sample",
+          },
+        ],
+        "nickname": "test-nickname",
+        "ready": true,
+      }
+    }
+    exited={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction)
+    id="123abc"
+  />
+</div>
+`;

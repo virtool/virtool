@@ -10,7 +10,7 @@ const getInitialState = (props) => ({
     nickname: props.entry.nickname
 });
 
-class EditSubtraction extends React.Component {
+export class EditSubtraction extends React.Component {
 
     constructor (props) {
         super(props);

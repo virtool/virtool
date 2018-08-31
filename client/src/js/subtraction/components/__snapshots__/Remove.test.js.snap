@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RemoveSubtraction /> renders correctly 1`] = `
+<RemoveModal
+  id="123abc"
+  name="123abc"
+  noun="Subtraction"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+/>
+`;
