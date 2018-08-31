@@ -1,0 +1,286 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NuVsBLAST /> renders <BLASTInProgress /> subcomponent 1`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="center"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={1}
+      >
+        <ClipLoader
+          color="#000"
+          loading={true}
+          size={16}
+        />
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        pad={5}
+        shrink={1}
+      >
+        <span>
+          BLAST in progress 
+           with RID 
+        </span>
+        <a
+          href="https://blast.ncbi.nlm.nih.gov/Blast.cgi?    CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=ABC123"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          ABC123
+           
+          <sup>
+            <Icon
+              faStyle="fas"
+              fixedWidth={false}
+              name="new-tab"
+              pullRight={false}
+            />
+          </sup>
+        </a>
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={1}
+      >
+        <small
+          className="pull-right"
+        >
+          Last checked 
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+          . Checking again in 
+          7 months ago
+          .
+        </small>
+      </FlexItem>
+    </Flex>
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<NuVsBLAST /> renders <BLASTInProgress /> subcomponent 2`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="center"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={1}
+      >
+        <ClipLoader
+          color="#000"
+          loading={true}
+          size={16}
+        />
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        pad={5}
+        shrink={1}
+      >
+        <span>
+          BLAST in progress 
+        </span>
+      </FlexItem>
+    </Flex>
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<NuVsBLAST /> renders <BLASTResults /> component 1`] = `
+<Uncontrolled(Panel)>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    NCBI BLAST
+  </PanelHeading>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <Table
+      bordered={false}
+      bsClass="table"
+      condensed={true}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <thead>
+        <tr>
+          <th>
+            Accession
+          </th>
+          <th>
+            Name
+          </th>
+          <th>
+            E-value
+          </th>
+          <th>
+            Score
+          </th>
+          <th>
+            Identity
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="0"
+        >
+          <td>
+            <a
+              href="https://www.ncbi.nlm.nih.gov/nuccore/NC123"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              NC123
+            </a>
+          </td>
+          <td>
+            test
+          </td>
+          <td>
+            3
+          </td>
+          <td>
+            1
+          </td>
+          <td>
+            0.50
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<NuVsBLAST /> renders alert when no blast data available 1`] = `
+<Alert
+  bsStyle="warning"
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={1}
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="info-circle"
+        pullRight={false}
+      />
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      pad={5}
+      shrink={1}
+    >
+      This sequence has no BLAST information attached to it.
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      <Button
+        bsSize="small"
+        bsStyle="default"
+        icon="cloud"
+        onClick={[Function]}
+        pullRight={false}
+        tipPlacement="top"
+      >
+        BLAST at NCBI
+      </Button>
+    </FlexItem>
+  </Flex>
+</Alert>
+`;
+
+exports[`<NuVsBLAST /> renders correctly 1`] = `
+<BLASTResults
+  hits={
+    Array [
+      Object {
+        "accession": "NC123",
+        "align_len": 4,
+        "evalue": 3,
+        "identity": 2,
+        "name": "test",
+        "score": 1,
+      },
+    ]
+  }
+/>
+`;
+
+exports[`<NuVsBLAST /> renders correctly with in progress BLAST 1`] = `
+<BLASTInProgress
+  interval={5}
+  lastCheckedAt="2018-02-14T17:12:00.000000Z"
+  rid="ABC123"
+/>
+`;
+
+exports[`<NuVsBLAST /> renders correctly with no BLAST hits 1`] = `
+<Uncontrolled(Panel)>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    NCBI BLAST
+  </PanelHeading>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    No BLAST hits found.
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
