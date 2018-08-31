@@ -99,7 +99,7 @@ describe("<NuVsBLAST />", () => {
         const store = mockStore(initialState);
         props = { blast: null, sequenceIndex: 0 };
 
-        wrapper = shallow(<NuVsBLASTContainer store={store} {...props}/>).dive();
+        wrapper = shallow(<NuVsBLASTContainer store={store} {...props} />).dive();
         wrapper.find({ icon: "cloud" }).prop("onClick")();
         expect(spy.calledWith("123abc", 0)).toBe(true);
 

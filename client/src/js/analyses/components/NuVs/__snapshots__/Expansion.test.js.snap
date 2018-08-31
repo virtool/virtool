@@ -1,0 +1,262 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NuVsExpansion /> renders correctly 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  className="pathoscope-otu-detail spaced"
+>
+  <ListGroupItem
+    bsClass="list-group-item"
+    className="pathoscope-otu-detail spaced"
+    listItem={false}
+    onFocus={[Function]}
+  >
+    <span
+      className="pathoscope-otu-detail spaced list-group-item"
+      onFocus={[Function]}
+    >
+      <div
+        className="nuvs-layout"
+      >
+        <div
+          className="nuvs-item nuvs-sequence"
+        >
+          <div />
+        </div>
+        <div
+          className="nuvs-orfs"
+        >
+          <NuVsORF
+            frame={1}
+            hits={Array []}
+            index={0}
+            key="0"
+            maxSequenceLength={10}
+            pos={
+              Array [
+                1,
+                2,
+              ]
+            }
+            pro="ABC"
+            strand={-1}
+          >
+            <div
+              className="nuvs-item"
+            >
+              <div
+                className="nuvs-item-header"
+              >
+                <Flex
+                  alignContent="stretch"
+                  alignItems="stretch"
+                  direction="row"
+                  justifyContent="flex-start"
+                  wrap="nowrap"
+                >
+                  <div
+                    style={
+                      Object {
+                        "alignContent": "stretch",
+                        "alignItems": "stretch",
+                        "display": "flex",
+                        "flexFlow": "row nowrap",
+                        "justifyContent": "flex-start",
+                      }
+                    }
+                  >
+                    <FlexItem
+                      alignSelf={null}
+                      basis="auto"
+                      grow={0}
+                      shrink={1}
+                    >
+                      <div
+                        style={
+                          Object {
+                            "alignSelf": null,
+                            "flex": "0 1 auto",
+                          }
+                        }
+                      >
+                        <span>
+                          Unannotated
+                        </span>
+                      </div>
+                    </FlexItem>
+                    <FlexItem
+                      alignSelf={null}
+                      basis="auto"
+                      grow={0}
+                      pad={5}
+                      shrink={1}
+                    >
+                      <div
+                        style={
+                          Object {
+                            "alignSelf": null,
+                            "flex": "0 1 auto",
+                            "marginLeft": "5px",
+                          }
+                        }
+                      >
+                        <small
+                          className="text-primary text-strong"
+                        >
+                          1
+                        </small>
+                      </div>
+                    </FlexItem>
+                    <FlexItem
+                      alignSelf={null}
+                      basis="auto"
+                      grow={0}
+                      pad={5}
+                      shrink={1}
+                    >
+                      <div
+                        style={
+                          Object {
+                            "alignSelf": null,
+                            "flex": "0 1 auto",
+                            "marginLeft": "5px",
+                          }
+                        }
+                      >
+                        <small
+                          className="text-danger text-strong"
+                        />
+                      </div>
+                    </FlexItem>
+                  </div>
+                </Flex>
+              </div>
+              <div />
+            </div>
+          </NuVsORF>
+        </div>
+      </div>
+      <Connect(NuVsBLAST)
+        analysisId="test-analysis"
+        blast={Object {}}
+        sequence="test-sequence"
+        sequenceIndex={0}
+      >
+        <NuVsBLAST
+          analysisId="123abc"
+          blast={Object {}}
+          onBlast={[Function]}
+          sequence="test-sequence"
+          sequenceIndex={0}
+        >
+          <BLASTInProgress>
+            <Uncontrolled(Panel)>
+              <Panel
+                bsClass="panel"
+                bsStyle="default"
+                onToggle={[Function]}
+              >
+                <div
+                  className="panel panel-default"
+                >
+                  <PanelBody
+                    bsClass="panel"
+                    collapsible={false}
+                  >
+                    <div
+                      className="panel-body"
+                    >
+                      <Flex
+                        alignContent="stretch"
+                        alignItems="center"
+                        direction="row"
+                        justifyContent="flex-start"
+                        wrap="nowrap"
+                      >
+                        <div
+                          style={
+                            Object {
+                              "alignContent": "stretch",
+                              "alignItems": "center",
+                              "display": "flex",
+                              "flexFlow": "row nowrap",
+                              "justifyContent": "flex-start",
+                            }
+                          }
+                        >
+                          <FlexItem
+                            alignSelf={null}
+                            basis="auto"
+                            grow={0}
+                            shrink={1}
+                          >
+                            <div
+                              style={
+                                Object {
+                                  "alignSelf": null,
+                                  "flex": "0 1 auto",
+                                }
+                              }
+                            >
+                              <ClipLoader
+                                color="#000"
+                                loading={true}
+                                size={16}
+                              >
+                                <div>
+                                  <div
+                                    style={
+                                      Object {
+                                        "animation": "anim_31535737020663 0.75s 0s infinite linear",
+                                        "animationFillMode": "both",
+                                        "background": "transparent !important",
+                                        "border": "2px solid",
+                                        "borderBottomColor": "transparent",
+                                        "borderColor": "#000",
+                                        "borderRadius": "100%",
+                                        "display": "inline-block",
+                                        "height": 16,
+                                        "verticalAlign": undefined,
+                                        "width": 16,
+                                      }
+                                    }
+                                  />
+                                </div>
+                              </ClipLoader>
+                            </div>
+                          </FlexItem>
+                          <FlexItem
+                            alignSelf={null}
+                            basis="auto"
+                            grow={0}
+                            pad={5}
+                            shrink={1}
+                          >
+                            <div
+                              style={
+                                Object {
+                                  "alignSelf": null,
+                                  "flex": "0 1 auto",
+                                  "marginLeft": "5px",
+                                }
+                              }
+                            >
+                              <span>
+                                BLAST in progress 
+                              </span>
+                            </div>
+                          </FlexItem>
+                        </div>
+                      </Flex>
+                    </div>
+                  </PanelBody>
+                </div>
+              </Panel>
+            </Uncontrolled(Panel)>
+          </BLASTInProgress>
+        </NuVsBLAST>
+      </Connect(NuVsBLAST)>
+    </span>
+  </ListGroupItem>
+</ListGroupItem>
+`;
