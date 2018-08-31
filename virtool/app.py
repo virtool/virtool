@@ -313,7 +313,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     if skip_setup:
         middlewares.append(virtool.app_auth.middleware)
 
-    app = web.Application(loop=loop, middlewares=middlewares)
+    app = web.Application(middlewares=middlewares)
 
     aiojobs.aiohttp.setup(app)
 
