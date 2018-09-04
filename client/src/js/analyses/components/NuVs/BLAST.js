@@ -12,7 +12,7 @@ import { Alert, Button, Flex, FlexItem, Icon, RelativeTime } from "../../../base
 const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
 
-const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
+export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
     let timing;
     let ridText;
     let ridLink;
@@ -56,7 +56,7 @@ const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
     );
 };
 
-const BLASTResults = ({ hits }) => {
+export const BLASTResults = ({ hits }) => {
     const components = map(hits, (hit, index) =>
         <tr key={index}>
             <td>
@@ -98,7 +98,7 @@ const BLASTResults = ({ hits }) => {
     );
 };
 
-const NuVsBLAST = (props) => {
+export const NuVsBLAST = (props) => {
 
     if (props.blast) {
         if (props.blast.ready) {

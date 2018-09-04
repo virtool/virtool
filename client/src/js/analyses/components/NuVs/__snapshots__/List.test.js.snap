@@ -1,0 +1,119 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NuVsList /> renders correctly 1`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-md-3"
+        >
+          Contig Count
+        </th>
+        <td
+          className="col-md-9"
+        >
+          1
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <div
+    className="toolbar"
+  >
+    <FormGroup
+      bsClass="form-group"
+    >
+      <InputGroup
+        bsClass="input-group"
+      >
+        <InputGroupAddon
+          bsClass="input-group-addon"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="search"
+            pullRight={false}
+          />
+        </InputGroupAddon>
+        <FormControl
+          bsClass="form-control"
+          componentClass="input"
+          onChange={[Function]}
+          placeholder="Name, family"
+          value=""
+        />
+      </InputGroup>
+    </FormGroup>
+    <Button
+      bsStyle="default"
+      disabled={true}
+      icon="compress"
+      onClick={[Function]}
+      pullRight={false}
+      tip="Collapse All"
+      tipPlacement="top"
+    />
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to={
+        Object {
+          "state": Object {
+            "export": true,
+          },
+        }
+      }
+    >
+      <Button
+        bsStyle="default"
+        icon="download"
+        pullRight={false}
+        tip="Export"
+        tipPlacement="top"
+      />
+    </LinkContainer>
+    <Button
+      active={true}
+      bsStyle="default"
+      icon="filter"
+      onClick={[Function]}
+      pullRight={false}
+      tip="Filter ORFs"
+      tipPlacement="top"
+    />
+  </div>
+  <FlipMovePropConverter
+    className="list-group"
+    delay={0}
+    disableAllAnimations={false}
+    duration={350}
+    easing="ease-in-out"
+    enterAnimation="accordionVertical"
+    getPosition={[Function]}
+    leaveAnimation={false}
+    maintainContainerHeight={false}
+    staggerDelayBy={0}
+    staggerDurationBy={0}
+    typeName="div"
+    verticalAlignment="top"
+  >
+    <NuVsEntry
+      in={false}
+      key="sequence_undefined"
+      orfs={Array []}
+      toggleIn={[Function]}
+    />
+  </FlipMovePropConverter>
+</div>
+`;
