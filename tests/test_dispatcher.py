@@ -78,11 +78,11 @@ async def test_dispatch_authorized(loop, create_test_connection):
 
     dispatcher.add_connection(m)
 
-    await dispatcher.dispatch("test", "test", {"test": True})
+    await dispatcher.dispatch("otus", "update", {"test": True})
 
     m.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": True
         }
@@ -102,7 +102,7 @@ async def test_dispatch_unauthorized(loop, create_test_connection):
 
     dispatcher.add_connection(m)
 
-    await dispatcher.dispatch("test", "test", {"test": True})
+    await dispatcher.dispatch("otus", "update", {"test": True})
 
     m.send_stub.assert_not_called()
 
@@ -124,11 +124,11 @@ async def test_dispatch_either(loop, create_test_connection):
     dispatcher.add_connection(m_authorized)
     dispatcher.add_connection(m_unauthorized)
 
-    await dispatcher.dispatch("test", "test", {"test": True})
+    await dispatcher.dispatch("otus", "update", {"test": True})
 
     m_authorized.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": True
         }
@@ -157,13 +157,13 @@ async def test_dispatch_specific(loop, create_test_connection):
     for m in (m_1, m_2, m_3):
         dispatcher.add_connection(m)
 
-    await dispatcher.dispatch("test", "test", {"test": True}, connections=[m_2])
+    await dispatcher.dispatch("otus", "update", {"test": True}, connections=[m_2])
 
     m_1.send_stub.assert_not_called()
 
     m_2.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": True
         }
@@ -188,11 +188,11 @@ async def test_callable_filter(loop, create_test_connection):
     dispatcher.add_connection(m_1)
     dispatcher.add_connection(m_2)
 
-    await dispatcher.dispatch("test", "test", {"test": True}, conn_filter=lambda conn: conn.user_id == "bob")
+    await dispatcher.dispatch("otus", "update", {"test": True}, conn_filter=lambda conn: conn.user_id == "bob")
 
     m_1.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": True
         }
@@ -207,7 +207,7 @@ async def test_not_callable_filter(loop):
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("test", "test", {"test": True}, conn_filter=True)
+        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, conn_filter=True)
 
     assert "conn_filter must be callable" in str(err.value)
 
@@ -231,7 +231,7 @@ async def test_callable_modifier(loop, create_test_connection):
     def apply_male(conn):
         conn.groups = ["men"]
 
-    await dispatcher.dispatch("test", "test", {"test": True}, conn_modifier=apply_male)
+    await dispatcher.dispatch("otus", "update", {"test": True}, conn_modifier=apply_male)
 
     assert m_1.groups == ["men"]
     assert m_2.groups == ["men"]
@@ -243,7 +243,7 @@ async def test_not_callable_modifier(loop):
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("test", "test", {"test": True}, conn_modifier="abc")
+        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, conn_modifier="abc")
 
     assert "conn_modifier must be callable" in str(err.value)
 
@@ -270,7 +270,7 @@ async def test_modifier_filter(loop, create_test_connection):
         conn.groups = ["men"]
 
     await dispatcher.dispatch(
-        "test", "test", {"test": True},
+        "otus", "update", {"test": True},
         conn_filter=lambda conn: conn.user_id == "bob",
         conn_modifier=apply_male
     )
@@ -301,19 +301,19 @@ async def test_writer(loop, create_test_connection):
     dispatcher.add_connection(m_1)
     dispatcher.add_connection(m_2)
 
-    await dispatcher.dispatch("test", "test", {"test": True}, writer=writer)
+    await dispatcher.dispatch("otus", "update", {"test": True}, writer=writer)
 
     m_1.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": False
         }
     })
 
     m_2.send_stub.assert_called_with({
-        "interface": "test",
-        "operation": "test",
+        "interface": "otus",
+        "operation": "update",
         "data": {
             "test": True
         }
@@ -326,6 +326,6 @@ async def test_writer_not_callable(loop):
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("test", "test", {"test": True}, writer="writer")
+        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, writer="writer")
 
     assert "writer must be callable" in str(err)
