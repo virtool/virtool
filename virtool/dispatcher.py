@@ -2,6 +2,29 @@ import logging
 from copy import deepcopy
 
 import virtool.api.utils
+INTERFACES = (
+    "analyses",
+    "files",
+    "groups",
+    "history",
+    "hmm",
+    "indexes",
+    "jobs",
+    "processes",
+    "references",
+    "samples",
+    "settings",
+    "software",
+    "status",
+    "subtractions",
+    "users"
+)
+
+OPERATIONS = (
+    "insert",
+    "update",
+    "delete"
+)
 
 
 async def default_writer(connection, message):
@@ -83,6 +106,12 @@ class Dispatcher:
         :type writer: callable
 
         """
+        if not interface in INTERFACES:
+            raise ValueError(f'Unknown dispatch interface: {interface}')
+
+        if not operation in OPERATIONS:
+            raise ValueError(f'Unknown dispatch operation: {operation}')
+
         message = {
             "operation": operation,
             "interface": interface,
