@@ -1,0 +1,348 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>How-To &#8212; virtool.job  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference" href="api.html" />
+    <link rel="prev" title="Welcome to virtool.job’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="how-to">
+<h1>How-To<a class="headerlink" href="#how-to" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="lifecycle">
+<h2>Lifecycle<a class="headerlink" href="#lifecycle" title="Permalink to this headline">¶</a></h2>
+<p>All jobs follow a simple lifecycle model.</p>
+<p>When a job is initiated by a user a new job object is created using the appropriate job class. The job is queued and
+assigned a _waiting_ state.</p>
+<p>When resources are available, the <a class="reference internal" href="api.html#virtool.job.job.Job.run" title="virtool.job.job.Job.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.run()</span></code></a> method is called. This results in a number of method calls being
+made in sequence:</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt><a class="reference internal" href="api.html#virtool.job.job.Job.init_db" title="virtool.job.job.Job.init_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.init_db()</span></code></a></dt>
+<dd><p class="first">Initializes a database connection <a class="reference external" href="https://api.mongodb.com/python/current/api/pymongo/database.html#pymongo.database.Database" title="(in PyMongo v3.7.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pymongo.database.Database</span></code></a> at <a class="reference internal" href="api.html#virtool.job.job.Job.db" title="virtool.job.job.Job.db"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.db</span></code></a>.</p>
+<p class="last">Retrieves the job database document and assigns the job attributes <a class="reference internal" href="api.html#virtool.job.job.Job.proc" title="virtool.job.job.Job.proc"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.proc</span></code></a>, <a class="reference internal" href="api.html#virtool.job.job.Job.mem" title="virtool.job.job.Job.mem"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.mem</span></code></a>,
+<a class="reference internal" href="api.html#virtool.job.job.Job.task_name" title="virtool.job.job.Job.task_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.task_name</span></code></a>, and <a class="reference internal" href="api.html#virtool.job.job.Job.task_args" title="virtool.job.job.Job.task_args"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.task_args</span></code></a> with the appropriate values from the document.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><a class="reference internal" href="api.html#virtool.job.job.Job.check_db" title="virtool.job.job.Job.check_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.check_db()</span></code></a></dt>
+<dd><p class="first">This method should be redefined in the job subclass.</p>
+<p class="last">Gather required data from the database for use in the job stage methods. For example calculate file paths and
+properties of samples used in a given analysis.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Stage methods</dt>
+<dd><p class="first">Jobs are built my defining stage methods that are called in sequence when the job runs. Stage methods should perform
+distinct actions such as parsing a file or running a <code class="docutils literal notranslate"><span class="pre">blast</span></code> subprocess.</p>
+<p class="last">The progress of the job as it relates to completed stages will be automatically relayed to users.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>Building a new job using this module is easy.</p>
+<p>It consists of extending the <a class="reference internal" href="api.html#virtool.job.job.Job" title="virtool.job.job.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a> class by defining new job stage methods and adding them to
+the <code class="xref py py-attr docutils literal notranslate"><span class="pre">stage_list</span></code> attribute. Stage methods are run sequentially with progress being stored
+in the database as the job progresses.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_numbers</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">add_numbers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="mi">10</span> <span class="o">+</span> <span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<p>Job parameters are data derived from the Virtool application state that inform the job process.</p>
+<p>They should be calculated before stage methods are run at the beginning of the job process. The <a class="reference internal" href="api.html#virtool.job.job.Job.check_db" title="virtool.job.job.Job.check_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.check_db()</span></code></a>
+method can be redefined in job subclasses to populate the <code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.params()</span></code> attribute.</p>
+<p>The <a class="reference internal" href="api.html#virtool.job.job.Job.check_db" title="virtool.job.job.Job.check_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">check_db()</span></code></a> method will be called automatically during job start immediately after a database connection is
+made in <a class="reference internal" href="api.html#virtool.job.job.Job.init_db" title="virtool.job.job.Job.init_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">init_db()</span></code></a>.</p>
+<p>We suggest using this model of parameter derivation over deriving parameters on the fly as needed in stage methods. This
+allows easy unit testing of individual stage methods by supplying them with mock <a class="reference internal" href="api.html#virtool.job.job.Job.params" title="virtool.job.job.Job.params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">params</span></code></a> instead of
+providing a testing database.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">check_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sample_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_args</span><span class="p">[</span><span class="s2">&quot;sample_id&quot;</span><span class="p">]</span>
+
+        <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">analyses</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">sample_id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s2">&quot;sample_id&quot;</span><span class="p">:</span> <span class="n">sample_id</span><span class="p">,</span>
+            <span class="s2">&quot;paired&quot;</span><span class="p">:</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;paired]</span>
+        <span class="p">})</span>
+</pre></div>
+</div>
+<p>When job stage methods start running, they will have access to the <a class="reference internal" href="api.html#virtool.job.job.Job.params" title="virtool.job.job.Job.params"><code class="xref py py-attr docutils literal notranslate"><span class="pre">params</span></code></a> and therefore the
+<code class="docutils literal notranslate"><span class="pre">sample_id</span></code> and <code class="docutils literal notranslate"><span class="pre">paired</span></code> values.</p>
+</div>
+<div class="section" id="state">
+<h2>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="api.html#virtool.job.job.Job" title="virtool.job.job.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a> can be heavily customized to store intermediate data and job results between stage
+methods, but we suggest using the predefined <a class="reference internal" href="api.html#virtool.job.job.Job.intermediate" title="virtool.job.job.Job.intermediate"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.intermediate</span></code></a> and <a class="reference internal" href="api.html#virtool.job.job.Job.results" title="virtool.job.job.Job.results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.results</span></code></a> attributes to these
+state data.</p>
+<p>The <a class="reference internal" href="api.html#virtool.job.job.Job.intermediate" title="virtool.job.job.Job.intermediate"><code class="xref py py-attr docutils literal notranslate"><span class="pre">intermediate</span></code></a> attribute should be used for carrying data between stage methods. Deleting unneeded
+intermediate values after the intermediate data has been consumed by a subsequent stage is highly recommended.</p>
+<p>The <a class="reference internal" href="api.html#virtool.job.job.Job.results" title="virtool.job.job.Job.results"><code class="xref py py-attr docutils literal notranslate"><span class="pre">results</span></code></a> attribute should be considered immutable and is used to write result files or update the database
+at the end of the job.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_numbers</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">divide</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">add_numbers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;added&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">20</span>
+
+    <span class="k">def</span> <span class="nf">divide_by_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Perform another operation on the sum from `add_numbers`.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;final&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;added&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Delete stale data.</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;added&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="subprocesses">
+<span id="id1"></span><h2>Subprocesses<a class="headerlink" href="#subprocesses" title="Permalink to this headline">¶</a></h2>
+<p>A major part of the <a class="reference internal" href="api.html#virtool.job.job.Job" title="virtool.job.job.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a> superclass handles running of subprocesses using the <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#module-subprocess" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">subprocess</span></code></a>
+module.</p>
+<p>Subprocesses are started using the <a class="reference internal" href="api.html#virtool.job.job.Job.run_subprocess" title="virtool.job.job.Job.run_subprocess"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.run_subprocess()</span></code></a> method. Commands must be of the <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> type.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fastqc</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">fastqc</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_subprocess</span><span class="p">([</span>
+            <span class="s2">&quot;fastqc&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reads.fq&quot;</span>
+        <span class="p">])</span>
+</pre></div>
+</div>
+<p>One of the primary uses of subprocesses in Virtool jobs is collecting standard output from bioinformatic tools. Handler
+functions can be passed to <a class="reference internal" href="api.html#virtool.job.job.Job.run_subprocess" title="virtool.job.job.Job.run_subprocess"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.run_subprocess()</span></code></a> to process stdout and stderr lines.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blast</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">blast</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;blast&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="c1"># Strip newlines from BLAST output and append to</span>
+        <span class="c1"># intermediate BLAST list.</span>
+        <span class="k">def</span> <span class="nf">stdout_handler</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;blast&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_subprocess</span><span class="p">([</span>
+            <span class="s2">&quot;blastn&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-query&quot;</span><span class="p">,</span> <span class="s2">&quot;query.fa&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-db&quot;</span><span class="p">,</span> <span class="s2">&quot;rna&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-max_target_seqs&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span>
+        <span class="p">],</span> <span class="n">stdout_handler</span><span class="o">=</span><span class="n">stdout_handler</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is important to keep processing in the <cite>stdout_handler</cite> to a minimum. Long running <cite>stdout_handler</cite> calls can
+lead to throttling in the subprocess as the output buffer fills. Perform heavy processing of subprocess output after the
+subprocess has finished.</p>
+<p>The same techniques can be used to process stderr lines. Note that all stderr is logged automatically even if no
+<cite>stderr_handler</cite> is provided.</p>
+</div>
+<div class="section" id="database">
+<h2>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="api.html#virtool.job.job.Job" title="virtool.job.job.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a> objects initiate a connection to the application database when the job starts. The
+database is accessible from stage methods through the <a class="reference internal" href="api.html#virtool.job.job.Job.db" title="virtool.job.job.Job.db"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.db</span></code></a> attribute.</p>
+<p><a class="reference internal" href="api.html#virtool.job.job.Job.db" title="virtool.job.job.Job.db"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Job.db</span></code></a> is a <a class="reference external" href="https://api.mongodb.com/python/current/api/pymongo/database.html#pymongo.database.Database" title="(in PyMongo v3.7.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pymongo.database.Database</span></code></a> object and can be fully utilized to read and modify the Virtool
+application database. Refer to the <a class="reference external" href="https://api.mongodb.com/python/current/index.html">Pymongo documentation</a> to make
+use of the database client API.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blast</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">save_blast</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;blast&quot;</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">analyses</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s2">&quot;_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_id</span><span class="p">},</span> <span class="p">{</span>
+            <span class="s2">&quot;$set&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;blast&quot;</span><span class="p">:</span> <span class="n">top</span>
+            <span class="p">}</span>
+        <span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dispatching">
+<span id="id2"></span><h2>Dispatching<a class="headerlink" href="#dispatching" title="Permalink to this headline">¶</a></h2>
+<p>If you have used Virtool, you have likely noticed that many user interface components are updated in real time as
+changes occur on the server. This is accomplished by dispatching update messages to all connected clients.</p>
+<p>Currently, message dispatches have to be triggered explicity from within job processes using the <a class="reference internal" href="api.html#virtool.job.job.Job.dispatch" title="virtool.job.job.Job.dispatch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Job.dispatch()</span></code></a>
+method. Calling this method passes a message to the Virtool server process where it is dispatched.</p>
+<p>Messages consist of three parts:</p>
+<dl class="docutils">
+<dt><cite>operation</cite></dt>
+<dd>One of ‘insert’, ‘update’, or ‘remove. Instructs the client on whether the message data</dd>
+<dt><cite>interface</cite></dt>
+<dd>The database collection or other data store being modified. Jobs primary affect the <cite>jobs</cite> and <cite>analyses</cite> database
+collections.</dd>
+<dt><cite>id_list</cite></dt>
+<dd>A list of affected document ids that should be dispatched.</dd>
+</dl>
+<p>Here is the previous example with dispatching:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewJob</span><span class="p">(</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stage_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blast</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">save_blast</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span><span class="p">[</span><span class="s2">&quot;blast&quot;</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">analyses</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s2">&quot;_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_id</span><span class="p">},</span> <span class="p">{</span>
+            <span class="s2">&quot;$set&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;blast&quot;</span><span class="p">:</span> <span class="n">top</span>
+            <span class="p">}</span>
+        <span class="p">})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+            <span class="s2">&quot;update&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;analyses&quot;</span><span class="p">,</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">analysis_id</span><span class="p">]</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">virtool.job</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How-To</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#lifecycle">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#state">State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subprocesses">Subprocesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#database">Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dispatching">Dispatching</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to virtool.job’s documentation!</a></li>
+      <li>Next: <a href="api.html" title="next chapter">Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Ian Boyes.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/how-to.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

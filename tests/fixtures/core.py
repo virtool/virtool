@@ -101,3 +101,20 @@ def static_time_obj():
 def static_time(mocker, static_time_obj):
     mocker.patch("virtool.utils.timestamp", return_value=static_time_obj.datetime)
     return static_time_obj
+
+
+@pytest.fixture
+def test_sam_path(tmpdir):
+    path = os.path.join(str(tmpdir.mkdir("test_sam_file")), "test_al.sam")
+    shutil.copy(SAM_PATH, path)
+    return path
+
+
+def get_sam_lines():
+    with open(SAM_50_PATH, "r") as handle:
+        return handle.read().split("\n")[0:-1]
+
+
+@pytest.fixture(params=get_sam_lines(), ids=lambda x: x.split("\t")[0])
+def sam_line(request):
+    return request.param.split("\t")

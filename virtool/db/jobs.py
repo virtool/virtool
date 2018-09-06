@@ -1,3 +1,7 @@
+"""
+Globals and utility functions for interacting with the jobs collection in the application database.
+
+"""
 import virtool.utils
 
 OR_COMPLETE = [
@@ -9,6 +13,7 @@ OR_FAILED = [
     {"status.state": "cancelled"}
 ]
 
+#: The default MongoDB projection for job documents.
 PROJECTION = [
     "_id",
     "task",
@@ -112,16 +117,14 @@ async def get_waiting_and_running_ids(db):
     return [a["_id"] async for a in cursor]
 
 
-def processor(document):
+def processor(document: dict) -> dict:
     """
     Removes the ``status`` and ``args`` fields from the job document.
     Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
     ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
-    :param document: a document to process.
-    :type document: dict
 
+    :param document: a document to process.
     :return: a processed documents.
-    :rtype: dict
     """
     document = virtool.utils.base_processor(document)
 

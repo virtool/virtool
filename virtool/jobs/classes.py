@@ -1,15 +1,14 @@
-from virtool.nuvs import job as nuvs
-from virtool.pathoscope import job as pathoscope
-
 import virtool.jobs.build_index
 import virtool.jobs.create_sample
 import virtool.jobs.create_subtraction
+import virtool.jobs.nuvs
+import virtool.jobs.pathoscope
 
 #: A dict containing :class:`~.job.Job` subclasses keyed by their task names.
 TASK_CLASSES = {
-    "build_index": virtool.jobs.build_index.BuildIndex,
-    "pathoscope_bowtie": pathoscope.Job,
-    "nuvs": nuvs.Job,
-    "create_subtraction": virtool.jobs.create_subtraction.CreateSubtraction,
-    "create_sample": virtool.jobs.create_sample.CreateSample
+    "build_index": virtool.jobs.build_index.Job,
+    "pathoscope_bowtie": virtool.jobs.pathoscope.Job,
+    "nuvs": virtool.jobs.nuvs.Job,
+    "create_subtraction": virtool.jobs.create_subtraction.Job,
+    "create_sample": virtool.jobs.create_sample.Job
 }

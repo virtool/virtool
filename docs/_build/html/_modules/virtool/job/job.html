@@ -1,0 +1,530 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>virtool.job.job &#8212; virtool.job  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for virtool.job.job</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes, exceptions, and utilities for creating Virtool jobs.</span>
+
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">pymongo</span>
+
+<span class="kn">import</span> <span class="nn">virtool.job.db</span>
+<span class="kn">import</span> <span class="nn">virtool.job.utils</span>
+
+
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :class:`~Job` can be subclassed to create new jobs that are compatible with Virtool.</span>
+
+<span class="sd">    :param db_connection_string: the MongoDB connection string for the application database server</span>
+<span class="sd">    :param db_name: the name of the application MongoDB database</span>
+<span class="sd">    :param settings: a `dict` of settings that will be used by the job</span>
+<span class="sd">    :param job_id: the job&#39;s unique ID that should already be associated with a job document in the database</span>
+<span class="sd">    :param q:</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_connection_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1">#: The application database server connection string. See</span>
+        <span class="c1">#: `Connection String URI Format &lt;https://docs.mongodb.com/manual/reference/connection-string/&gt;`_ in the MongoDB</span>
+        <span class="c1">#: documentation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_connection_string</span> <span class="o">=</span> <span class="n">db_connection_string</span>
+
+        <span class="c1">#: The name of the application database.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_name</span> <span class="o">=</span> <span class="n">db_name</span>
+
+        <span class="c1">#: A `dict` of application settings passed into the job when it was created.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span>
+
+        <span class="c1">#: The job&#39;s unique ID. It is associated with the job&#39;s database document.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">job_id</span>
+
+        <span class="c1">#: A bidirectional :class:`multiprocessing.Queue` used for passing dispatch instructions to the API server.</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: This queue is not used if message passing through Redis is enabled.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+
+        <span class="c1">#: An instance of :class:`pymongo.database.Database` connected to the MongoDB database specified by</span>
+        <span class="c1">#: :attr:`.db_connection_string` and :attr:`.db_name`.</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: Value is ``None`` until :meth:`.init_db` is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1">#: The name of the job task (eg. `create_sample`).</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: Value is ``None`` until :meth:`.init_db` is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_name</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1">#: Arguments attached to the job document by the API server.</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: Value is ``None`` until :meth:`.init_db` is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_args</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1">#: The core limit for the job.</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: Value is ``None`` until :meth:`.init_db` is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1">#: The memory limit for the job.</span>
+        <span class="c1">#:</span>
+        <span class="c1">#: Value is ``None`` until :meth:`.init_db` is called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1">#: A :class:`dict` for storing parameters that will direct the job run. Parameters should be assigned in the</span>
+        <span class="c1">#: redefinition of the :meth:`.check_db` method.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1">#: A :class:`dict` for storing data to be carried between stage methods.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intermediate</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1">#: A :class:`dict` for storing results that should be written to file or database at the end of the job.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="s2">&quot;waiting&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stage</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stage_list</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;data_path&quot;</span><span class="p">],</span> <span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;jobs&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Job.init_db"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.init_db">[docs]</a>    <span class="k">def</span> <span class="nf">init_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called in the :meth:`.run` method when the job starts.</span>
+
+<span class="sd">        Initializes a database client using the :attr:`~db_connection_string` and :attr:`~db_name` attributes.</span>
+
+<span class="sd">        The job document is fetched and used to set the :attr:`.task_name`, :attr:`.task_args`, :attr:`.proc`, and</span>
+<span class="sd">        :attr:`.mem` attributes.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_connection_string</span><span class="p">,</span> <span class="n">serverSelectionTimeoutMS</span><span class="o">=</span><span class="mi">6000</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">db_name</span><span class="p">]</span>
+
+        <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_name</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_args</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;proc&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">&quot;mem&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Job.check_db"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.check_db">[docs]</a>    <span class="k">def</span> <span class="nf">check_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Intended to be redefined in subclasses of :class:`.Job`.</span>
+
+<span class="sd">        This method is called immediately after :meth:`.init_db`, Populate the :attr:`.Job.params` state attribute here.</span>
+<span class="sd">        These values are used to provide application data to the stage methods.</span>
+
+<span class="sd">        Isolating calculation of :attr:`.Job.params` to this method simplifies the mocking required for unit testing</span>
+<span class="sd">        individual stage methods.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Job.run"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The main job execution method. Methods in :attr:`.Job.stage_list` are executed sequentially.</span>
+
+<span class="sd">        If ``SIGTERM`` is received, execution of stage methods is stopped and the job is put into the `cancelled` state</span>
+<span class="sd">        by calling :meth:`.add_status`.</span>
+
+<span class="sd">        If an error is encountered in a stage method or a subprocess, execution of stage methods is stopped. The error</span>
+<span class="sd">        is recorded in :attr:`.Job._error` and the job is put into the `error` state by calling :meth:`.add_status`.</span>
+
+<span class="sd">        Any dangling subprocess is killed and :meth:`.cleanup` is called if the job fails.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_IGN</span><span class="p">)</span>
+
+        <span class="c1"># When the manager terminates jobs, run the handle_sigterm method.</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="n">handle_sigterm</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_db</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_db</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage_list</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_status</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">&quot;running&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_log</span><span class="p">(</span><span class="s2">&quot;Stage: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+                <span class="n">method</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_status</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="s2">&quot;complete&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="n">TerminationError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_status</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="s2">&quot;cancelled&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_error</span> <span class="o">=</span> <span class="n">handle_exception</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_status</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">flush_log</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Job.run_subprocess"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.run_subprocess">[docs]</a>    <span class="k">def</span> <span class="nf">run_subprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">stdout_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stderr_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A utility method for running a the passed `subprocess` command.</span>
+
+<span class="sd">        It takes care of running a command and handling STDOUT and STDERR.</span>
+
+<span class="sd">        :param command: the command to run in a subprocess</span>
+<span class="sd">        :param stdout_handler: a function for handling STDOUT lines</span>
+<span class="sd">        :param stderr_handler: a function for handling STDERR lines</span>
+<span class="sd">        :param env: environmental variables to</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_log</span><span class="p">(</span><span class="s2">&quot;Command: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">stdout_handler</span><span class="p">:</span>
+            <span class="n">stdout</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stdout</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span>
+
+        <span class="k">if</span> <span class="n">stderr_handler</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">_stderr_handler</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="n">stderr_handler</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_log</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">_stderr_handler</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_log</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">)</span>
+
+        <span class="n">stdout_thread</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">stdout_queue</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">stdout_handler</span><span class="p">:</span>
+            <span class="n">stdout_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+
+            <span class="n">stdout_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">watch_pipe</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stdout_queue</span><span class="p">),</span>
+                <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+
+            <span class="n">stdout_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">stderr_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+
+        <span class="n">stderr_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">watch_pipe</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">stderr_queue</span><span class="p">),</span>
+            <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="n">stderr_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stdout_queue</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stdout_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">stdout_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="n">stdout_handler</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">stderr_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="n">stderr_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="n">_stderr_handler</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+
+            <span class="n">alive</span> <span class="o">=</span> <span class="p">(</span><span class="n">stdout_thread</span> <span class="ow">and</span> <span class="n">stdout_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">())</span> <span class="ow">or</span> <span class="n">stderr_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">()</span>
+
+            <span class="n">queue_empty</span> <span class="o">=</span> <span class="p">(</span><span class="n">stdout_queue</span> <span class="ow">and</span> <span class="n">stdout_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">())</span> <span class="ow">and</span> <span class="n">stderr_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">alive</span> <span class="ow">and</span> <span class="n">queue_empty</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SubprocessError</span><span class="p">(</span><span class="s2">&quot;Command failed: </span><span class="si">{}</span><span class="s2">. Check job log.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">add_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a status entry to the job database document that describes this job.</span>
+
+
+
+<span class="sd">        :param state:</span>
+<span class="sd">        :param stage:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stage</span> <span class="o">=</span> <span class="n">stage</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">stage_index</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage_list</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stage</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">stage_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stage_list</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">document</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">find_one_and_update</span><span class="p">({</span><span class="s2">&quot;_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">},</span> <span class="p">{</span>
+            <span class="s2">&quot;$push&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span>
+                    <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage</span><span class="p">,</span>
+                    <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error</span><span class="p">,</span>
+                    <span class="s2">&quot;progress&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span><span class="p">,</span>
+                    <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">},</span> <span class="n">return_document</span><span class="o">=</span><span class="n">pymongo</span><span class="o">.</span><span class="n">ReturnDocument</span><span class="o">.</span><span class="n">AFTER</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">PROJECTION</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="s2">&quot;jobs&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">processor</span><span class="p">(</span><span class="n">document</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Job.dispatch"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">id_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Using the job&#39;s messaging interface (:class:`multiprocessing.Queue` or Redis), send an instruction to the API</span>
+<span class="sd">        server(s) to dispatch messages for the passed ``interface``, ``operation`` and ``id_list``.</span>
+
+<span class="sd">        Operations can be one of: `insert`, `update`, or `remove`.</span>
+
+<span class="sd">        Consider this call to :meth:`.Job.dispatch`:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            dispatch(</span>
+<span class="sd">                &quot;update&quot;,</span>
+<span class="sd">                &quot;analyses&quot;,</span>
+<span class="sd">                [&quot;ahj26ka&quot;]</span>
+<span class="sd">            )</span>
+
+<span class="sd">        The above call would instruct the API server to dispatch the most recent version of the database document with</span>
+<span class="sd">        the unique id `ahj26ka` in the analyses collection.</span>
+
+<span class="sd">        This is useful when the job updates parts of the database and you want users to receive real time updates for</span>
+<span class="sd">        the affected documents. For example, building a new reference index and setting the ``ready`` flag to ``True``</span>
+<span class="sd">        on the database document representing the index. Sending a real-time update to the clients would allow the index</span>
+<span class="sd">        UI component to change from a pending to active style.</span>
+
+<span class="sd">        :param interface: the interface (ie. database collection) the message applies to</span>
+<span class="sd">        :param operation: the operation to perform on the interface</span>
+<span class="sd">        :param id_list: a list of ids whose documents should be dispatched</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">interface</span><span class="p">,</span>
+            <span class="n">operation</span><span class="p">,</span>
+            <span class="n">id_list</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">add_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">virtool</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2">    </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="n">indent</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_buffer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flush_log</span><span class="p">()</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_buffer</span><span class="p">[:]</span>
+
+    <span class="k">def</span> <span class="nf">flush_log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_buffer</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Job.cleanup"><a class="viewcode-back" href="../../../api.html#virtool.job.job.Job.cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called when the job fails due to error or cancellation. It should clean up any files or</span>
+<span class="sd">        database changes made by the job prior to its failure.</span>
+
+<span class="sd">        By default, this method does nothing. It is intended to be replaced in a subclass.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">SubprocessError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This exception is raised when a subprocess run as part of a job encounters an error. The exception is handled in</span>
+<span class="sd">    the main :meth:`.run` method</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">TerminationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This exception is raised when ``SIGTERM`` is handled in the job process. ``SIGTERM`` usually represents an attempt</span>
+<span class="sd">    at cancellation of the job as a result of the process&#39;s :meth:`~multiprocessing.Process.terminate` being called.</span>
+
+<span class="sd">    The exception is handled in the :meth:`.run` method and stops execution and leads the job into a cancelled state.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="handle_exception"><a class="viewcode-back" href="../../../api.html#virtool.job.job.handle_exception">[docs]</a><span class="k">def</span> <span class="nf">handle_exception</span><span class="p">(</span><span class="n">max_tb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transforms an exception into a :class:`dict` describing the error. The dict can be stored in MongoDB and used to</span>
+<span class="sd">    annotate a job document.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        try:</span>
+<span class="sd">            cause_error()</span>
+<span class="sd">        except:</span>
+<span class="sd">            error = handle_exception()</span>
+
+<span class="sd">    :param max_tb: maximum traceback depth</span>
+<span class="sd">    :return: traceback data</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exception</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">trace_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">exception</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+        <span class="s2">&quot;traceback&quot;</span><span class="p">:</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_tb</span><span class="p">(</span><span class="n">trace_info</span><span class="p">,</span> <span class="n">max_tb</span><span class="p">),</span>
+        <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">args</span><span class="p">]</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="handle_sigterm"><a class="viewcode-back" href="../../../api.html#virtool.job.job.handle_sigterm">[docs]</a><span class="k">def</span> <span class="nf">handle_sigterm</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A handler for SIGTERM signals. Raises a TerminationError in :meth:`.Job.run` that allows the job to clean-up after</span>
+<span class="sd">    itself before terminating.</span>
+
+<span class="sd">    A SIGTERM is generally received as the result of explicit cancellation of the job by a user.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="n">TerminationError</span></div>
+
+
+<div class="viewcode-block" id="watch_pipe"><a class="viewcode-back" href="../../../api.html#virtool.job.job.watch_pipe">[docs]</a><span class="k">def</span> <span class="nf">watch_pipe</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">TextIOWrapper</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A function for watching stdout and stderr pipes on subprocesses. Lines are read and pushed into the `q`. Queued</span>
+<span class="sd">    lines are handled in :meth:`.Job.run`.</span>
+
+<span class="sd">    This function is intended to be run in a separate thread.</span>
+
+<span class="sd">    :param stream: a stdout or stderr file object</span>
+<span class="sd">    :param q: a queue to push lines into</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">line</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">virtool.job</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../how-to.html">How-To</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Ian Boyes.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
