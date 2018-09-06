@@ -290,7 +290,7 @@ class Job(virtool.jobs.job.Job):
             }
         })
 
-        self.dispatch("samples", "update", self.params["sample_id"])
+        self.dispatch("samples", "update", [self.params["sample_id"]])
 
     def clean_watch(self):
         """ Remove the original read files from the files directory """
@@ -299,14 +299,13 @@ class Job(virtool.jobs.job.Job):
 
     def cleanup(self):
         for file_id in self.params["files"]:
-            document = self.db.files.find_one_and_update({"_id": file_id}, {
+            self.db.files.update_many({"_id": file_id}, {
                 "$set": {
                     "reserved": False
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.files.PROJECTION)
+            })
 
-            if document:
-                self.dispatch("files", "update", virtool.utils.base_processor(document))
+        self.dispatch("files", "update", self.params["files"])
 
         try:
             shutil.rmtree(self.params["sample_path"])
