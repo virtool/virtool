@@ -118,25 +118,29 @@ async def get_waiting_and_running_ids(db):
 
 
 def processor(document: dict) -> dict:
-    """
-    Removes the ``status`` and ``args`` fields from the job document.
-    Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
-    ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
+        """
+        The default document processor for job documents. Transforms projected job documents to a structure that can be
+        dispatches to clients.
 
-    :param document: a document to process.
-    :return: a processed documents.
-    """
-    document = virtool.utils.base_processor(document)
+        1. Removes the ``status`` and ``args`` fields from the job document.
+        2. Adds a ``username`` field.
+        3. Adds a ``created_at`` date taken from the first status entry in the job document.
+        4. Adds ``state`` and ``progress`` fields derived from the most recent ``status`` entry in the job document.
 
-    status = document.pop("status")
+        :param document: a document to process
+        :return: a processed document
+        """
+        document["id"] = document.pop("_id")
 
-    last_update = status[-1]
+        status = document.pop("status")
 
-    document.update({
-        "state": last_update["state"],
-        "stage": last_update["stage"],
-        "created_at": status[0]["timestamp"],
-        "progress": status[-1]["progress"]
-    })
+        last_update = status[-1]
 
-    return document
+        document.update({
+            "state": last_update["state"],
+            "stage": last_update["stage"],
+            "created_at": status[0]["timestamp"],
+            "progress": status[-1]["progress"]
+        })
+
+        return document
