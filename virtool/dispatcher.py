@@ -63,7 +63,7 @@ class Dispatcher:
 
         """
         self.connections.append(connection)
-        logging.debug("Added connection to dispatcher: {}".format(connection.user_id))
+        logging.debug(f'Added connection to dispatcher: {connection.user_id}')
 
     def remove_connection(self, connection):
         """
@@ -75,7 +75,7 @@ class Dispatcher:
         """
         try:
             self.connections.remove(connection)
-            logging.debug("Removed connection from dispatcher: {}".format(connection.user_id))
+            logging.debug(f'Removed connection from dispatcher: {connection.user_id}')
         except ValueError:
             pass
 
