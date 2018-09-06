@@ -2,6 +2,23 @@ import logging
 from copy import deepcopy
 
 import virtool.api.utils
+import virtool.db.analyses
+import virtool.db.files
+import virtool.db.groups
+import virtool.db.history
+import virtool.db.hmm
+import virtool.db.indexes
+import virtool.db.jobs
+import virtool.db.processes
+import virtool.db.references
+import virtool.db.samples
+import virtool.db.software
+import virtool.db.status
+import virtool.db.subtractions
+import virtool.db.users
+import virtool.utils
+
+
 INTERFACES = (
     "analyses",
     "files",
@@ -29,6 +46,28 @@ OPERATIONS = (
 
 async def default_writer(connection, message):
     return await connection.send(message)
+
+
+def get_processor(name):
+    if name == "jobs":
+        return virtool.db.jobs.processor
+
+    return virtool.utils.base_processor
+
+
+def get_projection(name):
+    return {
+        "analyses": virtool.db.analyses.PROJECTION,
+        "files": virtool.db.files.PROJECTION,
+        "history": virtool.db.history.PROJECTION,
+        "hmm": virtool.db.hmm.PROJECTION,
+        "indexes": virtool.db.indexes.PROJECTION,
+        "jobs": virtool.db.jobs.PROJECTION,
+        "references": virtool.db.references.PROJECTION,
+        "samples": virtool.db.samples.PROJECTION,
+        "subtractions": virtool.db.subtractions.PROJECTION,
+        "users": virtool.db.users.PROJECTION
+    }.get(name, None)
 
 
 class Connection:
