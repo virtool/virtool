@@ -78,7 +78,7 @@ async def default_writer(connection: Connection, message: dict):
     return await connection.send(message)
 
 
-def get_processor(interface: str) -> function:
+def get_processor(interface: str):
     """
     Returns a Virtool-style document processor given an `interface` name (eg. samples). The only `interface` that uses a
     custom processor is "jobs".
