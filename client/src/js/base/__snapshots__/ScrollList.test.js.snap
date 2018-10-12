@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ScrollList /> renders correctly if [noContainer=true], render without container 1`] = `
-<Fragment>
+<React.Fragment>
   <Entry
     key="0"
   />
-</Fragment>
+</React.Fragment>
 `;
 
 exports[`<ScrollList /> renders correctly otherwise render within <div> container 1`] = `

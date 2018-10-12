@@ -76,7 +76,7 @@ exports[`<EditSubtraction /> renders correctly 1`] = `
             label="Nickname"
             onChange={[Function]}
             type="text"
-            value="test-nickname"
+            value="foo"
           />
         </Col>
       </Row>

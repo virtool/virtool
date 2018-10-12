@@ -145,27 +145,29 @@ exports[`<UserItem /> renders correctly 1`] = `
       </small>
     </Flex>
     <UserPermissions />
-    <label>
-      User Role
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="Limited"
-    >
-      <option
-        key="admin"
-        value="Administrator"
-      >
-        Administrator
-      </option>
-      <option
-        key="limit"
+    <React.Fragment>
+      <label>
+        User Role
+      </label>
+      <InputError
+        onChange={[Function]}
+        type="select"
         value="Limited"
       >
-        Limited
-      </option>
-    </InputError>
+        <option
+          key="admin"
+          value="Administrator"
+        >
+          Administrator
+        </option>
+        <option
+          key="limit"
+          value="Limited"
+        >
+          Limited
+        </option>
+      </InputError>
+    </React.Fragment>
     <RemoveBanner
       buttonText="Delete"
       message="Click the Delete button to permanently remove this user."

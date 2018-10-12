@@ -32,10 +32,11 @@ export class Password extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.lastPasswordChange !== nextProps.last_password_change) {
-            return getInitialState(nextProps);
+        if (prevState.lastPasswordChange === nextProps.detail.last_password_change) {
+            return null;
         }
-        return null;
+
+        return getInitialState(nextProps);
     }
 
     componentWillUnmount () {

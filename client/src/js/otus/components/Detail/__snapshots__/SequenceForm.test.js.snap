@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SequenceForm /> renders correctly 1`] = `
-<Fragment>
+<React.Fragment>
   <form
     onSubmit={[MockFunction]}
   >
@@ -109,5 +109,5 @@ exports[`<SequenceForm /> renders correctly 1`] = `
       <SaveButton />
     </ModalFooter>
   </form>
-</Fragment>
+</React.Fragment>
 `;

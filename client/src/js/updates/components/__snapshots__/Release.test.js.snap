@@ -48,7 +48,7 @@ exports[`<Release /> renders correctly 1`] = `
             className="fixed-width"
             faStyle="fas"
             fixedWidth={false}
-            name="caret-down"
+            name="caret-right"
             pullRight={false}
           />
            
@@ -78,15 +78,6 @@ exports[`<Release /> renders correctly 1`] = `
           </Button>
         </Col>
       </Row>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
-    >
-      <ReleaseMarkdown
-        body="foo bar baz"
-      />
     </Col>
   </Row>
 </ListGroupItem>

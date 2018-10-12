@@ -28,19 +28,21 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
         grow={1}
         shrink={0}
       >
-        <small>
-          <div />
-        </small>
-        <small>
-          <Icon
-            bsStyle="warning"
-            faStyle="fas"
-            fixedWidth={false}
-            name="pencil-alt"
-            onClick={[Function]}
-            pullRight={true}
-          />
-        </small>
+        <React.Fragment>
+          <small>
+            <div />
+          </small>
+          <small>
+            <Icon
+              bsStyle="warning"
+              faStyle="fas"
+              fixedWidth={false}
+              name="pencil-alt"
+              onClick={[Function]}
+              pullRight={true}
+            />
+          </small>
+        </React.Fragment>
       </FlexItem>
     </Flex>
   </ViewHeader>
