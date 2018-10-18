@@ -14,7 +14,7 @@ sys.dont_write_bytecode = True
 
 logger = logging.getLogger("aiohttp.server")
 
-args = get_args()
+args = virtool.args.get_args()
 
 virtool.logs.configure(verbose=args.verbose)
 
