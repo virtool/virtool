@@ -67,7 +67,7 @@ class Job(virtool.jobs.job.Job):
             document = self.db.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = virtool.db.sync.join_otu(self.db, patch_id)
+                joined = virtool.db.sync.join_otu(self.db, patch_id, document)
             else:
                 _, joined, _ = virtool.db.sync.patch_otu_to_version(self.db, patch_id, patch_version)
 
