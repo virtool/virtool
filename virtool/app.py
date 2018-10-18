@@ -114,7 +114,7 @@ async def init_dispatcher(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["dispatcher"] = virtool.dispatcher.Dispatcher(app.loop)
+    app["dispatcher"] = virtool.dispatcher.Dispatcher()
 
 
 async def init_db(app):
