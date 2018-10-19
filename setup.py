@@ -20,9 +20,7 @@ build_exe_options = {
         "numpy",
         "numpy.core._methods",
         "numpy.lib",
-        "numpy.lib.format",
-        "virtool.job",
-        "virtool.nuvs"
+        "numpy.lib.format"
     ],
     "namespace_packages": [
         "virtool"

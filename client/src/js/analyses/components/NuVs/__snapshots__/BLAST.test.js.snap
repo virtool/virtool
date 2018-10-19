@@ -67,7 +67,7 @@ exports[`<NuVsBLAST /> renders <BLASTInProgress /> subcomponent 1`] = `
             time="2018-02-14T17:12:00.000000Z"
           />
           . Checking again in 
-          7 months ago
+          8 months ago
           .
         </small>
       </FlexItem>

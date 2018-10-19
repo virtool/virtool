@@ -1,11 +1,14 @@
-import aiojobs.aiohttp
 import asyncio
 import logging
 import multiprocessing
 
 import virtool.db.iface
+import virtool.db.indexes
 import virtool.db.jobs
+import virtool.db.otus
+import virtool.db.samples
 import virtool.db.utils
+import virtool.dispatcher
 import virtool.errors
 import virtool.jobs.classes
 import virtool.utils
@@ -19,9 +22,10 @@ class IntegratedManager:
 
     """
     def __init__(self, app, capture_exception):
+        #: A reference to the application dispatcher's :meth:`.dispatch` method.
+        self._dispatch = app["dispatcher"].dispatch
 
-        self.dispatch = app["dispatcher"].dispatch
-
+        #: A :class:`multiprocess.Queue` used to receive dispatch information from job processes.
         self.queue = multiprocessing.Queue()
 
         #: The application IO loop
@@ -108,6 +112,19 @@ class IntegratedManager:
             "mem": document["mem"]
         }
 
+    async def dispatch(self, interface, operation, id_list):
+
+        if operation == "delete":
+            await self._dispatch(interface, operation, id_list)
+
+        collection = getattr(self.dbi, interface)
+
+        projection = virtool.dispatcher.get_projection(interface)
+        processor = virtool.dispatcher.get_processor(interface)
+
+        async for document in collection.find({"_id": {"$in": id_list}}, projection=projection):
+            await self._dispatch(interface, operation, processor(document))
+
     async def cancel(self, job_id):
         """
         Cancel the job with the given `job_id` if it is in the `_jobs_dict`.
@@ -124,7 +141,6 @@ class IntegratedManager:
             else:
                 await virtool.db.jobs.cancel(self.dbi, job_id)
                 del self._jobs[job_id]
-
 
 def get_available_resources(settings, jobs):
     used = get_used_resources(jobs)

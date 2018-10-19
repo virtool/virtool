@@ -12,7 +12,7 @@ __pycache__
 /client/coverage
 /.idea
 settings.json
-/doc/_build
+/docs/_build
 /assets/prunus_persica
 *.log*
 .coverage.cog*

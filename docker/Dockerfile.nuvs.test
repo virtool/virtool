@@ -1,0 +1,49 @@
+FROM debian:stretch as base
+WORKDIR /build
+RUN apt-get update && apt-get install -y wget zip unzip
+
+# HMMER
+FROM base as hmmer
+RUN apt-get install -y make gcc
+RUN wget -q http://eddylab.org/software/hmmer/hmmer-3.2.1.tar.gz && \
+    tar -xf hmmer-3.2.1.tar.gz && \
+    cd hmmer-3.2.1 && \
+    ./configure --prefix /build/hmmer && \
+    make && \
+    make install
+
+# Bowtie2
+FROM base as bowtie
+RUN wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip && \
+    unzip bowtie2-2.3.2-legacy-linux-x86_64.zip && \
+    mv bowtie2-2.3.2-legacy bowtie2
+
+# SPAdes
+FROM base as spades
+RUN wget -q https://github.com/ablab/spades/releases/download/v3.11.0/SPAdes-3.11.0-Linux.tar.gz && \
+    tar -xf SPAdes-3.11.0-Linux.tar.gz && \
+    mv SPAdes-3.11.0-Linux spades
+
+# Install Python packages
+FROM python:3.6 as pip
+WORKDIR /build
+ADD ./requirements.txt ./
+RUN pip install -r requirements.txt
+
+FROM python:3.6
+WORKDIR /app
+COPY ./virtool /app/virtool
+COPY ./tests /app/tests
+COPY ./LICENSE /app/
+COPY ./README.md /app/
+RUN rm -rf /opt/spades && mkdir /opt/spades && rm -rf /opt/bowtie2 && mkdir /opt/bowtie2
+COPY --from=hmmer /build/hmmer /opt/hmmer
+COPY --from=bowtie /build/bowtie2/ /opt/bowtie2
+COPY --from=spades /build/spades /opt/spades
+COPY --from=pip /root/.cache /root/.cache
+COPY --from=pip /build/requirements.txt ./
+RUN pip install -r requirements.txt && \
+    cd /usr/local/bin && \
+    ln -f -s /opt/spades/bin/spades.py && \
+    ln -f -s /opt/bowtie2/bowtie2 && \
+    for file in `ls /opt/hmmer/bin`; do ln -f -s /opt/hmmer/bin/$file; done

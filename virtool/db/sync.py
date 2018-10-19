@@ -108,7 +108,7 @@ def join_otu(db, query, document=None):
     if document is None:
         return None
 
-    sequences = db.sequences.find({"otu_id": document["_id"]})
+    sequences = list(db.sequences.find({"otu_id": document["_id"]}))
 
     # Merge the sequence entries into the otu entry.
     return virtool.otus.merge_otu(document, sequences)

@@ -17,7 +17,7 @@ def test_create_sample_job(mocker, tmpdir, loop, dbi, dbs, test_db_name):
 
     q = mocker.Mock()
 
-    job = virtool.jobs.create_sample.CreateSample(
+    job = virtool.jobs.create_sample.Job(
         "mongodb://localhost:27017",
         test_db_name,
         settings,

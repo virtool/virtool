@@ -4,18 +4,19 @@ import sys
 import json
 import uvloop
 import asyncio
-
 from aiohttp import web
-from virtool.app import create_app
-from virtool.app_init import get_args, configure
+
+import virtool.args
+import virtool.app
+import virtool.logs
 
 sys.dont_write_bytecode = True
 
 logger = logging.getLogger("aiohttp.server")
 
-args = get_args()
+args = virtool.args.get_args()
 
-configure(verbose=args.verbose)
+virtool.logs.configure(verbose=args.verbose)
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -32,7 +33,7 @@ except FileNotFoundError:
     settings_temp = dict()
 
 if __name__ == "__main__":
-    app = create_app(
+    app = virtool.app.create_app(
         loop,
         skip_setup=skip_setup,
         force_version=args.force_version,
