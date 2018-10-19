@@ -47,7 +47,6 @@ class ImportReference extends React.Component {
     };
 
     handleDrop = (file) => {
-
         if (file.length > 1) {
             return this.setState({
                 errorFile: "Only one file can be uploaded at a time"
@@ -94,7 +93,9 @@ class ImportReference extends React.Component {
 
         if (this.state.localId.length) {
             uploadedFile = find(this.props.uploads, { localId: this.state.localId });
-            progress = uploadedFile.progress;
+            if (uploadedFile) {
+                progress = uploadedFile.progress;
+            }
         }
 
         if (progress !== 0 && progress < 100) {
