@@ -40,8 +40,8 @@ class TestConnection:
         assert test_ws_connection._ws.close.stub.called
 
 
-def test_add_connection(loop, mocker):
-    dispatcher = Dispatcher(loop)
+def test_add_connection(mocker):
+    dispatcher = Dispatcher()
 
     m = mocker.Mock()
 
@@ -50,9 +50,9 @@ def test_add_connection(loop, mocker):
     assert m in dispatcher.connections
 
 
-def test_remove_connection(loop, mocker):
+def test_remove_connection(mocker):
 
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m = mocker.Mock()
 
@@ -65,12 +65,12 @@ def test_remove_connection(loop, mocker):
     assert dispatcher.connections == []
 
 
-async def test_dispatch_authorized(loop, create_test_connection):
+async def test_dispatch_authorized(create_test_connection):
     """
     Test if an authorized connection can have a message dispatched through it using its ``send`` method.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m = create_test_connection()
 
@@ -89,12 +89,12 @@ async def test_dispatch_authorized(loop, create_test_connection):
     })
 
 
-async def test_dispatch_unauthorized(loop, create_test_connection):
+async def test_dispatch_unauthorized(create_test_connection):
     """
     Test an unauthorized connections does not have its ``send`` method called during a dispatch.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m = create_test_connection()
 
@@ -107,13 +107,13 @@ async def test_dispatch_unauthorized(loop, create_test_connection):
     m.send_stub.assert_not_called()
 
 
-async def test_dispatch_either(loop, create_test_connection):
+async def test_dispatch_either(create_test_connection):
     """
     Test the only the authorized connection has its ``send`` method called when an one authorized and one
     unauthorized connection are managed by the dispatcher.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_authorized = create_test_connection()
     m_authorized.user_id = "test"
@@ -137,13 +137,13 @@ async def test_dispatch_either(loop, create_test_connection):
     m_unauthorized.send_stub.assert_not_called()
 
 
-async def test_dispatch_specific(loop, create_test_connection):
+async def test_dispatch_specific(create_test_connection):
     """
     Test that only the connection passed in the keyword argument ``connections`` has its ``send`` method called when
     a dispatch occurs.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_1 = create_test_connection()
     m_1.user_id = "bob"
@@ -172,12 +172,12 @@ async def test_dispatch_specific(loop, create_test_connection):
     m_3.send_stub.assert_not_called()
 
 
-async def test_callable_filter(loop, create_test_connection):
+async def test_callable_filter(create_test_connection):
     """
     Test that the ``conn_filter`` keyword argument properly filters connections and dispatches to them.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_1 = create_test_connection()
     m_1.user_id = "bob"
@@ -201,23 +201,22 @@ async def test_callable_filter(loop, create_test_connection):
     m_2.send_stub.assert_not_called()
 
 
-async def test_not_callable_filter(loop):
     """
     Test that that passing a non-callable ``conn_filter`` keyword argument raises a specific ``TypeError``.
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, conn_filter=True)
+        await Dispatcher().dispatch("otus", "update", {"test": True}, conn_filter=True)
 
     assert "conn_filter must be callable" in str(err.value)
 
 
-async def test_callable_modifier(loop, create_test_connection):
+async def test_callable_modifier(create_test_connection):
     """
     Test that the ``conn_modifier`` keyword argument properly modifies connection objects.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_1 = create_test_connection()
     m_1.user_id = "bob"
@@ -237,23 +236,23 @@ async def test_callable_modifier(loop, create_test_connection):
     assert m_2.groups == ["men"]
 
 
-async def test_not_callable_modifier(loop):
+async def test_not_callable_modifier():
     """
     Test that an non-callable ``conn_modifier`` raises a specific ``TypeError``.
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, conn_modifier="abc")
+        await Dispatcher().dispatch("otus", "update", {"test": True}, conn_modifier="abc")
 
     assert "conn_modifier must be callable" in str(err.value)
 
 
-async def test_modifier_filter(loop, create_test_connection):
+async def test_modifier_filter(create_test_connection):
     """
     Test that the ``conn_modifier`` keyword argument only modifies connection objects that pass ``conn_filter``.
 
     """
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_1 = create_test_connection()
     m_1.user_id = "bob"
@@ -279,7 +278,7 @@ async def test_modifier_filter(loop, create_test_connection):
     assert m_2.groups is None
 
 
-async def test_writer(loop, create_test_connection):
+async def test_writer(create_test_connection):
     """
     Test that a writer can properly modify and write a message to the passed connection.
 
@@ -290,7 +289,7 @@ async def test_writer(loop, create_test_connection):
 
         await connection.send(message)
 
-    dispatcher = Dispatcher(loop)
+    dispatcher = Dispatcher()
 
     m_1 = create_test_connection()
     m_1.user_id = "bob"
@@ -320,12 +319,12 @@ async def test_writer(loop, create_test_connection):
     })
 
 
-async def test_writer_not_callable(loop):
+async def test_writer_not_callable():
     """
     Test that a writer can properly modify and write a message to the passed connection.
 
     """
     with pytest.raises(TypeError) as err:
-        await Dispatcher(loop).dispatch("otus", "update", {"test": True}, writer="writer")
+        await Dispatcher().dispatch("otus", "update", {"test": True}, writer="writer")
 
     assert "writer must be callable" in str(err)
