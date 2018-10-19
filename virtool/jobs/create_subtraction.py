@@ -1,14 +1,14 @@
 import os
 
 import pymongo
-from virtool.job import Job
+import virtool.jobs.job
 
 import virtool.db.subtractions
 import virtool.subtractions
 import virtool.utils
 
 
-class CreateSubtraction(Job):
+class Job(virtool.jobs.job.Job):
 
     """
     A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file.
@@ -59,14 +59,14 @@ class CreateSubtraction(Job):
         """
         gc, count = virtool.subtractions.calculate_fasta_gc(self.params["fasta_path"])
 
-        document = self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
+        self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "gc": gc,
                 "count": count
             }
         }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.subtractions.PROJECTION)
 
-        self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+        self.dispatch("subtraction", "update", [self.params["subtraction_id"]])
 
     def bowtie_build(self):
         """
@@ -87,13 +87,13 @@ class CreateSubtraction(Job):
         Set the ``ready`` on the subtraction document ``True``.
 
         """
-        document = self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
+        self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "ready": True
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.subtractions.PROJECTION)
+        })
 
-        self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+        self.dispatch("subtraction", "update", [self.params["subtraction_id"]])
 
     def cleanup(self):
         """

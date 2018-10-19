@@ -8,3 +8,11 @@ Virtool
 Virtool is a web-based application for diagnosing viral infections in plant samples using Illumina sequencing. 
   
 Website: http://www.virtool.ca
+
+#### Required Software
+
+| Software                                                         | Version |
+|------------------------------------------------------------------|---------|
+| [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.2   |
+| [HMMER](http://hmmer.org/)                                       | 3.1b2   |
+| [SPAdes](http://cab.spbu.ru/software/spades/)                    | 3.11.0  |

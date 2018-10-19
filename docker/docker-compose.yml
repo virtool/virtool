@@ -1,0 +1,14 @@
+version: "3"
+services:
+  nuvs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: echo
+    container_name: nuvs
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:3.6.6
+    container_name: mongodb
+    command: mongod

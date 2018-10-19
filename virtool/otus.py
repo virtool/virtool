@@ -214,7 +214,7 @@ def merge_otu(otu, sequences):
     merged = deepcopy(otu)
 
     for isolate in merged["isolates"]:
-        isolate_id = isolate.get("id", None) or isolate.get("isolate_id", None)
+        isolate_id = isolate["id"]
         isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate_id]
 
     return merged

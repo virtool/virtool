@@ -1,19 +1,18 @@
 import os
 import pymongo
 
-from virtool.job import Job
-
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.otus
 import virtool.db.sync
 import virtool.errors
 import virtool.history
+import virtool.jobs.job
 import virtool.otus
 import virtool.utils
 
 
-class BuildIndex(Job):
+class Job(virtool.jobs.job.Job):
     """
     Job object that builds a new Bowtie2 index for a given reference.
 
@@ -68,7 +67,7 @@ class BuildIndex(Job):
             document = self.db.otus.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = virtool.db.sync.join_otu(self.db, patch_id)
+                joined = virtool.db.sync.join_otu(self.db, patch_id, document)
             else:
                 _, joined, _ = virtool.db.sync.patch_otu_to_version(self.db, patch_id, patch_version)
 
@@ -110,28 +109,35 @@ class BuildIndex(Job):
 
         """
         # Tell the client the index is ready to be used and to no longer show it as building.
-        document = self.db.indexes.find_one_and_update({"_id": self.params["index_id"]}, {
+        self.db.indexes.find_one_and_update({"_id": self.params["index_id"]}, {
             "$set": {
                 "ready": True
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.indexes.PROJECTION)
+        })
 
-        self.dispatch("indexes", "update", virtool.utils.base_processor(document))
+        self.dispatch("indexes", "update", [self.params["index_id"]])
 
         active_indexes = virtool.db.sync.get_active_index_ids(self.db, self.params["ref_id"])
 
         remove_unused_index_files(self.params["reference_path"], active_indexes)
 
-        self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
+        query = {
+            "_id": {
+                "$not": {
+                    "$in": active_indexes
+                }
+            }
+        }
+
+        self.db.indexes.update_many(query, {
             "$set": {
                 "has_files": False
             }
         })
 
-        query = {"_id": {"$not": {"$in": active_indexes}}}
+        id_list = self.db.indexes.distinct("_id", query)
 
-        for index in self.db.indexes.find(query, projection=virtool.db.indexes.PROJECTION):
-            self.dispatch("indexes", "update", virtool.utils.base_processor(index))
+        self.dispatch("indexes", "update", id_list)
 
         # Find otus with changes.
         pipeline = [
@@ -192,8 +198,9 @@ class BuildIndex(Job):
             }
         })
 
-        for document in self.db.history.find(query):
-            self.dispatch("history", "update", document)
+        id_list = self.db.history.distinct("_id", query)
+
+        self.dispatch("history", "update", id_list)
 
         virtool.utils.rm(self.params["index_path"], True)
 

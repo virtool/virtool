@@ -1,11 +1,11 @@
 import os
 import shutil
-import pymongo
 
-from virtool.job import Job
+import pymongo
 
 import virtool.db.files
 import virtool.db.samples
+import virtool.jobs.job
 import virtool.samples
 import virtool.utils
 
@@ -45,7 +45,7 @@ def move_trimming_results(path, paired):
     )
 
 
-class CreateSample(Job):
+class Job(virtool.jobs.job.Job):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -283,14 +283,14 @@ class CreateSample(Job):
 
                     fastqc["sequences"][quality] += int(line[1].split(".")[0])
 
-        document = self.db.samples.find_one_and_update({"_id": self.params["sample_id"]}, {
+        self.db.samples.update_one({"_id": self.params["sample_id"]}, {
             "$set": {
                 "quality": fastqc,
                 "imported": False
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.samples.PROJECTION)
+        })
 
-        self.dispatch("samples", "update", virtool.utils.base_processor(document))
+        self.dispatch("samples", "update", [self.params["sample_id"]])
 
     def clean_watch(self):
         """ Remove the original read files from the files directory """
@@ -299,14 +299,13 @@ class CreateSample(Job):
 
     def cleanup(self):
         for file_id in self.params["files"]:
-            document = self.db.files.find_one_and_update({"_id": file_id}, {
+            self.db.files.update_many({"_id": file_id}, {
                 "$set": {
                     "reserved": False
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.files.PROJECTION)
+            })
 
-            if document:
-                self.dispatch("files", "update", virtool.utils.base_processor(document))
+        self.dispatch("files", "update", self.params["files"])
 
         try:
             shutil.rmtree(self.params["sample_path"])
