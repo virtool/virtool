@@ -1,13 +1,10 @@
 import pytest
 import filecmp
 import json
-import multiprocessing
 import os
 import pickle
 import shutil
 import sys
-
-import pytest
 
 import virtool.bio
 import virtool.jobs.nuvs

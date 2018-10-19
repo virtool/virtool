@@ -278,7 +278,7 @@ def compute_best_hit(u, nu, refs, reads):
 
         num_best_ref = num_best_ref or 1
 
-        for i in range(len(x_norm)):
+        for i, _ in enumerate(x_norm):
             if x_norm[i] == best_ref:
                 best_hit_reads[ind[i]] += 1.0 / num_best_ref
 
