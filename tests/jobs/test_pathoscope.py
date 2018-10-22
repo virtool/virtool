@@ -439,6 +439,8 @@ def test_import_results(dbs, mock_job):
 
     assert dbs.samples.find_one() == {
         "_id": "foobar",
+        "nuvs": False,
+        "pathoscope": True,
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },

@@ -352,6 +352,8 @@ def test_import_results(mock_job, dbs):
         }
     })
 
+    mock_job.params["sample_id"] = "foobar"
+
     mock_job.results = [
         {
             'orfs': [
@@ -397,7 +399,7 @@ def test_import_results(mock_job, dbs):
     assert dbs.samples.find_one() == {
         "_id": "foobar",
         "pathoscope": False,
-        "nuvs": "ip"
+        "nuvs": True
     }
 
     assert dbs.analyses.find_one() == {

@@ -423,6 +423,10 @@ async def analyze(req):
 
     document = virtool.utils.base_processor(document)
 
+    sample = await virtool.db.samples.recalculate_algorithm_tags(db, sample_id)
+
+    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
+
     return json_response(
         document,
         status=201,
