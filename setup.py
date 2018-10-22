@@ -20,10 +20,8 @@ build_exe_options = {
         "numpy",
         "numpy.core._methods",
         "numpy.lib",
-        "numpy.lib.format"
+        "numpy.lib.format",
         "raven.processors"
-    "namespace_packages": [
-        "virtool"
     ],
     "packages": [
         "_cffi_backend",
