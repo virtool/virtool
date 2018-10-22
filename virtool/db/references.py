@@ -171,7 +171,8 @@ async def cleanup_removed(db, process_id, ref_id, user_id):
             db,
             document["_id"],
             user_id,
-            document=document
+            document=document,
+            silent=True
         )
 
         await progress_tracker.add(1)
@@ -985,7 +986,8 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
         old,
         joined,
         description,
-        user_id
+        user_id,
+        silent=True
     )
 
 
@@ -1040,7 +1042,7 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
                 }
             })
 
-    document = await db.otus.insert_one(otu)
+    document = await db.otus.insert_one(otu, silent=True)
 
     for sequence in all_sequences:
         await db.sequences.insert_one(dict(sequence, otu_id=document["_id"]), silent=True)
