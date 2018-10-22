@@ -21,7 +21,7 @@ build_exe_options = {
         "numpy.core._methods",
         "numpy.lib",
         "numpy.lib.format"
-    ],
+        "raven.processors"
     "namespace_packages": [
         "virtool"
     ],
