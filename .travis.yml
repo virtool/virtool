@@ -66,13 +66,8 @@ matrix:
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
       - python setup.py build
-      - ls -lh build/exe.linux-x86_64-3.6
       - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
-      - cp -rv templates gh_build/virtool
-      - cp -rv client/dist gh_build/virtool/client
-      - cp -v LICENSE gh_build/virtool
-      - cp -v readme.md gh_build/virtool
-      - echo $TRAVIS_TAG > gh_build/virtool/VERSION
+      - 'if [ "$TRAVIS_TAG" ]; then echo $TRAVIS_TAG > gh_build/virtool/VERSION; else echo "v0.0.0" > gh_build/virtool/VERSION; fi'
       - cd gh_build
       - tar -cvzf virtool.tar.gz virtool
       - tar -tvf virtool.tar.gz
