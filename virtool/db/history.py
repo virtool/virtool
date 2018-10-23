@@ -34,7 +34,7 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, user_id):
+async def add(db, method_name, old, new, description, user_id, silent=False):
     """
     Add a change document to the history collection.
 
@@ -55,6 +55,9 @@ async def add(db, method_name, old, new, description, user_id):
 
     :param user_id: the id of the requesting user
     :type user_id: str
+
+    :param silent: don't dispatch a message
+    :type: silent: bool
 
     :return: the change document
     :rtype: Coroutine[dict]
@@ -111,7 +114,7 @@ async def add(db, method_name, old, new, description, user_id):
     else:
         document["diff"] = virtool.history.calculate_diff(old, new)
 
-    await db.history.insert_one(document)
+    await db.history.insert_one(document, silent=silent)
 
     return document
 
