@@ -388,6 +388,7 @@ class Job(virtool.jobs.job.Job):
 
         """
         analysis_id = self.params["analysis_id"]
+        sample_id = self.params["sample_id"]
 
         try:
             self.db.analyses.update_one({"_id": analysis_id}, {
@@ -405,7 +406,10 @@ class Job(virtool.jobs.job.Job):
                 }
             })
 
-            self.dispatch("analyses", "update", [analysis_id])
+        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+
+        self.dispatch("analyses", "update", [analysis_id])
+        self.dispatch("samples", "update", [sample_id])
 
     def cleanup(self):
         """
@@ -419,6 +423,8 @@ class Job(virtool.jobs.job.Job):
             shutil.rmtree(self.params["analysis_path"])
         except FileNotFoundError:
             pass
+
+        virtool.db.sync.recalculate_algorithm_tags(self.db, self.params["sample_id"])
 
     def cleanup_indexes(self):
         pass
