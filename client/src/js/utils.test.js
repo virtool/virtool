@@ -7,41 +7,28 @@ describe("Utility constants and functions module", () => {
     it("byteSize(): converts number into closest whole units of B, KB, MB, GB ...", () => {
         let bytes = 1;
         result = utils.byteSize(bytes);
-        expected = "1.0 B";
+        expected = "1.0B";
         expect(result).toEqual(expected);
 
         bytes = 1024;
         result = utils.byteSize(bytes);
-        expected = "1.0 KB";
+        expected = "1.0KiB";
         expect(result).toEqual(expected);
 
         bytes = NaN;
         result = utils.byteSize(bytes);
-        expected = "0.0 B";
+        expected = "0.0B";
         expect(result).toEqual(expected);
 
         bytes = 0;
         result = utils.byteSize(bytes);
-        expected = "0.0 B";
+        expected = "0.0B";
         expect(result).toEqual(expected);
 
         bytes = null;
         result = utils.byteSize(bytes);
-        expected = "0.0 B";
+        expected = "0.0B";
         expect(result).toEqual(expected);
-
-        bytes = Infinity;
-        result = utils.byteSize(bytes);
-        expected = "NaN ";
-        expect(result).toEqual(expected);
-
-        // Unexpected/Undocumented behavior for numeral.js
-        bytes = -1024;
-        result = utils.byteSize(bytes);
-        expected = "-1.0 KB";
-        expect(result).not.toEqual(expected);
-        const actual = "-1024.0 ";
-        expect(result).toEqual(actual);
     });
 
     it("createRandomString()", () => {

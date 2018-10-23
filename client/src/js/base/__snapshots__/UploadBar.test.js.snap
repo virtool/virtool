@@ -4,7 +4,7 @@ exports[`<UploadBar /> renders correctly 1`] = `
 <div
   className="toolbar"
 >
-  <t
+  <n
     activeClassName="dropzone-active"
     className="dropzone"
     disableClick={true}
@@ -18,7 +18,7 @@ exports[`<UploadBar /> renders correctly 1`] = `
     preventDropOnDocument={true}
   >
     Drag file here to upload
-  </t>
+  </n>
   <Button
     bsStyle="default"
     icon="folder-open fa-fw"
@@ -34,7 +34,7 @@ exports[`<UploadBar /> renders optional message instead 1`] = `
 <div
   className="toolbar"
 >
-  <t
+  <n
     activeClassName="dropzone-active"
     className="dropzone"
     disableClick={true}
@@ -48,7 +48,7 @@ exports[`<UploadBar /> renders optional message instead 1`] = `
     preventDropOnDocument={true}
   >
     tester
-  </t>
+  </n>
   <Button
     bsStyle="default"
     icon="folder-open fa-fw"

@@ -91,6 +91,7 @@ export class IsolateDetail extends React.Component {
         return (
             <div>
                 <EditIsolate
+                    key={isolate.id}
                     otuId={this.props.otuId}
                     isolateId={isolate.id}
                     sourceType={isolate.source_type}
