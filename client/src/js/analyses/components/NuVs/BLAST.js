@@ -1,6 +1,6 @@
 import React from "react";
 import Moment from "moment";
-import Numeral from "numeral";
+import numbro from "numbro";
 import { ClipLoader } from "halogenium";
 import { map } from "lodash-es";
 import { Table, Panel } from "react-bootstrap";
@@ -71,7 +71,7 @@ export const BLASTResults = ({ hits }) => {
             <td>{hit.name}</td>
             <td>{hit.evalue}</td>
             <td>{hit.score}</td>
-            <td>{Numeral(hit.identity / hit.align_len).format("0.00")}</td>
+            <td>{numbro(hit.identity / hit.align_len).format("0.00")}</td>
         </tr>
     );
 

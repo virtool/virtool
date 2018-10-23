@@ -92,7 +92,7 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
           <td
             className="col-xs-8"
           >
-            100.0 
+            100.0
           </td>
         </tr>
         <tr>
@@ -301,7 +301,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
           <td
             className="col-xs-8"
           >
-            100.0 
+            100.0
           </td>
         </tr>
         <tr>

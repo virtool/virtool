@@ -1,5 +1,5 @@
 import React from "react";
-import Numeral from "numeral";
+import numbro from "numbro";
 import { map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
@@ -12,7 +12,7 @@ import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 import { checkAdminOrPermission } from "../../utils";
 
-const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
+const calculateGC = (nucleotides) => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 export class SubtractionDetail extends React.Component {
 

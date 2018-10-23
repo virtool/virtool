@@ -1,5 +1,5 @@
 import { get } from "lodash-es";
-import Numeral from "numeral";
+import numbro from "numbro";
 import React from "react";
 import { Label, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -61,7 +61,7 @@ class AnalysisDetail extends React.Component {
             throw Error("Unusable analysis detail content");
         }
 
-        const mappedPercent = Numeral(detail.read_count / this.props.quality.count).format("0.00%");
+        const mappedPercent = numbro(detail.read_count / this.props.quality.count).format("0.00%");
 
         return (
             <div>
@@ -88,7 +88,7 @@ class AnalysisDetail extends React.Component {
                         <tr>
                             <th>Mapped Reads</th>
                             <td>
-                                {Numeral(detail.read_count).format()}
+                                {numbro(detail.read_count).format()}
                                 <span style={{paddingLeft: "5px"}}>
                                     ({mappedPercent})
                                 </span>
@@ -96,7 +96,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Library Read Count</th>
-                            <td>{Numeral(this.props.quality.count).format()}</td>
+                            <td>{numbro(this.props.quality.count).format()}</td>
                         </tr>
                         <tr>
                             <th>Created</th>

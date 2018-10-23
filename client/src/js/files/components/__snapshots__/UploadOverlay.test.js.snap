@@ -32,7 +32,7 @@ exports[`<UploadOverlay /> renders <UploadItem /> subcomponent correctly 1`] = `
       pad={15}
       shrink={0}
     >
-      1.0 KB
+      1.0KiB
     </FlexItem>
   </Flex>
 </ListGroupItem>

@@ -1,5 +1,5 @@
 import React from "react";
-import Numeral from "numeral";
+import numbro from "numbro";
 import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -93,8 +93,8 @@ const mapStateToProps = (state) => {
 
     return {
         ...detail,
-        gc: Numeral(detail.quality.gc / 100).format("0.0 %"),
-        count: Numeral(detail.quality.count).format("0.0 a"),
+        gc: numbro(detail.quality.gc / 100).format("0.0 %"),
+        count: numbro(detail.quality.count).format("0.0 a"),
         encoding: detail.quality.encoding,
         lengthRange: detail.quality.length.join(" - "),
         userId: detail.user.id
