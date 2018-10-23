@@ -88,7 +88,7 @@
   },
   "scripts": {
     "build": "webpack --mode production",
-    "dev": "webpack --mode development",
+    "start": "webpack --mode development",
     "pretest": "eslint --ignore-path ../.gitignore .",
     "test": "jest",
     "test:watch": "yarn test --watch",
