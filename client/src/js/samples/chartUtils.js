@@ -7,41 +7,45 @@ import { map } from "lodash-es";
 const height = 300;
 
 const margin = {
-    top: 20,
-    left: 60,
-    bottom: 60,
-    right: 20
+  top: 20,
+  left: 60,
+  bottom: 60,
+  right: 20
 };
 
 export const appendLegend = (svg, width, series) => {
+  const legendScale = scaleOrdinal()
+    .domain(map(series, "label"))
+    .range(map(series, "color"));
 
-    const legendScale = scaleOrdinal()
-        .domain(map(series, "label"))
-        .range(map(series, "color"));
+  const legend = legendColor()
+    .shape(
+      "path",
+      symbol()
+        .type(symbolSquare)
+        .size(150)()
+    )
+    .shapePadding(10)
+    .scale(legendScale);
 
-    const legend = legendColor()
-        .shape("path", symbol().type(symbolSquare).size(150)())
-        .shapePadding(10)
-        .scale(legendScale);
-
-    // Append legend, calling rendering function.
-    svg.append("g")
-        .attr("class", "legendOrdinal")
-        .attr("transform", `translate(${width - 60}, 5)`)
-        .call(legend);
+  // Append legend, calling rendering function.
+  svg
+    .append("g")
+    .attr("class", "legendOrdinal")
+    .attr("transform", `translate(${width - 60}, 5)`)
+    .call(legend);
 };
 
-
 export const createSVG = (element, width) => {
+  const svg = select(element)
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    const svg = select(element).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+  svg.margin = margin;
+  svg.height = height;
 
-    svg.margin = margin;
-    svg.height = height;
-
-    return svg;
+  return svg;
 };

@@ -10,10 +10,10 @@
  * @type object
  */
 export const bsStyles = [
-    "primary",
-    "success",
-    "danger",
-    "warning",
-    "info",
-    "default"
+  "primary",
+  "success",
+  "danger",
+  "warning",
+  "info",
+  "default"
 ];

@@ -1,27 +1,27 @@
 import { simpleActionCreator } from "../utils";
 import {
-    WS_INSERT_GROUP,
-    WS_UPDATE_GROUP,
-    WS_REMOVE_GROUP,
-    LIST_GROUPS,
-    CREATE_GROUP,
-    SET_GROUP_PERMISSION,
-    REMOVE_GROUP
+  WS_INSERT_GROUP,
+  WS_UPDATE_GROUP,
+  WS_REMOVE_GROUP,
+  LIST_GROUPS,
+  CREATE_GROUP,
+  SET_GROUP_PERMISSION,
+  REMOVE_GROUP
 } from "../actionTypes";
 
-export const wsInsertGroup = (data) => ({
-    type: WS_INSERT_GROUP,
-    data
+export const wsInsertGroup = data => ({
+  type: WS_INSERT_GROUP,
+  data
 });
 
-export const wsUpdateGroup = (data) => ({
-    type: WS_UPDATE_GROUP,
-    data
+export const wsUpdateGroup = data => ({
+  type: WS_UPDATE_GROUP,
+  data
 });
 
-export const wsRemoveGroup = (data) => ({
-    type: WS_REMOVE_GROUP,
-    data
+export const wsRemoveGroup = data => ({
+  type: WS_REMOVE_GROUP,
+  data
 });
 
 /**
@@ -38,9 +38,9 @@ export const listGroups = simpleActionCreator(LIST_GROUPS.REQUESTED);
  * @param groupId {string} the id for the new group
  * @returns {object}
  */
-export const createGroup = (groupId) => ({
-    type: CREATE_GROUP.REQUESTED,
-    groupId
+export const createGroup = groupId => ({
+  type: CREATE_GROUP.REQUESTED,
+  groupId
 });
 
 /**
@@ -52,10 +52,10 @@ export const createGroup = (groupId) => ({
  * @returns {object}
  */
 export const setGroupPermission = (groupId, permission, value) => ({
-    type: SET_GROUP_PERMISSION.REQUESTED,
-    groupId,
-    permission,
-    value
+  type: SET_GROUP_PERMISSION.REQUESTED,
+  groupId,
+  permission,
+  value
 });
 
 /**
@@ -65,7 +65,7 @@ export const setGroupPermission = (groupId, permission, value) => ({
  * @param groupId {string} the id for the new group
  * @returns {object}
  */
-export const removeGroup = (groupId) => ({
-    type: REMOVE_GROUP.REQUESTED,
-    groupId
+export const removeGroup = groupId => ({
+  type: REMOVE_GROUP.REQUESTED,
+  groupId
 });

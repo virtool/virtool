@@ -8,118 +8,123 @@ import { getResources } from "../actions";
 const color = "#d44b40";
 
 class JobsResources extends React.Component {
+  componentDidMount() {
+    this.props.onGet();
+    this.timer = window.setInterval(this.props.onGet, 800);
+  }
 
-    componentDidMount () {
-        this.props.onGet();
-        this.timer = window.setInterval(this.props.onGet, 800);
+  componentDidUpdate(prevProps) {
+    if (!prevProps.error && this.props.error) {
+      window.clearInterval(this.timer);
     }
 
-    componentDidUpdate (prevProps) {
-        if (!prevProps.error && this.props.error) {
-            window.clearInterval(this.timer);
-        }
+    if (prevProps.error && !this.props.error) {
+      window.setInterval(this.props.onGet, 800);
+    }
+  }
 
-        if (prevProps.error && !this.props.error) {
-            window.setInterval(this.props.onGet, 800);
-        }
+  componentWillUnmount() {
+    window.clearInterval(this.timer);
+  }
+
+  render() {
+    if (this.props.error) {
+      return (
+        <NotFound
+          status={this.props.error.status}
+          message={this.props.error.message}
+        />
+      );
     }
 
-    componentWillUnmount () {
-        window.clearInterval(this.timer);
+    if (this.props.resources === null) {
+      return <LoadingPlaceholder />;
     }
 
-    render () {
-        if (this.props.error) {
-            return (
-                <NotFound
-                    status={this.props.error.status}
-                    message={this.props.error.message}
-                />
-            );
-        }
+    const coreGauges = map(this.props.resources.proc, (value, index) => (
+      <Gauge
+        key={index}
+        color={color}
+        value={Math.round(value)}
+        label={`Core ${index + 1}`}
+        width={100}
+        height={80}
+        minMaxLabelStyle={{ display: "none" }}
+      />
+    ));
 
-        if (this.props.resources === null) {
-            return <LoadingPlaceholder />;
-        }
+    const used =
+      (this.props.resources.mem.total - this.props.resources.mem.available) /
+      Math.pow(1024, 3);
 
-        const coreGauges = map(this.props.resources.proc, (value, index) =>
+    const minMaxLabelStyle = {
+      fontSize: "14px",
+      fontColor: "#333333"
+    };
+
+    return (
+      <div>
+        <h3 style={{ marginBottom: "30px" }}>System Resources</h3>
+
+        <h4
+          style={{ display: "flex", alignItems: "center", marginTop: "20px" }}
+          className="section-header"
+        >
+          <strong>CPU Utilization</strong>
+        </h4>
+
+        <Flex alignItems="center">
+          <FlexItem>
             <Gauge
-                key={index}
-                color={color}
-                value={Math.round(value)}
-                label={`Core ${index + 1}`}
-                width={100}
-                height={80}
-                minMaxLabelStyle={{display: "none"}}
+              color={color}
+              value={Math.round(mean(this.props.resources.proc))}
+              label=""
+              width={200}
+              height={160}
+              minMaxLabelStyle={minMaxLabelStyle}
             />
-        );
+          </FlexItem>
 
-        const used = (this.props.resources.mem.total - this.props.resources.mem.available) / Math.pow(1024, 3);
+          <FlexItem pad={25}>
+            <Flex wrap="wrap" justifyContent="center" alignContent="center">
+              {coreGauges}
+            </Flex>
+          </FlexItem>
+        </Flex>
 
-        const minMaxLabelStyle = {
-            fontSize: "14px",
-            fontColor: "#333333"
-        };
+        <h4
+          style={{ display: "flex", alignItems: "center", marginTop: "20px" }}
+          className="section-header"
+        >
+          <strong>Memory Utilization (GB)</strong>
+        </h4>
 
-        return (
-            <div>
-                <h3 style={{marginBottom: "30px"}}>
-                    System Resources
-                </h3>
-
-                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
-                    <strong>CPU Utilization</strong>
-                </h4>
-
-                <Flex alignItems="center">
-                    <FlexItem>
-                        <Gauge
-                            color={color}
-                            value={Math.round(mean(this.props.resources.proc))}
-                            label=""
-                            width={200}
-                            height={160}
-                            minMaxLabelStyle={minMaxLabelStyle}
-                        />
-                    </FlexItem>
-
-                    <FlexItem pad={25}>
-                        <Flex wrap="wrap" justifyContent="center" alignContent="center">
-                            {coreGauges}
-                        </Flex>
-                    </FlexItem>
-                </Flex>
-
-                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
-                    <strong>Memory Utilization (GB)</strong>
-                </h4>
-
-                <Gauge
-                    color={color}
-                    value={Math.round(used)}
-                    label=""
-                    minMaxLabelStyle={minMaxLabelStyle}
-                    max={Math.floor(this.props.resources.mem.total / Math.pow(1024, 3))}
-                    width={200}
-                    height={160}
-                />
-
-            </div>
-        );
-    }
+        <Gauge
+          color={color}
+          value={Math.round(used)}
+          label=""
+          minMaxLabelStyle={minMaxLabelStyle}
+          max={Math.floor(this.props.resources.mem.total / Math.pow(1024, 3))}
+          width={200}
+          height={160}
+        />
+      </div>
+    );
+  }
 }
 
-const mapStateToProps = (state) => ({
-    error: get(state, "errors.GET_RESOURCES_ERROR", null),
-    resources: state.jobs.resources
+const mapStateToProps = state => ({
+  error: get(state, "errors.GET_RESOURCES_ERROR", null),
+  resources: state.jobs.resources
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGet: () => {
-        dispatch(getResources());
-    }
-
+const mapDispatchToProps = dispatch => ({
+  onGet: () => {
+    dispatch(getResources());
+  }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobsResources);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(JobsResources);

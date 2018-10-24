@@ -1,24 +1,23 @@
-import {simpleActionCreator} from "../utils";
+import { simpleActionCreator } from "../utils";
 import {
-    WS_INSERT_SAMPLE,
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    FILTER_SAMPLES,
-    FIND_READ_FILES,
-    FIND_READY_HOSTS,
-    GET_SAMPLE,
-    CREATE_SAMPLE,
-    UPDATE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS,
-    REMOVE_SAMPLE,
-    LIST_SAMPLES,
-    SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL
+  WS_INSERT_SAMPLE,
+  WS_UPDATE_SAMPLE,
+  WS_REMOVE_SAMPLE,
+  FIND_SAMPLES,
+  FIND_READ_FILES,
+  FIND_READY_HOSTS,
+  GET_SAMPLE,
+  CREATE_SAMPLE,
+  UPDATE_SAMPLE,
+  UPDATE_SAMPLE_RIGHTS,
+  REMOVE_SAMPLE,
+  SHOW_REMOVE_SAMPLE,
+  HIDE_SAMPLE_MODAL
 } from "../actionTypes";
 
-export const wsInsertSample = (data) => ({
-    type: WS_INSERT_SAMPLE,
-    data
+export const wsInsertSample = data => ({
+  type: WS_INSERT_SAMPLE,
+  data
 });
 
 /**
@@ -28,9 +27,9 @@ export const wsInsertSample = (data) => ({
  * @param update {object} update data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateSample = (data) => ({
-    type: WS_UPDATE_SAMPLE,
-    data
+export const wsUpdateSample = data => ({
+  type: WS_UPDATE_SAMPLE,
+  data
 });
 
 /**
@@ -40,14 +39,15 @@ export const wsUpdateSample = (data) => ({
  * @param removed {string} the id for the specific sample
  * @returns {object}
  */
-export const wsRemoveSample = (data) => ({
-    type: WS_REMOVE_SAMPLE,
-    data
+export const wsRemoveSample = data => ({
+  type: WS_REMOVE_SAMPLE,
+  data
 });
 
-export const filterSamples = (term) => ({
-    type: FILTER_SAMPLES.REQUESTED,
-    term
+export const findSamples = (term, page = 1) => ({
+  type: FIND_SAMPLES.REQUESTED,
+  term,
+  page
 });
 
 export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);
@@ -67,9 +67,9 @@ export const findReadyHosts = simpleActionCreator(FIND_READY_HOSTS.REQUESTED);
  * @param sampleId {string} the id for the specific sample
  * @returns {object}
  */
-export const getSample = (sampleId) => ({
-    type: GET_SAMPLE.REQUESTED,
-    sampleId
+export const getSample = sampleId => ({
+  type: GET_SAMPLE.REQUESTED,
+  sampleId
 });
 
 /**
@@ -85,15 +85,23 @@ export const getSample = (sampleId) => ({
  * @param files {object} file ids of one or two files
  * @returns {object}
  */
-export const createSample = (name, isolate, host, locale, srna, subtraction, files) => ({
-    type: CREATE_SAMPLE.REQUESTED,
-    name,
-    isolate,
-    host,
-    locale,
-    srna,
-    subtraction,
-    files
+export const createSample = (
+  name,
+  isolate,
+  host,
+  locale,
+  srna,
+  subtraction,
+  files
+) => ({
+  type: CREATE_SAMPLE.REQUESTED,
+  name,
+  isolate,
+  host,
+  locale,
+  srna,
+  subtraction,
+  files
 });
 
 /**
@@ -105,9 +113,9 @@ export const createSample = (name, isolate, host, locale, srna, subtraction, fil
  * @returns {object}
  */
 export const editSample = (sampleId, update) => ({
-    type: UPDATE_SAMPLE.REQUESTED,
-    sampleId,
-    update
+  type: UPDATE_SAMPLE.REQUESTED,
+  sampleId,
+  update
 });
 
 /**
@@ -119,9 +127,9 @@ export const editSample = (sampleId, update) => ({
  * @returns {object}
  */
 export const updateSampleRights = (sampleId, update) => ({
-    type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
-    sampleId,
-    update
+  type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
+  sampleId,
+  update
 });
 
 /**
@@ -131,14 +139,9 @@ export const updateSampleRights = (sampleId, update) => ({
  * @param sampleId {string} unique sample id
  * @returns {object}
  */
-export const removeSample = (sampleId) => ({
-    type: REMOVE_SAMPLE.REQUESTED,
-    sampleId
-});
-
-export const listSamples = (page) => ({
-    type: LIST_SAMPLES.REQUESTED,
-    page
+export const removeSample = sampleId => ({
+  type: REMOVE_SAMPLE.REQUESTED,
+  sampleId
 });
 
 /**

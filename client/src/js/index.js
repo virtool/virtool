@@ -2,15 +2,15 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Raven from "raven-js";
 
-import App from "./App";
-import WSConnection from "./websocket";
 import createHistory from "history/createBrowserHistory";
-import { getAccount } from "./account/actions";
-import { getSettings } from "./administration/actions";
-import { listProcesses } from "./processes/actions";
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
+import App from "./App";
+import WSConnection from "./websocket";
+import { getAccount } from "./account/actions";
+import { getSettings } from "./administration/actions";
+import { listProcesses } from "./processes/actions";
 
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 
@@ -35,54 +35,54 @@ import rootSaga from "./sagas";
 
 export * from "../style/style.less";
 
-Raven.config("https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541").install();
+Raven.config(
+  "https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541"
+).install();
 
 window.Raven = Raven;
 
 const sagaMiddleware = createSagaMiddleware();
 
 const appInitialState = {
-    pending: false
+  pending: false
 };
 
 const appReducer = (state = appInitialState, action) => {
+  switch (action.type) {
+    case SET_APP_PENDING:
+      return { ...state, pending: true };
 
-    switch (action.type) {
+    case UNSET_APP_PENDING:
+      return { ...state, pending: false };
+  }
 
-        case SET_APP_PENDING:
-            return {...state, pending: true};
-
-        case UNSET_APP_PENDING:
-            return {...state, pending: false};
-    }
-
-    return state;
+  return state;
 };
 
 const history = createHistory();
 
 const store = createStore(
-    combineReducers({
-        account: accountReducer,
-        analyses: analysesReducer,
-        app: appReducer,
-        errors: errorsReducer,
-        files: filesReducer,
-        groups: groupsReducer,
-        hmms: hmmsReducer,
-        indexes: indexesReducer,
-        jobs: jobsReducer,
-        otus: otusReducer,
-        processes: processesReducer,
-        references: referencesReducer,
-        router: routerReducer,
-        samples: samplesReducer,
-        settings: settingsReducer,
-        subtraction: subtractionReducer,
-        updates: updatesReducer,
-        users: usersReducer
-    }),
-    applyMiddleware(sagaMiddleware, routerMiddleware(history)),
+  combineReducers({
+    account: accountReducer,
+    analyses: analysesReducer,
+    app: appReducer,
+    errors: errorsReducer,
+    files: filesReducer,
+    groups: groupsReducer,
+    hmms: hmmsReducer,
+    indexes: indexesReducer,
+    jobs: jobsReducer,
+    otus: otusReducer,
+    processes: processesReducer,
+    references: referencesReducer,
+    router: routerReducer,
+    samples: samplesReducer,
+    settings: settingsReducer,
+    subtraction: subtractionReducer,
+    updates: updatesReducer,
+    users: usersReducer
+  }),
+  applyMiddleware(sagaMiddleware, routerMiddleware(history))
 );
 
 sagaMiddleware.run(rootSaga);
@@ -97,6 +97,6 @@ window.store.dispatch(getSettings());
 window.store.dispatch(listProcesses());
 
 ReactDOM.render(
-    <App store={store} history={history} />,
-    document.getElementById("app-container")
+  <App store={store} history={history} />,
+  document.getElementById("app-container")
 );

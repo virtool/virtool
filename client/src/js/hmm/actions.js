@@ -1,20 +1,10 @@
 import { simpleActionCreator } from "../utils";
-import {
-    GET_HMM,
-    INSTALL_HMMS,
-    FILTER_HMMS,
-    LIST_HMMS,
-    PURGE_HMMS
-} from "../actionTypes";
+import { GET_HMM, INSTALL_HMMS, FIND_HMMS, PURGE_HMMS } from "../actionTypes";
 
-export const filterHmms = (term) => ({
-    type: FILTER_HMMS.REQUESTED,
-    term
-});
-
-export const listHmms = (page) => ({
-    type: LIST_HMMS.REQUESTED,
-    page
+export const findHmms = (term, page = 1) => ({
+  type: FIND_HMMS.REQUESTED,
+  term,
+  page
 });
 
 /**
@@ -24,9 +14,9 @@ export const listHmms = (page) => ({
  * @param hmmId {string} unique id for specific hmm document
  * @returns {object}
  */
-export const getHmm = (hmmId) => ({
-    type: GET_HMM.REQUESTED,
-    hmmId
+export const getHmm = hmmId => ({
+  type: GET_HMM.REQUESTED,
+  hmmId
 });
 
 /**
@@ -35,9 +25,9 @@ export const getHmm = (hmmId) => ({
  * @func
  * @returns {object}
  */
-export const installHMMs = (releaseId) => ({
-    type: INSTALL_HMMS.REQUESTED,
-    release_id: releaseId
+export const installHMMs = releaseId => ({
+  type: INSTALL_HMMS.REQUESTED,
+  release_id: releaseId
 });
 
 /**

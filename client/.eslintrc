@@ -16,34 +16,17 @@
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
-    "plugin:jest/recommended"
+    "plugin:jest/recommended",
+    "plugin:prettier/recommended"
   ],
-  "plugins": [
-    "import",
-    "lodash",
-    "react",
-    "jest"
-  ],
+  "plugins": ["prettier", "import", "lodash", "react", "jest"],
   "rules": {
+    "prettier/prettier": "error",
+
     // Basic
-    "array-bracket-newline": [1, {"multiline": true, "minItems": 5}],
-    "arrow-body-style": [1, "as-needed"],
-    "arrow-spacing": [1],
-    "brace-style": [1, "1tbs", {"allowSingleLine": true}],
-    "capitalized-comments": [1, "always", {"ignoreConsecutiveComments": true}],
-    "comma-dangle": [1],
-    "comma-spacing": [1],
     "eol-last": [1, "always"],
-    "func-call-spacing": [1],
-    "indent": [1, 4, {"SwitchCase": 1}],
-    "key-spacing": [1],
-    "keyword-spacing": [1],
-    "line-comment-position": [1],
-    "lines-between-class-members": [1],
-    "max-len": [1, 120, 2],
-    "newline-per-chained-call": [1, {"ignoreChainWithDepth": 4}],
     "no-children-prop": [0],
-    "no-console": [1, {"allow": ["warn", "error"]}],
+    "no-console": [1, { "allow": ["warn", "error"] }],
     "no-duplicate-imports": [2],
     "no-else-return": [1],
     "no-extra-bind": [1],
@@ -52,14 +35,11 @@
     "no-lonely-if": [2],
     "no-loop-func": [1],
     "no-multi-assign": [1],
-    "no-multi-spaces": [1],
-    "no-multiple-empty-lines": [1],
     "no-negated-condition": [1],
     "no-nested-ternary": [1],
     "no-self-compare": [1],
     "no-sequences": [2],
     "no-throw-literal": [1],
-    "no-trailing-spaces": [1],
     "no-undef-init": [1],
     "no-unneeded-ternary": [1],
     "no-unused-expressions": [1],
@@ -67,27 +47,17 @@
     "no-useless-rename": [1],
     "no-useless-return": [1],
     "no-var": [1],
-    "no-whitespace-before-property": [1],
     "object-shorthand": [1],
     "prefer-arrow-callback": [1],
     "prefer-const": [1],
     "prefer-spread": [1],
-    "rest-spread-spacing": [1],
-    "semi": [1, "always", {"omitLastInOneLineBlock": true}],
-    "semi-spacing": [1],
     "sort-vars": [1],
-    "space-before-blocks": [1],
-    "space-before-function-paren": [1],
-    "space-in-parens": [1],
     "space-infix-ops": [1],
-    "spaced-comment": [1],
-    "switch-colon-spacing": [1],
     "strict": [1, "never"],
-    "quote-props": [1, "as-needed"],
-    "quotes": [1, "double"],
 
     // Import
     "import/named": [2],
+    "import/order": [2],
 
     // Lodash
     "lodash/callback-binding": [1],
@@ -107,9 +77,7 @@
     "lodash/prefer-get": [1],
     "lodash/prefer-includes": [1],
     "lodash/prefer-is-nil": [1],
-    "lodash/prefer-lodash-method": [1, "ignoreMethods":[
-      "find"
-    ]],
+    "lodash/prefer-lodash-method": [1, {"ignoreMethods": ["find"]}],
     "lodash/prefer-lodash-typecheck": [1],
     "lodash/prefer-matches": [1],
     "lodash/prefer-noop": [1],
@@ -119,30 +87,16 @@
     "lodash/prefer-times": [1],
 
     // React
-    "react/prop-types": [1, {"skipUndeclared": true}],
+    "react/prop-types": [1, { "skipUndeclared": true }],
 
     // JSX
-    "jsx-quotes": [1],
-    "react/jsx-closing-bracket-location": [1],
-    "react/jsx-closing-tag-location": [1],
-    "react/jsx-curly-spacing": [1],
-    "react/jsx-equals-spacing": [1],
-    "react/jsx-first-prop-new-line": [1],
-    "react/jsx-indent": [1],
-    "react/jsx-indent-props": [1],
     "react/jsx-key": [2],
     "react/jsx-no-comment-textnodes": [1],
     "react/jsx-no-duplicate-props": [2],
     "react/jsx-no-target-blank": [2],
     "react/jsx-no-undef": [2],
-    "react/jsx-curly-brace-presence": [1, "never"],
-    "react/jsx-pascal-case": [1, {
-      "allowAllCaps": true
-    }],
-    "react/jsx-tag-spacing": [1],
     "react/jsx-uses-react": [1],
-    "react/jsx-uses-vars": [1],
-    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}]
+    "react/jsx-uses-vars": [1]
   },
   "overrides": [
     {

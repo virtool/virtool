@@ -12,17 +12,23 @@ import { ClipLoader } from "halogenium";
  * @param message {message} an optional message to show above the spinner
  * @param size {number} the size of the spinner
  */
-export const LoadingPlaceholder = ({ color = "#3c8786", margin = "220px", message = null, size = "22px", style }) => (
-    <div className="text-center" style={{marginTop: margin, ...style}}>
-        {message ? <p>{message}</p> : null}
-        <ClipLoader color={color} size={size} />
-    </div>
+export const LoadingPlaceholder = ({
+  color = "#3c8786",
+  margin = "220px",
+  message = null,
+  size = "22px",
+  style
+}) => (
+  <div className="text-center" style={{ marginTop: margin, ...style }}>
+    {message ? <p>{message}</p> : null}
+    <ClipLoader color={color} size={size} />
+  </div>
 );
 
 LoadingPlaceholder.propTypes = {
-    color: PropTypes.string,
-    margin: PropTypes.string,
-    message: PropTypes.string,
-    size: PropTypes.string,
-    style: PropTypes.object
+  color: PropTypes.string,
+  margin: PropTypes.string,
+  message: PropTypes.string,
+  size: PropTypes.string,
+  style: PropTypes.object
 };

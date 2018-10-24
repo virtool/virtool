@@ -18,48 +18,48 @@ import Account from "./account/components/Account";
 import UploadOverlay from "./files/components/UploadOverlay";
 import { LoadingPlaceholder } from "./base";
 
-export const Inner = (props) => {
-    if (props.ready) {
-        return (
-            <div>
-                <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
+export const Inner = props => {
+  if (props.ready) {
+    return (
+      <div>
+        <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
 
-                <NavBar />
+        <NavBar />
 
-                <Switch>
-                    <Redirect from="/" to="/home" exact />
-                    <Route path="/home" component={Welcome} />
-                    <Route path="/jobs" component={Jobs} />
-                    <Route path="/samples" component={Samples} />
-                    <Route path="/refs" component={References} />
-                    <Route path="/hmm" component={HMM} />
-                    <Route path="/subtraction" component={Subtraction} />
-                    <Route path="/administration" component={Administration} />
-                    <Route path="/account" component={Account} />
-                </Switch>
+        <Switch>
+          <Redirect from="/" to="/home" exact />
+          <Route path="/home" component={Welcome} />
+          <Route path="/jobs" component={Jobs} />
+          <Route path="/samples" component={Samples} />
+          <Route path="/refs" component={References} />
+          <Route path="/hmm" component={HMM} />
+          <Route path="/subtraction" component={Subtraction} />
+          <Route path="/administration" component={Administration} />
+          <Route path="/account" component={Account} />
+        </Switch>
 
-                <Sidebar />
+        <Sidebar />
 
-                <UploadOverlay />
-            </div>
-        );
-    }
+        <UploadOverlay />
+      </div>
+    );
+  }
 
-    return <LoadingPlaceholder margin="290px" />;
+  return <LoadingPlaceholder margin="290px" />;
 };
 
 const mapStateToProps = state => ({
-    ready: state.account.ready && Boolean(keys(state.settings).length)
+  ready: state.account.ready && Boolean(keys(state.settings).length)
 });
 
 export const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
 
 const App = ({ store, history }) => (
-    <Provider store={store}>
-        <ConnectedRouter history={history}>
-            <InnerContainer />
-        </ConnectedRouter>
-    </Provider>
+  <Provider store={store}>
+    <ConnectedRouter history={history}>
+      <InnerContainer />
+    </ConnectedRouter>
+  </Provider>
 );
 
 export default App;

@@ -7,7 +7,7 @@ import { WS_UPDATE_STATUS } from "../actionTypes";
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateStatus = (data) => ({
-    type: WS_UPDATE_STATUS,
-    data
+export const wsUpdateStatus = data => ({
+  type: WS_UPDATE_STATUS,
+  data
 });

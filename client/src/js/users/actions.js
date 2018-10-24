@@ -5,30 +5,30 @@
  */
 
 import {
-    WS_INSERT_USER,
-    WS_UPDATE_USER,
-    WS_REMOVE_USER,
-    LIST_USERS,
-    FILTER_USERS,
-    GET_USER,
-    CREATE_USER,
-    EDIT_USER,
-    REMOVE_USER
+  WS_INSERT_USER,
+  WS_UPDATE_USER,
+  WS_REMOVE_USER,
+  LIST_USERS,
+  FILTER_USERS,
+  GET_USER,
+  CREATE_USER,
+  EDIT_USER,
+  REMOVE_USER
 } from "../actionTypes";
 
-export const wsInsertUser = (data) => ({
-    type: WS_INSERT_USER,
-    data
+export const wsInsertUser = data => ({
+  type: WS_INSERT_USER,
+  data
 });
 
-export const wsUpdateUser = (data) => ({
-    type: WS_UPDATE_USER,
-    data
+export const wsUpdateUser = data => ({
+  type: WS_UPDATE_USER,
+  data
 });
 
-export const wsRemoveUser = (data) => ({
-    type: WS_REMOVE_USER,
-    data
+export const wsRemoveUser = data => ({
+  type: WS_REMOVE_USER,
+  data
 });
 
 /**
@@ -37,9 +37,9 @@ export const wsRemoveUser = (data) => ({
  * @func
  * @returns {object}
  */
-export const listUsers = (page) => ({
-    type: LIST_USERS.REQUESTED,
-    page
+export const listUsers = page => ({
+  type: LIST_USERS.REQUESTED,
+  page
 });
 
 /**
@@ -49,14 +49,14 @@ export const listUsers = (page) => ({
  * @param term {string} user input search term
  * @returns {object}
  */
-export const filterUsers = (term) => ({
-    type: FILTER_USERS.REQUESTED,
-    term
+export const filterUsers = term => ({
+  type: FILTER_USERS.REQUESTED,
+  term
 });
 
-export const getUser = (userId) => ({
-    type: GET_USER.REQUESTED,
-    userId
+export const getUser = userId => ({
+  type: GET_USER.REQUESTED,
+  userId
 });
 
 /**
@@ -66,9 +66,9 @@ export const getUser = (userId) => ({
  * @param data {object} data used to create a new user
  * @returns {object}
  */
-export const createUser = (data) => ({
-    type: CREATE_USER.REQUESTED,
-    ...data
+export const createUser = data => ({
+  type: CREATE_USER.REQUESTED,
+  ...data
 });
 
 /**
@@ -80,12 +80,12 @@ export const createUser = (data) => ({
  * @returns {object}
  */
 export const editUser = (userId, update) => ({
-    type: EDIT_USER.REQUESTED,
-    userId,
-    update
+  type: EDIT_USER.REQUESTED,
+  userId,
+  update
 });
 
-export const removeUser = (userId) => ({
-    type: REMOVE_USER.REQUESTED,
-    userId
+export const removeUser = userId => ({
+  type: REMOVE_USER.REQUESTED,
+  userId
 });

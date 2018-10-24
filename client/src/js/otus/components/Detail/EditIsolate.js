@@ -15,67 +15,72 @@ import { editIsolate, hideOTUModal } from "../../actions";
 import IsolateForm from "./IsolateForm";
 
 const getInitialState = props => ({
-    sourceType: props.sourceType || (props.restrictSourceTypes ? "unknown" : ""),
-    sourceName: props.sourceName || ""
+  sourceType: props.sourceType || (props.restrictSourceTypes ? "unknown" : ""),
+  sourceName: props.sourceName || ""
 });
 
 class EditIsolate extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = getInitialState(this.props);
+  }
 
-    constructor (props) {
-        super(props);
-        this.state = getInitialState(this.props);
-    }
+  handleChange = update => {
+    this.setState(update);
+  };
 
-    handleChange = (update) => {
-        this.setState(update);
-    };
+  handleSubmit = e => {
+    e.preventDefault();
 
-    handleSubmit = (e) => {
-        e.preventDefault();
+    this.props.onSave(
+      this.props.otuId,
+      this.props.isolateId,
+      this.state.sourceType,
+      this.state.sourceName
+    );
+  };
 
-        this.props.onSave(
-            this.props.otuId,
-            this.props.isolateId,
-            this.state.sourceType,
-            this.state.sourceName
-        );
-    };
-
-    render () {
-        return (
-            <Modal bsStyle="warning" show={this.props.show} onEntered={this.modalEntered} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Isolate
-                </Modal.Header>
-                <IsolateForm
-                    sourceType={this.state.sourceType}
-                    sourceName={this.state.sourceName}
-                    allowedSourceTypes={this.props.allowedSourceTypes}
-                    restrictSourceTypes={this.props.restrictSourceTypes}
-                    onChange={this.handleChange}
-                    onSubmit={this.handleSubmit}
-                />
-            </Modal>
-        );
-    }
+  render() {
+    return (
+      <Modal
+        bsStyle="warning"
+        show={this.props.show}
+        onEntered={this.modalEntered}
+        onHide={this.props.onHide}
+      >
+        <Modal.Header onHide={this.props.onHide} closeButton>
+          Edit Isolate
+        </Modal.Header>
+        <IsolateForm
+          sourceType={this.state.sourceType}
+          sourceName={this.state.sourceName}
+          allowedSourceTypes={this.props.allowedSourceTypes}
+          restrictSourceTypes={this.props.restrictSourceTypes}
+          onChange={this.handleChange}
+          onSubmit={this.handleSubmit}
+        />
+      </Modal>
+    );
+  }
 }
 
 const mapStateToProps = state => ({
-    show: state.otus.editIsolate,
-    allowedSourceTypes: state.references.detail.source_types,
-    restrictSourceTypes: state.references.detail.restrict_source_types
+  show: state.otus.editIsolate,
+  allowedSourceTypes: state.references.detail.source_types,
+  restrictSourceTypes: state.references.detail.restrict_source_types
 });
 
 const mapDispatchToProps = dispatch => ({
+  onHide: () => {
+    dispatch(hideOTUModal());
+  },
 
-    onHide: () => {
-        dispatch(hideOTUModal());
-    },
-
-    onSave: (otuId, isolateId, sourceType, sourceName) => {
-        dispatch(editIsolate(otuId, isolateId, sourceType, sourceName));
-    }
-
+  onSave: (otuId, isolateId, sourceType, sourceName) => {
+    dispatch(editIsolate(otuId, isolateId, sourceType, sourceName));
+  }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditIsolate);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(EditIsolate);

@@ -10,36 +10,26 @@ import PropTypes from "prop-types";
  * @param x {number} x position of the tooltip
  * @param y {number} y position of the tooltip
  */
-export const Tooltip = ({ children, header, x, y}) => {
+export const Tooltip = ({ children, header, x, y }) => {
+  const tooltipStyle = {
+    left: x - 10 + "px",
+    top: y - window.pageYOffset - 10 + "px",
+    zIndex: 10000
+  };
 
-    const tooltipStyle = {
-        left: (x - 10) + "px",
-        top: (y - window.pageYOffset - 10) + "px",
-        zIndex: 10000
-    };
-
-    return (
-        <div className="tooltip" style={tooltipStyle}>
-            {header ? (
-                <div className="tooltip-header">
-                    {header}
-                </div>
-            ) : null}
-            <div className="tooltip-body">
-                {children}
-            </div>
-        </div>
-    );
+  return (
+    <div className="tooltip" style={tooltipStyle}>
+      {header ? <div className="tooltip-header">{header}</div> : null}
+      <div className="tooltip-body">{children}</div>
+    </div>
+  );
 };
 
 Tooltip.propTypes = {
-    x: PropTypes.number,
-    y: PropTypes.number,
+  x: PropTypes.number,
+  y: PropTypes.number,
 
-    header: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.element
-    ]),
+  header: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
 
-    children: PropTypes.node
+  children: PropTypes.node
 };

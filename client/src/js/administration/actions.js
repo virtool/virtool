@@ -1,9 +1,9 @@
 import { simpleActionCreator } from "../utils";
 import {
-    GET_SETTINGS,
-    UPDATE_SETTINGS,
-    GET_CONTROL_READAHEAD,
-    TEST_PROXY
+  GET_SETTINGS,
+  UPDATE_SETTINGS,
+  GET_CONTROL_READAHEAD,
+  TEST_PROXY
 } from "../actionTypes";
 
 /**
@@ -22,9 +22,9 @@ export const getSettings = simpleActionCreator(GET_SETTINGS.REQUESTED);
  * @returns {object}
  */
 export const getControlReadahead = (refId, term) => ({
-    type: GET_CONTROL_READAHEAD.REQUESTED,
-    refId,
-    term
+  type: GET_CONTROL_READAHEAD.REQUESTED,
+  refId,
+  term
 });
 
 /**
@@ -44,9 +44,9 @@ export const testProxy = simpleActionCreator(TEST_PROXY.REQUESTED);
  * @returns {object}
  */
 export const updateSetting = (key, value) => {
-    const update = {};
-    update[key] = value;
-    return updateSettings(update);
+  const update = {};
+  update[key] = value;
+  return updateSettings(update);
 };
 
 /**
@@ -56,7 +56,7 @@ export const updateSetting = (key, value) => {
  * @param update {object} update data of key-value pairs
  * @returns {object}
  */
-export const updateSettings = (update) => ({
-    type: UPDATE_SETTINGS.REQUESTED,
-    update
+export const updateSettings = update => ({
+  type: UPDATE_SETTINGS.REQUESTED,
+  update
 });

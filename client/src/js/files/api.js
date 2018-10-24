@@ -5,14 +5,12 @@
  */
 import Request from "superagent";
 
-export const find = ({ fileType, page, perPage }) => (
-    Request.get("/api/files")
-        .query({
-            type: fileType,
-            per_page: perPage,
-            page
-        })
-);
+export const find = ({ fileType, page, perPage }) =>
+  Request.get("/api/files").query({
+    type: fileType,
+    per_page: perPage,
+    page
+  });
 
 /**
  * Get files of the given ``fileType``. Get a specific page of results using the ``page`` argument.
@@ -22,13 +20,11 @@ export const find = ({ fileType, page, perPage }) => (
  * @param page {number} the page of results to get
  * @returns {promise}
  */
-export const list = ({ fileType, page }) => (
-    Request.get("/api/files")
-        .query({
-            type: fileType,
-            page
-        })
-);
+export const list = ({ fileType, page }) =>
+  Request.get("/api/files").query({
+    type: fileType,
+    page
+  });
 
 /**
  * Remove the file with the given ``fileId``.
@@ -37,9 +33,7 @@ export const list = ({ fileType, page }) => (
  * @param fileId {string} the fileId to remove
  * @returns {promise}
  */
-export const remove = ({ fileId }) => (
-    Request.delete(`/api/files/${fileId}`)
-);
+export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);
 
 /**
  * Upload a ``file`` with the given ``fileType``. Pass progress events to ``onProgress``.
@@ -50,11 +44,10 @@ export const remove = ({ fileId }) => (
  * @param onProgress {function} a callback to call with ``ProgressEvent``s when they are fired
  * @returns {promise}
  */
-export const upload = (file, fileType, onProgress, onSuccess, onFailure) => (
-    Request.post(`/upload/${fileType}`)
-        .query({name: file.name})
-        .attach("file", file)
-        .on("progress", onProgress)
-        .then(onSuccess)
-        .catch(onFailure)
-);
+export const upload = (file, fileType, onProgress, onSuccess, onFailure) =>
+  Request.post(`/upload/${fileType}`)
+    .query({ name: file.name })
+    .attach("file", file)
+    .on("progress", onProgress)
+    .then(onSuccess)
+    .catch(onFailure);

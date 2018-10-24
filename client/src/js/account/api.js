@@ -12,9 +12,7 @@ import Request from "superagent";
  * @func
  * @returns {promise}
  */
-export const get = () => (
-    Request.get("/api/account")
-);
+export const get = () => Request.get("/api/account");
 
 /**
  * Updates the complete data for the current account.
@@ -23,10 +21,8 @@ export const get = () => (
  * @param update {object} the update to apply to current account.
  * @returns {promise}
  */
-export const update = ({ update }) => (
-    Request.patch("/api/account")
-        .send(update)
-);
+export const update = ({ update }) =>
+  Request.patch("/api/account").send(update);
 
 /**
  * Gets the settings object for the current account.
@@ -34,9 +30,7 @@ export const update = ({ update }) => (
  * @func
  * @returns {promise}
  */
-export const getSettings = () => (
-    Request.get("/api/account/settings")
-);
+export const getSettings = () => Request.get("/api/account/settings");
 
 /**
  * Updates the settings for the current account.
@@ -45,10 +39,8 @@ export const getSettings = () => (
  * @param update {object} the update to apply to account settings
  * @returns {promise}
  */
-export const updateSettings = ({ update }) => (
-    Request.patch("/api/account/settings")
-        .send(update)
-);
+export const updateSettings = ({ update }) =>
+  Request.patch("/api/account/settings").send(update);
 
 /**
  * Changes the password for the current account.
@@ -58,22 +50,18 @@ export const updateSettings = ({ update }) => (
  * @param newPassword {string} the new password
  * @returns {promise}
  */
-export const changePassword = ({ oldPassword, newPassword }) => (
-    Request.patch("/api/account")
-        .send({
-            old_password: oldPassword,
-            password: newPassword
-        })
-);
+export const changePassword = ({ oldPassword, newPassword }) =>
+  Request.patch("/api/account").send({
+    old_password: oldPassword,
+    password: newPassword
+  });
 
 /**
  * Gets all API keys owned by the current account.
  *
  * @returns {promise}
  */
-export const getAPIKeys = () => (
-    Request.get("/api/account/keys")
-);
+export const getAPIKeys = () => Request.get("/api/account/keys");
 
 /**
  * Create a new API key for the current account.
@@ -83,13 +71,11 @@ export const getAPIKeys = () => (
  * @param permissions {object} the permissions to assign to the API key
  * @returns {promise}
  */
-export const createAPIKey = ({ name, permissions }) => (
-    Request.post("/api/account/keys")
-        .send({
-            name,
-            permissions
-        })
-);
+export const createAPIKey = ({ name, permissions }) =>
+  Request.post("/api/account/keys").send({
+    name,
+    permissions
+  });
 
 /**
  * Update the permissions for an existing API key owned by the current account.
@@ -99,12 +85,10 @@ export const createAPIKey = ({ name, permissions }) => (
  * @param permissions {object} the new permissions for the API key
  * @returns {promise}
  */
-export const updateAPIKey = ({ keyId, permissions }) => (
-    Request.patch(`/api/account/keys/${keyId}`)
-        .send({
-            permissions
-        })
-);
+export const updateAPIKey = ({ keyId, permissions }) =>
+  Request.patch(`/api/account/keys/${keyId}`).send({
+    permissions
+  });
 
 /**
  * Remove an existing API key owned by current account.
@@ -112,9 +96,8 @@ export const updateAPIKey = ({ keyId, permissions }) => (
  * @param keyId
  * @returns {promise}
  */
-export const removeAPIKey = ({ keyId }) => (
-    Request.delete(`/api/account/keys/${keyId}`)
-);
+export const removeAPIKey = ({ keyId }) =>
+  Request.delete(`/api/account/keys/${keyId}`);
 
 /**
  * Logs out the current session.
@@ -122,6 +105,4 @@ export const removeAPIKey = ({ keyId }) => (
  * @func
  * @returns {promise}
  */
-export const logout = () => (
-    Request.get("/api/account/logout")
-);
+export const logout = () => Request.get("/api/account/logout");

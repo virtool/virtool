@@ -14,24 +14,23 @@ import { Flex, FlexItem } from "./index";
  * @param totalCount {count} the total number of documents
  */
 export const ViewHeader = ({ title, totalCount, children }) => (
-    <h3 className="view-header">
-        <Helmet>
-            <title>{title}</title>
-        </Helmet>
-        {isUndefined(totalCount) ? null
-            : (
-                <Flex alignItems="flex-end">
-                    <FlexItem grow={0} shrink={0}>
-                        <strong>{title}</strong> <Badge>{totalCount}</Badge>
-                    </FlexItem>
-                </Flex>
-            )}
-        {children}
-    </h3>
+  <h3 className="view-header">
+    <Helmet>
+      <title>{title}</title>
+    </Helmet>
+    {isUndefined(totalCount) ? null : (
+      <Flex alignItems="flex-end">
+        <FlexItem grow={0} shrink={0}>
+          <strong>{title}</strong> <Badge>{totalCount}</Badge>
+        </FlexItem>
+      </Flex>
+    )}
+    {children}
+  </h3>
 );
 
 ViewHeader.propTypes = {
-    title: PropTypes.string.isRequired,
-    totalCount: PropTypes.number,
-    children: PropTypes.node
+  title: PropTypes.string.isRequired,
+  totalCount: PropTypes.number,
+  children: PropTypes.node
 };

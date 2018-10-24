@@ -4,7 +4,13 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
+import {
+  InputGroup,
+  FormGroup,
+  FormControl,
+  Dropdown,
+  MenuItem
+} from "react-bootstrap";
 import { clearJobs, filterJobs } from "../actions";
 import { Icon, Button } from "../../base";
 
@@ -13,59 +19,71 @@ import { Icon, Button } from "../../base";
  * @param props
  * @returns {*}
  */
-const JobsToolbar = (props) => {
+const JobsToolbar = props => {
+  let removalDropdown;
 
-    let removalDropdown;
-
-    if (props.canRemove) {
-        removalDropdown = (
-            <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-                <Button name="finished" onClick={props.onClear} tip="Clear Finished">
-                    <Icon name="trash" />
-                </Button>
-                <Dropdown.Toggle />
-                <Dropdown.Menu>
-                    <MenuItem eventKey="removeFailed" name="failed" onClick={props.onClear}>
-                        Failed
-                    </MenuItem>
-                    <MenuItem eventKey="removeComplete" name="complete" onClick={props.onClear}>
-                        Complete
-                    </MenuItem>
-                </Dropdown.Menu>
-            </Dropdown>
-        );
-    }
-
-    return (
-        <div className="toolbar">
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search" />
-                    </InputGroup.Addon>
-                    <FormControl value={props.filter} onChange={props.onFilter} placeholder="User or task" />
-                </InputGroup>
-            </FormGroup>
-
-            {removalDropdown}
-        </div>
+  if (props.canRemove) {
+    removalDropdown = (
+      <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
+        <Button name="finished" onClick={props.onClear} tip="Clear Finished">
+          <Icon name="trash" />
+        </Button>
+        <Dropdown.Toggle />
+        <Dropdown.Menu>
+          <MenuItem
+            eventKey="removeFailed"
+            name="failed"
+            onClick={props.onClear}
+          >
+            Failed
+          </MenuItem>
+          <MenuItem
+            eventKey="removeComplete"
+            name="complete"
+            onClick={props.onClear}
+          >
+            Complete
+          </MenuItem>
+        </Dropdown.Menu>
+      </Dropdown>
     );
+  }
+
+  return (
+    <div className="toolbar">
+      <FormGroup>
+        <InputGroup>
+          <InputGroup.Addon>
+            <Icon name="search" />
+          </InputGroup.Addon>
+          <FormControl
+            value={props.filter}
+            onChange={props.onFilter}
+            placeholder="User or task"
+          />
+        </InputGroup>
+      </FormGroup>
+
+      {removalDropdown}
+    </div>
+  );
 };
 
-const mapStateToProps = (state) => ({
-    filter: state.jobs.filter
+const mapStateToProps = state => ({
+  filter: state.jobs.filter
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
+  onFilter: e => {
+    dispatch(filterJobs(e.target.value));
+  },
 
-    onFilter: (e) => {
-        dispatch(filterJobs(e.target.value));
-    },
-
-    onClear: (e) => {
-        dispatch(clearJobs(e.target.name));
-    }
-
+  onClear: e => {
+    dispatch(clearJobs(e.target.name));
+  }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobsToolbar);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(JobsToolbar);

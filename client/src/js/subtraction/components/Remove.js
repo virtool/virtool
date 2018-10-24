@@ -6,41 +6,41 @@ import { RemoveModal } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
 export class RemoveSubtraction extends React.Component {
+  handleConfirm = () => {
+    this.props.onConfirm(this.props.id);
+  };
 
-    handleConfirm = () => {
-        this.props.onConfirm(this.props.id);
-    };
+  render() {
+    const { id, onHide, show } = this.props;
 
-    render () {
-        const { id, onHide, show } = this.props;
-
-        return (
-            <RemoveModal
-                id={id}
-                name={id}
-                noun="Subtraction"
-                show={show}
-                onHide={onHide}
-                onConfirm={this.handleConfirm}
-            />
-        );
-    }
+    return (
+      <RemoveModal
+        id={id}
+        name={id}
+        noun="Subtraction"
+        show={show}
+        onHide={onHide}
+        onConfirm={this.handleConfirm}
+      />
+    );
+  }
 }
 
-const mapStateToProps = (state) => ({
-    show: routerLocationHasState(state, "removeSubtraction", true)
+const mapStateToProps = state => ({
+  show: routerLocationHasState(state, "removeSubtraction", true)
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
+  onHide: () => {
+    dispatch(push({ state: { removeSubtraction: false } }));
+  },
 
-    onHide: () => {
-        dispatch(push({state: {removeSubtraction: false}}));
-    },
-
-    onConfirm: (subtractionId) => {
-        dispatch(removeSubtraction(subtractionId));
-    }
-
+  onConfirm: subtractionId => {
+    dispatch(removeSubtraction(subtractionId));
+  }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RemoveSubtraction);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(RemoveSubtraction);
