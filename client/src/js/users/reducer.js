@@ -29,20 +29,11 @@ const reducer = (state = initialState, action) => {
         case WS_REMOVE_USER:
             return remove(state, action);
 
-        case FIND_USERS.REQUESTED: {
-            const stateUpdate = {
-                term: action.term
-            };
-
-            if (action.page === 1) {
-                stateUpdate.documents = null;
-            }
-
+        case FIND_USERS.REQUESTED:
             return {
                 ...state,
-                ...stateUpdate
+                term: action.term
             };
-        }
 
         case FIND_USERS.SUCCEEDED:
             return updateDocuments(state, action);
