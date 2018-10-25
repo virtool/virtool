@@ -21,20 +21,14 @@ import { put, all } from "redux-saga/effects";
  * @param actionType {object} a request-style action type
  * @param extra {object} extra properties to assign to the SUCCEEDED action
  */
-export function* apiCall(
-  apiMethod,
-  action,
-  actionType,
-  extra = {},
-  extraFunctions
-) {
-  try {
-    const response = yield apiMethod(action);
-    yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
-    yield all(extraFunctions);
-  } catch (error) {
-    yield putGenericError(actionType, error);
-  }
+export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctions) {
+    try {
+        const response = yield apiMethod(action);
+        yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
+        yield all(extraFunctions);
+    } catch (error) {
+        yield putGenericError(actionType, error);
+    }
 }
 
 /**
@@ -53,13 +47,13 @@ export function* apiCall(
  * @param actionType {object} the request-style action type to dispatch when the call completes
  */
 export function* apiFind(path, apiMethod, action, actionType) {
-  const { pathname } = action.payload;
+    const { pathname } = action.payload;
 
-  const match = matchPath(pathname, { path, exact: true });
+    const match = matchPath(pathname, { path, exact: true });
 
-  if (match) {
-    yield apiCall(apiMethod, {}, actionType);
-  }
+    if (match) {
+        yield apiCall(apiMethod, {}, actionType);
+    }
 }
 
 /**
@@ -69,7 +63,7 @@ export function* apiFind(path, apiMethod, action, actionType) {
  * @param update {object} a new state object
  */
 export function* pushHistoryState(update) {
-  yield put(push({ ...window.location, state: update }));
+    yield put(push({ ...window.location, state: update }));
 }
 
 /**
@@ -81,14 +75,14 @@ export function* pushHistoryState(update) {
  * @param error {object} the HTTP error from Superagent
  */
 export function* putGenericError(actionType, error) {
-  const { body, status } = error.response;
+    const { body, status } = error.response;
 
-  yield put({
-    type: actionType.FAILED,
-    message: body.message,
-    error,
-    status
-  });
+    yield put({
+        type: actionType.FAILED,
+        message: body.message,
+        error,
+        status
+    });
 }
 
 /**
@@ -99,7 +93,7 @@ export function* putGenericError(actionType, error) {
  * @param generator {generator} the generator to yield while the bar is progressing *
  */
 export function* setPending(generator) {
-  yield put({ type: SET_APP_PENDING });
-  yield generator;
-  yield put({ type: UNSET_APP_PENDING });
+    yield put({ type: SET_APP_PENDING });
+    yield generator;
+    yield put({ type: UNSET_APP_PENDING });
 }

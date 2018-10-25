@@ -27,23 +27,23 @@ import { all } from "redux-saga/effects";
  * @generator
  */
 function* rootSaga() {
-  yield all([
-    watchAccount(),
-    watchAnalyses(),
-    watchFiles(),
-    watchSubtraction(),
-    watchHmms(),
-    watchIndexes(),
-    watchJobs(),
-    watchOTUs(),
-    watchProcesses(),
-    watchSamples(),
-    watchSettings(),
-    watchGroups(),
-    watchUpdates(),
-    watchUsers(),
-    watchReferences()
-  ]);
+    yield all([
+        watchAccount(),
+        watchAnalyses(),
+        watchFiles(),
+        watchSubtraction(),
+        watchHmms(),
+        watchIndexes(),
+        watchJobs(),
+        watchOTUs(),
+        watchProcesses(),
+        watchSamples(),
+        watchSettings(),
+        watchGroups(),
+        watchUpdates(),
+        watchUsers(),
+        watchReferences()
+    ]);
 }
 
 export default rootSaga;

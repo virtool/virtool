@@ -5,25 +5,14 @@
  * @author igboyes
  */
 import numbro from "numbro";
-import {
-  capitalize,
-  get,
-  replace,
-  sampleSize,
-  split,
-  startCase,
-  filter,
-  find,
-  upperFirst
-} from "lodash-es";
+import { capitalize, get, replace, sampleSize, split, startCase, filter, find, upperFirst } from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
  *
  * @type {string}
  */
-export const alphanumeric =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 /**
  * Converts an integer in bytes to a nicely formatted string (eg. 10.2 GB).
@@ -33,11 +22,11 @@ export const alphanumeric =
  * @returns {string}
  */
 export const byteSize = bytes => {
-  if (bytes) {
-    return numbro(bytes).format("0.0 b");
-  }
+    if (bytes) {
+        return numbro(bytes).format("0.0 b");
+    }
 
-  return "0.0B";
+    return "0.0B";
 };
 
 /**
@@ -49,21 +38,21 @@ export const byteSize = bytes => {
  * @returns {URL}
  */
 export const createFindURL = ({ find, page }) => {
-  const url = new window.URL(window.location);
+    const url = new window.URL(window.location);
 
-  if (find !== undefined) {
-    if (find) {
-      url.searchParams.set("find", find);
-    } else {
-      url.searchParams.delete("find");
+    if (find !== undefined) {
+        if (find) {
+            url.searchParams.set("find", find);
+        } else {
+            url.searchParams.delete("find");
+        }
     }
-  }
 
-  if (page) {
-    url.searchParams.set("page", page);
-  }
+    if (page) {
+        url.searchParams.set("page", page);
+    }
 
-  return url;
+    return url;
 };
 
 /**
@@ -72,8 +61,7 @@ export const createFindURL = ({ find, page }) => {
  * @func
  * @param length {number} the length of string to return
  */
-export const createRandomString = (length = 8) =>
-  sampleSize(alphanumeric, length).join("");
+export const createRandomString = (length = 8) => sampleSize(alphanumeric, length).join("");
 
 /**
  * Download the file at the given {@link path}.
@@ -82,12 +70,12 @@ export const createRandomString = (length = 8) =>
  * @param path {string}
  */
 export const followDownload = path => {
-  const a = document.createElement("A");
-  a.href = path;
-  a.download = path.substr(path.lastIndexOf("/") + 1);
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    const a = document.createElement("A");
+    a.href = path;
+    a.download = path.substr(path.lastIndexOf("/") + 1);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 };
 
 /**
@@ -99,16 +87,16 @@ export const followDownload = path => {
  * @param text
  */
 export const followDynamicDownload = (filename, text) => {
-  const a = document.createElement("a");
-  a.href = `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
-  a.download = filename;
+    const a = document.createElement("a");
+    a.href = `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+    a.download = filename;
 
-  a.style.display = "none";
-  document.body.appendChild(a);
+    a.style.display = "none";
+    document.body.appendChild(a);
 
-  a.click();
+    a.click();
 
-  document.body.removeChild(a);
+    document.body.removeChild(a);
 };
 
 /**
@@ -119,12 +107,10 @@ export const followDynamicDownload = (filename, text) => {
  * @returns {string}
  */
 export const formatIsolateName = isolate => {
-  const sourceType = get(isolate, "source_type") || get(isolate, "sourceType");
-  const sourceName = get(isolate, "source_name") || get(isolate, "sourceName");
+    const sourceType = get(isolate, "source_type") || get(isolate, "sourceType");
+    const sourceName = get(isolate, "source_name") || get(isolate, "sourceName");
 
-  return sourceType === "unknown"
-    ? "Unnamed"
-    : `${capitalize(sourceType)} ${sourceName}`;
+    return sourceType === "unknown" ? "Unnamed" : `${capitalize(sourceType)} ${sourceName}`;
 };
 
 /**
@@ -134,8 +120,7 @@ export const formatIsolateName = isolate => {
  * @param url {URL} an optional url to get a find term from
  * @returns {string | undefined}
  */
-export const getFindTerm = (url = new window.URL(window.location)) =>
-  url.searchParams.get("find") || "";
+export const getFindTerm = (url = new window.URL(window.location)) => url.searchParams.get("find") || "";
 
 /**
  * Transforms a plain taskName (eg. pathoscope_bowtie) to a human-readable name (eg. PathoscopeBowtie).
@@ -144,17 +129,13 @@ export const getFindTerm = (url = new window.URL(window.location)) =>
  * @param taskName {string} plain task name
  * @returns {string}
  */
-export const getTaskDisplayName = taskName =>
-  get(taskDisplayNames, taskName, startCase(taskName));
+export const getTaskDisplayName = taskName => get(taskDisplayNames, taskName, startCase(taskName));
 
-export const reportAPIError = action =>
-  window.Raven.captureException(action.error);
+export const reportAPIError = action => window.Raven.captureException(action.error);
 
 export const routerLocationHasState = (state, key, value) =>
-  !!state.router.location.state &&
-  (value
-    ? state.router.location.state[key] === value
-    : state.router.location.state[key]);
+    !!state.router.location.state &&
+    (value ? state.router.location.state[key] === value : state.router.location.state[key]);
 
 /**
  * Returns an action creator that returns an action with ``type`` as the only property.
@@ -164,14 +145,14 @@ export const routerLocationHasState = (state, key, value) =>
  * @returns {function}
  */
 export const simpleActionCreator = type =>
-  function actionCreator() {
-    return { type };
-  };
+    function actionCreator() {
+        return { type };
+    };
 
 export const getTargetChange = target => ({
-  name: target.name,
-  value: target.value,
-  error: `error${upperFirst(target.name)}`
+    name: target.name,
+    value: target.value,
+    error: `error${upperFirst(target.name)}`
 });
 
 /**
@@ -180,12 +161,12 @@ export const getTargetChange = target => ({
  * @type {object}
  */
 export const taskDisplayNames = {
-  create_sample: "Create Sample",
-  create_subtraction: "Create Subtraction",
-  nuvs: "NuVs",
-  pathoscope_bowtie: "PathoscopeBowtie",
-  pathoscope_snap: "PathoscopeSNAP",
-  build_index: "Build Index"
+    create_sample: "Create Sample",
+    create_subtraction: "Create Subtraction",
+    nuvs: "NuVs",
+    pathoscope_bowtie: "PathoscopeBowtie",
+    pathoscope_snap: "PathoscopeSNAP",
+    build_index: "Build Index"
 };
 
 /**
@@ -196,45 +177,41 @@ export const taskDisplayNames = {
  * @returns {string}
  */
 export const toScientificNotation = number => {
-  if (number < 0.01 || number > 1000) {
-    const [coefficient, exponent] = split(number.toExponential(), "e");
-    return `${numbro(coefficient).format("0.00")}E${replace(
-      exponent,
-      "+",
-      ""
-    )}`;
-  }
+    if (number < 0.01 || number > 1000) {
+        const [coefficient, exponent] = split(number.toExponential(), "e");
+        return `${numbro(coefficient).format("0.00")}E${replace(exponent, "+", "")}`;
+    }
 
-  return numbro(number).format("0.000");
+    return numbro(number).format("0.000");
 };
 
-export const checkAdminOrPermission = (isAdmin, permissions, permission) =>
-  isAdmin || permissions[permission];
+export const checkAdminOrPermission = (state, permission) =>
+    state.account.administrator || state.account.permissions[permission];
 
 export const checkUserRefPermission = (props, permission) => {
-  const { isAdmin, userId, userGroups } = props;
-  const refUsers = props.detail.users;
-  const refGroups = props.detail.groups;
+    const { isAdmin, userId, userGroups } = props;
+    const refUsers = props.detail.users;
+    const refGroups = props.detail.groups;
 
-  if (isAdmin) {
-    return true;
-  }
+    if (isAdmin) {
+        return true;
+    }
 
-  const userExists = find(refUsers, ["id", userId]);
+    const userExists = find(refUsers, ["id", userId]);
 
-  const groupsExist = filter(refGroups, refGroup => {
-    const result = filter(userGroups, group => group === refGroup.id);
-    return result;
-  });
+    const groupsExist = filter(refGroups, refGroup => {
+        const result = filter(userGroups, group => group === refGroup.id);
+        return result;
+    });
 
-  if (userExists && userExists[permission]) {
-    return true;
-  }
+    if (userExists && userExists[permission]) {
+        return true;
+    }
 
-  if (groupsExist.length) {
-    const hasBuildPermission = filter(groupsExist, group => group[permission]);
-    return !!hasBuildPermission.length;
-  }
+    if (groupsExist.length) {
+        const hasBuildPermission = filter(groupsExist, group => group[permission]);
+        return !!hasBuildPermission.length;
+    }
 
-  return false;
+    return false;
 };
