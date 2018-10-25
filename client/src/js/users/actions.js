@@ -5,58 +5,46 @@
  */
 
 import {
-  WS_INSERT_USER,
-  WS_UPDATE_USER,
-  WS_REMOVE_USER,
-  LIST_USERS,
-  FILTER_USERS,
-  GET_USER,
-  CREATE_USER,
-  EDIT_USER,
-  REMOVE_USER
+    WS_INSERT_USER,
+    WS_UPDATE_USER,
+    WS_REMOVE_USER,
+    FIND_USERS,
+    GET_USER,
+    CREATE_USER,
+    EDIT_USER,
+    REMOVE_USER
 } from "../actionTypes";
 
 export const wsInsertUser = data => ({
-  type: WS_INSERT_USER,
-  data
+    type: WS_INSERT_USER,
+    data
 });
 
 export const wsUpdateUser = data => ({
-  type: WS_UPDATE_USER,
-  data
+    type: WS_UPDATE_USER,
+    data
 });
 
 export const wsRemoveUser = data => ({
-  type: WS_REMOVE_USER,
-  data
+    type: WS_REMOVE_USER,
+    data
 });
 
 /**
- * Returns action that can trigger an API call for retrieving all users.
+ * Returns an action that can trigger an API call for finding users.
  *
  * @func
  * @returns {object}
  */
-export const listUsers = page => ({
-  type: LIST_USERS.REQUESTED,
-  page
-});
-
-/**
- * Returns action for filtering users by search term.
- *
- * @func
- * @param term {string} user input search term
- * @returns {object}
- */
-export const filterUsers = term => ({
-  type: FILTER_USERS.REQUESTED,
-  term
+export const findUsers = (term, page) => ({
+    type: FIND_USERS.REQUESTED,
+    term,
+    page
 });
 
 export const getUser = userId => ({
-  type: GET_USER.REQUESTED,
-  userId
+    type: GET_USER.REQUESTED,
+    userId
 });
 
 /**
@@ -67,8 +55,8 @@ export const getUser = userId => ({
  * @returns {object}
  */
 export const createUser = data => ({
-  type: CREATE_USER.REQUESTED,
-  ...data
+    type: CREATE_USER.REQUESTED,
+    ...data
 });
 
 /**
@@ -80,12 +68,12 @@ export const createUser = data => ({
  * @returns {object}
  */
 export const editUser = (userId, update) => ({
-  type: EDIT_USER.REQUESTED,
-  userId,
-  update
+    type: EDIT_USER.REQUESTED,
+    userId,
+    update
 });
 
 export const removeUser = userId => ({
-  type: REMOVE_USER.REQUESTED,
-  userId
+    type: REMOVE_USER.REQUESTED,
+    userId
 });
