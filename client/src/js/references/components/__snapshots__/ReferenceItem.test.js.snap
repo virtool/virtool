@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceItem /> renders <ReferenceHeader /> subcomponent correctly 1`] = `
+exports[`<Item /> renders <ReferenceHeader /> subcomponent correctly 1`] = `
 <div
   style={
     Object {
@@ -46,18 +46,18 @@ exports[`<ReferenceItem /> renders <ReferenceHeader /> subcomponent correctly 1`
     componentClass="div"
   >
     <small>
-      Created 
+      Created
       <RelativeTime
         time="2018-01-01T00:00:00.000000Z"
       />
-       by 
+       by
       test-user
     </small>
   </Row>
 </div>
 `;
 
-exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 1`] = `
+exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 1`] = `
 <Table
   bordered={true}
   bsClass="table"
@@ -104,7 +104,7 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
           replace={false}
           to="/refs/test-reference-id/indexes/test-build"
         >
-          Index 
+          Index
           0
         </Link>
         <div
@@ -115,11 +115,11 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
             }
           }
         >
-          Created 
+          Created
           <RelativeTime
             time="2018-01-01T00:00:00.000000Z"
           />
-           by 
+           by
           test-user
         </div>
       </td>
@@ -128,7 +128,7 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
 </Table>
 `;
 
-exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 2`] = `
+exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 2`] = `
 <Table
   bordered={true}
   bsClass="table"
@@ -175,7 +175,7 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
 </Table>
 `;
 
-exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 3`] = `
+exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 3`] = `
 <Table
   bordered={true}
   bsClass="table"
@@ -223,7 +223,7 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
 </Table>
 `;
 
-exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 4`] = `
+exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 4`] = `
 <Table
   bordered={true}
   bsClass="table"
@@ -265,7 +265,7 @@ exports[`<ReferenceItem /> renders <ReferenceMetadata /> subcomponent correctly 
 </Table>
 `;
 
-exports[`<ReferenceItem /> renders base component correctly 1`] = `
+exports[`<Item /> renders base component correctly 1`] = `
 <Uncontrolled(Panel)
   className="card reference-item"
 >
@@ -334,7 +334,7 @@ exports[`<ReferenceItem /> renders base component correctly 1`] = `
 </Uncontrolled(Panel)>
 `;
 
-exports[`<ReferenceItem /> renders base component correctly 2`] = `
+exports[`<Item /> renders base component correctly 2`] = `
 <Uncontrolled(Panel)
   className="card reference-item"
 >
@@ -411,7 +411,7 @@ exports[`<ReferenceItem /> renders base component correctly 2`] = `
 </Uncontrolled(Panel)>
 `;
 
-exports[`<ReferenceItem /> renders base component correctly 3`] = `
+exports[`<Item /> renders base component correctly 3`] = `
 <Uncontrolled(Panel)
   className="card reference-item"
 >
@@ -488,7 +488,7 @@ exports[`<ReferenceItem /> renders base component correctly 3`] = `
 </Uncontrolled(Panel)>
 `;
 
-exports[`<ReferenceItem /> renders correctly 1`] = `
+exports[`<Item /> renders correctly 1`] = `
 <Uncontrolled(Panel)
   className="card reference-item"
   onClick={[Function]}

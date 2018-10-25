@@ -1,111 +1,96 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Panel, Button } from "react-bootstrap";
-import { remoteReference, listReferences } from "../actions";
-import {
-  ViewHeader,
-  LoadingPlaceholder,
-  NoneFound,
-  ScrollList
-} from "../../base";
-import { checkAdminOrPermission } from "../../utils";
+import { remoteReference, findReferences } from "../actions";
+import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
+import { checkAdminOrPermission, routerLocationHasState } from "../../utils";
 import AddReference from "./AddReference";
-import ReferenceItem from "./ReferenceItem";
+import ReferenceItem from "./Item";
 import ReferenceToolbar from "./Toolbar";
 
 class ReferenceList extends React.Component {
-  componentDidMount() {
-    if (!this.props.fetched) {
-      this.props.loadNextPage(1);
-    }
-  }
-
-  rowRenderer = index => (
-    <ReferenceItem
-      key={this.props.documents[index].id}
-      {...this.props.documents[index]}
-    />
-  );
-
-  render() {
-    if (this.props.documents === null) {
-      return <LoadingPlaceholder />;
+    componentDidMount() {
+        this.props.loadNextPage(this.props.term, 1);
     }
 
-    let referenceComponents = null;
-    let noRefs;
+    renderRow = index => <ReferenceItem key={this.props.documents[index].id} {...this.props.documents[index]} />;
 
-    if (this.props.documents.length) {
-      referenceComponents = (
-        <ScrollList
-          hasNextPage={this.props.page < this.props.page_count}
-          isNextPageLoading={this.props.isLoading}
-          isLoadError={this.props.errorLoad}
-          list={this.props.documents}
-          refetchPage={this.props.refetchPage}
-          loadNextPage={this.props.loadNextPage}
-          page={this.props.page}
-          rowRenderer={this.rowRenderer}
-          noContainer
-        />
-      );
-    } else {
-      noRefs = <NoneFound noun="References" />;
+    render() {
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
+        let referenceComponents = null;
+        let noRefs;
+
+
+
+        let installOfficialComponent;
+
+        if (this.props.installOfficial && this.props.canCreate) {
+            installOfficialComponent = (
+                <Panel key="remote" className="card reference-remote">
+                    <span>
+                        <p>Official Remote Reference</p>
+                        <Button bsStyle="primary" onClick={this.props.onRemote}>
+                            Install
+                        </Button>
+                    </span>
+                </Panel>
+            );
+        }
+
+        if (this.props.documents.length) {
+            referenceComponents = (
+                <ScrollList
+                    documents={this.props.documents}
+                    loadNextPage={this.props.loadNextPage}
+                    page={this.props.page}
+                    pageCount={this.props.pageCount}
+                    renderRow={this.renderRow}
+                    noContainer
+                />
+            );
+        } else if (installOfficialComponent) {
+            noRefs = <NoneFound noun="References" />;
+        }
+
+        return (
+            <div>
+                <ViewHeader title="References" totalCount={this.props.total_count} />
+
+                <ReferenceToolbar />
+
+                <div className="card-container">
+                    {referenceComponents}
+                    {installOfficialComponent}
+                </div>
+
+                {noRefs}
+
+                {this.props.showModal ? <AddReference /> : null}
+            </div>
+        );
     }
-
-    const officialRemote =
-      !this.props.installOfficial && this.props.canCreateRef ? (
-        <Panel key="remote" className="card reference-remote">
-          <span>
-            <p>Official Remote Reference</p>
-            <Button bsStyle="primary" onClick={this.props.onRemote}>
-              Install
-            </Button>
-          </span>
-        </Panel>
-      ) : null;
-
-    return (
-      <div>
-        <ViewHeader title="References" totalCount={this.props.total_count} />
-
-        <ReferenceToolbar canCreate={this.props.canCreateRef} />
-
-        <div className="card-container">
-          {referenceComponents}
-          {officialRemote}
-        </div>
-
-        {officialRemote ? null : noRefs}
-
-        {this.props.routerStateExists ? <AddReference /> : null}
-      </div>
-    );
-  }
 }
 
 const mapStateToProps = state => ({
-  ...state.references,
-  account: state.account,
-  routerStateExists: !!state.router.location.state,
-  canCreateRef: checkAdminOrPermission(
-    state.account.administrator,
-    state.account.permissions,
-    "create_ref"
-  )
+    ...state.references,
+    showModal: routerLocationHasState(state, "newReference"),
+    canCreate: checkAdminOrPermission(state, "create_ref")
 });
 
 const mapDispatchToProps = dispatch => ({
-  onRemote: () => {
-    dispatch(remoteReference());
-  },
+    onRemote: () => {
+        dispatch(remoteReference());
+    },
 
-  loadNextPage: page => {
-    dispatch(listReferences(page));
-  }
+    loadNextPage: (term, page) => {
+        dispatch(findReferences(term, page));
+    }
 });
 
 export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(ReferenceList);
