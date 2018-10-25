@@ -1,38 +1,33 @@
 import {
-  WS_INSERT_SUBTRACTION,
-  WS_UPDATE_SUBTRACTION,
-  WS_REMOVE_SUBTRACTION,
-  LIST_SUBTRACTIONS,
-  FILTER_SUBTRACTIONS,
-  GET_SUBTRACTION,
-  UPDATE_SUBTRACTION,
-  CREATE_SUBTRACTION,
-  REMOVE_SUBTRACTION
+    WS_INSERT_SUBTRACTION,
+    WS_UPDATE_SUBTRACTION,
+    WS_REMOVE_SUBTRACTION,
+    GET_SUBTRACTION,
+    UPDATE_SUBTRACTION,
+    CREATE_SUBTRACTION,
+    REMOVE_SUBTRACTION,
+    FIND_SUBTRACTIONS
 } from "../actionTypes";
 
 export const wsInsertSubtraction = data => ({
-  type: WS_INSERT_SUBTRACTION,
-  data
+    type: WS_INSERT_SUBTRACTION,
+    data
 });
 
 export const wsUpdateSubtraction = data => ({
-  type: WS_UPDATE_SUBTRACTION,
-  data
+    type: WS_UPDATE_SUBTRACTION,
+    data
 });
 
 export const wsRemoveSubtraction = data => ({
-  type: WS_REMOVE_SUBTRACTION,
-  data
+    type: WS_REMOVE_SUBTRACTION,
+    data
 });
 
-export const listSubtractions = page => ({
-  type: LIST_SUBTRACTIONS.REQUESTED,
-  page
-});
-
-export const filterSubtractions = term => ({
-  type: FILTER_SUBTRACTIONS.REQUESTED,
-  term
+export const findSubtractions = (term, page) => ({
+    type: FIND_SUBTRACTIONS.REQUESTED,
+    term,
+    page
 });
 
 /**
@@ -43,8 +38,8 @@ export const filterSubtractions = term => ({
  * @returns {object}
  */
 export const getSubtraction = subtractionId => ({
-  type: GET_SUBTRACTION.REQUESTED,
-  subtractionId
+    type: GET_SUBTRACTION.REQUESTED,
+    subtractionId
 });
 
 /**
@@ -57,10 +52,10 @@ export const getSubtraction = subtractionId => ({
  * @returns {object}
  */
 export const createSubtraction = (subtractionId, fileId, nickname) => ({
-  type: CREATE_SUBTRACTION.REQUESTED,
-  subtractionId,
-  fileId,
-  nickname
+    type: CREATE_SUBTRACTION.REQUESTED,
+    subtractionId,
+    fileId,
+    nickname
 });
 
 /**
@@ -72,9 +67,9 @@ export const createSubtraction = (subtractionId, fileId, nickname) => ({
  * @returns {object}
  */
 export const updateSubtraction = (subtractionId, nickname) => ({
-  type: UPDATE_SUBTRACTION.REQUESTED,
-  subtractionId,
-  nickname
+    type: UPDATE_SUBTRACTION.REQUESTED,
+    subtractionId,
+    nickname
 });
 
 /**
@@ -85,6 +80,6 @@ export const updateSubtraction = (subtractionId, nickname) => ({
  * @returns {object}
  */
 export const removeSubtraction = subtractionId => ({
-  type: REMOVE_SUBTRACTION.REQUESTED,
-  subtractionId
+    type: REMOVE_SUBTRACTION.REQUESTED,
+    subtractionId
 });
