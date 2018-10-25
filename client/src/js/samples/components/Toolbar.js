@@ -7,46 +7,44 @@ import { checkAdminOrPermission } from "../../utils";
 import { Icon, Button } from "../../base";
 import { findSamples } from "../actions";
 
-const SampleToolbar = ({ canCreate, onFilter, filter }) => (
-  <div key="toolbar" className="toolbar">
-    <FormGroup>
-      <InputGroup>
-        <InputGroup.Addon>
-          <Icon name="search fa-fw" />
-        </InputGroup.Addon>
-        <FormControl
-          type="text"
-          value={filter}
-          onChange={onFilter}
-          placeholder="Sample name"
-        />
-      </InputGroup>
-    </FormGroup>
+const SampleToolbar = ({ canCreate, onFind, term }) => {
+    let createButton;
 
-    {canCreate ? (
-      <LinkContainer to={{ state: { create: true } }}>
-        <Button tip="Create" icon="plus-square fa-fw" bsStyle="primary" />
-      </LinkContainer>
-    ) : null}
-  </div>
-);
+    if (canCreate) {
+        createButton = (
+            <LinkContainer to={{ state: { createSample: true } }}>
+                <Button tip="Create" icon="plus-square fa-fw" bsStyle="primary" />
+            </LinkContainer>
+        );
+    }
+
+    return (
+        <div key="toolbar" className="toolbar">
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name="search fa-fw" />
+                    </InputGroup.Addon>
+                    <FormControl type="text" value={term} onChange={onFind} placeholder="Sample name" />
+                </InputGroup>
+            </FormGroup>
+            {createButton}
+        </div>
+    );
+};
 
 const mapStateToProps = state => ({
-  filter: state.samples.filter,
-  canCreate: checkAdminOrPermission(
-    state.account.administrator,
-    state.account.permissions,
-    "create_sample"
-  )
+    term: state.samples.term,
+    canCreate: checkAdminOrPermission(state, "create_sample")
 });
 
 const mapDispatchToProps = dispatch => ({
-  onFilter: e => {
-    dispatch(findSamples(e.target.value));
-  }
+    onFind: e => {
+        dispatch(findSamples(e.target.value, 1));
+    }
 });
 
 export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(SampleToolbar);
