@@ -7,9 +7,7 @@ import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES } from "../actionTypes";
  * @func
  * @returns {object}
  */
-export const getSoftwareUpdates = simpleActionCreator(
-  GET_SOFTWARE_UPDATES.REQUESTED
-);
+export const getSoftwareUpdates = simpleActionCreator(GET_SOFTWARE_UPDATES.REQUESTED);
 
 /**
  * Returns action that can trigger an API call for installing software updates.
@@ -17,6 +15,4 @@ export const getSoftwareUpdates = simpleActionCreator(
  * @func
  * @returns {object}
  */
-export const installSoftwareUpdates = simpleActionCreator(
-  INSTALL_SOFTWARE_UPDATES.REQUESTED
-);
+export const installSoftwareUpdates = simpleActionCreator(INSTALL_SOFTWARE_UPDATES.REQUESTED);

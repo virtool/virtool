@@ -6,56 +6,49 @@ import { updateSetting } from "../../administration/actions";
 import { Radio } from "../../base";
 
 export class ChannelButton extends React.Component {
-  handleClick = () => {
-    this.props.onClick(this.props.channel);
-  };
+    handleClick = () => {
+        this.props.onClick(this.props.channel);
+    };
 
-  render() {
-    const { channel, checked } = this.props;
+    render() {
+        const { channel, checked } = this.props;
 
-    return (
-      <Radio
-        label={`${capitalize(channel)}${
-          channel === "stable" ? " (recommended)" : ""
-        }`}
-        checked={checked}
-        onClick={this.handleClick}
-      />
-    );
-  }
+        return (
+            <Radio
+                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
+                checked={checked}
+                onClick={this.handleClick}
+            />
+        );
+    }
 }
 
 export const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
-  const radioComponents = map(["stable", "beta", "alpha"], label => (
-    <ChannelButton
-      key={label}
-      channel={label}
-      checked={label === channel}
-      onClick={onSetSoftwareChannel}
-    />
-  ));
+    const radioComponents = map(["stable", "beta", "alpha"], label => (
+        <ChannelButton key={label} channel={label} checked={label === channel} onClick={onSetSoftwareChannel} />
+    ));
 
-  return (
-    <Panel>
-      <Panel.Body>
-        <label>Software Channel</label>
-        {radioComponents}
-      </Panel.Body>
-    </Panel>
-  );
+    return (
+        <Panel>
+            <Panel.Body>
+                <label>Software Channel</label>
+                {radioComponents}
+            </Panel.Body>
+        </Panel>
+    );
 };
 
 const mapStateToProps = state => ({
-  channel: state.settings.data.software_channel
+    channel: state.settings.data.software_channel
 });
 
 const mapDispatchToProps = dispatch => ({
-  onSetSoftwareChannel: value => {
-    dispatch(updateSetting("software_channel", value));
-  }
+    onSetSoftwareChannel: value => {
+        dispatch(updateSetting("software_channel", value));
+    }
 });
 
 export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(SoftwareChannels);
