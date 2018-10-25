@@ -8,6 +8,6 @@ import { WS_UPDATE_STATUS } from "../actionTypes";
  * @returns {object}
  */
 export const wsUpdateStatus = data => ({
-  type: WS_UPDATE_STATUS,
-  data
+    type: WS_UPDATE_STATUS,
+    data
 });
