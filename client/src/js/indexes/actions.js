@@ -1,23 +1,23 @@
 import {
-  WS_INSERT_INDEX,
-  WS_UPDATE_INDEX,
-  LIST_INDEXES,
-  GET_INDEX,
-  GET_UNBUILT,
-  CREATE_INDEX,
-  GET_INDEX_HISTORY,
-  LIST_READY_INDEXES,
-  WS_INSERT_HISTORY
+    WS_INSERT_INDEX,
+    WS_UPDATE_INDEX,
+    FIND_INDEXES,
+    GET_INDEX,
+    GET_UNBUILT,
+    CREATE_INDEX,
+    GET_INDEX_HISTORY,
+    LIST_READY_INDEXES,
+    WS_INSERT_HISTORY
 } from "../actionTypes";
 
 export const wsInsertHistory = data => ({
-  type: WS_INSERT_HISTORY,
-  data
+    type: WS_INSERT_HISTORY,
+    data
 });
 
 export const wsInsertIndex = data => ({
-  type: WS_INSERT_INDEX,
-  data
+    type: WS_INSERT_INDEX,
+    data
 });
 
 /**
@@ -28,8 +28,8 @@ export const wsInsertIndex = data => ({
  * @returns {object}
  */
 export const wsUpdateIndex = data => ({
-  type: WS_UPDATE_INDEX,
-  data
+    type: WS_UPDATE_INDEX,
+    data
 });
 
 /**
@@ -38,10 +38,11 @@ export const wsUpdateIndex = data => ({
  * @func
  * @returns {object}
  */
-export const listIndexes = (refId, page) => ({
-  type: LIST_INDEXES.REQUESTED,
-  refId,
-  page
+export const findIndexes = (refId, term, page) => ({
+    type: FIND_INDEXES.REQUESTED,
+    refId,
+    term,
+    page
 });
 
 /**
@@ -51,7 +52,7 @@ export const listIndexes = (refId, page) => ({
  * @returns {object}
  */
 export const listReadyIndexes = () => ({
-  type: LIST_READY_INDEXES.REQUESTED
+    type: LIST_READY_INDEXES.REQUESTED
 });
 
 /**
@@ -62,8 +63,8 @@ export const listReadyIndexes = () => ({
  * @returns {object}
  */
 export const getIndex = indexId => ({
-  type: GET_INDEX.REQUESTED,
-  indexId
+    type: GET_INDEX.REQUESTED,
+    indexId
 });
 
 /**
@@ -73,8 +74,8 @@ export const getIndex = indexId => ({
  * @returns {object}
  */
 export const getUnbuilt = refId => ({
-  type: GET_UNBUILT.REQUESTED,
-  refId
+    type: GET_UNBUILT.REQUESTED,
+    refId
 });
 
 /**
@@ -84,8 +85,8 @@ export const getUnbuilt = refId => ({
  * @returns {object}
  */
 export const createIndex = refId => ({
-  type: CREATE_INDEX.REQUESTED,
-  refId
+    type: CREATE_INDEX.REQUESTED,
+    refId
 });
 
 /**
@@ -97,7 +98,7 @@ export const createIndex = refId => ({
  * @returns {object}
  */
 export const getIndexHistory = (indexId, page) => ({
-  type: GET_INDEX_HISTORY.REQUESTED,
-  indexId,
-  page
+    type: GET_INDEX_HISTORY.REQUESTED,
+    indexId,
+    page
 });
