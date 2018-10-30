@@ -15,9 +15,9 @@
  * @returns {object} a request-style action type
  */
 const createRequestActionType = root => ({
-  REQUESTED: `${root}_REQUESTED`,
-  SUCCEEDED: `${root}_SUCCEEDED`,
-  FAILED: `${root}_FAILED`
+    REQUESTED: `${root}_REQUESTED`,
+    SUCCEEDED: `${root}_SUCCEEDED`,
+    FAILED: `${root}_FAILED`
 });
 
 // App
@@ -28,15 +28,9 @@ export const WS_CLOSED = "WS_CLOSED";
 // Account
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
 export const UPDATE_ACCOUNT = createRequestActionType("UPDATE_ACCOUNT");
-export const GET_ACCOUNT_SETTINGS = createRequestActionType(
-  "GET_ACCOUNT_SETTINGS"
-);
-export const UPDATE_ACCOUNT_SETTINGS = createRequestActionType(
-  "UPDATE_ACCOUNT_SETTINGS"
-);
-export const CHANGE_ACCOUNT_PASSWORD = createRequestActionType(
-  "CHANGE_ACCOUNT_PASSWORD"
-);
+export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
+export const UPDATE_ACCOUNT_SETTINGS = createRequestActionType("UPDATE_ACCOUNT_SETTINGS");
+export const CHANGE_ACCOUNT_PASSWORD = createRequestActionType("CHANGE_ACCOUNT_PASSWORD");
 export const GET_API_KEYS = createRequestActionType("GET_API_KEYS");
 export const CREATE_API_KEY = createRequestActionType("CREATE_API_KEY");
 export const UPDATE_API_KEY = createRequestActionType("UPDATE_API_KEY");
@@ -47,9 +41,7 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 // Administration Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
-export const GET_CONTROL_READAHEAD = createRequestActionType(
-  "GET_CONTROL_READAHEAD"
-);
+export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Analysis
@@ -67,8 +59,7 @@ export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 export const SET_PATHOSCOPE_FILTER = "SET_PATHOSCOPE_FILTER";
 export const SET_PATHOSCOPE_SORT_KEY = "SET_PATHOSCOPE_SORT_KEY";
 export const TOGGLE_ANALYSIS_EXPANDED = "TOGGLE_ANALYSIS_EXPANDED";
-export const TOGGLE_SORT_PATHOSCOPE_DESCENDING =
-  "TOGGLE_PATHOSCOPE_SORT_DIRECTION";
+export const TOGGLE_SORT_PATHOSCOPE_DESCENDING = "TOGGLE_PATHOSCOPE_SORT_DIRECTION";
 export const TOGGLE_SHOW_PATHOSCOPE_MEDIAN = "TOGGLE_SHOW_PATHOSCOPE_MEDIAN";
 export const TOGGLE_SHOW_PATHOSCOPE_READS = "TOGGLE_SHOW_PATHOSCOPE_READS";
 
@@ -89,11 +80,9 @@ export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 export const WS_INSERT_GROUP = "WS_INSERT_GROUP";
 export const WS_UPDATE_GROUP = "WS_UPDATE_GROUP";
 export const WS_REMOVE_GROUP = "WS_REMOVE_GROUP";
-export const FIND_GROUPS = createRequestActionType("FIND_GROUPS");
+export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
 export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
-export const SET_GROUP_PERMISSION = createRequestActionType(
-  "SET_GROUP_PERMISSION"
-);
+export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSION");
 export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 
 // HMMs
@@ -137,9 +126,7 @@ export const REMOVE_OTU = createRequestActionType("REMOVE_OTU");
 export const GET_OTU_HISTORY = createRequestActionType("GET_OTU_HISTORY");
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
-export const SET_ISOLATE_AS_DEFAULT = createRequestActionType(
-  "SET_ISOLATE_AS_DEFAULT"
-);
+export const SET_ISOLATE_AS_DEFAULT = createRequestActionType("SET_ISOLATE_AS_DEFAULT");
 export const REMOVE_ISOLATE = createRequestActionType("REMOVE_ISOLATE");
 export const ADD_SEQUENCE = createRequestActionType("ADD_SEQUENCE");
 export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
@@ -160,6 +147,7 @@ export const HIDE_OTU_MODAL = "HIDE_OTU_MODAL";
 // Processes
 export const WS_INSERT_PROCESS = "WS_INSERT_PROCESS";
 export const WS_UPDATE_PROCESS = "WS_UPDATE_PROCESS";
+export const WS_REMOVE_PROCESS = "WS_REMOVE_PROCESS";
 export const LIST_PROCESSES = createRequestActionType("LIST_PROCESSES");
 export const GET_PROCESS = createRequestActionType("GET_PROCESS");
 
@@ -176,27 +164,13 @@ export const IMPORT_REFERENCE = createRequestActionType("IMPORT_REFERENCE");
 export const CLONE_REFERENCE = createRequestActionType("CLONE_REFERENCE");
 export const REMOTE_REFERENCE = createRequestActionType("REMOTE_REFERENCE");
 export const ADD_REFERENCE_USER = createRequestActionType("ADD_REFERENCE_USER");
-export const EDIT_REFERENCE_USER = createRequestActionType(
-  "EDIT_REFERENCE_USER"
-);
-export const REMOVE_REFERENCE_USER = createRequestActionType(
-  "REMOVE_REFERENCE_USER"
-);
-export const ADD_REFERENCE_GROUP = createRequestActionType(
-  "ADD_REFERENCE_GROUP"
-);
-export const EDIT_REFERENCE_GROUP = createRequestActionType(
-  "EDIT_REFERENCE_GROUP"
-);
-export const REMOVE_REFERENCE_GROUP = createRequestActionType(
-  "REMOVE_REFERENCE_GROUP"
-);
-export const CHECK_REMOTE_UPDATES = createRequestActionType(
-  "CHECK_REMOTE_UPDATES"
-);
-export const UPDATE_REMOTE_REFERENCE = createRequestActionType(
-  "UPDATE_REMOTE_REFERENCE"
-);
+export const EDIT_REFERENCE_USER = createRequestActionType("EDIT_REFERENCE_USER");
+export const REMOVE_REFERENCE_USER = createRequestActionType("REMOVE_REFERENCE_USER");
+export const ADD_REFERENCE_GROUP = createRequestActionType("ADD_REFERENCE_GROUP");
+export const EDIT_REFERENCE_GROUP = createRequestActionType("EDIT_REFERENCE_GROUP");
+export const REMOVE_REFERENCE_GROUP = createRequestActionType("REMOVE_REFERENCE_GROUP");
+export const CHECK_REMOTE_UPDATES = createRequestActionType("CHECK_REMOTE_UPDATES");
+export const UPDATE_REMOTE_REFERENCE = createRequestActionType("UPDATE_REMOTE_REFERENCE");
 
 // Samples
 export const WS_INSERT_SAMPLE = "WS_INSERT_SAMPLE";
@@ -208,9 +182,7 @@ export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const CREATE_SAMPLE = createRequestActionType("CREATE_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
-export const UPDATE_SAMPLE_RIGHTS = createRequestActionType(
-  "UPDATE_SAMPLE_RIGHTS"
-);
+export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
@@ -237,9 +209,5 @@ export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 
 // Updates
 export const WS_UPDATE_STATUS = "WS_UPDATE_STATUS";
-export const GET_SOFTWARE_UPDATES = createRequestActionType(
-  "GET_SOFTWARE_UPDATES"
-);
-export const INSTALL_SOFTWARE_UPDATES = createRequestActionType(
-  "INSTALL_SOFTWARE_UPDATES"
-);
+export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
+export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
