@@ -12,6 +12,6 @@ import { CLEAR_ERROR } from "../actionTypes";
  * @returns {object}
  */
 export const clearError = error => ({
-  type: CLEAR_ERROR,
-  error
+    type: CLEAR_ERROR,
+    error
 });
