@@ -4,14 +4,9 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import {
-  InputGroup,
-  FormGroup,
-  FormControl,
-  Dropdown,
-  MenuItem
-} from "react-bootstrap";
-import { clearJobs, filterJobs } from "../actions";
+import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
+import { checkAdminOrPermission } from "../../utils";
+import { clearJobs, findJobs } from "../actions";
 import { Icon, Button } from "../../base";
 
 /**
@@ -19,71 +14,60 @@ import { Icon, Button } from "../../base";
  * @param props
  * @returns {*}
  */
-const JobsToolbar = props => {
-  let removalDropdown;
+const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
+    let removalDropdown;
 
-  if (props.canRemove) {
-    removalDropdown = (
-      <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-        <Button name="finished" onClick={props.onClear} tip="Clear Finished">
-          <Icon name="trash" />
-        </Button>
-        <Dropdown.Toggle />
-        <Dropdown.Menu>
-          <MenuItem
-            eventKey="removeFailed"
-            name="failed"
-            onClick={props.onClear}
-          >
-            Failed
-          </MenuItem>
-          <MenuItem
-            eventKey="removeComplete"
-            name="complete"
-            onClick={props.onClear}
-          >
-            Complete
-          </MenuItem>
-        </Dropdown.Menu>
-      </Dropdown>
+    if (canRemove) {
+        removalDropdown = (
+            <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
+                <Button name="finished" onClick={onClear} tip="Clear Finished">
+                    <Icon name="trash" />
+                </Button>
+                <Dropdown.Toggle />
+                <Dropdown.Menu>
+                    <MenuItem eventKey="removeFailed" name="failed" onClick={onClear}>
+                        Failed
+                    </MenuItem>
+                    <MenuItem eventKey="removeComplete" name="complete" onClick={onClear}>
+                        Complete
+                    </MenuItem>
+                </Dropdown.Menu>
+            </Dropdown>
+        );
+    }
+
+    return (
+        <div className="toolbar">
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name="search" />
+                    </InputGroup.Addon>
+                    <FormControl value={term} onChange={onFind} placeholder="User or task" />
+                </InputGroup>
+            </FormGroup>
+
+            {removalDropdown}
+        </div>
     );
-  }
-
-  return (
-    <div className="toolbar">
-      <FormGroup>
-        <InputGroup>
-          <InputGroup.Addon>
-            <Icon name="search" />
-          </InputGroup.Addon>
-          <FormControl
-            value={props.filter}
-            onChange={props.onFilter}
-            placeholder="User or task"
-          />
-        </InputGroup>
-      </FormGroup>
-
-      {removalDropdown}
-    </div>
-  );
 };
 
 const mapStateToProps = state => ({
-  filter: state.jobs.filter
+    term: state.jobs.term,
+    canRemove: checkAdminOrPermission(state, "remove_job")
 });
 
 const mapDispatchToProps = dispatch => ({
-  onFilter: e => {
-    dispatch(filterJobs(e.target.value));
-  },
+    onFind: e => {
+        dispatch(findJobs(e.target.value, 1));
+    },
 
-  onClear: e => {
-    dispatch(clearJobs(e.target.name));
-  }
+    onClear: e => {
+        dispatch(clearJobs(e.target.name));
+    }
 });
 
 export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(JobsToolbar);

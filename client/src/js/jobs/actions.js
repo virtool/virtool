@@ -1,20 +1,19 @@
 import { simpleActionCreator } from "../utils";
 import {
-  WS_INSERT_JOB,
-  WS_UPDATE_JOB,
-  WS_REMOVE_JOB,
-  LIST_JOBS,
-  FILTER_JOBS,
-  GET_JOB,
-  CANCEL_JOB,
-  REMOVE_JOB,
-  CLEAR_JOBS,
-  GET_RESOURCES
+    WS_INSERT_JOB,
+    WS_UPDATE_JOB,
+    WS_REMOVE_JOB,
+    FIND_JOBS,
+    GET_JOB,
+    CANCEL_JOB,
+    REMOVE_JOB,
+    CLEAR_JOBS,
+    GET_RESOURCES
 } from "../actionTypes";
 
 export const wsInsertJob = data => ({
-  type: WS_INSERT_JOB,
-  data
+    type: WS_INSERT_JOB,
+    data
 });
 
 /**
@@ -25,8 +24,8 @@ export const wsInsertJob = data => ({
  * @returns {object}
  */
 export const wsUpdateJob = data => ({
-  type: WS_UPDATE_JOB,
-  data
+    type: WS_UPDATE_JOB,
+    data
 });
 
 /**
@@ -37,8 +36,8 @@ export const wsUpdateJob = data => ({
  * @returns {object}
  */
 export const wsRemoveJob = data => ({
-  type: WS_REMOVE_JOB,
-  data
+    type: WS_REMOVE_JOB,
+    data
 });
 
 /**
@@ -48,14 +47,10 @@ export const wsRemoveJob = data => ({
  * @returns {object}
  */
 
-export const listJobs = page => ({
-  type: LIST_JOBS.REQUESTED,
-  page
-});
-
-export const filterJobs = term => ({
-  type: FILTER_JOBS.REQUESTED,
-  term
+export const findJobs = (term, page) => ({
+    type: FIND_JOBS.REQUESTED,
+    term,
+    page
 });
 
 /**
@@ -66,8 +61,8 @@ export const filterJobs = term => ({
  * @returns {object}
  */
 export const getJob = jobId => ({
-  type: GET_JOB.REQUESTED,
-  jobId
+    type: GET_JOB.REQUESTED,
+    jobId
 });
 
 /**
@@ -78,8 +73,8 @@ export const getJob = jobId => ({
  * @returns {object}
  */
 export const cancelJob = jobId => ({
-  type: CANCEL_JOB.REQUESTED,
-  jobId
+    type: CANCEL_JOB.REQUESTED,
+    jobId
 });
 
 /**
@@ -90,8 +85,8 @@ export const cancelJob = jobId => ({
  * @returns {object}
  */
 export const removeJob = jobId => ({
-  type: REMOVE_JOB.REQUESTED,
-  jobId
+    type: REMOVE_JOB.REQUESTED,
+    jobId
 });
 
 /**
@@ -102,8 +97,8 @@ export const removeJob = jobId => ({
  * @returns {object}
  */
 export const clearJobs = scope => ({
-  type: CLEAR_JOBS.REQUESTED,
-  scope
+    type: CLEAR_JOBS.REQUESTED,
+    scope
 });
 
 /**
