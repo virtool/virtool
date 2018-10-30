@@ -5,16 +5,16 @@
  */
 import { simpleActionCreator } from "../utils";
 import {
-  GET_ACCOUNT,
-  UPDATE_ACCOUNT,
-  UPDATE_ACCOUNT_SETTINGS,
-  CHANGE_ACCOUNT_PASSWORD,
-  GET_API_KEYS,
-  CREATE_API_KEY,
-  UPDATE_API_KEY,
-  REMOVE_API_KEY,
-  LOGOUT,
-  CLEAR_API_KEY
+    GET_ACCOUNT,
+    UPDATE_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS,
+    CHANGE_ACCOUNT_PASSWORD,
+    GET_API_KEYS,
+    CREATE_API_KEY,
+    UPDATE_API_KEY,
+    REMOVE_API_KEY,
+    LOGOUT,
+    CLEAR_API_KEY
 } from "../actionTypes";
 
 /**
@@ -33,8 +33,8 @@ export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
  * @returns {object}
  */
 export const updateAccount = update => ({
-  type: UPDATE_ACCOUNT.REQUESTED,
-  update
+    type: UPDATE_ACCOUNT.REQUESTED,
+    update
 });
 
 /**
@@ -45,8 +45,8 @@ export const updateAccount = update => ({
  * @returns {object}
  */
 export const updateAccountSettings = update => ({
-  type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
-  update
+    type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
+    update
 });
 
 /**
@@ -58,9 +58,9 @@ export const updateAccountSettings = update => ({
  * @returns {object}
  */
 export const changePassword = (oldPassword, newPassword) => ({
-  type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
-  oldPassword,
-  newPassword
+    type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
+    oldPassword,
+    newPassword
 });
 
 /**
@@ -80,9 +80,9 @@ export const getAPIKeys = simpleActionCreator(GET_API_KEYS.REQUESTED);
  * @returns {object}
  */
 export const createAPIKey = (name, permissions) => ({
-  type: CREATE_API_KEY.REQUESTED,
-  name,
-  permissions
+    type: CREATE_API_KEY.REQUESTED,
+    name,
+    permissions
 });
 
 /**
@@ -102,9 +102,9 @@ export const clearAPIKey = simpleActionCreator(CLEAR_API_KEY);
  * @returns {object}
  */
 export const updateAPIKey = (keyId, permissions) => ({
-  type: UPDATE_API_KEY.REQUESTED,
-  keyId,
-  permissions
+    type: UPDATE_API_KEY.REQUESTED,
+    keyId,
+    permissions
 });
 
 /**
@@ -115,8 +115,8 @@ export const updateAPIKey = (keyId, permissions) => ({
  * @returns {object}
  */
 export const removeAPIKey = keyId => ({
-  type: REMOVE_API_KEY.REQUESTED,
-  keyId
+    type: REMOVE_API_KEY.REQUESTED,
+    keyId
 });
 
 /**

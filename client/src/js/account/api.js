@@ -21,8 +21,7 @@ export const get = () => Request.get("/api/account");
  * @param update {object} the update to apply to current account.
  * @returns {promise}
  */
-export const update = ({ update }) =>
-  Request.patch("/api/account").send(update);
+export const update = ({ update }) => Request.patch("/api/account").send(update);
 
 /**
  * Gets the settings object for the current account.
@@ -39,8 +38,7 @@ export const getSettings = () => Request.get("/api/account/settings");
  * @param update {object} the update to apply to account settings
  * @returns {promise}
  */
-export const updateSettings = ({ update }) =>
-  Request.patch("/api/account/settings").send(update);
+export const updateSettings = ({ update }) => Request.patch("/api/account/settings").send(update);
 
 /**
  * Changes the password for the current account.
@@ -51,10 +49,10 @@ export const updateSettings = ({ update }) =>
  * @returns {promise}
  */
 export const changePassword = ({ oldPassword, newPassword }) =>
-  Request.patch("/api/account").send({
-    old_password: oldPassword,
-    password: newPassword
-  });
+    Request.patch("/api/account").send({
+        old_password: oldPassword,
+        password: newPassword
+    });
 
 /**
  * Gets all API keys owned by the current account.
@@ -72,10 +70,10 @@ export const getAPIKeys = () => Request.get("/api/account/keys");
  * @returns {promise}
  */
 export const createAPIKey = ({ name, permissions }) =>
-  Request.post("/api/account/keys").send({
-    name,
-    permissions
-  });
+    Request.post("/api/account/keys").send({
+        name,
+        permissions
+    });
 
 /**
  * Update the permissions for an existing API key owned by the current account.
@@ -86,9 +84,9 @@ export const createAPIKey = ({ name, permissions }) =>
  * @returns {promise}
  */
 export const updateAPIKey = ({ keyId, permissions }) =>
-  Request.patch(`/api/account/keys/${keyId}`).send({
-    permissions
-  });
+    Request.patch(`/api/account/keys/${keyId}`).send({
+        permissions
+    });
 
 /**
  * Remove an existing API key owned by current account.
@@ -96,8 +94,7 @@ export const updateAPIKey = ({ keyId, permissions }) =>
  * @param keyId
  * @returns {promise}
  */
-export const removeAPIKey = ({ keyId }) =>
-  Request.delete(`/api/account/keys/${keyId}`);
+export const removeAPIKey = ({ keyId }) => Request.delete(`/api/account/keys/${keyId}`);
 
 /**
  * Logs out the current session.

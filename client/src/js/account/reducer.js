@@ -4,13 +4,13 @@
  * @module account/reducer
  */
 import {
-  GET_ACCOUNT,
-  UPDATE_ACCOUNT,
-  UPDATE_ACCOUNT_SETTINGS,
-  CHANGE_ACCOUNT_PASSWORD,
-  GET_API_KEYS,
-  CREATE_API_KEY,
-  CLEAR_API_KEY
+    GET_ACCOUNT,
+    UPDATE_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS,
+    CHANGE_ACCOUNT_PASSWORD,
+    GET_API_KEYS,
+    CREATE_API_KEY,
+    CLEAR_API_KEY
 } from "../actionTypes";
 
 /**
@@ -20,10 +20,10 @@ import {
  * @type {object}
  */
 export const initialState = {
-  ready: false,
-  oldPasswordError: false,
-  apiKeys: null,
-  newKey: null
+    ready: false,
+    oldPasswordError: false,
+    apiKeys: null,
+    newKey: null
 };
 
 /**
@@ -34,32 +34,32 @@ export const initialState = {
  * @returns {object}
  */
 export default function accountReducer(state = initialState, action) {
-  switch (action.type) {
-    case GET_ACCOUNT.SUCCEEDED:
-      return { ...state, ...action.data, ready: true };
+    switch (action.type) {
+        case GET_ACCOUNT.SUCCEEDED:
+            return { ...state, ...action.data, ready: true };
 
-    case UPDATE_ACCOUNT.SUCCEEDED:
-      return { ...state, ...action.data };
+        case UPDATE_ACCOUNT.SUCCEEDED:
+            return { ...state, ...action.data };
 
-    case GET_API_KEYS.SUCCEEDED:
-      return { ...state, apiKeys: action.data };
+        case GET_API_KEYS.SUCCEEDED:
+            return { ...state, apiKeys: action.data };
 
-    case CHANGE_ACCOUNT_PASSWORD.SUCCEEDED:
-      return { ...state, oldPasswordError: false };
+        case CHANGE_ACCOUNT_PASSWORD.SUCCEEDED:
+            return { ...state, oldPasswordError: false };
 
-    case CREATE_API_KEY.REQUESTED:
-      return { ...state, key: null };
+        case CREATE_API_KEY.REQUESTED:
+            return { ...state, key: null };
 
-    case CREATE_API_KEY.SUCCEEDED:
-      return { ...state, newKey: action.data.key };
+        case CREATE_API_KEY.SUCCEEDED:
+            return { ...state, newKey: action.data.key };
 
-    case CLEAR_API_KEY:
-      return { ...state, newKey: null };
+        case CLEAR_API_KEY:
+            return { ...state, newKey: null };
 
-    case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
-      return { ...state, settings: action.data };
+        case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
+            return { ...state, settings: action.data };
 
-    default:
-      return state;
-  }
+        default:
+            return state;
+    }
 }
