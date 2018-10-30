@@ -1,7 +1,6 @@
 import Request from "superagent";
 
-export const find = ({ term, page }) =>
-  Request.get("/api/hmms").query({ term, page });
+export const find = ({ term, page }) => Request.get("/api/hmms").query({ find: term, page });
 
 export const list = ({ page }) => Request.get("/api/hmms").query({ page });
 
