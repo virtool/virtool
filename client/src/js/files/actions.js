@@ -6,19 +6,19 @@
 
 import { simpleActionCreator } from "../utils";
 import {
-  WS_INSERT_FILE,
-  WS_UPDATE_FILE,
-  WS_REMOVE_FILE,
-  LIST_FILES,
-  REMOVE_FILE,
-  UPLOAD,
-  UPLOAD_PROGRESS,
-  HIDE_UPLOAD_OVERLAY
+    WS_INSERT_FILE,
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    FIND_FILES,
+    REMOVE_FILE,
+    UPLOAD,
+    UPLOAD_PROGRESS,
+    HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
 
 export const wsInsertFile = data => ({
-  type: WS_INSERT_FILE,
-  data
+    type: WS_INSERT_FILE,
+    data
 });
 
 /**
@@ -29,8 +29,8 @@ export const wsInsertFile = data => ({
  * @returns {object}
  */
 export const wsUpdateFile = data => ({
-  type: WS_UPDATE_FILE,
-  data
+    type: WS_UPDATE_FILE,
+    data
 });
 
 /**
@@ -41,8 +41,8 @@ export const wsUpdateFile = data => ({
  * @returns {object}
  */
 export const wsRemoveFile = data => ({
-  type: WS_REMOVE_FILE,
-  data
+    type: WS_REMOVE_FILE,
+    data
 });
 
 /**
@@ -53,10 +53,11 @@ export const wsRemoveFile = data => ({
  * @param page {number} which page of results to return
  * @returns {object}
  */
-export const listFiles = (fileType, page) => ({
-  type: LIST_FILES.REQUESTED,
-  fileType,
-  page
+export const findFiles = (fileType, term, page) => ({
+    type: FIND_FILES.REQUESTED,
+    fileType,
+    term,
+    page
 });
 
 /**
@@ -70,10 +71,10 @@ export const listFiles = (fileType, page) => ({
  * @returns {object}
  */
 export const upload = (localId, file, fileType) => ({
-  type: UPLOAD.REQUESTED,
-  localId,
-  file,
-  fileType
+    type: UPLOAD.REQUESTED,
+    localId,
+    file,
+    fileType
 });
 
 /**
@@ -84,8 +85,8 @@ export const upload = (localId, file, fileType) => ({
  * @returns {object}
  */
 export const removeFile = fileId => ({
-  type: REMOVE_FILE.REQUESTED,
-  fileId
+    type: REMOVE_FILE.REQUESTED,
+    fileId
 });
 
 /**
@@ -97,9 +98,9 @@ export const removeFile = fileId => ({
  * @returns {object}
  */
 export const uploadProgress = (localId, progress) => ({
-  type: UPLOAD_PROGRESS,
-  localId,
-  progress
+    type: UPLOAD_PROGRESS,
+    localId,
+    progress
 });
 
 /**

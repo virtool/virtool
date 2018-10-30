@@ -3,10 +3,10 @@ import PathoscopeList from "./List";
 import PathoscopeToolbar from "./Toolbar";
 
 export default function PathoscopeViewer() {
-  return (
-    <div>
-      <PathoscopeToolbar />
-      <PathoscopeList />
-    </div>
-  );
+    return (
+        <div>
+            <PathoscopeToolbar />
+            <PathoscopeList />
+        </div>
+    );
 }

@@ -1,17 +1,17 @@
 import NuVsExportPreview from "./ExportPreview";
 
 describe("<NuVsExportPreview />", () => {
-  let wrapper;
+    let wrapper;
 
-  it("renders correctly when [mode=contigs]", () => {
-    wrapper = shallow(<NuVsExportPreview mode="contigs" />);
+    it("renders correctly when [mode=contigs]", () => {
+        wrapper = shallow(<NuVsExportPreview mode="contigs" />);
 
-    expect(wrapper).toMatchSnapshot();
-  });
+        expect(wrapper).toMatchSnapshot();
+    });
 
-  it("renders correctly otherwise", () => {
-    wrapper = shallow(<NuVsExportPreview mode="test" />);
+    it("renders correctly otherwise", () => {
+        wrapper = shallow(<NuVsExportPreview mode="test" />);
 
-    expect(wrapper).toMatchSnapshot();
-  });
+        expect(wrapper).toMatchSnapshot();
+    });
 });

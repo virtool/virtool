@@ -4,15 +4,15 @@
  * @module files/reducer
  */
 import { every, map } from "lodash-es";
-import { updateDocuments, insert, edit, remove } from "../reducerUtils";
+import { updateDocuments, insert, update, remove } from "../reducerUtils";
 import {
-  WS_INSERT_FILE,
-  WS_UPDATE_FILE,
-  WS_REMOVE_FILE,
-  LIST_FILES,
-  UPLOAD,
-  UPLOAD_PROGRESS,
-  HIDE_UPLOAD_OVERLAY
+    WS_INSERT_FILE,
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    FIND_FILES,
+    UPLOAD,
+    UPLOAD_PROGRESS,
+    HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
 
 /**
@@ -22,16 +22,14 @@ import {
  * @type {object}
  */
 export const initialState = {
-  documents: null,
-  fileType: null,
-  found_count: 0,
-  page: 0,
-  total_count: 0,
-  fetched: false,
-  refetchPage: false,
-  uploads: [],
-  uploadsComplete: true,
-  showUploadOverlay: false
+    documents: null,
+    fileType: null,
+    found_count: 0,
+    page: 0,
+    total_count: 0,
+    uploads: [],
+    uploadsComplete: true,
+    showUploadOverlay: false
 };
 
 /**
@@ -42,8 +40,8 @@ export const initialState = {
  * @returns {object}
  */
 export const checkUploadsComplete = state => ({
-  ...state,
-  uploadsComplete: every(state.uploads, { progress: 100 })
+    ...state,
+    uploadsComplete: every(state.uploads, { progress: 100 })
 });
 
 /**
@@ -54,91 +52,70 @@ export const checkUploadsComplete = state => ({
  * @returns {object}
  */
 export default function fileReducer(state = initialState, action) {
-  switch (action.type) {
-    case WS_INSERT_FILE:
-      if (!state.fetched || action.data.type !== state.fileType) {
-        return state;
-      }
-      return {
-        ...state,
-        documents: insert(
-          state.documents,
-          state.page,
-          state.per_page,
-          action,
-          "created_at"
-        ),
-        total_count: state.total_count + 1
-      };
+    switch (action.type) {
+        case WS_INSERT_FILE:
+            if (action.data.type === state.fileType) {
+                return insert(state, action, "created_at");
+            }
 
-    case WS_UPDATE_FILE:
-      return {
-        ...state,
-        documents: edit(state.documents, action)
-      };
+            return state;
 
-    case WS_REMOVE_FILE:
-      return {
-        ...state,
-        documents: remove(state.documents, action),
-        refetchPage: state.page < state.page_count,
-        total_count: state.total_count - 1
-      };
+        case WS_UPDATE_FILE:
+            return update(state, action);
 
-    case LIST_FILES.REQUESTED:
-      return {
-        ...state,
-        isLoading: true,
-        errorLoad: false
-      };
+        case WS_REMOVE_FILE:
+            return {
+                ...state,
+                documents: remove(state.documents, action),
+                refetchPage: state.page < state.page_count,
+                total_count: state.total_count - 1
+            };
 
-    case LIST_FILES.SUCCEEDED:
-      return {
-        ...state,
-        ...updateDocuments(state.documents, action, state.page),
-        fileType: action.fileType,
-        isLoading: false,
-        errorLoad: false,
-        fetched: true,
-        refetchPage: false
-      };
+        case FIND_FILES.REQUESTED: {
+            const update = {
+                term: action.term
+            };
 
-    case LIST_FILES.FAILED:
-      return {
-        ...state,
-        isLoading: false,
-        errorLoad: true
-      };
+            if (action.page === 1) {
+                update.documents = null;
+            }
 
-    case UPLOAD.REQUESTED: {
-      const { name, size, type } = action.file;
-      const fileType = action.fileType;
-      const newState = {
-        ...state,
-        uploads: state.uploads.concat([
-          { localId: action.localId, progress: 0, name, size, type, fileType }
-        ]),
-        showUploadOverlay: true
-      };
-
-      return checkUploadsComplete(newState);
-    }
-
-    case UPLOAD_PROGRESS: {
-      const uploads = map(state.uploads, upload => {
-        if (upload.localId !== action.localId) {
-          return upload;
+            return {
+                ...state,
+                ...update
+            };
         }
 
-        return { ...upload, progress: action.progress };
-      });
+        case FIND_FILES.SUCCEEDED:
+            return { ...updateDocuments(state, action), fileType: action.fileType };
 
-      return checkUploadsComplete({ ...state, uploads });
+        case UPLOAD.REQUESTED: {
+            const { name, size, type } = action.file;
+            const fileType = action.fileType;
+            const newState = {
+                ...state,
+                uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type, fileType }]),
+                showUploadOverlay: true
+            };
+
+            return checkUploadsComplete(newState);
+        }
+
+        case UPLOAD_PROGRESS: {
+            const uploads = map(state.uploads, upload => {
+                if (upload.localId !== action.localId) {
+                    return upload;
+                }
+
+                return { ...upload, progress: action.progress };
+            });
+
+            return checkUploadsComplete({ ...state, uploads });
+        }
+
+        case HIDE_UPLOAD_OVERLAY:
+            return { ...state, showUploadOverlay: false };
     }
 
-    case HIDE_UPLOAD_OVERLAY:
-      return { ...state, showUploadOverlay: false };
-  }
-
-  return state;
+    return state;
 }

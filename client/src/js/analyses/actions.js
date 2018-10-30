@@ -1,27 +1,26 @@
 import {
-  WS_INSERT_ANALYSIS,
-  WS_UPDATE_ANALYSIS,
-  WS_REMOVE_ANALYSIS,
-  FIND_ANALYSES,
-  FILTER_ANALYSES,
-  GET_ANALYSIS,
-  ANALYZE,
-  BLAST_NUVS,
-  REMOVE_ANALYSIS,
-  CLEAR_ANALYSIS,
-  COLLAPSE_ANALYSIS,
-  SET_PATHOSCOPE_FILTER,
-  SET_PATHOSCOPE_SORT_KEY,
-  TOGGLE_ANALYSIS_EXPANDED,
-  TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-  TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
-  TOGGLE_SHOW_PATHOSCOPE_READS
+    WS_INSERT_ANALYSIS,
+    WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    ANALYZE,
+    BLAST_NUVS,
+    REMOVE_ANALYSIS,
+    CLEAR_ANALYSIS,
+    COLLAPSE_ANALYSIS,
+    SET_PATHOSCOPE_FILTER,
+    SET_PATHOSCOPE_SORT_KEY,
+    TOGGLE_ANALYSIS_EXPANDED,
+    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
+    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
+    TOGGLE_SHOW_PATHOSCOPE_READS
 } from "../actionTypes";
 import { simpleActionCreator } from "../utils";
 
 export const wsInsertAnalysis = data => ({
-  type: WS_INSERT_ANALYSIS,
-  data
+    type: WS_INSERT_ANALYSIS,
+    data
 });
 
 /**
@@ -32,8 +31,8 @@ export const wsInsertAnalysis = data => ({
  * @returns {object}
  */
 export const wsUpdateAnalysis = data => ({
-  type: WS_UPDATE_ANALYSIS,
-  data
+    type: WS_UPDATE_ANALYSIS,
+    data
 });
 
 /**
@@ -44,48 +43,38 @@ export const wsUpdateAnalysis = data => ({
  * @returns {object}
  */
 export const wsRemoveAnalysis = data => ({
-  type: WS_REMOVE_ANALYSIS,
-  data
+    type: WS_REMOVE_ANALYSIS,
+    data
 });
 
 export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
 
 export const toggleExpanded = id => ({
-  type: TOGGLE_ANALYSIS_EXPANDED,
-  id
+    type: TOGGLE_ANALYSIS_EXPANDED,
+    id
 });
 
 export const setPathoscopeFilter = key => ({
-  type: SET_PATHOSCOPE_FILTER,
-  key
+    type: SET_PATHOSCOPE_FILTER,
+    key
 });
 
 export const setSortKey = key => ({
-  type: SET_PATHOSCOPE_SORT_KEY,
-  key
+    type: SET_PATHOSCOPE_SORT_KEY,
+    key
 });
 
-export const togglePathoscopeSortDescending = simpleActionCreator(
-  TOGGLE_SORT_PATHOSCOPE_DESCENDING
-);
+export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
 
-export const toggleShowPathoscopeMedian = simpleActionCreator(
-  TOGGLE_SHOW_PATHOSCOPE_MEDIAN
-);
+export const toggleShowPathoscopeMedian = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
 
-export const toggleShowPathoscopeReads = simpleActionCreator(
-  TOGGLE_SHOW_PATHOSCOPE_READS
-);
+export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
-export const findAnalyses = sampleId => ({
-  type: FIND_ANALYSES.REQUESTED,
-  sampleId
-});
-
-export const filterAnalyses = (sampleId, term) => ({
-  type: FILTER_ANALYSES.REQUESTED,
-  sampleId,
-  term
+export const findAnalyses = (sampleId, term, page) => ({
+    type: FIND_ANALYSES.REQUESTED,
+    sampleId,
+    term,
+    page
 });
 
 /**
@@ -96,8 +85,8 @@ export const filterAnalyses = (sampleId, term) => ({
  * @returns {object}
  */
 export const getAnalysis = analysisId => ({
-  type: GET_ANALYSIS.REQUESTED,
-  analysisId
+    type: GET_ANALYSIS.REQUESTED,
+    analysisId
 });
 
 export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
@@ -111,23 +100,23 @@ export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
  * @returns {object}
  */
 export const analyze = (sampleId, refId, algorithm, userId) => {
-  const createdAt = new Date();
+    const createdAt = new Date();
 
-  const placeholder = {
-    algorithm,
-    created_at: createdAt.toISOString(),
-    ready: false,
-    placeholder: true
-  };
+    const placeholder = {
+        algorithm,
+        created_at: createdAt.toISOString(),
+        ready: false,
+        placeholder: true
+    };
 
-  return {
-    type: ANALYZE.REQUESTED,
-    algorithm,
-    placeholder,
-    refId,
-    sampleId,
-    userId
-  };
+    return {
+        type: ANALYZE.REQUESTED,
+        algorithm,
+        placeholder,
+        refId,
+        sampleId,
+        userId
+    };
 };
 
 /**
@@ -139,9 +128,9 @@ export const analyze = (sampleId, refId, algorithm, userId) => {
  * @returns {object}
  */
 export const blastNuvs = (analysisId, sequenceIndex) => ({
-  type: BLAST_NUVS.REQUESTED,
-  analysisId,
-  sequenceIndex
+    type: BLAST_NUVS.REQUESTED,
+    analysisId,
+    sequenceIndex
 });
 
 /**
@@ -152,6 +141,6 @@ export const blastNuvs = (analysisId, sequenceIndex) => ({
  * @returns {object}
  */
 export const removeAnalysis = analysisId => ({
-  type: REMOVE_ANALYSIS.REQUESTED,
-  analysisId
+    type: REMOVE_ANALYSIS.REQUESTED,
+    analysisId
 });

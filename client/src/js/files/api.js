@@ -6,11 +6,11 @@
 import Request from "superagent";
 
 export const find = ({ fileType, page, perPage }) =>
-  Request.get("/api/files").query({
-    type: fileType,
-    per_page: perPage,
-    page
-  });
+    Request.get("/api/files").query({
+        type: fileType,
+        per_page: perPage,
+        page
+    });
 
 /**
  * Get files of the given ``fileType``. Get a specific page of results using the ``page`` argument.
@@ -21,10 +21,10 @@ export const find = ({ fileType, page, perPage }) =>
  * @returns {promise}
  */
 export const list = ({ fileType, page }) =>
-  Request.get("/api/files").query({
-    type: fileType,
-    page
-  });
+    Request.get("/api/files").query({
+        type: fileType,
+        page
+    });
 
 /**
  * Remove the file with the given ``fileId``.
@@ -45,9 +45,9 @@ export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);
  * @returns {promise}
  */
 export const upload = (file, fileType, onProgress, onSuccess, onFailure) =>
-  Request.post(`/upload/${fileType}`)
-    .query({ name: file.name })
-    .attach("file", file)
-    .on("progress", onProgress)
-    .then(onSuccess)
-    .catch(onFailure);
+    Request.post(`/upload/${fileType}`)
+        .query({ name: file.name })
+        .attach("file", file)
+        .on("progress", onProgress)
+        .then(onSuccess)
+        .catch(onFailure);
