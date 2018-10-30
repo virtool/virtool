@@ -14,59 +14,59 @@ import Sentry from "./Server/Sentry";
 import Data from "./Data";
 
 export const Server = () => (
-  <div className="settings-container">
-    <HTTP />
-    <Proxy />
-    <Sentry />
-  </div>
+    <div className="settings-container">
+        <HTTP />
+        <Proxy />
+        <Sentry />
+    </div>
 );
 
 export const Settings = ({ settings }) => {
-  let content;
+    let content;
 
-  if (settings === null) {
-    content = <LoadingPlaceholder />;
-  } else {
-    content = (
-      <Switch>
-        <Redirect from="/administration" to="/administration/server" exact />
-        <Route path="/administration/server" component={Server} />
-        <Route path="/administration/data" component={Data} />
-        <Route path="/administration/users" component={Users} exact />
-        <Route path="/administration/updates" component={Updates} />
-        <Route path="/administration/users/:userId" component={User} />
-      </Switch>
+    if (settings === null) {
+        content = <LoadingPlaceholder />;
+    } else {
+        content = (
+            <Switch>
+                <Redirect from="/administration" to="/administration/server" exact />
+                <Route path="/administration/server" component={Server} />
+                <Route path="/administration/data" component={Data} />
+                <Route path="/administration/users" component={Users} exact />
+                <Route path="/administration/updates" component={Updates} />
+                <Route path="/administration/users/:userId" component={User} />
+            </Switch>
+        );
+    }
+
+    return (
+        <div className="container-noside">
+            <ViewHeader title="Administration">
+                <strong>Administration</strong>
+            </ViewHeader>
+
+            <Nav bsStyle="tabs">
+                <LinkContainer to="/administration/server">
+                    <NavItem>Server</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/data">
+                    <NavItem>Data</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/users">
+                    <NavItem>Users</NavItem>
+                </LinkContainer>
+                <LinkContainer to="/administration/updates">
+                    <NavItem>Updates</NavItem>
+                </LinkContainer>
+            </Nav>
+
+            {content}
+        </div>
     );
-  }
-
-  return (
-    <div className="container-noside">
-      <ViewHeader title="Administration">
-        <strong>Administration</strong>
-      </ViewHeader>
-
-      <Nav bsStyle="tabs">
-        <LinkContainer to="/administration/server">
-          <NavItem>Server</NavItem>
-        </LinkContainer>
-        <LinkContainer to="/administration/data">
-          <NavItem>Data</NavItem>
-        </LinkContainer>
-        <LinkContainer to="/administration/users">
-          <NavItem>Users</NavItem>
-        </LinkContainer>
-        <LinkContainer to="/administration/updates">
-          <NavItem>Updates</NavItem>
-        </LinkContainer>
-      </Nav>
-
-      {content}
-    </div>
-  );
 };
 
 const mapStateToProps = state => ({
-  settings: state.settings.data
+    settings: state.settings.data
 });
 
 export default connect(mapStateToProps)(Settings);
