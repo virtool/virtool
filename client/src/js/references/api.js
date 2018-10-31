@@ -36,13 +36,13 @@ export const remoteReference = ({ remote_from }) => Request.post("/api/refs").se
 
 export const remove = ({ refId }) => Request.delete(`/api/refs/${refId}`);
 
-export const addUser = ({ refId, user }) => Request.post(`/api/refs/${refId}/users`).send(user);
+export const addUser = ({ refId, user }) => Request.post(`/api/refs/${refId}/users`).send({ user_id: user });
 
 export const editUser = ({ refId, userId, update }) => Request.patch(`/api/refs/${refId}/users/${userId}`).send(update);
 
 export const removeUser = ({ refId, userId }) => Request.delete(`/api/refs/${refId}/users/${userId}`);
 
-export const addGroup = ({ refId, group }) => Request.post(`/api/refs/${refId}/groups`).send(group);
+export const addGroup = ({ refId, group }) => Request.post(`/api/refs/${refId}/groups`).send({ group_id: group });
 
 export const editGroup = ({ refId, groupId, update }) =>
     Request.patch(`/api/refs/${refId}/groups/${groupId}`).send(update);

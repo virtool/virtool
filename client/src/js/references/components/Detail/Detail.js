@@ -19,10 +19,10 @@ import { checkRefRight, followDownload } from "../../../utils";
 import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
 import IndexList from "../../../indexes/components/List";
-import SourceTypes from "../../../administration/components/General/SourceTypes";
-import InternalControl from "../../../administration/components/General/InternalControl";
+import SourceTypes from "../SourceTypes";
+import InternalControl from "./InternalControl";
 import ReferenceMembers from "./Members";
-import Manage from "./Manage";
+import ReferenceManage from "./Manage";
 import EditReference from "./Edit";
 
 class CustomToggle extends React.Component {
@@ -40,12 +40,10 @@ class CustomToggle extends React.Component {
     }
 }
 
-const ReferenceManage = props => <Manage {...props} />;
-
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
-        <InternalControl />
+        <InternalControl global />
         <ReferenceMembers noun="users" />
         <ReferenceMembers noun="groups" />
     </div>
@@ -219,10 +217,7 @@ class ReferenceDetail extends React.Component {
 
                 <Switch>
                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
-                    <Route
-                        path="/refs/:refId/manage"
-                        render={({ match }) => <ReferenceManage match={match} isUpdating={isUpdatingRemote} />}
-                    />
+                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
                     <Route path="/refs/:refId/otus" component={OTUList} />
                     <Route path="/refs/:refId/indexes" component={IndexList} />
                     <Route path="/refs/:refId/settings" render={() => <ReferenceSettings isRemote={remotes_from} />} />

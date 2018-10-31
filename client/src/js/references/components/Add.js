@@ -13,7 +13,6 @@ export class AddReference extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: this.props.show,
             lock: false
         };
     }
@@ -41,15 +40,22 @@ export class AddReference extends React.Component {
         this.setState({ show: false });
     };
 
-    render() {
-        if (this.props.noProps) {
-            this.props.onHide();
-            return null;
+    renderForm = () => {
+        if (this.props.isImport) {
+            return <ImportReference lock={this.checkModalLock} />;
         }
 
+        if (this.props.isClone) {
+            return <CloneReference />;
+        }
+
+        return <CreateReference/>;
+    };
+
+    render() {
         return (
-            <Modal show={this.state.show} onHide={this.handleHide} onExited={this.props.onHide}>
-                <Modal.Header onHide={this.handleHide} closeButton style={{ borderBottomWidth: "0" }}>
+            <Modal show={this.props.show} onHide={this.handleHide} onExited={this.props.onHide}>
+                <Modal.Header onHide={this.handleHide} style={{ borderBottomWidth: "0" }} closeButton>
                     New Reference
                 </Modal.Header>
 
@@ -74,22 +80,16 @@ export class AddReference extends React.Component {
                     </LinkContainer>
                 </Nav>
 
-                {this.props.isCreate ? <CreateReference /> : null}
-                {this.props.isImport ? <ImportReference lock={this.checkModalLock} /> : null}
-                {this.props.isClone ? <CloneReference /> : null}
+                {this.renderForm()}
             </Modal>
         );
     }
 }
 
 const mapStateToProps = state => {
-    if (!state.router.location.state) {
-        return { noProps: true };
-    }
-
-    const isCreate = state.router.location.state["createReference"];
-    const isImport = state.router.location.state["importReference"];
-    const isClone = state.router.location.state["cloneReference"];
+    const isClone = routerLocationHasState(state, "cloneReference");
+    const isCreate = routerLocationHasState(state, "createReference");
+    const isImport = routerLocationHasState(state, "importReference");
 
     return {
         show: routerLocationHasState(state, "newReference"),

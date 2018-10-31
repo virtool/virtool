@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import OTUDetail from "../../otus/components/Detail/Detail";
 import IndexDetail from "../../indexes/components/Detail";
 import { LoadingPlaceholder } from "../../base";
-import SourceTypes from "../../administration/components/General/SourceTypes";
+import SourceTypes from "./SourceTypes";
 import ReferenceList from "./List";
 import ReferenceDetail from "./Detail/Detail";
 

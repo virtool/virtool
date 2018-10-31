@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { ScrollList } from "../../../base";
 import { findUsers } from "../../../users/actions";
-import MemberEntry from "./MemberEntry";
+import MemberItem from "./MemberItem";
 
 class UsersList extends React.Component {
     constructor(props) {
@@ -17,7 +17,7 @@ class UsersList extends React.Component {
     renderRow = index => {
         const isSelected = this.props.selected === this.props.documents[index].id;
         return (
-            <MemberEntry
+            <MemberItem
                 key={this.props.documents[index].id}
                 onEdit={this.props.onEdit}
                 onToggleSelect={this.props.onToggleSelect}

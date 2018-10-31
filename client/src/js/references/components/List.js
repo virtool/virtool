@@ -4,7 +4,7 @@ import { Panel, Button } from "react-bootstrap";
 import { remoteReference, findReferences } from "../actions";
 import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils";
-import AddReference from "./AddReference";
+import AddReference from "./Add";
 import ReferenceItem from "./Item";
 import ReferenceToolbar from "./Toolbar";
 
@@ -68,7 +68,7 @@ class ReferenceList extends React.Component {
 
                 {noRefs}
 
-                {this.props.showModal ? <AddReference /> : null}
+                <AddReference />
             </div>
         );
     }

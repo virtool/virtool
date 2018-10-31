@@ -1,7 +1,9 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { map, filter, some } from "lodash-es";
-import { LoadingPlaceholder, NoneFound } from "../../../base";
+import { ListGroup, ListGroupItem, Panel } from "react-bootstrap";
+import { map, sortBy } from "lodash-es";
+import { Button, LoadingPlaceholder, NoneFound } from "../../../base";
 import {
     addReferenceUser,
     editReferenceUser,
@@ -10,22 +12,15 @@ import {
     editReferenceGroup,
     removeReferenceGroup
 } from "../../../references/actions";
-import { findUsers } from "../../../users/actions";
-import { listGroups } from "../../../groups/actions";
+import { checkRefRight } from "../../../utils";
 import AddReferenceMember from "./AddMember";
-import MemberSetting from "./MemberSetting";
-import MemberEntry from "./MemberEntry";
+import EditReferenceMember from "./EditMember";
+import MemberItem from "./MemberItem";
 
 const getInitialState = () => ({
-    value: "",
-    selected: "",
-    showAdd: false
+    showAdd: false,
+    showEdit: false
 });
-
-const getOtherMembers = (list, members) => {
-    const otherMembers = filter(list, member => !some(members, ["id", member.id]));
-    return otherMembers;
-};
 
 class ReferenceMembers extends React.Component {
     constructor(props) {
@@ -33,139 +28,101 @@ class ReferenceMembers extends React.Component {
         this.state = getInitialState();
     }
 
-    componentDidMount() {
-        if (!this.props[`${this.props.noun}Fetched`]) {
-            this.props.onList(this.props.noun);
-        }
-    }
+    static propTypes = {
+        noun: PropTypes.oneOf(["groups", "users"]).isRequired
+    };
 
     add = () => {
         this.setState({ showAdd: true });
     };
 
-    edit = (id, key, value) => {
-        const update = { [key]: value };
-        this.props.onEdit(this.props.refId, id, update, this.props.noun);
-    };
-
-    handleRemove = id => {
-        this.props.onRemove(this.props.refId, id, this.props.noun);
-    };
-
-    toggleMember = member => {
-        if (this.state.selected !== member || !this.state.selected) {
-            this.setState({ selected: member });
-        } else {
-            this.setState({ selected: "" });
-        }
-    };
-
-    handleAdd = (newMember, idType) => {
-        this.props.onAdd(
-            this.props.refId,
-            {
-                [idType]: newMember.id,
-                build: newMember.build,
-                modify: newMember.modify,
-                modify_otu: newMember.modify_otu,
-                remove: newMember.remove
-            },
-            this.props.noun
-        );
-        this.setState(getInitialState());
+    edit = id => {
+        this.setState({ showEdit: id });
     };
 
     handleHide = () => {
-        this.setState({ showAdd: false });
+        this.setState({ showAdd: false, showEdit: false });
+    };
+
+    handleRemove = id => {
+        this.props.onRemove(this.props.refId, id);
     };
 
     render() {
-        if (!this.props.userList || !this.props.groupList) {
+        const { canModify, list, members, noun } = this.props;
+
+        if (list === null) {
             return <LoadingPlaceholder />;
         }
 
-        const list = this.props.noun === "users" ? this.props.userList : this.props.groupList;
-        const currentMembers = this.props.noun === "users" ? this.props.users : this.props.groups;
-        const otherMembers = getOtherMembers(list, currentMembers);
+        let memberComponents;
 
-        const listComponents = currentMembers.length ? (
-            map(currentMembers, member => (
-                <MemberEntry
+        if (members.length) {
+            memberComponents = map(members, member => (
+                <MemberItem
                     key={member.id}
+                    {...member}
+                    canModify={canModify}
                     onEdit={this.edit}
                     onRemove={this.handleRemove}
-                    onToggleSelect={this.toggleMember}
-                    id={member.id}
-                    identicon={member.identicon}
-                    permissions={{
-                        build: member.build,
-                        modify: member.modify,
-                        modify_otu: member.modify_otu,
-                        remove: member.remove
-                    }}
-                    isSelected={this.state.selected === member.id}
                 />
-            ))
-        ) : (
-            <NoneFound noun={this.props.noun} style={{ margin: "0" }} />
-        );
+            ));
+        } else {
+            memberComponents = <NoneFound noun={noun} style={{ margin: 0 }} noListGroup />;
+        }
+
+        let addButton;
+
+        if (this.props.canModify) {
+            addButton = (
+                <Button bsSize="xsmall" bsStyle="primary" icon="plus-square" onClick={this.add} pullRight>
+                    Add
+                </Button>
+            );
+        }
 
         return (
-            <div>
-                <MemberSetting noun={this.props.noun} listComponents={listComponents} onAdd={this.add} />
-                <AddReferenceMember
-                    show={this.state.showAdd}
-                    list={otherMembers}
-                    onAdd={this.handleAdd}
-                    onHide={this.handleHide}
-                    noun={this.props.noun}
-                />
-            </div>
+            <Panel>
+                <ListGroup>
+                    <ListGroupItem key="heading">
+                        <strong className="text-capitalize">{noun}</strong>
+                        {addButton}
+                    </ListGroupItem>
+                    <ListGroupItem>Manage membership and rights for reference {noun}.</ListGroupItem>
+                    {memberComponents}
+                </ListGroup>
+                <AddReferenceMember show={this.state.showAdd} noun={noun} onHide={this.handleHide} />
+                <EditReferenceMember show={this.state.showEdit} noun={noun} onHide={this.handleHide} />
+            </Panel>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    refId: state.references.detail.id,
-    users: state.references.detail.users,
-    userList: state.users.list ? state.users.list.documents : null,
-    usersFetched: state.users.fetched,
-    groups: state.references.detail.groups,
-    groupList: state.groups.list,
-    groupsFetched: state.groups.fetched
-});
+const mapStateToProps = (state, ownProps) => {
+    const noun = ownProps.noun;
 
-const mapDispatchToProps = dispatch => ({
-    onAdd: (refId, member, noun) => {
-        if (noun === "users") {
-            dispatch(addReferenceUser(refId, member));
-        } else {
-            dispatch(addReferenceGroup(refId, member));
-        }
+    return {
+        refId: state.references.detail.id,
+        members: sortBy(noun === "users" ? state.references.detail.users : state.references.detail.groups, "id"),
+        documents: noun === "users" ? state.users.documents : state.groups.documents,
+        canModify: checkRefRight(state, "modify")
+    };
+};
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+    onAdd: (refId, member) => {
+        const actionCreator = ownProps.noun === "users" ? addReferenceUser : addReferenceGroup;
+        dispatch(actionCreator(refId, member));
     },
 
-    onEdit: (refId, id, update, noun) => {
-        if (noun === "users") {
-            dispatch(editReferenceUser(refId, id, update));
-        } else {
-            dispatch(editReferenceGroup(refId, id, update));
-        }
+    onEdit: (refId, id, update) => {
+        const actionCreator = ownProps.noun === "users" ? editReferenceUser : editReferenceGroup;
+        dispatch(actionCreator(refId, id, update));
     },
 
-    onRemove: (refId, id, noun) => {
-        if (noun === "users") {
-            dispatch(removeReferenceUser(refId, id));
-        } else {
-            dispatch(removeReferenceGroup(refId, id));
-        }
-    },
-
-    onList: noun => {
-        if (noun === "users") {
-            dispatch(findUsers(1));
-        } else {
-            dispatch(listGroups());
-        }
+    onRemove: (refId, id) => {
+        const actionCreator = ownProps.noun === "users" ? removeReferenceUser : removeReferenceGroup;
+        dispatch(actionCreator(refId, id));
     }
 });
 

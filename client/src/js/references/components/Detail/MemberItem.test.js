@@ -1,7 +1,7 @@
 import { ListGroupItem } from "../../../base";
-import MemberEntry from "./MemberEntry";
+import MemberItem from "./MemberItem";
 
-describe("<MemberEntry />", () => {
+describe("<MemberItem />", () => {
     let props;
     let wrapper;
 
@@ -19,7 +19,7 @@ describe("<MemberEntry />", () => {
             add: false,
             isSelected: false
         };
-        wrapper = shallow(<MemberEntry {...props} />);
+        wrapper = shallow(<MemberItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
@@ -32,12 +32,12 @@ describe("<MemberEntry />", () => {
             isSelected: true,
             onRemove: jest.fn()
         };
-        wrapper = shallow(<MemberEntry {...props} />);
+        wrapper = shallow(<MemberItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("calls onToggleSelect callback on entry click", () => {
-        wrapper = shallow(<MemberEntry {...props} />);
+        wrapper = shallow(<MemberItem {...props} />);
         expect(props.onToggleSelect.called).toBe(false);
 
         wrapper.find(".list-group-item").prop("onClick")();
@@ -49,7 +49,7 @@ describe("<MemberEntry />", () => {
             ...props,
             onRemove: sinon.spy()
         };
-        wrapper = shallow(<MemberEntry {...props} />);
+        wrapper = shallow(<MemberItem {...props} />);
         expect(props.onRemove.called).toBe(false);
 
         wrapper.find({ name: "trash" }).prop("onClick")();
@@ -62,7 +62,7 @@ describe("<MemberEntry />", () => {
             permissions: { test: false },
             isSelected: true
         };
-        wrapper = shallow(<MemberEntry {...props} />);
+        wrapper = shallow(<MemberItem {...props} />);
         expect(props.onEdit.called).toBe(false);
 
         wrapper.find(ListGroupItem).prop("onClick")();
