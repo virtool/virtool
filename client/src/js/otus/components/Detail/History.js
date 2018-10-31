@@ -13,218 +13,198 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getOTUHistory, revert } from "../../actions";
-import {
-  Flex,
-  FlexItem,
-  ListGroupItem,
-  RelativeTime,
-  Icon
-} from "../../../base";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, LoadingPlaceholder } from "../../../base";
 
 const methodIconProps = {
-  add_isolate: {
-    name: "flask",
-    bsStyle: "primary"
-  },
-  create: {
-    name: "plus-square",
-    bsStyle: "primary"
-  },
-  create_sequence: {
-    name: "dna",
-    bsStyle: "primary"
-  },
-  edit: {
-    name: "pencil-alt",
-    bsStyle: "warning"
-  },
-  edit_isolate: {
-    name: "flask",
-    bsStyle: "warning"
-  },
-  edit_sequence: {
-    name: "dna",
-    bsStyle: "warning"
-  },
-  clone: {
-    name: "clone",
-    bsStyle: "primary"
-  },
-  remote: {
-    name: "link",
-    bsStyle: "primary"
-  },
-  remove: {
-    name: "trash",
-    bsStyle: "danger"
-  },
-  remove_isolate: {
-    name: "flask",
-    bsStyle: "danger"
-  },
-  remove_sequence: {
-    name: "dna",
-    bsStyle: "danger"
-  },
-  set_as_default: {
-    name: "star",
-    bsStyle: "warning"
-  },
-  update: {
-    name: "arrow-alt-circle-up",
-    bsStyle: "warning"
-  }
+    add_isolate: {
+        name: "flask",
+        bsStyle: "primary"
+    },
+    create: {
+        name: "plus-square",
+        bsStyle: "primary"
+    },
+    create_sequence: {
+        name: "dna",
+        bsStyle: "primary"
+    },
+    edit: {
+        name: "pencil-alt",
+        bsStyle: "warning"
+    },
+    edit_isolate: {
+        name: "flask",
+        bsStyle: "warning"
+    },
+    edit_sequence: {
+        name: "dna",
+        bsStyle: "warning"
+    },
+    clone: {
+        name: "clone",
+        bsStyle: "primary"
+    },
+    remote: {
+        name: "link",
+        bsStyle: "primary"
+    },
+    remove: {
+        name: "trash",
+        bsStyle: "danger"
+    },
+    remove_isolate: {
+        name: "flask",
+        bsStyle: "danger"
+    },
+    remove_sequence: {
+        name: "dna",
+        bsStyle: "danger"
+    },
+    set_as_default: {
+        name: "star",
+        bsStyle: "warning"
+    },
+    update: {
+        name: "arrow-alt-circle-up",
+        bsStyle: "warning"
+    }
 };
 
 const getMethodIcon = ({ method_name }) => {
-  const props = get(methodIconProps, method_name, {
-    name: "exclamation-triangle",
-    bsStyle: "danger"
-  });
+    const props = get(methodIconProps, method_name, {
+        name: "exclamation-triangle",
+        bsStyle: "danger"
+    });
 
-  return <Icon {...props} />;
+    return <Icon {...props} />;
 };
 
 export class Change extends React.Component {
-  handleRevert = () => {
-    this.props.revert(this.props.otu.id, this.props._id);
-  };
+    handleRevert = () => {
+        this.props.revert(this.props.otu.id, this.props._id);
+    };
 
-  render() {
-    let revertIcon;
+    render() {
+        let revertIcon;
 
-    if (this.props.unbuilt && this.props.canModify) {
-      revertIcon = (
-        <Icon
-          name="undo"
-          bsStyle="primary"
-          tip="Revert"
-          onClick={this.handleRevert}
-          pullRight
-        />
-      );
+        if (this.props.unbuilt && this.props.canModify) {
+            revertIcon = <Icon name="undo" bsStyle="primary" tip="Revert" onClick={this.handleRevert} pullRight />;
+        }
+
+        return (
+            <ListGroupItem>
+                <Row>
+                    <Col md={1}>
+                        <Label>{this.props.otu.version}</Label>
+                    </Col>
+                    <Col md={6}>
+                        <Flex alignItems="center">
+                            {getMethodIcon(this.props)}
+                            <FlexItem pad={5}>{this.props.description || "No Description"}</FlexItem>
+                        </Flex>
+                    </Col>
+                    <Col md={4}>
+                        <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
+                    </Col>
+                    <Col md={1}>{revertIcon}</Col>
+                </Row>
+            </ListGroupItem>
+        );
     }
-
-    return (
-      <ListGroupItem>
-        <Row>
-          <Col md={1}>
-            <Label>{this.props.otu.version}</Label>
-          </Col>
-          <Col md={6}>
-            <Flex alignItems="center">
-              {getMethodIcon(this.props)}
-              <FlexItem pad={5}>
-                {this.props.description || "No Description"}
-              </FlexItem>
-            </Flex>
-          </Col>
-          <Col md={4}>
-            <RelativeTime time={this.props.created_at} /> by{" "}
-            {this.props.user.id}
-          </Col>
-          <Col md={1}>{revertIcon}</Col>
-        </Row>
-      </ListGroupItem>
-    );
-  }
 }
 
 export class HistoryList extends React.Component {
-  render() {
-    const changes = reverse(sortBy(this.props.history, "otu.version"));
+    render() {
+        const changes = reverse(sortBy(this.props.history, "otu.version"));
 
-    const changeComponents = map(changes, (change, index) => (
-      <Change
-        key={index}
-        {...change}
-        canModify={this.props.canModify}
-        unbuilt={this.props.unbuilt}
-        revert={this.props.revert}
-      />
-    ));
+        const changeComponents = map(changes, (change, index) => (
+            <Change
+                key={index}
+                {...change}
+                canModify={this.props.canModify}
+                unbuilt={this.props.unbuilt}
+                revert={this.props.revert}
+            />
+        ));
 
-    return <ListGroup>{changeComponents}</ListGroup>;
-  }
+        return <ListGroup>{changeComponents}</ListGroup>;
+    }
 }
 
 HistoryList.propTypes = {
-  history: PropTypes.arrayOf(PropTypes.object),
-  unbuilt: PropTypes.bool,
-  revert: PropTypes.func,
-  canModify: PropTypes.bool
+    history: PropTypes.arrayOf(PropTypes.object),
+    unbuilt: PropTypes.bool,
+    revert: PropTypes.func,
+    canModify: PropTypes.bool
 };
 
 class OTUHistory extends React.Component {
-  componentDidMount() {
-    this.props.getHistory(this.props.otuId);
-  }
-
-  render() {
-    if (this.props.history === null) {
-      return <div />;
+    componentDidMount() {
+        this.props.getHistory(this.props.otuId);
     }
 
-    const changes = groupBy(
-      this.props.history,
-      change => (change.index.version === "unbuilt" ? "unbuilt" : "built")
-    );
+    render() {
+        if (this.props.history === null) {
+            return <LoadingPlaceholder />;
+        }
 
-    let built;
-    let unbuilt;
+        const changes = groupBy(
+            this.props.history,
+            change => (change.index.version === "unbuilt" ? "unbuilt" : "built")
+        );
 
-    if (changes.built) {
-      built = (
-        <div>
-          <h4>Built Changes</h4>
-          <HistoryList
-            history={changes.built}
-            canModify={this.props.hasModifyOTU && !this.props.isRemote}
-          />
-        </div>
-      );
+        let built;
+        let unbuilt;
+
+        if (changes.built) {
+            built = (
+                <div>
+                    <h4>Built Changes</h4>
+                    <HistoryList history={changes.built} canModify={this.props.hasModifyOTU && !this.props.isRemote} />
+                </div>
+            );
+        }
+
+        if (changes.unbuilt) {
+            unbuilt = (
+                <div>
+                    <h4>Unbuilt Changes</h4>
+                    <HistoryList
+                        history={changes.unbuilt}
+                        revert={this.props.revert}
+                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                        unbuilt
+                    />
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                {unbuilt}
+                {built}
+            </div>
+        );
     }
-
-    if (changes.unbuilt) {
-      unbuilt = (
-        <div>
-          <h4>Unbuilt Changes</h4>
-          <HistoryList
-            history={changes.unbuilt}
-            revert={this.props.revert}
-            canModify={this.props.hasModifyOTU && !this.props.isRemote}
-            unbuilt
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        {unbuilt}
-        {built}
-      </div>
-    );
-  }
 }
 
 const mapStateToProps = state => ({
-  otuId: state.otus.detail.id,
-  history: state.otus.detailHistory,
-  isRemote: state.references.detail.remotes_from
+    otuId: state.otus.detail.id,
+    history: state.otus.detailHistory,
+    isRemote: state.references.detail.remotes_from
 });
 
 const mapDispatchToProps = dispatch => ({
-  getHistory: otuId => {
-    dispatch(getOTUHistory(otuId));
-  },
+    getHistory: otuId => {
+        dispatch(getOTUHistory(otuId));
+    },
 
-  revert: (otuId, changeId) => {
-    dispatch(revert(otuId, changeId));
-  }
+    revert: (otuId, changeId) => {
+        dispatch(revert(otuId, changeId));
+    }
 });
 
 export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(OTUHistory);
