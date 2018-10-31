@@ -1,5 +1,5 @@
 import * as actions from "../../actions";
-import { Button } from "../../../base";
+import { Button } from "../../../base/index";
 import UniqueNamesContainer from "./UniqueNames";
 
 describe("<UniqueNames />", () => {
