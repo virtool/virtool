@@ -178,6 +178,7 @@ async def init_check_db(app):
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")
+    await db.analyses.create_index([("created_at", -1)])
     await db.history.create_index("otu.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")

@@ -4,7 +4,7 @@
  * @module utils
  * @author igboyes
  */
-import Numeral from "numeral";
+import numbro from "numbro";
 import {
     capitalize,
     get,
@@ -31,9 +31,13 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  * @param bytes {number}
  * @returns {string}
  */
-export const byteSize = bytes => (
-    Numeral(bytes).format("0.0 b")
-);
+export const byteSize = bytes => {
+    if (bytes) {
+        return numbro(bytes).format("0.0 b");
+    }
+
+    return "0.0B";
+};
 
 /**
  * Create a URL object given a find term or a page number. Both parameters are optional.
@@ -195,10 +199,10 @@ export const taskDisplayNames = {
 export const toScientificNotation = (number) => {
     if (number < 0.01 || number > 1000) {
         const [ coefficient, exponent ] = split(number.toExponential(), "e");
-        return `${Numeral(coefficient).format("0.00")}E${replace(exponent, "+", "")}`;
+        return `${numbro(coefficient).format("0.00")}E${replace(exponent, "+", "")}`;
     }
 
-    return Numeral(number).format("0.000");
+    return numbro(number).format("0.000");
 };
 
 export const checkAdminOrPermission = (isAdmin, permissions, permission) => (

@@ -13,6 +13,7 @@ import pymongo
 import pymongo.errors
 
 import virtool.bio
+import virtool.db.sync
 import virtool.jobs.job
 
 
@@ -364,8 +365,11 @@ class Job(virtool.jobs.job.Job):
         indexes that are no longer being used by an active analysis job.
 
         """
+        analysis_id = self.params["analysis_id"]
+        sample_id = self.params["sample_id"]
+
         try:
-            self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
+            self.db.analyses.update_one({"_id": analysis_id}, {
                 "$set": {
                     "results": self.results,
                     "ready": True
@@ -376,19 +380,24 @@ class Job(virtool.jobs.job.Job):
                 json_string = json.dumps(self.results)
                 f.write(json_string)
 
-            self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
+            self.db.analyses.update_one({"_id": analysis_id}, {
                 "$set": {
                     "results": "file",
                     "ready": True
                 }
             })
 
-        self.dispatch("analyses", "update", [self.params["analysis_id"]])
+        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+
+        self.dispatch("analyses", "update", [analysis_id])
+        self.dispatch("samples", "update", [sample_id])
 
     def cleanup(self):
         try:
             self.temp_dir.cleanup()
         except AttributeError:
             pass
+
+        virtool.db.sync.recalculate_algorithm_tags(self.db, self.params["sample_id"])
 
         super().cleanup()

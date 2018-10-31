@@ -222,7 +222,7 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
     return virtool.otus.format_otu(joined, issues, most_recent_change)
 
 
-async def remove(db, otu_id, user_id, document=None):
+async def remove(db, otu_id, user_id, document=None, silent=False):
 
     # Join the otu.
     joined = await join(db, otu_id, document=document)
@@ -234,8 +234,9 @@ async def remove(db, otu_id, user_id, document=None):
     await db.sequences.delete_many({"otu_id": otu_id})
 
     # Remove the otu document itself.
-    await db.otus.delete_one({"_id": otu_id})
+    await db.otus.delete_one({"_id": otu_id}, silent=silent)
 
+    # Unset the reference internal_control if it is the OTU being removed.
     await db.references.update_one({"_id": joined["reference"]["id"], "internal_control.id": joined["_id"]}, {
         "$set": {
             "internal_control": None
@@ -244,13 +245,15 @@ async def remove(db, otu_id, user_id, document=None):
 
     description = virtool.history.compose_remove_description(joined)
 
+    # Add a removal history item.
     await virtool.db.history.add(
         db,
         "remove",
         joined,
         None,
         description,
-        user_id
+        user_id,
+        silent=silent
     )
 
     return True

@@ -163,3 +163,24 @@ def patch_otu_to_version(db, otu_id, version):
         current = None
 
     return current, patched, reverted_history_ids
+
+
+def recalculate_algorithm_tags(db, sample_id):
+    """
+    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
+    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param sample_id: the id of the sample to recalculate tags for
+    :type sample_id: str
+
+    """
+    analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"])
+
+    update = virtool.samples.calculate_algorithm_tags(analyses)
+
+    db.samples.update_one({"_id": sample_id}, {
+        "$set": update
+    })

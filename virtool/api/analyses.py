@@ -64,7 +64,9 @@ async def remove(req):
     if not document:
         return not_found()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
+    sample_id = document["sample"]["id"]
+
+    sample = await db.samples.find_one({"_id": sample_id}, virtool.db.samples.PROJECTION)
 
     if not sample:
         return bad_request("Parent sample does not exist")
@@ -78,6 +80,8 @@ async def remove(req):
         return conflict("Analysis is still running")
 
     await db.analyses.delete_one({"_id": analysis_id})
+
+    await virtool.db.samples.recalculate_algorithm_tags(db, sample_id)
 
     return no_content()
 
