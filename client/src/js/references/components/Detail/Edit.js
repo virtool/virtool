@@ -6,7 +6,7 @@ import ReferenceForm from "../Form";
 import { editReference } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { SaveButton } from "../../../base";
-import { routerLocationHasState, getTargetChange, checkRefRight } from "../../../utils";
+import { routerLocationHasState, getTargetChange } from "../../../utils";
 
 const getInitialState = detail => ({
     name: detail.name,

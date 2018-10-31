@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { findFiles, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
 import { createRandomString, checkAdminOrPermission } from "../../utils";
-import { filesSelector } from "../../listSelectors";
+import { filesSelector } from "../selectors";
 import File from "./File";
 
 class FileManager extends React.Component {

@@ -16,8 +16,6 @@ const ReferenceToolbar = ({ term, onFind, canCreate }) => {
         );
     }
 
-    console.log(term);
-
     return (
         <div className="toolbar">
             <div className="form-group">

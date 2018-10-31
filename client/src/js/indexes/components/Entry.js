@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
@@ -68,10 +67,6 @@ export const IndexEntry = ({ activeId, documents, index, refId }) => {
             </ListGroupItem>
         </LinkContainer>
     );
-};
-
-IndexEntry.propTypes = {
-    index: PropTypes.number
 };
 
 const mapStateToProps = state => ({

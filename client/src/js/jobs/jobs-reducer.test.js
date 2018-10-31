@@ -1,11 +1,9 @@
 import {
-    WS_INSERT_JOB,
-    WS_UPDATE_JOB,
-    WS_REMOVE_JOB,
-    LIST_JOBS,
-    FILTER_JOBS,
-    GET_JOB,
-    GET_RESOURCES
+  WS_INSERT_JOB,
+  WS_UPDATE_JOB,
+  WS_REMOVE_JOB,
+  GET_JOB,
+  GET_RESOURCES, FIND_JOBS
 } from "../actionTypes";
 import reducer, { initialState as reducerInitialState } from "./reducer";
 
@@ -119,18 +117,17 @@ describe("Job Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle LIST_JOBS_REQUESTED", () => {
+    it("should handle FIND_JOBS_REQUESTED", () => {
         state = {};
-        action = { type: LIST_JOBS.REQUESTED };
+        action = { type: FIND_JOBS.REQUESTED, term: "foo" };
         result = reducer(state, action);
-        expected = { isLoading: true, errorLoad: false };
-        expect(result).toEqual(expected);
+        expect(result).toEqual({ term: "foo" });
     });
 
-    it("should handle LIST_JOBS_SUCCEEDED", () => {
+    it("should handle FIND_JOBS_REQUESTED", () => {
         state = { documents: null, page: 0 };
         action = {
-            type: LIST_JOBS.SUCCEEDED,
+            type: FIND_JOBS.SUCCEEDED,
             data: { documents: [] }
         };
         result = reducer(state, action);

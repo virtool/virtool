@@ -1,7 +1,7 @@
 import { MemoryRouter } from "react-router";
-import * as refActions from "../../references/actions";
-import * as actions from "../actions";
-import IndexDetailContainer, { IndexDetail } from "./Detail";
+import * as refActions from "../../../references/actions";
+import * as actions from "../../actions";
+import IndexDetailContainer, { IndexDetail } from "../Detail";
 
 describe("<Detail />", () => {
     const initialState = {

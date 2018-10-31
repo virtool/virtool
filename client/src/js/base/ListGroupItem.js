@@ -8,39 +8,36 @@ import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
  * ListGroupItem from taking focus, even when clicked. *
  */
 export class ListGroupItem extends React.Component {
-  static propTypes = {
-    allowFocus: PropTypes.bool,
-    children: PropTypes.node.isRequired
-  };
+    static propTypes = {
+        allowFocus: PropTypes.bool,
+        children: PropTypes.node.isRequired
+    };
 
-  static defaultProps = {
-    allowFocus: false
-  };
+    static defaultProps = {
+        allowFocus: false
+    };
 
-  handleFocus = e => {
-    e.target.blur();
-  };
+    handleFocus = e => {
+        e.target.blur();
+    };
 
-  render() {
-    const props = pick(this.props, [
-      "active",
-      "style",
-      "className",
-      "bsStyle",
-      "disabled",
-      "header",
-      "href",
-      "onClick",
-      "type"
-    ]);
+    render() {
+        const props = pick(this.props, [
+            "active",
+            "style",
+            "className",
+            "bsStyle",
+            "disabled",
+            "header",
+            "href",
+            "onClick",
+            "type"
+        ]);
 
-    return (
-      <BsListGroupItem
-        {...props}
-        onFocus={this.props.allowFocus ? null : this.handleFocus}
-      >
-        {this.props.children}
-      </BsListGroupItem>
-    );
-  }
+        return (
+            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null : this.handleFocus}>
+                {this.props.children}
+            </BsListGroupItem>
+        );
+    }
 }

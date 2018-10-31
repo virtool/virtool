@@ -1,7 +1,8 @@
 import * as actions from "../actions";
 import * as indexesActions from "../../indexes/actions";
 import * as hmmActions from "../../hmm/actions";
-import AnalysesListContainer, { AnalysesToolbar } from "./List";
+import AnalysesListContainer  from "./List";
+import AnalysesToolbar from "./Toolbar";
 
 describe("<AnalysesList />", () => {
     const initialState = {

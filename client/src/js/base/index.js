@@ -17,6 +17,7 @@ import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
+import { Panel } from "./Panel";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveBanner } from "./RemoveBanner";
@@ -28,34 +29,35 @@ import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export {
-  Alert,
-  AlgorithmSelect,
-  AutoProgressBar,
-  bsStyles,
-  Button,
-  Checkbox,
-  Flex,
-  FlexItem,
-  Help,
-  Icon,
-  Identicon,
-  IDRow,
-  Input,
-  InputError,
-  InputSave,
-  ListGroupItem,
-  LoadingPlaceholder,
-  NoneFound,
-  NotFound,
-  ProgressBar,
-  Radio,
-  RelativeTime,
-  RemoveBanner,
-  RemoveModal,
-  SaveButton,
-  ScrollList,
-  Tooltip,
-  UploadBar,
-  ViewHeader,
-  VTLogo
+    Alert,
+    AlgorithmSelect,
+    AutoProgressBar,
+    bsStyles,
+    Button,
+    Checkbox,
+    Flex,
+    FlexItem,
+    Help,
+    Icon,
+    Identicon,
+    IDRow,
+    Input,
+    InputError,
+    InputSave,
+    ListGroupItem,
+    LoadingPlaceholder,
+    NoneFound,
+    NotFound,
+    Panel,
+    ProgressBar,
+    Radio,
+    RelativeTime,
+    RemoveBanner,
+    RemoveModal,
+    SaveButton,
+    ScrollList,
+    Tooltip,
+    UploadBar,
+    ViewHeader,
+    VTLogo
 };

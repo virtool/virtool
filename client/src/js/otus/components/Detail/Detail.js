@@ -4,7 +4,6 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
-import { getReference } from "../../../references/actions";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../../base";
 import { checkRefRight } from "../../../utils";

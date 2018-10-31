@@ -2,8 +2,6 @@ import {
     WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
     WS_REMOVE_REFERENCE,
-    LIST_REFERENCES,
-    FILTER_REFERENCES,
     GET_REFERENCE,
     EDIT_REFERENCE,
     UPLOAD,
@@ -21,7 +19,6 @@ import {
 import reducer, {
     initialState as reducerInitialState,
     checkHasOfficialRemote,
-    checkRemoveOfficialRemote,
     removeMember
 } from "./reducer";
 

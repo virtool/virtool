@@ -1,8 +1,8 @@
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { Modal } from "react-bootstrap";
-import { InputError } from "../../../base/index";
-import * as actions from "../../actions";
-import CreateAPIKeyContainer, { getInitialState, CreateAPIKey } from "./Create";
+import { InputError } from "../../../../base/index";
+import * as actions from "../../../actions";
+import CreateAPIKeyContainer, { getInitialState, CreateAPIKey } from "../Create";
 
 describe("<CreateAPIKey />", () => {
     let initialState;

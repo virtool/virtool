@@ -54,7 +54,7 @@ const mapStateToProps = state => ({
     canCancel: checkAdminOrPermission(state, "cancel_job")
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = dispatch => ({
     onLoadNextPage: (term, page) => {
         dispatch(findJobs(term, page));
     }

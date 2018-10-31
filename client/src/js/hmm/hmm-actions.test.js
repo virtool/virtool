@@ -1,5 +1,5 @@
-import { GET_HMM, INSTALL_HMMS, FILTER_HMMS, LIST_HMMS, PURGE_HMMS } from "../actionTypes";
-import { filterHmms, listHmms, getHmm, installHMMs, purgeHMMs } from "./actions";
+import { GET_HMM, INSTALL_HMMS, PURGE_HMMS } from "../actionTypes";
+import { getHmm, installHMMs, purgeHMMs } from "./actions";
 
 describe("HMM Action Creators:", () => {
     let result;

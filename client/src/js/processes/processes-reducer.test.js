@@ -1,5 +1,5 @@
 import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
-import reducer, { initialState as reducerInitialState, updateProcesses } from "./reducer";
+import reducer, { initialState as reducerInitialState } from "./reducer";
 
 describe("Processes Reducer", () => {
     const initialState = reducerInitialState;

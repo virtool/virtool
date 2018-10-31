@@ -1,7 +1,6 @@
 import {
     WS_INSERT_INDEX,
     WS_UPDATE_INDEX,
-    LIST_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
@@ -13,7 +12,6 @@ import {
     wsInsertHistory,
     wsInsertIndex,
     wsUpdateIndex,
-    listIndexes,
     listReadyIndexes,
     getIndex,
     getUnbuilt,

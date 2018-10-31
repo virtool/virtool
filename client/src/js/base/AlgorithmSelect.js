@@ -13,28 +13,24 @@ export const algorithms = ["pathoscope_bowtie", "nuvs"];
  *
  */
 export const AlgorithmSelect = props => (
-  <Input
-    name="algorithm"
-    type="select"
-    label={props.noLabel ? null : "Algorithm"}
-    value={props.value}
-    onChange={props.onChange}
-  >
-    {map(algorithms, algorithm => (
-      <option
-        key={algorithm}
-        value={algorithm}
-        disabled={algorithm === "nuvs" && !props.hasHmm}
-      >
-        {getTaskDisplayName(algorithm)}
-      </option>
-    ))}
-  </Input>
+    <Input
+        name="algorithm"
+        type="select"
+        label={props.noLabel ? null : "Algorithm"}
+        value={props.value}
+        onChange={props.onChange}
+    >
+        {map(algorithms, algorithm => (
+            <option key={algorithm} value={algorithm} disabled={algorithm === "nuvs" && !props.hasHmm}>
+                {getTaskDisplayName(algorithm)}
+            </option>
+        ))}
+    </Input>
 );
 
 AlgorithmSelect.propTypes = {
-  noLabel: PropTypes.bool,
-  value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
-  onChange: PropTypes.func,
-  hasHmm: PropTypes.bool
+    noLabel: PropTypes.bool,
+    value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
+    onChange: PropTypes.func,
+    hasHmm: PropTypes.bool
 };

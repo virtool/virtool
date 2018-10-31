@@ -11,21 +11,21 @@ import { Icon } from "./Icon";
  * @param noListGroup {boolean} don't include a ListGroup in the returned element
  */
 export const NoneFound = ({ noun, noListGroup, style }) => {
-  const item = (
-    <ListGroupItem className="text-center">
-      <Icon name="info-circle" /> No {noun} found
-    </ListGroupItem>
-  );
+    const item = (
+        <ListGroupItem className="text-center">
+            <Icon name="info-circle" /> No {noun} found
+        </ListGroupItem>
+    );
 
-  if (noListGroup) {
-    return item;
-  }
+    if (noListGroup) {
+        return item;
+    }
 
-  return <ListGroup style={style}>{item}</ListGroup>;
+    return <ListGroup style={style}>{item}</ListGroup>;
 };
 
 NoneFound.propTypes = {
-  noun: PropTypes.string.isRequired,
-  noListGroup: PropTypes.bool,
-  style: PropTypes.object
+    noun: PropTypes.string.isRequired,
+    noListGroup: PropTypes.bool,
+    style: PropTypes.object
 };

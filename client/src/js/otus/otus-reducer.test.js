@@ -4,7 +4,6 @@ import {
     WS_UPDATE_OTU,
     WS_REMOVE_OTU,
     WS_UPDATE_STATUS,
-    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     EDIT_OTU,

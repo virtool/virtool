@@ -1,4 +1,4 @@
-import { WS_UPDATE_STATUS, LIST_HMMS, GET_HMM, FILTER_HMMS } from "../actionTypes";
+import { WS_UPDATE_STATUS, GET_HMM } from "../actionTypes";
 import reducer, { initialState as reducerInitialState } from "./reducer";
 
 describe("HMM Reducer", () => {

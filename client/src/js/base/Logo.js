@@ -21,23 +21,23 @@ const path = `
 `;
 
 export const VTLogo = () => (
-  <div className="vtlogo">
-    <svg id="svg2" viewBox="0 0 448 512" height="30" version="1.1">
-      <defs id="defs125" />
-      <path
-        id="path4138-2"
-        d={path}
-        style={{
-          fill: "#edf7f6",
-          fillOpacity: "1",
-          stroke: "none",
-          strokeWidth: "1",
-          strokeMiterlimit: "4",
-          strokeDasharray: "none",
-          strokeDashoffset: "0",
-          strokeOpacity: "1"
-        }}
-      />
-    </svg>
-  </div>
+    <div className="vtlogo">
+        <svg id="svg2" viewBox="0 0 448 512" height="30" version="1.1">
+            <defs id="defs125" />
+            <path
+                id="path4138-2"
+                d={path}
+                style={{
+                    fill: "#edf7f6",
+                    fillOpacity: "1",
+                    stroke: "none",
+                    strokeWidth: "1",
+                    strokeMiterlimit: "4",
+                    strokeDasharray: "none",
+                    strokeDashoffset: "0",
+                    strokeOpacity: "1"
+                }}
+            />
+        </svg>
+    </div>
 );

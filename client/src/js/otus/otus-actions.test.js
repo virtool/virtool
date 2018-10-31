@@ -2,7 +2,6 @@ import {
     WS_INSERT_OTU,
     WS_UPDATE_OTU,
     WS_REMOVE_OTU,
-    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,

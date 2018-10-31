@@ -1,5 +1,5 @@
 import React from "react";
-import { map, sortBy, forEach } from "lodash-es";
+import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";

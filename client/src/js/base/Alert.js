@@ -5,22 +5,22 @@ import { Flex, FlexItem } from "./Flex";
 import { Icon } from "./Icon";
 
 export const Alert = ({ bsStyle, children, className, icon }) => {
-  let content;
+    let content;
 
-  if (icon) {
-    content = (
-      <Flex alignItems="center">
-        <FlexItem>
-          <Icon name={icon} />
-        </FlexItem>
-        <FlexItem pad={5}>{children}</FlexItem>
-      </Flex>
+    if (icon) {
+        content = (
+            <Flex alignItems="center">
+                <FlexItem>
+                    <Icon name={icon} />
+                </FlexItem>
+                <FlexItem pad={5}>{children}</FlexItem>
+            </Flex>
+        );
+    }
+
+    return (
+        <BsAlert bsStyle={bsStyle} className={className}>
+            {content || children}
+        </BsAlert>
     );
-  }
-
-  return (
-    <BsAlert bsStyle={bsStyle} className={className}>
-      {content || children}
-    </BsAlert>
-  );
 };

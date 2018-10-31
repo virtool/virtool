@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 import { find, map } from "lodash-es";
@@ -20,12 +19,6 @@ export class EditReferenceMember extends React.Component {
         super(props);
         this.state = getInitialState();
     }
-
-    static propTypes = {
-        noun: PropTypes.string.isRequired,
-        show: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]).isRequired,
-        onHide: PropTypes.func.isRequired
-    };
 
     handleChange = (key, value) => {
         const { modify_otu, build, modify, remove } = this.props;

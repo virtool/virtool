@@ -1,60 +1,59 @@
-import {
-  reject,
-  map,
-  includes,
-  concat,
-  sortBy,
-  slice,
-  unionBy
-} from "lodash-es";
+import { reject, map, includes, sortBy, unionBy } from "lodash-es";
 
-export const updateDocuments = (state, action) => ({
-  ...state,
-  ...action.data,
-  documents: unionBy([state.documents, action.data.documents], "id")
-});
+export const updateDocuments = (state, action) => {
+    const existing = action.data.page === 1 ? [] : state.documents || [];
 
-export const insert = (
-  documents,
-  page,
-  per_page,
-  action,
-  sortKey,
-  sortReverse
-) => {
-  const beforeList = documents ? documents.slice() : [];
-  const newPage = page || 1;
-  const perPage = per_page || 25;
-
-  let newList = concat(beforeList, [{ ...action.data }]);
-  newList = sortBy(newList, sortKey);
-
-  if (sortReverse) {
-    newList = newList.reverse();
-  }
-
-  // Only display listings that would be included in the
-  // current pages, to synchronize with database pages
-  return slice(newList, 0, perPage * newPage);
+    return {
+        ...state,
+        ...action.data,
+        documents: unionBy(existing, action.data.documents, "id")
+    };
 };
 
-export const edit = (documents, action) => {
-  if (!documents) {
-    return documents;
-  }
+export const insert = (state, action, sortKey, sortReverse = false) => {
+    const documents = sortBy(unionBy(state.documents || [], [action.data], "id"), sortKey);
 
-  return map(documents, entry => {
-    if (entry.id === action.data.id) {
-      return action.data;
+    if (sortReverse) {
+        documents.reverse();
     }
-    return entry;
-  });
+
+    return {
+        ...state,
+        documents
+    };
 };
 
-export const remove = (documents, action) => {
-  if (!documents) {
-    return documents;
-  }
+export const update = (state, action) => {
+    if (!state.documents) {
+        return state;
+    }
 
-  return reject(documents, ({ id }) => includes(action.data, id));
+    return {
+        ...state,
+        documents: updateMember(state.documents, action)
+    };
+};
+
+export const remove = (state, action) => {
+    if (!state.documents) {
+        return state;
+    }
+
+    return {
+        ...state,
+        documents: reject(state.documents, ({ id }) => includes(action.data, id))
+    };
+};
+
+export const updateMember = (list, action) => {
+    if (!list) {
+        return list;
+    }
+
+    return map(list, item => {
+        if (item.id === action.data.id) {
+            return action.data;
+        }
+        return item;
+    });
 };

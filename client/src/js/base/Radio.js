@@ -10,14 +10,14 @@ import { Flex, FlexItem, Icon } from "./index";
  * @param onClick {function} a function to call when the button is clicked
  */
 export const Radio = ({ checked, label, onClick }) => (
-  <Flex alignItems="center" style={{ marginBottom: "3px" }}>
-    <Icon onClick={onClick} name={checked ? "dot-circle" : "circle"} />
-    <FlexItem pad={5}>{label ? <span> {label}</span> : null}</FlexItem>
-  </Flex>
+    <Flex alignItems="center" style={{ marginBottom: "3px" }}>
+        <Icon onClick={onClick} name={checked ? "dot-circle" : "circle"} />
+        <FlexItem pad={5}>{label ? <span> {label}</span> : null}</FlexItem>
+    </Flex>
 );
 
 Radio.propTypes = {
-  checked: PropTypes.bool.isRequired,
-  label: PropTypes.string,
-  onClick: PropTypes.func
+    checked: PropTypes.bool.isRequired,
+    label: PropTypes.string,
+    onClick: PropTypes.func
 };

@@ -1,6 +1,6 @@
-import { Button } from "../../../base/index";
-import * as actions from "../../actions";
-import APIKeyContainer, { APIKey } from "./Key";
+import { Button } from "../../../../base/index";
+import * as actions from "../../../actions";
+import APIKeyContainer, { APIKey } from "../Key";
 
 describe("<APIKey />", () => {
     const initialState = {

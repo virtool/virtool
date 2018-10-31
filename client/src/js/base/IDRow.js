@@ -9,15 +9,15 @@ import { connect } from "react-redux";
  * @param showIds
  */
 export const IDRowComponent = ({ id, showIds }) =>
-  showIds ? (
-    <tr>
-      <th>Unique ID</th>
-      <td>{id}</td>
-    </tr>
-  ) : null;
+    showIds ? (
+        <tr>
+            <th>Unique ID</th>
+            <td>{id}</td>
+        </tr>
+    ) : null;
 
 const mapStateToProps = state => ({
-  showIds: state.account.settings.show_ids
+    showIds: state.account.settings.show_ids
 });
 
 export const IDRow = connect(mapStateToProps)(IDRowComponent);

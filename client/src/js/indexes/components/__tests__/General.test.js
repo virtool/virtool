@@ -1,5 +1,5 @@
 import { Badge } from "react-bootstrap";
-import IndexGeneral, { PanelBadgeHeader, IndexOTUEntry } from "./General";
+import IndexGeneral, { PanelBadgeHeader, IndexOTUEntry } from "../General";
 
 describe("<General />", () => {
     const initialState = {

@@ -1,5 +1,5 @@
-import { ListGroupItem } from "../../../base/index";
-import APIPermissions from "./Permissions";
+import { ListGroupItem } from "../../../../base/index";
+import APIPermissions from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;

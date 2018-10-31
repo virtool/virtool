@@ -5,7 +5,19 @@
  * @author igboyes
  */
 import numbro from "numbro";
-import { capitalize, get, replace, sampleSize, split, startCase, filter, find, upperFirst } from "lodash-es";
+import {
+    capitalize,
+    get,
+    includes,
+    replace,
+    sampleSize,
+    some,
+    split,
+    startCase,
+    filter,
+    find,
+    upperFirst
+} from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -188,30 +200,26 @@ export const toScientificNotation = number => {
 export const checkAdminOrPermission = (state, permission) =>
     state.account.administrator || state.account.permissions[permission];
 
-export const checkUserRefPermission = (props, permission) => {
-    const { isAdmin, userId, userGroups } = props;
-    const refUsers = props.detail.users;
-    const refGroups = props.detail.groups;
-
-    if (isAdmin) {
+export const checkRefRight = (state, permission) => {
+    if (state.account.administrator) {
         return true;
     }
 
-    const userExists = find(refUsers, ["id", userId]);
+    const user = find(state.references.detail.users, { id: state.account.id });
 
-    const groupsExist = filter(refGroups, refGroup => {
-        const result = filter(userGroups, group => group === refGroup.id);
-        return result;
-    });
-
-    if (userExists && userExists[permission]) {
+    if (user && user[permission]) {
         return true;
     }
 
-    if (groupsExist.length) {
-        const hasBuildPermission = filter(groupsExist, group => group[permission]);
-        return !!hasBuildPermission.length;
+    // Groups user is a member of.
+    const memberGroups = state.account.groups;
+
+    // Groups in common between the user and the registered ref groups.
+    const groups = filter(state.references.detail.groups, group => includes(memberGroups, group.id));
+
+    if (!groups) {
+        return false;
     }
 
-    return false;
+    return some(groups, { [permission]: true });
 };

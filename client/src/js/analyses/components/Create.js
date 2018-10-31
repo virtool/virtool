@@ -86,7 +86,6 @@ export class CreateAnalysis extends React.Component {
     }
 
     handleSelectIndex = index => {
-        console.log(index);
         this.setState({ selected: xorBy(this.state.selected, [index], "id"), error: "" });
     };
 

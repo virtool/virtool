@@ -9,17 +9,15 @@ import Identiconjs from "identicon.js";
  * @param hash {string} the users identicon hash
  */
 export const Identicon = ({ size = 64, hash }) => {
-  const data = new Identiconjs(hash, {
-    size,
-    format: "svg"
-  });
+    const data = new Identiconjs(hash, {
+        size,
+        format: "svg"
+    });
 
-  return (
-    <img width={size} height={size} src={`data:image/svg+xml;base64,${data}`} />
-  );
+    return <img width={size} height={size} src={`data:image/svg+xml;base64,${data}`} />;
 };
 
 Identicon.propTypes = {
-  size: PropTypes.number,
-  hash: PropTypes.string.isRequired
+    size: PropTypes.number,
+    hash: PropTypes.string.isRequired
 };

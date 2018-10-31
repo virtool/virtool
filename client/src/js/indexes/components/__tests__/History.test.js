@@ -1,4 +1,4 @@
-import RebuildHistory from "./History";
+import RebuildHistory from "../History";
 
 describe("<History />", () => {
     let props;

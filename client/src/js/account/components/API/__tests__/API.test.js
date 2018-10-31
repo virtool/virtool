@@ -1,4 +1,4 @@
-import APIContainer from "./API";
+import APIContainer from "../API";
 
 describe("<API />", () => {
     let initialState;

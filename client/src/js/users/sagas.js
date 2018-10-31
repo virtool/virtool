@@ -6,7 +6,6 @@ import * as usersAPI from "./api";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
 function* findUsers(action) {
-    console.log(action);
     yield apiCall(usersAPI.find, action, FIND_USERS);
 }
 

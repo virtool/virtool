@@ -132,7 +132,6 @@ export default function OTUsReducer(state = initialState, action) {
             return remove(state.documents, action);
 
         case FIND_OTUS.REQUESTED:
-            console.log(action);
             return {
                 ...state,
                 term: action.term,

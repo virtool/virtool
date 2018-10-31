@@ -1,4 +1,4 @@
-import IndexEntry from "./Entry";
+import IndexEntry from "../Entry";
 
 describe("<IndexEntry />", () => {
     let props;
