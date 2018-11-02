@@ -1,6 +1,6 @@
 import { find, map } from "lodash-es";
-import { updateDocuments, insert, remove, update } from "../reducerUtils";
-import { formatIsolateName } from "../utils";
+import { updateDocuments, insert, remove, update } from "../utils/reducers";
+import { formatIsolateName } from "../utils/utils";
 import {
     WS_INSERT_OTU,
     WS_UPDATE_OTU,
@@ -30,11 +30,11 @@ import {
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL,
     GET_OTU_HISTORY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const initialState = {
     term: "",
-    referenceId: "",
+    refId: "",
     documents: null,
     detail: null,
     page: 0,
@@ -115,27 +115,28 @@ export default function OTUsReducer(state = initialState, action) {
             return state;
 
         case WS_INSERT_OTU:
-            if (action.data.reference.id === state.referenceId) {
+            if (action.data.reference.id === state.refId) {
                 return insert(state, action, "name");
             }
 
             return state;
 
         case WS_UPDATE_OTU:
-            if (action.data.reference.id === state.referenceId) {
-                return update(state.documents, action);
+            if (action.data.reference.id === state.refId) {
+                return update(state, action);
             }
 
             return state;
 
         case WS_REMOVE_OTU:
-            return remove(state.documents, action);
+            return remove(state, action);
 
         case FIND_OTUS.REQUESTED:
             return {
                 ...state,
                 term: action.term,
-                verified: action.verified
+                verified: action.verified,
+                refId: action.refId
             };
 
         case FIND_OTUS.SUCCEEDED:

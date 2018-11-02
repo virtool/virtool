@@ -9,7 +9,7 @@ import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils/utils";
 
 export class SubtractionFileItem extends React.Component {
     handleClick = () => {

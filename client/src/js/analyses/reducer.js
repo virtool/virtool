@@ -16,8 +16,8 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS,
     SET_PATHOSCOPE_FILTER
-} from "../actionTypes";
-import { update, remove, updateDocuments } from "../reducerUtils";
+} from "../app/actionTypes";
+import { update, remove, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
 
 export const initialState = {
@@ -110,8 +110,8 @@ export const toggleExpanded = (state, id) =>
 export const insert = (documents, action, sampleId) => {
     const beforeList = documents ? slice(documents, 0, documents.length) : [];
 
-    forEach(documents, (entry, i) => {
-        if (entry.placeholder && entry.sampleId === sampleId && entry.userId === action.data.user.id) {
+    forEach(documents, (document, i) => {
+        if (document.placeholder && document.sampleId === sampleId && document.userId === action.data.user.id) {
             beforeList.splice(i, 1);
             return false;
         }
@@ -127,7 +127,10 @@ export default function samplesReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_ANALYSIS:
             if (action.data.sample.id === state.sampleId) {
-                return insert(state, action, state.sortKey, state.sortDescending);
+                return {
+                    ...state,
+                    documents: insert(state.documents, action, state, state.sortKey, state.sortDescending)
+                };
             }
 
             return state;
@@ -140,11 +143,7 @@ export default function samplesReducer(state = initialState, action) {
             return state;
 
         case WS_REMOVE_ANALYSIS:
-            if (action.data.sample.id === state.sampleId) {
-                return remove(state, action);
-            }
-
-            return state;
+            return remove(state, action);
 
         case ANALYZE.REQUESTED:
             return {

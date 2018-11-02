@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { get, map, find, forEach, xorBy } from "lodash-es";
 import { Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../base/index";
-import { getTaskDisplayName, routerLocationHasState } from "../../utils";
+import { getTaskDisplayName, routerLocationHasState } from "../../utils/utils";
 import { analyze } from "../actions";
 
 export const IndexSelect = ({ indexes, onSelect, selected, error }) => {

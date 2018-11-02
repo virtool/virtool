@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { find } from "lodash-es";
 import { SaveButton, UploadBar, ProgressBar } from "../../base";
-import { createRandomString, getTargetChange } from "../../utils";
+import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";

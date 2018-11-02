@@ -2,7 +2,7 @@ import { includes } from "lodash-es";
 import { push } from "react-router-redux";
 
 import * as filesAPI from "../files/api";
-import { apiCall, putGenericError, setPending } from "../sagaUtils";
+import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import {
     FIND_SAMPLES,
     FIND_READ_FILES,
@@ -12,7 +12,7 @@ import {
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE
-} from "../actionTypes";
+} from "../app/actionTypes";
 import * as samplesAPI from "./api";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 

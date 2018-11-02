@@ -18,7 +18,7 @@ import {
     REMOVE_REFERENCE_GROUP,
     CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertReference = data => ({
     type: WS_INSERT_REFERENCE,

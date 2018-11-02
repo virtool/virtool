@@ -14,7 +14,7 @@ import PropTypes from "prop-types";
 import { map, toLower } from "lodash-es";
 import { Row, Col, Modal } from "react-bootstrap";
 
-import { formatIsolateName } from "../../../utils";
+import { formatIsolateName } from "../../../utils/utils";
 import { InputError, SaveButton } from "../../../base";
 
 export default class IsolateForm extends React.Component {

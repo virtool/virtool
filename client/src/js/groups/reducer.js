@@ -7,8 +7,8 @@ import {
     CREATE_GROUP,
     SET_GROUP_PERMISSION,
     REMOVE_GROUP
-} from "../actionTypes";
-import { update, remove, insert } from "../reducerUtils";
+} from "../app/actionTypes";
+import { update, remove, insert } from "../utils/reducers";
 
 export const initialState = {
     documents: null

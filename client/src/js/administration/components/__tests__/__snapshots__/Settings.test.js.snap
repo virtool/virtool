@@ -1,0 +1,307 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Settings /> renders Server subcomponent correctly 1`] = `
+<div
+  className="settings-container"
+>
+  <Connect(HTTPOptions) />
+  <Connect(ProxyOptions) />
+  <Connect(SentryOptions) />
+</div>
+`;
+
+exports[`<Settings /> renders Settings subcomponent correctly 1`] = `
+<div
+  className="container-noside"
+>
+  <ViewHeader
+    title="Administration"
+  >
+    <strong>
+      Administration
+    </strong>
+  </ViewHeader>
+  <Nav
+    bsClass="nav"
+    bsStyle="tabs"
+    justified={false}
+    pullLeft={false}
+    pullRight={false}
+    stacked={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/server"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Server
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/data"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Data
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/users"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Users
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/updates"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Updates
+      </NavItem>
+    </LinkContainer>
+  </Nav>
+  <LoadingPlaceholder />
+</div>
+`;
+
+exports[`<Settings /> renders Settings subcomponent correctly 2`] = `
+<div
+  className="container-noside"
+>
+  <ViewHeader
+    title="Administration"
+  >
+    <strong>
+      Administration
+    </strong>
+  </ViewHeader>
+  <Nav
+    bsClass="nav"
+    bsStyle="tabs"
+    justified={false}
+    pullLeft={false}
+    pullRight={false}
+    stacked={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/server"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Server
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/data"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Data
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/users"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Users
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/updates"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Updates
+      </NavItem>
+    </LinkContainer>
+  </Nav>
+  <Switch>
+    <Redirect
+      exact={true}
+      from="/administration"
+      push={false}
+      to="/administration/server"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/server"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/data"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/administration/users"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/updates"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/users/:userId"
+    />
+  </Switch>
+</div>
+`;
+
+exports[`<Settings /> renders correctly 1`] = `
+<div
+  className="container-noside"
+>
+  <ViewHeader
+    title="Administration"
+  >
+    <strong>
+      Administration
+    </strong>
+  </ViewHeader>
+  <Nav
+    bsClass="nav"
+    bsStyle="tabs"
+    justified={false}
+    pullLeft={false}
+    pullRight={false}
+    stacked={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/server"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Server
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/data"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Data
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/users"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Users
+      </NavItem>
+    </LinkContainer>
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/administration/updates"
+    >
+      <NavItem
+        active={false}
+        disabled={false}
+      >
+        Updates
+      </NavItem>
+    </LinkContainer>
+  </Nav>
+  <Switch>
+    <Redirect
+      exact={true}
+      from="/administration"
+      push={false}
+      to="/administration/server"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/server"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/data"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/administration/users"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/updates"
+    />
+    <Route
+      component={[Function]}
+      path="/administration/users/:userId"
+    />
+  </Switch>
+</div>
+`;

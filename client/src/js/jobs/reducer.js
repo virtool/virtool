@@ -1,5 +1,5 @@
-import { WS_INSERT_JOB, WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, GET_RESOURCES } from "../actionTypes";
-import { updateDocuments, insert, update, remove } from "../reducerUtils";
+import { WS_INSERT_JOB, WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, GET_RESOURCES } from "../app/actionTypes";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
     documents: null,

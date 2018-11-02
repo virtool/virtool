@@ -1,6 +1,6 @@
-import { Checkbox } from "../../base";
-import * as actions from "../actions";
-import AccountSettings from "./Settings";
+import { Checkbox } from "../../../base/index";
+import * as actions from "../../actions";
+import AccountSettings from "../Settings";
 
 describe("<Settings />", () => {
     let wrapper;

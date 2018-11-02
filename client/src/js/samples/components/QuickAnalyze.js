@@ -16,7 +16,7 @@ import { Modal } from "react-bootstrap";
 import { analyze } from "../../analyses/actions";
 import { updateAccountSettings } from "../../account/actions";
 import { AlgorithmSelect, InputError, Checkbox, Button } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
     algorithm,

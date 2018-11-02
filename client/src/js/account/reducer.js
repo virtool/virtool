@@ -11,7 +11,7 @@ import {
     GET_API_KEYS,
     CREATE_API_KEY,
     CLEAR_API_KEY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * The state that should initially be stored.

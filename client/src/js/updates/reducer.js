@@ -1,5 +1,5 @@
 import { get } from "lodash-es";
-import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../actionTypes";
+import { WS_UPDATE_PROCESS, WS_UPDATE_STATUS, GET_SOFTWARE_UPDATES } from "../app/actionTypes";
 
 export const initialState = {
     process: null,

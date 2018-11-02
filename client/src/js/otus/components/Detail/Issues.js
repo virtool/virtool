@@ -11,7 +11,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { find, map } from "lodash-es";
 import { Alert } from "react-bootstrap";
-import { formatIsolateName } from "../../../utils";
+import { formatIsolateName } from "../../../utils/utils";
 
 const OTUIssues = props => {
     const errors = [];

@@ -2,7 +2,7 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { Flex, FlexItem } from "../../../base/index";
-import { toScientificNotation } from "../../../utils";
+import { toScientificNotation } from "../../../utils/utils";
 import Coverage from "./Coverage";
 
 export default class PathoscopeIsolate extends React.Component {

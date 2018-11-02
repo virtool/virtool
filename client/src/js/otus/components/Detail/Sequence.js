@@ -11,7 +11,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Table, Label, Collapse } from "react-bootstrap";
 import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
-import { followDownload } from "../../../utils";
+import { followDownload } from "../../../utils/utils";
 
 class Sequence extends React.Component {
     constructor(props) {

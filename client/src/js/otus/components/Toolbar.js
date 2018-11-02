@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
-import { checkRefRight } from "../../utils";
+import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 
 export class OTUToolbar extends React.Component {
@@ -47,7 +47,7 @@ export class OTUToolbar extends React.Component {
                     </div>
                 </div>
 
-                <Button tip="Filter Unverified" onClick={this.handleVerified} active={verified}>
+                <Button id="verified-button" tip="Filter Unverified" onClick={this.handleVerified} active={verified}>
                     <Icon name="filter" />
                 </Button>
 

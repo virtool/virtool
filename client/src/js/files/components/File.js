@@ -4,7 +4,7 @@ import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Row } from "react-bootstrap";
 import { removeFile } from "../actions";
-import { byteSize } from "../../utils";
+import { byteSize } from "../../utils/utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
 export class File extends React.Component {

@@ -1,4 +1,4 @@
-import { setPending, apiCall } from "../sagaUtils";
+import { setPending, apiCall } from "../utils/sagas";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT,
@@ -10,7 +10,7 @@ import {
     UPDATE_API_KEY,
     REMOVE_API_KEY,
     LOGOUT
-} from "../actionTypes";
+} from "../app/actionTypes";
 import * as accountAPI from "./api";
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 

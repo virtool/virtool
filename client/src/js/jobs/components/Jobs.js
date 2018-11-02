@@ -1,8 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
-import Resources from "../../administration/components/Jobs/Resources";
-import Tasks from "../../administration/components/Jobs/Tasks";
+import Resources from "../../administration/components/Resources";
+import Tasks from "../../administration/components/Tasks";
 import { LoadingPlaceholder } from "../../base";
 import JobsList from "./List";
 import JobDetail from "./Detail";

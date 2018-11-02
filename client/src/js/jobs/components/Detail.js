@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { Table } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, RelativeTime } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";

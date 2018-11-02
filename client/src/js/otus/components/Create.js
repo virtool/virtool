@@ -6,8 +6,8 @@ import { Modal } from "react-bootstrap";
 import { get } from "lodash-es";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
-import { getNextState } from "../otusUtils";
-import { getTargetChange } from "../../utils";
+import { getNextState } from "../utils";
+import { getTargetChange } from "../../utils/utils";
 import OTUForm from "./OTUForm";
 
 const getInitialState = () => ({

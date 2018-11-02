@@ -1,5 +1,5 @@
 import { compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip } from "lodash-es";
-import { formatIsolateName } from "../utils";
+import { formatIsolateName } from "../utils/utils";
 
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length - 1);

@@ -1,5 +1,5 @@
-import { apiCall } from "../sagaUtils";
-import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES, UPDATE_SETTINGS } from "../actionTypes";
+import { apiCall } from "../utils/sagas";
+import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES, UPDATE_SETTINGS } from "../app/actionTypes";
 import * as updatesAPI from "./api";
 import { put, takeLatest } from "redux-saga/effects";
 

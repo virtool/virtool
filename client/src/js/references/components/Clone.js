@@ -5,7 +5,7 @@ import { find, map } from "lodash-es";
 import { SaveButton, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
 import ReferenceForm from "./Form";
 
 const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {

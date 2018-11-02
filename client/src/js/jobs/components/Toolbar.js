@@ -5,7 +5,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import { clearJobs, findJobs } from "../actions";
 import { Icon, Button } from "../../base";
 
@@ -14,7 +14,7 @@ import { Icon, Button } from "../../base";
  * @param props
  * @returns {*}
  */
-const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
+export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     let removalDropdown;
 
     if (canRemove) {

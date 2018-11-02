@@ -5,7 +5,7 @@ import { Badge, ListGroup } from "react-bootstrap";
 
 import { Flex, Icon, NoneFound } from "../../../base";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
-import { formatIsolateName } from "../../../utils";
+import { formatIsolateName } from "../../../utils/utils";
 import AddSequence from "./AddSequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";

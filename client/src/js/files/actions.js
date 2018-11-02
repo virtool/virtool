@@ -4,7 +4,7 @@
  * @module files/actions
  */
 
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_FILE,
     WS_UPDATE_FILE,
@@ -14,7 +14,7 @@ import {
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertFile = data => ({
     type: WS_INSERT_FILE,

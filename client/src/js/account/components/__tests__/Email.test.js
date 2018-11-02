@@ -1,7 +1,7 @@
-import * as actions from "../actions";
-import * as errorActions from "../../errors/actions";
-import { InputError } from "../../base";
-import EmailContainer, { Email } from "./Email";
+import * as actions from "../../actions";
+import * as errorActions from "../../../errors/actions";
+import { InputError } from "../../../base/index";
+import EmailContainer, { Email } from "../Email";
 
 describe("<Email />", () => {
     let wrapper;

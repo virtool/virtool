@@ -5,8 +5,8 @@ import { get } from "lodash-es";
 import OTUForm from "../OTUForm";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { getNextState } from "../../otusUtils";
-import { getTargetChange } from "../../../utils";
+import { getNextState } from "../../utils";
+import { getTargetChange } from "../../../utils/utils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,

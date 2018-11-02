@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[` 1`] = `
+<div
+  className="toolbar"
+  key="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search fa-fw"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        placeholder="Sample name"
+        type="text"
+      />
+    </InputGroup>
+  </FormGroup>
+</div>
+`;
+
+exports[` 2`] = `
+<div
+  className="toolbar"
+  key="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search fa-fw"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        placeholder="Sample name"
+        type="text"
+      />
+    </InputGroup>
+  </FormGroup>
+</div>
+`;

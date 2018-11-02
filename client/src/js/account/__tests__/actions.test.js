@@ -9,7 +9,7 @@ import {
     REMOVE_API_KEY,
     LOGOUT,
     CLEAR_API_KEY
-} from "../actionTypes";
+} from "../../app/actionTypes";
 import {
     getAccount,
     updateAccount,
@@ -21,7 +21,7 @@ import {
     updateAPIKey,
     removeAPIKey,
     logout
-} from "./actions";
+} from "../actions";
 
 describe("Account Action Creators:", () => {
     it("getAccount: returns simple action", () => {

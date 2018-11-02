@@ -1,5 +1,5 @@
-import { apiCall } from "../sagaUtils";
-import { LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
+import { apiCall } from "../utils/sagas";
+import { LIST_PROCESSES, GET_PROCESS } from "../app/actionTypes";
 import * as processesAPI from "./api";
 import { takeLatest } from "redux-saga/effects";
 

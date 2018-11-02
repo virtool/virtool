@@ -14,7 +14,7 @@ import {
     RelativeTime,
     Button
 } from "../../../base";
-import { checkRefRight } from "../../../utils";
+import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoveReference from "./RemoveReference";
 

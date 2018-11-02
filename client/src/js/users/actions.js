@@ -13,7 +13,7 @@ import {
     CREATE_USER,
     EDIT_USER,
     REMOVE_USER
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertUser = data => ({
     type: WS_INSERT_USER,

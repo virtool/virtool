@@ -3,7 +3,7 @@
  *
  * @module account/actions
  */
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT,
@@ -15,7 +15,7 @@ import {
     REMOVE_API_KEY,
     LOGOUT,
     CLEAR_API_KEY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * Returns action that can trigger an API call for getting the current account data.

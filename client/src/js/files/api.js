@@ -30,7 +30,7 @@ export const list = ({ fileType, page }) =>
  * Remove the file with the given ``fileId``.
  *
  * @func
- * @param fileId {string} the fileId to remove
+ * @param fileId {string} the fileId to handleRemove
  * @returns {promise}
  */
 export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);

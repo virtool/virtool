@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UsersList /> renders correctly 1`] = `
+<ScrollList
+  documents={Array []}
+  onLoadNextPage={[Function]}
+  page={2}
+  pageCount={5}
+  renderRow={[Function]}
+/>
+`;

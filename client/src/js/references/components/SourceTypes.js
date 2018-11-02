@@ -11,10 +11,10 @@ const getInitialState = () => ({
     error: null
 });
 
-export const SourceTypeItem = ({ onRemove, sourceType, isDisabled }) => (
-    <ListGroupItem key={sourceType} disabled={!isDisabled}>
+export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
+    <ListGroupItem key={sourceType} disabled={disabled}>
         <span className="text-capitalize">{sourceType}</span>
-        {isDisabled ? <Icon name="trash" bsStyle="danger" onClick={() => onRemove(sourceType)} pullRight /> : null}
+        {disabled ? null : <Icon name="trash" bsStyle="danger" onClick={() => onRemove(sourceType)} pullRight />}
     </ListGroupItem>
 );
 
@@ -24,8 +24,8 @@ export class SourceTypes extends React.Component {
         this.state = getInitialState();
     }
 
-    remove = sourceType => {
-        this.props.onUpdate(without(this.props.sourceTypes, sourceType), this.props.isGlobalSettings, this.props.refId);
+    handleRemove = sourceType => {
+        this.props.onUpdate(without(this.props.sourceTypes, sourceType), this.props.global, this.props.refId);
     };
 
     handleEnable = () => {
@@ -55,19 +55,18 @@ export class SourceTypes extends React.Component {
                 });
             } else {
                 const newSourceTypes = this.props.sourceTypes.concat([newSourceType]);
-                this.props.onUpdate(newSourceTypes, this.props.isGlobalSettings, this.props.refId);
+                this.props.onUpdate(newSourceTypes, this.props.global, this.props.refId);
                 this.setState(getInitialState());
             }
         }
     };
 
     render() {
-        let isDisabled = (this.props.isGlobalSettings && this.props.isAdmin) || this.props.restrictSourceTypes;
-        isDisabled = this.props.isRemote ? false : isDisabled;
+        const disabled = !this.global && (this.props.remote || !this.props.restrictSourceTypes);
 
         let checkbox;
 
-        if (!this.props.global && !this.props.isRemote) {
+        if (!this.props.global && !this.props.remote) {
             checkbox = (
                 <Checkbox
                     label="Enable"
@@ -79,7 +78,7 @@ export class SourceTypes extends React.Component {
         }
 
         const listComponents = map(this.props.sourceTypes.sort(), sourceType => (
-            <SourceTypeItem key={sourceType} onRemove={this.remove} sourceType={sourceType} isDisabled={isDisabled} />
+            <SourceTypeItem key={sourceType} onRemove={this.handleRemove} sourceType={sourceType} disabled={disabled} />
         ));
 
         const errorMessage = (
@@ -107,12 +106,12 @@ export class SourceTypes extends React.Component {
                                     <FormControl
                                         type="text"
                                         inputRef={node => (this.inputNode = node)}
-                                        disabled={!isDisabled}
+                                        disabled={!disabled}
                                         onChange={e => this.setState({ value: e.target.value, error: null })}
                                         value={this.state.value}
                                     />
                                     <InputGroup.Button>
-                                        <Button type="submit" bsStyle="primary" disabled={!isDisabled}>
+                                        <Button type="submit" bsStyle="primary" disabled={!disabled}>
                                             <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
                                         </Button>
                                     </InputGroup.Button>
@@ -140,26 +139,25 @@ const mapStateToProps = (state, ownProps) => {
         : get(state, "references.detail.restrict_source_types", false);
 
     let refId;
-    let isRemote;
+    let remote;
 
     if (!global) {
         refId = get(state, "references.detail.id");
-        isRemote = get(state, "references.detailremotes_from");
+        remote = get(state, "references.detail.remotes_from");
     }
 
     return {
-        isAdministrator: state.account.administrator,
         global,
         restrictSourceTypes,
         refId,
         sourceTypes,
-        isRemote
+        remote
     };
 };
 
-const mapDispatchToProps = dispatch => ({
-    onUpdate: (value, isGlobal, refId) => {
-        if (isGlobal) {
+export const mapDispatchToProps = dispatch => ({
+    onUpdate: (value, global, refId) => {
+        if (global) {
             dispatch(updateSetting("default_source_types", value));
         } else {
             dispatch(editReference(refId, { source_types: value }));

@@ -2,7 +2,7 @@ import React from "react";
 import { map } from "lodash-es";
 import { LoadingPlaceholder } from "./index";
 
-export const getScrollRatio = (innerHeight, scrollY, scrollHeight) =>
+export const calculateScrollRatio = (innerHeight, scrollY, scrollHeight) =>
     ((innerHeight + scrollY) / scrollHeight).toFixed(1);
 
 export class ScrollList extends React.Component {
@@ -12,57 +12,41 @@ export class ScrollList extends React.Component {
     }
 
     componentDidMount() {
-        return this.props.isElement
-            ? this.scrollList.current.addEventListener("scroll", this.onScroll)
-            : window.addEventListener("scroll", this.onScroll, false);
-    }
-
-    componentDidUpdate() {
-        if (
-            this.props.refetchPage &&
-            !this.props.isElement &&
-            window.innerHeight === document.documentElement.scrollHeight &&
-            this.props.hasNextPage &&
-            !this.props.isNextPageLoading
-        ) {
-            // Reload first page when entry deletion results in
-            // loss of scrollbars (list same/shorter than window height)
-            this.props.loadNextPage(this.props.page);
-        }
+        this.getEventTarget().addEventListener("scroll", this.onScroll);
     }
 
     componentWillUnmount() {
-        return this.props.isElement
-            ? this.scrollList.current.removeEventListener("scroll", this.onScroll)
-            : window.removeEventListener("scroll", this.onScroll, false);
+        this.getEventTarget().removeEventListener("scroll", this.onScroll);
     }
 
-    onScroll = () => {
-        // Scroll bar reaches the bottom of page when ratio = 1.
-        // Want to load available page when scroll bar nears the bottom
-        const ratio = this.props.isElement
-            ? getScrollRatio(
-                  this.scrollList.current.clientHeight,
-                  this.scrollList.current.scrollTop,
-                  this.scrollList.current.scrollHeight
-              )
-            : getScrollRatio(window.innerHeight, window.scrollY, document.documentElement.scrollHeight);
+    getEventTarget = () => (this.props.isElement ? this.scrollList.current : window);
 
-        if (this.props.documents.length && this.props.page < this.props.pageCount && ratio > 0.8) {
-            // If entry deletion has occurred, must reload latest page
-            // to synchronize page entries with database
+    getScrollRatio = () => {
+        if (this.props.isElement) {
+            return calculateScrollRatio(
+                this.scrollList.current.clientHeight,
+                this.scrollList.current.scrollTop,
+                this.scrollList.current.scrollHeight
+            );
+        }
+
+        return calculateScrollRatio(window.innerHeight, window.scrollY, document.documentElement.scrollHeight);
+    };
+
+    onScroll = () => {
+        if (this.props.documents.length && this.props.page < this.props.pageCount && this.getScrollRatio() > 0.8) {
             this.props.onLoadNextPage(this.props.page + 1);
         }
     };
 
     render() {
-        const { documents, renderRow, isNextPageLoading, page, pageCount, noContainer } = this.props;
+        const { documents, renderRow, page, pageCount, noContainer } = this.props;
 
         const entries = map(documents, (item, index) => renderRow(index));
 
         let loading;
 
-        if (isNextPageLoading && page < pageCount) {
+        if (documents === null && page < pageCount) {
             loading = <LoadingPlaceholder margin="20px" />;
         }
 

@@ -5,22 +5,26 @@ import { ListGroupItem } from "react-bootstrap";
 import { get } from "lodash-es";
 import { Flex, FlexItem, Identicon, Icon } from "../../base";
 
-export const UserItem = ({ document }) => (
-    <LinkContainer to={`/administration/users/${document.id}`} style={{ paddingLeft: "10px" }}>
+export const UserItem = ({ id, identicon, administrator }) => (
+    <LinkContainer to={`/administration/users/${id}`} style={{ paddingLeft: "10px" }}>
         <ListGroupItem className="spaced">
             <Flex alignItems="center">
-                <Identicon size={32} hash={document.identicon} />
-                <FlexItem pad={10}>{document.id}</FlexItem>
-                <FlexItem pad={10}>
-                    {document.administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
-                </FlexItem>
+                <Identicon size={32} hash={identicon} />
+                <FlexItem pad={10}>{id}</FlexItem>
+                <FlexItem pad={10}>{administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}</FlexItem>
             </Flex>
         </ListGroupItem>
     </LinkContainer>
 );
 
-const mapStateToProps = (state, props) => ({
-    document: get(state, `users.documents[${props.index}]`, null)
-});
+export const mapStateToProps = (state, ownProps) => {
+    const { id, identicon, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
+
+    return {
+      id,
+      identicon,
+      administrator
+    };
+};
 
 export default connect(mapStateToProps)(UserItem);

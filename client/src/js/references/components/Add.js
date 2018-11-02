@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Modal, Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 import ImportReference from "./Import";
 import CreateReference from "./Create";

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Panel, Button } from "react-bootstrap";
 import { remoteReference, findReferences } from "../actions";
 import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
-import { checkAdminOrPermission, routerLocationHasState } from "../../utils";
+import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import AddReference from "./Add";
 import ReferenceItem from "./Item";
 import ReferenceToolbar from "./Toolbar";

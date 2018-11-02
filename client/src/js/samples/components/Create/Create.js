@@ -7,7 +7,7 @@ import { push } from "react-router-redux";
 import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
-import { routerLocationHasState, getTargetChange } from "../../../utils";
+import { routerLocationHasState, getTargetChange } from "../../../utils/utils";
 import ReadSelector from "./ReadSelector";
 
 const getReadyHosts = props => (props.readyHosts && props.readyHosts.length ? props.readyHosts[0].id || "" : "");

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { removeSequence, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
-class RemoveSequence extends React.Component {
+export class RemoveSequence extends React.Component {
     handleConfirm = () => {
         this.props.onConfirm(this.props.otuId, this.props.isolateId, this.props.sequenceId);
     };
@@ -24,7 +24,7 @@ class RemoveSequence extends React.Component {
                 noun="Sequence"
                 onConfirm={this.handleConfirm}
                 onHide={this.props.onHide}
-                show={Boolean(this.props.sequenceId)}
+                show={!!this.props.sequenceId}
                 message={removeMessage}
             />
         );

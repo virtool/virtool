@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { isEqual } from "lodash-es";
 import { Alert, NoneFound, ViewHeader, ScrollList, LoadingPlaceholder } from "../../base";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 import SubtractionItem from "./Item";
 import SubtractionToolbar from "./Toolbar";

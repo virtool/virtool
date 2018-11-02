@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
-import { checkRefRight, formatIsolateName } from "../../../utils";
+import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
 import { FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 import IsolateDetail from "./IsolateDetail";

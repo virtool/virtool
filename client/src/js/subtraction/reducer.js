@@ -5,8 +5,8 @@ import {
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
     UPDATE_SUBTRACTION
-} from "../actionTypes";
-import { updateDocuments, insert, update, remove } from "../reducerUtils";
+} from "../app/actionTypes";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
     documents: null,

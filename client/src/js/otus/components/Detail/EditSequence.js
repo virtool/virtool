@@ -17,7 +17,7 @@ import { Col, Modal } from "react-bootstrap";
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { InputError } from "../../../base";
-import { getTargetChange } from "../../../utils";
+import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
 
 const getInitialState = props => {

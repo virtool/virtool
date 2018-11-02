@@ -11,8 +11,8 @@ import {
     HIDE_SAMPLE_MODAL,
     FIND_READ_FILES,
     FIND_READY_HOSTS
-} from "../actionTypes";
-import { updateDocuments, insert, update, remove } from "../reducerUtils";
+} from "../app/actionTypes";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
     documents: null,

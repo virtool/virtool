@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ScrollList, NoneFound } from "../../base";
-import { checkRefRight } from "../../utils";
+import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 import OTUToolbar from "./Toolbar";
 import OTUItem from "./Item";

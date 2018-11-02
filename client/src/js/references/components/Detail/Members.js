@@ -12,7 +12,7 @@ import {
     editReferenceGroup,
     removeReferenceGroup
 } from "../../../references/actions";
-import { checkRefRight } from "../../../utils";
+import { checkRefRight } from "../../../utils/utils";
 import AddReferenceMember from "./AddMember";
 import EditReferenceMember from "./EditMember";
 import MemberItem from "./MemberItem";

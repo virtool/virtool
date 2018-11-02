@@ -1,5 +1,5 @@
-import { simpleActionCreator } from "../utils";
-import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../actionTypes";
+import { simpleActionCreator } from "../utils/utils";
+import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS } from "../app/actionTypes";
 
 export const wsInsertProcess = data => ({
     type: WS_INSERT_PROCESS,

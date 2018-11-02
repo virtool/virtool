@@ -1,4 +1,4 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_OTU,
     WS_UPDATE_OTU,
@@ -27,7 +27,7 @@ import {
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertOTU = data => ({
     type: WS_INSERT_OTU,

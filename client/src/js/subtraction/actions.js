@@ -7,7 +7,7 @@ import {
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertSubtraction = data => ({
     type: WS_INSERT_SUBTRACTION,

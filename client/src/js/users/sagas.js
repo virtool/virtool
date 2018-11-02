@@ -1,7 +1,7 @@
 import { push } from "react-router-redux";
 
-import { apiCall, setPending } from "../sagaUtils";
-import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER } from "../actionTypes";
+import { apiCall, setPending } from "../utils/sagas";
+import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER } from "../app/actionTypes";
 import * as usersAPI from "./api";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 

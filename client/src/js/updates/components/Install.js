@@ -8,7 +8,7 @@ import { push } from "react-router-redux";
 
 import { installSoftwareUpdates } from "../actions";
 import { Button } from "../../base";
-import { byteSize, routerLocationHasState } from "../../utils";
+import { byteSize, routerLocationHasState } from "../../utils/utils";
 import { ReleaseMarkdown } from "./Release";
 
 export const attemptReload = () => {

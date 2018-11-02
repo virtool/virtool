@@ -1,5 +1,5 @@
-import { simpleActionCreator } from "../utils";
-import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY } from "../actionTypes";
+import { simpleActionCreator } from "../utils/utils";
+import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY } from "../app/actionTypes";
 
 /**
  * Returns action that can trigger an API call for retrieving settings.

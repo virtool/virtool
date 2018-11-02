@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Analyses /> should render placeholder when loading 1`] = `
+<LoadingPlaceholder
+  margin="130px"
+/>
+`;
+
+exports[`<Analyses /> should render sub-components when not loading 1`] = `
+<Switch>
+  <Route
+    component={[Function]}
+    exact={true}
+    path="/samples/:sampleId/analyses"
+  />
+  <Route
+    component={[Function]}
+    path="/samples/:sampleId/analyses/:analysisId"
+  />
+</Switch>
+`;

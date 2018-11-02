@@ -1,0 +1,115 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SequenceForm /> renders correctly 1`] = `
+<Fragment>
+  <form
+    onSubmit={[MockFunction]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+          xs={12}
+        >
+          <InputError
+            error=""
+            label="Segment"
+            name="segment"
+            onChange={[MockFunction]}
+            type="select"
+            value="test-segment"
+          >
+            <option
+              key="None"
+              value=""
+            >
+               
+              - None -
+               
+            </option>
+            <option
+              key="hello"
+              value="hello"
+            >
+              hello
+            </option>
+            <option
+              key="world"
+              value="world"
+            >
+              world
+            </option>
+          </InputError>
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={12}
+        >
+          <InputError
+            label="Host"
+            name="host"
+            onChange={[MockFunction]}
+            value="test-host"
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={12}
+        >
+          <InputError
+            error=""
+            label="Definition"
+            name="definition"
+            onChange={[MockFunction]}
+            value="test-definition"
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={12}
+        >
+          <SequenceField
+            error=""
+            name="sequence"
+            onChange={[MockFunction]}
+            readOnly={false}
+            sequence="test-sequence"
+          />
+        </Col>
+      </Row>
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <SaveButton />
+    </ModalFooter>
+  </form>
+</Fragment>
+`;

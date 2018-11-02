@@ -4,7 +4,7 @@
  * @module errors/reducer
  */
 import { endsWith, replace } from "lodash-es";
-import { reportAPIError } from "../utils";
+import { reportAPIError } from "../utils/utils";
 import {
     CLEAR_ERROR,
     CREATE_SAMPLE,
@@ -34,7 +34,7 @@ import {
     UPDATE_SETTINGS,
     FIND_USERS,
     GET_USER
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * Checks whether supplied action is of failed action type,

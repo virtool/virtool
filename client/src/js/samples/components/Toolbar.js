@@ -3,11 +3,11 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import { Icon, Button } from "../../base";
 import { findSamples } from "../actions";
 
-const SampleToolbar = ({ canCreate, onFind, term }) => {
+export const SampleToolbar = ({ canCreate, onFind, term }) => {
     let createButton;
 
     if (canCreate) {

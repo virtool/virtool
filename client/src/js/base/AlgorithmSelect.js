@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { map } from "lodash-es";
 
-import { getTaskDisplayName } from "../utils";
+import { getTaskDisplayName } from "../utils/utils";
 import { Input } from "./";
 
 export const algorithms = ["pathoscope_bowtie", "nuvs"];

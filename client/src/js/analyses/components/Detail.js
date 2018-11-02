@@ -5,7 +5,7 @@ import { Label, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { IDRow, LoadingPlaceholder, NotFound, RelativeTime } from "../../base/index";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";

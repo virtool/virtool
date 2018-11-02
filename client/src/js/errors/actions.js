@@ -3,7 +3,7 @@
  *
  * @module error/actions
  */
-import { CLEAR_ERROR } from "../actionTypes";
+import { CLEAR_ERROR } from "../app/actionTypes";
 
 /**
  * Returns action that clears specific error in the store.

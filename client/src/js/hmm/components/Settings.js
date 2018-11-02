@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { ViewHeader, Alert, RemoveBanner } from "../../base";
 import { purgeHMMs } from "../actions";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 
 export const HMMSettings = ({ canPurge, onPurge }) => (
     <div>

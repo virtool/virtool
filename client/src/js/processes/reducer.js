@@ -1,5 +1,5 @@
-import { insert, update, remove } from "../reducerUtils";
-import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS, WS_REMOVE_PROCESS } from "../actionTypes";
+import { insert, update, remove, updateDocuments } from "../utils/reducers";
+import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS, WS_REMOVE_PROCESS } from "../app/actionTypes";
 
 export const initialState = {
     documents: [],
@@ -18,7 +18,10 @@ export default function processReducer(state = initialState, action) {
             return remove(state, action);
 
         case LIST_PROCESSES.SUCCEEDED:
-            return { ...state, documents: [...action.data] };
+            return {
+                ...state,
+                documents: action.data
+            };
 
         case GET_PROCESS.REQUESTED:
             return { ...state, detail: null };

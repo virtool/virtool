@@ -4,7 +4,7 @@
  * @module files/reducer
  */
 import { every, map } from "lodash-es";
-import { updateDocuments, insert, update, remove } from "../reducerUtils";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 import {
     WS_INSERT_FILE,
     WS_UPDATE_FILE,
@@ -13,7 +13,7 @@ import {
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * The initial state to give the reducer.
@@ -64,27 +64,13 @@ export default function fileReducer(state = initialState, action) {
             return update(state, action);
 
         case WS_REMOVE_FILE:
+            return remove(state, action);
+
+        case FIND_FILES.REQUESTED:
             return {
                 ...state,
-                documents: remove(state.documents, action),
-                refetchPage: state.page < state.page_count,
-                total_count: state.total_count - 1
-            };
-
-        case FIND_FILES.REQUESTED: {
-            const update = {
                 term: action.term
             };
-
-            if (action.page === 1) {
-                update.documents = null;
-            }
-
-            return {
-                ...state,
-                ...update
-            };
-        }
 
         case FIND_FILES.SUCCEEDED:
             return { ...updateDocuments(state, action), fileType: action.fileType };

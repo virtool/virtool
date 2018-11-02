@@ -1,6 +1,6 @@
 import { push } from "react-router-redux";
 
-import { apiCall, setPending } from "../sagaUtils";
+import { apiCall, setPending } from "../utils/sagas";
 import {
     CREATE_REFERENCE,
     GET_REFERENCE,
@@ -18,7 +18,7 @@ import {
     REMOVE_REFERENCE_GROUP,
     CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
-} from "../actionTypes";
+} from "../app/actionTypes";
 import * as referenceAPI from "./api";
 import { takeLatest, throttle, put, takeEvery } from "redux-saga/effects";
 

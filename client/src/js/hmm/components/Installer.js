@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 
 import { installHMMs } from "../actions";
 import { Button, Flex, FlexItem, Alert } from "../../base";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 
 class HMMInstall extends React.Component {
     handleInstall = () => {

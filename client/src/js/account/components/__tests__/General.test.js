@@ -1,5 +1,5 @@
-import { Icon } from "../../base";
-import AccountGeneral from "./General";
+import { Icon } from "../../../base/index";
+import AccountGeneral from "../General";
 
 describe("<AccountGeneral />", () => {
     describe("renders correctly", () => {

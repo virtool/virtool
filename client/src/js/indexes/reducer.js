@@ -6,8 +6,8 @@ import {
     GET_UNBUILT,
     GET_INDEX_HISTORY,
     WS_INSERT_HISTORY
-} from "../actionTypes";
-import { updateDocuments, insert, update } from "../reducerUtils";
+} from "../app/actionTypes";
+import { updateDocuments, insert, update } from "../utils/reducers";
 
 export const initialState = {
     documents: null,
@@ -23,34 +23,31 @@ export const initialState = {
 export default function indexesReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_HISTORY:
-            if (action.data.reference.id === state.referenceId) {
+            if (action.data.reference.id === state.refId) {
                 return { ...state, modified_otu_count: state.modified_otu_count + 1 };
             }
             return state;
 
         case WS_INSERT_INDEX:
-            if (action.data.reference.id === state.referenceId) {
+            if (action.data.reference.id === state.refId) {
                 return {
-                    ...insert(state, action, "version", true),
-                    modified_otu_count: 0
+                    ...insert(state, action, "version", true)
                 };
             }
 
             return state;
 
         case WS_UPDATE_INDEX:
-            if (action.data.reference.id === state.referenceId) {
+            if (action.data.reference.id === state.refId) {
                 return update(state, action);
             }
 
             return state;
 
         case FIND_INDEXES.REQUESTED: {
-          const { term, refId } = action;
           return {
             ...state,
-            term,
-            refId
+            term: action.term
           };
         }
 
@@ -58,7 +55,7 @@ export default function indexesReducer(state = initialState, action) {
             return updateDocuments(state, action);
 
         case GET_INDEX.REQUESTED:
-            return { ...state, detail: null };
+            return { ...state, refId: action.refId, detail: null };
 
         case GET_INDEX.SUCCEEDED:
             return { ...state, detail: action.data };
@@ -66,23 +63,11 @@ export default function indexesReducer(state = initialState, action) {
         case GET_UNBUILT.SUCCEEDED:
             return { ...state, unbuilt: action.data };
 
-        case GET_INDEX_HISTORY.REQUESTED:
-            return {
-                ...state,
-                history: {
-                    ...state.history,
-                    isLoading: true,
-                    errorLoad: false
-                }
-            };
-
         case GET_INDEX_HISTORY.SUCCEEDED:
             return {
                 ...state,
                 history: {
-                    ...updateDocuments(state.history, action),
-                    isLoading: false,
-                    errorLoad: false
+                    ...updateDocuments(state.history, action)
                 }
             };
 

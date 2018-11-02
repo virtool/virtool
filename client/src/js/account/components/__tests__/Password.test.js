@@ -1,7 +1,7 @@
-import * as actions from "../actions";
-import * as errorActions from "../../errors/actions";
-import { InputError } from "../../base";
-import PasswordContainer, { ChangePassword as Password } from "./Password";
+import * as actions from "../../actions";
+import * as errorActions from "../../../errors/actions";
+import { InputError } from "../../../base/index";
+import PasswordContainer, { ChangePassword as Password } from "../Password";
 
 describe("<Password />", () => {
     let props;

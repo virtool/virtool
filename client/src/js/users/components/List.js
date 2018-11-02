@@ -10,20 +10,13 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { isEqual } from "lodash-es";
 import { ScrollList } from "../../base";
 import { findUsers } from "../actions";
 import UserItem from "./Item";
 
-class UsersList extends React.Component {
+export class UsersList extends React.Component {
     componentDidMount() {
         this.props.onLoadNextPage(this.props.term, 1);
-    }
-
-    shouldComponentUpdate(nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents) || !isEqual(nextProps.isLoading, this.props.isLoading)
-        );
     }
 
     renderRow = index => <UserItem key={index} index={index} />;
@@ -32,7 +25,7 @@ class UsersList extends React.Component {
         return (
             <ScrollList
                 documents={this.props.documents}
-                loadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
+                onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
                 page={this.props.page}
                 pageCount={this.props.page_count}
                 renderRow={this.renderRow}
@@ -41,7 +34,7 @@ class UsersList extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     const { documents, page, page_count, term } = state.users;
 
     return {
@@ -52,7 +45,7 @@ const mapStateToProps = state => {
     };
 };
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onLoadNextPage: (term, page) => {
         dispatch(findUsers(term, page));
     }

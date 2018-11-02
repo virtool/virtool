@@ -3,7 +3,7 @@ import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 import { findAnalyses } from "../actions";
 import { getCanModify } from "../../samples/selectors";
@@ -20,12 +20,11 @@ export class AnalysesList extends React.Component {
         };
     }
 
-    handleFilter = e => {
-        this.props.onFilter(this.props.sampleId, e.target.value);
+    handleFind = e => {
+        this.props.onFind(this.props.sampleId, e.target.value);
     };
 
     render() {
-
         // The content that will be shown below the "New Analysis" form.
         let listContent;
 
@@ -40,7 +39,7 @@ export class AnalysesList extends React.Component {
 
         let hmmAlert;
 
-        if (!this.props.hmms.status.installed) {
+        if (!this.props.hmmsInstalled) {
             hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -64,11 +63,11 @@ export class AnalysesList extends React.Component {
                 <ListGroup>{listContent}</ListGroup>
 
                 <CreateAnalysis
-                    id={this.props.detail.id}
+                    id={this.props.sampleId}
                     show={this.state.show}
                     onHide={() => this.setState({ show: false })}
                     onSubmit={this.props.onAnalyze}
-                    hasHmm={!!this.props.hmms.status.installed}
+                    hasHmm={!!this.props.hmmsInstalled}
                     refIndexes={this.props.indexes}
                     userId={this.props.userId}
                 />
@@ -78,14 +77,13 @@ export class AnalysesList extends React.Component {
 }
 
 const mapStateToProps = state => ({
-  showCreate: routerLocationHasState(state, "createAnalysis"),
+    showCreate: routerLocationHasState(state, "createAnalysis"),
     userId: state.account.id,
     sampleId: state.analyses.sampleId,
-    detail: state.samples.detail,
     analyses: state.analyses.documents,
-    filter: state.analyses.filter,
+    term: state.analyses.term,
     indexes: state.analyses.readyIndexes,
-    hmms: state.hmms,
+    hmmsInstalled: !!state.hmms.installed,
     canModify: getCanModify(state)
 });
 

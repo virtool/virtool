@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { removeSubtraction } from "../actions";
 import { RemoveModal } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 export class RemoveSubtraction extends React.Component {
     handleConfirm = () => {

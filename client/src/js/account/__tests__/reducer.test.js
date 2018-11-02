@@ -6,8 +6,8 @@ import {
     GET_API_KEYS,
     CREATE_API_KEY,
     CLEAR_API_KEY
-} from "../actionTypes";
-import reducer, { initialState as reducerInitialState } from "./reducer";
+} from "../../app/actionTypes";
+import reducer, { initialState as reducerInitialState } from "../reducer";
 
 describe("Account Reducer", () => {
     const initialState = reducerInitialState;

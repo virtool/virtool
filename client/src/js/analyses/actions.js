@@ -15,8 +15,8 @@ import {
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS
-} from "../actionTypes";
-import { simpleActionCreator } from "../utils";
+} from "../app/actionTypes";
+import { simpleActionCreator } from "../utils/utils";
 
 export const wsInsertAnalysis = data => ({
     type: WS_INSERT_ANALYSIS,

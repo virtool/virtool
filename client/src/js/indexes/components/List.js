@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkRefRight } from "../../utils";
+import { checkRefRight } from "../../utils/utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { findIndexes } from "../actions";
-import IndexEntry from "./Entry";
+import IndexEntry from "./Item";
 import RebuildIndex from "./Rebuild";
 
 class IndexesList extends React.Component {

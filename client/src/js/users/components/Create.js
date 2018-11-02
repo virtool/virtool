@@ -7,7 +7,7 @@ import { pick, get } from "lodash-es";
 import { createUser } from "../actions";
 import { clearError } from "../../errors/actions";
 import { InputError, Checkbox, SaveButton } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils/utils";
 
 const getInitialState = () => ({
     userId: "",

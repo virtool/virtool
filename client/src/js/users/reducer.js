@@ -6,8 +6,8 @@ import {
     GET_USER,
     CREATE_USER,
     EDIT_USER
-} from "../actionTypes";
-import { updateDocuments, insert, update, remove } from "../reducerUtils";
+} from "../app/actionTypes";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
     documents: null,

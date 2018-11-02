@@ -1,4 +1,4 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_JOB,
     WS_UPDATE_JOB,
@@ -9,7 +9,7 @@ import {
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertJob = data => ({
     type: WS_INSERT_JOB,

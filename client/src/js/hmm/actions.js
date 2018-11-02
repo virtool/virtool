@@ -1,5 +1,5 @@
-import { simpleActionCreator } from "../utils";
-import { GET_HMM, INSTALL_HMMS, FIND_HMMS, PURGE_HMMS } from "../actionTypes";
+import { simpleActionCreator } from "../utils/utils";
+import { GET_HMM, INSTALL_HMMS, FIND_HMMS, PURGE_HMMS } from "../app/actionTypes";
 
 export const findHmms = (term, page) => ({
     type: FIND_HMMS.REQUESTED,

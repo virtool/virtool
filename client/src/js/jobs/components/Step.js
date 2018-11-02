@@ -1,7 +1,7 @@
 import React from "react";
 import { ClipLoader } from "halogenium";
 import { Icon } from "../../base";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 
 const JobStep = ({ step, isDone }) => {
     let hasBar;

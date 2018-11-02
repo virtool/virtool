@@ -1,22 +1,23 @@
-import { concat, pull, reject, some } from "lodash-es";
+import { concat } from "lodash-es";
 import {
-    WS_INSERT_REFERENCE,
-    WS_UPDATE_REFERENCE,
-    WS_REMOVE_REFERENCE,
-    FIND_REFERENCES,
-    GET_REFERENCE,
-    EDIT_REFERENCE,
-    UPLOAD,
-    CHECK_REMOTE_UPDATES,
-    UPDATE_REMOTE_REFERENCE,
-    ADD_REFERENCE_USER,
-    EDIT_REFERENCE_USER,
-    REMOVE_REFERENCE_USER,
-    ADD_REFERENCE_GROUP,
-    EDIT_REFERENCE_GROUP,
-    REMOVE_REFERENCE_GROUP
-} from "../actionTypes";
-import { updateDocuments, insert, update, remove, updateMember } from "../reducerUtils";
+  ADD_REFERENCE_GROUP,
+  ADD_REFERENCE_USER,
+  CHECK_REMOTE_UPDATES,
+  EDIT_REFERENCE,
+  EDIT_REFERENCE_GROUP,
+  EDIT_REFERENCE_USER,
+  FIND_REFERENCES,
+  GET_REFERENCE,
+  REMOVE_REFERENCE_GROUP,
+  REMOVE_REFERENCE_USER,
+  UPDATE_REMOTE_REFERENCE,
+  UPLOAD,
+  WS_INSERT_REFERENCE,
+  WS_REMOVE_REFERENCE,
+  WS_UPDATE_REFERENCE
+} from "../app/actionTypes";
+import { insert, remove, update, updateDocuments, updateMember } from "../utils/reducers";
+import { checkHasOfficialRemote, removeMember } from "./utils";
 
 export const initialState = {
     term: "",
@@ -25,18 +26,6 @@ export const initialState = {
     page: 0,
     total_count: 0,
     detail: null
-};
-
-export const checkHasOfficialRemote = state =>
-    some(state.documents, ["remotes_from", { slug: "virtool/ref-plant-viruses" }]);
-
-
-
-export const removeMember = (list, pendingRemoves) => {
-    const target = pendingRemoves[0];
-    pull(pendingRemoves, target);
-
-    return reject(list, ["id", target]);
 };
 
 export default function referenceReducer(state = initialState, action) {

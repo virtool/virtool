@@ -7,7 +7,7 @@ import { push } from "react-router-redux";
 import { createGroup, setGroupPermission, removeGroup } from "../actions";
 import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 class Group extends React.Component {
     handleClick = () => {

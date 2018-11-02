@@ -9,9 +9,9 @@ import { LoadingPlaceholder } from "../../base";
 import AnalysesList from "./List";
 import AnalysisDetail from "./Detail";
 
-class Analyses extends React.Component {
+export class Analyses extends React.Component {
     componentDidMount() {
-        this.props.onFindAnalyses(this.props.match.params.sampleId);
+        this.props.onFindAnalyses(this.props.sampleId);
         this.props.onFindHmms();
         this.props.onListReadyIndexes();
     }
@@ -30,22 +30,19 @@ class Analyses extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-  loading: (
-    state.analyses.documents === null ||
-    state.hmms.documents === null ||
-    state.analyses.readyIndexes === null
-  )
+const mapStateToProps = state => ({
+    sampleId: state.samples.detail.id,
+    loading: state.analyses.documents === null || state.hmms.documents === null || state.analyses.readyIndexes === null
 });
 
 const mapDispatchToProps = dispatch => ({
     onFindAnalyses: sampleId => {
         dispatch(findAnalyses(sampleId, "", 1));
     },
-  onFindHmms: () => {
-        dispatch(findHmms(null))
-  },
-  onListReadyIndexes: () => {
+    onFindHmms: () => {
+        dispatch(findHmms(null));
+    },
+    onListReadyIndexes: () => {
         dispatch(listReadyIndexes());
     }
 });

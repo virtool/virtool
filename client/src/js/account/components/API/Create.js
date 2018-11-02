@@ -7,7 +7,7 @@ import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import { Button, Icon, Input, InputError, Flex, FlexItem, SaveButton } from "../../../base";
-import { routerLocationHasState } from "../../../utils";
+import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
 

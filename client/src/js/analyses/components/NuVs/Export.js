@@ -9,7 +9,7 @@ import PropTypes from "prop-types";
 import { filter, map, reduce, replace } from "lodash-es";
 import { ButtonGroup, Modal } from "react-bootstrap";
 
-import { followDynamicDownload } from "../../../utils";
+import { followDynamicDownload } from "../../../utils/utils";
 import { Button } from "../../../base/index";
 import NuVsExportPreview from "./ExportPreview";
 

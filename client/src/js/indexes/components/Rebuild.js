@@ -7,7 +7,7 @@ import { get } from "lodash-es";
 import { getUnbuilt, createIndex } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, LoadingPlaceholder } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 import RebuildHistory from "./History";
 
 class RebuildIndex extends React.Component {

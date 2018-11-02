@@ -1,4 +1,4 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_GROUP,
     WS_UPDATE_GROUP,
@@ -7,7 +7,7 @@ import {
     CREATE_GROUP,
     SET_GROUP_PERMISSION,
     REMOVE_GROUP
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertGroup = data => ({
     type: WS_INSERT_GROUP,

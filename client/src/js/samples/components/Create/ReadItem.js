@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 
-import { byteSize } from "../../../utils";
+import { byteSize } from "../../../utils/utils";
 import { Icon, ListGroupItem } from "../../../base";
 
 export default class ReadItem extends React.PureComponent {

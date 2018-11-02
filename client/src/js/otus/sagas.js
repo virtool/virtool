@@ -1,6 +1,6 @@
 import { push } from "react-router-redux";
 
-import { apiCall, putGenericError, setPending } from "../sagaUtils";
+import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import {
     FIND_OTUS,
     GET_OTU,
@@ -16,7 +16,7 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT
-} from "../actionTypes";
+} from "../app/actionTypes";
 import * as otusAPI from "./api";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Label, Panel, Table } from "react-bootstrap";
 
 import { Icon, IDRow } from "../../../base";
-import { followDownload } from "../../../utils";
+import { followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
 import IsolateSequences from "./Sequences";

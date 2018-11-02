@@ -1,5 +1,5 @@
-import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
-import { updateDocuments } from "../reducerUtils";
+import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../app/actionTypes";
+import { updateDocuments } from "../utils/reducers";
 
 export const initialState = {
     process: null,

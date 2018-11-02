@@ -6,7 +6,7 @@ import { Col, Panel, Row } from "react-bootstrap";
 import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
 import { SaveButton, InputError, RelativeTime } from "../../base";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
 
 const getInitialState = props => ({
     oldPassword: "",

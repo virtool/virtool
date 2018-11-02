@@ -15,7 +15,7 @@ import {
     ProgressBar,
     NotFound
 } from "../../../base";
-import { checkRefRight, followDownload } from "../../../utils";
+import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
 import IndexList from "../../../indexes/components/List";

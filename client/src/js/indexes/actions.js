@@ -8,7 +8,7 @@ import {
     GET_INDEX_HISTORY,
     LIST_READY_INDEXES,
     WS_INSERT_HISTORY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertHistory = data => ({
     type: WS_INSERT_HISTORY,

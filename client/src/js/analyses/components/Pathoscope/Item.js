@@ -3,7 +3,7 @@ import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Flex, FlexItem } from "../../../base/index";
-import { toScientificNotation } from "../../../utils";
+import { toScientificNotation } from "../../../utils/utils";
 import { toggleExpanded } from "../../actions";
 import AnalysisValueLabel from "../ValueLabel";
 

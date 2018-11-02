@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { ClipLoader } from "halogenium";
 import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 import { cancelJob, removeJob } from "../actions";
 
 export class JobEntry extends React.Component {

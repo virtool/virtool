@@ -18,7 +18,7 @@ import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
-import { getTargetChange } from "../../../utils";
+import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
 
 const getInitialState = () => ({

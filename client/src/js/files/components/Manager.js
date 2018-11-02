@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 
 import { findFiles, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
-import { createRandomString, checkAdminOrPermission } from "../../utils";
+import { createRandomString, checkAdminOrPermission } from "../../utils/utils";
 import { filesSelector } from "../selectors";
 import File from "./File";
 

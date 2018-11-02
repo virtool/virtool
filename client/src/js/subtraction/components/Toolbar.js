@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { Button, Icon } from "../../base";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 
-const SubtractionToolbar = ({ term, onFind, canModify }) => {
+export const SubtractionToolbar = ({ term, onFind, canModify }) => {
     let createButton;
 
     if (canModify) {

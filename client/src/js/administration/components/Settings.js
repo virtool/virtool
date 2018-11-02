@@ -8,9 +8,9 @@ import User from "../../users/components/User";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder, ViewHeader } from "../../base";
-import HTTP from "./Server/HTTP";
-import Proxy from "./Server/Proxy";
-import Sentry from "./Server/Sentry";
+import HTTP from "./HTTP";
+import Proxy from "./Proxy";
+import Sentry from "./Sentry";
 import Data from "./Data";
 
 export const Server = () => (

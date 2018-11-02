@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 import { removeSample } from "../actions";
 import { RemoveModal } from "../../base";
 
-const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
+export const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
     <RemoveModal noun="OTU" name={name} show={show} onConfirm={() => onConfirm(id)} onHide={onHide} />
 );
 

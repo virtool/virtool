@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { findJobs } from "../actions";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import JobsToolbar from "./Toolbar";
 import Job from "./Entry";
 

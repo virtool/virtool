@@ -1,5 +1,5 @@
 import { push } from "react-router-redux";
-import { apiCall, setPending } from "../sagaUtils";
+import { apiCall, setPending } from "../utils/sagas";
 import {
     FIND_INDEXES,
     GET_INDEX,
@@ -7,7 +7,7 @@ import {
     CREATE_INDEX,
     GET_INDEX_HISTORY,
     LIST_READY_INDEXES
-} from "../actionTypes";
+} from "../app/actionTypes";
 import * as indexesAPI from "./api";
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 

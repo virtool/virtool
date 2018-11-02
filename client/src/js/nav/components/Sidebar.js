@@ -4,7 +4,7 @@ import { Route, Switch, withRouter } from "react-router-dom";
 import { Nav } from "react-bootstrap";
 import SidebarItem from "./SidebarItem";
 
-const Sidebar = () => (
+export const Sidebar = ({ administrator }) => (
     <Switch>
         <Route path="/home">
             <Nav className="sidebar">
@@ -20,7 +20,7 @@ const Sidebar = () => (
                     icon="th-list"
                 />
                 <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
-                <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" />
+                {administrator ? <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" /> : null}
             </Nav>
         </Route>
         <Route path="/samples">
@@ -32,13 +32,13 @@ const Sidebar = () => (
                     icon="th-list"
                 />
                 <SidebarItem title="Files" link="/samples/files" icon="folder-open" />
-                <SidebarItem title="Settings" link="/samples/settings" icon="cogs" />
+                {administrator ? <SidebarItem title="Settings" link="/samples/settings" icon="cogs" /> : null}
             </Nav>
         </Route>
         <Route path="/refs">
             <Nav className="sidebar">
                 <SidebarItem exclude={["/refs/settings"]} title="Browse" link="/refs" icon="th-list" />
-                <SidebarItem title="Settings" link="/refs/settings" icon="cogs" />
+                {administrator ? <SidebarItem title="Settings" link="/refs/settings" icon="cogs" /> : null}
             </Nav>
         </Route>
         <Route path="/subtraction">
@@ -50,14 +50,14 @@ const Sidebar = () => (
         <Route path="/hmm">
             <Nav className="sidebar">
                 <SidebarItem exclude={["/hmm/settings"]} title="Browse" link="/hmm" icon="th-list" />
-                <SidebarItem title="Settings" link="/hmm/settings" icon="cogs" />
+                {administrator ? <SidebarItem title="Settings" link="/hmm/settings" icon="cogs" /> : null}
             </Nav>
         </Route>
     </Switch>
 );
 
 const mapStateToProps = state => ({
-    ...state.account
+    administrator: state.account.administrator
 });
 
 export default withRouter(

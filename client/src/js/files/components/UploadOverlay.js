@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { reduce, concat } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { byteSize } from "../../utils";
+import { byteSize } from "../../utils/utils";
 import { hideUploadOverlay } from "../actions";
 import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 

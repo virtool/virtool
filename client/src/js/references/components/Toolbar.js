@@ -2,10 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 import { findReferences } from "../actions";
 
-const ReferenceToolbar = ({ term, onFind, canCreate }) => {
+export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
     let createButton;
 
     if (canCreate) {

@@ -1,4 +1,4 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_SAMPLE,
     WS_UPDATE_SAMPLE,
@@ -13,7 +13,7 @@ import {
     REMOVE_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 export const wsInsertSample = data => ({
     type: WS_INSERT_SAMPLE,

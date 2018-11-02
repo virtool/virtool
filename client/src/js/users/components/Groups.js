@@ -1,34 +1,18 @@
 import React from "react";
 import { includes, map, xor } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
-import { ListGroupItem, Checkbox, NoneFound, LoadingPlaceholder } from "../../base";
+import { Row, Panel } from "react-bootstrap";
+import { LoadingPlaceholder, NoneFound } from "../../base";
+import { UserGroup } from "./Group";
 import { editUser } from "../actions";
 import { listGroups } from "../../groups/actions";
 
-export class UserGroup extends React.Component {
-    handleClick = () => {
-        this.props.onClick(this.props.id);
-    };
-
-    render() {
-        return (
-            <Col xs={12} md={4}>
-                <ListGroupItem className="text-capitalize" onClick={this.handleClick}>
-                    {this.props.id}
-                    <Checkbox checked={this.props.toggled} pullRight />
-                </ListGroupItem>
-            </Col>
-        );
-    }
-}
-
 export class UserGroups extends React.Component {
     componentDidMount() {
-        this.props.listGroups();
+        this.props.onList();
     }
 
-    handleClick = groupId => {
+    handleEdit = groupId => {
         this.props.onEditGroup(this.props.userId, xor(this.props.memberGroups, [groupId]));
     };
 
@@ -46,7 +30,7 @@ export class UserGroups extends React.Component {
                 key={document.id}
                 id={document.id}
                 toggled={includes(this.props.memberGroups, document.id)}
-                onClick={this.handleClick}
+                onClick={this.handleEdit}
             />
         ));
 
@@ -60,14 +44,14 @@ export class UserGroups extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     documents: state.groups.documents,
     memberGroups: state.users.detail.groups,
     userId: state.users.detail.id
 });
 
-const mapDispatchToProps = dispatch => ({
-    listGroups: () => {
+export const mapDispatchToProps = dispatch => ({
+    onList: () => {
         dispatch(listGroups());
     },
     onEditGroup: (userId, groups) => {

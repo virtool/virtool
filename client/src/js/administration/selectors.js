@@ -1,7 +1,7 @@
 import { createSelector } from "reselect";
 import { flatMap, keys, map, minBy, pick, pickBy, endsWith } from "lodash-es";
 
-import { taskDisplayNames } from "../utils";
+import { taskDisplayNames } from "../utils/utils";
 
 export const readOnlyFields = ["create_subtraction", "build_index"];
 

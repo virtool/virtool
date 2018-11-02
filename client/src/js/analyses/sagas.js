@@ -1,6 +1,6 @@
 import { get } from "lodash-es";
-import { ANALYZE, BLAST_NUVS, FIND_ANALYSES, GET_ANALYSIS, REMOVE_ANALYSIS } from "../actionTypes";
-import { apiCall } from "../sagaUtils";
+import { ANALYZE, BLAST_NUVS, FIND_ANALYSES, GET_ANALYSIS, REMOVE_ANALYSIS } from "../app/actionTypes";
+import { apiCall } from "../utils/sagas";
 
 import * as analysesAPI from "./api";
 import { takeEvery, takeLatest, throttle } from "redux-saga/effects";

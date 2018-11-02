@@ -4,7 +4,7 @@ import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button } from "../../base";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
 import ReferenceForm from "./Form";
 
 const getInitialState = () => ({
