@@ -1,4 +1,4 @@
-import { insert, update, remove, updateDocuments } from "../utils/reducers";
+import { insert, update, remove } from "../utils/reducers";
 import { WS_INSERT_PROCESS, WS_UPDATE_PROCESS, LIST_PROCESSES, GET_PROCESS, WS_REMOVE_PROCESS } from "../app/actionTypes";
 
 export const initialState = {

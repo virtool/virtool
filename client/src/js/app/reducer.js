@@ -1,4 +1,3 @@
-import createHistory from "history/createBrowserHistory";
 import { routerMiddleware, routerReducer } from "react-router-redux";
 import { applyMiddleware, combineReducers, createStore } from "redux";
 import createSagaMiddleware from "redux-saga";
@@ -37,10 +36,8 @@ const appReducer = (state = appInitialState, action) => {
     return state;
 };
 
-export const createAppStore = () => {
+export const createAppStore = (history) => {
     const sagaMiddleware = createSagaMiddleware();
-
-    window.history = createHistory();
 
     const store = createStore(
         combineReducers({

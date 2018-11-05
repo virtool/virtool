@@ -1,3 +1,4 @@
+import createHistory from "history/createBrowserHistory";
 import React from "react";
 import ReactDOM from "react-dom";
 import Raven from "raven-js";
@@ -14,7 +15,9 @@ Raven.config("https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541").instal
 
 window.Raven = Raven;
 
-window.store = createAppStore();
+const history = createHistory();
+
+window.store = createAppStore(history);
 window.ws = new WSConnection(window.store.dispatch);
 window.ws.establishConnection();
 
