@@ -7,7 +7,6 @@ import { Icon, RelativeTime, ListGroupItem } from "../../base";
 import { activeIndexIdSelector } from "../selectors";
 
 export const IndexEntry = ({ activeId, document, refId }) => {
-
     let activeIcon;
 
     // Decide what icon/text should be shown at the right end of the index document. If the index is building a

@@ -75,7 +75,11 @@ describe("Analyses Reducer", () => {
     });
 
     it("should handle WS_UPDATE_ANALYSIS", () => {
-        const state = { ...initialState, sampleId: "baz", documents: [{ id: "123abc", created_at: "2018-01-01T00:00:00.000000Z", foo: "test", sample: { id: "baz" } }] };
+        const state = {
+            ...initialState,
+            sampleId: "baz",
+            documents: [{ id: "123abc", created_at: "2018-01-01T00:00:00.000000Z", foo: "test", sample: { id: "baz" } }]
+        };
 
         const action = {
             type: WS_UPDATE_ANALYSIS,

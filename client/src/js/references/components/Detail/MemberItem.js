@@ -2,7 +2,6 @@ import React from "react";
 import { ListGroupItem, Icon, Identicon, Flex, FlexItem } from "../../../base";
 
 class MemberItem extends React.Component {
-
     handleEdit = () => {
         this.props.onEdit(this.props.id);
     };

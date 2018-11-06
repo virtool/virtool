@@ -45,10 +45,10 @@ export default function indexesReducer(state = initialState, action) {
             return state;
 
         case FIND_INDEXES.REQUESTED: {
-          return {
-            ...state,
-            term: action.term
-          };
+            return {
+                ...state,
+                term: action.term
+            };
         }
 
         case FIND_INDEXES.SUCCEEDED:

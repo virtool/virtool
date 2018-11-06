@@ -17,11 +17,11 @@ describe("Job Reducer", () => {
 
     describe("should handle WS_INSERT_JOB", () => {
         it("when documents are not yet fetched, returns state", () => {
-            const document = {"id": "foo"};
+            const document = { id: "foo" };
             const action = { type: WS_INSERT_JOB, data: document };
             const result = reducer({}, action);
             expect(result).toEqual({
-              documents: [document]
+                documents: [document]
             });
         });
 

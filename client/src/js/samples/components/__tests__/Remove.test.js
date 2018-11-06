@@ -27,15 +27,19 @@ describe("<Remove />", () => {
 
     it("calls onConfirm() with id when confirmed", () => {
         const wrapper = mount(<RemoveSample {...props} />);
-        wrapper.find(RemoveModal).props().onConfirm();
+        wrapper
+            .find(RemoveModal)
+            .props()
+            .onConfirm();
         expect(props.onConfirm).toBeCalledWith("foo");
     });
 
     it("calls onHide() when RemoveModal.onHide() is called", () => {
         const wrapper = mount(<RemoveSample {...props} />);
-        wrapper.find(RemoveModal).props().onHide();
+        wrapper
+            .find(RemoveModal)
+            .props()
+            .onHide();
         expect(props.onHide).toBeCalled();
     });
-
-
 });

@@ -36,7 +36,7 @@ const appReducer = (state = appInitialState, action) => {
     return state;
 };
 
-export const createAppStore = (history) => {
+export const createAppStore = history => {
     const sagaMiddleware = createSagaMiddleware();
 
     const store = createStore(

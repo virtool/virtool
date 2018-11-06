@@ -34,8 +34,8 @@ describe("Subtraction Reducer", () => {
             const state = { documents: null };
             const result = reducer(state, action);
             expect(result).toEqual({
-            documents: [{ id: "foo" }]
-        });
+                documents: [{ id: "foo" }]
+            });
         });
 
         it("inserts document if documents not empty", () => {

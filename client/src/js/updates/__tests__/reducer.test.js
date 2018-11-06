@@ -37,7 +37,7 @@ describe("Updates Reducer", () => {
                 type: WS_UPDATE_STATUS,
                 data: {
                     id: "software",
-                  progress: 5
+                    progress: 5
                 }
             };
             const result = reducer({}, action);

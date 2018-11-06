@@ -23,8 +23,6 @@ class ReferenceList extends React.Component {
         let referenceComponents = null;
         let noRefs;
 
-
-
         let installOfficialComponent;
 
         if (this.props.installOfficial && this.props.canCreate) {

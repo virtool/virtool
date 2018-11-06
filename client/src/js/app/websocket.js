@@ -1,4 +1,3 @@
-import { WS_CLOSED } from "./actionTypes";
 import { wsInsertAnalysis, wsUpdateAnalysis, wsRemoveAnalysis } from "../analyses/actions";
 import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "../files/actions";
 import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "../groups/actions";
@@ -11,6 +10,7 @@ import { wsInsertSample, wsUpdateSample, wsRemoveSample } from "../samples/actio
 import { wsUpdateStatus } from "../status/actions";
 import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from "../subtraction/actions";
 import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "../users/actions";
+import { WS_CLOSED } from "./actionTypes";
 
 const documentInserters = {
     analyses: wsInsertAnalysis,

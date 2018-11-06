@@ -268,7 +268,7 @@ class ReferenceManage extends React.Component {
                     <Contributors contributors={contributors} />
                 </Panel>
 
-              {this.props.canRemove ? <RemoveReference />: null}
+                {this.props.canRemove ? <RemoveReference /> : null}
             </div>
         );
     }

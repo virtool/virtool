@@ -1,8 +1,5 @@
-import { FormControl } from "react-bootstrap";
 import { EDIT_REFERENCE, UPDATE_SETTINGS } from "../../../app/actionTypes";
-import { Icon, Checkbox } from "../../../base/index";
-import * as actions from "../../../administration/actions";
-import * as refActions from "../../actions";
+import { Icon } from "../../../base/index";
 import { mapDispatchToProps, SourceTypes, SourceTypeItem } from "../SourceTypes";
 
 describe("<SourceTypes />", () => {

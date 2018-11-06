@@ -108,7 +108,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onFind: (e) => {
+    onFind: e => {
         dispatch(findUsers(e.target.value || null, 1));
     },
 

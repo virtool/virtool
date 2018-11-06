@@ -156,7 +156,7 @@ export class SamplesList extends React.Component {
                         documents={this.props.documents}
                         page={this.props.page}
                         pageCount={this.props.page_count}
-                        onLoadNextPage={(page) => this.props.onLoadNextPage(this.props.term, page)}
+                        onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
                         renderRow={this.renderRow}
                     />
                 )}

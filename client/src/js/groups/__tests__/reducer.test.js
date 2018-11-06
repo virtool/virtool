@@ -26,10 +26,10 @@ describe("Groups Reducer", () => {
     describe("should handle WS_INSERT_GROUP", () => {
         it("if documents are not yet fetched, return state", () => {
             const state = { documents: null };
-            const action = { type: WS_INSERT_GROUP, data: {"id": "foo"} };
+            const action = { type: WS_INSERT_GROUP, data: { id: "foo" } };
             const result = reducer(state, action);
             expect(result).toEqual({
-              documents: [{"id": "foo"}]
+                documents: [{ id: "foo" }]
             });
         });
 
@@ -65,12 +65,12 @@ describe("Groups Reducer", () => {
         const state = { documents: null };
         const action = {
             type: LIST_GROUPS.SUCCEEDED,
-            data: [{"id": "foobar"}]
+            data: [{ id: "foobar" }]
         };
         const result = reducer(state, action);
         expect(result).toEqual({
             ...state,
-            documents: [{"id": "foobar"}]
+            documents: [{ id: "foobar" }]
         });
     });
 
@@ -165,7 +165,7 @@ describe("Groups Reducer", () => {
                 }
             };
             const result = updateGroup(state, update);
-            const expected = {
+            expect(result).toEqual({
                 ...state,
                 pending: false,
                 documents: [
@@ -182,7 +182,7 @@ describe("Groups Reducer", () => {
                         }
                     }
                 ]
-            };
+            });
         });
 
         it("insertGroup: adds new entry to current list and sorts by id", () => {

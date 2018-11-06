@@ -36,10 +36,10 @@ describe("Samples Reducer", () => {
         };
 
         it("inserts entry when [documents=null]", () => {
-            const state = {documents: null};
+            const state = { documents: null };
             const result = reducer(state, action);
             expect(result).toEqual({
-              documents: [action.data]
+                documents: [action.data]
             });
         });
 

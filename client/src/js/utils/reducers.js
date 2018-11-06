@@ -50,7 +50,7 @@ export const update = (state, action, sortKey, sortReverse = false) => {
 
     return {
         ...state,
-        documents: documents
+        documents
     };
 };
 

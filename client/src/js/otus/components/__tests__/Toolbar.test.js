@@ -2,7 +2,7 @@ import { MemoryRouter } from "react-router-dom";
 import { OTUToolbar } from "../Toolbar";
 
 describe("<OTUToolbar />", () => {
-    let props = {
+    const props = {
         canModify: true,
         page: 2,
         term: "foo",

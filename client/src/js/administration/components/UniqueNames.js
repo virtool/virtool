@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { Checkbox, Button } from "../../base/index";
+import AdministrationSection from "./Section";
 
 const UniqueNames = ({ enabled, onToggle }) => {
     const description = `Enable this feature to ensure that every created sample has a unique name. If a user

@@ -35,8 +35,8 @@ export class AddReferenceMember extends React.Component {
         });
     };
 
-    handleAdd = (id) => {
-      this.props.onAdd(this.props.refId, id);
+    handleAdd = id => {
+        this.props.onAdd(this.props.refId, id);
     };
 
     handleSubmit = () => {

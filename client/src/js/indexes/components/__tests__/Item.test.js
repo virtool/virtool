@@ -1,7 +1,5 @@
 import { IndexEntry } from "../Item";
 
-const documents = [];
-
 describe("<IndexEntry />", () => {
     let props;
     let wrapper;

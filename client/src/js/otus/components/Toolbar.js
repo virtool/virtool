@@ -21,7 +21,7 @@ export class OTUToolbar extends React.Component {
 
         if (canModify) {
             createButton = (
-                <LinkContainer to={{state: { createOTU: true } }} replace>
+                <LinkContainer to={{ state: { createOTU: true } }} replace>
                     <Button bsStyle="primary" tip="Create">
                         <Icon name="plus-square" />
                     </Button>

@@ -68,7 +68,7 @@ describe("<UserGroups />", () => {
             }
         });
         expect(props).toEqual({
-            documents: documents,
+            documents,
             memberGroups: detail.groups,
             userId: detail.id
         });

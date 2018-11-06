@@ -1,20 +1,20 @@
 import { concat } from "lodash-es";
 import {
-  ADD_REFERENCE_GROUP,
-  ADD_REFERENCE_USER,
-  CHECK_REMOTE_UPDATES,
-  EDIT_REFERENCE,
-  EDIT_REFERENCE_GROUP,
-  EDIT_REFERENCE_USER,
-  FIND_REFERENCES,
-  GET_REFERENCE,
-  REMOVE_REFERENCE_GROUP,
-  REMOVE_REFERENCE_USER,
-  UPDATE_REMOTE_REFERENCE,
-  UPLOAD,
-  WS_INSERT_REFERENCE,
-  WS_REMOVE_REFERENCE,
-  WS_UPDATE_REFERENCE
+    ADD_REFERENCE_GROUP,
+    ADD_REFERENCE_USER,
+    CHECK_REMOTE_UPDATES,
+    EDIT_REFERENCE,
+    EDIT_REFERENCE_GROUP,
+    EDIT_REFERENCE_USER,
+    FIND_REFERENCES,
+    GET_REFERENCE,
+    REMOVE_REFERENCE_GROUP,
+    REMOVE_REFERENCE_USER,
+    UPDATE_REMOTE_REFERENCE,
+    UPLOAD,
+    WS_INSERT_REFERENCE,
+    WS_REMOVE_REFERENCE,
+    WS_UPDATE_REFERENCE
 } from "../app/actionTypes";
 import { insert, remove, update, updateDocuments, updateMember } from "../utils/reducers";
 import { checkHasOfficialRemote, removeMember } from "./utils";
@@ -54,10 +54,10 @@ export default function referenceReducer(state = initialState, action) {
             };
         }
 
-      case FIND_REFERENCES.REQUESTED:
+        case FIND_REFERENCES.REQUESTED:
             return {
-              ...state,
-              term: action.term
+                ...state,
+                term: action.term
             };
 
         case FIND_REFERENCES.SUCCEEDED:

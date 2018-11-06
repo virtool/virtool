@@ -2,10 +2,10 @@ import React from "react";
 import { forEach, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { ListGroupItem, Icon } from "../../base/index";
 import { readOnlyFields, maxResourcesSelector, minResourcesSelector } from "../selectors";
+import AdministrationSection from "./Section";
 import Task from "./Task";
 
 const taskNames = ["create_sample", "build_index", "create_subtraction", "pathoscope_bowtie", "nuvs"];

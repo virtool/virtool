@@ -21,9 +21,9 @@ export const mapStateToProps = (state, ownProps) => {
     const { id, identicon, administrator } = get(state, `users.documents[${ownProps.index}]`, null);
 
     return {
-      id,
-      identicon,
-      administrator
+        id,
+        identicon,
+        administrator
     };
 };
 

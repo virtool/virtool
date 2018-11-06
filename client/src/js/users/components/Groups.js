@@ -3,9 +3,9 @@ import { includes, map, xor } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Panel } from "react-bootstrap";
 import { LoadingPlaceholder, NoneFound } from "../../base";
-import { UserGroup } from "./Group";
 import { editUser } from "../actions";
 import { listGroups } from "../../groups/actions";
+import { UserGroup } from "./Group";
 
 export class UserGroups extends React.Component {
     componentDidMount() {

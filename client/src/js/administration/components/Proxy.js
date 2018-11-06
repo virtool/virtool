@@ -2,9 +2,9 @@ import React from "react";
 import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { testProxy, updateSetting } from "../actions";
 import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../base/index";
+import AdministrationSection from "./Section";
 
 export const ProxyFooter = () => (
     <small className="text-danger">

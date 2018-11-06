@@ -49,7 +49,7 @@ export class AddReference extends React.Component {
             return <CloneReference />;
         }
 
-        return <CreateReference/>;
+        return <CreateReference />;
     };
 
     render() {

@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { Button, Icon, Checkbox } from "../../base/index";
+import AdministrationSection from "./Section";
 
 export const SentryFooter = () => (
     <small className="text-warning">

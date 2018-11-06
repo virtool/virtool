@@ -21,9 +21,12 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onFind: (e) => {
+    onFind: e => {
         dispatch(findHmms(e.target.value, 1));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(HMMToolbar);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(HMMToolbar);

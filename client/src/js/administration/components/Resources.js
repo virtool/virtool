@@ -2,13 +2,13 @@ import React from "react";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 import { toNumber, upperFirst, forEach, endsWith, isEmpty, get } from "lodash-es";
-import AdministrationSection from "./Section";
 import { Alert, Flex, FlexItem, InputError, LoadingPlaceholder } from "../../base/index";
 import { getResources } from "../../jobs/actions";
 import { maxResourcesSelector, minResourcesSelector, checkTaskUpperLimits } from "../selectors";
 import { updateSetting } from "../actions";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
+import AdministrationSection from "./Section";
 
 export const getErrorMessage = (isError, min, max) => (isError ? `Value must be between ${min} and ${max}` : null);
 

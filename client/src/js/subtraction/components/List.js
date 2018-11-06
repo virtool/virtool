@@ -26,7 +26,6 @@ export class SubtractionList extends React.Component {
     renderRow = index => <SubtractionItem key={index} index={index} />;
 
     render() {
-
         let subtractionComponents;
 
         if (this.props.documents === null) {

@@ -1,5 +1,4 @@
-import { ListGroupItem } from "../../../base/index";
-import { CreateAnalysis, IndexSelect } from "../Create";
+import { CreateAnalysis } from "../Create";
 
 describe("<CreateAnalysis />", () => {
     let props;

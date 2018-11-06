@@ -10,7 +10,7 @@ export const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
 );
 
 const mapStateToProps = state => {
-  const { id, name } = state.samples.detail;
+    const { id, name } = state.samples.detail;
     return {
         show: routerLocationHasState(state, "removeSample"),
         id,

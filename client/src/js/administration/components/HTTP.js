@@ -2,9 +2,9 @@ import React from "react";
 import { toNumber } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { Checkbox, Icon, InputError } from "../../base/index";
+import AdministrationSection from "./Section";
 
 export const HTTPCheckboxLabel = () => (
     <span>

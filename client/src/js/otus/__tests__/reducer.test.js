@@ -32,7 +32,6 @@ import {
 import reducer, { initialState as reducerInitialState, hideOTUModal, getActiveIsolate, receiveOTU } from "../reducer";
 
 describe("OTUs Reducer:", () => {
-
     it("should return the initial state on first pass", () => {
         const result = reducer(undefined, {});
         expect(result).toEqual(reducerInitialState);
@@ -119,7 +118,7 @@ describe("OTUs Reducer:", () => {
     describe("should handle WS_REMOVE_OTU", () => {
         it("no result if otu not found", () => {
             const state = {
-                documents: [{id: "foo"}]
+                documents: [{ id: "foo" }]
             };
             const action = {
                 type: WS_REMOVE_OTU,
@@ -138,7 +137,7 @@ describe("OTUs Reducer:", () => {
                 data: ["foo"]
             };
             const result = reducer(state, action);
-            expect(result).toEqual({documents: []});
+            expect(result).toEqual({ documents: [] });
         });
     });
 
@@ -158,7 +157,7 @@ describe("OTUs Reducer:", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            ...action.data,
+            ...action.data
         });
     });
 
