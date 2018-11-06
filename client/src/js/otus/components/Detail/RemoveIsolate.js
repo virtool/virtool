@@ -4,12 +4,11 @@ import { removeIsolate, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
 export class RemoveIsolate extends React.Component {
-
     handleConfirm = () => {
         this.props.onConfirm(this.props.otuId, this.props.isolateId, this.props.nextIsolateId);
     };
 
-    render () {
+    render() {
         return (
             <RemoveModal
                 name={this.props.isolateName}
@@ -27,7 +26,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -35,7 +33,9 @@ const mapDispatchToProps = dispatch => ({
     onConfirm: (otuId, isolateId, nextIsolateId) => {
         dispatch(removeIsolate(otuId, isolateId, nextIsolateId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RemoveIsolate);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(RemoveIsolate);

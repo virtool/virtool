@@ -1,21 +1,23 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
+import { findHmms } from "../../hmm/actions";
+import { listReadyIndexes } from "../../indexes/actions";
 
 import { findAnalyses } from "../actions";
 import { LoadingPlaceholder } from "../../base";
 import AnalysesList from "./List";
 import AnalysisDetail from "./Detail";
 
-class Analyses extends React.Component {
-
-    componentDidMount () {
-        this.props.findAnalyses(this.props.match.params.sampleId);
+export class Analyses extends React.Component {
+    componentDidMount() {
+        this.props.onFindAnalyses(this.props.sampleId);
+        this.props.onFindHmms();
+        this.props.onListReadyIndexes();
     }
 
-    render () {
-
-        if (this.props.analyses === null) {
+    render() {
+        if (this.props.loading) {
             return <LoadingPlaceholder margin="130px" />;
         }
 
@@ -28,12 +30,24 @@ class Analyses extends React.Component {
     }
 }
 
-const mapDispatchToProps = (dispatch) => ({
-
-    findAnalyses: (sampleId) => {
-        dispatch(findAnalyses(sampleId));
-    }
-
+const mapStateToProps = state => ({
+    sampleId: state.samples.detail.id,
+    loading: state.analyses.documents === null || state.hmms.documents === null || state.analyses.readyIndexes === null
 });
 
-export default connect(null, mapDispatchToProps)(Analyses);
+const mapDispatchToProps = dispatch => ({
+    onFindAnalyses: sampleId => {
+        dispatch(findAnalyses(sampleId, "", 1));
+    },
+    onFindHmms: () => {
+        dispatch(findHmms(null));
+    },
+    onListReadyIndexes: () => {
+        dispatch(listReadyIndexes());
+    }
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Analyses);

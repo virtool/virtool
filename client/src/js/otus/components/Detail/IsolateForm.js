@@ -14,11 +14,10 @@ import PropTypes from "prop-types";
 import { map, toLower } from "lodash-es";
 import { Row, Col, Modal } from "react-bootstrap";
 
-import { formatIsolateName } from "../../../utils";
+import { formatIsolateName } from "../../../utils/utils";
 import { InputError, SaveButton } from "../../../base";
 
 export default class IsolateForm extends React.Component {
-
     static propTypes = {
         sourceType: PropTypes.string,
         sourceName: PropTypes.string,
@@ -28,22 +27,21 @@ export default class IsolateForm extends React.Component {
         onSubmit: PropTypes.func
     };
 
-    changeSourceType = (e) => {
+    changeSourceType = e => {
         this.props.onChange({
             sourceType: toLower(e.target.value),
             sourceName: e.target.value === "unknown" ? "" : this.props.sourceName
         });
     };
 
-    changeSourceName = (e) => {
+    changeSourceName = e => {
         this.props.onChange({
             sourceName: e.target.value,
             sourceType: this.props.sourceType
         });
     };
 
-    render () {
-
+    render() {
         let sourceTypeInput;
 
         const sourceTypeInputProps = {
@@ -54,15 +52,17 @@ export default class IsolateForm extends React.Component {
 
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
         if (this.props.restrictSourceTypes) {
-            const optionComponents = map(this.props.allowedSourceTypes, sourceType =>
+            const optionComponents = map(this.props.allowedSourceTypes, sourceType => (
                 <option key={sourceType} value={sourceType} className="text-capitalize">
                     {sourceType}
                 </option>
-            );
+            ));
 
             sourceTypeInput = (
                 <InputError type="select" {...sourceTypeInputProps}>
-                    <option key="default" value="unknown">Unknown</option>
+                    <option key="default" value="unknown">
+                        Unknown
+                    </option>
                     {optionComponents}
                 </InputError>
             );
@@ -74,9 +74,7 @@ export default class IsolateForm extends React.Component {
             <form onSubmit={this.props.onSubmit}>
                 <Modal.Body>
                     <Row>
-                        <Col md={6}>
-                            {sourceTypeInput}
-                        </Col>
+                        <Col md={6}>{sourceTypeInput}</Col>
                         <Col md={6}>
                             <InputError
                                 label="Source Name"
@@ -87,11 +85,7 @@ export default class IsolateForm extends React.Component {
                             />
                         </Col>
                         <Col md={12}>
-                            <InputError
-                                label="Isolate Name"
-                                value={formatIsolateName(this.props)}
-                                readOnly
-                            />
+                            <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
                         </Col>
                     </Row>
                 </Modal.Body>

@@ -1,53 +1,24 @@
 import React from "react";
-import { isEqual } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { Alert } from "react-bootstrap";
-import {
-    Flex,
-    FlexItem,
-    Icon,
-    LoadingPlaceholder,
-    ScrollList,
-    NoneFound
-} from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ScrollList, NoneFound } from "../../base";
+import { checkRefRight } from "../../utils/utils";
+import { findOTUs } from "../actions";
 import OTUToolbar from "./Toolbar";
 import OTUItem from "./Item";
 import CreateOTU from "./Create";
-import { checkUserRefPermission } from "../../utils";
-import { otusSelector } from "../../listSelectors";
-import { listOTUs } from "../actions";
 
 class OTUsList extends React.Component {
-
-    componentDidMount () {
-        if (!this.props.fetched) {
-            this.props.loadNextPage(this.props.refId, 1);
-        }
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.refId, this.props.term, this.props.verified, 1);
     }
 
-    shouldComponentUpdate (nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents)
-            || !isEqual(nextProps.isLoading, this.props.isLoading)
-            || !isEqual(nextProps.unbuiltChangeCount, this.props.unbuiltChangeCount)
-        );
-    }
+    renderRow = index => <OTUItem key={index} refId={this.props.refId} index={index} />;
 
-    handleNextPage = (page) => {
-        this.props.loadNextPage(this.props.refId, page);
-    };
-
-    rowRenderer = (index) => (
-        <OTUItem
-            key={index}
-            refId={this.props.refId}
-            index={index}
-        />
-    );
-
-    render () {
+    render() {
+        const { canBuild } = this.props;
 
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
@@ -59,12 +30,9 @@ class OTUsList extends React.Component {
             noOTUs = <NoneFound noun="otus" />;
         }
 
-        const hasBuild = checkUserRefPermission(this.props, "build");
-        const hasRemoveOTU = checkUserRefPermission(this.props, "modify_otu");
-
         let alert;
 
-        if (this.props.unbuiltChangeCount && hasBuild) {
+        if (this.props.unbuiltChangeCount && canBuild) {
             alert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -83,21 +51,20 @@ class OTUsList extends React.Component {
             <div>
                 {alert}
 
-                <OTUToolbar hasRemoveOTU={hasRemoveOTU} refId={this.props.refId} />
+                <OTUToolbar />
 
                 <CreateOTU {...this.props} />
 
                 {noOTUs}
 
                 <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.props.documents}
-                    refetchPage={this.props.refetchPage}
-                    loadNextPage={this.handleNextPage}
+                    documents={this.props.documents}
+                    onLoadNextPage={page =>
+                        this.props.onLoadNextPage(this.props.refId, this.props.term, this.props.verified, page)
+                    }
                     page={this.props.page}
-                    rowRenderer={this.rowRenderer}
+                    pageCount={this.props.page_count}
+                    renderRow={this.renderRow}
                 />
             </div>
         );
@@ -106,24 +73,25 @@ class OTUsList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.otus,
-    documents: otusSelector(state),
+    term: state.otus.term,
     refId: state.references.detail.id,
     unbuiltChangeCount: state.references.detail.unbuilt_change_count,
-    isAdmin: state.account.administrator,
-    userId: state.account.id,
-    userGroups: state.account.groups,
-    detail: state.references.detail
+    detail: state.references.detail,
+    verified: state.otus.verified,
+    canBuild: checkRefRight(state, "build")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({state: {createOTU: false}}));
+        dispatch(push({ state: { createOTU: false } }));
     },
 
-    loadNextPage: (refId, page) => {
-        dispatch(listOTUs(refId, page));
+    onLoadNextPage: (refId, term, verified, page) => {
+        dispatch(findOTUs(refId, term, verified, page));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(OTUsList);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(OTUsList);

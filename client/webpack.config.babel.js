@@ -19,6 +19,7 @@ export default {
                     {
                         loader: "eslint-loader",
                         options: {
+                            fix: true,
                             configFile: path.resolve(__dirname, "./.eslintrc")
                         }
 

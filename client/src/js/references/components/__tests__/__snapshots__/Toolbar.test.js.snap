@@ -1,0 +1,147 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceToolbar /> renders when [canCreate=false] 1`] = `
+<div
+  className="toolbar"
+>
+  <div
+    className="form-group"
+  >
+    <div
+      className="input-group"
+    >
+      <span
+        className="input-group-addon"
+        id="find-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </span>
+      <input
+        aria-describedby="find-addon"
+        className="form-control"
+        onChange={[MockFunction]}
+        placeholder="Reference name"
+        type="text"
+        value=""
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
+<div
+  className="toolbar"
+>
+  <div
+    className="form-group"
+  >
+    <div
+      className="input-group"
+    >
+      <span
+        className="input-group-addon"
+        id="find-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </span>
+      <input
+        aria-describedby="find-addon"
+        className="form-control"
+        onChange={[MockFunction]}
+        placeholder="Reference name"
+        type="text"
+        value=""
+      />
+    </div>
+  </div>
+  <LinkContainer
+    activeClassName="active"
+    exact={false}
+    replace={false}
+    strict={false}
+    to={
+      Object {
+        "state": Object {
+          "createReference": true,
+          "newReference": true,
+        },
+      }
+    }
+  >
+    <Button
+      bsStyle="primary"
+      icon="plus-square fa-fw"
+      pullRight={false}
+      tip="Create"
+      tipPlacement="top"
+    />
+  </LinkContainer>
+</div>
+`;
+
+exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
+<div
+  className="toolbar"
+>
+  <div
+    className="form-group"
+  >
+    <div
+      className="input-group"
+    >
+      <span
+        className="input-group-addon"
+        id="find-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </span>
+      <input
+        aria-describedby="find-addon"
+        className="form-control"
+        onChange={[MockFunction]}
+        placeholder="Reference name"
+        type="text"
+        value="foo"
+      />
+    </div>
+  </div>
+  <LinkContainer
+    activeClassName="active"
+    exact={false}
+    replace={false}
+    strict={false}
+    to={
+      Object {
+        "state": Object {
+          "createReference": true,
+          "newReference": true,
+        },
+      }
+    }
+  >
+    <Button
+      bsStyle="primary"
+      icon="plus-square fa-fw"
+      pullRight={false}
+      tip="Create"
+      tipPlacement="top"
+    />
+  </LinkContainer>
+</div>
+`;

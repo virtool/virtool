@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AnalysesList /> renders 1`] = `
+<div>
+  <Connect(AnalysesToolbar) />
+  <ListGroup
+    bsClass="list-group"
+  >
+    <Connect(AnalysisItem)
+      id="bar"
+      key="0"
+    />
+  </ListGroup>
+  <Connect(CreateAnalysis)
+    hasHmm={true}
+    id="foo"
+    onHide={[Function]}
+    refIndexes={
+      Array [
+        Object {
+          "id": "indy",
+        },
+      ]
+    }
+    show={false}
+    userId="bob"
+  />
+</div>
+`;

@@ -6,7 +6,7 @@ import Bases from "./Bases";
 import Nucleotides from "./Nucleotides";
 import Sequences from "./Sequences";
 
-const SampleDetailQuality = (props) => (
+const SampleDetailQuality = props => (
     <div className="printable-quality">
         <h5>
             <strong>Quality Distribution at Read Positions</strong>
@@ -14,26 +14,21 @@ const SampleDetailQuality = (props) => (
                 Print
             </Button>
         </h5>
-        <Chart
-            createChart={Bases}
-            data={props.bases}
-        />
+        <Chart createChart={Bases} data={props.bases} />
 
-        <h5><strong>Nucleotide Composition at Read Positions</strong></h5>
-        <Chart
-            createChart={Nucleotides}
-            data={props.composition}
-        />
+        <h5>
+            <strong>Nucleotide Composition at Read Positions</strong>
+        </h5>
+        <Chart createChart={Nucleotides} data={props.composition} />
 
-        <h5><strong>Read-wise Quality Occurrence</strong></h5>
-        <Chart
-            createChart={Sequences}
-            data={props.sequences}
-        />
+        <h5>
+            <strong>Read-wise Quality Occurrence</strong>
+        </h5>
+        <Chart createChart={Sequences} data={props.sequences} />
     </div>
 );
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     const { bases, composition, sequences } = state.samples.detail.quality;
 
     return {

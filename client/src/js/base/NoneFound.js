@@ -21,11 +21,7 @@ export const NoneFound = ({ noun, noListGroup, style }) => {
         return item;
     }
 
-    return (
-        <ListGroup style={style}>
-            {item}
-        </ListGroup>
-    );
+    return <ListGroup style={style}>{item}</ListGroup>;
 };
 
 NoneFound.propTypes = {

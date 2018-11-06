@@ -1,4 +1,4 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_GROUP,
     WS_UPDATE_GROUP,
@@ -7,19 +7,19 @@ import {
     CREATE_GROUP,
     SET_GROUP_PERMISSION,
     REMOVE_GROUP
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertGroup = (data) => ({
+export const wsInsertGroup = data => ({
     type: WS_INSERT_GROUP,
     data
 });
 
-export const wsUpdateGroup = (data) => ({
+export const wsUpdateGroup = data => ({
     type: WS_UPDATE_GROUP,
     data
 });
 
-export const wsRemoveGroup = (data) => ({
+export const wsRemoveGroup = data => ({
     type: WS_REMOVE_GROUP,
     data
 });
@@ -38,7 +38,7 @@ export const listGroups = simpleActionCreator(LIST_GROUPS.REQUESTED);
  * @param groupId {string} the id for the new group
  * @returns {object}
  */
-export const createGroup = (groupId) => ({
+export const createGroup = groupId => ({
     type: CREATE_GROUP.REQUESTED,
     groupId
 });
@@ -65,7 +65,7 @@ export const setGroupPermission = (groupId, permission, value) => ({
  * @param groupId {string} the id for the new group
  * @returns {object}
  */
-export const removeGroup = (groupId) => ({
+export const removeGroup = groupId => ({
     type: REMOVE_GROUP.REQUESTED,
     groupId
 });

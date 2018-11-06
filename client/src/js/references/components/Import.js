@@ -3,12 +3,12 @@ import { Alert, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { find } from "lodash-es";
-import ReferenceForm from "./Form";
 import { SaveButton, UploadBar, ProgressBar } from "../../base";
-import { createRandomString, getTargetChange } from "../../utils";
+import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
+import ReferenceForm from "./Form";
 
 const getInitialState = () => ({
     name: "",
@@ -22,13 +22,12 @@ const getInitialState = () => ({
 });
 
 class ImportReference extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
 
-    componentDidUpdate (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         if (prevState.localId !== this.state.localId) {
             this.props.lock(true);
         }
@@ -41,12 +40,12 @@ class ImportReference extends React.Component {
         }
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
         this.setState({ [name]: value, [error]: "" });
     };
 
-    handleDrop = (file) => {
+    handleDrop = file => {
         if (file.length > 1) {
             return this.setState({
                 errorFile: "Only one file can be uploaded at a time"
@@ -60,7 +59,7 @@ class ImportReference extends React.Component {
         this.props.onDrop("reference", file[0], localId);
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name.length) {
@@ -82,11 +81,9 @@ class ImportReference extends React.Component {
             this.state.organism,
             this.props.importId
         );
-
     };
 
-    render () {
-
+    render() {
         let progress = 0;
         let uploadedFile;
         let message = "";
@@ -121,30 +118,18 @@ class ImportReference extends React.Component {
                         bsStyle={progress === 100 ? "success" : "warning"}
                         now={progress}
                         affixed
-                        style={{marginBottom: "10px"}}
+                        style={{ marginBottom: "10px" }}
                     />
-                    <UploadBar
-                        onDrop={this.handleDrop}
-                        message={message}
-                        style={fileErrorStyle}
-                    />
-                    <ReferenceForm
-                        state={this.state}
-                        onChange={this.handleChange}
-                        toggle={this.toggleCheck}
-                    />
+                    <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
+                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <SaveButton
-                        disabled={progress !== 100 && progress !== 0}
-                        altText="Import"
-                    />
+                    <SaveButton disabled={progress !== 100 && progress !== 0} altText="Import" />
                 </Modal.Footer>
             </form>
         );
     }
-
 }
 
 const mapStateToProps = state => ({
@@ -153,7 +138,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onSubmit: (name, description, dataType, organism, fileId) => {
         dispatch(importReference(name, description, dataType, organism, fileId));
     },
@@ -163,13 +147,15 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {importReference: false}}));
+        dispatch(push({ ...window.location, state: { importReference: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ImportReference);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(ImportReference);

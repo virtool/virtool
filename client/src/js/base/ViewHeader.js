@@ -18,14 +18,13 @@ export const ViewHeader = ({ title, totalCount, children }) => (
         <Helmet>
             <title>{title}</title>
         </Helmet>
-        {isUndefined(totalCount) ? null
-            : (
-                <Flex alignItems="flex-end">
-                    <FlexItem grow={0} shrink={0}>
-                        <strong>{title}</strong> <Badge>{totalCount}</Badge>
-                    </FlexItem>
-                </Flex>
-            )}
+        {isUndefined(totalCount) ? null : (
+            <Flex alignItems="flex-end">
+                <FlexItem grow={0} shrink={0}>
+                    <strong>{title}</strong> <Badge>{totalCount}</Badge>
+                </FlexItem>
+            </Flex>
+        )}
         {children}
     </h3>
 );

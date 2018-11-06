@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { ViewHeader, Alert, RemoveBanner } from "../../base";
 import { purgeHMMs } from "../actions";
-import { checkAdminOrPermission } from "../../utils";
+import { checkAdminOrPermission } from "../../utils/utils";
 
 export const HMMSettings = ({ canPurge, onPurge }) => (
     <div>
@@ -10,7 +10,7 @@ export const HMMSettings = ({ canPurge, onPurge }) => (
             <strong>HMM Settings</strong>
         </ViewHeader>
 
-        { canPurge ? (
+        {canPurge ? (
             <RemoveBanner
                 message="Delete all HMM profile annotations and data files."
                 buttonText="Purge"
@@ -25,14 +25,17 @@ export const HMMSettings = ({ canPurge, onPurge }) => (
     </div>
 );
 
-const mapStateToProps = (state) => ({
-    canPurge: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_hmm")
+const mapStateToProps = state => ({
+    canPurge: checkAdminOrPermission(state, "modify_hmm")
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
     onPurge: () => {
         dispatch(purgeHMMs());
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(HMMSettings);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(HMMSettings);

@@ -9,7 +9,8 @@ import { connect } from "react-redux";
 import { blastNuvs } from "../../actions";
 import { Alert, Button, Flex, FlexItem, Icon, RelativeTime } from "../../../base/index";
 
-const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
+const ridRoot =
+    "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
 
 export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
@@ -19,13 +20,18 @@ export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
 
     if (rid) {
         const relativeLast = <RelativeTime time={lastCheckedAt} />;
-        const relativeNext = Moment(lastCheckedAt).add(interval, "seconds").fromNow();
+        const relativeNext = Moment(lastCheckedAt)
+            .add(interval, "seconds")
+            .fromNow();
 
         ridText = " with RID ";
 
         ridLink = (
             <a target="_blank" href={ridRoot + rid} rel="noopener noreferrer">
-                {rid} <sup><Icon name="new-tab" /></sup>
+                {rid}{" "}
+                <sup>
+                    <Icon name="new-tab" />
+                </sup>
             </a>
         );
 
@@ -57,7 +63,7 @@ export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
 };
 
 export const BLASTResults = ({ hits }) => {
-    const components = map(hits, (hit, index) =>
+    const components = map(hits, (hit, index) => (
         <tr key={index}>
             <td>
                 <a
@@ -73,7 +79,7 @@ export const BLASTResults = ({ hits }) => {
             <td>{hit.score}</td>
             <td>{numbro(hit.identity / hit.align_len).format("0.00")}</td>
         </tr>
-    );
+    ));
 
     return (
         <Panel>
@@ -89,17 +95,14 @@ export const BLASTResults = ({ hits }) => {
                             <th>Identity</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {components}
-                    </tbody>
+                    <tbody>{components}</tbody>
                 </Table>
             </Panel.Body>
         </Panel>
     );
 };
 
-export const NuVsBLAST = (props) => {
-
+export const NuVsBLAST = props => {
     if (props.blast) {
         if (props.blast.ready) {
             if (props.blast.result.hits.length) {
@@ -109,9 +112,7 @@ export const NuVsBLAST = (props) => {
             return (
                 <Panel>
                     <Panel.Heading>NCBI BLAST</Panel.Heading>
-                    <Panel.Body>
-                        No BLAST hits found.
-                    </Panel.Body>
+                    <Panel.Body>No BLAST hits found.</Panel.Body>
                 </Panel>
             );
         }
@@ -148,16 +149,17 @@ export const NuVsBLAST = (props) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     analysisId: state.analyses.detail.id
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onBlast: (analysisId, sequenceIndex) => {
         dispatch(blastNuvs(analysisId, sequenceIndex));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(NuVsBLAST);

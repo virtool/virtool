@@ -13,7 +13,6 @@ import { bsStyles } from "./utils";
  * @class
  */
 export class Button extends React.Component {
-
     static propTypes = {
         bsStyle: PropTypes.oneOf(bsStyles),
         active: PropTypes.bool,
@@ -26,25 +25,10 @@ export class Button extends React.Component {
         iconStyle: PropTypes.oneOf(bsStyles),
         pad: PropTypes.bool,
         children: PropTypes.node,
-        type: PropTypes.oneOf([
-            "button",
-            "submit"
-        ]),
-        bsSize: PropTypes.oneOf([
-            "xsmall",
-            "small",
-            "large"
-        ]),
-        tip: PropTypes.oneOfType([
-            PropTypes.string,
-            PropTypes.element
-        ]),
-        tipPlacement: PropTypes.oneOf([
-            "top",
-            "right",
-            "bottom",
-            "left"
-        ])
+        type: PropTypes.oneOf(["button", "submit"]),
+        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
+        tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+        tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"])
     };
 
     static defaultProps = {
@@ -57,8 +41,7 @@ export class Button extends React.Component {
         this.buttonNode.blur();
     };
 
-    render () {
-
+    render() {
         const className = CX("btn", `btn-${this.props.bsStyle}`, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
@@ -79,7 +62,7 @@ export class Button extends React.Component {
         const button = (
             <button
                 type={this.props.type}
-                ref={(node) => this.buttonNode = node}
+                ref={node => (this.buttonNode = node)}
                 onFocus={this.blur}
                 className={className}
                 onClick={this.props.onClick}
@@ -87,17 +70,14 @@ export class Button extends React.Component {
                 disabled={this.props.disabled}
             >
                 <div>
-                    {icon}{this.props.children ? <span>{this.props.children}</span> : null}
+                    {icon}
+                    {this.props.children ? <span>{this.props.children}</span> : null}
                 </div>
             </button>
         );
 
         if (this.props.tip) {
-            const tooltip = (
-                <Tooltip id={this.props.tip}>
-                    {this.props.tip}
-                </Tooltip>
-            );
+            const tooltip = <Tooltip id={this.props.tip}>{this.props.tip}</Tooltip>;
 
             return (
                 <OverlayTrigger placement={this.props.tipPlacement} overlay={tooltip}>

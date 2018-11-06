@@ -1,4 +1,4 @@
-import { WS_UPDATE_STATUS } from "../actionTypes";
+import { WS_UPDATE_STATUS } from "../app/actionTypes";
 
 /**
  * Returns an action that should be dispatched when the status is updated via websocket.
@@ -7,7 +7,7 @@ import { WS_UPDATE_STATUS } from "../actionTypes";
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateStatus = (data) => ({
+export const wsUpdateStatus = data => ({
     type: WS_UPDATE_STATUS,
     data
 });

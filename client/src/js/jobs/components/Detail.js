@@ -4,24 +4,22 @@ import { push } from "react-router-redux";
 import { Table } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getJob, removeJob } from "../actions";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, RelativeTime } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
 import JobSteps from "./Steps";
 
 class JobDetail extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.getDetail(this.props.match.params.jobId);
     }
 
     handleClick = () => {
         this.props.onRemove(this.props.detail.id);
-    }
+    };
 
-    render () {
-
+    render() {
         if (this.props.error) {
             return <NotFound />;
         }
@@ -52,9 +50,7 @@ class JobDetail extends React.Component {
                     <Flex alignItems="flex-end">
                         <FlexItem grow={1}>
                             <Flex alignItems="center">
-                                <strong>
-                                    {taskName}
-                                </strong>
+                                <strong>{taskName}</strong>
                                 <FlexItem grow={1} pad={7}>
                                     <small className={`text-strong text-capitalize text-${progressStyle}`}>
                                         {latest.state}
@@ -63,14 +59,9 @@ class JobDetail extends React.Component {
                             </Flex>
                         </FlexItem>
 
-                        <Icon
-                            bsStyle="danger"
-                            name="trash"
-                            style={{fontSize: "18px"}}
-                            onClick={this.handleClick}
-                        />
+                        <Icon bsStyle="danger" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
                     </Flex>
-                    <div className="text-muted" style={{fontSize: "12px"}}>
+                    <div className="text-muted" style={{ fontSize: "12px" }}>
                         Started <RelativeTime time={detail.status[0].timestamp} /> by {detail.user.id}
                     </div>
                 </ViewHeader>
@@ -79,7 +70,9 @@ class JobDetail extends React.Component {
                     <tbody>
                         <tr>
                             <th className="col-xs-4">Cores / Memory</th>
-                            <td className="col-xs-8">{detail.proc} CPUs / {detail.mem} GB</td>
+                            <td className="col-xs-8">
+                                {detail.proc} CPUs / {detail.mem} GB
+                            </td>
                         </tr>
                     </tbody>
                 </Table>
@@ -93,28 +86,28 @@ class JobDetail extends React.Component {
                 <JobSteps steps={detail.status} />
 
                 <JobError error={latest.error} />
-
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_JOB_ERROR", null),
     detail: state.jobs.detail
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    getDetail: (jobId) => {
+const mapDispatchToProps = dispatch => ({
+    getDetail: jobId => {
         dispatch(getJob(jobId));
     },
 
-    onRemove: (jobId) => {
+    onRemove: jobId => {
         dispatch(removeJob(jobId));
         dispatch(push("/jobs"));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(JobDetail);

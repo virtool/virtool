@@ -1,0 +1,320 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SourceTypeItem /> renders when [disabled=false] 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  disabled={false}
+  key="genotype"
+>
+  <span
+    className="text-capitalize"
+  >
+    genotype
+  </span>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="trash"
+    onClick={[Function]}
+    pullRight={true}
+  />
+</ListGroupItem>
+`;
+
+exports[`<SourceTypeItem /> renders when [disabled=true] 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  disabled={true}
+  key="genotype"
+>
+  <span
+    className="text-capitalize"
+  >
+    genotype
+  </span>
+</ListGroupItem>
+`;
+
+exports[`<SourceTypes /> renders when global 1`] = `
+<Uncontrolled(Panel)>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <strong>
+        Source Types
+      </strong>
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <form
+        onSubmit={[Function]}
+      >
+        <FormGroup
+          bsClass="form-group"
+        >
+          <InputGroup
+            bsClass="input-group"
+          >
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={true}
+              inputRef={[Function]}
+              onChange={[Function]}
+              type="text"
+              value=""
+            />
+            <InputGroupButton
+              bsClass="input-group-btn"
+            >
+              <Button
+                bsStyle="primary"
+                disabled={true}
+                pullRight={false}
+                tipPlacement="top"
+                type="submit"
+              >
+                <Icon
+                  faStyle="fas"
+                  fixedWidth={false}
+                  name="plus-square"
+                  pullRight={false}
+                  style={
+                    Object {
+                      "paddingLeft": "3px",
+                    }
+                  }
+                />
+              </Button>
+            </InputGroupButton>
+          </InputGroup>
+          <div
+            className="input-form-error-none"
+          >
+            <span
+              className="input-error-message"
+            >
+              None
+            </span>
+          </div>
+        </FormGroup>
+      </form>
+      <div>
+        <SourceTypeItem
+          disabled={false}
+          key="isolate"
+          onRemove={[Function]}
+          sourceType="isolate"
+        />
+        <SourceTypeItem
+          disabled={false}
+          key="serotype"
+          onRemove={[Function]}
+          sourceType="serotype"
+        />
+      </div>
+    </ListGroupItem>
+  </ListGroup>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<SourceTypes /> renders when not global and not remote 1`] = `
+<Uncontrolled(Panel)>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <strong>
+        Source Types
+      </strong>
+      <Checkbox
+        checked={true}
+        label="Enable"
+        onClick={[Function]}
+        partial={false}
+        pullRight={true}
+      />
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <form
+        onSubmit={[Function]}
+      >
+        <FormGroup
+          bsClass="form-group"
+        >
+          <InputGroup
+            bsClass="input-group"
+          >
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={true}
+              inputRef={[Function]}
+              onChange={[Function]}
+              type="text"
+              value=""
+            />
+            <InputGroupButton
+              bsClass="input-group-btn"
+            >
+              <Button
+                bsStyle="primary"
+                disabled={true}
+                pullRight={false}
+                tipPlacement="top"
+                type="submit"
+              >
+                <Icon
+                  faStyle="fas"
+                  fixedWidth={false}
+                  name="plus-square"
+                  pullRight={false}
+                  style={
+                    Object {
+                      "paddingLeft": "3px",
+                    }
+                  }
+                />
+              </Button>
+            </InputGroupButton>
+          </InputGroup>
+          <div
+            className="input-form-error-none"
+          >
+            <span
+              className="input-error-message"
+            >
+              None
+            </span>
+          </div>
+        </FormGroup>
+      </form>
+      <div>
+        <SourceTypeItem
+          disabled={false}
+          key="isolate"
+          onRemove={[Function]}
+          sourceType="isolate"
+        />
+        <SourceTypeItem
+          disabled={false}
+          key="serotype"
+          onRemove={[Function]}
+          sourceType="serotype"
+        />
+      </div>
+    </ListGroupItem>
+  </ListGroup>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<SourceTypes /> renders when not global and remote 1`] = `
+<Uncontrolled(Panel)>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <strong>
+        Source Types
+      </strong>
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
+    </ListGroupItem>
+    <ListGroupItem
+      allowFocus={false}
+    >
+      <form
+        onSubmit={[Function]}
+      >
+        <FormGroup
+          bsClass="form-group"
+        >
+          <InputGroup
+            bsClass="input-group"
+          >
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={false}
+              inputRef={[Function]}
+              onChange={[Function]}
+              type="text"
+              value=""
+            />
+            <InputGroupButton
+              bsClass="input-group-btn"
+            >
+              <Button
+                bsStyle="primary"
+                disabled={false}
+                pullRight={false}
+                tipPlacement="top"
+                type="submit"
+              >
+                <Icon
+                  faStyle="fas"
+                  fixedWidth={false}
+                  name="plus-square"
+                  pullRight={false}
+                  style={
+                    Object {
+                      "paddingLeft": "3px",
+                    }
+                  }
+                />
+              </Button>
+            </InputGroupButton>
+          </InputGroup>
+          <div
+            className="input-form-error-none"
+          >
+            <span
+              className="input-error-message"
+            >
+              None
+            </span>
+          </div>
+        </FormGroup>
+      </form>
+      <div>
+        <SourceTypeItem
+          disabled={true}
+          key="isolate"
+          onRemove={[Function]}
+          sourceType="isolate"
+        />
+        <SourceTypeItem
+          disabled={true}
+          key="serotype"
+          onRemove={[Function]}
+          sourceType="serotype"
+        />
+      </div>
+    </ListGroupItem>
+  </ListGroup>
+</Uncontrolled(Panel)>
+`;

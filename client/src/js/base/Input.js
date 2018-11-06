@@ -6,7 +6,6 @@ import { ControlLabel, FormControl, FormGroup } from "react-bootstrap";
  * A reusable composition of form components from react-bootstrap.
  */
 export class Input extends React.Component {
-
     static propTypes = {
         label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
         name: PropTypes.string,
@@ -52,8 +51,7 @@ export class Input extends React.Component {
         this.inputNode.focus();
     };
 
-    render () {
-
+    render() {
         const formClass = this.props.error ? "form-control-error" : "";
 
         let componentClass;
@@ -66,21 +64,15 @@ export class Input extends React.Component {
             componentClass = "textarea";
         }
 
-        const style = this.props.type === "number"
-            ? {...this.props.style, paddingRight: "12px"}
-            : this.props.style;
+        const style = this.props.type === "number" ? { ...this.props.style, paddingRight: "12px" } : this.props.style;
 
         let label;
 
         if (this.props.label) {
-            label = (
-                <ControlLabel>
-                    {this.props.label}
-                </ControlLabel>
-            );
+            label = <ControlLabel>{this.props.label}</ControlLabel>;
         }
 
-        const groupStyle = {...this.props.formGroupStyle};
+        const groupStyle = { ...this.props.formGroupStyle };
 
         if (this.props.noMargin) {
             groupStyle.marginBottom = 0;
@@ -91,7 +83,7 @@ export class Input extends React.Component {
                 {label}
                 <FormControl
                     className={formClass}
-                    inputRef={(ref) => this.inputNode = ref}
+                    inputRef={ref => (this.inputNode = ref)}
                     type={this.props.type}
                     name={this.props.name}
                     rows={this.props.rows}

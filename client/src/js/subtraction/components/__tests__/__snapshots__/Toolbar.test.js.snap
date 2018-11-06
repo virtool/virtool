@@ -1,0 +1,88 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SubtractionToolbar /> renders correctly when [canModify=false] 1`] = `
+<div
+  className="toolbar"
+  key="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        placeholder="Name"
+        type="text"
+        value="test"
+      />
+    </InputGroup>
+  </FormGroup>
+</div>
+`;
+
+exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
+<div
+  className="toolbar"
+  key="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        placeholder="Name"
+        type="text"
+        value="test"
+      />
+    </InputGroup>
+  </FormGroup>
+  <LinkContainer
+    activeClassName="active"
+    exact={false}
+    replace={false}
+    strict={false}
+    to={
+      Object {
+        "state": Object {
+          "createSubtraction": true,
+        },
+      }
+    }
+  >
+    <Button
+      bsStyle="primary"
+      icon="plus-square fa-fw"
+      pullRight={false}
+      tip="Create"
+      tipPlacement="top"
+    />
+  </LinkContainer>
+</div>
+`;

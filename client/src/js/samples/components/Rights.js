@@ -8,20 +8,18 @@ import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
 
 class SampleRights extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         if (!this.props.groupsFetched) {
             this.props.onListGroups();
         }
     }
 
-    isOwnerOrAdministrator = () => (
-        includes(this.props.groups, this.props.group)
-        || this.props.accountId === this.props.ownerId
-        || this.props.isAdmin
-    );
+    isOwnerOrAdministrator = () =>
+        includes(this.props.groups, this.props.group) ||
+        this.props.accountId === this.props.ownerId ||
+        this.props.isAdmin;
 
-    handleChangeGroup = (e) => {
+    handleChangeGroup = e => {
         this.props.onChangeGroup(this.props.sampleId, e.target.value);
     };
 
@@ -29,7 +27,7 @@ class SampleRights extends React.Component {
         this.props.onChangeRights(this.props.sampleId, scope, e.target.value);
     };
 
-    render () {
+    render() {
         if (this.props.groups === null) {
             return <LoadingPlaceholder />;
         }
@@ -37,9 +35,7 @@ class SampleRights extends React.Component {
         if (!this.isOwnerOrAdministrator()) {
             return (
                 <Panel>
-                    <Panel.Body>
-                        Not allowed
-                    </Panel.Body>
+                    <Panel.Body>Not allowed</Panel.Body>
                 </Panel>
             );
         }
@@ -47,11 +43,11 @@ class SampleRights extends React.Component {
         const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
         const allRights = (this.props.all_read ? "r" : "") + (this.props.all_write ? "w" : "");
 
-        const nameOptionComponents = map(this.props.groups, group =>
+        const nameOptionComponents = map(this.props.groups, group => (
             <option key={group.id} value={group.id}>
                 {capitalize(group.id)}
             </option>
-        );
+        ));
 
         return (
             <div>
@@ -61,12 +57,7 @@ class SampleRights extends React.Component {
 
                 <Panel>
                     <Panel.Body>
-                        <Input
-                            type="select"
-                            label="Group"
-                            value={this.props.group}
-                            onChange={this.handleChangeGroup}
-                        >
+                        <Input type="select" label="Group" value={this.props.group} onChange={this.handleChangeGroup}>
                             <option value="none">None</option>
                             {nameOptionComponents}
                         </Input>
@@ -76,7 +67,7 @@ class SampleRights extends React.Component {
                             name="groupRights"
                             label="Group Rights"
                             value={groupRights}
-                            onChange={(e) => this.handleChangeRights(e, "group")}
+                            onChange={e => this.handleChangeRights(e, "group")}
                         >
                             <option value="">None</option>
                             <option value="r">Read</option>
@@ -88,7 +79,7 @@ class SampleRights extends React.Component {
                             name="allUsers"
                             label="All Users' Rights"
                             value={allRights}
-                            onChange={(e) => this.handleChangeRights(e, "all")}
+                            onChange={e => this.handleChangeRights(e, "all")}
                         >
                             <option value="">None</option>
                             <option value="r">Read</option>
@@ -102,7 +93,6 @@ class SampleRights extends React.Component {
 }
 
 const mapStateToProps = state => {
-
     const { all_read, all_write, group, group_read, group_write, id, user } = state.samples.detail;
 
     return {
@@ -121,13 +111,12 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = dispatch => ({
-
     onListGroups: () => {
         dispatch(listGroups());
     },
 
     onChangeGroup: (sampleId, groupId) => {
-        dispatch(updateSampleRights(sampleId, {group: groupId}));
+        dispatch(updateSampleRights(sampleId, { group: groupId }));
     },
 
     onChangeRights: (sampleId, scope, value) => {
@@ -138,7 +127,9 @@ const mapDispatchToProps = dispatch => ({
 
         dispatch(updateSampleRights(sampleId, update));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SampleRights);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SampleRights);

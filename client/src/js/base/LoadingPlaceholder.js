@@ -13,7 +13,7 @@ import { ClipLoader } from "halogenium";
  * @param size {number} the size of the spinner
  */
 export const LoadingPlaceholder = ({ color = "#3c8786", margin = "220px", message = null, size = "22px", style }) => (
-    <div className="text-center" style={{marginTop: margin, ...style}}>
+    <div className="text-center" style={{ marginTop: margin, ...style }}>
         {message ? <p>{message}</p> : null}
         <ClipLoader color={color} size={size} />
     </div>

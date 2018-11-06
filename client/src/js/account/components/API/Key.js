@@ -4,19 +4,18 @@ import { connect } from "react-redux";
 import { isEqual, reduce } from "lodash-es";
 import { ButtonToolbar, Col, Row } from "react-bootstrap";
 
-import APIPermissions from "./Permissions";
 import { Button, ListGroupItem, RelativeTime } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
+import APIPermissions from "./Permissions";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     in: false,
     changed: false,
     permissions: props.apiKey.permissions
 });
 
 export class APIKey extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
@@ -34,7 +33,7 @@ export class APIKey extends React.Component {
     };
 
     onPermissionChange = (key, value) => {
-        const permissions = {...this.state.permissions, [key]: value};
+        const permissions = { ...this.state.permissions, [key]: value };
 
         this.setState({
             changed: !isEqual(permissions, this.props.apiKey.permissions),
@@ -42,7 +41,7 @@ export class APIKey extends React.Component {
         });
     };
 
-    render () {
+    render() {
         let lower;
         let closeButton;
 
@@ -52,7 +51,7 @@ export class APIKey extends React.Component {
                     <Row>
                         <Col xs={12}>
                             <APIPermissions
-                                style={{marginTop: "15px"}}
+                                style={{ marginTop: "15px" }}
                                 userPermissions={this.props.permissions}
                                 keyPermissions={this.state.permissions}
                                 onChange={this.onPermissionChange}
@@ -101,7 +100,8 @@ export class APIKey extends React.Component {
 
                     <Col xs={4}>
                         <span>{permissionCount} perm</span>
-                        <span className="hidden-xs hidden-sm">ission</span>{permissionCount === 1 ? null : "s"}
+                        <span className="hidden-xs hidden-sm">ission</span>
+                        {permissionCount === 1 ? null : "s"}
                     </Col>
 
                     <Col xsHidden smHidden md={3}>
@@ -111,9 +111,7 @@ export class APIKey extends React.Component {
                         {Moment(this.props.apiKey.created_at).format("YY-MM-DD")}
                     </Col>
 
-                    <Col xs={1}>
-                        {closeButton}
-                    </Col>
+                    <Col xs={1}>{closeButton}</Col>
                 </Row>
 
                 {lower}
@@ -122,18 +120,21 @@ export class APIKey extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     permissions: state.account.permissions
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
     onUpdate: (keyId, permissions) => {
         dispatch(updateAPIKey(keyId, permissions));
     },
 
-    onRemove: (keyId) => {
+    onRemove: keyId => {
         dispatch(removeAPIKey(keyId));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(APIKey);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(APIKey);

@@ -4,15 +4,11 @@ import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 import { Icon } from "../../base";
 
-const Welcome = (props) => {
+const Welcome = props => {
     let version;
 
     if (props.version) {
-        version = (
-            <small className="text-muted">
-                {props.version}
-            </small>
-        );
+        version = <small className="text-muted">{props.version}</small>;
     }
     return (
         <div className="container">
@@ -35,8 +31,11 @@ const Welcome = (props) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     version: get(state.updates, "version")
 });
 
-export default connect(mapStateToProps, null)(Welcome);
+export default connect(
+    mapStateToProps,
+    null
+)(Welcome);

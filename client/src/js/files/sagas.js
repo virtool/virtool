@@ -1,27 +1,28 @@
 import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
-import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
+import { putGenericError, setPending, apiCall } from "../utils/sagas";
+import { FIND_FILES, REMOVE_FILE, UPLOAD } from "../app/actionTypes";
 import * as filesAPI from "./api";
-import { putGenericError, setPending, apiCall } from "../sagaUtils";
-import { LIST_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 import { uploadProgress } from "./actions";
+import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
 
-export function* watchFiles () {
-    yield takeLatest(LIST_FILES.REQUESTED, listFiles);
+export function* watchFiles() {
+    yield takeLatest(FIND_FILES.REQUESTED, findFiles);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
     yield takeEvery(UPLOAD.REQUESTED, upload);
 }
 
-export function* listFiles (action) {
-    yield apiCall(filesAPI.list, action, LIST_FILES, {fileType: action.fileType});
+export function* findFiles(action) {
+    yield apiCall(filesAPI.list, action, FIND_FILES, {
+        fileType: action.fileType
+    });
 }
 
-export function* removeFile (action) {
+export function* removeFile(action) {
     yield setPending(apiCall(filesAPI.remove, action, REMOVE_FILE));
 }
 
-export function* upload (action) {
-
+export function* upload(action) {
     const { file, fileType, localId } = action;
 
     const channel = yield call(createUploadChannel, file, fileType);
@@ -34,39 +35,32 @@ export function* upload (action) {
         }
 
         if (response) {
-            return yield put({type: UPLOAD.SUCCEEDED, data: response.body});
+            return yield put({ type: UPLOAD.SUCCEEDED, data: response.body });
         }
 
         yield put(uploadProgress(localId, progress));
     }
 }
 
-const createUploadChannel = (file, fileType) => (
+const createUploadChannel = (file, fileType) =>
     eventChannel(emitter => {
-        const onProgress = (e) => {
+        const onProgress = e => {
             if (e.lengthComputable) {
-                emitter({progress: e.percent});
+                emitter({ progress: e.percent });
             }
         };
 
-        const onSuccess = (response) => {
-            emitter({response});
+        const onSuccess = response => {
+            emitter({ response });
             emitter(END);
         };
 
-        const onFailure = (err) => {
-            emitter({err});
+        const onFailure = err => {
+            emitter({ err });
             emitter(END);
         };
 
-        filesAPI.upload(
-            file,
-            fileType,
-            onProgress,
-            onSuccess,
-            onFailure
-        );
+        filesAPI.upload(file, fileType, onProgress, onSuccess, onFailure);
 
         return noop;
-    }, buffers.sliding(2))
-);
+    }, buffers.sliding(2));

@@ -22,12 +22,7 @@ const path = `
 
 export const VTLogo = () => (
     <div className="vtlogo">
-        <svg
-            id="svg2"
-            viewBox="0 0 448 512"
-            height="30"
-            version="1.1"
-        >
+        <svg id="svg2" viewBox="0 0 448 512" height="30" version="1.1">
             <defs id="defs125" />
             <path
                 id="path4138-2"

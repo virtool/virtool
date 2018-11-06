@@ -3,14 +3,14 @@ import { connect } from "react-redux";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { map } from "lodash-es";
 
+import { Button, NoneFound } from "../../../base";
+import { editOTU } from "../../actions";
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
-import { Button, NoneFound } from "../../../base";
-import { editOTU } from "../../actions";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     segArray: props.schema ? props.schema : [],
     showAdd: false,
     showRemove: false,
@@ -33,43 +33,32 @@ const getItemStyle = (isDragging, draggableStyle) => ({
 });
 
 class Schema extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
 
         this.state = getInitialState(this.props);
         this.onDragEnd = this.onDragEnd.bind(this);
     }
 
-    onDragEnd (result) {
+    onDragEnd(result) {
         if (!this.props.hasModifyOTU || this.props.isRemote) {
             return;
         }
 
         if (result.destination) {
-            const newArray = reorder(
-                this.state.segArray,
-                result.source.index,
-                result.destination.index
-            );
+            const newArray = reorder(this.state.segArray, result.source.index, result.destination.index);
 
-            this.setState({segArray: newArray});
+            this.setState({ segArray: newArray });
 
-            this.props.onSave(
-                this.props.otuId,
-                this.props.detail.name,
-                this.props.detail.abbreviation,
-                newArray
-            );
+            this.props.onSave(this.props.otuId, this.props.detail.name, this.props.detail.abbreviation, newArray);
         }
-
     }
 
     handleAddNew = () => {
-        this.setState({showAdd: true});
+        this.setState({ showAdd: true });
     };
 
-    handleSubmit = (newArray) => {
+    handleSubmit = newArray => {
         this.setState({
             segArray: newArray,
             showAdd: false,
@@ -77,12 +66,7 @@ class Schema extends React.Component {
             showEdit: false
         });
 
-        this.props.onSave(
-            this.props.otuId,
-            this.props.detail.name,
-            this.props.detail.abbreviation,
-            newArray
-        );
+        this.props.onSave(this.props.otuId, this.props.detail.name, this.props.detail.abbreviation, newArray);
     };
 
     handleClose = () => {
@@ -93,22 +77,21 @@ class Schema extends React.Component {
         });
     };
 
-    handleSegment = (entry) => {
+    handleSegment = entry => {
         if (entry.handler === "remove") {
-            this.setState({showRemove: true, selected: entry.segment});
+            this.setState({ showRemove: true, selected: entry.segment });
         }
         if (entry.handler === "edit") {
-            this.setState({showEdit: true, selected: entry.segment});
+            this.setState({ showEdit: true, selected: entry.segment });
         }
     };
 
-    render () {
-
+    render() {
         const { segArray } = this.state;
         let segments;
 
         if (segArray.length) {
-            segments = map(segArray, (segment, index) =>
+            segments = map(segArray, (segment, index) => (
                 <Draggable key={segment.name} draggableId={segment.name} index={index}>
                     {(provided, snapshot) => (
                         <div>
@@ -116,10 +99,7 @@ class Schema extends React.Component {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                style={getItemStyle(
-                                    snapshot.isDragging,
-                                    provided.draggableProps.style
-                                )}
+                                style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}
                             >
                                 <Segment
                                     seg={segment}
@@ -132,7 +112,7 @@ class Schema extends React.Component {
                         </div>
                     )}
                 </Draggable>
-            );
+            ));
         } else {
             segments = <NoneFound noun="segments" noListGroup />;
         }
@@ -144,7 +124,7 @@ class Schema extends React.Component {
                         bsStyle="primary"
                         icon="plus-square"
                         onClick={this.handleAddNew}
-                        style={{marginBottom: "10px"}}
+                        style={{ marginBottom: "10px" }}
                         block
                     >
                         &nbsp;Add Segment
@@ -153,7 +133,7 @@ class Schema extends React.Component {
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
-                        {(provided) => (
+                        {provided => (
                             <div ref={provided.innerRef}>
                                 {segments}
                                 {provided.placeholder}
@@ -162,11 +142,7 @@ class Schema extends React.Component {
                     </Droppable>
                 </DragDropContext>
 
-                <AddSegment
-                    show={this.state.showAdd}
-                    onHide={this.handleClose}
-                    onSubmit={this.handleSubmit}
-                />
+                <AddSegment show={this.state.showAdd} onHide={this.handleClose} onSubmit={this.handleSubmit} />
                 <EditSegment
                     show={this.state.showEdit}
                     onHide={this.handleClose}
@@ -184,17 +160,20 @@ class Schema extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     schema: state.otus.detail.schema,
     detail: state.otus.detail,
     otuId: state.otus.detail.id,
     isRemote: state.references.detail.remotes_from
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
     onSave: (otuId, name, abbreviation, schema) => {
         dispatch(editOTU(otuId, name, abbreviation, schema));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Schema);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Schema);

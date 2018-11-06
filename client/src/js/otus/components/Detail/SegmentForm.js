@@ -6,8 +6,7 @@ import { map } from "lodash-es";
 import { InputError, Checkbox } from "../../../base";
 
 class SegmentForm extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
 
         this.state = {
@@ -17,7 +16,7 @@ class SegmentForm extends React.Component {
         };
     }
 
-    static getDerivedStateFromProps (nextProps) {
+    static getDerivedStateFromProps(nextProps) {
         if (nextProps.errors && nextProps.errors.EDIT_OTU_ERROR) {
             return { error: nextProps.errors.EDIT_OTU_ERROR.message };
         }
@@ -33,20 +32,20 @@ class SegmentForm extends React.Component {
         };
     }
 
-    changeSegName = (e) => {
+    changeSegName = e => {
         this.props.onChange({
             ...this.props.newEntry,
             name: e.target.value
         });
-        this.setState({error: ""});
+        this.setState({ error: "" });
     };
 
-    changeMolType = (e) => {
+    changeMolType = e => {
         this.props.onChange({
             ...this.props.newEntry,
             molecule: e.target.value
         });
-        this.setState({error: ""});
+        this.setState({ error: "" });
     };
 
     toggleCheck = () => {
@@ -54,26 +53,17 @@ class SegmentForm extends React.Component {
             ...this.props.newEntry,
             required: !this.state.isChecked
         });
-        this.setState({isChecked: !this.state.isChecked, error: ""});
+        this.setState({ isChecked: !this.state.isChecked, error: "" });
     };
 
-    render () {
+    render() {
+        const moleculeTypes = ["", "ssDNA", "dsDNA", "ssRNA+", "ssRNA-", "ssRNA", "dsRNA"];
 
-        const moleculeTypes = [
-            "",
-            "ssDNA",
-            "dsDNA",
-            "ssRNA+",
-            "ssRNA-",
-            "ssRNA",
-            "dsRNA"
-        ];
-
-        const molecules = map(moleculeTypes, (molecule) =>
+        const molecules = map(moleculeTypes, molecule => (
             <option key={molecule} value={molecule}>
                 {molecule || "None"}
             </option>
-        );
+        ));
 
         return (
             <div>
@@ -122,4 +112,7 @@ const mapStateToProps = state => ({
     errors: state.errors
 });
 
-export default connect(mapStateToProps, null)(SegmentForm);
+export default connect(
+    mapStateToProps,
+    null
+)(SegmentForm);

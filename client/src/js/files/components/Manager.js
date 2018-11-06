@@ -1,52 +1,31 @@
 import React from "react";
-import { capitalize, forEach, isEqual } from "lodash-es";
+import { capitalize, forEach } from "lodash-es";
 import { connect } from "react-redux";
 
-import File from "./File";
-import { listFiles, upload } from "../actions";
+import { findFiles, upload } from "../actions";
 import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
-import { createRandomString, checkAdminOrPermission } from "../../utils";
-import { filesSelector } from "../../listSelectors";
+import { createRandomString, checkAdminOrPermission } from "../../utils/utils";
+import { filesSelector } from "../selectors";
+import File from "./File";
 
 class FileManager extends React.Component {
-
-    componentDidMount () {
-        if (!this.props.fetched || (this.props.fileType !== this.props.storedFileType)) {
-            this.handlePage(1);
-        }
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.fileType, this.props.term, 1);
     }
 
-    shouldComponentUpdate (nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents)
-            || !isEqual(nextProps.isLoading, this.props.isLoading)
-            || !isEqual(nextProps.total_count, this.props.total_count)
-        );
-    }
-
-    handleDrop = (acceptedFiles) => {
+    handleDrop = acceptedFiles => {
         if (this.props.canUpload) {
             this.props.onDrop(this.props.fileType, acceptedFiles);
         }
     };
 
-    handlePage = (page) => {
-        this.props.onList(this.props.fileType, page);
-    };
+    renderRow = index => <File key={index} index={index} canRemove={this.props.canRemove} />;
 
-    rowRenderer = (index) => (
-        <File
-            key={index}
-            index={index}
-            canRemove={this.props.canRemove}
-        />
-    );
-
-    render () {
-
-        if (this.props.documents === null ||
-            (this.props.storedFileType &&
-                this.props.fileType !== this.props.storedFileType)) {
+    render() {
+        if (
+            this.props.documents === null ||
+            (this.props.storedFileType && this.props.fileType !== this.props.storedFileType)
+        ) {
             return <LoadingPlaceholder />;
         }
 
@@ -55,9 +34,7 @@ class FileManager extends React.Component {
         let toolbar;
 
         if (this.props.canUpload) {
-            toolbar = (
-                <UploadBar onDrop={this.handleDrop} />
-            );
+            toolbar = <UploadBar onDrop={this.handleDrop} />;
         } else {
             toolbar = (
                 <Alert bsStyle="warning" icon="exclamation-circle">
@@ -69,41 +46,26 @@ class FileManager extends React.Component {
 
         return (
             <div>
-                <ViewHeader
-                    title={`${titleType} Files`}
-                    totalCount={this.props.total_count}
-                />
+                <ViewHeader title={`${titleType} Files`} totalCount={this.props.total_count} />
 
                 {toolbar}
 
                 {this.props.documents.length ? null : <NoneFound noun="files" />}
 
                 <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.props.documents}
-                    refetchPage={this.props.refetchPage}
-                    loadNextPage={this.handlePage}
+                    documents={this.props.documents}
+                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.fileType, this.props.term, page)}
                     page={this.props.page}
-                    rowRenderer={this.rowRenderer}
+                    pageCount={this.props.page_count}
+                    renderRow={this.renderRow}
                 />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    const {
-        found_count,
-        page,
-        page_count,
-        total_count,
-        fetched,
-        errorLoad,
-        isLoading,
-        refetchPage
-    } = state.files;
+const mapStateToProps = state => {
+    const { found_count, page, page_count, total_count } = state.files;
 
     return {
         documents: filesSelector(state),
@@ -111,18 +73,13 @@ const mapStateToProps = (state) => {
         page,
         page_count,
         total_count,
-        fetched,
-        errorLoad,
-        isLoading,
-        refetchPage,
-        canUpload: checkAdminOrPermission(state.account.administrator, state.account.permissions, "upload_file"),
-        canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_file"),
+        canUpload: checkAdminOrPermission(state, "upload_file"),
+        canRemove: checkAdminOrPermission(state, "remove_file"),
         storedFileType: state.files.fileType
     };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onDrop: (fileType, acceptedFiles) => {
         forEach(acceptedFiles, file => {
             const localId = createRandomString();
@@ -130,10 +87,12 @@ const mapDispatchToProps = (dispatch) => ({
         });
     },
 
-    onList: (fileType, page = 1) => {
-        dispatch(listFiles(fileType, page));
+    onLoadNextPage: (fileType, term, page = 1) => {
+        dispatch(findFiles(fileType, term, page));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(FileManager);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(FileManager);

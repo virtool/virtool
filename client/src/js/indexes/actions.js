@@ -1,21 +1,21 @@
 import {
     WS_INSERT_INDEX,
     WS_UPDATE_INDEX,
-    LIST_INDEXES,
+    FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
     LIST_READY_INDEXES,
     WS_INSERT_HISTORY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertHistory = (data) => ({
+export const wsInsertHistory = data => ({
     type: WS_INSERT_HISTORY,
     data
 });
 
-export const wsInsertIndex = (data) => ({
+export const wsInsertIndex = data => ({
     type: WS_INSERT_INDEX,
     data
 });
@@ -27,7 +27,7 @@ export const wsInsertIndex = (data) => ({
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateIndex = (data) => ({
+export const wsUpdateIndex = data => ({
     type: WS_UPDATE_INDEX,
     data
 });
@@ -38,9 +38,10 @@ export const wsUpdateIndex = (data) => ({
  * @func
  * @returns {object}
  */
-export const listIndexes = (refId, page) => ({
-    type: LIST_INDEXES.REQUESTED,
+export const findIndexes = (refId, term, page) => ({
+    type: FIND_INDEXES.REQUESTED,
     refId,
+    term,
     page
 });
 
@@ -61,7 +62,7 @@ export const listReadyIndexes = () => ({
  * @param indexId {string} the unique index id.
  * @returns {object}
  */
-export const getIndex = (indexId) => ({
+export const getIndex = indexId => ({
     type: GET_INDEX.REQUESTED,
     indexId
 });
@@ -72,11 +73,10 @@ export const getIndex = (indexId) => ({
  * @func
  * @returns {object}
  */
-export const getUnbuilt = (refId) => ({
+export const getUnbuilt = refId => ({
     type: GET_UNBUILT.REQUESTED,
     refId
 });
-
 
 /**
  * Returns action that can trigger an API call for creating a new OTU index.
@@ -84,7 +84,7 @@ export const getUnbuilt = (refId) => ({
  * @func
  * @returns {object}
  */
-export const createIndex = (refId) => ({
+export const createIndex = refId => ({
     type: CREATE_INDEX.REQUESTED,
     refId
 });

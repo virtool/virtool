@@ -1,13 +1,13 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
-import { map } from "lodash-es";
-import { Button, NoneFound } from "../../../base";
-
-import MemberEntry from "./MemberEntry";
-import UserList from "./UserList";
+import { connect } from "react-redux";
+import { ListGroup, Modal } from "react-bootstrap";
+import { filter, includes, map } from "lodash-es";
+import { Identicon, ListGroupItem, NoneFound } from "../../../base";
+import { listGroups } from "../../../groups/actions";
+import { findUsers } from "../../../users/actions";
+import { addReferenceGroup, addReferenceUser } from "../../actions";
 
 const getInitialState = () => ({
-    selected: "",
     id: "",
     build: false,
     modify: false,
@@ -15,9 +15,15 @@ const getInitialState = () => ({
     remove: false
 });
 
-export default class AddReferenceMember extends React.Component {
+const AddMemberItem = ({ id, identicon, onClick }) => (
+    <ListGroupItem onClick={onClick}>
+        {identicon ? <Identicon size={24} hash={identicon} /> : null}
+        {id}
+    </ListGroupItem>
+);
 
-    constructor (props) {
+export class AddReferenceMember extends React.Component {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
@@ -27,98 +33,84 @@ export default class AddReferenceMember extends React.Component {
             id,
             [key]: value
         });
-    }
+    };
+
+    handleAdd = id => {
+        this.props.onAdd(this.props.refId, id);
+    };
 
     handleSubmit = () => {
-        if (!this.state.id.length) {
-            return;
+        if (this.state.id.length) {
+            const idType = this.props.noun === "users" ? "user_id" : "group_id";
+            this.props.onAdd({ ...this.state }, idType);
         }
-        const idType = (this.props.noun === "users") ? "user_id" : "group_id";
-        this.props.onAdd({...this.state}, idType);
-    }
+    };
+
+    handleEnter = () => {
+        this.props.onList();
+    };
 
     handleExited = () => {
         this.props.onHide();
         this.setState(getInitialState());
-    }
-
-    toggleMember = (member) => {
-        if (this.state.selected !== member || !this.state.selected) {
-            this.setState({ ...getInitialState(), selected: member });
-        } else {
-            this.setState(getInitialState());
-        }
     };
 
-    render () {
+    render() {
+        let addMemberComponents;
 
-        const modalStyle = this.props.list.length ? {height: "300px", overflowY: "auto"} : null;
-        let listComponents = <NoneFound noun={this.props.noun} style={{margin: "0"}} />;
-        let content;
-
-        if (this.props.noun === "users") {
-            content = this.props.list.length ? (
-                <UserList
-                    documents={this.props.list}
-                    onEdit={this.handleChange}
-                    onToggleSelect={this.toggleMember}
-                    selected={this.state.selected}
-                    permissions={{
-                        build: this.state.build,
-                        modify: this.state.modify,
-                        modify_otu: this.state.modify_otu,
-                        remove: this.state.remove
-                    }}
-                />
-            ) : (
-                <Modal.Body style={modalStyle}>
-                    {listComponents}
-                </Modal.Body>
-            );
+        if (this.props.documents.length) {
+            addMemberComponents = map(this.props.documents, document => (
+                <AddMemberItem key={document.id} {...document} onClick={() => this.handleAdd(document.id)} />
+            ));
         } else {
-            listComponents = this.props.list.length ? map(this.props.list, member =>
-                <MemberEntry
-                    key={member.id}
-                    onEdit={this.handleChange}
-                    onToggleSelect={this.toggleMember}
-                    add={this.state.selected === member.id}
-                    id={member.id}
-                    identicon={member.identicon}
-                    permissions={this.state.selected === member.id
-                        ? {
-                            build: this.state.build,
-                            modify: this.state.modify,
-                            modify_otu: this.state.modify_otu,
-                            remove: this.state.remove
-                        }
-                        : {
-                            build: member.build,
-                            modify: member.modify,
-                            modify_otu: member.modify_otu,
-                            remove: member.remove
-                        }}
-                    isSelected={this.state.selected === member.id}
-                />) : listComponents;
-
-            content = (
-                <Modal.Body style={modalStyle}>
-                    {listComponents}
-                </Modal.Body>
-            );
+            addMemberComponents = <NoneFound noun={this.props.noun} />;
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.handleExited} onExit={this.handleExited}>
+            <Modal
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEnter={this.handleEnter}
+                onExited={this.handleExited}
+            >
                 <Modal.Header closeButton>
                     <span className="text-capitalize">Add {this.props.noun}</span>
                 </Modal.Header>
-                {content}
-                <Modal.Footer>
-                    <Button bsStyle="primary" onClick={this.handleSubmit} >
-                        Add
-                    </Button>
-                </Modal.Footer>
+                <ListGroup>{addMemberComponents}</ListGroup>
             </Modal>
         );
     }
 }
+
+const mapStateToProps = (state, ownProps) => {
+    const noun = ownProps.noun;
+
+    const members = noun === "users" ? state.references.detail.users : state.references.detail.groups;
+    const memberIds = map(members, "id");
+
+    const documents = map(noun === "users" ? state.users.documents : state.groups.documents);
+
+    return {
+        refId: state.references.detail.id,
+        documents: filter(documents, document => !includes(memberIds, document.id))
+    };
+};
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+    onAdd: (refId, id) => {
+        const actionCreator = ownProps.noun === "users" ? addReferenceUser : addReferenceGroup;
+        dispatch(actionCreator(refId, id));
+    },
+    onList: () => {
+        if (ownProps.noun === "users") {
+            dispatch(findUsers("", 1));
+        } else {
+            dispatch(listGroups());
+        }
+    }
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AddReferenceMember);

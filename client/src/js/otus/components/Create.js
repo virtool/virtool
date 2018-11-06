@@ -4,11 +4,11 @@ import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import { get } from "lodash-es";
-import OTUForm from "./OTUForm";
 import { createOTU } from "../actions";
 import { clearError } from "../../errors/actions";
-import { getNextState } from "../otusUtils";
-import { getTargetChange } from "../../utils";
+import { getNextState } from "../utils";
+import { getTargetChange } from "../../utils/utils";
+import OTUForm from "./OTUForm";
 
 const getInitialState = () => ({
     name: "",
@@ -19,17 +19,16 @@ const getInitialState = () => ({
 });
 
 class CreateOTU extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         return getNextState(prevState.error, nextProps.error);
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({ [name]: value, [error]: "" });
@@ -51,7 +50,7 @@ class CreateOTU extends React.Component {
         }
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name) {
@@ -63,11 +62,9 @@ class CreateOTU extends React.Component {
         if (!this.state.errorName || !this.state.errorAbbreviation) {
             this.props.onSubmit(this.props.refId, this.state.name, this.state.abbreviation);
         }
-
     };
 
-    render () {
-
+    render() {
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -94,19 +91,22 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onSubmit: (refId, name, abbreviation) => {
         dispatch(createOTU(refId, name, abbreviation));
     },
 
     onHide: ({ location }) => {
-        dispatch(push({...location, state: {createOTU: false}}));
+        dispatch(push({ ...location, state: { createOTU: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateOTU));
+export default withRouter(
+    connect(
+        mapStateToProps,
+        mapDispatchToProps
+    )(CreateOTU)
+);

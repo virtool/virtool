@@ -4,8 +4,7 @@ import { forEach, reduce } from "lodash-es";
 import NuVsExport from "./Export";
 import NuVsList from "./List";
 
-const NuVsViewer = (props) => {
-
+const NuVsViewer = props => {
     // The length of the longest sequence will be stored here.
     let maxSequenceLength = 0;
 
@@ -17,19 +16,27 @@ const NuVsViewer = (props) => {
             return;
         }
 
-        const minE = reduce(result.orfs, (result, orf) => {
-            const orfMinE = reduce(orf.hits, (result, hit) => {
-                if (hit.full_e < result) {
-                    return hit.full_e;
+        const minE = reduce(
+            result.orfs,
+            (result, orf) => {
+                const orfMinE = reduce(
+                    orf.hits,
+                    (result, hit) => {
+                        if (hit.full_e < result) {
+                            return hit.full_e;
+                        }
+                    },
+                    10
+                );
+
+                if (orfMinE < result) {
+                    return orfMinE;
                 }
-            }, 10);
 
-            if (orfMinE < result) {
-                return orfMinE;
-            }
-
-            return result;
-        }, 10);
+                return result;
+            },
+            10
+        );
 
         // Don't include if there are no significant ORFs
         if (minE > 1e-10) {
@@ -53,14 +60,10 @@ const NuVsViewer = (props) => {
                 sampleName={props.sample.name}
                 analysisId={props.id}
                 results={sequences}
-                onHide={() => props.history.push({state: {export: false}})}
+                onHide={() => props.history.push({ state: { export: false } })}
             />
 
-            <NuVsList
-                data={sequences}
-                analysisId={props.id}
-                maxSequenceLength={maxSequenceLength}
-            />
+            <NuVsList data={sequences} analysisId={props.id} maxSequenceLength={maxSequenceLength} />
         </div>
     );
 };

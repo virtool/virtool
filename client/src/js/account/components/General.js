@@ -8,22 +8,21 @@ import ChangePassword from "./Password";
 import Email from "./Email";
 
 export const AccountGeneral = ({ id, groups, hash, isAdmin }) => {
-
-    const groupLabels = map(groups, groupId =>
-        <Label key={groupId} style={{marginRight: "3px"}}>
+    const groupLabels = map(groups, groupId => (
+        <Label key={groupId} style={{ marginRight: "3px" }}>
             {capitalize(groupId)}
         </Label>
-    );
+    ));
 
     const adminLabel = (
-        <Label key="virtool-admin" bsStyle="primary" style={{marginRight: "3px"}}>
+        <Label key="virtool-admin" bsStyle="primary" style={{ marginRight: "3px" }}>
             Administrator
         </Label>
     );
 
     return (
         <div>
-            <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
+            <Flex alignItems="stretch" style={{ marginBottom: "15px" }}>
                 <FlexItem>
                     <Identicon hash={hash} />
                 </FlexItem>
@@ -46,7 +45,7 @@ export const AccountGeneral = ({ id, groups, hash, isAdmin }) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     id: state.account.id,
     hash: state.account.identicon,
     groups: state.account.groups,

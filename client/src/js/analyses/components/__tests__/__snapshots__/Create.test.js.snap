@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateAnalysis /> renders correctly 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    New Analysis
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <AlgorithmSelect
+        hasHmm={false}
+        onChange={[Function]}
+        value="pathoscope_bowtie"
+      />
+      <IndexSelect
+        error=""
+        onSelect={[Function]}
+        selected={Array []}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <MultiSummary
+        algorithm="pathoscope_bowtie"
+        samples={null}
+        selected={Array []}
+      />
+      <Button
+        bsStyle="primary"
+        disabled={false}
+        icon="play"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Start
+      </Button>
+    </ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateAnalysis /> renders correctly 2`] = `null`;
+
+exports[`<CreateAnalysis /> renders correctly 3`] = `null`;
+
+exports[`<CreateAnalysis /> renders correctly 4`] = `null`;

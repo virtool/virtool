@@ -11,11 +11,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Table, Label, Collapse } from "react-bootstrap";
 import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
-import { followDownload } from "../../../utils";
+import { followDownload } from "../../../utils/utils";
 
 class Sequence extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
             in: false
@@ -34,7 +33,7 @@ class Sequence extends React.Component {
     };
 
     handleCloseClick = () => {
-        this.setState({in: false});
+        this.setState({ in: false });
     };
 
     handleDownload = () => {
@@ -49,8 +48,7 @@ class Sequence extends React.Component {
         this.props.showRemoveSequence(this.props.id);
     };
 
-    render () {
-
+    render() {
         const accession = this.props.accession;
         const id = this.props.id;
 
@@ -81,11 +79,7 @@ class Sequence extends React.Component {
                             </FlexItem>
                         ) : null}
                         <FlexItem grow={0} shrink={0} pad={3}>
-                            <Icon
-                                name="download"
-                                tip="Download FASTA"
-                                onClick={this.handleDownload}
-                            />
+                            <Icon name="download" tip="Download FASTA" onClick={this.handleDownload} />
                         </FlexItem>
                         <FlexItem pad={5}>
                             <button type="button" className="close" onClick={this.handleCloseClick}>
@@ -102,7 +96,7 @@ class Sequence extends React.Component {
                 className="spaced"
                 componentClass="div"
                 key={id}
-                onClick={this.state.in ? null : () => this.setState({in: true})}
+                onClick={this.state.in ? null : () => this.setState({ in: true })}
             >
                 <div>
                     <Flex alignItems="center">
@@ -118,7 +112,7 @@ class Sequence extends React.Component {
 
                 <Collapse in={this.state.in}>
                     <div>
-                        <Table style={{marginTop: "10px"}} bordered>
+                        <Table style={{ marginTop: "10px" }} bordered>
                             <tbody>
                                 <tr>
                                     <th>Accession</th>
@@ -135,11 +129,7 @@ class Sequence extends React.Component {
                                 <tr>
                                     <th>Sequence</th>
                                     <td className="sequence-cell">
-                                        <textarea
-                                            rows="5"
-                                            value={this.props.sequence}
-                                            readOnly
-                                        />
+                                        <textarea rows="5" value={this.props.sequence} readOnly />
                                     </td>
                                 </tr>
                             </tbody>

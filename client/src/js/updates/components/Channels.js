@@ -5,15 +5,12 @@ import { connect } from "react-redux";
 import { updateSetting } from "../../administration/actions";
 import { Radio } from "../../base";
 
-
 export class ChannelButton extends React.Component {
-
     handleClick = () => {
         this.props.onClick(this.props.channel);
     };
 
-    render () {
-
+    render() {
         const { channel, checked } = this.props;
 
         return (
@@ -26,17 +23,10 @@ export class ChannelButton extends React.Component {
     }
 }
 
-
 export const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
-
-    const radioComponents = map(["stable", "beta", "alpha"], label =>
-        <ChannelButton
-            key={label}
-            channel={label}
-            checked={label === channel}
-            onClick={onSetSoftwareChannel}
-        />
-    );
+    const radioComponents = map(["stable", "beta", "alpha"], label => (
+        <ChannelButton key={label} channel={label} checked={label === channel} onClick={onSetSoftwareChannel} />
+    ));
 
     return (
         <Panel>
@@ -48,16 +38,17 @@ export const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     channel: state.settings.data.software_channel
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onSetSoftwareChannel: (value) => {
+const mapDispatchToProps = dispatch => ({
+    onSetSoftwareChannel: value => {
         dispatch(updateSetting("software_channel", value));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SoftwareChannels);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SoftwareChannels);

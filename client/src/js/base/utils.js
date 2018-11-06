@@ -9,11 +9,4 @@
  *
  * @type object
  */
-export const bsStyles = [
-    "primary",
-    "success",
-    "danger",
-    "warning",
-    "info",
-    "default"
-];
+export const bsStyles = ["primary", "success", "danger", "warning", "info", "default"];

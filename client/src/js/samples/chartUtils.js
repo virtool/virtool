@@ -14,13 +14,17 @@ const margin = {
 };
 
 export const appendLegend = (svg, width, series) => {
-
     const legendScale = scaleOrdinal()
         .domain(map(series, "label"))
         .range(map(series, "color"));
 
     const legend = legendColor()
-        .shape("path", symbol().type(symbolSquare).size(150)())
+        .shape(
+            "path",
+            symbol()
+                .type(symbolSquare)
+                .size(150)()
+        )
         .shapePadding(10)
         .scale(legendScale);
 
@@ -31,10 +35,9 @@ export const appendLegend = (svg, width, series) => {
         .call(legend);
 };
 
-
 export const createSVG = (element, width) => {
-
-    const svg = select(element).append("svg")
+    const svg = select(element)
+        .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")

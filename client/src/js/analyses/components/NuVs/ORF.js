@@ -7,7 +7,6 @@ import { Flex, FlexItem } from "../../../base/index";
 const HEIGHT = 8;
 
 export default class NuVsORF extends React.Component {
-
     static propTypes = {
         hits: PropTypes.arrayOf(PropTypes.object),
         maxSequenceLength: PropTypes.number,
@@ -15,12 +14,11 @@ export default class NuVsORF extends React.Component {
         strand: PropTypes.number
     };
 
-    componentDidMount () {
+    componentDidMount() {
         this.draw();
     }
 
     draw = () => {
-
         const element = this.containerNode;
 
         element.innerHTML = "";
@@ -28,13 +26,13 @@ export default class NuVsORF extends React.Component {
         const width = element.offsetWidth - 30;
 
         // Construct the SVG canvas.
-        const svg = select(element).append("svg")
+        const svg = select(element)
+            .append("svg")
             .attr("width", width + 30)
             .attr("height", HEIGHT);
 
         // Create a mother group that will hold all chart elements.
-        const group = svg.append("g")
-            .attr("transform", "translate(15,0)");
+        const group = svg.append("g").attr("transform", "translate(15,0)");
 
         // Set-up a y-axis that will appear at the top of the chart.
         const x = scaleLinear()
@@ -55,13 +53,13 @@ export default class NuVsORF extends React.Component {
             `L${x0},${yBase - 2}`
         ].join(" ");
 
-        group.append("path")
+        group
+            .append("path")
             .attr("d", d)
             .attr("stroke-width", 1);
     };
 
-    render () {
-
+    render() {
         const hmm = this.props.hits[0];
 
         let label;
@@ -73,34 +71,24 @@ export default class NuVsORF extends React.Component {
                 </a>
             );
         } else {
-            label = (
-                <span>
-                    Unannotated
-                </span>
-            );
+            label = <span>Unannotated</span>;
         }
 
         return (
             <div className="nuvs-item">
                 <div className="nuvs-item-header">
                     <Flex>
-                        <FlexItem>
-                            {label}
+                        <FlexItem>{label}</FlexItem>
+                        <FlexItem pad={5}>
+                            <small className="text-primary text-strong">{this.props.pos[1] - this.props.pos[0]}</small>
                         </FlexItem>
                         <FlexItem pad={5}>
-                            <small className="text-primary text-strong">
-                                {this.props.pos[1] - this.props.pos[0]}
-                            </small>
-                        </FlexItem>
-                        <FlexItem pad={5}>
-                            <small className="text-danger text-strong">
-                                {hmm ? hmm.best_e : null}
-                            </small>
+                            <small className="text-danger text-strong">{hmm ? hmm.best_e : null}</small>
                         </FlexItem>
                     </Flex>
                 </div>
 
-                <div ref={(node) => this.containerNode = node} />
+                <div ref={node => (this.containerNode = node)} />
             </div>
         );
     }

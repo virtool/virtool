@@ -1,17 +1,24 @@
 import React from "react";
-import SequenceField from "./SequenceField";
 import { Row, Col, Modal } from "react-bootstrap";
 import { map, concat } from "lodash-es";
 import { SaveButton, InputError } from "../../../base";
+import SequenceField from "./SequenceField";
 
-const SegmentForm = (props) => {
-
-    const defaultOption = <option key="None" value=""> - None - </option>;
-    const segmentNames = concat(defaultOption, map(props.schema, (segment) => (
-        <option key={segment} value={segment}>
-            {segment}
+const SegmentForm = props => {
+    const defaultOption = (
+        <option key="None" value="">
+            {" "}
+            - None -{" "}
         </option>
-    )));
+    );
+    const segmentNames = concat(
+        defaultOption,
+        map(props.schema, segment => (
+            <option key={segment} value={segment}>
+                {segment}
+            </option>
+        ))
+    );
 
     return (
         <React.Fragment>
@@ -35,12 +42,7 @@ const SegmentForm = (props) => {
                     </Row>
                     <Row>
                         <Col xs={12}>
-                            <InputError
-                                label="Host"
-                                name="host"
-                                value={props.host}
-                                onChange={props.handleChange}
-                            />
+                            <InputError label="Host" name="host" value={props.host} onChange={props.handleChange} />
                         </Col>
                     </Row>
                     <Row>

@@ -8,8 +8,7 @@ import PropTypes from "prop-types";
 import { replace } from "lodash-es";
 import { Table, Well } from "react-bootstrap";
 
-export default function NuVsExportPreview ({ mode }) {
-
+export default function NuVsExportPreview({ mode }) {
     let previewHeader = ">sequence_1|17SP002|RNA Polymerase";
     let previewSequence;
     let indexName;
@@ -41,11 +40,14 @@ export default function NuVsExportPreview ({ mode }) {
         <div>
             <label>Preview</label>
             <Well className="text-muted">
-                <p style={{wordWrap: "break-word", marginBottom: 0}}>
+                <p style={{ wordWrap: "break-word", marginBottom: 0 }}>
                     <code>{previewHeader}</code>
                 </p>
-                <p style={{wordWrap: "break-word"}}>
-                    <code>{previewSequence}&hellip;</code>
+                <p style={{ wordWrap: "break-word" }}>
+                    <code>
+                        {previewSequence}
+                        &hellip;
+                    </code>
                 </p>
             </Well>
 
@@ -60,15 +62,21 @@ export default function NuVsExportPreview ({ mode }) {
                 <tbody>
                     <tr>
                         <td>{indexName}</td>
-                        <td><code>{indexExample}</code></td>
+                        <td>
+                            <code>{indexExample}</code>
+                        </td>
                     </tr>
                     <tr>
                         <td>sample name</td>
-                        <td><code>17SP002</code></td>
+                        <td>
+                            <code>17SP002</code>
+                        </td>
                     </tr>
                     <tr>
                         <td>{barName}</td>
-                        <td><code>{barExample}</code></td>
+                        <td>
+                            <code>{barExample}</code>
+                        </td>
                     </tr>
                 </tbody>
             </Table>

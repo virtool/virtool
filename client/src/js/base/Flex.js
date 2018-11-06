@@ -9,8 +9,7 @@ import { join } from "lodash-es";
 /**
  * A configurable component that acts as a flex container.
  */
-export function Flex (props) {
-
+export function Flex(props) {
     const { alignContent, alignItems, children, className, direction, justifyContent, wrap } = props;
 
     let style = {
@@ -22,7 +21,7 @@ export function Flex (props) {
     };
 
     if (props.style) {
-        style = {...style, ...props.style};
+        style = { ...style, ...props.style };
     }
 
     return (
@@ -33,41 +32,13 @@ export function Flex (props) {
 }
 
 Flex.propTypes = {
-    direction: PropTypes.oneOf([
-        "row",
-        "row-reverse",
-        "column",
-        "column-reverse"
-    ]),
-    wrap: PropTypes.oneOf([
-        "nowrap",
-        "wrap",
-        "wrap-reverse"
-    ]),
-    justifyContent: PropTypes.oneOf([
-        "flex-start",
-        "flex-end",
-        "center",
-        "space-between",
-        "space-around"
-    ]),
+    direction: PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
+    wrap: PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
+    justifyContent: PropTypes.oneOf(["flex-start", "flex-end", "center", "space-between", "space-around"]),
 
-    alignItems: PropTypes.oneOf([
-        "flex-start",
-        "flex-end",
-        "center",
-        "stretch",
-        "baseline"
-    ]),
+    alignItems: PropTypes.oneOf(["flex-start", "flex-end", "center", "stretch", "baseline"]),
 
-    alignContent: PropTypes.oneOf([
-        "flex-start",
-        "flex-end",
-        "center",
-        "stretch",
-        "space-between",
-        "space-around"
-    ]),
+    alignContent: PropTypes.oneOf(["flex-start", "flex-end", "center", "stretch", "space-between", "space-around"]),
     children: PropTypes.node.isRequired,
     className: PropTypes.string,
     style: PropTypes.object
@@ -82,29 +53,15 @@ Flex.defaultProps = {
 };
 
 export class FlexItem extends React.Component {
-
     static propTypes = {
         grow: PropTypes.number,
         shrink: PropTypes.number,
         style: PropTypes.object,
         className: PropTypes.string,
         children: PropTypes.node,
-        basis: PropTypes.oneOfType([
-            PropTypes.string,
-            PropTypes.number
-        ]),
-        alignSelf: PropTypes.oneOf([
-            "auto",
-            "flex-start",
-            "flex-end",
-            "center",
-            "baseline",
-            "stretch"
-        ]),
-        pad: PropTypes.oneOfType([
-            PropTypes.bool,
-            PropTypes.number
-        ])
+        basis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        alignSelf: PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
+        pad: PropTypes.oneOfType([PropTypes.bool, PropTypes.number])
     };
 
     static defaultProps = {
@@ -114,8 +71,7 @@ export class FlexItem extends React.Component {
         alignSelf: null
     };
 
-    render () {
-
+    render() {
         let style = {
             flex: join([this.props.grow, this.props.shrink, this.props.basis], " "),
             alignSelf: this.props.alignSelf
@@ -126,7 +82,7 @@ export class FlexItem extends React.Component {
         }
 
         if (this.props.style) {
-            style = {...style, ...this.props.style};
+            style = { ...style, ...this.props.style };
         }
 
         return (
@@ -135,5 +91,4 @@ export class FlexItem extends React.Component {
             </div>
         );
     }
-
 }

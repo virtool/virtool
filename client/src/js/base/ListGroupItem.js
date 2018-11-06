@@ -8,7 +8,6 @@ import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
  * ListGroupItem from taking focus, even when clicked. *
  */
 export class ListGroupItem extends React.Component {
-
     static propTypes = {
         allowFocus: PropTypes.bool,
         children: PropTypes.node.isRequired
@@ -18,12 +17,11 @@ export class ListGroupItem extends React.Component {
         allowFocus: false
     };
 
-    handleFocus = (e) => {
+    handleFocus = e => {
         e.target.blur();
     };
 
-    render () {
-
+    render() {
         const props = pick(this.props, [
             "active",
             "style",

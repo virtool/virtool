@@ -2,37 +2,32 @@ import {
     WS_INSERT_SUBTRACTION,
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
-    LIST_SUBTRACTIONS,
-    FILTER_SUBTRACTIONS,
     GET_SUBTRACTION,
     UPDATE_SUBTRACTION,
     CREATE_SUBTRACTION,
-    REMOVE_SUBTRACTION
-} from "../actionTypes";
+    REMOVE_SUBTRACTION,
+    FIND_SUBTRACTIONS
+} from "../app/actionTypes";
 
-export const wsInsertSubtraction = (data) => ({
+export const wsInsertSubtraction = data => ({
     type: WS_INSERT_SUBTRACTION,
     data
 });
 
-export const wsUpdateSubtraction = (data) => ({
+export const wsUpdateSubtraction = data => ({
     type: WS_UPDATE_SUBTRACTION,
     data
 });
 
-export const wsRemoveSubtraction = (data) => ({
+export const wsRemoveSubtraction = data => ({
     type: WS_REMOVE_SUBTRACTION,
     data
 });
 
-export const listSubtractions = (page) => ({
-    type: LIST_SUBTRACTIONS.REQUESTED,
+export const findSubtractions = (term, page) => ({
+    type: FIND_SUBTRACTIONS.REQUESTED,
+    term,
     page
-});
-
-export const filterSubtractions = (term) => ({
-    type: FILTER_SUBTRACTIONS.REQUESTED,
-    term
 });
 
 /**
@@ -42,7 +37,7 @@ export const filterSubtractions = (term) => ({
  * @param subtractionId {string} unique subtraction id
  * @returns {object}
  */
-export const getSubtraction = (subtractionId) => ({
+export const getSubtraction = subtractionId => ({
     type: GET_SUBTRACTION.REQUESTED,
     subtractionId
 });
@@ -84,7 +79,7 @@ export const updateSubtraction = (subtractionId, nickname) => ({
  * @param subtractionId {string} unique subtraction id
  * @returns {object}
  */
-export const removeSubtraction = (subtractionId) => ({
+export const removeSubtraction = subtractionId => ({
     type: REMOVE_SUBTRACTION.REQUESTED,
     subtractionId
 });

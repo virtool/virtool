@@ -8,16 +8,15 @@ import { connect } from "react-redux";
  * @param id
  * @param showIds
  */
-export const IDRowComponent = ({ id, showIds }) => (
+export const IDRowComponent = ({ id, showIds }) =>
     showIds ? (
         <tr>
             <th>Unique ID</th>
             <td>{id}</td>
         </tr>
-    ) : null
-);
+    ) : null;
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     showIds: state.account.settings.show_ids
 });
 

@@ -17,6 +17,7 @@ import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
+import { Panel } from "./Panel";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveBanner } from "./RemoveBanner";
@@ -47,6 +48,7 @@ export {
     LoadingPlaceholder,
     NoneFound,
     NotFound,
+    Panel,
     ProgressBar,
     Radio,
     RelativeTime,

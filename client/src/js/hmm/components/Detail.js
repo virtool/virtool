@@ -7,30 +7,23 @@ import { IDRow, ListGroupItem, LoadingPlaceholder, ViewHeader, NotFound } from "
 import { getHmm } from "../actions";
 
 const HMMTaxonomy = ({ counts }) => {
+    const sorted = sortBy(map(counts, (count, name) => ({ name, count })), "name");
 
-    const sorted = sortBy(map(counts, (count, name) => ({name, count})), "name");
-
-    const components = map(sorted, entry =>
+    const components = map(sorted, entry => (
         <ListGroupItem key={entry.name}>
             {entry.name} <Badge>{entry.count}</Badge>
         </ListGroupItem>
-    );
+    ));
 
-    return (
-        <ListGroup style={{maxHeight: 210, overflowY: "auto"}}>
-            {components}
-        </ListGroup>
-    );
+    return <ListGroup style={{ maxHeight: 210, overflowY: "auto" }}>{components}</ListGroup>;
 };
 
 class HMMDetail extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet(this.props.match.params.hmmId);
     }
 
-    render () {
-
+    render() {
         if (this.props.error) {
             return <NotFound />;
         }
@@ -39,7 +32,7 @@ class HMMDetail extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) =>
+        const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) => (
             <tr key={index}>
                 <td>
                     <a
@@ -53,13 +46,14 @@ class HMMDetail extends React.Component {
                 <td>{name}</td>
                 <td>{organism}</td>
             </tr>
-        );
+        ));
 
-        const names = map(this.props.detail.names, (name, index) =>
+        const names = map(this.props.detail.names, (name, index) => (
             <span key={index}>
-                <Label>{name}</Label>&nbsp;
+                <Label>{name}</Label>
+                &nbsp;
             </span>
-        );
+        ));
 
         return (
             <div>
@@ -111,9 +105,7 @@ class HMMDetail extends React.Component {
                                 <th>Organism</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {clusterMembers}
-                        </tbody>
+                        <tbody>{clusterMembers}</tbody>
                     </Table>
                 </Panel>
 
@@ -126,9 +118,7 @@ class HMMDetail extends React.Component {
                     </Col>
                     <Col md={6}>
                         <h5>
-                            <strong>
-                                Genera
-                            </strong>
+                            <strong>Genera</strong>
                         </h5>
                         <HMMTaxonomy counts={this.props.detail.genera} />
                     </Col>
@@ -138,17 +128,18 @@ class HMMDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_HMM_ERROR", null),
     detail: state.hmms.detail
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGet: (hmmId) => {
+const mapDispatchToProps = dispatch => ({
+    onGet: hmmId => {
         dispatch(getHmm(hmmId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(HMMDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(HMMDetail);

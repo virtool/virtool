@@ -19,7 +19,11 @@ export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) =>
             Remove {noun}
         </Modal.Header>
         <Modal.Body>
-            {message || (<span>Are you sure you want to remove <strong>{name}</strong>?</span>)}
+            {message || (
+                <span>
+                    Are you sure you want to remove <strong>{name}</strong>?
+                </span>
+            )}
         </Modal.Body>
         <Modal.Footer>
             <Button bsStyle="danger" icon="check" onClick={onConfirm}>

@@ -2,50 +2,55 @@ import React from "react";
 import { Alert, Modal, ListGroup, Col, Badge } from "react-bootstrap";
 import { connect } from "react-redux";
 import { find, map } from "lodash-es";
-import ReferenceForm from "./Form";
 import { SaveButton, ListGroupItem, NoneFound, RelativeTime } from "../../base";
 import { cloneReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
+import ReferenceForm from "./Form";
 
 const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {
-
-    const errorStyle = hasError ? {border: "1px solid #d44b40"} : {border: "1px solid transparent"};
+    const errorStyle = hasError ? { border: "1px solid #d44b40" } : { border: "1px solid transparent" };
 
     return (
         <div>
             <label className="control-label">Source Reference</label>
-            {references.length
-                ? (
-                    <ListGroup style={{maxHeight: "85px", overflowY: "auto", marginBottom: "3px", ...errorStyle}}>
-                        {map(references, reference =>
-                            <ListGroupItem
-                                key={reference.id}
-                                onClick={() => onSelect(reference.id)}
-                                active={selected === reference.id}
-                            >
-                                <Col xs={5}>
-                                    <strong>{reference.name}</strong>
-                                </Col>
-                                <Col xs={6}>
-                                    <span className="text-muted" style={{fontSize: "10px"}}>
-                                        Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
-                                    </span>
-                                </Col>
-                                <Col xs={1}>
-                                    <Badge>{reference.otu_count}</Badge>
-                                </Col>
-                            </ListGroupItem>
-                        )}
-                    </ListGroup>
-                ) : <NoneFound noun="source references" />
-            }
+            {references.length ? (
+                <ListGroup
+                    style={{
+                        maxHeight: "85px",
+                        overflowY: "auto",
+                        marginBottom: "3px",
+                        ...errorStyle
+                    }}
+                >
+                    {map(references, reference => (
+                        <ListGroupItem
+                            key={reference.id}
+                            onClick={() => onSelect(reference.id)}
+                            active={selected === reference.id}
+                        >
+                            <Col xs={5}>
+                                <strong>{reference.name}</strong>
+                            </Col>
+                            <Col xs={6}>
+                                <span className="text-muted" style={{ fontSize: "10px" }}>
+                                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
+                                </span>
+                            </Col>
+                            <Col xs={1}>
+                                <Badge>{reference.otu_count}</Badge>
+                            </Col>
+                        </ListGroupItem>
+                    ))}
+                </ListGroup>
+            ) : (
+                <NoneFound noun="source references" />
+            )}
         </div>
     );
 };
 
 const getInitialState = (refId, refArray) => {
-
     const originalRef = find(refArray, { id: refId });
 
     if (originalRef) {
@@ -74,13 +79,12 @@ const getInitialState = (refId, refArray) => {
 };
 
 class CloneReference extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props.refId, this.props.refDocuments);
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "dataType") {
@@ -100,11 +104,11 @@ class CloneReference extends React.Component {
         }
     };
 
-    handleSelect = (refId) => {
+    handleSelect = refId => {
         this.setState(getInitialState(refId, this.props.refDocuments));
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name.length) {
@@ -128,15 +132,12 @@ class CloneReference extends React.Component {
         );
     };
 
-    render () {
-
+    render() {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Alert bsStyle="info">
-                        <strong>
-                            Clone an existing reference.
-                        </strong>
+                        <strong>Clone an existing reference.</strong>
                     </Alert>
                     <ReferenceSelect
                         references={this.props.refDocuments}
@@ -144,22 +145,15 @@ class CloneReference extends React.Component {
                         selected={this.state.reference}
                         hasError={this.state.errorSelect}
                     />
-                    <ReferenceForm
-                        state={this.state}
-                        onChange={this.handleChange}
-                    />
+                    <ReferenceForm state={this.state} onChange={this.handleChange} />
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <SaveButton
-                        disabled={!this.props.refDocuments.length}
-                        altText="Clone"
-                    />
+                    <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
                 </Modal.Footer>
             </form>
         );
     }
-
 }
 
 const mapStateToProps = state => ({
@@ -168,15 +162,16 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onSubmit: (name, description, dataType, organism, refId) => {
         dispatch(cloneReference(name, description, dataType, organism, refId));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CloneReference);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(CloneReference);

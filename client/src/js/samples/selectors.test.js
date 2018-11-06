@@ -49,5 +49,4 @@ describe("Samples selector helper module", () => {
         result = getCanModify(state);
         expect(result).toEqual(true);
     });
-
 });

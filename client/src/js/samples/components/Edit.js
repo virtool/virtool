@@ -17,20 +17,19 @@ const getInitialState = ({ name, isolate, host, locale }) => ({
 });
 
 class EditSample extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (prevState.error !== nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value } = e.target;
         this.setState({
             [name]: value,
@@ -53,7 +52,7 @@ class EditSample extends React.Component {
         this.props.onHide();
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name) {
@@ -65,8 +64,7 @@ class EditSample extends React.Component {
         this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host", "locale"]));
     };
 
-    render () {
-
+    render() {
         return (
             <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleModalHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -115,7 +113,6 @@ class EditSample extends React.Component {
                                 />
                             </Col>
                         </Row>
-
                     </Modal.Body>
                     <Modal.Footer>
                         <SaveButton />
@@ -126,26 +123,27 @@ class EditSample extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.samples.detail,
     show: get(state.router.location.state, "editSample", false),
     error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({state: {showEdit: false}}));
+        dispatch(push({ state: { showEdit: false } }));
     },
 
     onEdit: (sampleId, update) => {
         dispatch(editSample(sampleId, update));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditSample);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(EditSample);

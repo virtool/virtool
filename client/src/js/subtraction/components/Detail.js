@@ -8,15 +8,14 @@ import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader, NotFound } from "../../base";
+import { checkAdminOrPermission } from "../../utils/utils";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
-import { checkAdminOrPermission } from "../../utils";
 
-const calculateGC = (nucleotides) => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
+const calculateGC = nucleotides => numbro(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 export class SubtractionDetail extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
 
         this.state = {
@@ -24,16 +23,15 @@ export class SubtractionDetail extends React.Component {
         };
     }
 
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet(this.props.match.params.subtractionId);
     }
 
     handleExit = () => {
-        this.setState({showEdit: false});
+        this.setState({ showEdit: false });
     };
 
-    render () {
-
+    render() {
         if (this.props.error) {
             return <NotFound />;
         }
@@ -49,21 +47,15 @@ export class SubtractionDetail extends React.Component {
             let removeIcon;
 
             if (data.linked_samples.length) {
-                const linkedSampleComponents = map(data.linked_samples, sample =>
+                const linkedSampleComponents = map(data.linked_samples, sample => (
                     <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
                         <LinkContainer to={`/samples/${sample.id}`}>
-                            <Button block>
-                                {sample.name}
-                            </Button>
+                            <Button block>{sample.name}</Button>
                         </LinkContainer>
                     </Col>
-                );
+                ));
 
-                linkedSamples = (
-                    <Row>
-                        {linkedSampleComponents}
-                    </Row>
-                );
+                linkedSamples = <Row>{linkedSampleComponents}</Row>;
 
                 removeIcon = <div />;
             } else {
@@ -74,19 +66,14 @@ export class SubtractionDetail extends React.Component {
                         name="trash"
                         bsStyle="danger"
                         onClick={this.props.onShowRemove}
-                        style={{paddingLeft: "5px"}}
+                        style={{ paddingLeft: "5px" }}
                         pullRight
                     />
                 );
             }
 
             const editIcon = (
-                <Icon
-                    name="pencil-alt"
-                    bsStyle="warning"
-                    onClick={() => this.setState({showEdit: true})}
-                    pullRight
-                />
+                <Icon name="pencil-alt" bsStyle="warning" onClick={() => this.setState({ showEdit: true })} pullRight />
             );
 
             return (
@@ -99,12 +86,8 @@ export class SubtractionDetail extends React.Component {
                             <FlexItem grow={1} shrink={0}>
                                 {this.props.canModify ? (
                                     <React.Fragment>
-                                        <small>
-                                            {removeIcon}
-                                        </small>
-                                        <small>
-                                            {editIcon}
-                                        </small>
+                                        <small>{removeIcon}</small>
+                                        <small>{editIcon}</small>
                                     </React.Fragment>
                                 ) : null}
                             </FlexItem>
@@ -136,11 +119,7 @@ export class SubtractionDetail extends React.Component {
 
                     {linkedSamples}
 
-                    <EditSubtraction
-                        show={this.state.showEdit}
-                        entry={this.props.detail}
-                        exited={this.handleExit}
-                    />
+                    <EditSubtraction show={this.state.showEdit} entry={this.props.detail} exited={this.handleExit} />
                     <RemoveSubtraction id={data.id} />
                 </div>
             );
@@ -150,22 +129,23 @@ export class SubtractionDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_SUBTRACTION_ERROR", null),
-    canModify: checkAdminOrPermission(state.account.administrator, state.account.permissions, "modify_subtraction"),
+    canModify: checkAdminOrPermission(state, "modify_subtraction"),
     detail: state.subtraction.detail
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGet: (subtractionId) => {
+const mapDispatchToProps = dispatch => ({
+    onGet: subtractionId => {
         dispatch(getSubtraction(subtractionId));
     },
 
     onShowRemove: () => {
-        dispatch(push({state: {removeSubtraction: true}}));
+        dispatch(push({ state: { removeSubtraction: true } }));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SubtractionDetail);

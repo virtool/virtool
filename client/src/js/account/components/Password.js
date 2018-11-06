@@ -6,9 +6,9 @@ import { Col, Panel, Row } from "react-bootstrap";
 import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
 import { SaveButton, InputError, RelativeTime } from "../../base";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -19,13 +19,12 @@ const getInitialState = (props) => ({
 });
 
 export class ChangePassword extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.error && nextProps.error) {
             if (nextProps.error.status === 400) {
                 return {
@@ -38,14 +37,14 @@ export class ChangePassword extends React.Component {
         return null;
     }
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         // Clears form on successful password change
         if (this.props.lastPasswordChange !== prevProps.lastPasswordChange) {
             return getInitialState(this.props);
         }
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({ [name]: value, [error]: "" });
@@ -55,7 +54,7 @@ export class ChangePassword extends React.Component {
         }
     };
 
-    onSubmit = (e) => {
+    onSubmit = e => {
         e.preventDefault();
 
         let hasError = false;
@@ -68,12 +67,16 @@ export class ChangePassword extends React.Component {
 
         if (0 < this.state.oldPassword.length && this.state.oldPassword.length < minLength) {
             hasError = true;
-            this.setState({ errorOldPassword: `Passwords must contain at least ${minLength} characters` });
+            this.setState({
+                errorOldPassword: `Passwords must contain at least ${minLength} characters`
+            });
         }
 
         if (this.state.newPassword.length < minLength) {
             hasError = true;
-            this.setState({ errorNewPassword: `Passwords must contain at least ${minLength} characters` });
+            this.setState({
+                errorNewPassword: `Passwords must contain at least ${minLength} characters`
+            });
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
@@ -86,8 +89,7 @@ export class ChangePassword extends React.Component {
         }
     };
 
-    render () {
-
+    render() {
         if (!this.props.settings) {
             return <div />;
         }
@@ -126,7 +128,7 @@ export class ChangePassword extends React.Component {
                                     error={this.state.errorConfirmPassword}
                                 />
 
-                                <div style={{marginTop: "20px"}}>
+                                <div style={{ marginTop: "20px" }}>
                                     <Row>
                                         <Col xs={12} md={6} className="text-muted">
                                             Last changed <RelativeTime time={this.props.lastPasswordChange} />
@@ -145,22 +147,23 @@ export class ChangePassword extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     lastPasswordChange: state.account.last_password_change,
     settings: state.settings.data,
     error: get(state, "errors.CHANGE_ACCOUNT_PASSWORD_ERROR", "")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onChangePassword: (oldPassword, newPassword) => {
         dispatch(changePassword(oldPassword, newPassword));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(ChangePassword);

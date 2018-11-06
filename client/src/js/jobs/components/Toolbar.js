@@ -5,7 +5,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
-import { clearJobs, filterJobs } from "../actions";
+import { checkAdminOrPermission } from "../../utils/utils";
+import { clearJobs, findJobs } from "../actions";
 import { Icon, Button } from "../../base";
 
 /**
@@ -13,22 +14,21 @@ import { Icon, Button } from "../../base";
  * @param props
  * @returns {*}
  */
-const JobsToolbar = (props) => {
-
+export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     let removalDropdown;
 
-    if (props.canRemove) {
+    if (canRemove) {
         removalDropdown = (
             <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-                <Button name="finished" onClick={props.onClear} tip="Clear Finished">
+                <Button name="finished" onClick={onClear} tip="Clear Finished">
                     <Icon name="trash" />
                 </Button>
                 <Dropdown.Toggle />
                 <Dropdown.Menu>
-                    <MenuItem eventKey="removeFailed" name="failed" onClick={props.onClear}>
+                    <MenuItem eventKey="removeFailed" name="failed" onClick={onClear}>
                         Failed
                     </MenuItem>
-                    <MenuItem eventKey="removeComplete" name="complete" onClick={props.onClear}>
+                    <MenuItem eventKey="removeComplete" name="complete" onClick={onClear}>
                         Complete
                     </MenuItem>
                 </Dropdown.Menu>
@@ -43,7 +43,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl value={props.filter} onChange={props.onFilter} placeholder="User or task" />
+                    <FormControl value={term} onChange={onFind} placeholder="User or task" />
                 </InputGroup>
             </FormGroup>
 
@@ -52,20 +52,22 @@ const JobsToolbar = (props) => {
     );
 };
 
-const mapStateToProps = (state) => ({
-    filter: state.jobs.filter
+const mapStateToProps = state => ({
+    term: state.jobs.term,
+    canRemove: checkAdminOrPermission(state, "remove_job")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onFilter: (e) => {
-        dispatch(filterJobs(e.target.value));
+const mapDispatchToProps = dispatch => ({
+    onFind: e => {
+        dispatch(findJobs(e.target.value, 1));
     },
 
-    onClear: (e) => {
+    onClear: e => {
         dispatch(clearJobs(e.target.name));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobsToolbar);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(JobsToolbar);

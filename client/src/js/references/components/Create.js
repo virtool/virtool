@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
-import ReferenceForm from "./Form";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button } from "../../base";
-import { getTargetChange } from "../../utils";
+import { getTargetChange } from "../../utils/utils";
+import ReferenceForm from "./Form";
 
 const getInitialState = () => ({
     name: "",
@@ -17,13 +17,12 @@ const getInitialState = () => ({
 });
 
 export class CreateReference extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
@@ -32,7 +31,7 @@ export class CreateReference extends React.Component {
         });
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name.length) {
@@ -44,30 +43,18 @@ export class CreateReference extends React.Component {
         }
 
         if (this.state.name.length && this.state.dataType.length) {
-            this.props.onSubmit(
-                this.state.name,
-                this.state.description,
-                this.state.dataType,
-                this.state.organism
-            );
+            this.props.onSubmit(this.state.name, this.state.description, this.state.dataType, this.state.organism);
         }
-
     };
 
-    render () {
-
+    render() {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Alert bsStyle="info">
-                        <strong>
-                            Create an empty reference.
-                        </strong>
+                        <strong>Create an empty reference.</strong>
                     </Alert>
-                    <ReferenceForm
-                        state={this.state}
-                        onChange={this.handleChange}
-                    />
+                    <ReferenceForm state={this.state} onChange={this.handleChange} />
                 </Modal.Body>
 
                 <Modal.Footer>
@@ -83,15 +70,16 @@ export class CreateReference extends React.Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-
     onSubmit: (name, description, dataType, organism) => {
         dispatch(createReference(name, description, dataType, organism));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(null, mapDispatchToProps)(CreateReference);
+export default connect(
+    null,
+    mapDispatchToProps
+)(CreateReference);

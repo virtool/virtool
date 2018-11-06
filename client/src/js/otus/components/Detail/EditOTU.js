@@ -5,8 +5,8 @@ import { get } from "lodash-es";
 import OTUForm from "../OTUForm";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { getNextState } from "../../otusUtils";
-import { getTargetChange } from "../../../utils";
+import { getNextState } from "../../utils";
+import { getTargetChange } from "../../../utils/utils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -17,17 +17,16 @@ const getInitialState = ({ name = "", abbreviation = "" }) => ({
 });
 
 class EditOTU extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         return getNextState(prevState.error, nextProps.error);
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
@@ -51,7 +50,7 @@ class EditOTU extends React.Component {
         }
     };
 
-    handleSave = (e) => {
+    handleSave = e => {
         e.preventDefault();
 
         if (!this.state.name) {
@@ -65,8 +64,7 @@ class EditOTU extends React.Component {
         }
     };
 
-    render () {
-
+    render() {
         return (
             <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleHide}>
                 <Modal.Header onHide={this.handleHide} closeButton>
@@ -85,13 +83,12 @@ class EditOTU extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     show: state.otus.edit,
     error: get(state, "errors.EDIT_OTU_ERROR.message", "")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -100,10 +97,12 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(editOTU(otuId, name, abbreviation));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditOTU);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(EditOTU);

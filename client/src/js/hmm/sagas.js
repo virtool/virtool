@@ -1,40 +1,29 @@
-import { takeLatest, throttle, put } from "redux-saga/effects";
 import { push } from "react-router-redux";
+import { apiCall } from "../utils/sagas";
+import { INSTALL_HMMS, GET_HMM, PURGE_HMMS, FIND_HMMS } from "../app/actionTypes";
 import * as hmmsAPI from "./api";
-import { apiCall } from "../sagaUtils";
-import {
-    LIST_HMMS,
-    FILTER_HMMS,
-    INSTALL_HMMS,
-    GET_HMM,
-    PURGE_HMMS
-} from "../actionTypes";
+import { takeLatest, throttle, put } from "redux-saga/effects";
 
-export function* watchHmms () {
-    yield takeLatest(LIST_HMMS.REQUESTED, listHmms);
-    yield takeLatest(FILTER_HMMS.REQUESTED, filterHmms);
+export function* watchHmms() {
+    yield throttle(300, FIND_HMMS.REQUESTED, findHmms);
     yield takeLatest(GET_HMM.REQUESTED, getHmm);
     yield throttle(500, INSTALL_HMMS.REQUESTED, installHmms);
     yield takeLatest(PURGE_HMMS.REQUESTED, purgeHmms);
 }
 
-export function* listHmms (action) {
-    yield apiCall(hmmsAPI.list, action, LIST_HMMS);
+export function* findHmms(action) {
+    yield apiCall(hmmsAPI.find, action, FIND_HMMS);
 }
 
-export function* filterHmms (action) {
-    yield apiCall(hmmsAPI.filter, action, FILTER_HMMS);
-}
-
-export function* installHmms (action) {
+export function* installHmms(action) {
     yield apiCall(hmmsAPI.install, action, INSTALL_HMMS);
 }
 
-export function* getHmm (action) {
+export function* getHmm(action) {
     yield apiCall(hmmsAPI.get, action, GET_HMM);
 }
 
-export function* purgeHmms (action) {
+export function* purgeHmms(action) {
     const extraFunc = {
         goToList: put(push("/hmm"))
     };

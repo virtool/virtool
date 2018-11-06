@@ -14,17 +14,16 @@ import { find, union } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Modal } from "react-bootstrap";
 
-import SequenceForm from "./SequenceForm";
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { InputError } from "../../../base";
-import { getTargetChange } from "../../../utils";
+import { getTargetChange } from "../../../utils/utils";
+import SequenceForm from "./SequenceForm";
 
-const getInitialState = (props) => {
-
+const getInitialState = props => {
     if (props.sequenceId) {
-        const isolate = {...props.isolate};
-        const sequence = find(isolate.sequences, {id: props.sequenceId});
+        const isolate = { ...props.isolate };
+        const sequence = find(isolate.sequences, { id: props.sequenceId });
 
         return {
             definition: sequence.definition,
@@ -52,20 +51,19 @@ const getInitialState = (props) => {
 };
 
 class EditSequence extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (prevState.error !== nextProps.error) {
             return getInitialState(nextProps);
         }
         return null;
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({
@@ -90,7 +88,7 @@ class EditSequence extends React.Component {
         }
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.definition.length) {
@@ -112,28 +110,20 @@ class EditSequence extends React.Component {
         );
     };
 
-    render () {
-
+    render() {
         let overlay;
 
         if (this.state.autofillPending) {
             overlay = (
                 <div className="modal-body-overlay">
-                    <span>
-                        Loading
-                    </span>
+                    <span>Loading</span>
                 </div>
             );
         }
 
         const accessionCol = (
             <Col xs={12} md={6}>
-                <InputError
-                    label="Accession (ID)"
-                    name="id"
-                    value={this.props.sequenceId}
-                    readOnly
-                />
+                <InputError label="Accession (ID)" name="id" value={this.props.sequenceId} readOnly />
             </Col>
         );
 
@@ -169,7 +159,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -178,10 +167,12 @@ const mapDispatchToProps = dispatch => ({
         dispatch(editSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditSequence);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(EditSequence);

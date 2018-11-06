@@ -6,14 +6,13 @@ import { forEach, unzip } from "lodash-es";
 import { appendLegend, createSVG } from "../../chartUtils";
 
 const series = [
-    {color: "#428bca", label: "Guanine"},
-    {color: "#a94442", label: "Adenine"},
-    {color: "#3c763d", label: "Thymine"},
-    {color: "#777", label: "Cytosine"}
+    { color: "#428bca", label: "Guanine" },
+    { color: "#a94442", label: "Adenine" },
+    { color: "#3c763d", label: "Thymine" },
+    { color: "#777", label: "Cytosine" }
 ];
 
 const CreateNucleotidesChart = (element, data, baseWidth) => {
-
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.left - svg.margin.right;
@@ -68,7 +67,6 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .text("% Composition");
 
     appendLegend(svg, width, series);
-
 };
 
 export default CreateNucleotidesChart;

@@ -7,8 +7,7 @@ import { Flex, FlexItem, Button } from "./index";
  * An Input component combined with a save button addon.
  */
 export class InputSave extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
             value: this.props.initialValue,
@@ -38,7 +37,7 @@ export class InputSave extends React.Component {
         autoComplete: true
     };
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         if (this.props.initialValue !== prevProps.initialValue) {
             this.setState({
                 pending: false,
@@ -51,13 +50,13 @@ export class InputSave extends React.Component {
      * Resets the setting value to the initialValue if the form component loses focus. Clicking the saveButton does not
      * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
-    handleBlur = (e) => {
+    handleBlur = e => {
         // If click on focus element that does not submit, reset value
         if (!this.state.pending && e.relatedTarget && e.relatedTarget.type !== "submit") {
-            this.setState({value: this.props.initialValue});
-        // If click on non focus element, reset value
+            this.setState({ value: this.props.initialValue });
+            // If click on non focus element, reset value
         } else if (!e.relatedTarget) {
-            this.setState({value: this.props.initialValue});
+            this.setState({ value: this.props.initialValue });
         }
 
         // If click on focus element that does submit, keep value
@@ -71,9 +70,9 @@ export class InputSave extends React.Component {
      *
      * @param e {event} - the change event from the FormControl
      */
-    handleChange = (e) => {
+    handleChange = e => {
         if (!this.props.disabled) {
-            this.setState({value: e.target.value});
+            this.setState({ value: e.target.value });
         }
 
         if (this.props.onChange) {
@@ -88,7 +87,7 @@ export class InputSave extends React.Component {
      *
      * @param e {object} - the submit event.
      */
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (this.state.value === this.props.initialValue) {
@@ -98,7 +97,7 @@ export class InputSave extends React.Component {
         } else {
             // If the new value is different to the initial one, show a spinner and call the onSave function. Show a
             // spinner to indicate the request is pending. Drop focus from the form children.
-            this.setState({pending: true}, () => {
+            this.setState({ pending: true }, () => {
                 this.props.onSave({
                     value: this.state.value,
                     name: this.props.name,
@@ -119,20 +118,22 @@ export class InputSave extends React.Component {
         this.buttonNode.blur();
     };
 
-    render () {
+    render() {
         const formMargin = this.props.noMargin ? "0" : "15px";
 
         const formClass = this.props.error ? "form-control-error" : "";
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <h5><strong>{this.props.label}</strong></h5>
-                <Flex alignItems="stretch" style={{marginBottom: formMargin}}>
+                <h5>
+                    <strong>{this.props.label}</strong>
+                </h5>
+                <Flex alignItems="stretch" style={{ marginBottom: formMargin }}>
                     <FlexItem grow={1} shrink={1}>
                         <FormControl
                             className={formClass}
                             name={this.props.name}
-                            inputRef={(ref) => this.inputNode = ref}
+                            inputRef={ref => (this.inputNode = ref)}
                             type={this.props.type}
                             min={this.props.min}
                             max={this.props.max}
@@ -143,7 +144,7 @@ export class InputSave extends React.Component {
                             onInvalid={this.props.onInvalid}
                             value={this.state.value}
                             disabled={this.props.disabled}
-                            style={{marginBottom: "0"}}
+                            style={{ marginBottom: "0" }}
                         />
                     </FlexItem>
                     <Button
@@ -151,7 +152,7 @@ export class InputSave extends React.Component {
                         bsStyle="primary"
                         disabled={this.props.disabled}
                         icon="save"
-                        ref={(button) => this.buttonNode = button}
+                        ref={button => (this.buttonNode = button)}
                     />
                 </Flex>
             </form>

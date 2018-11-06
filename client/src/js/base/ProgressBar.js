@@ -8,8 +8,7 @@ import { bsStyles } from "./utils";
  *
  */
 export class AutoProgressBar extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.interval = null;
         this.state = {
@@ -31,7 +30,7 @@ export class AutoProgressBar extends React.Component {
         interval: 120
     };
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (prevState.active && !nextProps.active) {
             return { fill: 100, active: nextProps.active };
         }
@@ -43,7 +42,7 @@ export class AutoProgressBar extends React.Component {
         return null;
     }
 
-    componentDidUpdate (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         if (this.state.fill !== prevState.fill && this.state.fill === 10) {
             this.interval = window.setInterval(this.move, this.props.interval);
         }
@@ -53,7 +52,7 @@ export class AutoProgressBar extends React.Component {
         }
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.stop();
     }
 
@@ -68,12 +67,12 @@ export class AutoProgressBar extends React.Component {
         }
 
         // Update the fill so the progress bar moves.
-        this.setState({fill});
+        this.setState({ fill });
     };
 
-    handleMoved = (now) => {
+    handleMoved = now => {
         if (now === 100) {
-            this.setState({fill: 0});
+            this.setState({ fill: 0 });
         }
     };
 
@@ -81,8 +80,7 @@ export class AutoProgressBar extends React.Component {
         window.clearInterval(this.interval);
     };
 
-    render () {
-
+    render() {
         if (this.state.fill === 0) {
             return <div className="progress-affixed-empty" />;
         }
@@ -96,11 +94,9 @@ export class AutoProgressBar extends React.Component {
             />
         );
     }
-
 }
 
 export class ProgressBar extends React.PureComponent {
-
     static propTypes = {
         now: PropTypes.number,
         onMoved: PropTypes.func,
@@ -115,14 +111,14 @@ export class ProgressBar extends React.PureComponent {
         now: 0
     };
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         // Listen for the bar move transition to end if the "now" prop is being changed.
         if (prevProps.now !== this.props.now) {
             this.barNode.addEventListener("transitionend", this.onTransitionend);
         }
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.barNode.removeEventListener("transitionend", this.onTransitionend);
     }
 
@@ -136,13 +132,13 @@ export class ProgressBar extends React.PureComponent {
         }
     };
 
-    render () {
+    render() {
         return (
-            <div className={CX("progress", {"progress-affixed": this.props.affixed})} style={this.props.style}>
+            <div className={CX("progress", { "progress-affixed": this.props.affixed })} style={this.props.style}>
                 <div
-                    ref={(node) => this.barNode = node}
+                    ref={node => (this.barNode = node)}
                     className={`progress-bar progress-bar-${this.props.bsStyle}`}
-                    style={{width: `${this.props.now}%`}}
+                    style={{ width: `${this.props.now}%` }}
                     role="progressbar"
                     aria-valuenow={`${this.props.now}`}
                     aria-valuemin="0"
@@ -153,5 +149,4 @@ export class ProgressBar extends React.PureComponent {
             </div>
         );
     }
-
 }

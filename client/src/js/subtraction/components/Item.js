@@ -8,7 +8,6 @@ import { get } from "lodash-es";
 import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 
 const SubtractionItem = ({ entry }) => {
-
     let icon;
 
     if (entry.ready) {

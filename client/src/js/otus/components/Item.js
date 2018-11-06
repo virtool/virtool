@@ -11,7 +11,7 @@ const OTUItem = ({ refId, entry }) => (
             <Row>
                 <Col xs={11} sm={11} md={7}>
                     <strong>{entry.name}</strong>
-                    <small className="hidden-md hidden-lg text-muted" style={{marginLeft: "5px"}}>
+                    <small className="hidden-md hidden-lg text-muted" style={{ marginLeft: "5px" }}>
                         {entry.abbreviation}
                     </small>
                 </Col>

@@ -7,24 +7,23 @@ import { get } from "lodash-es";
 import { getUnbuilt, createIndex } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, LoadingPlaceholder } from "../../base";
+import { routerLocationHasState } from "../../utils/utils";
 import RebuildHistory from "./History";
-import {routerLocationHasState} from "../../utils";
 
 class RebuildIndex extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = { error: "" };
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.error && nextProps.error) {
             return { error: nextProps.error };
         }
         return null;
     }
 
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGetUnbuilt(this.props.refId);
     }
 
@@ -38,12 +37,12 @@ class RebuildIndex extends React.Component {
         }
     };
 
-    save = (e) => {
+    save = e => {
         e.preventDefault();
         this.props.onRebuild(this.props.refId);
     };
 
-    render () {
+    render() {
         let history;
 
         if (this.props.unbuilt) {
@@ -52,20 +51,17 @@ class RebuildIndex extends React.Component {
             history = <LoadingPlaceholder margin="70px" />;
         }
 
-        const errorDisplay = this.state.error
-            ? (
-                <div className="input-form-error">
-                    <span className="input-error-message">{this.state.error}</span>
-                    <br />
-                    {this.state.error === "There are unverified OTUs"
-                        ? (
-                            <span className="input-error-message">
-                                Please modify the unverified OTUs before rebuilding the index
-                            </span>
-                        ) : null}
-                </div>
-            )
-            : null;
+        const errorDisplay = this.state.error ? (
+            <div className="input-form-error">
+                <span className="input-error-message">{this.state.error}</span>
+                <br />
+                {this.state.error === "There are unverified OTUs" ? (
+                    <span className="input-error-message">
+                        Please modify the unverified OTUs before rebuilding the index
+                    </span>
+                ) : null}
+            </div>
+        ) : null;
 
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.handleHide}>
@@ -88,31 +84,32 @@ class RebuildIndex extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     show: routerLocationHasState(state, "rebuild", true),
     unbuilt: state.indexes.unbuilt,
     error: get(state, "errors.CREATE_INDEX_ERROR.message", ""),
     refId: state.references.detail.id
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGetUnbuilt: (refId) => {
+const mapDispatchToProps = dispatch => ({
+    onGetUnbuilt: refId => {
         dispatch(getUnbuilt(refId));
     },
 
-    onRebuild: (refId) => {
+    onRebuild: refId => {
         dispatch(createIndex(refId));
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {rebuild: false}}));
+        dispatch(push({ ...window.location, state: { rebuild: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(RebuildIndex);

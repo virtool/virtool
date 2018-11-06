@@ -1,13 +1,12 @@
-import {axisBottom, axisLeft} from "d3-axis";
-import {scaleLinear} from "d3-scale";
-import {select} from "d3-selection";
-import {area} from "d3-shape";
+import { axisBottom, axisLeft } from "d3-axis";
+import { scaleLinear } from "d3-scale";
+import { select } from "d3-selection";
+import { area } from "d3-shape";
 import PropTypes from "prop-types";
 import React from "react";
-import {createBlob, formatSvg, getPng, getSvgAttr} from "./Download";
+import { createBlob, formatSvg, getPng, getSvgAttr } from "./Download";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
-
     let svg = select(element).append("svg");
 
     const margin = {
@@ -17,7 +16,8 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         right: 10
     };
 
-    svg.append("text").text(yMax.toString())
+    svg.append("text")
+        .text(yMax.toString())
         .remove();
 
     svg.remove();
@@ -30,7 +30,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         width = xMin;
     }
 
-    width -= (margin.left + margin.right);
+    width -= margin.left + margin.right;
 
     const x = scaleLinear()
         .range([0, width])
@@ -43,14 +43,14 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
     const xAxis = axisBottom(x);
 
     // Construct the SVG canvas.
-    svg = select(element).append("svg")
+    svg = select(element)
+        .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
-
         const areaDrawer = area()
             .x(d => x(d[0]))
             .y0(d => y(d[1]))
@@ -91,7 +91,6 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 };
 
 export default class CoverageChart extends React.Component {
-
     static propTypes = {
         id: PropTypes.string,
         definition: PropTypes.string,
@@ -102,21 +101,20 @@ export default class CoverageChart extends React.Component {
         showYAxis: PropTypes.bool
     };
 
-    componentDidMount () {
+    componentDidMount() {
         window.addEventListener("resize", this.renderChart);
         this.renderChart();
     }
 
-    shouldComponentUpdate () {
+    shouldComponentUpdate() {
         return false;
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         window.removeEventListener("resize", this.renderChart);
     }
 
     renderChart = () => {
-
         while (this.chartNode.firstChild) {
             this.chartNode.removeChild(this.chartNode.firstChild);
         }
@@ -147,14 +145,7 @@ export default class CoverageChart extends React.Component {
         formatSvg(svg, "visible");
     };
 
-    render () {
-
-        return (
-            <div
-                className="coverage-chart"
-                ref={(node) => this.chartNode = node}
-                onClick={this.handleClick}
-            />
-        );
+    render() {
+        return <div className="coverage-chart" ref={node => (this.chartNode = node)} onClick={this.handleClick} />;
     }
 }

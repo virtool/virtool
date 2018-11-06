@@ -6,10 +6,10 @@ import { forEach, map, min, values } from "lodash-es";
 import { appendLegend, createSVG } from "../../chartUtils";
 
 const series = [
-    {label: "Mean", color: "#a94442"},
-    {label: "Median", color: "#428bca"},
-    {label: "Quartile", color: "#3C763D"},
-    {label: "Decile", color: "#FFF475"}
+    { label: "Mean", color: "#a94442" },
+    { label: "Median", color: "#428bca" },
+    { label: "Quartile", color: "#3C763D" },
+    { label: "Decile", color: "#FFF475" }
 ];
 
 /**
@@ -33,9 +33,7 @@ const getArea = (name, areaX, y, a, b) => ({
  * @param data
  * @returns {*}
  */
-const getMinQuality = (data) => (
-    min(map(data, document => min(values(document))))
-);
+const getMinQuality = data => min(map(data, document => min(values(document))));
 
 /**
  * Generates the lines representing mean and median base quality.
@@ -60,7 +58,6 @@ const lineDrawer = (data, key, x, y) => {
 };
 
 const CreateBasesChart = (element, data, baseWidth) => {
-
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.left - svg.margin.right;

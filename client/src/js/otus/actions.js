@@ -1,9 +1,8 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_OTU,
     WS_UPDATE_OTU,
     WS_REMOVE_OTU,
-    LIST_OTUS,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
@@ -28,38 +27,29 @@ import {
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertOTU = (data) => ({
+export const wsInsertOTU = data => ({
     type: WS_INSERT_OTU,
     data
 });
 
-export const wsUpdateOTU = (data) => ({
+export const wsUpdateOTU = data => ({
     type: WS_UPDATE_OTU,
     data
 });
 
-export const wsRemoveOTU = (data) => ({
+export const wsRemoveOTU = data => ({
     type: WS_REMOVE_OTU,
     data
 });
 
-/**
- * Returns action for retrieving all available OTUs.
- *
- * @func
- * @returns {object}
- */
-export const listOTUs = (refId, page) => ({
-    type: LIST_OTUS.REQUESTED,
-    refId,
-    page
-});
-
-export const findOTUs = (refId) => ({
+export const findOTUs = (refId, term, verified, page) => ({
     type: FIND_OTUS.REQUESTED,
-    refId
+    refId,
+    term,
+    verified,
+    page
 });
 
 /**
@@ -69,7 +59,7 @@ export const findOTUs = (refId) => ({
  * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTU = (otuId) => ({
+export const getOTU = otuId => ({
     type: GET_OTU.REQUESTED,
     otuId
 });
@@ -81,7 +71,7 @@ export const getOTU = (otuId) => ({
  * @param otuId {string} unique OTU id
  * @returns {object}
  */
-export const getOTUHistory = (otuId) => ({
+export const getOTUHistory = otuId => ({
     type: GET_OTU_HISTORY.REQUESTED,
     otuId
 });
@@ -284,7 +274,7 @@ export const revert = (otuId, changeId) => ({
  * @param isolateId {string} unique isolate id
  * @returns {object}
  */
-export const selectIsolate = (isolateId) => ({
+export const selectIsolate = isolateId => ({
     type: SELECT_ISOLATE,
     isolateId
 });
@@ -354,7 +344,7 @@ export const showAddSequence = simpleActionCreator(SHOW_ADD_SEQUENCE);
  * @param sequenceId {string} unique sequence id
  * @returns {object}
  */
-export const showEditSequence = (sequenceId) => ({
+export const showEditSequence = sequenceId => ({
     type: SHOW_EDIT_SEQUENCE,
     sequenceId
 });
@@ -366,7 +356,7 @@ export const showEditSequence = (sequenceId) => ({
  * @param sequenceId {string} unique sequence id
  * @returns {object}
  */
-export const showRemoveSequence = (sequenceId) => ({
+export const showRemoveSequence = sequenceId => ({
     type: SHOW_REMOVE_SEQUENCE,
     sequenceId
 });

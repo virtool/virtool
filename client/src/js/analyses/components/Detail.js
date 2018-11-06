@@ -5,23 +5,21 @@ import { Label, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { IDRow, LoadingPlaceholder, NotFound, RelativeTime } from "../../base/index";
-import { getTaskDisplayName } from "../../utils";
+import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 
 class AnalysisDetail extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.getAnalysis(this.props.match.params.analysisId);
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.props.clearAnalysis();
     }
 
-    render () {
-
+    render() {
         if (this.props.error) {
             return <NotFound />;
         }
@@ -43,20 +41,9 @@ class AnalysisDetail extends React.Component {
                 </Panel>
             );
         } else if (detail.algorithm === "pathoscope_bowtie") {
-            content = (
-                <PathoscopeViewer
-                    {...detail}
-                    maxReadLength={this.props.quality.length[1]}
-                />
-            );
+            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
         } else if (detail.algorithm === "nuvs") {
-            content = (
-                <NuVsViewer
-                    history={this.props.history}
-                    location={this.props.location}
-                    {...detail}
-                />
-            );
+            content = <NuVsViewer history={this.props.history} location={this.props.location} {...detail} />;
         } else {
             throw Error("Unusable analysis detail content");
         }
@@ -69,19 +56,13 @@ class AnalysisDetail extends React.Component {
                     <tbody>
                         <tr>
                             <th className="col-md-3">Algorithm</th>
-                            <td className="col-md-9">
-                                {getTaskDisplayName(detail.algorithm)}
-                            </td>
+                            <td className="col-md-9">{getTaskDisplayName(detail.algorithm)}</td>
                         </tr>
                         <tr>
                             <th>Reference</th>
                             <td>
-                                <Link to={`/refs/${detail.reference.id}`}>
-                                    {detail.reference.name}
-                                </Link>
-                                <Label style={{marginLeft: "5px"}}>
-                                    {detail.index.version}
-                                </Label>
+                                <Link to={`/refs/${detail.reference.id}`}>{detail.reference.name}</Link>
+                                <Label style={{ marginLeft: "5px" }}>{detail.index.version}</Label>
                             </td>
                         </tr>
                         <IDRow id={detail.id} />
@@ -89,9 +70,7 @@ class AnalysisDetail extends React.Component {
                             <th>Mapped Reads</th>
                             <td>
                                 {numbro(detail.read_count).format()}
-                                <span style={{paddingLeft: "5px"}}>
-                                    ({mappedPercent})
-                                </span>
+                                <span style={{ paddingLeft: "5px" }}>({mappedPercent})</span>
                             </td>
                         </tr>
                         <tr>
@@ -100,7 +79,9 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Created</th>
-                            <td><RelativeTime time={detail.created_at} /> by {detail.user.id}</td>
+                            <td>
+                                <RelativeTime time={detail.created_at} /> by {detail.user.id}
+                            </td>
                         </tr>
                     </tbody>
                 </Table>
@@ -111,22 +92,23 @@ class AnalysisDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_ANALYSIS_ERROR", null),
     detail: state.analyses.detail,
     quality: state.samples.detail.quality
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    getAnalysis: (analysisId) => {
+const mapDispatchToProps = dispatch => ({
+    getAnalysis: analysisId => {
         dispatch(getAnalysis(analysisId));
     },
 
     clearAnalysis: () => {
         dispatch(clearAnalysis());
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AnalysisDetail);

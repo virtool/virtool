@@ -18,7 +18,7 @@ import Issues from "./Issues";
 
 const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
     <div>
-        { issues ? <Issues issues={issues} isolates={isolates} /> : null }
+        {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
         <Table bordered>
             <tbody>
@@ -44,4 +44,7 @@ const mapStateToProps = state => ({
     ...state.otus.detail
 });
 
-export default connect(mapStateToProps, null)(OTUGeneral);
+export default connect(
+    mapStateToProps,
+    null
+)(OTUGeneral);
