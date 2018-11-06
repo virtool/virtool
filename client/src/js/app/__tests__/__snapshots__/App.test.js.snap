@@ -72,10 +72,10 @@ exports[`<App /> renders correctly 1`] = `
     }
   }
 >
-  <ConnectedRouter
+  <Connect(ConnectedRouter)
     history={Object {}}
   >
     <withRouter(Connect(Inner)) />
-  </ConnectedRouter>
+  </Connect(ConnectedRouter)>
 </Provider>
 `;
