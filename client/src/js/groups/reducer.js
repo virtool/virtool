@@ -17,10 +17,10 @@ export const initialState = {
 export const updateGroup = (state, update) => ({
     ...state,
     pending: false,
-    list: sortBy(unionBy([update], state.list, "id"), "id")
+    documents: sortBy(unionBy([update], state.documents, "id"), "id")
 });
 
-export const insertGroup = (list, entry) => sortBy(concat(list, [entry]), "id");
+export const insertGroup = (documents, entry) => sortBy(concat(documents, [entry]), "id");
 
 export default function groupsReducer(state = initialState, action) {
     switch (action.type) {
