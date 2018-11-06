@@ -29,7 +29,9 @@ class ReferenceMembers extends React.Component {
     }
 
     static propTypes = {
-        noun: PropTypes.oneOf(["groups", "users"]).isRequired
+        canModify: PropTypes.bool.isRequired,
+        noun: PropTypes.oneOf(["groups", "users"]).isRequired,
+        onRemove: PropTypes.func.isRequired
     };
 
     add = () => {
