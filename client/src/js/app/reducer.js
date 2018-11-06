@@ -1,4 +1,4 @@
-import { routerMiddleware, routerReducer } from "react-router-redux";
+import { connectRouter, routerMiddleware } from "connected-react-router";
 import { applyMiddleware, combineReducers, createStore } from "redux";
 import createSagaMiddleware from "redux-saga";
 import accountReducer from "../account/reducer";
@@ -53,7 +53,7 @@ export const createAppStore = history => {
             otus: otusReducer,
             processes: processesReducer,
             references: referencesReducer,
-            router: routerReducer,
+            router: connectRouter(history),
             samples: samplesReducer,
             settings: settingsReducer,
             subtraction: subtractionReducer,

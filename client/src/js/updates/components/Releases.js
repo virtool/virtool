@@ -2,7 +2,7 @@ import React from "react";
 import { map } from "lodash-es";
 import { ListGroup, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { Button, Flex, FlexItem, Icon } from "../../base";
 import Install from "./Install";

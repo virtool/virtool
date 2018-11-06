@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { Link } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ScrollList, NoneFound } from "../../base";

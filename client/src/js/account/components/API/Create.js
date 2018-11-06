@@ -1,6 +1,6 @@
 import CX from "classnames";
 import React from "react";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { mapValues } from "lodash-es";

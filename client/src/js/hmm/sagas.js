@@ -1,4 +1,4 @@
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { apiCall, pushFindTerm } from "../utils/sagas";
 import { INSTALL_HMMS, GET_HMM, PURGE_HMMS, FIND_HMMS } from "../app/actionTypes";
 import * as hmmsAPI from "./api";

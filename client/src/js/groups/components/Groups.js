@@ -2,7 +2,7 @@ import React from "react";
 import { filter, find, includes, map, sortBy, transform, get, toLower } from "lodash-es";
 import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { createGroup, setGroupPermission, removeGroup } from "../actions";
 import { clearError } from "../../errors/actions";

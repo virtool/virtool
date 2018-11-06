@@ -3,7 +3,7 @@
  *
  * @module sagaUtils
  */
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
@@ -35,7 +35,7 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
 /**
  * Executes an API call that uses Virtool's find implementation when the browser URL matches to ``path``.
  *
- * This generator is intended to be used in a saga triggered by ``LOCATION_CHANGE`` from ``react-router-redux``. If the
+ * This generator is intended to be used in a saga triggered by ``LOCATION_CHANGE`` from ``connected-react-router``. If the
  * ``path`` matches the current browser URL and API request will be sent to the server with the search parameter
  * (if any) appended to the request URL.
  *

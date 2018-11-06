@@ -1,7 +1,7 @@
 import React from "react";
 import { Alert, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { find } from "lodash-es";
 import { SaveButton, UploadBar, ProgressBar } from "../../base";
 import { createRandomString, getTargetChange } from "../../utils/utils";

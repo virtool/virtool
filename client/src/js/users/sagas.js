@@ -1,4 +1,4 @@
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
 import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER } from "../app/actionTypes";

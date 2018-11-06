@@ -1,5 +1,5 @@
 import { includes } from "lodash-es";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import * as filesAPI from "../files/api";
 import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";

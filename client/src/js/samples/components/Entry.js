@@ -1,6 +1,6 @@
 import React from "react";
 import CX from "classnames";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Row, Col } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
