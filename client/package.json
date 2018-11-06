@@ -94,9 +94,7 @@
     "build": "webpack --mode production",
     "start": "webpack --mode development",
     "pretest": "eslint --ignore-path ../.gitignore .",
-    "test": "jest",
-    "test:watch": "yarn test --watch",
-    "test:coverage": "yarn test --coverage"
+    "test": "jest"
   },
   "jest": {
     "transform": {
