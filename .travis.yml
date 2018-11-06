@@ -51,10 +51,9 @@ matrix:
       - git checkout `git describe --abbrev=0 --tags`
       - source ~/.nvm/nvm.sh
       - nvm install $TRAVIS_NODE_VERSION
-      - npm install -g yarn
       - cd $TRAVIS_BUILD_DIR
       - cd client
-      - yarn install
+      - npm install
       - ./node_modules/.bin/webpack --config webpack.production.config.babel.js
       - cd $TRAVIS_BUILD_DIR
       before_script:
@@ -94,13 +93,11 @@ matrix:
       node_js:
       - '8'
       cache:
-        yarn: true
-        directories:
-        - client/node_modules
+        npm: true
       before_script:
       - cd $TRAVIS_BUILD_DIR
       - cd client
-      - yarn install
+      - npm install
       script:
-      - yarn test --maxWorkers=4 --coverage
+      - ./node_modules/.bin/jest --maxWorkers=4 --coverage
       - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then cat ./coverage/lcov.info | codacy-coverage; fi'
