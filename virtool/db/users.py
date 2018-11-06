@@ -317,8 +317,6 @@ async def update_sessions_and_keys(db, user_id, administrator, groups, permissio
         "user.id": user_id
     }
 
-    print(find_query)
-
     async for document in db.keys.find(find_query, ["permissions"]):
         await db.keys.update_one({"_id": document["_id"]}, {
             "$set": {
@@ -327,13 +325,6 @@ async def update_sessions_and_keys(db, user_id, administrator, groups, permissio
                 "permissions": virtool.users.limit_permissions(document["permissions"], permissions)
             }
         })
-
-    import pprint
-    pprint.pprint({
-        "administrator": administrator,
-        "groups": groups,
-        "permissions": permissions
-    })
 
     await db.sessions.update_many(find_query, {
         "$set": {
