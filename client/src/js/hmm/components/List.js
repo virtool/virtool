@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
 import { findHmms } from "../actions";
+import { getTerm } from "../selectors";
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
 import HMMToolbar from "./Toolbar";
@@ -65,7 +66,8 @@ class HMMList extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    ...state.hmms
+    ...state.hmms,
+    term: getTerm(state)
 });
 
 const mapDispatchToProps = dispatch => ({

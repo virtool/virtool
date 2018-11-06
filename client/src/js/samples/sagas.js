@@ -17,7 +17,7 @@ import * as samplesAPI from "./api";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 export function* watchSamples() {
-    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
+    yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);

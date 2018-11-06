@@ -13,7 +13,9 @@ export function* watchHmms() {
 
 export function* findHmms(action) {
     yield apiCall(hmmsAPI.find, action, FIND_HMMS);
-    yield pushFindTerm(action.term);
+    if (!action.background) {
+        yield pushFindTerm(action.term);
+    }
 }
 
 export function* installHmms(action) {

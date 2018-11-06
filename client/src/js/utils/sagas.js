@@ -3,6 +3,7 @@
  *
  * @module sagaUtils
  */
+import { includes } from "lodash-es";
 import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
@@ -57,9 +58,12 @@ export function* apiFind(path, apiMethod, action, actionType) {
     }
 }
 
-export function* pushFindTerm(term) {
+export function* pushFindTerm(term, contains) {
     const url = createFindURL(term);
-    yield put(push(url.pathname + url.search));
+
+    if (!contains || includes(url.pathname, contains)) {
+        yield put(push(url.pathname + url.search));
+    }
 }
 
 /**

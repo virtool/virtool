@@ -8,6 +8,7 @@ import { findSamples } from "../actions";
 import { analyze } from "../../analyses/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { findHmms } from "../../hmm/actions";
+import { getTerm } from "../selectors";
 import QuickAnalyze from "./QuickAnalyze";
 import CreateSample from "./Create/Create";
 import SampleToolbar from "./Toolbar";
@@ -172,6 +173,7 @@ export class SamplesList extends React.Component {
 const mapStateToProps = state => ({
     userId: state.account.id,
     ...state.samples,
+    term: getTerm(state),
     hmms: state.hmms
 });
 

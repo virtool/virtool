@@ -38,8 +38,6 @@ export const initialState = {
     documents: null,
     detail: null,
     page: 0,
-    fetched: false,
-    refetchPage: false,
     detailHistory: null,
     edit: false,
     remove: false,
