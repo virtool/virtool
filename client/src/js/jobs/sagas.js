@@ -1,4 +1,4 @@
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import { FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../app/actionTypes";
 import * as jobsAPI from "./api";
 import { takeEvery, takeLatest } from "redux-saga/effects";
@@ -14,6 +14,7 @@ export function* watchJobs() {
 
 export function* findJobs(action) {
     yield apiCall(jobsAPI.find, action, FIND_JOBS);
+    yield pushFindTerm(action.term);
 }
 
 export function* getJob(action) {

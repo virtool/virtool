@@ -1,5 +1,5 @@
 import { push } from "react-router-redux";
-import { apiCall } from "../utils/sagas";
+import { apiCall, pushFindTerm } from "../utils/sagas";
 import { INSTALL_HMMS, GET_HMM, PURGE_HMMS, FIND_HMMS } from "../app/actionTypes";
 import * as hmmsAPI from "./api";
 import { takeLatest, throttle, put } from "redux-saga/effects";
@@ -13,6 +13,7 @@ export function* watchHmms() {
 
 export function* findHmms(action) {
     yield apiCall(hmmsAPI.find, action, FIND_HMMS);
+    yield pushFindTerm(action.term);
 }
 
 export function* installHmms(action) {

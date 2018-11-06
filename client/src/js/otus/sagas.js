@@ -1,6 +1,6 @@
 import { push } from "react-router-redux";
 
-import { apiCall, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
 import {
     FIND_OTUS,
     GET_OTU,
@@ -17,6 +17,7 @@ import {
     REMOVE_SEQUENCE,
     REVERT
 } from "../app/actionTypes";
+import { createFindURL } from "../utils/utils";
 import * as otusAPI from "./api";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
@@ -36,6 +37,7 @@ export function* updateAndGetOTU(apiMethod, action, actionType) {
 
 export function* findOTUs(action) {
     yield apiCall(otusAPI.find, action, FIND_OTUS);
+    yield pushFindTerm(action.term);
 }
 
 export function* getOTU(action) {
@@ -106,7 +108,7 @@ export function* revert(action) {
 }
 
 export function* watchOTUs() {
-    yield throttle(300, FIND_OTUS.REQUESTED, findOTUs);
+    yield throttle(500, FIND_OTUS.REQUESTED, findOTUs);
     yield takeLatest(GET_OTU.REQUESTED, getOTU);
     yield takeLatest(GET_OTU_HISTORY.REQUESTED, getOTUHistory);
     yield takeEvery(CREATE_OTU.REQUESTED, createOTU);

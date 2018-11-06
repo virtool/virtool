@@ -6,6 +6,7 @@
 import { push } from "react-router-redux";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
+import { createFindURL } from "./utils";
 import { put, all } from "redux-saga/effects";
 
 /**
@@ -54,6 +55,11 @@ export function* apiFind(path, apiMethod, action, actionType) {
     if (match) {
         yield apiCall(apiMethod, {}, actionType);
     }
+}
+
+export function* pushFindTerm(term) {
+    const url = createFindURL(term);
+    yield put(push(url.pathname + url.search));
 }
 
 /**

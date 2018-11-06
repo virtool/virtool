@@ -49,19 +49,15 @@ export const byteSize = bytes => {
  * @param page {(number|string)} a page number to place in the URL
  * @returns {URL}
  */
-export const createFindURL = ({ find, page }) => {
+export const createFindURL = term => {
     const url = new window.URL(window.location);
 
-    if (find !== undefined) {
-        if (find) {
-            url.searchParams.set("find", find);
+    if (term !== undefined) {
+        if (term) {
+            url.searchParams.set("find", term);
         } else {
             url.searchParams.delete("find");
         }
-    }
-
-    if (page) {
-        url.searchParams.set("page", page);
     }
 
     return url;

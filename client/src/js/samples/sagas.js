@@ -2,7 +2,7 @@ import { includes } from "lodash-es";
 import { push } from "react-router-redux";
 
 import * as filesAPI from "../files/api";
-import { apiCall, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
 import {
     FIND_SAMPLES,
     FIND_READ_FILES,
@@ -29,6 +29,7 @@ export function* watchSamples() {
 
 export function* findSamples(action) {
     yield apiCall(samplesAPI.find, action, FIND_SAMPLES);
+    yield pushFindTerm(action.term);
 }
 
 export function* findReadFiles() {
