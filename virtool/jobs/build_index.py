@@ -62,6 +62,7 @@ class Job(virtool.jobs.job.Job):
 
         """
         fasta_dict = dict()
+        sequence_otu_map = dict()
 
         for patch_id, patch_version in self.params["manifest"].items():
             document = self.db.otus.find_one(patch_id)
@@ -70,6 +71,10 @@ class Job(virtool.jobs.job.Job):
                 joined = virtool.db.sync.join_otu(self.db, patch_id, document)
             else:
                 _, joined, _ = virtool.db.sync.patch_otu_to_version(self.db, patch_id, patch_version)
+
+            for isolate in joined["isolates"]:
+                for sequence in isolate["sequences"]:
+                    sequence_otu_map[sequence["id"]] = patch_id
 
             # Extract the list of sequences from the joined patched patch.
             sequences = virtool.otus.extract_default_sequences(joined)
@@ -87,6 +92,16 @@ class Job(virtool.jobs.job.Job):
         fasta_path = os.path.join(self.params["index_path"], "ref.fa")
 
         write_fasta_dict_to_file(fasta_path, fasta_dict)
+
+        index_id = self.params["index_id"]
+
+        self.db.indexes.update_one({"_id": index_id}, {
+            "$set": {
+                "sequence_otu_map": sequence_otu_map
+            }
+        })
+
+        self.dispatch("indexes", "update", [index_id])
 
     def bowtie_build(self):
         """
