@@ -131,19 +131,9 @@ class OTUDetail extends React.Component {
 
                 <Switch>
                     <Redirect from="/refs/:refId/otus/:otuId" to={`/refs/${refId}/otus/${id}/otu`} exact />
-                    <Route
-                        path="/refs/:refId/otus/:otuId/otu"
-                        render={({ match }) => <OTUSection hasModifyOTU={this.props.canModify} match={match} />}
-                        match={window.location}
-                    />
-                    <Route
-                        path="/refs/:refId/otus/:otuId/history"
-                        render={() => <History hasModifyOTU={this.props.canModify} />}
-                    />
-                    <Route
-                        path="/refs/:refId/otus/:otuId/schema"
-                        render={() => <Schema hasModifyOTU={this.props.canModify} />}
-                    />
+                    <Route path="/refs/:refId/otus/:otuId/otu" component={OTUSection} />
+                    <Route path="/refs/:refId/otus/:otuId/history" component={History} />
+                    <Route path="/refs/:refId/otus/:otuId/schema" component={Schema} />
                 </Switch>
             </div>
         );

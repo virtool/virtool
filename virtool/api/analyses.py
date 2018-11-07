@@ -14,7 +14,6 @@ import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
-
 routes = virtool.http.routes.Routes()
 
 

@@ -15,6 +15,7 @@ import {
     ProgressBar,
     NotFound
 } from "../../../base";
+import OTUDetail from "../../../otus/components/Detail/Detail";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
@@ -108,7 +109,7 @@ class ReferenceDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
+        if (this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
 
@@ -196,34 +197,47 @@ class ReferenceDetail extends React.Component {
 
         return (
             <div className="detail-container">
-                {referenceHeader}
-
-                <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${id}/manage`}>
-                        <NavItem>Manage</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/otus`}>
-                        <NavItem>
-                            OTUs <Badge>{this.props.detail.otu_count}</Badge>
-                        </NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/indexes`}>
-                        <NavItem>Indexes</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/settings`}>
-                        <NavItem>Settings</NavItem>
-                    </LinkContainer>
-                </Nav>
-
                 <Switch>
-                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
-                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                    <Route path="/refs/:refId/otus" component={OTUList} />
-                    <Route path="/refs/:refId/indexes" component={IndexList} />
-                    <Route path="/refs/:refId/settings" render={() => <ReferenceSettings isRemote={remotes_from} />} />
-                </Switch>
+                    <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                    <Route
+                        path="/refs"
+                        render={() => (
+                            <div>
+                                {referenceHeader}
 
-                <EditReference />
+                                <Nav bsStyle="tabs">
+                                    <LinkContainer to={`/refs/${id}/manage`}>
+                                        <NavItem>Manage</NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/otus`}>
+                                        <NavItem>
+                                            OTUs <Badge>{this.props.detail.otu_count}</Badge>
+                                        </NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/indexes`}>
+                                        <NavItem>Indexes</NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/settings`}>
+                                        <NavItem>Settings</NavItem>
+                                    </LinkContainer>
+                                </Nav>
+
+                                <Switch>
+                                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                                    <Route path="/refs/:refId/otus" component={OTUList} />
+                                    <Route path="/refs/:refId/indexes" component={IndexList} />
+                                    <Route
+                                        path="/refs/:refId/settings"
+                                        render={() => <ReferenceSettings isRemote={remotes_from} />}
+                                    />
+                                </Switch>
+
+                                <EditReference />
+                            </div>
+                        )}
+                    />
+                </Switch>
             </div>
         );
     };
@@ -233,7 +247,6 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    refDetail: state.references.detail,
     processes: state.processes.documents,
     canModify: checkRefRight(state, "modify")
 });

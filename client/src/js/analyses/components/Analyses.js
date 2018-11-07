@@ -40,7 +40,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(findAnalyses(sampleId, "", 1));
     },
     onFindHmms: () => {
-        dispatch(findHmms(null));
+        dispatch(findHmms());
     },
     onListReadyIndexes: () => {
         dispatch(listReadyIndexes());

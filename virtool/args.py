@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 
 
 def get_args():
-
     parser = ArgumentParser()
 
     parser.add_argument(

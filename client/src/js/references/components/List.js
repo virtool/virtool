@@ -4,7 +4,7 @@ import { Panel, Button } from "react-bootstrap";
 import { remoteReference, findReferences } from "../actions";
 import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
-import { getTerm } from "../selectors";
+import { getHasOfficial, getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item";
 import ReferenceToolbar from "./Toolbar";
@@ -26,7 +26,7 @@ class ReferenceList extends React.Component {
 
         let installOfficialComponent;
 
-        if (this.props.installOfficial && this.props.canCreate) {
+        if (!this.props.hasOfficial && this.props.canCreate) {
             installOfficialComponent = (
                 <Panel key="remote" className="card reference-remote">
                     <span>
@@ -76,6 +76,7 @@ class ReferenceList extends React.Component {
 const mapStateToProps = state => ({
     ...state.references,
     term: getTerm(state),
+    hasOfficial: getHasOfficial(state),
     showModal: routerLocationHasState(state, "newReference"),
     canCreate: checkAdminOrPermission(state, "create_ref")
 });

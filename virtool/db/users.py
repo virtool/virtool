@@ -213,7 +213,6 @@ async def create(db, user_id, password, force_reset=True):
 
 
 async def edit(db, user_id, administrator=None, force_reset=None, groups=None, password=None, primary_group=None):
-
     if not await virtool.db.utils.id_exists(db.users, user_id):
         raise virtool.errors.DatabaseError("User does not exist")
 

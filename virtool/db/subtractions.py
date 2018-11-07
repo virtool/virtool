@@ -1,6 +1,5 @@
 import virtool.utils
 
-
 PROJECTION = [
     "_id",
     "file",

@@ -1,15 +1,14 @@
 import os
 
 import pymongo
-import virtool.jobs.job
 
 import virtool.db.subtractions
+import virtool.jobs.job
 import virtool.subtractions
 import virtool.utils
 
 
 class Job(virtool.jobs.job.Job):
-
     """
     A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file.
 

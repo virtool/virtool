@@ -4,8 +4,8 @@ import virtool.db.history
 import virtool.db.utils
 import virtool.errors
 import virtool.history
-import virtool.utils
 import virtool.otus
+import virtool.utils
 from virtool.api.utils import compose_regex_query, paginate
 
 PROJECTION = [
@@ -124,7 +124,6 @@ async def create(db, ref_id, name, abbreviation):
 
 
 async def find(db, names, term, req_query, verified, ref_id=None):
-
     db_query = dict()
 
     if term:
@@ -223,7 +222,6 @@ async def join_and_format(db, otu_id, joined=None, issues=False):
 
 
 async def remove(db, otu_id, user_id, document=None, silent=False):
-
     # Join the otu.
     joined = await join(db, otu_id, document=document)
 

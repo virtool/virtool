@@ -4,9 +4,9 @@ import dictdiffer
 
 import virtool.db.otus
 import virtool.errors
+import virtool.history
 import virtool.otus
 import virtool.utils
-import virtool.history
 from virtool.api.utils import paginate
 
 MOST_RECENT_PROJECTION = [

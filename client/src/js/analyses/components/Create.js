@@ -96,7 +96,7 @@ export class CreateAnalysis extends React.Component {
             return this.setState({ error: "Please select reference(s)" });
         }
 
-        this.props.onAnalyze(this.props.id, this.state.selected, this.state.algorithm, this.props.userId);
+        this.props.onAnalyze(this.props.sampleId, this.state.selected, this.state.algorithm, this.props.userId);
         this.props.onHide();
     };
 

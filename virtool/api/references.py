@@ -22,7 +22,6 @@ from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, ins
 
 routes = virtool.http.routes.Routes()
 
-
 RIGHTS_SCHEMA = {
     "build": {
         "type": "boolean"

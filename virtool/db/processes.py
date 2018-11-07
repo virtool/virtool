@@ -4,7 +4,6 @@ import virtool.utils
 
 
 async def register(db, process_type, file_size=None):
-
     process_id = await virtool.db.utils.get_new_id(db.processes)
 
     document = {
@@ -23,7 +22,6 @@ async def register(db, process_type, file_size=None):
 
 
 async def update(db, process_id, count=None, progress=None, step=None, file_progress=None, file_size=None, errors=None):
-
     update_dict = dict()
 
     if count is not None:

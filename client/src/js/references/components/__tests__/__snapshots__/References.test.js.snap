@@ -38,10 +38,6 @@ exports[`<References /> renders correctly with settings data 1`] = `
     />
     <Route
       component={[Function]}
-      path="/refs/:refId/otus/:otuId"
-    />
-    <Route
-      component={[Function]}
       path="/refs/:refId/indexes/:indexId"
     />
     <Route

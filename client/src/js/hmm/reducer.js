@@ -6,7 +6,6 @@ export const initialState = {
     process: null,
     documents: null,
     page: 0,
-    term: "",
     detail: null
 };
 

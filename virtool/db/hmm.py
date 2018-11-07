@@ -102,8 +102,8 @@ async def fetch_and_update_release(app, ignore_errors=False):
 
             release["newer"] = bool(
                 release is None or installed is None or (
-                    installed and
-                    semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+                        installed and
+                        semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
                 )
             )
 

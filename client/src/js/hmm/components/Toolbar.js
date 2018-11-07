@@ -4,6 +4,7 @@ import { get } from "lodash-es";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { Icon } from "../../base";
 import { findHmms } from "../actions";
+import { getStateTerm, getTerm } from "../selectors";
 
 export const HMMToolbar = ({ onFind, term }) => (
     <FormGroup>
@@ -17,12 +18,12 @@ export const HMMToolbar = ({ onFind, term }) => (
 );
 
 const mapStateToProps = state => ({
-    term: get(state, "hmms.term")
+    term: getStateTerm(state)
 });
 
 const mapDispatchToProps = dispatch => ({
     onFind: e => {
-        dispatch(findHmms(e.target.value, 1));
+        dispatch(findHmms(e.target.value, 1, false));
     }
 });
 

@@ -36,7 +36,7 @@ describe("References Reducer", () => {
             const state = { documents: null };
             const action = { type: WS_INSERT_REFERENCE, data: { id: "foo" } };
             const result = reducer(state, action);
-            expect(result).toEqual({ documents: [{ id: "foo" }], installOfficial: false });
+            expect(result).toEqual({ documents: [{ id: "foo" }] });
         });
 
         it("inserts entry into list otherwise", () => {
@@ -53,8 +53,7 @@ describe("References Reducer", () => {
             const result = reducer(state, action);
             expect(result).toEqual({
                 ...state,
-                documents: [{ ...action.data }],
-                installOfficial: false
+                documents: [{ ...action.data }]
             });
         });
     });
@@ -68,8 +67,7 @@ describe("References Reducer", () => {
         const result = reducer(state, action);
         expect(result).toEqual({
             ...state,
-            documents: [{ id: "123abc", name: "testReference-edited" }],
-            installOfficial: false
+            documents: [{ id: "123abc", name: "testReference-edited" }]
         });
     });
 
@@ -83,8 +81,7 @@ describe("References Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            documents: [],
-            installOfficial: false
+            documents: []
         });
     });
 
@@ -106,8 +103,7 @@ describe("References Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            ...action.data,
-            installOfficial: false
+            ...action.data
         });
     });
 

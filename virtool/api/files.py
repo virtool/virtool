@@ -9,7 +9,6 @@ import virtool.http.routes
 import virtool.utils
 from virtool.api.utils import json_response, not_found, paginate
 
-
 routes = virtool.http.routes.Routes()
 
 

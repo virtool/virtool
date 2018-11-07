@@ -1,5 +1,5 @@
 import React from "react";
-import { map, sortBy } from "lodash-es";
+import { get, map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -83,7 +83,7 @@ const mapStateToProps = state => ({
     analyses: state.analyses.documents,
     term: state.analyses.term,
     indexes: state.analyses.readyIndexes,
-    hmmsInstalled: !!state.hmms.installed,
+    hmmsInstalled: !!get(state, "hmms.status.installed"),
     canModify: getCanModify(state)
 });
 

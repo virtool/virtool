@@ -150,7 +150,6 @@ async def generate_otu_fasta(db, otu_id):
 
 
 async def get_otu_and_isolate_names(db, otu_id, isolate_id):
-
     otu = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["name", "isolates"])
 
     if not otu:
