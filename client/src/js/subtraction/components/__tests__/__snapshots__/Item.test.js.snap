@@ -41,9 +41,8 @@ exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
           justifyContent="flex-start"
           wrap="nowrap"
         >
-          <ClipLoader
+          <Loader
             color="#3c8786"
-            loading={true}
             size="14px"
           />
           <FlexItem

@@ -4,8 +4,7 @@ import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { ClipLoader } from "halogenium";
-import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
+import { Icon, RelativeTime, ProgressBar, Flex, FlexItem, Loader } from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";
 import { cancelJob, removeJob } from "../actions";
 
@@ -48,7 +47,7 @@ export class JobEntry extends React.Component {
                 <Icon bsStyle="danger" name="ban" onClick={this.handleCancel} style={{ fontSize: "17px" }} pullRight />
             );
 
-            statusIcon = <ClipLoader size="14px" color="#3c8786" />;
+            statusIcon = <Loader size="14px" color="#3c8786" />;
         } else if (this.props.canRemove) {
             actionIcon = (
                 <Icon

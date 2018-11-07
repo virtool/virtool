@@ -77,9 +77,8 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         <span
           className="pull-right"
         >
-          <ClipLoader
+          <Loader
             color="#3c8786"
-            loading={true}
             size="14px"
             style={
               Object {
@@ -99,9 +98,8 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         <strong
           className="pull-right"
         >
-          <ClipLoader
+          <Loader
             color="#3c8786"
-            loading={true}
             size="14px"
             style={
               Object {
@@ -171,9 +169,8 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
       <span
         className="pull-right"
       >
-        <ClipLoader
+        <Loader
           color="#3c8786"
-          loading={true}
           size="14px"
           style={
             Object {
@@ -193,9 +190,8 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
       <strong
         className="pull-right"
       >
-        <ClipLoader
+        <Loader
           color="#3c8786"
-          loading={true}
           size="14px"
           style={
             Object {

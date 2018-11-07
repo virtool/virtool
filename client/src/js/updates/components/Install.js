@@ -1,13 +1,12 @@
 import React from "react";
 import Request from "superagent";
-import { ClipLoader } from "halogenium";
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 
 import { installSoftwareUpdates } from "../actions";
-import { Button } from "../../base";
+import { Button, Loader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 import { ReleaseMarkdown } from "./Release";
 
@@ -48,7 +47,7 @@ export const Process = ({ count, progress, size, step, updating }) => {
         return (
             <Modal.Body className="text-center" style={{ padding: "50px 15px" }}>
                 <p>Restarting server</p>
-                <ClipLoader color="#3c8786" />
+                <Loader color="#3c8786" />
             </Modal.Body>
         );
     }

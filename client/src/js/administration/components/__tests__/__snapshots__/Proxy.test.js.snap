@@ -274,9 +274,8 @@ exports[`<Proxy /> renders ProxyTestIcon correctly show loading when pending 1`]
     }
   }
 >
-  <ClipLoader
+  <Loader
     color="#333"
-    loading={true}
     size="12px"
   />
 </div>

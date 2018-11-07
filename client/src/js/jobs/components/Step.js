@@ -1,6 +1,5 @@
 import React from "react";
-import { ClipLoader } from "halogenium";
-import { Icon } from "../../base";
+import { Icon, Loader } from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";
 
 const JobStep = ({ step, isDone }) => {
@@ -39,7 +38,7 @@ const JobStep = ({ step, isDone }) => {
                     {stateIcon.length ? (
                         <Icon name={stateIcon} bsStyle={entryStyle} />
                     ) : (
-                        <ClipLoader size="14px" color="#07689d" style={{ padding: "0 1.5px" }} />
+                        <Loader size="14px" color="#07689d" style={{ padding: "0 1.5px" }} />
                     )}
                 </div>
                 <div className="step-entry-content">{getTaskDisplayName(step.stage)}</div>
