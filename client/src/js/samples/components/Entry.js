@@ -1,19 +1,20 @@
 import React from "react";
 import CX from "classnames";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Row, Col } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
-import { Icon, Flex, FlexItem, RelativeTime, Checkbox } from "../../base";
+import { Icon, Flex, FlexItem, RelativeTime, Checkbox, Loader } from "../../base";
 
 const SampleEntryLabel = ({ icon, label, ready }) => (
     <Flex>
-        <FlexItem className={CX("sample-label", {"bg-primary": ready})}>
+        <FlexItem className={CX("sample-label", { "bg-primary": ready })}>
             <Flex alignItems="center">
-                {ready === "ip"
-                    ? <ClipLoader size="10px" color="white" verticalAlign="middle" />
-                    : <Icon name={icon} style={{lineHeight: "inherit"}} />}
-                <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
+                {ready === "ip" ? (
+                    <Loader size="10px" color="white" verticalAlign="middle" />
+                ) : (
+                    <Icon name={icon} style={{ lineHeight: "inherit" }} />
+                )}
+                <span style={{ paddingLeft: "3px" }} className="hidden-xs hidden-sm">
                     {label}
                 </span>
             </Flex>
@@ -22,37 +23,36 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
 );
 
 const SampleEntryLabels = ({ nuvs, pathoscope }) => (
-    <Flex style={{height: "20px"}}>
-        <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />&nbsp;
+    <Flex style={{ height: "20px" }}>
+        <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />
+        &nbsp;
         <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
     </Flex>
 );
 
 class SampleEntry extends React.Component {
-
-    onClick = (e) => {
+    onClick = e => {
         if (e.target.getAttribute("class") !== "sample-checkbox-overlay") {
             this.props.onNavigate(this.props.id);
         }
     };
 
-    handleCheck = (e) => {
+    handleCheck = e => {
         this.props.onSelect(this.props.id, this.props.index, e.shiftKey);
     };
 
-    handleQuickAnalyze = (e) => {
+    handleQuickAnalyze = e => {
         e.stopPropagation();
         this.props.quickAnalyze(this.props.id);
     };
 
-    render () {
-
+    render() {
         let statusIcon;
 
         if (this.props.imported === "ip") {
             statusIcon = (
                 <Flex alignItems="center" className="pull-right">
-                    <ClipLoader size="14px" color="#3c8786" />
+                    <Loader size="14px" color="#3c8786" />
                     <FlexItem pad>
                         <strong>Creating</strong>
                     </FlexItem>
@@ -66,7 +66,7 @@ class SampleEntry extends React.Component {
                     tipPlacement="left"
                     bsStyle="success"
                     onClick={this.handleQuickAnalyze}
-                    style={{fontSize: "17px", zIndex: 10000}}
+                    style={{ fontSize: "17px", zIndex: 10000 }}
                     pullRight
                 />
             );
@@ -106,16 +106,17 @@ class SampleEntry extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     algorithm: state.account.settings.quick_analyze_algorithm
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onNavigate: (sampleId) => {
+const mapDispatchToProps = dispatch => ({
+    onNavigate: sampleId => {
         dispatch(push(`/samples/${sampleId}`));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SampleEntry);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SampleEntry);

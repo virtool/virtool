@@ -49,4 +49,3 @@ def get_sample_rights(sample: dict, client):
     write = sample["all_write"] or (is_group_member and sample["group_write"])
 
     return read, write
-

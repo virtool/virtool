@@ -3,55 +3,23 @@ import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { checkUserRefPermission } from "../../utils";
+import { checkRefRight } from "../../utils/utils";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
-import { listIndexes } from "../actions";
-import IndexEntry from "./Entry";
+import { findIndexes } from "../actions";
+import IndexEntry from "./Item";
 import RebuildIndex from "./Rebuild";
 
 class IndexesList extends React.Component {
-
-    constructor (props) {
-        super(props);
-        this.firstReady = false;
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.detail.id, 1);
     }
 
-    componentDidMount () {
-        if (!this.props.fetched || this.props.refId !== this.props.referenceId) {
-            this.handleNextPage(1);
-        }
-    }
+    renderRow = index => <IndexEntry key={index} index={index} />;
 
-    handleNextPage = (page) => {
-        this.props.onList(this.props.refId, page);
-    };
-
-    rowRenderer = (index) => {
-
-        let isActive = false;
-
-        if (!this.firstReady && this.props.documents[index].ready) {
-            isActive = true;
-            this.firstReady = true;
-        }
-
-        return (
-            <IndexEntry
-                key={this.props.documents[index].id}
-                showReady={!this.props.documents[index].ready || isActive}
-                {...this.props.documents[index]}
-                refId={this.props.refId}
-            />
-        );
-    };
-
-    render () {
-
-        if (this.props.documents === null || this.props.refId !== this.props.referenceId) {
+    render() {
+        if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
-
-        this.firstReady = false;
 
         let noIndexes;
         let alert;
@@ -61,13 +29,10 @@ class IndexesList extends React.Component {
         }
 
         if (this.props.total_otu_count) {
-
-            const hasBuildPermission = checkUserRefPermission(this.props, "build");
-
             if (this.props.modified_otu_count) {
-                const button = hasBuildPermission ? (
+                const button = this.props.canBuild ? (
                     <FlexItem pad={20}>
-                        <LinkContainer to={{state: {rebuild: true}}}>
+                        <LinkContainer to={{ state: { rebuild: true } }}>
                             <Button bsStyle="warning" icon="wrench" pullRight>
                                 Rebuild
                             </Button>
@@ -94,7 +59,6 @@ class IndexesList extends React.Component {
                     </Alert>
                 );
             }
-
         } else {
             alert = (
                 <Alert bsStyle="warning" icon="exclamation-circle">
@@ -109,35 +73,30 @@ class IndexesList extends React.Component {
                 {noIndexes}
 
                 <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.props.documents}
-                    refetchPage={this.props.refetchPage}
-                    loadNextPage={this.handleNextPage}
+                    documents={this.props.documents}
+                    onLoadNextPage={this.props.onLoadNextPage}
                     page={this.props.page}
-                    rowRenderer={this.rowRenderer}
+                    pageCount={this.props.page_count}
+                    renderRow={this.renderRow}
                 />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.indexes,
-    refId: state.references.detail.id,
-    isAdmin: state.account.administrator,
-    userId: state.account.id,
-    userGroups: state.account.groups,
-    detail: state.references.detail
+    detail: state.references.detail,
+    canBuild: checkRefRight(state, "build")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onList: (refId, page) => {
-        dispatch(listIndexes(refId, page));
+const mapDispatchToProps = dispatch => ({
+    onLoadNextPage: (refId, page) => {
+        dispatch(findIndexes(refId, null, page));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(IndexesList);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(IndexesList);

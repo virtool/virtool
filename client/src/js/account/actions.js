@@ -3,7 +3,7 @@
  *
  * @module account/actions
  */
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT,
@@ -15,7 +15,7 @@ import {
     REMOVE_API_KEY,
     LOGOUT,
     CLEAR_API_KEY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * Returns action that can trigger an API call for getting the current account data.
@@ -32,7 +32,7 @@ export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
  * @param update {object} the update to apply to the account
  * @returns {object}
  */
-export const updateAccount = (update) => ({
+export const updateAccount = update => ({
     type: UPDATE_ACCOUNT.REQUESTED,
     update
 });
@@ -44,7 +44,7 @@ export const updateAccount = (update) => ({
  * @param update {object} the update to apply to the account
  * @returns {object}
  */
-export const updateAccountSettings = (update) => ({
+export const updateAccountSettings = update => ({
     type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
     update
 });
@@ -114,7 +114,7 @@ export const updateAPIKey = (keyId, permissions) => ({
  * @param keyId {string} the unique id for the API key
  * @returns {object}
  */
-export const removeAPIKey = (keyId) => ({
+export const removeAPIKey = keyId => ({
     type: REMOVE_API_KEY.REQUESTED,
     keyId
 });

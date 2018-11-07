@@ -1,17 +1,16 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { removeSubtraction } from "../actions";
 import { RemoveModal } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 export class RemoveSubtraction extends React.Component {
-
     handleConfirm = () => {
         this.props.onConfirm(this.props.id);
     };
 
-    render () {
+    render() {
         const { id, onHide, show } = this.props;
 
         return (
@@ -27,20 +26,21 @@ export class RemoveSubtraction extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     show: routerLocationHasState(state, "removeSubtraction", true)
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({state: {removeSubtraction: false}}));
+        dispatch(push({ state: { removeSubtraction: false } }));
     },
 
-    onConfirm: (subtractionId) => {
+    onConfirm: subtractionId => {
         dispatch(removeSubtraction(subtractionId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RemoveSubtraction);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(RemoveSubtraction);

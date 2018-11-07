@@ -1,5 +1,5 @@
-import { simpleActionCreator } from "../utils";
-import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES } from "../actionTypes";
+import { simpleActionCreator } from "../utils/utils";
+import { GET_SOFTWARE_UPDATES, INSTALL_SOFTWARE_UPDATES } from "../app/actionTypes";
 
 /**
  * Returns action that can trigger an API call for retrieving software udpates.

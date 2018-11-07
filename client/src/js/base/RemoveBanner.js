@@ -5,9 +5,7 @@ import { Button } from "./Button";
 export const RemoveBanner = ({ message, buttonText, onClick }) => (
     <Alert bsStyle="danger">
         <div style={{ textAlign: "right" }}>
-            <span style={{ float: "left", marginTop: "7px" }}>
-                {message}
-            </span>
+            <span style={{ float: "left", marginTop: "7px" }}>{message}</span>
             <Button bsStyle="danger" onClick={onClick}>
                 {buttonText}
             </Button>

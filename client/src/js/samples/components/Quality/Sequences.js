@@ -3,10 +3,9 @@ import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash-es";
 import { createSVG } from "../../chartUtils";
-import { toScientificNotation } from "../../../utils";
+import { toScientificNotation } from "../../../utils/utils";
 
 const CreateSequencesChart = (element, data, baseWidth) => {
-
     const svg = createSVG(element, baseWidth);
 
     const width = baseWidth - svg.margin.right - svg.margin.left;

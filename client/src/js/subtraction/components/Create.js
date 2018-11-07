@@ -3,22 +3,20 @@ import { filter, map, get } from "lodash-es";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
-import { listFiles } from "../../files/actions";
+import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils/utils";
 
 export class SubtractionFileItem extends React.Component {
-
     handleClick = () => {
         this.props.onClick(this.props.id);
     };
 
-    render () {
-
+    render() {
         const { active, name, uploaded_at, user } = this.props;
 
         return (
@@ -45,20 +43,19 @@ const getInitialState = () => ({
 });
 
 export class CreateSubtraction extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.errorSubtractionId && nextProps.error) {
             return { errorSubtractionId: nextProps.error };
         }
         return null;
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({ [name]: value, [error]: "" });
@@ -79,14 +76,14 @@ export class CreateSubtraction extends React.Component {
         }
     };
 
-    handleSelectFile = (fileId) => {
+    handleSelectFile = fileId => {
         this.setState({
             fileId: fileId === this.state.fileId ? "" : fileId,
             errorFile: ""
         });
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         let hasError = false;
@@ -106,21 +103,20 @@ export class CreateSubtraction extends React.Component {
         }
     };
 
-    render () {
-
-        const files = filter(this.props.files, {type: "subtraction"});
+    render() {
+        const files = filter(this.props.files, { type: "subtraction" });
 
         let fileComponents;
 
         if (files.length) {
-            fileComponents = map(files, file =>
+            fileComponents = map(files, file => (
                 <SubtractionFileItem
                     key={file.id}
                     {...file}
                     active={file.id === this.state.fileId}
                     onClick={this.handleSelectFile}
                 />
-            );
+            ));
         } else {
             fileComponents = (
                 <ListGroupItem className="text-center">
@@ -133,7 +129,7 @@ export class CreateSubtraction extends React.Component {
         const inputErrorClassName = this.state.errorFile ? "input-form-error" : "input-form-error-none";
 
         const errorMessage = (
-            <div className={inputErrorClassName} style={{margin: "3px 0 0 0"}}>
+            <div className={inputErrorClassName} style={{ margin: "3px 0 0 0" }}>
                 {this.state.errorFile || "None"}
             </div>
         );
@@ -146,13 +142,10 @@ export class CreateSubtraction extends React.Component {
                 onEnter={this.handleModalEnter}
                 onExited={this.handleModalExited}
             >
-
-                <Modal.Header>
-                    Create Subtraction
-                </Modal.Header>
+                <Modal.Header>Create Subtraction</Modal.Header>
 
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body style={{margin: "0 0 10px 0"}}>
+                    <Modal.Body style={{ margin: "0 0 10px 0" }}>
                         <Row>
                             <Col md={12}>
                                 <InputError
@@ -177,20 +170,15 @@ export class CreateSubtraction extends React.Component {
                             </Col>
                         </Row>
 
-                        <h5><strong>Files</strong></h5>
-                        <ListGroup className={panelListStyle}>
-                            {fileComponents}
-                        </ListGroup>
+                        <h5>
+                            <strong>Files</strong>
+                        </h5>
+                        <ListGroup className={panelListStyle}>{fileComponents}</ListGroup>
                         {errorMessage}
                     </Modal.Body>
 
                     <Modal.Footer className="modal-footer">
-                        <Button
-                            type="submit"
-                            bsStyle="primary"
-                            icon="play"
-                            pullRight
-                        >
+                        <Button type="submit" bsStyle="primary" icon="play" pullRight>
                             Start
                         </Button>
                     </Modal.Footer>
@@ -200,30 +188,31 @@ export class CreateSubtraction extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createSubtraction"),
     files: state.files.documents,
     error: get(state, "errors.CREATE_SUBTRACTION_ERROR.message", "")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onCreate: ({ subtractionId, fileId, nickname }) => {
         dispatch(createSubtraction(subtractionId, fileId, nickname));
     },
 
     onListFiles: () => {
-        dispatch(listFiles("subtraction"));
+        dispatch(findFiles("subtraction"));
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {createSubtraction: false}}));
+        dispatch(push({ ...window.location, state: { createSubtraction: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(CreateSubtraction);

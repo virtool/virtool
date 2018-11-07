@@ -7,7 +7,7 @@ import { updateAccount } from "../actions";
 import { clearError } from "../../errors/actions";
 import { SaveButton, InputError } from "../../base";
 
-const getInitialState = (email) => ({
+const getInitialState = email => ({
     email: email || "",
     error: ""
 });
@@ -15,21 +15,19 @@ const getInitialState = (email) => ({
 const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
 
 export class Email extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props.email);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.error === "Invalid input" && !prevState.error.length) {
             return { error: "Please provide a valid email address" };
         }
         return null;
     }
 
-    handleChange = (e) => {
-
+    handleChange = e => {
         this.setState({
             email: e.target.value,
             error: ""
@@ -40,7 +38,7 @@ export class Email extends React.Component {
         }
     };
 
-    handleBlur = (e) => {
+    handleBlur = e => {
         if (!e.relatedTarget) {
             this.setState({
                 email: this.props.email,
@@ -49,12 +47,12 @@ export class Email extends React.Component {
         }
     };
 
-    onSubmit = (e) => {
+    onSubmit = e => {
         e.preventDefault();
 
         if (!re.test(this.state.email)) {
             const error = "Please provide a valid email address";
-            return this.setState({error});
+            return this.setState({ error });
         }
 
         this.props.onUpdateEmail({
@@ -62,8 +60,7 @@ export class Email extends React.Component {
         });
     };
 
-    render () {
-
+    render() {
         return (
             <Row>
                 <Col md={8} lg={6}>
@@ -79,7 +76,7 @@ export class Email extends React.Component {
                                     error={this.state.error}
                                 />
 
-                                <div style={{marginTop: "20px"}}>
+                                <div style={{ marginTop: "20px" }}>
                                     <Row>
                                         <Col xs={24} md={12}>
                                             <SaveButton pullRight />
@@ -95,20 +92,22 @@ export class Email extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     email: state.account.email,
     error: get(state, "errors.UPDATE_ACCOUNT_ERROR.message", "")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onUpdateEmail: (email) => {
+const mapDispatchToProps = dispatch => ({
+    onUpdateEmail: email => {
         dispatch(updateAccount(email));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Email);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Email);

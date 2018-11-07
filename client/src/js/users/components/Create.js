@@ -1,13 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { Row, Col, Modal } from "react-bootstrap";
 import { pick, get } from "lodash-es";
 
 import { createUser } from "../actions";
 import { clearError } from "../../errors/actions";
 import { InputError, Checkbox, SaveButton } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils";
+import { routerLocationHasState, getTargetChange } from "../../utils/utils";
 
 const getInitialState = () => ({
     userId: "",
@@ -20,20 +20,19 @@ const getInitialState = () => ({
 });
 
 export class CreateUser extends React.PureComponent {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState();
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.errorUserId && nextProps.error) {
             return { errorUserId: nextProps.error };
         }
         return null;
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({ [name]: value, [error]: "" });
@@ -56,7 +55,7 @@ export class CreateUser extends React.PureComponent {
         });
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         let hasError = false;
@@ -82,8 +81,7 @@ export class CreateUser extends React.PureComponent {
         }
     };
 
-    render () {
-
+    render() {
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -151,19 +149,20 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    onCreate: (data) => {
+    onCreate: data => {
         dispatch(createUser(data));
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {createUser: false}}));
+        dispatch(push({ ...window.location, state: { createUser: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CreateUser);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(CreateUser);

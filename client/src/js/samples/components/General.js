@@ -4,21 +4,21 @@ import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import EditSample from "./Edit";
 import { IDRow } from "../../base";
+import EditSample from "./Edit";
 
 const cellNames = ["name", "host", "isolate", "locale"];
 
-const SampleDetailGeneral = (props) => (
+const SampleDetailGeneral = props => (
     <div>
         <table className="table table-bordered">
             <tbody>
-                {map(cellNames, field =>
+                {map(cellNames, field => (
                     <tr key={field}>
                         <th className="col-xs-4 text-capitalize">{field}</th>
                         <td className="col-xs-8">{props[field]}</td>
                     </tr>
-                )}
+                ))}
 
                 <IDRow id={props.id} />
             </tbody>
@@ -75,9 +75,7 @@ const SampleDetailGeneral = (props) => (
                     <tr>
                         <th className="col-xs-4">Host</th>
                         <td className="col-xs-8">
-                            <Link to={`/subtraction/${props.subtraction.id}`}>
-                                {props.subtraction.id}
-                            </Link>
+                            <Link to={`/subtraction/${props.subtraction.id}`}>{props.subtraction.id}</Link>
                         </td>
                     </tr>
                 </tbody>
@@ -88,7 +86,7 @@ const SampleDetailGeneral = (props) => (
     </div>
 );
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     const detail = state.samples.detail;
 
     return {

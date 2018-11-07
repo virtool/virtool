@@ -3,15 +3,15 @@ import { find, map, filter, differenceWith, isEqual, get, sortBy, indexOf } from
 import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
+import { Flex, Icon, NoneFound } from "../../../base";
+import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
+import { formatIsolateName } from "../../../utils/utils";
 import AddSequence from "./AddSequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
 import Sequence from "./Sequence";
-import { Flex, Icon, NoneFound } from "../../../base";
-import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
-import { formatIsolateName } from "../../../utils";
 
-const getInitialState = (props) => {
+const getInitialState = props => {
     const originalSchema = map(props.schema, "name");
     const sequencesWithSegment = filter(props.sequences, "segment");
     const segmentsInUse = map(sequencesWithSegment, "segment");
@@ -20,7 +20,7 @@ const getInitialState = (props) => {
     let index;
 
     const sortedSequences = sortBy(props.sequences, [
-        (entry) => {
+        entry => {
             index = indexOf(originalSchema, entry.segment);
             if (index !== -1) {
                 return index;
@@ -37,14 +37,13 @@ const getInitialState = (props) => {
 };
 
 class IsolateSequences extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
-        if (prevState.sequences !== nextProps.sequences || !prevState.error && nextProps.error) {
+    static getDerivedStateFromProps(nextProps, prevState) {
+        if (prevState.sequences !== nextProps.sequences || (!prevState.error && nextProps.error)) {
             return getInitialState(nextProps);
         }
         if (prevState.error && !nextProps.error) {
@@ -53,11 +52,11 @@ class IsolateSequences extends React.Component {
         return null;
     }
 
-    render () {
+    render() {
         let sequenceComponents;
 
         if (this.state.sequences.length) {
-            sequenceComponents = map(this.state.sequences, sequence =>
+            sequenceComponents = map(this.state.sequences, sequence => (
                 <Sequence
                     key={sequence.id}
                     active={sequence.accession === this.props.activeSequenceId}
@@ -66,16 +65,16 @@ class IsolateSequences extends React.Component {
                     showRemoveSequence={this.props.showRemoveSequence}
                     {...sequence}
                 />
-            );
+            ));
         } else {
             sequenceComponents = <NoneFound noun="sequences" noListGroup />;
         }
 
         return (
             <div>
-                <Flex alignItems="center" style={{marginBottom: "10px"}}>
-                    <strong style={{flex: "0 1 auto"}}>Sequences</strong>
-                    <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
+                <Flex alignItems="center" style={{ marginBottom: "10px" }}>
+                    <strong style={{ flex: "0 1 auto" }}>Sequences</strong>
+                    <span style={{ flex: "1 0 auto", marginLeft: "5px" }}>
                         <Badge>{this.props.sequences.length}</Badge>
                     </span>
                     {this.props.hasModifyOTU && !this.props.isRemote ? (
@@ -90,9 +89,7 @@ class IsolateSequences extends React.Component {
                     ) : null}
                 </Flex>
 
-                <ListGroup>
-                    {sequenceComponents}
-                </ListGroup>
+                <ListGroup>{sequenceComponents}</ListGroup>
 
                 <AddSequence schema={this.state.schema} />
 
@@ -114,7 +111,7 @@ class IsolateSequences extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
     let sequences = null;
     let activeIsolate = null;
 
@@ -122,7 +119,7 @@ const mapStateToProps = (state) => {
     const schema = state.otus.detail.schema;
 
     if (state.otus.detail.isolates.length) {
-        activeIsolate = find(state.otus.detail.isolates, {id: activeIsolateId});
+        activeIsolate = find(state.otus.detail.isolates, { id: activeIsolateId });
         sequences = activeIsolate.sequences;
     }
 
@@ -138,20 +135,21 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     showAddSequence: () => {
         dispatch(showAddSequence());
     },
 
-    showEditSequence: (sequenceId) => {
+    showEditSequence: sequenceId => {
         dispatch(showEditSequence(sequenceId));
     },
 
-    showRemoveSequence: (sequenceId) => {
+    showRemoveSequence: sequenceId => {
         dispatch(showRemoveSequence(sequenceId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(IsolateSequences);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(IsolateSequences);

@@ -1,20 +1,17 @@
 import {
     WS_INSERT_INDEX,
     WS_UPDATE_INDEX,
-    LIST_INDEXES,
+    FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
     GET_INDEX_HISTORY,
     WS_INSERT_HISTORY
-} from "../actionTypes";
-import { updateList, insert, edit } from "../reducerUtils";
+} from "../app/actionTypes";
+import { updateDocuments, insert, update } from "../utils/reducers";
 
 export const initialState = {
-    referenceId: "",
     documents: null,
     page: 0,
-    fetched: false,
-    refetchPage: false,
     modified_count: 0,
     total_otu_count: 0,
     detail: null,
@@ -23,84 +20,54 @@ export const initialState = {
     showRebuild: false
 };
 
-export default function indexesReducer (state = initialState, action) {
-
+export default function indexesReducer(state = initialState, action) {
     switch (action.type) {
-
         case WS_INSERT_HISTORY:
-            if (action.data.reference.id === state.referenceId) {
-                return {...state, modified_otu_count: (state.modified_otu_count + 1)};
+            if (action.data.reference.id === state.refId) {
+                return { ...state, modified_otu_count: state.modified_otu_count + 1 };
             }
             return state;
 
         case WS_INSERT_INDEX:
-            if (!state.fetched || action.data.reference.id !== state.referenceId) {
-                return state;
+            if (action.data.reference.id === state.refId) {
+                return {
+                    ...insert(state, action, "version", true)
+                };
             }
-            return {
-                ...state,
-                documents: insert(
-                    state.documents,
-                    state.page,
-                    state.per_page,
-                    action,
-                    "version"
-                ).reverse(),
-                modified_otu_count: 0
-            };
+
+            return state;
 
         case WS_UPDATE_INDEX:
-            if (action.data.reference.id !== state.referenceId) {
-                return state;
+            if (action.data.reference.id === state.refId) {
+                return update(state, action);
             }
+
+            return state;
+
+        case FIND_INDEXES.REQUESTED: {
             return {
                 ...state,
-                documents: edit(state.documents, action)
+                term: action.term
             };
+        }
 
-        case LIST_INDEXES.REQUESTED:
-            return {...state, referenceId: action.refId, isLoading: true, errorLoad: false};
-
-        case LIST_INDEXES.SUCCEEDED:
-            return {
-                ...state,
-                ...updateList(state.documents, action, state.page),
-                isLoading: false,
-                errorLoad: false,
-                fetched: true,
-                refetchPage: false
-            };
-
-        case LIST_INDEXES.FAILED:
-            return {...state, isLoading: false, errorLoad: true};
+        case FIND_INDEXES.SUCCEEDED:
+            return updateDocuments(state, action);
 
         case GET_INDEX.REQUESTED:
-            return {...state, detail: null};
+            return { ...state, refId: action.refId, detail: null };
 
         case GET_INDEX.SUCCEEDED:
-            return {...state, detail: action.data};
+            return { ...state, detail: action.data };
 
         case GET_UNBUILT.SUCCEEDED:
-            return {...state, unbuilt: action.data};
-
-        case GET_INDEX_HISTORY.REQUESTED:
-            return {
-                ...state,
-                history: {
-                    ...state.history,
-                    isLoading: true,
-                    errorLoad: false
-                }
-            };
+            return { ...state, unbuilt: action.data };
 
         case GET_INDEX_HISTORY.SUCCEEDED:
             return {
                 ...state,
                 history: {
-                    ...state.history,
-                    ...updateList(state.history.documents, action),
-                    isLoading: false,
-                    errorLoad: false
+                    ...updateDocuments(state.history, action)
                 }
             };
 

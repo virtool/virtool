@@ -1,68 +1,55 @@
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
+import { LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
+import { findHmms } from "../actions";
+import { getTerm } from "../selectors";
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
-import { Icon, LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
-import { listHmms, filterHmms } from "../actions";
+import HMMToolbar from "./Toolbar";
 
 class HMMList extends React.Component {
-
-    componentDidMount () {
-        if (!this.props.fetched) {
-            this.props.loadNextPage(1);
-        }
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.term, 1);
     }
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         if (prevProps.status && !prevProps.status.installed && this.props.status.installed) {
             this.props.loadNextPage(1);
         }
     }
 
-    rowRenderer = (index) => (
-        <HMMItem
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
-        />
-    );
+    renderRow = index => {
+        const document = this.props.documents[index];
+        return <HMMItem key={document.id} {...document} />;
+    };
 
-    render () {
+    render() {
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
 
         if (this.props.status.installed) {
+            let list;
+
+            if (this.props.documents.length) {
+                list = (
+                    <ScrollList
+                        documents={this.props.documents}
+                        onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
+                        page={this.props.page}
+                        pageCount={this.props.page_count}
+                        renderRow={this.renderRow}
+                    />
+                );
+            } else {
+                list = <NoneFound noun="HMMs" />;
+            }
+
             return (
                 <div>
                     <ViewHeader title="HMMs" totalCount={this.props.found_count} />
-
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-
-                            <FormControl
-                                type="text"
-                                placeholder="Definition"
-                                onChange={this.props.onFilter}
-                                value={this.props.filter}
-                            />
-                        </InputGroup>
-                    </FormGroup>
-
-                    {this.props.documents.length ? (
-                        <ScrollList
-                            hasNextPage={this.props.page < this.props.page_count}
-                            isNextPageLoading={this.props.isLoading}
-                            isLoadError={this.props.errorLoad}
-                            list={this.props.documents}
-                            loadNextPage={this.props.loadNextPage}
-                            page={this.props.page}
-                            rowRenderer={this.rowRenderer}
-                        />
-                    ) : <NoneFound noun="HMMs" />}
+                    <HMMToolbar />
+                    {list}
                 </div>
             );
         }
@@ -70,9 +57,7 @@ class HMMList extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>
-                        HMMs
-                    </strong>
+                    <strong>HMMs</strong>
                 </h3>
                 <HMMInstaller />
             </div>
@@ -80,21 +65,18 @@ class HMMList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.hmms,
-    filter: state.hmms.filter
+    term: getTerm(state)
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onFilter: (e) => {
-        dispatch(filterHmms(e.target.value));
-    },
-
-    loadNextPage: (page) => {
-        dispatch(listHmms(page));
+const mapDispatchToProps = dispatch => ({
+    onLoadNextPage: (term, page) => {
+        dispatch(findHmms(term, page, false));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(HMMList);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(HMMList);

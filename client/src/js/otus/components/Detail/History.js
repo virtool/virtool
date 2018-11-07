@@ -11,9 +11,10 @@ import PropTypes from "prop-types";
 import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
+import { checkRefRight } from "../../../utils/utils";
 
 import { getOTUHistory, revert } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, LoadingPlaceholder } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {
@@ -71,7 +72,6 @@ const methodIconProps = {
 };
 
 const getMethodIcon = ({ method_name }) => {
-
     const props = get(methodIconProps, method_name, {
         name: "exclamation-triangle",
         bsStyle: "danger"
@@ -81,24 +81,15 @@ const getMethodIcon = ({ method_name }) => {
 };
 
 export class Change extends React.Component {
-
     handleRevert = () => {
         this.props.revert(this.props.otu.id, this.props._id);
     };
 
-    render () {
+    render() {
         let revertIcon;
 
         if (this.props.unbuilt && this.props.canModify) {
-            revertIcon = (
-                <Icon
-                    name="undo"
-                    bsStyle="primary"
-                    tip="Revert"
-                    onClick={this.handleRevert}
-                    pullRight
-                />
-            );
+            revertIcon = <Icon name="undo" bsStyle="primary" tip="Revert" onClick={this.handleRevert} pullRight />;
         }
 
         return (
@@ -110,17 +101,13 @@ export class Change extends React.Component {
                     <Col md={6}>
                         <Flex alignItems="center">
                             {getMethodIcon(this.props)}
-                            <FlexItem pad={5}>
-                                {this.props.description || "No Description"}
-                            </FlexItem>
+                            <FlexItem pad={5}>{this.props.description || "No Description"}</FlexItem>
                         </Flex>
                     </Col>
                     <Col md={4}>
                         <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
                     </Col>
-                    <Col md={1}>
-                        {revertIcon}
-                    </Col>
+                    <Col md={1}>{revertIcon}</Col>
                 </Row>
             </ListGroupItem>
         );
@@ -128,12 +115,10 @@ export class Change extends React.Component {
 }
 
 export class HistoryList extends React.Component {
-
-    render () {
-
+    render() {
         const changes = reverse(sortBy(this.props.history, "otu.version"));
 
-        const changeComponents = map(changes, (change, index) =>
+        const changeComponents = map(changes, (change, index) => (
             <Change
                 key={index}
                 {...change}
@@ -141,13 +126,9 @@ export class HistoryList extends React.Component {
                 unbuilt={this.props.unbuilt}
                 revert={this.props.revert}
             />
-        );
+        ));
 
-        return (
-            <ListGroup>
-                {changeComponents}
-            </ListGroup>
-        );
+        return <ListGroup>{changeComponents}</ListGroup>;
     }
 }
 
@@ -159,17 +140,19 @@ HistoryList.propTypes = {
 };
 
 class OTUHistory extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.getHistory(this.props.otuId);
     }
 
-    render () {
+    render() {
         if (this.props.history === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
-        const changes = groupBy(this.props.history, change => change.index.version === "unbuilt" ? "unbuilt" : "built");
+        const changes = groupBy(
+            this.props.history,
+            change => (change.index.version === "unbuilt" ? "unbuilt" : "built")
+        );
 
         let built;
         let unbuilt;
@@ -178,10 +161,7 @@ class OTUHistory extends React.Component {
             built = (
                 <div>
                     <h4>Built Changes</h4>
-                    <HistoryList
-                        history={changes.built}
-                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
-                    />
+                    <HistoryList history={changes.built} canModify={this.props.canModify} />
                 </div>
             );
         }
@@ -193,7 +173,7 @@ class OTUHistory extends React.Component {
                     <HistoryList
                         history={changes.unbuilt}
                         revert={this.props.revert}
-                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                        canModify={this.props.canModify}
                         unbuilt
                     />
                 </div>
@@ -207,25 +187,25 @@ class OTUHistory extends React.Component {
             </div>
         );
     }
-
 }
 
 const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     history: state.otus.detailHistory,
-    isRemote: state.references.detail.remotes_from
+    canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    getHistory: (otuId) => {
+    getHistory: otuId => {
         dispatch(getOTUHistory(otuId));
     },
 
     revert: (otuId, changeId) => {
         dispatch(revert(otuId, changeId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(OTUHistory);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(OTUHistory);

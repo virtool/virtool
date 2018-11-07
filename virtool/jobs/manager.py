@@ -21,6 +21,7 @@ class IntegratedManager:
     The integrated manager makes use of the shared application process and thread pool executors.
 
     """
+
     def __init__(self, app, capture_exception):
         #: A reference to the application dispatcher's :meth:`.dispatch` method.
         self._dispatch = app["dispatcher"].dispatch
@@ -95,7 +96,6 @@ class IntegratedManager:
                 if job_process.is_alive():
                     job_process.terminate()
 
-
         logging.debug("Closed job manager")
 
     async def enqueue(self, job_id):
@@ -141,6 +141,7 @@ class IntegratedManager:
             else:
                 await virtool.db.jobs.cancel(self.dbi, job_id)
                 del self._jobs[job_id]
+
 
 def get_available_resources(settings, jobs):
     used = get_used_resources(jobs)

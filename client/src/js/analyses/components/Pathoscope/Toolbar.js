@@ -11,8 +11,7 @@ import {
     toggleShowPathoscopeReads
 } from "../../actions";
 
-export const PathoscopeToolbar = (props) => {
-
+export const PathoscopeToolbar = props => {
     const {
         filterIsolates,
         filterOTUs,
@@ -33,21 +32,11 @@ export const PathoscopeToolbar = (props) => {
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Button>
-                        <Button
-                            title="Sort Direction"
-                            onClick={onToggleSortDescending}
-                            tip="Sort List"
-                        >
-                            <Icon
-                                name={sortDescending ? "sort-amount-down" : "sort-amount-up"}
-                            />
+                        <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
+                            <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
                         </Button>
                     </InputGroup.Button>
-                    <FormControl
-                        componentClass="select"
-                        value={sortKey}
-                        onChange={onSetSortKey}
-                    >
+                    <FormControl componentClass="select" value={sortKey} onChange={onSetSortKey}>
                         <option className="text-primary" value="coverage">
                             Coverage
                         </option>
@@ -93,14 +82,9 @@ export const PathoscopeToolbar = (props) => {
                 onSelect={onFilter}
                 className="split-dropdown"
                 pullRight
-                style={{zIndex: 1}}
+                style={{ zIndex: 1 }}
             >
-                <Button
-                    title="Filter"
-                    tip="Filter Results"
-                    onClick={onFilter}
-                    active={filterOTUs || filterIsolates}
-                >
+                <Button title="Filter" tip="Filter Results" onClick={onFilter} active={filterOTUs || filterIsolates}>
                     <Icon name="filter" />
                 </Button>
                 <Dropdown.Toggle />
@@ -110,9 +94,7 @@ export const PathoscopeToolbar = (props) => {
                             <FlexItem>
                                 <Checkbox checked={filterOTUs} />
                             </FlexItem>
-                            <FlexItem pad={5}>
-                                OTUs
-                            </FlexItem>
+                            <FlexItem pad={5}>OTUs</FlexItem>
                         </Flex>
                     </MenuItem>
                     <MenuItem eventKey="isolates">
@@ -120,9 +102,7 @@ export const PathoscopeToolbar = (props) => {
                             <FlexItem>
                                 <Checkbox checked={filterIsolates} />
                             </FlexItem>
-                            <FlexItem pad={5}>
-                                Isolates
-                            </FlexItem>
+                            <FlexItem pad={5}>Isolates</FlexItem>
                         </Flex>
                     </MenuItem>
                 </Dropdown.Menu>
@@ -131,17 +111,16 @@ export const PathoscopeToolbar = (props) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.analyses
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onCollapse: () => {
         dispatch(collapseAnalysis());
     },
 
-    onFilter: (key) => {
+    onFilter: key => {
         if (key !== "OTUs" && key !== "isolates") {
             key = "";
         }
@@ -153,7 +132,7 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(togglePathoscopeSortDescending());
     },
 
-    onSetSortKey: (e) => {
+    onSetSortKey: e => {
         dispatch(setSortKey(e.target.value));
     },
 
@@ -164,7 +143,9 @@ const mapDispatchToProps = (dispatch) => ({
     onToggleShowReads: () => {
         dispatch(toggleShowPathoscopeReads());
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(PathoscopeToolbar);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(PathoscopeToolbar);

@@ -3,22 +3,21 @@ import React from "react";
 import PropTypes from "prop-types";
 
 export default class QualityChart extends React.Component {
-
     static propTypes = {
         data: PropTypes.array,
         createChart: PropTypes.func
     };
 
-    componentDidMount () {
+    componentDidMount() {
         this.update();
         window.addEventListener("resize", this.update);
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         window.removeEventListener("resize", this.update);
     }
 
-    shouldComponentUpdate () {
+    shouldComponentUpdate() {
         // Don"t ever render the component. All changes are done via d3.
         return false;
     }
@@ -35,9 +34,8 @@ export default class QualityChart extends React.Component {
         this.props.createChart(this.chartNode, this.props.data, width);
     };
 
-    render () {
+    render() {
         // This is the div the chart will be rendered in.
-        return <div className="chart-container" ref={(node) => this.chartNode = node} />;
+        return <div className="chart-container" ref={node => (this.chartNode = node)} />;
     }
-
 }

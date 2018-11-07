@@ -4,7 +4,7 @@
  * @module errors/reducer
  */
 import { endsWith, replace } from "lodash-es";
-import { reportAPIError } from "../utils";
+import { reportAPIError } from "../utils/utils";
 import {
     CLEAR_ERROR,
     CREATE_SAMPLE,
@@ -32,9 +32,9 @@ import {
     GET_SUBTRACTION,
     GET_RESOURCES,
     UPDATE_SETTINGS,
-    LIST_USERS,
+    FIND_USERS,
     GET_USER
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * Checks whether supplied action is of failed action type,
@@ -44,7 +44,7 @@ import {
  * @param action {object}
  * @returns {(object|boolean)}
  */
-export const checkActionFailed = (action) => {
+export const checkActionFailed = action => {
     const isFailed = endsWith(action.type, "_FAILED");
     return isFailed ? action : false;
 };
@@ -56,9 +56,7 @@ export const checkActionFailed = (action) => {
  * @param action {object}
  * @returns {object}
  */
-export const getErrorName = (action) => (
-    replace(action.type, "_FAILED", "_ERROR")
-);
+export const getErrorName = action => replace(action.type, "_FAILED", "_ERROR");
 
 /**
  * Clears error if a new request is made for the same category.
@@ -67,7 +65,7 @@ export const getErrorName = (action) => (
  * @param state {object}
  * @returns {object}
  */
-export const resetErrorName = (action) => {
+export const resetErrorName = action => {
     if (endsWith(action.type, "_REQUESTED")) {
         return replace(action.type, "_REQUESTED", "_ERROR");
     }
@@ -80,23 +78,23 @@ export const resetErrorName = (action) => {
  * @param action {object}
  * @returns {object}
  */
-export default function errorsReducer (state = null, action) {
-
+export default function errorsReducer(state = null, action) {
     if (action.type === CLEAR_ERROR) {
         // Clear specific error explicitly
-        return {...state, [action.error]: null};
+        return { ...state, [action.error]: null };
     }
 
     const failedAction = checkActionFailed(action);
 
     if (failedAction) {
-
         const errorName = getErrorName(action);
 
-        const errorPayload = { status: failedAction.status, message: failedAction.message };
+        const errorPayload = {
+            status: failedAction.status,
+            message: failedAction.message
+        };
 
         switch (failedAction.type) {
-
             case CREATE_SAMPLE.FAILED:
             case UPDATE_SAMPLE.FAILED:
             case CREATE_OTU.FAILED:
@@ -122,9 +120,9 @@ export default function errorsReducer (state = null, action) {
             case GET_INDEX.FAILED:
             case GET_SUBTRACTION.FAILED:
             case UPDATE_SETTINGS.FAILED:
-            case LIST_USERS.FAILED:
+            case FIND_USERS.FAILED:
             case GET_USER.FAILED:
-                return {...state, [errorName]: errorPayload};
+                return { ...state, [errorName]: errorPayload };
 
             default:
                 // Report uncaught errors to Sentry
@@ -138,7 +136,7 @@ export default function errorsReducer (state = null, action) {
 
     // Only clear errors on request that had been set previously
     if (errorName && state[errorName]) {
-        return {...state, [errorName]: null};
+        return { ...state, [errorName]: null };
     }
     return state;
 }

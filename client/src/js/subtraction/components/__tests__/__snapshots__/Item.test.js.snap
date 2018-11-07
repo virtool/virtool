@@ -1,0 +1,130 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
+<LinkContainer
+  activeClassName="active"
+  className="spaced"
+  exact={false}
+  key="123abc"
+  replace={false}
+  strict={false}
+  to="/subtraction/123abc"
+>
+  <ListGroupItem
+    allowFocus={false}
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={8}
+        xs={8}
+      >
+        <strong>
+          123abc
+        </strong>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        xs={4}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="center"
+          className="pull-right"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <Loader
+            color="#3c8786"
+            size="14px"
+          />
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={true}
+            shrink={1}
+          >
+            <strong>
+              Importing
+            </strong>
+          </FlexItem>
+        </Flex>
+      </Col>
+    </Row>
+  </ListGroupItem>
+</LinkContainer>
+`;
+
+exports[`<SubtractionItem /> renders correctly when entry is ready 1`] = `
+<LinkContainer
+  activeClassName="active"
+  className="spaced"
+  exact={false}
+  key="123abc"
+  replace={false}
+  strict={false}
+  to="/subtraction/123abc"
+>
+  <ListGroupItem
+    allowFocus={false}
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={8}
+        xs={8}
+      >
+        <strong>
+          123abc
+        </strong>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        xs={4}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="center"
+          className="pull-right"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <Icon
+            bsStyle="success"
+            faStyle="fas"
+            fixedWidth={false}
+            name="check"
+            pullRight={false}
+          />
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={true}
+            shrink={1}
+          >
+            <strong>
+              Ready
+            </strong>
+          </FlexItem>
+        </Flex>
+      </Col>
+    </Row>
+  </ListGroupItem>
+</LinkContainer>
+`;

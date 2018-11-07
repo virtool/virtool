@@ -20,28 +20,22 @@ const getInitialState = props => ({
 });
 
 class EditIsolate extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
-    handleChange = (update) => {
+    handleChange = update => {
         this.setState(update);
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
-        this.props.onSave(
-            this.props.otuId,
-            this.props.isolateId,
-            this.state.sourceType,
-            this.state.sourceName
-        );
+        this.props.onSave(this.props.otuId, this.props.isolateId, this.state.sourceType, this.state.sourceName);
     };
 
-    render () {
+    render() {
         return (
             <Modal bsStyle="warning" show={this.props.show} onEntered={this.modalEntered} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -67,7 +61,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -75,7 +68,9 @@ const mapDispatchToProps = dispatch => ({
     onSave: (otuId, isolateId, sourceType, sourceName) => {
         dispatch(editIsolate(otuId, isolateId, sourceType, sourceName));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(EditIsolate);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(EditIsolate);

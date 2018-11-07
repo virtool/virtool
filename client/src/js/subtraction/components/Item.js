@@ -1,20 +1,18 @@
 import React from "react";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 import { Col, Row } from "react-bootstrap";
 import { get } from "lodash-es";
 
-import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, Loader } from "../../base";
 
 const SubtractionItem = ({ entry }) => {
-
     let icon;
 
     if (entry.ready) {
         icon = <Icon name="check" bsStyle="success" />;
     } else {
-        icon = <ClipLoader size="14px" color="#3c8786" />;
+        icon = <Loader size="14px" color="#3c8786" />;
     }
 
     return (

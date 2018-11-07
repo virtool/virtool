@@ -292,8 +292,10 @@ async def set_rights(req):
 
     user_id = req["client"].user_id
 
+    print(req["client"].administrator)
+
     # Only update the document if the connected user owns the samples or is an administrator.
-    if not req["client"].administrator or user_id != await virtool.db.samples.get_sample_owner(db, sample_id):
+    if not req["client"].administrator and user_id != await virtool.db.samples.get_sample_owner(db, sample_id):
         return insufficient_rights("Must be administrator or sample owner")
 
     group = data.get("group", None)

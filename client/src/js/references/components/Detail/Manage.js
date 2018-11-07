@@ -3,8 +3,7 @@ import Marked from "marked";
 import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup, Panel, Table, Well, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Link} from "react-router-dom";
-import RemoveReference from "./RemoveReference";
+import { Link } from "react-router-dom";
 import {
     Flex,
     FlexItem,
@@ -15,25 +14,21 @@ import {
     RelativeTime,
     Button
 } from "../../../base";
-import { checkUserRefPermission } from "../../../utils";
+import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
+import RemoveReference from "./RemoveReference";
 
 const Contributors = ({ contributors }) => {
-
     if (contributors.length) {
         const sorted = sortBy(contributors, ["id", "count"]);
 
-        const contributorComponents = map(sorted, entry =>
+        const contributorComponents = map(sorted, entry => (
             <ListGroupItem key={entry.id}>
                 {entry.id} <Badge>{entry.count}</Badge>
             </ListGroupItem>
-        );
+        ));
 
-        return (
-            <ListGroup>
-                {contributorComponents}
-            </ListGroup>
-        );
+        return <ListGroup>{contributorComponents}</ListGroup>;
     }
 
     return <NoneFound noun="contributors" />;
@@ -44,9 +39,7 @@ const LatestBuild = ({ id, latestBuild }) => {
         return (
             <ListGroupItem>
                 <strong>
-                    <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>
-                        Index {latestBuild.version}
-                    </Link>
+                    <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
                 </strong>
                 <span>
                     &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
@@ -59,12 +52,14 @@ const LatestBuild = ({ id, latestBuild }) => {
 };
 
 const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) => {
-
     let updateStats;
 
     if (release.newer) {
         updateStats = (
-            <span> / {release.name} / Published <RelativeTime time={release.published_at} /></span>
+            <span>
+                {" "}
+                / {release.name} / Published <RelativeTime time={release.published_at} />
+            </span>
         );
     }
 
@@ -74,8 +69,8 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
         const html = Marked(release.body);
 
         updateDetail = (
-            <Well className="markdown-container" style={{marginTop: "10px"}}>
-                <div dangerouslySetInnerHTML={{__html: html}} />
+            <Well className="markdown-container" style={{ marginTop: "10px" }}>
+                <div dangerouslySetInnerHTML={{ __html: html }} />
             </Well>
         );
     }
@@ -86,22 +81,27 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
                 <span className={release.newer ? "text-primary" : "text-success"}>
                     <Icon name={release.newer ? "arrow-alt-circle-up" : "check"} />
                     <strong>
-                        &nbsp;{release.newer ? "Update Available" : "Up-to-date"}
+                        &nbsp;
+                        {release.newer ? "Update Available" : "Up-to-date"}
                     </strong>
                 </span>
                 {updateStats}
                 <span className="pull-right text-muted">
-                    Last checked <RelativeTime time={release.retrieved_at} />&nbsp;&nbsp;
-                    {isPending
-                        ? <div style={{display: "inline-block"}}><LoadingPlaceholder margin="0" size="14px" /></div>
-                        : <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />
-                    }
+                    Last checked <RelativeTime time={release.retrieved_at} />
+                    &nbsp;&nbsp;
+                    {isPending ? (
+                        <div style={{ display: "inline-block" }}>
+                            <LoadingPlaceholder margin="0" size="14px" />
+                        </div>
+                    ) : (
+                        <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />
+                    )}
                 </span>
             </div>
 
             {updateDetail}
             {release.newer ? (
-                <Row style={{margin: "0"}}>
+                <Row style={{ margin: "0" }}>
                     <Button
                         icon={isUpdating ? null : "download"}
                         bsStyle="primary"
@@ -109,17 +109,19 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
                         disabled={isUpdating}
                         pullRight
                     >
-                        {isUpdating
-                            ? (
-                                <div>
-                                    <LoadingPlaceholder
-                                        margin="0"
-                                        size="14px"
-                                        color="#edf7f6"
-                                        style={{display: "inline-block"}}
-                                    /> Installing
-                                </div>
-                            ) : "Install"}
+                        {isUpdating ? (
+                            <div>
+                                <LoadingPlaceholder
+                                    margin="0"
+                                    size="14px"
+                                    color="#edf7f6"
+                                    style={{ display: "inline-block" }}
+                                />{" "}
+                                Installing
+                            </div>
+                        ) : (
+                            "Install"
+                        )}
                     </Button>
                 </Row>
             ) : null}
@@ -131,9 +133,7 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
     <Panel>
         <Panel.Heading>
             <Flex>
-                <FlexItem grow={1}>
-                    Remote Reference
-                </FlexItem>
+                <FlexItem grow={1}>Remote Reference</FlexItem>
                 <FlexItem>
                     <a href={`https://github.com/${slug}`} target="_blank" rel="noopener noreferrer">
                         <Icon faStyle="fab" name="github" /> {slug}
@@ -146,7 +146,10 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
                 <ListGroupItem>
                     <Icon name="hdd" /> <strong>Installed Version</strong>
                     <span> / {installed.name}</span>
-                    <span> / Published <RelativeTime time={installed.published_at} /></span>
+                    <span>
+                        {" "}
+                        / Published <RelativeTime time={installed.published_at} />
+                    </span>
                 </ListGroupItem>
             ) : null}
             <Release
@@ -168,9 +171,7 @@ const Clone = ({ source }) => (
                 <strong>Source Reference</strong>
                 <span>
                     {" / "}
-                    <a href={`/refs/${source.id}`}>
-                        {source.name}
-                    </a>
+                    <a href={`/refs/${source.id}`}>{source.name}</a>
                 </span>
             </ListGroupItem>
         </ListGroup>
@@ -178,7 +179,6 @@ const Clone = ({ source }) => (
 );
 
 class ReferenceManage extends React.Component {
-
     handleCheckUpdates = () => {
         this.props.onCheckUpdates(this.props.detail.id);
     };
@@ -187,8 +187,7 @@ class ReferenceManage extends React.Component {
         this.props.onUpdate(this.props.detail.id);
     };
 
-    render () {
-
+    render() {
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
             return <LoadingPlaceholder />;
         }
@@ -226,12 +225,8 @@ class ReferenceManage extends React.Component {
         }
 
         if (cloned_from) {
-            clone = (
-                <Clone source={cloned_from} />
-            );
+            clone = <Clone source={cloned_from} />;
         }
-
-        const hasRemove = checkUserRefPermission(this.props, "remove");
 
         return (
             <div>
@@ -260,9 +255,7 @@ class ReferenceManage extends React.Component {
                 {clone}
 
                 <Panel>
-                    <Panel.Heading>
-                        Latest Index Build
-                    </Panel.Heading>
+                    <Panel.Heading>Latest Index Build</Panel.Heading>
 
                     <ListGroup>
                         <LatestBuild refId={id} latestBuild={latest_build} />
@@ -270,37 +263,33 @@ class ReferenceManage extends React.Component {
                 </Panel>
 
                 <Panel>
-                    <Panel.Heading>
-                        Contributors
-                    </Panel.Heading>
+                    <Panel.Heading>Contributors</Panel.Heading>
 
                     <Contributors contributors={contributors} />
                 </Panel>
 
-                {hasRemove ? <RemoveReference /> : null}
+                {this.props.canRemove ? <RemoveReference /> : null}
             </div>
         );
     }
-
 }
 
 const mapStateToProps = state => ({
     detail: state.references.detail,
-    isAdmin: state.account.administrator,
-    userId: state.account.id,
-    userGroups: state.account.groups
+    canRemove: checkRefRight(state, "remove")
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    onCheckUpdates: (refId) => {
+    onCheckUpdates: refId => {
         dispatch(checkUpdates(refId));
     },
 
-    onUpdate: (refId) => {
+    onUpdate: refId => {
         dispatch(updateRemoteReference(refId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ReferenceManage);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(ReferenceManage);

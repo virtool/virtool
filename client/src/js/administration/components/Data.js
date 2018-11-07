@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
-import AdministrationSection from "./Section";
 import { updateSetting } from "../actions";
 import { Icon, InputError } from "../../base";
+import AdministrationSection from "./Section";
 
 export const WarningFooter = () => (
     <small className="text-danger">
@@ -12,19 +12,18 @@ export const WarningFooter = () => (
 );
 
 export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave }) => {
-
     const contentDatabase = (
         <Panel.Body>
             <InputError
                 label="Database Name"
-                onSave={(e) => onSave("db_name", e.value)}
+                onSave={e => onSave("db_name", e.value)}
                 initialValue={db_name}
                 noMargin
                 withButton
             />
             <InputError
                 label="MongoDB Host"
-                onSave={(e) => onSave("db_host", e.value)}
+                onSave={e => onSave("db_host", e.value)}
                 initialValue={db_host}
                 noMargin
                 withButton
@@ -32,7 +31,7 @@ export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, 
             <InputError
                 label="MongoDB Port"
                 type="number"
-                onSave={(e) => onSave("db_port", Number(e.value))}
+                onSave={e => onSave("db_port", Number(e.value))}
                 initialValue={db_port}
                 noMargin
                 withButton
@@ -44,14 +43,14 @@ export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, 
         <Panel.Body>
             <InputError
                 label="Virtool Data"
-                onSave={(e) => onSave("data_path", e.value)}
+                onSave={e => onSave("data_path", e.value)}
                 initialValue={data_path}
                 noMargin
                 withButton
             />
             <InputError
                 label="Watch Folder"
-                onSave={(e) => onSave("watch_path", e.value)}
+                onSave={e => onSave("watch_path", e.value)}
                 initialValue={watch_path}
                 noMargin
                 withButton
@@ -77,16 +76,17 @@ export const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, 
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.settings.data
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onSave: (key, value) => {
         dispatch(updateSetting(key, value));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(DataOptions);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(DataOptions);

@@ -152,14 +152,14 @@ class Dispatcher:
             pass
 
     async def dispatch(
-        self,
-        interface: str,
-        operation: str,
-        data: Union[dict, list],
-        connections=None,
-        conn_filter=None,
-        conn_modifier=None,
-        writer=default_writer
+            self,
+            interface: str,
+            operation: str,
+            data: Union[dict, list],
+            connections=None,
+            conn_filter=None,
+            conn_modifier=None,
+            writer=default_writer
     ):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.

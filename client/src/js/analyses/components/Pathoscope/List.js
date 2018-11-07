@@ -8,8 +8,7 @@ import PathoscopeIsolate from "./Isolate";
 import PathoscopeItem from "./Item";
 
 export class PathoscopeList extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.itemRefs = {};
     }
@@ -22,7 +21,7 @@ export class PathoscopeList extends React.Component {
         });
     };
 
-    handlePosition = (node) => {
+    handlePosition = node => {
         const { left, top, right, bottom, height, width } = node.getBoundingClientRect();
         const scrollCorrection = window.pageYOffset;
 
@@ -36,18 +35,17 @@ export class PathoscopeList extends React.Component {
         };
     };
 
-    render () {
-
+    render() {
         if (this.props.data.length) {
-
-            let data = filter(this.props.data, otu => (
-                this.props.filterOTUs ? otu.reads >= otu.length * 0.8 / this.props.maxReadLength : true
-            ));
+            let data = filter(
+                this.props.data,
+                otu => (this.props.filterOTUs ? otu.reads >= (otu.length * 0.8) / this.props.maxReadLength : true)
+            );
 
             if (this.props.filterIsolates) {
                 data = map(data, otu => ({
                     ...otu,
-                    isolates: filter(otu.isolates, isolate => (isolate.pi >= 0.03 * otu.pi))
+                    isolates: filter(otu.isolates, isolate => isolate.pi >= 0.03 * otu.pi)
                 }));
             }
 
@@ -58,22 +56,15 @@ export class PathoscopeList extends React.Component {
             }
 
             const rows = map(data, (item, index) => {
-
-                const components = [
-                    <PathoscopeItem
-                        key={item.id}
-                        {...item}
-                    />
-                ];
+                const components = [<PathoscopeItem key={item.id} {...item} />];
 
                 if (item.expanded) {
-
                     const isolateComponents = map(sortBy(item.isolates, "pi").reverse(), isolate => {
                         const key = `${item.id}-${isolate.id}`;
 
                         return (
                             <PathoscopeIsolate
-                                ref={(node) => this.itemRefs[key] = node}
+                                ref={node => (this.itemRefs[key] = node)}
                                 key={key}
                                 otuId={item.id}
                                 maxDepth={item.maxDepth}
@@ -92,7 +83,6 @@ export class PathoscopeList extends React.Component {
                 }
 
                 return components;
-
             });
 
             return (
@@ -121,15 +111,8 @@ export class PathoscopeList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    const {
-        data,
-        filterOTUs,
-        filterIsolates,
-        showMedian,
-        sortDescending,
-        sortKey
-    } = state.analyses;
+const mapStateToProps = state => {
+    const { data, filterOTUs, filterIsolates, showMedian, sortDescending, sortKey } = state.analyses;
 
     return {
         data,

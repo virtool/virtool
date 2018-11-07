@@ -5,7 +5,6 @@ import { Flex, FlexItem } from "./Flex";
 import { Icon } from "./Icon";
 
 export const Alert = ({ bsStyle, children, className, icon }) => {
-
     let content;
 
     if (icon) {
@@ -14,9 +13,7 @@ export const Alert = ({ bsStyle, children, className, icon }) => {
                 <FlexItem>
                     <Icon name={icon} />
                 </FlexItem>
-                <FlexItem pad={5}>
-                    {children}
-                </FlexItem>
+                <FlexItem pad={5}>{children}</FlexItem>
             </Flex>
         );
     }

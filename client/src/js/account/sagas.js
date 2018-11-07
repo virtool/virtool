@@ -1,7 +1,4 @@
-import { put, takeEvery, takeLatest } from "redux-saga/effects";
-
-import * as accountAPI from "./api";
-import { setPending, apiCall } from "../sagaUtils";
+import { setPending, apiCall } from "../utils/sagas";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT,
@@ -13,9 +10,11 @@ import {
     UPDATE_API_KEY,
     REMOVE_API_KEY,
     LOGOUT
-} from "../actionTypes";
+} from "../app/actionTypes";
+import * as accountAPI from "./api";
+import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
-export function* watchAccount () {
+export function* watchAccount() {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);
     yield takeLatest(GET_ACCOUNT_SETTINGS.REQUESTED, getAccountSettings);
     yield takeLatest(UPDATE_ACCOUNT.REQUESTED, updateAccount);
@@ -28,47 +27,47 @@ export function* watchAccount () {
     yield takeEvery(LOGOUT.REQUESTED, logout);
 }
 
-export function* getAccount () {
+export function* getAccount() {
     yield apiCall(accountAPI.get, {}, GET_ACCOUNT);
 }
 
-export function* getAccountSettings () {
+export function* getAccountSettings() {
     yield apiCall(accountAPI.getSettings, {}, GET_ACCOUNT_SETTINGS);
 }
 
-export function* updateAccount (action) {
+export function* updateAccount(action) {
     yield setPending(apiCall(accountAPI.update, action, UPDATE_ACCOUNT));
 }
 
-export function* updateAccountSettings (action) {
+export function* updateAccountSettings(action) {
     yield setPending(apiCall(accountAPI.updateSettings, action, UPDATE_ACCOUNT_SETTINGS));
 }
 
-export function* changeAccountPassword (action) {
+export function* changeAccountPassword(action) {
     yield setPending(apiCall(accountAPI.changePassword, action, CHANGE_ACCOUNT_PASSWORD));
-    yield put({type: GET_ACCOUNT.REQUESTED});
+    yield put({ type: GET_ACCOUNT.REQUESTED });
 }
 
-export function* getAPIKeys () {
+export function* getAPIKeys() {
     yield apiCall(accountAPI.getAPIKeys, {}, GET_API_KEYS);
 }
 
-export function* createAPIKey (action) {
+export function* createAPIKey(action) {
     yield apiCall(accountAPI.createAPIKey, action, CREATE_API_KEY);
     yield getAPIKeys();
 }
 
-export function* updateAPIKey (action) {
+export function* updateAPIKey(action) {
     yield setPending(apiCall(accountAPI.updateAPIKey, action, UPDATE_API_KEY));
-    yield put({type: GET_API_KEYS.REQUESTED});
+    yield put({ type: GET_API_KEYS.REQUESTED });
 }
 
-export function* removeAPIKey (action) {
+export function* removeAPIKey(action) {
     yield setPending(apiCall(accountAPI.removeAPIKey, action, REMOVE_API_KEY));
-    yield put({type: GET_API_KEYS.REQUESTED});
+    yield put({ type: GET_API_KEYS.REQUESTED });
 }
 
-export function* logout () {
+export function* logout() {
     yield accountAPI.logout();
     window.location.reload();
 }

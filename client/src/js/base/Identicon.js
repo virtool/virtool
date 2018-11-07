@@ -9,7 +9,6 @@ import Identiconjs from "identicon.js";
  * @param hash {string} the users identicon hash
  */
 export const Identicon = ({ size = 64, hash }) => {
-
     const data = new Identiconjs(hash, {
         size,
         format: "svg"

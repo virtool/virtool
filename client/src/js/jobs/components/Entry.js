@@ -3,14 +3,12 @@ import PropTypes from "prop-types";
 import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-import { ClipLoader } from "halogenium";
-import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
-import { getTaskDisplayName } from "../../utils";
+import { push } from "connected-react-router";
+import { Icon, RelativeTime, ProgressBar, Flex, FlexItem, Loader } from "../../base";
+import { getTaskDisplayName } from "../../utils/utils";
 import { cancelJob, removeJob } from "../actions";
 
 export class JobEntry extends React.Component {
-
     static propTypes = {
         id: PropTypes.string.isRequired,
         task: PropTypes.string.isRequired,
@@ -25,52 +23,48 @@ export class JobEntry extends React.Component {
         canCancel: PropTypes.bool
     };
 
-    handleCancel = (e) => {
+    handleCancel = e => {
         e.stopPropagation();
         this.props.onCancel(this.props.id);
     };
 
-    handleNavigate = (e) => {
+    handleNavigate = e => {
         e.stopPropagation();
         this.props.onNavigate(this.props.id);
     };
 
-    handleRemove = (e) => {
+    handleRemove = e => {
         e.stopPropagation();
         this.props.onRemove(this.props.id);
     };
 
-    render () {
-
+    render() {
         let actionIcon;
         let statusIcon;
 
         if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
             actionIcon = (
-                <Icon
-                    bsStyle="danger"
-                    name="ban"
-                    onClick={this.handleCancel}
-                    style={{fontSize: "17px"}}
-                    pullRight
-                />
+                <Icon bsStyle="danger" name="ban" onClick={this.handleCancel} style={{ fontSize: "17px" }} pullRight />
             );
 
-            statusIcon = <ClipLoader size="14px" color="#3c8786" />;
+            statusIcon = <Loader size="14px" color="#3c8786" />;
         } else if (this.props.canRemove) {
             actionIcon = (
                 <Icon
                     bsStyle="danger"
                     name="trash"
                     onClick={this.handleRemove}
-                    style={{fontSize: "17px"}}
+                    style={{ fontSize: "17px" }}
                     pullRight
                 />
             );
 
-            statusIcon = this.props.state === "complete"
-                ? (<Icon name="check fa-fw" bsStyle="success" />)
-                : (<Icon name="times fa-fw" bsStyle="danger" />);
+            statusIcon =
+                this.props.state === "complete" ? (
+                    <Icon name="check fa-fw" bsStyle="success" />
+                ) : (
+                    <Icon name="times fa-fw" bsStyle="danger" />
+                );
         }
 
         let progressStyle = "success";
@@ -103,13 +97,9 @@ export class JobEntry extends React.Component {
                     </Col>
                     <Col xsHidden sm={2} md={2}>
                         <Flex justifyContent="flex-end">
-                            <FlexItem>
-                                {statusIcon}
-                            </FlexItem>
+                            <FlexItem>{statusIcon}</FlexItem>
                             <FlexItem pad>
-                                <strong>
-                                    {capitalize(this.props.state)}
-                                </strong>
+                                <strong>{capitalize(this.props.state)}</strong>
                             </FlexItem>
                         </Flex>
                     </Col>
@@ -122,19 +112,21 @@ export class JobEntry extends React.Component {
     }
 }
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onCancel: (jobId) => {
+const mapDispatchToProps = dispatch => ({
+    onCancel: jobId => {
         dispatch(cancelJob(jobId));
     },
 
-    onNavigate: (jobId) => {
+    onNavigate: jobId => {
         dispatch(push(`/jobs/${jobId}`));
     },
 
-    onRemove: (jobId) => {
+    onRemove: jobId => {
         dispatch(removeJob(jobId));
     }
 });
 
-export default connect(null, mapDispatchToProps)(JobEntry);
+export default connect(
+    null,
+    mapDispatchToProps
+)(JobEntry);

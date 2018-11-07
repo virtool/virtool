@@ -4,19 +4,19 @@
  * @module files/actions
  */
 
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_FILE,
     WS_UPDATE_FILE,
     WS_REMOVE_FILE,
-    LIST_FILES,
+    FIND_FILES,
     REMOVE_FILE,
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertFile = (data) => ({
+export const wsInsertFile = data => ({
     type: WS_INSERT_FILE,
     data
 });
@@ -28,7 +28,7 @@ export const wsInsertFile = (data) => ({
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateFile = (data) => ({
+export const wsUpdateFile = data => ({
     type: WS_UPDATE_FILE,
     data
 });
@@ -40,7 +40,7 @@ export const wsUpdateFile = (data) => ({
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsRemoveFile = (data) => ({
+export const wsRemoveFile = data => ({
     type: WS_REMOVE_FILE,
     data
 });
@@ -53,9 +53,10 @@ export const wsRemoveFile = (data) => ({
  * @param page {number} which page of results to return
  * @returns {object}
  */
-export const listFiles = (fileType, page) => ({
-    type: LIST_FILES.REQUESTED,
+export const findFiles = (fileType, term, page) => ({
+    type: FIND_FILES.REQUESTED,
     fileType,
+    term,
     page
 });
 
@@ -83,7 +84,7 @@ export const upload = (localId, file, fileType) => ({
  * @param fileId {string} the unique id for the file
  * @returns {object}
  */
-export const removeFile = (fileId) => ({
+export const removeFile = fileId => ({
     type: REMOVE_FILE.REQUESTED,
     fileId
 });

@@ -6,18 +6,17 @@ import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ScrollList } from "../../base";
 
 class IndexChanges extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         if (!this.props.history) {
             this.props.handlePage(1);
         }
     }
 
-    handlePage = (page) => {
+    handlePage = page => {
         this.props.loadNextPage(this.props.detail.id, page);
     };
 
-    rowRenderer = (index) => (
+    rowRenderer = index => (
         <ListGroupItem key={this.props.history.documents[index].id} className="spaced">
             <Row>
                 <Col xs={12} md={6}>
@@ -30,8 +29,7 @@ class IndexChanges extends React.Component {
         </ListGroupItem>
     );
 
-    render () {
-
+    render() {
         if (this.props.history === null || this.props.history.documents === null || this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
@@ -52,19 +50,20 @@ class IndexChanges extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     detail: state.indexes.detail,
     history: state.indexes.history,
     isLoading: state.indexes.isLoading,
     errorLoad: state.indexes.errorLoad
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     loadNextPage: (indexId, page) => {
         dispatch(getIndexHistory(indexId, page));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(IndexChanges);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(IndexChanges);

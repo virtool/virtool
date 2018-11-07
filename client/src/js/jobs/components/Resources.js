@@ -8,13 +8,12 @@ import { getResources } from "../actions";
 const color = "#d44b40";
 
 class JobsResources extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet();
         this.timer = window.setInterval(this.props.onGet, 800);
     }
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         if (!prevProps.error && this.props.error) {
             window.clearInterval(this.timer);
         }
@@ -24,25 +23,20 @@ class JobsResources extends React.Component {
         }
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         window.clearInterval(this.timer);
     }
 
-    render () {
+    render() {
         if (this.props.error) {
-            return (
-                <NotFound
-                    status={this.props.error.status}
-                    message={this.props.error.message}
-                />
-            );
+            return <NotFound status={this.props.error.status} message={this.props.error.message} />;
         }
 
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
 
-        const coreGauges = map(this.props.resources.proc, (value, index) =>
+        const coreGauges = map(this.props.resources.proc, (value, index) => (
             <Gauge
                 key={index}
                 color={color}
@@ -50,9 +44,9 @@ class JobsResources extends React.Component {
                 label={`Core ${index + 1}`}
                 width={100}
                 height={80}
-                minMaxLabelStyle={{display: "none"}}
+                minMaxLabelStyle={{ display: "none" }}
             />
-        );
+        ));
 
         const used = (this.props.resources.mem.total - this.props.resources.mem.available) / Math.pow(1024, 3);
 
@@ -63,11 +57,9 @@ class JobsResources extends React.Component {
 
         return (
             <div>
-                <h3 style={{marginBottom: "30px"}}>
-                    System Resources
-                </h3>
+                <h3 style={{ marginBottom: "30px" }}>System Resources</h3>
 
-                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
+                <h4 style={{ display: "flex", alignItems: "center", marginTop: "20px" }} className="section-header">
                     <strong>CPU Utilization</strong>
                 </h4>
 
@@ -90,7 +82,7 @@ class JobsResources extends React.Component {
                     </FlexItem>
                 </Flex>
 
-                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
+                <h4 style={{ display: "flex", alignItems: "center", marginTop: "20px" }} className="section-header">
                     <strong>Memory Utilization (GB)</strong>
                 </h4>
 
@@ -103,23 +95,23 @@ class JobsResources extends React.Component {
                     width={200}
                     height={160}
                 />
-
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_RESOURCES_ERROR", null),
     resources: state.jobs.resources
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onGet: () => {
         dispatch(getResources());
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobsResources);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(JobsResources);

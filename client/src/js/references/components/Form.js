@@ -4,19 +4,14 @@ import { Row, Col } from "react-bootstrap";
 import { InputError } from "../../base";
 
 export default class ReferenceForm extends React.Component {
+    render() {
+        const acceptedDataTypes = ["", "genome"];
 
-    render () {
-
-        const acceptedDataTypes = [
-            "",
-            "genome"
-        ];
-
-        const dataOptions = map(acceptedDataTypes, (type) =>
+        const dataOptions = map(acceptedDataTypes, type => (
             <option key={type} value={type} className="text-capitalize" hidden={!type.length}>
                 {type}
             </option>
-        );
+        ));
 
         let extraComponent;
 
@@ -34,9 +29,7 @@ export default class ReferenceForm extends React.Component {
 
         return (
             <div>
-                <Row>
-                    {extraComponent}
-                </Row>
+                <Row>{extraComponent}</Row>
                 <Row>
                     <Col xs={12}>
                         <InputError

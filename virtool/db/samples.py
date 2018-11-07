@@ -2,8 +2,8 @@ import asyncio
 import os
 
 import virtool.errors
-import virtool.utils
 import virtool.samples
+import virtool.utils
 
 LIST_PROJECTION = [
     "_id",
@@ -46,7 +46,6 @@ RIGHTS_PROJECTION = {
 
 
 async def check_name(db, settings, name, sample_id=None):
-
     if settings["sample_unique_names"]:
         query = {
             "name": name

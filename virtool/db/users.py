@@ -213,7 +213,6 @@ async def create(db, user_id, password, force_reset=True):
 
 
 async def edit(db, user_id, administrator=None, force_reset=None, groups=None, password=None, primary_group=None):
-
     if not await virtool.db.utils.id_exists(db.users, user_id):
         raise virtool.errors.DatabaseError("User does not exist")
 
@@ -317,8 +316,6 @@ async def update_sessions_and_keys(db, user_id, administrator, groups, permissio
         "user.id": user_id
     }
 
-    print(find_query)
-
     async for document in db.keys.find(find_query, ["permissions"]):
         await db.keys.update_one({"_id": document["_id"]}, {
             "$set": {
@@ -327,13 +324,6 @@ async def update_sessions_and_keys(db, user_id, administrator, groups, permissio
                 "permissions": virtool.users.limit_permissions(document["permissions"], permissions)
             }
         })
-
-    import pprint
-    pprint.pprint({
-        "administrator": administrator,
-        "groups": groups,
-        "permissions": permissions
-    })
 
     await db.sessions.update_many(find_query, {
         "$set": {

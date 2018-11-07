@@ -2,11 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 
-import { byteSize } from "../../../utils";
+import { byteSize } from "../../../utils/utils";
 import { Icon, ListGroupItem } from "../../../base";
 
 export default class ReadItem extends React.PureComponent {
-
     static propTypes = {
         id: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
@@ -29,9 +28,7 @@ export default class ReadItem extends React.PureComponent {
                 <Col md={8}>
                     <Icon name="file" /> {this.props.name}
                 </Col>
-                <Col md={4}>
-                    {byteSize(this.props.size)}
-                </Col>
+                <Col md={4}>{byteSize(this.props.size)}</Col>
             </Row>
         </ListGroupItem>
     );

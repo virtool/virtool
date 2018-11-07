@@ -1,19 +1,5 @@
-import {
-    compact,
-    fill,
-    flatMap,
-    fromPairs,
-    map,
-    max,
-    maxBy,
-    mean,
-    round,
-    sortBy,
-    sum,
-    sumBy,
-    unzip
-} from "lodash-es";
-import { formatIsolateName } from "../utils";
+import { compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip } from "lodash-es";
+import { formatIsolateName } from "../utils/utils";
 
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length - 1);
@@ -35,7 +21,7 @@ export const fillAlign = ({ align, length }) => {
     });
 };
 
-export const formatData = (detail) => {
+export const formatData = detail => {
     if (detail.diagnosis.length === 0) {
         return detail.diagnosis;
     }
@@ -53,18 +39,21 @@ export const formatData = (detail) => {
                 name = "Unnamed Isolate";
             }
 
-            const sequences = sortBy(map(isolate.sequences, sequence => {
-                const filled = fillAlign(sequence);
+            const sequences = sortBy(
+                map(isolate.sequences, sequence => {
+                    const filled = fillAlign(sequence);
 
-                return {
-                    ...sequence,
-                    reads: round(sequence.pi * mappedReadCount),
-                    meanDepth: mean(filled),
-                    medianDepth: median(filled),
-                    sumDepth: sum(filled),
-                    filled
-                };
-            }), "length");
+                    return {
+                        ...sequence,
+                        reads: round(sequence.pi * mappedReadCount),
+                        meanDepth: mean(filled),
+                        medianDepth: median(filled),
+                        sumDepth: sum(filled),
+                        filled
+                    };
+                }),
+                "length"
+            );
 
             const filled = flatMap(sequences, "filled");
 
@@ -114,7 +103,7 @@ export const formatData = (detail) => {
     });
 };
 
-export const median = (values) => {
+export const median = values => {
     const sorted = values.slice().sort();
 
     const midIndex = (sorted.length - 1) / 2;

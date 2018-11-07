@@ -10,10 +10,7 @@ import PropTypes from "prop-types";
  * @returns {*}
  * @constructor
  */
-export const CheckboxIcon = ({ checked }) => (
-    <i className={`far fa-lg fa-${checked ? "check-square" : "square"}`} />
-);
-
+export const CheckboxIcon = ({ checked }) => <i className={`far fa-lg fa-${checked ? "check-square" : "square"}`} />;
 
 /**
  * A simple checkbox component based on the application icon font.
@@ -22,8 +19,7 @@ export const CheckboxIcon = ({ checked }) => (
  * @returns {*} any type
  * @constructor
  */
-export const Checkbox = (props) => {
-
+export const Checkbox = props => {
     let className = CX("pointer", {
         "pull-right": props.pullRight,
         "labelled-checkbox": props.label,
@@ -34,10 +30,10 @@ export const Checkbox = (props) => {
         className += ` ${props.className}`;
     }
 
-    let style = {cursor: props.disabled ? "not-allowed" : "pointer"};
+    let style = { cursor: props.disabled ? "not-allowed" : "pointer" };
 
     if (props.style) {
-        style = {...style, ...props.style};
+        style = { ...style, ...props.style };
     }
 
     return (

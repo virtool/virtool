@@ -1,26 +1,18 @@
 import React from "react";
 import { filter, map, replace, split, get } from "lodash-es";
 import { connect } from "react-redux";
-import {
-    Modal,
-    Row,
-    Col,
-    ControlLabel,
-    InputGroup
-} from "react-bootstrap";
-import { push } from "react-router-redux";
+import { Modal, Row, Col, ControlLabel, InputGroup } from "react-bootstrap";
+import { push } from "connected-react-router";
 
-import ReadSelector from "./ReadSelector";
 import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
-import { routerLocationHasState, getTargetChange } from "../../../utils";
+import { routerLocationHasState, getTargetChange } from "../../../utils/utils";
+import ReadSelector from "./ReadSelector";
 
-const getReadyHosts = (props) => (
-    props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || "") : ""
-);
+const getReadyHosts = props => (props.readyHosts && props.readyHosts.length ? props.readyHosts[0].id || "" : "");
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     selected: [],
     name: "",
     host: "",
@@ -36,16 +28,18 @@ const getInitialState = (props) => ({
 });
 
 const SampleUserGroup = ({ group, groups, onChange }) => {
-    const groupComponents = map(groups, groupId =>
+    const groupComponents = map(groups, groupId => (
         <option key={groupId} value={groupId} className="text-capitalize">
             {groupId}
         </option>
-    );
+    ));
 
     return (
         <Col md={3}>
             <InputError type="select" label="User Group" value={group} onChange={onChange}>
-                <option key="none" value="none">None</option>
+                <option key="none" value="none">
+                    None
+                </option>
                 {groupComponents}
             </InputError>
         </Col>
@@ -53,13 +47,12 @@ const SampleUserGroup = ({ group, groups, onChange }) => {
 };
 
 class CreateSample extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.readyHosts !== prevState.readyHosts) {
             return {
                 subtraction: getReadyHosts(nextProps),
@@ -74,7 +67,7 @@ class CreateSample extends React.Component {
         return null;
     }
 
-    componentDidMount () {
+    componentDidMount() {
         this.props.onFindHosts();
         this.props.onFindFiles();
     }
@@ -90,7 +83,7 @@ class CreateSample extends React.Component {
         }
     };
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "subtraction") {
@@ -98,10 +91,9 @@ class CreateSample extends React.Component {
         } else {
             this.setState({ [name]: value });
         }
-
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         let hasError = false;
@@ -120,11 +112,13 @@ class CreateSample extends React.Component {
 
         if (!this.state.selected.length) {
             hasError = true;
-            this.setState({ errorFile: "At least one read file must be attached to the sample" });
+            this.setState({
+                errorFile: "At least one read file must be attached to the sample"
+            });
         }
 
         if (!hasError) {
-            this.props.onCreate({...this.state, files: this.state.selected});
+            this.props.onCreate({ ...this.state, files: this.state.selected });
         }
     };
 
@@ -134,12 +128,11 @@ class CreateSample extends React.Component {
         });
     };
 
-    handleSelect = (selected) => {
+    handleSelect = selected => {
         this.setState({ selected, errorFile: "" });
     };
 
-    render () {
-
+    render() {
         if (this.props.readyHosts === null) {
             return (
                 <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
@@ -150,15 +143,13 @@ class CreateSample extends React.Component {
             );
         }
 
-        const hostComponents = map(this.props.readyHosts, host =>
-            <option key={host.id}>{host.id}</option>
-        );
+        const hostComponents = map(this.props.readyHosts, host => <option key={host.id}>{host.id}</option>);
 
         const userGroup = this.props.forceGroupChoice ? (
             <SampleUserGroup
                 group={this.props.group}
                 groups={this.props.groups}
-                onChange={(e) => this.setState({group: e})}
+                onChange={e => this.setState({ group: e })}
             />
         ) : null;
 
@@ -180,7 +171,6 @@ class CreateSample extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-
                         <Row>
                             <Col xs={12}>
                                 <ControlLabel>Sample Name</ControlLabel>
@@ -192,7 +182,7 @@ class CreateSample extends React.Component {
                                         autocomplete={false}
                                         error={errorName}
                                     />
-                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                    <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
                                         <Button
                                             type="button"
                                             onClick={this.autofill}
@@ -264,12 +254,7 @@ class CreateSample extends React.Component {
 
                             {userGroup}
                             <Col xs={12} md={6}>
-                                <InputError
-                                    type="text"
-                                    label="Library Type"
-                                    value={libraryType}
-                                    readOnly={true}
-                                />
+                                <InputError type="text" label="Library Type" value={libraryType} readOnly={true} />
                             </Col>
                         </Row>
 
@@ -279,7 +264,6 @@ class CreateSample extends React.Component {
                             onSelect={this.handleSelect}
                             error={errorFile}
                         />
-
                     </Modal.Body>
 
                     <Modal.Footer>
@@ -291,21 +275,16 @@ class CreateSample extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    const show = routerLocationHasState(state, "create", true);
+const mapStateToProps = state => ({
+    show: routerLocationHasState(state, "createSample"),
+    groups: state.account.groups,
+    readyHosts: state.samples.readyHosts,
+    readyReads: filter(state.samples.readFiles, { reserved: false }),
+    forceGroupChoice: state.settings.sample_group === "force_choice",
+    error: get(state, "errors.CREATE_SAMPLE_ERROR.message", "")
+});
 
-    return {
-        show,
-        groups: state.account.groups,
-        readyHosts: state.samples.readyHosts,
-        readyReads: filter(state.samples.readFiles, {reserved: false}),
-        forceGroupChoice: state.settings.sample_group === "force_choice",
-        error: get(state, "errors.CREATE_SAMPLE_ERROR.message", "")
-    };
-};
-
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onFindHosts: () => {
         dispatch(findReadyHosts());
     },
@@ -319,13 +298,15 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {create: false}}));
+        dispatch(push({ ...window.location, state: { create: false } }));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(CreateSample);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(CreateSample);

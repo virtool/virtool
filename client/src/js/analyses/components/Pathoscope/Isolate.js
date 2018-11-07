@@ -2,11 +2,10 @@ import { map } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { Flex, FlexItem } from "../../../base/index";
-import { toScientificNotation } from "../../../utils";
+import { toScientificNotation } from "../../../utils/utils";
 import Coverage from "./Coverage";
 
 export default class PathoscopeIsolate extends React.Component {
-
     static propTypes = {
         otuId: PropTypes.string,
         name: PropTypes.string,
@@ -22,24 +21,23 @@ export default class PathoscopeIsolate extends React.Component {
         showReads: PropTypes.bool
     };
 
-    componentDidMount () {
+    componentDidMount() {
         this.chartNode.addEventListener("scroll", this.handleScroll);
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.chartNode.removeEventListener("scroll", this.handleScroll);
     }
 
-    scrollTo = (scrollLeft) => {
+    scrollTo = scrollLeft => {
         this.chartNode.scrollLeft = scrollLeft;
     };
 
-    handleScroll = (e) => {
+    handleScroll = e => {
         this.props.setScroll(this.props.otuId, e.target.scrollLeft);
     };
 
-    render () {
-
+    render() {
         const chartContainerStyle = {
             overflowX: "scroll",
             marginTop: "5px",
@@ -50,7 +48,7 @@ export default class PathoscopeIsolate extends React.Component {
             whiteSpace: "nowrap"
         };
 
-        const hitComponents = map(this.props.sequences, (hit, i) =>
+        const hitComponents = map(this.props.sequences, (hit, i) => (
             <Coverage
                 key={i}
                 data={hit.align}
@@ -61,7 +59,7 @@ export default class PathoscopeIsolate extends React.Component {
                 showYAxis={i === 0}
                 isolateComponent={this}
             />
-        );
+        ));
 
         const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
 
@@ -69,18 +67,12 @@ export default class PathoscopeIsolate extends React.Component {
             <div>
                 <div className="pathoscope-isolate-header">
                     <Flex>
-                        <FlexItem>
-                            {this.props.name}
+                        <FlexItem>{this.props.name}</FlexItem>
+                        <FlexItem pad={5}>
+                            <strong className="small text-success">{piValue}</strong>
                         </FlexItem>
                         <FlexItem pad={5}>
-                            <strong className="small text-success">
-                                {piValue}
-                            </strong>
-                        </FlexItem>
-                        <FlexItem pad={5}>
-                            <strong className="small text-danger">
-                                {this.props.depth.toFixed(1)}
-                            </strong>
+                            <strong className="small text-danger">{this.props.depth.toFixed(1)}</strong>
                         </FlexItem>
                         <FlexItem pad={5}>
                             <strong className="small text-primary">
@@ -89,10 +81,8 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                     </Flex>
                 </div>
-                <div ref={(node) => this.chartNode = node} style={chartContainerStyle}>
-                    <div style={chartRibbonStyle}>
-                        {hitComponents}
-                    </div>
+                <div ref={node => (this.chartNode = node)} style={chartContainerStyle}>
+                    <div style={chartRibbonStyle}>{hitComponents}</div>
                 </div>
             </div>
         );

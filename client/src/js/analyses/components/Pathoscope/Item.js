@@ -3,13 +3,14 @@ import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Flex, FlexItem } from "../../../base/index";
-import { toScientificNotation } from "../../../utils";
+import { toScientificNotation } from "../../../utils/utils";
 import { toggleExpanded } from "../../actions";
 import AnalysisValueLabel from "../ValueLabel";
 
-export const PathoscopeItem = (props) => {
-
-    const className = CX("list-group-item", "spaced", {hoverable: !props.expanded});
+export const PathoscopeItem = props => {
+    const className = CX("list-group-item", "spaced", {
+        hoverable: !props.expanded
+    });
 
     let closeButton;
 
@@ -28,14 +29,10 @@ export const PathoscopeItem = (props) => {
             <Row>
                 <Col xs={12} sm={5} md={5}>
                     <Flex>
-                        <FlexItem>
-                            {props.name}
-                        </FlexItem>
+                        <FlexItem>{props.name}</FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-primary">
-                                <strong className="text-warning">
-                                    {props.abbreviation}
-                                </strong>
+                                <strong className="text-warning">{props.abbreviation}</strong>
                             </small>
                         </FlexItem>
                     </Flex>
@@ -48,18 +45,10 @@ export const PathoscopeItem = (props) => {
                     />
                 </Col>
                 <Col xs={3} sm={2} md={2}>
-                    <AnalysisValueLabel
-                        bsStyle="danger"
-                        label="Depth"
-                        value={props.depth.toFixed(1)}
-                    />
+                    <AnalysisValueLabel bsStyle="danger" label="Depth" value={props.depth.toFixed(1)} />
                 </Col>
                 <Col xs={3} sm={2} md={2}>
-                    <AnalysisValueLabel
-                        bsStyle="primary"
-                        label="Coverage"
-                        value={props.coverage.toFixed(3)}
-                    />
+                    <AnalysisValueLabel bsStyle="primary" label="Coverage" value={props.coverage.toFixed(3)} />
                 </Col>
                 <Col xs={2} sm={1} md={1}>
                     {closeButton}
@@ -75,11 +64,13 @@ const mapStateToProps = (state, ownProps) => ({
     showReads: state.analyses.showReads
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onExpand: (id) => {
+const mapDispatchToProps = dispatch => ({
+    onExpand: id => {
         dispatch(toggleExpanded(id));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(PathoscopeItem);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(PathoscopeItem);

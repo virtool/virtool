@@ -525,7 +525,6 @@ async def get_unbuilt_count(db, ref_id):
 
 
 async def create_clone(db, settings, name, clone_from, description, user_id):
-
     source = await db.references.find_one(clone_from)
 
     name = name or "Clone of " + source["name"]
@@ -551,7 +550,6 @@ async def create_clone(db, settings, name, clone_from, description, user_id):
 
 async def create_document(db, settings, name, organism, description, data_type, created_at=None, ref_id=None,
                           user_id=None, users=None):
-
     if ref_id and await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
@@ -1072,7 +1070,6 @@ async def refresh_remotes(app):
 
 
 async def update(app, process_id, ref_id, release, user_id):
-
     db = app["db"]
 
     created_at = virtool.utils.timestamp()

@@ -5,17 +5,11 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Icon } from "../../base";
 
 const NotificationIcon = ({ visible }) => {
-
     if (visible) {
         return (
             <NavItem>
                 <LinkContainer to="/administration/updates">
-                    <Icon
-                        className="icon-pulse"
-                        name="arrow-alt-circle-up"
-                        tip="Software Update"
-                        tipPlacement="left"
-                    />
+                    <Icon className="icon-pulse" name="arrow-alt-circle-up" tip="Software Update" tipPlacement="left" />
                 </LinkContainer>
             </NavItem>
         );
@@ -24,7 +18,7 @@ const NotificationIcon = ({ visible }) => {
     return <div />;
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     visible: !!(state.account.administrator && state.updates.releases && state.updates.releases.length)
 });
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { find, get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Dropdown, MenuItem, ProgressBar as BSProgressBar } from "react-bootstrap";
@@ -15,41 +15,36 @@ import {
     ProgressBar,
     NotFound
 } from "../../../base";
-import { checkUserRefPermission, followDownload } from "../../../utils";
-import { listIndexes } from "../../../indexes/actions";
-import { listOTUs } from "../../../otus/actions";
+import OTUDetail from "../../../otus/components/Detail/Detail";
+import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
-import EditReference from "./Edit";
-import Manage from "./Manage";
+import OTUList from "../../../otus/components/List";
+import IndexList from "../../../indexes/components/List";
+import SourceTypes from "../SourceTypes";
+import InternalControl from "./InternalControl";
 import ReferenceMembers from "./Members";
-import ReferenceOTUs from "../../../otus/components/List";
-import ReferenceIndexList from "../../../indexes/components/List";
-import SourceTypes from "../../../administration/components/General/SourceTypes";
-import InternalControl from "../../../administration/components/General/InternalControl";
+import ReferenceManage from "./Manage";
+import EditReference from "./Edit";
 
 class CustomToggle extends React.Component {
     // Bootstrap Dropdown requires custom dropdown components to be class components
     // in order to use refs.
-    render () {
+    render() {
         return (
             <Icon
                 name="ellipsis-v"
                 tip="Options"
                 onClick={this.props.onClick}
-                style={{fontSize: "65%", paddingLeft: "5px"}}
+                style={{ fontSize: "65%", paddingLeft: "5px" }}
             />
         );
     }
 }
 
-const ReferenceManage = (props) => (
-    <Manage {...props} />
-);
-
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
-        <InternalControl />
+        <InternalControl global />
         <ReferenceMembers noun="users" />
         <ReferenceMembers noun="groups" />
     </div>
@@ -86,14 +81,11 @@ const getProgress = (detail, processes) => {
 };
 
 class ReferenceDetail extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGetReference(this.props.match.params.refId);
-        this.props.onListIndexes(this.props.match.params.refId, 1);
-        this.props.onListOTUs(this.props.match.params.refId, 1);
     }
 
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         if (prevProps.detail === null) {
             return;
         }
@@ -108,22 +100,20 @@ class ReferenceDetail extends React.Component {
         }
     }
 
-    handleSelect = (key) => {
+    handleSelect = key => {
         followDownload(`/download/refs/${this.props.match.params.refId}?scope=${key}`);
-    }
+    };
 
     render = () => {
-
         if (this.props.error) {
             return <NotFound />;
         }
 
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
+        if (this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
 
         const { name, id, remotes_from, cloned_from, imported_from, created_at, user } = this.props.detail;
-        const hasModify = checkUserRefPermission(this.props, "modify");
 
         let headerIcon;
         let exportButton;
@@ -131,53 +121,36 @@ class ReferenceDetail extends React.Component {
         const disableExport = !!(remotes_from || cloned_from || imported_from);
 
         if (this.props.pathname === `/refs/${id}/manage`) {
-            headerIcon = remotes_from
-                ? (
-                    <Icon
-                        bsStyle="default"
-                        name="lock"
-                        pullRight
-                        style={{fontSize: "65%"}}
-                    />
-                )
-                : null;
+            headerIcon = remotes_from ? (
+                <Icon bsStyle="default" name="lock" pullRight style={{ fontSize: "65%" }} />
+            ) : null;
 
-            headerIcon = (hasModify && !remotes_from)
-                ? (
+            headerIcon =
+                this.props.canModify && !remotes_from ? (
                     <Icon
                         bsStyle="warning"
                         name="pencil-alt"
                         tip="Edit"
                         onClick={this.props.onEdit}
                         pullRight
-                        style={{fontSize: "65%"}}
+                        style={{ fontSize: "65%" }}
                     />
-                ) : headerIcon;
+                ) : (
+                    headerIcon
+                );
 
             exportButton = (
                 <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
                     <CustomToggle bsRole="toggle" />
                     <Dropdown.Menu className="export-ref-dropdown-menu">
                         <MenuItem header>Export</MenuItem>
-                        <MenuItem
-                            eventKey="built"
-                            onSelect={this.handleSelect}
-                            disabled={!disableExport}
-                        >
+                        <MenuItem eventKey="built" onSelect={this.handleSelect} disabled={!disableExport}>
                             Built
                         </MenuItem>
-                        <MenuItem
-                            eventKey="unbuilt"
-                            onSelect={this.handleSelect}
-                            disabled={!disableExport}
-                        >
+                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect} disabled={!disableExport}>
                             Unbuilt
                         </MenuItem>
-                        <MenuItem
-                            eventKey="unverified"
-                            onSelect={this.handleSelect}
-                            disabled={!disableExport}
-                        >
+                        <MenuItem eventKey="unverified" onSelect={this.handleSelect} disabled={!disableExport}>
                             Unverified
                         </MenuItem>
                     </Dropdown.Menu>
@@ -196,7 +169,7 @@ class ReferenceDetail extends React.Component {
                     {headerIcon}
                     {exportButton}
                 </Flex>
-                <div className="text-muted" style={{fontSize: "12px"}}>
+                <div className="text-muted" style={{ fontSize: "12px" }}>
                     Created <RelativeTime time={created_at} /> by {user.id}
                 </div>
             </ViewHeader>
@@ -214,7 +187,9 @@ class ReferenceDetail extends React.Component {
                             <BSProgressBar bsStyle="warning" now={50} />
                             <BSProgressBar bsStyle="success" now={progress / 2} />
                         </BSProgressBar>
-                    ) : <ProgressBar bsStyle="warning" now={progress} />}
+                    ) : (
+                        <ProgressBar bsStyle="warning" now={progress} />
+                    )}
                     <ReferenceManage match={this.props.match} isUpdating={isUpdatingRemote} />
                 </div>
             );
@@ -222,35 +197,47 @@ class ReferenceDetail extends React.Component {
 
         return (
             <div className="detail-container">
-                {referenceHeader}
-
-                <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${id}/manage`}>
-                        <NavItem>Manage</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/otus`}>
-                        <NavItem>OTUs <Badge>{this.props.detail.otu_count}</Badge></NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/indexes`}>
-                        <NavItem>Indexes</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${id}/settings`}>
-                        <NavItem>Settings</NavItem>
-                    </LinkContainer>
-                </Nav>
-
                 <Switch>
-                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                    <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
                     <Route
-                        path="/refs/:refId/manage"
-                        render={({ match }) => <ReferenceManage match={match} isUpdating={isUpdatingRemote} />}
-                    />
-                    <Route path="/refs/:refId/otus" component={ReferenceOTUs} />
-                    <Route path="/refs/:refId/indexes" component={ReferenceIndexList} />
-                    <Route path="/refs/:refId/settings" render={() => <ReferenceSettings isRemote={remotes_from} />} />
-                </Switch>
+                        path="/refs"
+                        render={() => (
+                            <div>
+                                {referenceHeader}
 
-                <EditReference />
+                                <Nav bsStyle="tabs">
+                                    <LinkContainer to={`/refs/${id}/manage`}>
+                                        <NavItem>Manage</NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/otus`}>
+                                        <NavItem>
+                                            OTUs <Badge>{this.props.detail.otu_count}</Badge>
+                                        </NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/indexes`}>
+                                        <NavItem>Indexes</NavItem>
+                                    </LinkContainer>
+                                    <LinkContainer to={`/refs/${id}/settings`}>
+                                        <NavItem>Settings</NavItem>
+                                    </LinkContainer>
+                                </Nav>
+
+                                <Switch>
+                                    <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                                    <Route path="/refs/:refId/otus" component={OTUList} />
+                                    <Route path="/refs/:refId/indexes" component={IndexList} />
+                                    <Route
+                                        path="/refs/:refId/settings"
+                                        render={() => <ReferenceSettings isRemote={remotes_from} />}
+                                    />
+                                </Switch>
+
+                                <EditReference />
+                            </div>
+                        )}
+                    />
+                </Switch>
             </div>
         );
     };
@@ -260,31 +247,21 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    isAdmin: state.account.administrator,
-    userId: state.account.id,
-    userGroups: state.account.groups,
-    refDetail: state.references.detail,
-    processes: state.processes.documents
+    processes: state.processes.documents,
+    canModify: checkRefRight(state, "modify")
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    onGetReference: (refId) => {
+    onGetReference: refId => {
         dispatch(getReference(refId));
     },
 
     onEdit: () => {
-        dispatch(push({...window.location, state: {editReference: true}}));
-    },
-
-    onListIndexes: (refId, page) => {
-        dispatch(listIndexes(refId, page));
-    },
-
-    onListOTUs: (refId, page) => {
-        dispatch(listOTUs(refId, page));
+        dispatch(push({ ...window.location, state: { editReference: true } }));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ReferenceDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(ReferenceDetail);

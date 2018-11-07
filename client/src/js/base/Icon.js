@@ -7,9 +7,8 @@ import { Tooltip, OverlayTrigger } from "react-bootstrap";
  * A component for rendering a font icon. A tooltip can optionally be shown on hover.
  *
  */
-export const Icon = (props) => {
-
-    function handleClick (e) {
+export const Icon = props => {
+    function handleClick(e) {
         e.stopPropagation();
         props.onClick(e);
     }
@@ -21,16 +20,12 @@ export const Icon = (props) => {
         "hoverable pointer": props.onClick
     });
 
-    const style = {...(props.pad ? {marginLeft: "3px"} : {}), ...props.style};
+    const style = { ...(props.pad ? { marginLeft: "3px" } : {}), ...props.style };
 
     const icon = <i className={className} style={style} onClick={props.onClick ? handleClick : null} />;
 
     if (props.tip) {
-        const tooltip = (
-            <Tooltip id={props.tip}>
-                {props.tip}
-            </Tooltip>
-        );
+        const tooltip = <Tooltip id={props.tip}>{props.tip}</Tooltip>;
 
         return (
             <OverlayTrigger placement={props.tipPlacement || "top"} overlay={tooltip}>
@@ -40,7 +35,6 @@ export const Icon = (props) => {
     }
 
     return icon;
-
 };
 
 Icon.propTypes = {

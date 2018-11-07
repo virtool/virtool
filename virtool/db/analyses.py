@@ -1,6 +1,7 @@
-import aiofiles
 import asyncio
 import json
+
+import aiofiles
 
 import virtool.analyses
 import virtool.bio
@@ -95,7 +96,7 @@ async def format_pathoscope(db, settings, document):
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["diagnosis"]}
 
     patched_otus = await asyncio.gather(*[
-          virtool.db.history.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
+        virtool.db.history.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
     ])
 
     patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}
@@ -212,39 +213,6 @@ async def new(app, sample_id, ref_id, user_id, algorithm):
         "sample_name": sample["name"],
         "index_id": index_id
     }
-
-    if "pathoscope" in algorithm:
-        sequence_otu_map = dict()
-        otu_dict = dict()
-
-        async for sequence_document in db.sequences.find({}, ["otu_id", "isolate_id"]):
-            otu_id = sequence_document["otu_id"]
-
-            otu = otu_dict.get(otu_id, None)
-
-            if otu is None:
-                otu = await db.otus.find_one(otu_id, ["last_indexed_version"])
-
-                try:
-                    last_index_version = otu["last_indexed_version"]
-
-                    otu_dict[otu["_id"]] = {
-                        "id": otu["_id"],
-                        "version": last_index_version
-                    }
-
-                    sequence_otu_map[sequence_document["_id"]] = otu_id
-                except KeyError:
-                    otu_dict[otu["id"]] = False
-
-            sequence_otu_map[sequence_document["_id"]] = otu_id
-
-        sequence_otu_map = [item for item in sequence_otu_map.items()]
-
-        task_args.update({
-            "otu_dict": otu_dict,
-            "sequence_otu_map": sequence_otu_map
-        })
 
     await db.analyses.insert_one(document)
 

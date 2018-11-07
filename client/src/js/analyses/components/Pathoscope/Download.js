@@ -1,20 +1,22 @@
 /*  Helper functions to enable svg to png conversion and file download
  */
-export const createBlob = (svgNode) => {
+export const createBlob = svgNode => {
+    const doctype =
+        "<?xml version='1.0' standalone='no'?>" +
+        "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
 
-    const doctype = "<?xml version='1.0' standalone='no'?>"
-    + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
-
-    const svg = (new window.XMLSerializer()).serializeToString(svgNode);
-    const blob = new window.Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
+    const svg = new window.XMLSerializer().serializeToString(svgNode);
+    const blob = new window.Blob([doctype + svg], {
+        type: "image/svg+xml;charset=utf-8"
+    });
 
     return window.URL.createObjectURL(blob);
 };
 
 export const formatSvg = (svg, setting) => {
-
     if (setting === "hidden") {
-        svg.select("path").node()
+        svg.select("path")
+            .node()
             .setAttribute("fill", "#428bca");
     }
 
@@ -31,7 +33,7 @@ export const formatSvg = (svg, setting) => {
         .setAttribute("visibility", setting);
 };
 
-export const getSvgAttr = (svg) => {
+export const getSvgAttr = svg => {
     const width = svg.attr("width");
     const height = svg.attr("height");
 
@@ -48,7 +50,6 @@ export const getSvgAttr = (svg) => {
 };
 
 export const createImage = (width, height, url) => {
-
     const img = document.createElement("img");
     img.width = width;
     img.height = height;
@@ -58,7 +59,6 @@ export const createImage = (width, height, url) => {
 };
 
 const drawBackground = (ctx, width, height) => {
-
     ctx.beginPath();
     ctx.rect(0, 0, width, height);
     ctx.fillStyle = "white";
@@ -80,7 +80,6 @@ export const createCanvas = (width, height) => {
 };
 
 export const convertSvgToPng = (width, height, img) => {
-
     const { ctx, canvas } = createCanvas(width, height);
 
     drawBackground(ctx, width, height);
@@ -96,7 +95,6 @@ export const convertSvgToPng = (width, height, img) => {
 };
 
 export const downloadPng = (filename, canvasUrl) => {
-
     const a = document.createElement("a");
     a.href = canvasUrl;
     a.download = filename;
@@ -107,13 +105,12 @@ export const downloadPng = (filename, canvasUrl) => {
     document.body.removeChild(a);
 };
 
-export const getPng = (svgAttr) => {
-
+export const getPng = svgAttr => {
     const { width, height, url, filename } = svgAttr;
 
     const img = createImage(width, height, url);
 
-    img.onload = function () {
+    img.onload = function() {
         const canvasUrl = convertSvgToPng(width, height, this);
         downloadPng(filename, canvasUrl);
     };

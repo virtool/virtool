@@ -15,18 +15,17 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
-import { formatIsolateName } from "../../../utils";
+import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
 import { FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 import IsolateDetail from "./IsolateDetail";
 
 export class IsolateButton extends React.Component {
-
     handleSelectIsolate = () => {
         this.props.onClick(this.props.id);
     };
 
-    render () {
+    render() {
         return (
             <ListGroupItem className="isolate-item" active={this.props.active} onClick={this.handleSelectIsolate}>
                 <div className="isolate-item-name">
@@ -34,9 +33,9 @@ export class IsolateButton extends React.Component {
                 </div>
                 <div className="isolate-item-icon">
                     <span>
-                        {this.props.default
-                            ? <Icon className="pull-right" name="star" tip="Set as Default" tipPlacement="left" />
-                            : null}
+                        {this.props.default ? (
+                            <Icon className="pull-right" name="star" tip="Set as Default" tipPlacement="left" />
+                        ) : null}
                     </span>
                 </div>
             </ListGroupItem>
@@ -44,16 +43,15 @@ export class IsolateButton extends React.Component {
     }
 }
 
-const IsolateEditor = (props) => {
-
-    const isolateComponents = map(props.isolates, (isolate, index) =>
+const IsolateEditor = props => {
+    const isolateComponents = map(props.isolates, (isolate, index) => (
         <IsolateButton
             key={index}
             {...isolate}
             active={isolate.id === props.activeIsolateId}
             onClick={props.onSelectIsolate}
         />
-    );
+    ));
 
     let noIsolatesFound;
 
@@ -67,26 +65,22 @@ const IsolateEditor = (props) => {
 
     return (
         <div>
-            <h4 style={{display: "flex", alignItems: "center"}} className="section-header">
+            <h4 style={{ display: "flex", alignItems: "center" }} className="section-header">
                 <FlexItem grow={0} shrink={0}>
-                    <strong>
-                        Isolates
-                    </strong>
+                    <strong>Isolates</strong>
                 </FlexItem>
 
                 <FlexItem grow={1} pad={5}>
-                    <Badge>
-                        {isolateComponents.length}
-                    </Badge>
+                    <Badge>{isolateComponents.length}</Badge>
                 </FlexItem>
 
-                {props.hasModifyOTU && !props.isRemote ? (
+                {props.canModify && !props.isRemote ? (
                     <Icon
                         bsStyle="primary"
                         name="plus-square"
                         tip="Add Isolate"
                         tipPlacement="left"
-                        style={{fontSize: "15px"}}
+                        style={{ fontSize: "15px" }}
                         onClick={props.onShowAddIsolate}
                     />
                 ) : null}
@@ -95,13 +89,9 @@ const IsolateEditor = (props) => {
             <Row>
                 {noIsolatesFound}
                 <Col md={3}>
-                    <ListGroup style={{height: "100%"}}>
-                        {isolateComponents}
-                    </ListGroup>
+                    <ListGroup style={{ height: "100%" }}>{isolateComponents}</ListGroup>
                 </Col>
-                <Col md={9}>
-                    {noIsolatesFound ? null : <IsolateDetail hasModifyOTU={props.hasModifyOTU} />}
-                </Col>
+                <Col md={9}>{noIsolatesFound ? null : <IsolateDetail canModify={props.canModify} />}</Col>
             </Row>
         </div>
     );
@@ -111,19 +101,23 @@ const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     isolates: state.otus.detail.isolates,
     activeIsolateId: state.otus.activeIsolateId,
-    isRemote: state.references.detail.remotes_from
+    isRemote: state.references.detail.remotes_from,
+    canModify: checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({
-
-    onSelectIsolate: (isolateId) => {
+    onSelectIsolate: isolateId => {
         dispatch(selectIsolate(isolateId));
     },
 
     onShowAddIsolate: () => {
         dispatch(showAddIsolate());
     }
-
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));
+export default withRouter(
+    connect(
+        mapStateToProps,
+        mapDispatchToProps
+    )(IsolateEditor)
+);

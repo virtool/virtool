@@ -4,16 +4,16 @@
  * @module files/reducer
  */
 import { every, map } from "lodash-es";
-import { updateList, insert, edit, remove } from "../reducerUtils";
+import { updateDocuments, insert, update, remove } from "../utils/reducers";
 import {
     WS_INSERT_FILE,
     WS_UPDATE_FILE,
     WS_REMOVE_FILE,
-    LIST_FILES,
+    FIND_FILES,
     UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
-} from "../actionTypes";
+} from "../app/actionTypes";
 
 /**
  * The initial state to give the reducer.
@@ -27,8 +27,6 @@ export const initialState = {
     found_count: 0,
     page: 0,
     total_count: 0,
-    fetched: false,
-    refetchPage: false,
     uploads: [],
     uploadsComplete: true,
     showUploadOverlay: false
@@ -41,9 +39,9 @@ export const initialState = {
  * @param state {object}
  * @returns {object}
  */
-export const checkUploadsComplete = (state) => ({
+export const checkUploadsComplete = state => ({
     ...state,
-    uploadsComplete: every(state.uploads, {progress: 100})
+    uploadsComplete: every(state.uploads, { progress: 100 })
 });
 
 /**
@@ -53,70 +51,36 @@ export const checkUploadsComplete = (state) => ({
  * @param action {object}
  * @returns {object}
  */
-export default function fileReducer (state = initialState, action) {
-
+export default function fileReducer(state = initialState, action) {
     switch (action.type) {
-
         case WS_INSERT_FILE:
-            if (!state.fetched || action.data.type !== state.fileType) {
-                return state;
+            if (action.data.type === state.fileType) {
+                return insert(state, action, "created_at");
             }
-            return {
-                ...state,
-                documents: insert(
-                    state.documents,
-                    state.page,
-                    state.per_page,
-                    action,
-                    "created_at"
-                ),
-                total_count: state.total_count + 1
-            };
+
+            return state;
 
         case WS_UPDATE_FILE:
-            return {
-                ...state,
-                documents: edit(state.documents, action)
-            };
+            return update(state, action);
 
         case WS_REMOVE_FILE:
+            return remove(state, action);
+
+        case FIND_FILES.REQUESTED:
             return {
                 ...state,
-                documents: remove(state.documents, action),
-                refetchPage: (state.page < state.page_count),
-                total_count: state.total_count - 1
+                term: action.term
             };
 
-        case LIST_FILES.REQUESTED:
-            return {
-                ...state,
-                isLoading: true,
-                errorLoad: false
-            };
-
-        case LIST_FILES.SUCCEEDED:
-            return {
-                ...state,
-                ...updateList(state.documents, action, state.page),
-                fileType: action.fileType,
-                isLoading: false,
-                errorLoad: false,
-                fetched: true,
-                refetchPage: false
-            };
-
-        case LIST_FILES.FAILED:
-            return {
-                ...state,
-                isLoading: false,
-                errorLoad: true
-            };
+        case FIND_FILES.SUCCEEDED:
+            return { ...updateDocuments(state, action), fileType: action.fileType };
 
         case UPLOAD.REQUESTED: {
             const { name, size, type } = action.file;
             const fileType = action.fileType;
-            const newState = {...state,
-                uploads: state.uploads.concat([{localId: action.localId, progress: 0, name, size, type, fileType}]),
+            const newState = {
+                ...state,
+                uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type, fileType }]),
                 showUploadOverlay: true
             };
 
@@ -129,15 +93,14 @@ export default function fileReducer (state = initialState, action) {
                     return upload;
                 }
 
-                return {...upload, progress: action.progress};
+                return { ...upload, progress: action.progress };
             });
 
-            return checkUploadsComplete({...state, uploads});
+            return checkUploadsComplete({ ...state, uploads });
         }
 
         case HIDE_UPLOAD_OVERLAY:
-            return {...state, showUploadOverlay: false};
-
+            return { ...state, showUploadOverlay: false };
     }
 
     return state;

@@ -4,11 +4,10 @@ import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Row } from "react-bootstrap";
 import { removeFile } from "../actions";
-import { byteSize } from "../../utils";
+import { byteSize } from "../../utils/utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
 export class File extends React.Component {
-
     static propTypes = {
         index: PropTypes.number,
         entry: PropTypes.object,
@@ -20,8 +19,7 @@ export class File extends React.Component {
         this.props.onRemove(this.props.entry.id);
     };
 
-    render () {
-
+    render() {
         const { name, size, uploaded_at, user } = this.props.entry;
 
         let creation;
@@ -46,7 +44,7 @@ export class File extends React.Component {
                     <Col xs={4} sm={4} md={4}>
                         <strong>{name}</strong>
                     </Col>
-                    <Col xs={2} sm={2} md={2} >
+                    <Col xs={2} sm={2} md={2}>
                         {byteSize(size)}
                     </Col>
                     <Col xs={5} sm={5} md={5}>
@@ -57,7 +55,7 @@ export class File extends React.Component {
                             <Icon
                                 name="trash"
                                 bsStyle="danger"
-                                style={{fontSize: "17px"}}
+                                style={{ fontSize: "17px" }}
                                 onClick={this.handleRemove}
                                 pullRight
                             />
@@ -73,10 +71,13 @@ const mapStateToProps = (state, props) => ({
     entry: get(state, `files.documents[${props.index}]`, null)
 });
 
-const mapDispatchToProps = (dispatch) => ({
-    onRemove: (fileId) => {
+const mapDispatchToProps = dispatch => ({
+    onRemove: fileId => {
         dispatch(removeFile(fileId));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(File);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(File);

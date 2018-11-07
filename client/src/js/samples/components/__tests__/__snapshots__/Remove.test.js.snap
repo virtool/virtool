@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Remove /> renders when [show=false] 1`] = `
+<RemoveModal
+  name="test"
+  noun="OTU"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+  show={false}
+/>
+`;
+
+exports[`<Remove /> renders when [show=true] 1`] = `
+<RemoveModal
+  name="test"
+  noun="OTU"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+/>
+`;

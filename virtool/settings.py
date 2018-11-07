@@ -24,7 +24,6 @@ DEFAULT_ANALYSIS_PROC = get_default_integer(6)
 DEFAULT_ANALYSIS_MEM = get_default_integer(16)
 DEFAULT_ANALYSIS_INST = get_default_integer(6)
 
-
 SCHEMA = {
     # File paths
     "data_path": {"type": "string", "default": "data"},

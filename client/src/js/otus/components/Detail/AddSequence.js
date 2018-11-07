@@ -11,15 +11,14 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 import { get, find } from "lodash-es";
 
-import SequenceForm from "./SequenceForm";
 import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, Icon, InputError } from "../../../base";
+import { Button, Icon, InputError, Loader } from "../../../base";
 import { getGenbank } from "../../api";
-import { getTargetChange } from "../../../utils";
+import { getTargetChange } from "../../../utils/utils";
+import SequenceForm from "./SequenceForm";
 
 const getInitialState = () => ({
     id: "",
@@ -36,15 +35,13 @@ const getInitialState = () => ({
 });
 
 class AddSequence extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
-        this.state = {show: false, ...getInitialState()};
+        this.state = { show: false, ...getInitialState() };
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (prevState.error !== nextProps.error) {
-
             if (!nextProps.error) {
                 return { error: null };
             }
@@ -61,7 +58,10 @@ class AddSequence extends React.Component {
                     error: nextProps.error
                 };
             } else if (nextProps.error.status === 404) {
-                return { errorSegment: nextProps.error.message, error: nextProps.error };
+                return {
+                    errorSegment: nextProps.error.message,
+                    error: nextProps.error
+                };
             }
             return { errorId: nextProps.error.message, error: nextProps.error };
         }
@@ -70,31 +70,34 @@ class AddSequence extends React.Component {
     }
 
     handleAutofill = () => {
-        this.setState({autofillPending: true}, () => {
-            getGenbank(this.state.id).then((resp) => {
-                const { definition, host, sequence } = resp.body;
+        this.setState({ autofillPending: true }, () => {
+            getGenbank(this.state.id).then(
+                resp => {
+                    const { definition, host, sequence } = resp.body;
 
-                this.setState({
-                    autofillPending: false,
-                    definition,
-                    host,
-                    sequence,
-                    errorId: "",
-                    errorSegment: "",
-                    errorDefinition: "",
-                    errorSequence: ""
-                });
-            }, (err) => {
-                this.setState({
-                    autofillPending: false,
-                    error: err.status === 404 ? "Accession not found" : ""
-                });
-                return err;
-            });
+                    this.setState({
+                        autofillPending: false,
+                        definition,
+                        host,
+                        sequence,
+                        errorId: "",
+                        errorSegment: "",
+                        errorDefinition: "",
+                        errorSequence: ""
+                    });
+                },
+                err => {
+                    this.setState({
+                        autofillPending: false,
+                        error: err.status === 404 ? "Accession not found" : ""
+                    });
+                    return err;
+                }
+            );
         });
     };
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         if (name === "host") {
@@ -102,7 +105,10 @@ class AddSequence extends React.Component {
         }
 
         if (name === "id" && !!find(this.props.sequences, ["accession", value])) {
-            return this.setState({ [name]: value, [error]: "Note: entry with this id already exists" });
+            return this.setState({
+                [name]: value,
+                [error]: "Note: entry with this id already exists"
+            });
         }
 
         this.setState({ [name]: value, [error]: "" });
@@ -119,11 +125,11 @@ class AddSequence extends React.Component {
         }
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (this.state.id) {
-            this.setState({show: false});
+            this.setState({ show: false });
             this.props.onSave(
                 this.props.otuId,
                 this.props.isolateId,
@@ -141,15 +147,14 @@ class AddSequence extends React.Component {
         }
     };
 
-    render () {
-
+    render() {
         let overlay;
 
         if (this.state.autofillPending) {
             overlay = (
                 <div className="modal-body-overlay">
                     <span>
-                        <ClipLoader color="#fff" />
+                        <Loader color="#fff" />
                     </span>
                 </div>
             );
@@ -165,7 +170,7 @@ class AddSequence extends React.Component {
                         onChange={this.handleChange}
                         error={this.state.errorId}
                     />
-                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                    <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
                         <Button type="button" onClick={this.handleAutofill}>
                             <Icon name="magic" />
                         </Button>
@@ -207,7 +212,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -216,10 +220,12 @@ const mapDispatchToProps = dispatch => ({
         dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
     },
 
-    onClearError: (error) => {
+    onClearError: error => {
         dispatch(clearError(error));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AddSequence);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AddSequence);

@@ -12,7 +12,7 @@ import virtool.otus
 import virtool.references
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.utils import bad_request, insufficient_rights, json_response, no_content, not_found
 
 SCHEMA_VALIDATOR = {
     "type": "list",

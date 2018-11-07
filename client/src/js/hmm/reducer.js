@@ -1,24 +1,16 @@
-import {
-    WS_UPDATE_STATUS,
-    LIST_HMMS,
-    GET_HMM,
-    FILTER_HMMS
-} from "../actionTypes";
-import { updateList } from "../reducerUtils";
+import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../app/actionTypes";
+import { updateDocuments } from "../utils/reducers";
 
 export const initialState = {
+    term: "",
     process: null,
     documents: null,
     page: 0,
-    detail: null,
-    filter: "",
-    fetched: false
+    detail: null
 };
 
-export default function hmmsReducer (state = initialState, action) {
-
+export default function hmmsReducer(state = initialState, action) {
     switch (action.type) {
-
         case WS_UPDATE_STATUS:
             if (action.data.id === "hmm") {
                 return {
@@ -33,37 +25,22 @@ export default function hmmsReducer (state = initialState, action) {
             }
             return state;
 
-        case LIST_HMMS.REQUESTED:
-            return {...state, isLoading: true, errorLoad: false};
-
-        case LIST_HMMS.SUCCEEDED: {
+        case FIND_HMMS.REQUESTED:
             return {
                 ...state,
-                ...updateList(state.documents, action, state.page),
-                isLoading: false,
-                errorLoad: false,
-                fetched: true
+                term: action.term
             };
-        }
 
-        case LIST_HMMS.FAILED:
-            return {...state, isLoading: false, errorLoad: true};
+        case FIND_HMMS.SUCCEEDED:
+            return updateDocuments(state, action);
 
         case GET_HMM.REQUESTED:
-            return {...state, detail: null};
+            return { ...state, detail: null };
 
         case GET_HMM.SUCCEEDED:
-            return {...state, detail: action.data};
-
-        case FILTER_HMMS.REQUESTED:
-            return {...state, filter: action.term};
-
-        case FILTER_HMMS.SUCCEEDED: {
-            return {...state, ...action.data};
-        }
+            return { ...state, detail: action.data };
 
         default:
             return state;
-
     }
 }

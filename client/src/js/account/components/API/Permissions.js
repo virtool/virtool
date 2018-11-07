@@ -5,9 +5,11 @@ import { ListGroup, Panel } from "react-bootstrap";
 
 import { ListGroupItem, Checkbox } from "../../../base/index";
 
-export default function APIPermissions ({ style, userPermissions, keyPermissions, onChange }) {
-
-    const permissions = map(keyPermissions, (value, key) => ({name: key, allowed: value}));
+export default function APIPermissions({ style, userPermissions, keyPermissions, onChange }) {
+    const permissions = map(keyPermissions, (value, key) => ({
+        name: key,
+        allowed: value
+    }));
 
     const rowComponents = map(sortBy(permissions, "name"), permission => {
         const disabled = !userPermissions[permission.name];
@@ -19,10 +21,7 @@ export default function APIPermissions ({ style, userPermissions, keyPermissions
                 disabled={disabled}
             >
                 <code>{permission.name}</code>
-                <Checkbox
-                    checked={permission.allowed}
-                    pullRight
-                />
+                <Checkbox checked={permission.allowed} pullRight />
             </ListGroupItem>
         );
     });
@@ -30,9 +29,7 @@ export default function APIPermissions ({ style, userPermissions, keyPermissions
     return (
         <Panel style={style}>
             <Panel.Body>
-                <ListGroup>
-                    {rowComponents}
-                </ListGroup>
+                <ListGroup>{rowComponents}</ListGroup>
             </Panel.Body>
         </Panel>
     );

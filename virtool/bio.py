@@ -13,7 +13,6 @@ import virtool.utils
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
-
 COMPLEMENT_TABLE = {
     "A": "T",
     "T": "A",

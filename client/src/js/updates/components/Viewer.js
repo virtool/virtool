@@ -2,17 +2,16 @@ import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LoadingPlaceholder } from "../../base";
+import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
-import { getSoftwareUpdates } from "../actions";
 
 class SoftwareUpdateViewer extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet();
     }
 
-    render () {
+    render() {
         if (this.props.releases === null) {
             return <LoadingPlaceholder />;
         }
@@ -37,17 +36,18 @@ class SoftwareUpdateViewer extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     channel: state.settings.data.software_channel,
     releases: state.updates.releases
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onGet: () => {
         dispatch(getSoftwareUpdates());
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SoftwareUpdateViewer);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SoftwareUpdateViewer);

@@ -1,5 +1,5 @@
-import FileContainer from "./File";
 import * as actions from "../actions";
+import FileContainer from "./File";
 
 describe("<File />", () => {
     const initialState = {
@@ -28,7 +28,7 @@ describe("<File />", () => {
         expect(wrapper).toMatchSnapshot();
 
         wrapper.setProps({
-            entry: {...initialState.files.documents[0], user: null},
+            entry: { ...initialState.files.documents[0], user: null },
             canRemove: true
         });
         expect(wrapper).toMatchSnapshot();
@@ -48,5 +48,4 @@ describe("<File />", () => {
 
         spy.restore();
     });
-
 });

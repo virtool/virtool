@@ -2,8 +2,7 @@ import {
     WS_INSERT_REFERENCE,
     WS_UPDATE_REFERENCE,
     WS_REMOVE_REFERENCE,
-    LIST_REFERENCES,
-    FILTER_REFERENCES,
+    FIND_REFERENCES,
     GET_REFERENCE,
     CREATE_REFERENCE,
     EDIT_REFERENCE,
@@ -19,34 +18,30 @@ import {
     REMOVE_REFERENCE_GROUP,
     CHECK_REMOTE_UPDATES,
     UPDATE_REMOTE_REFERENCE
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertReference = (data) => ({
+export const wsInsertReference = data => ({
     type: WS_INSERT_REFERENCE,
     data
 });
 
-export const wsUpdateReference = (data) => ({
+export const wsUpdateReference = data => ({
     type: WS_UPDATE_REFERENCE,
     data
 });
 
-export const wsRemoveReference = (data) => ({
+export const wsRemoveReference = data => ({
     type: WS_REMOVE_REFERENCE,
     data
 });
 
-export const listReferences = (page) => ({
-    type: LIST_REFERENCES.REQUESTED,
+export const findReferences = (term, page = 1) => ({
+    type: FIND_REFERENCES.REQUESTED,
+    term,
     page
 });
 
-export const filterReferences = (term) => ({
-    type: FILTER_REFERENCES.REQUESTED,
-    term
-});
-
-export const getReference = (refId) => ({
+export const getReference = refId => ({
     type: GET_REFERENCE.REQUESTED,
     refId
 });
@@ -87,7 +82,7 @@ export const remoteReference = () => ({
     type: REMOTE_REFERENCE.REQUESTED
 });
 
-export const removeReference = (refId) => ({
+export const removeReference = refId => ({
     type: REMOVE_REFERENCE.REQUESTED,
     refId
 });
@@ -130,12 +125,12 @@ export const removeReferenceGroup = (refId, groupId) => ({
     groupId
 });
 
-export const checkUpdates = (refId) => ({
+export const checkUpdates = refId => ({
     type: CHECK_REMOTE_UPDATES.REQUESTED,
     refId
 });
 
-export const updateRemoteReference = (refId) => ({
+export const updateRemoteReference = refId => ({
     type: UPDATE_REMOTE_REFERENCE.REQUESTED,
     refId
 });

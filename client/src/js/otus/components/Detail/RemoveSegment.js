@@ -5,15 +5,13 @@ import { reject } from "lodash-es";
 import { RemoveModal } from "../../../base";
 
 class RemoveSegment extends React.Component {
-
     handleSubmit = () => {
         let newArray = this.props.schema.slice();
         newArray = reject(newArray, ["name", this.props.curSeg.name]);
         this.props.onSubmit(newArray);
-    }
+    };
 
-    render () {
-
+    render() {
         return (
             <RemoveModal
                 name={this.props.curSeg.name}
@@ -34,7 +32,7 @@ RemoveSegment.propTypes = {
     curSeg: PropTypes.object.isRequired
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     schema: state.otus.detail.schema
 });
 

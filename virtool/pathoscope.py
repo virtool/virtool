@@ -1,10 +1,9 @@
+import collections
 import copy
 import csv
 import math
 import os
 import shutil
-
-import collections
 
 
 def rescale_samscore(u, nu, max_score, min_score):
@@ -299,7 +298,6 @@ def compute_best_hit(u, nu, refs, reads):
 
 def write_report(path, pi, refs, read_count, init_pi, best_hit_initial, best_hit_initial_reads, best_hit_final,
                  best_hit_final_reads, level_1_initial, level_2_initial, level_1_final, level_2_final):
-
     tmp = zip(
         pi,
         refs,

@@ -10,38 +10,27 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 import { addIsolate, hideOTUModal } from "../../actions";
 import IsolateForm from "./IsolateForm";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     sourceType: props.restrictSourceTypes ? "unknown" : "",
     sourceName: ""
 });
 
 class AddIsolate extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(this.props);
     }
 
-    static propTypes = {
-        otuId: PropTypes.string,
-        allowedSourceTypes: PropTypes.array,
-        restrictSourceTypes: PropTypes.bool,
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
-
-    handleChange = (update) => {
+    handleChange = update => {
         this.setState(update);
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
         this.props.onSave(this.props.otuId, this.state.sourceType, this.state.sourceName);
     };
@@ -50,7 +39,7 @@ class AddIsolate extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    render () {
+    render() {
         return (
             <Modal
                 show={this.props.show}
@@ -62,7 +51,7 @@ class AddIsolate extends React.Component {
                     Add Isolate
                 </Modal.Header>
                 <IsolateForm
-                    ref={(node) => this.formNode = node}
+                    ref={node => (this.formNode = node)}
                     sourceType={this.state.sourceType}
                     sourceName={this.state.sourceName}
                     allowedSourceTypes={this.props.allowedSourceTypes}
@@ -77,12 +66,12 @@ class AddIsolate extends React.Component {
 
 const mapStateToProps = state => ({
     show: state.otus.addIsolate,
+    otuId: state.otus.detail.id,
     allowedSourceTypes: state.references.detail.source_types,
     restrictSourceTypes: state.references.detail.restrict_source_types
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -90,7 +79,9 @@ const mapDispatchToProps = dispatch => ({
     onSave: (otuId, sourceType, sourceName) => {
         dispatch(addIsolate(otuId, sourceType, sourceName));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AddIsolate);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AddIsolate);

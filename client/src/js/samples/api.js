@@ -1,48 +1,25 @@
 import Request from "superagent";
 
-export const list = ({ page }) => (
-    Request.get(`/api/samples?page=${page}`)
-);
+export const find = ({ term, page }) =>
+    Request.get("/api/samples").query({
+        find: term,
+        page
+    });
 
-export const filter = ({ term }) => (
-    Request.get(`/api/samples?find=${term}`)
-);
+export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 
-export const findReadyHosts = () => (
-    Request.get("/api/subtractions")
-        .query({
-            ready: true,
-            is_host: true
-        })
-);
+export const findReadyHosts = () =>
+    Request.get("/api/subtractions").query({
+        ready: true,
+        is_host: true
+    });
 
-export const get = ({ sampleId }) => (
-    Request.get(`/api/samples/${sampleId}`)
-);
+export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
-export const create = ({ name, isolate, host, locale, srna, subtraction, files }) => (
-    Request.post("/api/samples")
-        .send({
-            name,
-            isolate,
-            host,
-            locale,
-            srna,
-            subtraction,
-            files
-        })
-);
+export const create = action => Request.post("/api/samples").send(action);
 
-export const update = ({ sampleId, update }) => (
-    Request.patch(`/api/samples/${sampleId}`)
-        .send(update)
-);
+export const update = ({ sampleId, update }) => Request.patch(`/api/samples/${sampleId}`).send(update);
 
-export const updateRights = ({ sampleId, update }) => (
-    Request.patch(`/api/samples/${sampleId}/rights`)
-        .send(update)
-);
+export const updateRights = ({ sampleId, update }) => Request.patch(`/api/samples/${sampleId}/rights`).send(update);
 
-export const remove = ({ sampleId }) => (
-    Request.delete(`/api/samples/${sampleId}`)
-);
+export const remove = ({ sampleId }) => Request.delete(`/api/samples/${sampleId}`);

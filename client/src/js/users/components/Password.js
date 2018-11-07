@@ -17,7 +17,7 @@ import { find } from "lodash-es";
 import { editUser } from "../actions";
 import { Alert, Button, SaveButton, Checkbox, InputError, RelativeTime } from "../../base";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     password: "",
     confirm: "",
     errors: [],
@@ -25,13 +25,12 @@ const getInitialState = (props) => ({
 });
 
 export class Password extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
 
-    static getDerivedStateFromProps (nextProps, prevState) {
+    static getDerivedStateFromProps(nextProps, prevState) {
         if (prevState.lastPasswordChange === nextProps.detail.last_password_change) {
             return null;
         }
@@ -39,11 +38,11 @@ export class Password extends React.Component {
         return getInitialState(nextProps);
     }
 
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.setState(getInitialState(this.props));
     }
 
-    handleChange = (e) => {
+    handleChange = e => {
         const { name, value } = e.target;
 
         this.setState({
@@ -64,7 +63,7 @@ export class Password extends React.Component {
         this.props.onSetForceReset(this.props.detail.id, !this.props.detail.force_reset);
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         const errors = [];
@@ -84,7 +83,7 @@ export class Password extends React.Component {
         }
 
         if (errors.length) {
-            this.setState({errors});
+            this.setState({ errors });
             return;
         }
 
@@ -92,8 +91,7 @@ export class Password extends React.Component {
         this.handleClear();
     };
 
-    render () {
-
+    render() {
         const errorPassLen = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
         const errorPassMatch = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
 
@@ -140,15 +138,12 @@ export class Password extends React.Component {
                             </Col>
 
                             <Col xs={12} mdHidden lgHidden>
-                                <div style={{height: "15px"}} />
+                                <div style={{ height: "15px" }} />
                             </Col>
 
                             <Col xs={12} md={6}>
                                 <ButtonToolbar className="pull-right">
-                                    <Button
-                                        type="button"
-                                        onClick={this.handleClear}
-                                    >
+                                    <Button type="button" onClick={this.handleClear}>
                                         Clear
                                     </Button>
 
@@ -156,19 +151,13 @@ export class Password extends React.Component {
                                 </ButtonToolbar>
                             </Col>
 
-                            <Col xs={12} className={CX({hidden: !this.state.error})}>
-                                <h5 className="text-danger">
-                                    Passwords do not match
-                                </h5>
+                            <Col xs={12} className={CX({ hidden: !this.state.error })}>
+                                <h5 className="text-danger">Passwords do not match</h5>
                             </Col>
                         </Row>
                     </form>
 
-                    {this.props.error ? (
-                        <Alert bsStyle="danger">
-                            {this.props.error}
-                        </Alert>
-                    ) : null}
+                    {this.props.error ? <Alert bsStyle="danger">{this.props.error}</Alert> : null}
                 </Panel.Body>
             </Panel>
         );
@@ -179,16 +168,17 @@ const mapStateToProps = state => ({
     minPassLen: state.settings.data.minimum_password_length
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onSubmit: (userId, password) => {
-        dispatch(editUser(userId, {password}));
+        dispatch(editUser(userId, { password }));
     },
 
     onSetForceReset: (userId, enabled) => {
-        dispatch(editUser(userId, {force_reset: enabled}));
+        dispatch(editUser(userId, { force_reset: enabled }));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Password);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Password);

@@ -4,16 +4,15 @@ import { Col, Row, Label } from "react-bootstrap";
 import { Icon, ListGroupItem } from "../../../base";
 
 export default class Segment extends React.Component {
-
     handleRemove = () => {
-        this.props.onClick({segment: this.props.seg, handler: "remove"});
+        this.props.onClick({ segment: this.props.seg, handler: "remove" });
     };
 
     handleEdit = () => {
-        this.props.onClick({segment: this.props.seg, handler: "edit"});
+        this.props.onClick({ segment: this.props.seg, handler: "edit" });
     };
 
-    render () {
+    render() {
         const { seg, canModify } = this.props;
 
         let modifyIcons;
@@ -26,7 +25,7 @@ export default class Segment extends React.Component {
                         bsStyle="danger"
                         tip="Remove Segment"
                         tipPlacement="left"
-                        style={{fontSize: "17px", padding: "0 5px"}}
+                        style={{ fontSize: "17px", padding: "0 5px" }}
                         onClick={this.handleRemove}
                         pullRight
                     />
@@ -35,7 +34,7 @@ export default class Segment extends React.Component {
                         bsStyle="warning"
                         tip="Edit Segment"
                         tipPlacement="left"
-                        style={{fontSize: "17px"}}
+                        style={{ fontSize: "17px" }}
                         onClick={this.handleEdit}
                         pullRight
                     />
@@ -44,23 +43,19 @@ export default class Segment extends React.Component {
         }
 
         return (
-            <div >
+            <div>
                 <ListGroupItem className="spaced">
                     <Row>
-                        <Col md={5} >
+                        <Col md={5}>
                             <strong>{seg.name}</strong>
                         </Col>
-                        <Col md={4}>
-                            {seg.molecule}
-                        </Col>
+                        <Col md={4}>{seg.molecule}</Col>
                         <Col md={2}>
                             <Label bsStyle={seg.required ? "info" : "warning"}>
                                 {seg.required ? "required" : "not required"}
                             </Label>
                         </Col>
-                        <Col md={1}>
-                            {modifyIcons}
-                        </Col>
+                        <Col md={1}>{modifyIcons}</Col>
                     </Row>
                 </ListGroupItem>
             </div>

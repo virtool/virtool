@@ -4,10 +4,8 @@ import { Link } from "react-router-dom";
 import { mapValues, values } from "lodash-es";
 import { Table } from "react-bootstrap";
 
-const TaskArgs = (props) => {
-
+const TaskArgs = props => {
     switch (props.taskType) {
-
         case "nuvs":
         case "pathoscope_bowtie":
             return (
@@ -16,9 +14,7 @@ const TaskArgs = (props) => {
                         <tr>
                             <th className="col-xs-4">Sample</th>
                             <td className="col-xs-8">
-                                <Link to={`/samples/${props.taskArgs.sample_id}`}>
-                                    {props.taskArgs.sample_name}
-                                </Link>
+                                <Link to={`/samples/${props.taskArgs.sample_id}`}>{props.taskArgs.sample_name}</Link>
                             </td>
                         </tr>
                         <tr>
@@ -48,42 +44,39 @@ const TaskArgs = (props) => {
                     </tbody>
                 </Table>
             );
-
     }
 
-    const rowComponents = values(mapValues(props.taskArgs, (value, key) => {
+    const rowComponents = values(
+        mapValues(props.taskArgs, (value, key) => {
+            if (key !== "manifest") {
+                return (
+                    <tr key={key}>
+                        <th className="col-xs-4">
+                            <code>{key}</code>
+                        </th>
+                        <td className="col-xs-8">{JSON.stringify(value)}</td>
+                    </tr>
+                );
+            }
 
-        if (key !== "manifest") {
             return (
                 <tr key={key}>
-                    <th className="col-xs-4"><code>{key}</code></th>
-                    <td className="col-xs-8">{JSON.stringify(value)}</td>
+                    <th>
+                        <code>{key}</code>
+                    </th>
+                    <td className="sequence-cell">
+                        <textarea rows="5" value={JSON.stringify(value)} readOnly />
+                    </td>
                 </tr>
             );
-        }
-
-        return (
-            <tr key={key}>
-                <th><code>{key}</code></th>
-                <td className="sequence-cell">
-                    <textarea
-                        rows="5"
-                        value={JSON.stringify(value)}
-                        readOnly
-                    />
-                </td>
-            </tr>
-        );
-    }));
+        })
+    );
 
     return (
         <Table bordered>
-            <tbody>
-                {rowComponents}
-            </tbody>
+            <tbody>{rowComponents}</tbody>
         </Table>
     );
-
 };
 
 TaskArgs.propTypes = {

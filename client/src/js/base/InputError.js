@@ -6,20 +6,15 @@ import { Input, InputSave } from "./index";
  * A wrapper for Input and InputSave
  */
 export class InputError extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
     }
 
-    renderInput = () => (
-        <Input {...this.props} noMargin />
-    )
+    renderInput = () => <Input {...this.props} noMargin />;
 
-    renderInputSave = () => (
-        <InputSave {...this.props} />
-    )
+    renderInputSave = () => <InputSave {...this.props} />;
 
-    render () {
-
+    render() {
         const error = this.props.error;
 
         const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
@@ -27,13 +22,7 @@ export class InputError extends React.Component {
         const renderInputType = this.props.withButton ? this.renderInputSave : this.renderInput;
         const errorDisplayType = <span className="input-error-message">{error ? error : "None"}</span>;
 
-        const errorMessage = this.props.noError
-            ? null
-            : (
-                <div className={inputErrorClassName}>
-                    {errorDisplayType}
-                </div>
-            );
+        const errorMessage = this.props.noError ? null : <div className={inputErrorClassName}>{errorDisplayType}</div>;
 
         return (
             <div>

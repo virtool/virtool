@@ -9,14 +9,14 @@
  * @exports QuickAnalyze *
  */
 import React from "react";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { analyze } from "../../analyses/actions";
 import { updateAccountSettings } from "../../account/actions";
 import { AlgorithmSelect, InputError, Checkbox, Button } from "../../base";
-import { routerLocationHasState } from "../../utils";
+import { routerLocationHasState } from "../../utils/utils";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
     algorithm,
@@ -30,8 +30,7 @@ const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
  * @class
  */
 class QuickAnalyze extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = getInitialState(props);
     }
@@ -40,7 +39,7 @@ class QuickAnalyze extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleSetAlgorithm = (e) => {
+    handleSetAlgorithm = e => {
         this.setState({
             algorithm: e.target.value
         });
@@ -52,9 +51,9 @@ class QuickAnalyze extends React.Component {
         });
     };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
-        this.props.onAnalyze({id: this.props.id, ...this.state});
+        this.props.onAnalyze({ id: this.props.id, ...this.state });
     };
 
     handleUseAsDefault = () => {
@@ -63,8 +62,7 @@ class QuickAnalyze extends React.Component {
         });
     };
 
-    render () {
-
+    render() {
         return (
             <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
                 <form onSubmit={this.handleSubmit}>
@@ -79,10 +77,7 @@ class QuickAnalyze extends React.Component {
                             readOnly
                         />
 
-                        <AlgorithmSelect
-                            value={this.state.algorithm}
-                            onChange={this.handleSetAlgorithm}
-                        />
+                        <AlgorithmSelect value={this.state.algorithm} onChange={this.handleSetAlgorithm} />
 
                         <Checkbox
                             label="Set as default algorithm"
@@ -108,7 +103,7 @@ class QuickAnalyze extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...(state.router.location.state || {}),
     algorithm: state.account.settings.quick_analyze_algorithm,
     show: routerLocationHasState(
@@ -116,11 +111,9 @@ const mapStateToProps = (state) => ({
         "quickAnalyze",
         state.router.location.state ? state.router.location.state["quickAnalyze"] : false
     )
-
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onAnalyze: ({ id, algorithm, useAsDefault, skipQuickAnalyzeDialog }) => {
         dispatch(analyze(id, algorithm));
 
@@ -136,9 +129,11 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onHide: () => {
-        dispatch(push({...window.location, state: {}}));
+        dispatch(push({ ...window.location, state: {} }));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(QuickAnalyze);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(QuickAnalyze);

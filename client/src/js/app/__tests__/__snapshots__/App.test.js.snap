@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<App /> renders <Inner /> subcomponent renders loading screen when [ready=false] 1`] = `
+<LoadingPlaceholder
+  margin="290px"
+/>
+`;
+
+exports[`<App /> renders <Inner /> subcomponent renders routes to components when [ready=true] 1`] = `
+<div>
+  <HelmetWrapper
+    defaultTitle="Virtool"
+    defer={true}
+    encodeSpecialCharacters={true}
+    titleTemplate="%s - Virtool"
+  />
+  <withRouter(Connect(Bar)) />
+  <Switch>
+    <Redirect
+      exact={true}
+      from="/"
+      push={false}
+      to="/home"
+    />
+    <Route
+      component={[Function]}
+      path="/home"
+    />
+    <Route
+      component={[Function]}
+      path="/jobs"
+    />
+    <Route
+      component={[Function]}
+      path="/samples"
+    />
+    <Route
+      component={[Function]}
+      path="/refs"
+    />
+    <Route
+      component={[Function]}
+      path="/hmm"
+    />
+    <Route
+      component={[Function]}
+      path="/subtraction"
+    />
+    <Route
+      component={[Function]}
+      path="/administration"
+    />
+    <Route
+      component={[Function]}
+      path="/account"
+    />
+  </Switch>
+  <withRouter(Connect(Sidebar)) />
+  <Connect(UploadOverlay) />
+</div>
+`;
+
+exports[`<App /> renders <InnerContainer /> HOC subcomponent 1`] = `<withRouter(Connect(Inner)) />`;
+
+exports[`<App /> renders correctly 1`] = `
+<Provider
+  store={
+    Object {
+      "dispatch": [MockFunction],
+      "getState": [MockFunction],
+      "subscribe": [MockFunction],
+    }
+  }
+>
+  <Connect(ConnectedRouter)
+    history={Object {}}
+  >
+    <withRouter(Connect(Inner)) />
+  </Connect(ConnectedRouter)>
+</Provider>
+`;

@@ -11,67 +11,48 @@
 import React from "react";
 import { connect } from "react-redux";
 import { ScrollList } from "../../base";
-import { listUsers } from "../actions";
-import { isEqual } from "lodash-es";
-import { usersSelector } from "../../listSelectors";
-import UserEntry from "./Entry";
+import { findUsers } from "../actions";
+import { getTerm } from "../selectors";
+import UserItem from "./Item";
 
-class UsersList extends React.Component {
-
-    componentDidMount () {
-        if (!this.props.fetched) {
-            this.props.loadNextPage(1);
-        }
+export class UsersList extends React.Component {
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.term, 1);
     }
 
-    shouldComponentUpdate (nextProps) {
-        return (
-            !isEqual(nextProps.documents, this.props.documents)
-            || !isEqual(nextProps.isLoading, this.props.isLoading)
-        );
-    }
+    renderRow = index => <UserItem key={index} index={index} />;
 
-    rowRenderer = (index) => (
-        <UserEntry key={index} index={index} />
-    );
-
-    render () {
+    render() {
         return (
             <ScrollList
-                hasNextPage={this.props.page < this.props.page_count}
-                isNextPageLoading={this.props.isLoading}
-                isLoadError={this.props.errorLoad}
-                list={this.props.documents}
-                refetchPage={this.props.refetchPage}
-                loadNextPage={this.props.loadNextPage}
+                documents={this.props.documents}
+                onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
                 page={this.props.page}
-                rowRenderer={this.rowRenderer}
+                pageCount={this.props.page_count}
+                renderRow={this.renderRow}
             />
         );
     }
 }
 
-const mapStateToProps = state => {
-
-    const { documents, page, page_count } = usersSelector(state);
+export const mapStateToProps = state => {
+    const { documents, page, page_count } = state.users;
 
     return {
         documents,
+        term: getTerm(state),
         page,
-        page_count,
-        fetched: state.users.fetched,
-        refetchPage: state.users.refetchPage,
-        isLoading: state.users.isLoading,
-        errorLoad: state.users.errorLoad
+        page_count
     };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-    loadNextPage: (page) => {
-        if (page) {
-            dispatch(listUsers(page));
-        }
+export const mapDispatchToProps = dispatch => ({
+    onLoadNextPage: (term, page) => {
+        dispatch(findUsers(term, page));
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(UsersList);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(UsersList);

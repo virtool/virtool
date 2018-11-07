@@ -1,18 +1,17 @@
-import { simpleActionCreator } from "../utils";
+import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_JOB,
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
-    LIST_JOBS,
-    FILTER_JOBS,
+    FIND_JOBS,
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES
-} from "../actionTypes";
+} from "../app/actionTypes";
 
-export const wsInsertJob = (data) => ({
+export const wsInsertJob = data => ({
     type: WS_INSERT_JOB,
     data
 });
@@ -24,7 +23,7 @@ export const wsInsertJob = (data) => ({
  * @param data {object} the data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateJob = (data) => ({
+export const wsUpdateJob = data => ({
     type: WS_UPDATE_JOB,
     data
 });
@@ -36,7 +35,7 @@ export const wsUpdateJob = (data) => ({
  * @param jobId {string} the id for the specific job
  * @returns {object}
  */
-export const wsRemoveJob = (data) => ({
+export const wsRemoveJob = data => ({
     type: WS_REMOVE_JOB,
     data
 });
@@ -48,14 +47,10 @@ export const wsRemoveJob = (data) => ({
  * @returns {object}
  */
 
-export const listJobs = (page) => ({
-    type: LIST_JOBS.REQUESTED,
+export const findJobs = (term, page) => ({
+    type: FIND_JOBS.REQUESTED,
+    term,
     page
-});
-
-export const filterJobs = (term) => ({
-    type: FILTER_JOBS.REQUESTED,
-    term
 });
 
 /**
@@ -65,7 +60,7 @@ export const filterJobs = (term) => ({
  * @param jobId {string} the id for the specific job
  * @returns {object}
  */
-export const getJob = (jobId) => ({
+export const getJob = jobId => ({
     type: GET_JOB.REQUESTED,
     jobId
 });
@@ -77,7 +72,7 @@ export const getJob = (jobId) => ({
  * @param jobId {string} the id for the specific job
  * @returns {object}
  */
-export const cancelJob = (jobId) => ({
+export const cancelJob = jobId => ({
     type: CANCEL_JOB.REQUESTED,
     jobId
 });
@@ -89,7 +84,7 @@ export const cancelJob = (jobId) => ({
  * @param jobId {string} the id for the specific job
  * @returns {object}
  */
-export const removeJob = (jobId) => ({
+export const removeJob = jobId => ({
     type: REMOVE_JOB.REQUESTED,
     jobId
 });
@@ -101,7 +96,7 @@ export const removeJob = (jobId) => ({
  * @param scope {string} keyword for a category of jobs
  * @returns {object}
  */
-export const clearJobs = (scope) => ({
+export const clearJobs = scope => ({
     type: CLEAR_JOBS.REQUESTED,
     scope
 });

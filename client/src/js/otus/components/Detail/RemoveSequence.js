@@ -4,15 +4,15 @@ import { connect } from "react-redux";
 import { removeSequence, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
-class RemoveSequence extends React.Component {
-
+export class RemoveSequence extends React.Component {
     handleConfirm = () => {
         this.props.onConfirm(this.props.otuId, this.props.isolateId, this.props.sequenceId);
     };
 
-    render () {
+    render() {
         const removeMessage = (
-            <span>Are you sure you want to remove the sequence
+            <span>
+                Are you sure you want to remove the sequence
                 <strong> {this.props.sequenceId}</strong> from
                 <strong> {this.props.isolateName}</strong>?
             </span>
@@ -24,7 +24,7 @@ class RemoveSequence extends React.Component {
                 noun="Sequence"
                 onConfirm={this.handleConfirm}
                 onHide={this.props.onHide}
-                show={Boolean(this.props.sequenceId)}
+                show={!!this.props.sequenceId}
                 message={removeMessage}
             />
         );
@@ -45,7 +45,6 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-
     onHide: () => {
         dispatch(hideOTUModal());
     },
@@ -53,7 +52,9 @@ const mapDispatchToProps = dispatch => ({
     onConfirm: (otuId, isolateId, sequenceId) => {
         dispatch(removeSequence(otuId, isolateId, sequenceId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(RemoveSequence);

@@ -3,7 +3,6 @@ import {
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
     FIND_ANALYSES,
-    FILTER_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
@@ -16,10 +15,10 @@ import {
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS
-} from "../actionTypes";
-import {simpleActionCreator} from "../utils";
+} from "../app/actionTypes";
+import { simpleActionCreator } from "../utils/utils";
 
-export const wsInsertAnalysis = (data) => ({
+export const wsInsertAnalysis = data => ({
     type: WS_INSERT_ANALYSIS,
     data
 });
@@ -31,7 +30,7 @@ export const wsInsertAnalysis = (data) => ({
  * @param update {object} update data passed in the websocket message
  * @returns {object}
  */
-export const wsUpdateAnalysis = (data) => ({
+export const wsUpdateAnalysis = data => ({
     type: WS_UPDATE_ANALYSIS,
     data
 });
@@ -43,24 +42,24 @@ export const wsUpdateAnalysis = (data) => ({
  * @param removed {string} the id for the specific analysis
  * @returns {object}
  */
-export const wsRemoveAnalysis = (data) => ({
+export const wsRemoveAnalysis = data => ({
     type: WS_REMOVE_ANALYSIS,
     data
 });
 
 export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
 
-export const toggleExpanded = (id) => ({
+export const toggleExpanded = id => ({
     type: TOGGLE_ANALYSIS_EXPANDED,
     id
 });
 
-export const setPathoscopeFilter = (key) => ({
+export const setPathoscopeFilter = key => ({
     type: SET_PATHOSCOPE_FILTER,
     key
 });
 
-export const setSortKey = (key) => ({
+export const setSortKey = key => ({
     type: SET_PATHOSCOPE_SORT_KEY,
     key
 });
@@ -71,15 +70,11 @@ export const toggleShowPathoscopeMedian = simpleActionCreator(TOGGLE_SHOW_PATHOS
 
 export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
-export const findAnalyses = (sampleId) => ({
+export const findAnalyses = (sampleId, term, page) => ({
     type: FIND_ANALYSES.REQUESTED,
-    sampleId
-});
-
-export const filterAnalyses = (sampleId, term) => ({
-    type: FILTER_ANALYSES.REQUESTED,
     sampleId,
-    term
+    term,
+    page
 });
 
 /**
@@ -89,7 +84,7 @@ export const filterAnalyses = (sampleId, term) => ({
  * @param analysisId {string} unique analysis id
  * @returns {object}
  */
-export const getAnalysis = (analysisId) => ({
+export const getAnalysis = analysisId => ({
     type: GET_ANALYSIS.REQUESTED,
     analysisId
 });
@@ -145,7 +140,7 @@ export const blastNuvs = (analysisId, sequenceIndex) => ({
  * @param analysisId {string} unique analysis id
  * @returns {object}
  */
-export const removeAnalysis = (analysisId) => ({
+export const removeAnalysis = analysisId => ({
     type: REMOVE_ANALYSIS.REQUESTED,
     analysisId
 });

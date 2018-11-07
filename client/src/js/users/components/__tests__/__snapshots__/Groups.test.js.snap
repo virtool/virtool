@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UserGroups /> renders <NoneFound /> if no groups available 1`] = `
+<NoneFound
+  noun="groups"
+/>
+`;
+
+exports[`<UserGroups /> renders 1`] = `
+<NoneFound
+  noun="groups"
+/>
+`;

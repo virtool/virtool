@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<LoadingPlaceholder /> displays provided message and margin 1`] = `
+<div
+  className="text-center"
+  style={
+    Object {
+      "marginTop": "300px",
+    }
+  }
+>
+  <p>
+    Test Message
+  </p>
+  <Loader />
+</div>
+`;
+
+exports[`<LoadingPlaceholder /> renders correctly 1`] = `
+<div
+  className="text-center"
+  style={
+    Object {
+      "marginTop": "220px",
+    }
+  }
+>
+  <Loader />
+</div>
+`;

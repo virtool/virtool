@@ -2,7 +2,7 @@ import React from "react";
 import { Row, Col, Modal } from "react-bootstrap";
 import { InputError, SaveButton } from "../../base";
 
-const OTUForm = (props) => (
+const OTUForm = props => (
     <form onSubmit={props.handleSubmit}>
         <Modal.Body>
             <Row>

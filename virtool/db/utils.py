@@ -104,4 +104,3 @@ async def ids_exist(collection, id_list):
 
     """
     return await collection.count({"_id": {"$in": id_list}}) == len(id_list)
-

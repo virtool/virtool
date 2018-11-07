@@ -1,9 +1,10 @@
-import aiohttp.web
 import json.decoder
+
+import aiohttp.web
 from cerberus import Validator
 
 import virtool.users
-from virtool.api.utils import json_response, invalid_input
+from virtool.api.utils import invalid_input, json_response
 
 
 class Routes(aiohttp.web.RouteTableDef):
@@ -33,7 +34,6 @@ class Routes(aiohttp.web.RouteTableDef):
 
 
 def protect(route_decorator, admin, permission, public, schema):
-
     if permission and permission not in virtool.users.PERMISSIONS:
         raise ValueError("Invalid permission: " + permission)
 

@@ -4,14 +4,14 @@ import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import HTTP from "./Server/HTTP";
-import Proxy from "./Server/Proxy";
-import Sentry from "./Server/Sentry";
-import Data from "./Data";
 import User from "../../users/components/User";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder, ViewHeader } from "../../base";
+import HTTP from "./HTTP";
+import Proxy from "./Proxy";
+import Sentry from "./Sentry";
+import Data from "./Data";
 
 export const Server = () => (
     <div className="settings-container">
@@ -65,7 +65,7 @@ export const Settings = ({ settings }) => {
     );
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     settings: state.settings.data
 });
 

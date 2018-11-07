@@ -5,20 +5,19 @@ import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 
-import Update from "./Update";
 import { logout } from "../../account/actions";
 import { getSoftwareUpdates } from "../../updates/actions";
 import { Icon, AutoProgressBar, VTLogo } from "../../base";
+import Update from "./Update";
 
 const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
 class Bar extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet();
     }
 
-    render () {
+    render() {
         const dropdownTitle = (
             <span>
                 <Icon name="user" /> {this.props.id}
@@ -39,39 +38,27 @@ class Bar extends React.Component {
                     <Navbar.Collapse>
                         <Nav>
                             <LinkContainer to="/home" isActive={isHomeActive}>
-                                <NavItem>
-                                    Home
-                                </NavItem>
+                                <NavItem>Home</NavItem>
                             </LinkContainer>
 
                             <LinkContainer to="/jobs">
-                                <NavItem>
-                                    Jobs
-                                </NavItem>
+                                <NavItem>Jobs</NavItem>
                             </LinkContainer>
 
                             <LinkContainer to="/samples">
-                                <NavItem>
-                                    Samples
-                                </NavItem>
+                                <NavItem>Samples</NavItem>
                             </LinkContainer>
 
                             <LinkContainer to="/refs">
-                                <NavItem>
-                                    References
-                                </NavItem>
+                                <NavItem>References</NavItem>
                             </LinkContainer>
 
                             <LinkContainer to="/hmm">
-                                <NavItem>
-                                    HMM
-                                </NavItem>
+                                <NavItem>HMM</NavItem>
                             </LinkContainer>
 
                             <LinkContainer to="/subtraction">
-                                <NavItem>
-                                    Subtraction
-                                </NavItem>
+                                <NavItem>Subtraction</NavItem>
                             </LinkContainer>
                         </Nav>
 
@@ -116,13 +103,12 @@ class Bar extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.account,
     pending: state.app.pending
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     logout: () => {
         dispatch(logout());
     },
@@ -132,4 +118,9 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Bar));
+export default withRouter(
+    connect(
+        mapStateToProps,
+        mapDispatchToProps
+    )(Bar)
+);

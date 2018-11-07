@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 import { findIndex, find } from "lodash-es";
-import SegmentForm from "./SegmentForm";
 import { Button } from "../../../base";
+import SegmentForm from "./SegmentForm";
 
-const getInitialState = (props) => ({
+const getInitialState = props => ({
     newEntry: {
         name: props.curSeg.name,
         molecule: props.curSeg.molecule,
@@ -17,8 +17,7 @@ const getInitialState = (props) => ({
 });
 
 class EditSegment extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
 
         this.state = getInitialState(this.props);
@@ -26,9 +25,9 @@ class EditSegment extends React.Component {
 
     updateState = () => {
         this.setState(getInitialState(this.props));
-    }
+    };
 
-    handleChange = (entry) => {
+    handleChange = entry => {
         this.setState({
             newEntry: {
                 name: entry.name,
@@ -36,15 +35,17 @@ class EditSegment extends React.Component {
                 required: entry.required
             }
         });
-    }
+    };
 
-    handleSubmit = (e) => {
+    handleSubmit = e => {
         e.preventDefault();
 
         const takenName = find(this.props.schema, ["name", this.state.newEntry.name]);
 
-        if (takenName && (takenName.name !== this.props.curSeg.name)) {
-            this.setState({newEntry: {...this.state.newEntry, showError: false, nameTaken: true}});
+        if (takenName && takenName.name !== this.props.curSeg.name) {
+            this.setState({
+                newEntry: { ...this.state.newEntry, showError: false, nameTaken: true }
+            });
         } else if (this.state.newEntry.name) {
             const newArray = this.props.schema.slice();
             const name = this.props.curSeg.name;
@@ -52,20 +53,23 @@ class EditSegment extends React.Component {
 
             newArray[index] = this.state.newEntry;
 
-            this.setState({newEntry: {...this.state.newEntry, showError: false, nameTaken: false}});
+            this.setState({
+                newEntry: { ...this.state.newEntry, showError: false, nameTaken: false }
+            });
 
             this.props.onSubmit(newArray);
         } else {
-            this.setState({newEntry: {...this.state.newEntry, showError: true, nameTaken: false}});
+            this.setState({
+                newEntry: { ...this.state.newEntry, showError: true, nameTaken: false }
+            });
         }
-    }
+    };
 
     handleExited = () => {
-        this.setState({showError: false, nameTaken: false});
-    }
+        this.setState({ showError: false, nameTaken: false });
+    };
 
-    render () {
-
+    render() {
         return (
             <Modal
                 show={this.props.show}
@@ -73,18 +77,13 @@ class EditSegment extends React.Component {
                 onHide={this.props.onHide}
                 onEnter={this.updateState}
             >
-                <Modal.Header closeButton>
-                    Edit Segment
-                </Modal.Header>
+                <Modal.Header closeButton>Edit Segment</Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <SegmentForm
-                            onChange={this.handleChange}
-                            newEntry={this.state.newEntry}
-                        />
+                        <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button bsStyle="primary" icon="save" type="submit" >
+                        <Button bsStyle="primary" icon="save" type="submit">
                             Save
                         </Button>
                     </Modal.Footer>
@@ -102,7 +101,7 @@ EditSegment.propTypes = {
     curSeg: PropTypes.object.isRequired
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     schema: state.otus.detail.schema
 });
 

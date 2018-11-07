@@ -4,6 +4,7 @@ Provides request handlers for file downloads.
 """
 import gzip
 import json
+
 from aiohttp import web
 
 import virtool.bio

@@ -11,13 +11,11 @@ import AccountSettings from "./Settings";
 import APIKeys from "./API/API";
 
 class Account extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGet();
     }
 
-    render () {
-
+    render() {
         return (
             <div className="container-noside">
                 <ViewHeader title="Account">
@@ -46,12 +44,13 @@ class Account extends React.Component {
     }
 }
 
-const mapDispatchToProps = (dispatch) => ({
-
+const mapDispatchToProps = dispatch => ({
     onGet: () => {
         dispatch(getAccount());
     }
-
 });
 
-export default connect(null, mapDispatchToProps)(Account);
+export default connect(
+    null,
+    mapDispatchToProps
+)(Account);

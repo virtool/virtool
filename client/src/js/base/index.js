@@ -13,10 +13,12 @@ import { Input } from "./Input";
 import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
+import { Loader } from "./Loader";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
+import { Panel } from "./Panel";
 import { Radio } from "./Radio";
 import { RelativeTime } from "./RelativeTime";
 import { RemoveBanner } from "./RemoveBanner";
@@ -44,9 +46,11 @@ export {
     InputError,
     InputSave,
     ListGroupItem,
+    Loader,
     LoadingPlaceholder,
     NoneFound,
     NotFound,
+    Panel,
     ProgressBar,
     Radio,
     RelativeTime,

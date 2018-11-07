@@ -1,12 +1,11 @@
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
-import AnalysisValueLabel from "../ValueLabel";
 import { Row, Col } from "react-bootstrap";
+import AnalysisValueLabel from "../ValueLabel";
 import { Flex, FlexItem } from "../../../base/index";
 
 export default class NuVsEntry extends React.Component {
-
     static propTypes = {
         in: PropTypes.bool,
         index: PropTypes.number,
@@ -16,7 +15,7 @@ export default class NuVsEntry extends React.Component {
         toggleIn: PropTypes.func
     };
 
-    shouldComponentUpdate (nextProps) {
+    shouldComponentUpdate(nextProps) {
         return nextProps.in !== this.props.in;
     }
 
@@ -26,9 +25,10 @@ export default class NuVsEntry extends React.Component {
         }
     };
 
-    render () {
-
-        const className = CX("list-group-item", "spaced", { hoverable: !this.props.in });
+    render() {
+        const className = CX("list-group-item", "spaced", {
+            hoverable: !this.props.in
+        });
 
         let closeButton;
 

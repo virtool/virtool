@@ -8,7 +8,6 @@ import {
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
-    FILTER_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
     SET_PATHOSCOPE_SORT_KEY,
@@ -17,19 +16,18 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS,
     SET_PATHOSCOPE_FILTER
-} from "../actionTypes";
+} from "../app/actionTypes";
+import { update, remove, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
-import { edit, remove } from "../reducerUtils";
 
 export const initialState = {
-    sampleId: "",
     documents: null,
+    term: "",
     data: null,
     detail: null,
     readyIndexes: null,
     sortKey: "coverage",
     sortDescending: true,
-    filter: "",
 
     // Pathoscope-specific
     filterOTUs: true,
@@ -38,7 +36,7 @@ export const initialState = {
     showReads: false
 };
 
-export const addDepth = (data, showMedian) => (
+export const addDepth = (data, showMedian) =>
     map(data, item => ({
         ...item,
         depth: showMedian ? item.medianDepth : item.meanDepth,
@@ -46,22 +44,20 @@ export const addDepth = (data, showMedian) => (
             ...isolate,
             depth: showMedian ? isolate.medianDepth : isolate.meanDepth
         }))
-    }))
-);
+    }));
 
-export const collapse = (state) => (
+export const collapse = state =>
     map(state.data, item => ({
         ...item,
         expanded: false
-    }))
-);
+    }));
 
-export const toggleMedian = (state) => {
+export const toggleMedian = state => {
     const showMedian = !state.showMedian;
 
     const data = addDepth(state.data, showMedian);
 
-    return {...state, data, showMedian};
+    return { ...state, data, showMedian };
 };
 
 export const setFilter = (state, key) => {
@@ -84,89 +80,88 @@ export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const detail = state.detail;
 
     if (detail && detail.id === analysisId) {
-        return {...state, detail: {
-            ...detail,
-            results: map(detail.results, sequence => {
-                if (sequence.index === sequenceIndex) {
-                    return {...sequence, blast: data};
-                }
+        return {
+            ...state,
+            detail: {
+                ...detail,
+                results: map(detail.results, sequence => {
+                    if (sequence.index === sequenceIndex) {
+                        return { ...sequence, blast: data };
+                    }
 
-                return sequence;
-            })
-        }};
+                    return sequence;
+                })
+            }
+        };
     }
 
     return state;
 };
 
-export const toggleExpanded = (state, id) => (
+export const toggleExpanded = (state, id) =>
     map(state.data, item => {
         if (item.id === id) {
-            return {...item, expanded: !item.expanded};
+            return { ...item, expanded: !item.expanded };
         }
 
         return item;
-    })
-);
+    });
 
 export const insert = (documents, action, sampleId) => {
     const beforeList = documents ? slice(documents, 0, documents.length) : [];
 
-    forEach(documents, (entry, i) => {
-        if (entry.placeholder
-            && (entry.sampleId === sampleId)
-            && (entry.userId === action.data.user.id)) {
+    forEach(documents, (document, i) => {
+        if (document.placeholder && document.sampleId === sampleId && document.userId === action.data.user.id) {
             beforeList.splice(i, 1);
             return false;
         }
     });
 
-    let newList = concat(beforeList, [{...action.data}]);
+    let newList = concat(beforeList, [{ ...action.data }]);
     newList = sortBy(newList, "created_at");
 
     return newList;
 };
 
-export default function samplesReducer (state = initialState, action) {
-
+export default function samplesReducer(state = initialState, action) {
     switch (action.type) {
-
         case WS_INSERT_ANALYSIS:
-            if (action.data.sample.id !== state.sampleId) {
-                return state;
+            if (action.data.sample.id === state.sampleId) {
+                return {
+                    ...state,
+                    documents: insert(state.documents, action, state, state.sortKey, state.sortDescending)
+                };
             }
-            return {
-                ...state,
-                documents: insert(state.documents, action, state.sampleId)
-            };
+
+            return state;
 
         case WS_UPDATE_ANALYSIS:
-            return {
-                ...state,
-                documents: edit(state.documents, action)
-            };
+            if (action.data.sample.id === state.sampleId) {
+                return update(state, action);
+            }
+
+            return state;
 
         case WS_REMOVE_ANALYSIS:
-            return {
-                ...state,
-                documents: remove(state.documents, action)
-            };
+            return remove(state, action);
 
         case ANALYZE.REQUESTED:
             return {
                 ...state,
-                documents: (state.documents === null)
-                    ? null : concat(state.documents, [
-                        {
-                            ...action.placeholder,
-                            userId: action.userId,
-                            sampleId: action.sampleId
-                        }
-                    ])
+                documents:
+                    state.documents === null
+                        ? null
+                        : concat(state.documents, [
+                              {
+                                  ...action.placeholder,
+                                  userId: action.userId,
+                                  sampleId: action.sampleId
+                              }
+                          ])
             };
 
         case COLLAPSE_ANALYSIS:
-            return {...state, data: collapse(state)};
+            return { ...state, data: collapse(state) };
 
         case SET_PATHOSCOPE_FILTER:
             return setFilter(state, action.key);
@@ -175,31 +170,25 @@ export default function samplesReducer (state = initialState, action) {
             return toggleMedian(state);
 
         case TOGGLE_SHOW_PATHOSCOPE_READS:
-            return {...state, showReads: !state.showReads};
+            return { ...state, showReads: !state.showReads };
 
         case TOGGLE_SORT_PATHOSCOPE_DESCENDING:
-            return {...state, sortDescending: !state.sortDescending};
+            return { ...state, sortDescending: !state.sortDescending };
 
         case SET_PATHOSCOPE_SORT_KEY:
-            return {...state, sortKey: action.key};
+            return { ...state, sortKey: action.key };
 
         case TOGGLE_ANALYSIS_EXPANDED:
-            return {...state, data: toggleExpanded(state, action.id)};
+            return { ...state, data: toggleExpanded(state, action.id) };
 
         case LIST_READY_INDEXES.SUCCEEDED:
-            return {...state, readyIndexes: action.data};
+            return { ...state, readyIndexes: action.data };
 
         case FIND_ANALYSES.REQUESTED:
-            return {...state, sampleId: action.sampleId, documents: null, detail: null};
+            return { ...state, term: action.term };
 
         case FIND_ANALYSES.SUCCEEDED:
-            return {...state, documents: action.data.documents};
-
-        case FILTER_ANALYSES.REQUESTED:
-            return {...state, filter: action.term};
-
-        case FILTER_ANALYSES.SUCCEEDED:
-            return {...state, documents: action.data.documents};
+            return updateDocuments(state, action);
 
         case GET_ANALYSIS.REQUESTED:
             return {
@@ -209,7 +198,6 @@ export default function samplesReducer (state = initialState, action) {
             };
 
         case GET_ANALYSIS.SUCCEEDED: {
-
             let data;
 
             if (action.data.algorithm === "pathoscope_bowtie" && action.data.ready) {
@@ -233,7 +221,9 @@ export default function samplesReducer (state = initialState, action) {
             };
 
         case BLAST_NUVS.REQUESTED:
-            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});
+            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {
+                ready: false
+            });
 
         case BLAST_NUVS.SUCCEEDED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);

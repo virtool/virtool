@@ -4,22 +4,20 @@ import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
-import IndexGeneral from "./General";
-import IndexChanges from "./Changes";
 import { getReference } from "../../references/actions";
 import { getIndex, getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
+import IndexChanges from "./Changes";
+import IndexGeneral from "./General";
 
 export class IndexDetail extends React.Component {
-
-    componentDidMount () {
+    componentDidMount() {
         this.props.onGetIndex(this.props.match.params.indexId);
         this.props.onGetReference(this.props.match.params.refId);
         this.props.onGetChanges(this.props.match.params.indexId, 1);
     }
 
-    render () {
-
+    render() {
         if (this.props.error) {
             return <NotFound />;
         }
@@ -38,33 +36,25 @@ export class IndexDetail extends React.Component {
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <LinkContainer to="/refs/">
-                            <span>
-                                References
-                            </span>
+                            <span>References</span>
                         </LinkContainer>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}`}>
-                            <span>
-                                {this.props.refDetail.name}
-                            </span>
+                            <span>{this.props.refDetail.name}</span>
                         </LinkContainer>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
                         <LinkContainer to={`/refs/${refId}/indexes`}>
-                            <span>
-                                Indexes
-                            </span>
+                            <span>Indexes</span>
                         </LinkContainer>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item active>
-                        Index {version}
-                    </Breadcrumb.Item>
+                    <Breadcrumb.Item active>Index {version}</Breadcrumb.Item>
                 </Breadcrumb>
 
                 <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
                     <strong>Index {version}</strong>
-                    <div className="text-muted" style={{fontSize: "12px"}}>
+                    <div className="text-muted" style={{ fontSize: "12px" }}>
                         Created <RelativeTime time={created_at} /> by {user.id}
                     </div>
                 </ViewHeader>
@@ -74,7 +64,9 @@ export class IndexDetail extends React.Component {
                         <NavItem>General</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/refs/${refId}/indexes/${indexId}/changes`}>
-                        <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
+                        <NavItem>
+                            Changes <Badge>{this.props.detail.change_count}</Badge>
+                        </NavItem>
                     </LinkContainer>
                 </Nav>
 
@@ -90,18 +82,16 @@ export class IndexDetail extends React.Component {
             </div>
         );
     }
-
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     error: get(state, "errors.GET_INDEX_ERROR", null),
     detail: state.indexes.detail,
     refDetail: state.references.detail
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGetIndex: (indexId) => {
+const mapDispatchToProps = dispatch => ({
+    onGetIndex: indexId => {
         dispatch(getIndex(indexId));
     },
 
@@ -109,10 +99,12 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(getIndexHistory(indexId, page));
     },
 
-    onGetReference: (refId) => {
+    onGetReference: refId => {
         dispatch(getReference(refId));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(IndexDetail);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(IndexDetail);

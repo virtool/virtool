@@ -1,30 +1,25 @@
 import React from "react";
 import { connect } from "react-redux";
-import Job from "./Entry";
-import JobsToolbar from "./Toolbar";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
-import { listJobs } from "../actions";
-import { checkAdminOrPermission } from "../../utils";
+import { findJobs } from "../actions";
+import { checkAdminOrPermission } from "../../utils/utils";
+import { getTerm } from "../selectors";
+import JobsToolbar from "./Toolbar";
+import Job from "./Entry";
 
 export class JobsList extends React.Component {
-
-    componentDidMount () {
-        if (!this.props.fetched) {
-            this.props.loadNextPage(1);
-        }
+    componentDidMount() {
+        this.props.onLoadNextPage(this.props.term, 1);
     }
 
-    rowRenderer = (index) => (
-        <Job
-            key={this.props.documents[index].id}
-            {...this.props.documents[index]}
-            canRemove={this.props.canRemove}
-            canCancel={this.props.canCancel}
-        />
-    );
+    renderRow = index => {
+        const document = this.props.documents[index];
+        return (
+            <Job key={document.id} {...document} canRemove={this.props.canRemove} canCancel={this.props.canCancel} />
+        );
+    };
 
-    render () {
-
+    render() {
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
@@ -39,37 +34,36 @@ export class JobsList extends React.Component {
             <div>
                 <ViewHeader title="Jobs" totalCount={this.props.total_count} />
 
-                <JobsToolbar canRemove={this.props.canRemove} />
+                <JobsToolbar />
 
                 {noJobs}
 
                 <ScrollList
-                    hasNextPage={this.props.page < this.props.page_count}
-                    isNextPageLoading={this.props.isLoading}
-                    isLoadError={this.props.errorLoad}
-                    list={this.props.documents}
-                    refetchPage={this.props.refetchPage}
-                    loadNextPage={this.props.loadNextPage}
+                    documents={this.props.documents}
                     page={this.props.page}
-                    rowRenderer={this.rowRenderer}
+                    pageCount={this.props.page_count}
+                    loadNextPage={this.props.onLoadNextPage}
+                    renderRow={this.renderRow}
                 />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
     ...state.jobs,
-    canRemove: checkAdminOrPermission(state.account.administrator, state.account.permissions, "remove_job"),
-    canCancel: checkAdminOrPermission(state.account.administrator, state.account.permissions, "cancel_job")
+    term: getTerm(state),
+    canCancel: checkAdminOrPermission(state, "cancel_job"),
+    canRemove: checkAdminOrPermission(state, "remove_job")
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    loadNextPage: (page) => {
-        dispatch(listJobs(page));
+const mapDispatchToProps = dispatch => ({
+    onLoadNextPage: (term, page) => {
+        dispatch(findJobs(term, page));
     }
-
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(JobsList);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(JobsList);

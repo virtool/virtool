@@ -8,7 +8,6 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-
 PROJECTION = [
     "_id",
     "name",

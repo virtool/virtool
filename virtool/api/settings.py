@@ -2,9 +2,9 @@ import os
 
 import aiohttp
 
-import virtool.settings
 import virtool.http.routes
 import virtool.resources
+import virtool.settings
 import virtool.utils
 from virtool.api.utils import conflict, json_response
 

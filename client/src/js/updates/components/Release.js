@@ -8,7 +8,6 @@ import { Button, Col, ListGroupItem, Row } from "react-bootstrap";
 import { Icon } from "../../base";
 
 export const ReleaseMarkdown = ({ body, noMargin = false }) => {
-
     let html = Marked(body);
 
     html = replace(
@@ -18,15 +17,14 @@ export const ReleaseMarkdown = ({ body, noMargin = false }) => {
     );
 
     return (
-        <div className={CX("markdown-container", {"no-margin": noMargin})}>
-            <div dangerouslySetInnerHTML={{__html: html}} />
+        <div className={CX("markdown-container", { "no-margin": noMargin })}>
+            <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
     );
 };
 
 export default class Release extends React.Component {
-
-    constructor (props) {
+    constructor(props) {
         super(props);
 
         this.state = {
@@ -46,14 +44,8 @@ export default class Release extends React.Component {
         });
     };
 
-    render () {
-
-        const caret = (
-            <Icon
-                className="fixed-width"
-                name={`caret-${this.state.in ? "down" : "right"}`}
-            />
-        );
+    render() {
+        const caret = <Icon className="fixed-width" name={`caret-${this.state.in ? "down" : "right"}`} />;
 
         let markdown;
 
@@ -70,7 +62,7 @@ export default class Release extends React.Component {
                 <Row>
                     <Col xs={12}>
                         <Row>
-                            <Col xs={9} style={{cursor: "pointer"}} onClick={this.handleClick}>
+                            <Col xs={9} style={{ cursor: "pointer" }} onClick={this.handleClick}>
                                 {caret} <strong>{this.props.name}</strong>
                             </Col>
                             <Col xs={3}>

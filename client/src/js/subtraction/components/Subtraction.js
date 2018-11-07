@@ -1,13 +1,11 @@
 import React from "react";
 import { Switch, Route } from "react-router-dom";
 
+import FileManager from "../../files/components/Manager";
 import SubtractionList from "./List";
 import SubtractionDetail from "./Detail";
-import FileManager from "../../files/components/Manager";
 
-export const SubtractionFileManager = () => (
-    <FileManager fileType="subtraction" />
-);
+export const SubtractionFileManager = () => <FileManager fileType="subtraction" />;
 
 const Subtraction = () => (
     <div className="container">
