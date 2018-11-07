@@ -22,6 +22,8 @@ export const SampleSettings = () => (
 );
 
 const Samples = props => {
+    return <LoadingPlaceholder />;
+
     if (props.settings === null) {
         return <LoadingPlaceholder />;
     }

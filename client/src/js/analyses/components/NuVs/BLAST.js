@@ -1,13 +1,12 @@
 import React from "react";
 import Moment from "moment";
 import numbro from "numbro";
-import { ClipLoader } from "halogenium";
 import { map } from "lodash-es";
 import { Table, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { blastNuvs } from "../../actions";
-import { Alert, Button, Flex, FlexItem, Icon, RelativeTime } from "../../../base/index";
+import { Alert, Button, Flex, FlexItem, Icon, Loader, RelativeTime } from "../../../base/index";
 
 const ridRoot =
     "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
@@ -49,7 +48,7 @@ export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
             <Panel.Body>
                 <Flex alignItems="center">
                     <FlexItem>
-                        <ClipLoader size={16} color="#000" />
+                        <Loader size={16} color="#000" />
                     </FlexItem>
                     <FlexItem pad={5}>
                         <span>BLAST in progress {ridText}</span>

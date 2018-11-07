@@ -1,9 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";
-import { Icon, RelativeTime, ListGroupItem } from "../../base";
+import { Icon, RelativeTime, ListGroupItem, Loader } from "../../base";
 import { activeIndexIdSelector } from "../selectors";
 
 export const IndexEntry = ({ activeId, document, refId }) => {
@@ -22,7 +21,7 @@ export const IndexEntry = ({ activeId, document, refId }) => {
         } else {
             activeIcon = (
                 <div className="pull-right">
-                    <ClipLoader size="14px" color="#3c8786" style={{ display: "inline" }} />
+                    <Loader size="14px" color="#3c8786" style={{ display: "inline" }} />
                     <strong> Building</strong>
                 </div>
             );

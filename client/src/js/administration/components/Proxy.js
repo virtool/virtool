@@ -1,9 +1,8 @@
 import React from "react";
-import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 import { testProxy, updateSetting } from "../actions";
-import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../base/index";
+import { Button, Checkbox, Flex, FlexItem, Icon, InputError, Loader } from "../../base/index";
 import AdministrationSection from "./Section";
 
 export const ProxyFooter = () => (
@@ -16,7 +15,7 @@ export const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestF
     if (proxyTestPending) {
         return (
             <div style={{ padding: "0 1px" }}>
-                <ClipLoader size="12px" color="#333" />
+                <Loader size="12px" color="#333" />
             </div>
         );
     }

@@ -11,12 +11,11 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 import { get, find } from "lodash-es";
 
 import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { Button, Icon, InputError } from "../../../base";
+import { Button, Icon, InputError, Loader } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
@@ -155,7 +154,7 @@ class AddSequence extends React.Component {
             overlay = (
                 <div className="modal-body-overlay">
                     <span>
-                        <ClipLoader color="#fff" />
+                        <Loader color="#fff" />
                     </span>
                 </div>
             );

@@ -3,17 +3,16 @@ import CX from "classnames";
 import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { ClipLoader } from "halogenium";
 import { Row, Col, Label } from "react-bootstrap";
 
 import { getTaskDisplayName } from "../../utils/utils";
-import { Icon, RelativeTime } from "../../base";
+import { Icon, Loader, RelativeTime } from "../../base";
 import { removeAnalysis } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 
 export const AnalysisItem = props => {
     const itemClass = CX("list-group-item spaced", { hoverable: props.ready });
-    const loaderIcon = <ClipLoader size="14px" color="#3c8786" style={{ display: "inline" }} />;
+    const loaderIcon = <Loader size="14px" color="#3c8786" style={{ display: "inline" }} />;
     const canRemove = props.ready && props.canModify;
 
     const endIcon = canRemove ? (

@@ -3,15 +3,14 @@ import CX from "classnames";
 import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Row, Col } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
-import { Icon, Flex, FlexItem, RelativeTime, Checkbox } from "../../base";
+import { Icon, Flex, FlexItem, RelativeTime, Checkbox, Loader } from "../../base";
 
 const SampleEntryLabel = ({ icon, label, ready }) => (
     <Flex>
         <FlexItem className={CX("sample-label", { "bg-primary": ready })}>
             <Flex alignItems="center">
                 {ready === "ip" ? (
-                    <ClipLoader size="10px" color="white" verticalAlign="middle" />
+                    <Loader size="10px" color="white" verticalAlign="middle" />
                 ) : (
                     <Icon name={icon} style={{ lineHeight: "inherit" }} />
                 )}
@@ -53,7 +52,7 @@ class SampleEntry extends React.Component {
         if (this.props.imported === "ip") {
             statusIcon = (
                 <Flex alignItems="center" className="pull-right">
-                    <ClipLoader size="14px" color="#3c8786" />
+                    <Loader size="14px" color="#3c8786" />
                     <FlexItem pad>
                         <strong>Creating</strong>
                     </FlexItem>
