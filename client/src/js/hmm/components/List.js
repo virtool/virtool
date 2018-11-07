@@ -72,7 +72,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onLoadNextPage: (term, page) => {
-        dispatch(findHmms(term, page));
+        dispatch(findHmms(term, page, false));
     }
 });
 

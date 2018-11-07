@@ -189,7 +189,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onFindHmms: () => {
-        dispatch(findHmms(null, 1));
+        dispatch(findHmms(null, 1, false));
     },
 
     onListReadyIndexes: () => {
