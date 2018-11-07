@@ -6,18 +6,12 @@ import { Panel } from "react-bootstrap";
 import { Alert, Input, LoadingPlaceholder } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
+import { getCanModifyRights } from "../selectors";
 
 class SampleRights extends React.Component {
     componentDidMount() {
-        if (!this.props.groupsFetched) {
-            this.props.onListGroups();
-        }
+        this.props.onListGroups();
     }
-
-    isOwnerOrAdministrator = () =>
-        includes(this.props.groups, this.props.group) ||
-        this.props.accountId === this.props.ownerId ||
-        this.props.isAdmin;
 
     handleChangeGroup = e => {
         this.props.onChangeGroup(this.props.sampleId, e.target.value);
@@ -32,7 +26,7 @@ class SampleRights extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        if (!this.isOwnerOrAdministrator()) {
+        if (!this.props.canModifyRights) {
             return (
                 <Panel>
                     <Panel.Body>Not allowed</Panel.Body>
@@ -96,10 +90,10 @@ const mapStateToProps = state => {
     const { all_read, all_write, group, group_read, group_write, id, user } = state.samples.detail;
 
     return {
+        canModifyRights: getCanModifyRights(state),
         accountId: state.account.id,
         isAdmin: state.account.administrator,
-        groups: state.groups.list,
-        groupsFetched: state.groups.fetched,
+        groups: state.groups.documents,
         ownerId: user.id,
         sampleId: id,
         group,
