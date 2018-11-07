@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { map } from "lodash-es";
 
 import { Button, NoneFound } from "../../../base";
+import { checkRefRight } from "../../../utils/utils";
 import { editOTU } from "../../actions";
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
@@ -41,7 +42,7 @@ class Schema extends React.Component {
     }
 
     onDragEnd(result) {
-        if (!this.props.hasModifyOTU || this.props.isRemote) {
+        if (!this.props.canModify) {
             return;
         }
 
@@ -105,7 +106,7 @@ class Schema extends React.Component {
                                     seg={segment}
                                     index={index}
                                     onClick={this.handleSegment}
-                                    canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                                    canModify={this.props.canModify}
                                 />
                             </div>
                             {provided.placeholder}
@@ -117,19 +118,25 @@ class Schema extends React.Component {
             segments = <NoneFound noun="segments" noListGroup />;
         }
 
+        let addButton;
+
+        if (this.props.canModify) {
+            addButton = (
+                <Button
+                    bsStyle="primary"
+                    icon="plus-square"
+                    onClick={this.handleAddNew}
+                    style={{ marginBottom: "10px" }}
+                    block
+                >
+                    Add Segment
+                </Button>
+            );
+        }
+
         return (
             <div>
-                {this.props.hasModifyOTU && !this.props.isRemote ? (
-                    <Button
-                        bsStyle="primary"
-                        icon="plus-square"
-                        onClick={this.handleAddNew}
-                        style={{ marginBottom: "10px" }}
-                        block
-                    >
-                        &nbsp;Add Segment
-                    </Button>
-                ) : null}
+                {addButton}
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
@@ -164,7 +171,7 @@ const mapStateToProps = state => ({
     schema: state.otus.detail.schema,
     detail: state.otus.detail,
     otuId: state.otus.detail.id,
-    isRemote: state.references.detail.remotes_from
+    canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

@@ -11,6 +11,7 @@ import PropTypes from "prop-types";
 import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
+import { checkRefRight } from "../../../utils/utils";
 
 import { getOTUHistory, revert } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, LoadingPlaceholder } from "../../../base";
@@ -160,7 +161,7 @@ class OTUHistory extends React.Component {
             built = (
                 <div>
                     <h4>Built Changes</h4>
-                    <HistoryList history={changes.built} canModify={this.props.hasModifyOTU && !this.props.isRemote} />
+                    <HistoryList history={changes.built} canModify={this.props.canModify} />
                 </div>
             );
         }
@@ -172,7 +173,7 @@ class OTUHistory extends React.Component {
                     <HistoryList
                         history={changes.unbuilt}
                         revert={this.props.revert}
-                        canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                        canModify={this.props.canModify}
                         unbuilt
                     />
                 </div>
@@ -191,7 +192,7 @@ class OTUHistory extends React.Component {
 const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     history: state.otus.detailHistory,
-    isRemote: state.references.detail.remotes_from
+    canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

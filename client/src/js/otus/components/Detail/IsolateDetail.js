@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Label, Panel, Table } from "react-bootstrap";
 
 import { Icon, IDRow } from "../../../base";
-import { followDownload } from "../../../utils/utils";
+import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
 import IsolateSequences from "./Sequences";
@@ -52,7 +52,7 @@ export class IsolateDetail extends React.Component {
 
         let modifyIcons;
 
-        if (this.props.hasModifyOTU && !this.props.isRemote) {
+        if (this.props.canModify && !this.props.isRemote) {
             modifyIcons = (
                 <span>
                     <Icon
@@ -132,7 +132,7 @@ export class IsolateDetail extends React.Component {
                             sourceType={isolate.source_type}
                         />
 
-                        <IsolateSequences hasModifyOTU={this.props.hasModifyOTU} />
+                        <IsolateSequences canModify={this.props.canModify} />
                     </Panel.Body>
                 </Panel>
             </div>
@@ -149,7 +149,8 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    isRemote: state.references.detail.remotes_from
+    isRemote: state.references.detail.remotes_from,
+    canModify: checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

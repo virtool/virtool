@@ -36,7 +36,7 @@ describe("References Reducer", () => {
             const state = { documents: null };
             const action = { type: WS_INSERT_REFERENCE, data: { id: "foo" } };
             const result = reducer(state, action);
-            expect(result).toEqual({ documents: [{ id: "foo" }]);
+            expect(result).toEqual({ documents: [{ id: "foo" }] });
         });
 
         it("inserts entry into list otherwise", () => {

@@ -1,4 +1,5 @@
 import React from "react";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 import { Link } from "react-router-dom";
@@ -75,9 +76,8 @@ class OTUsList extends React.Component {
 const mapStateToProps = state => ({
     ...state.otus,
     term: getTerm(state),
-    refId: state.references.detail.id,
     unbuiltChangeCount: state.references.detail.unbuilt_change_count,
-    detail: state.references.detail,
+    refId: state.references.detail.id,
     verified: state.otus.verified,
     canBuild: checkRefRight(state, "build")
 });
