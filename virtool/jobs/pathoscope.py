@@ -2,14 +2,17 @@
 Functions and job classes for sample analysis.
 
 """
+import itertools
 import json
 import os
 import shlex
 import shutil
+from collections import defaultdict
 
 import pymongo
 import pymongo.errors
 
+import virtool.db.sync
 import virtool.jobs.job
 import virtool.pathoscope
 
@@ -55,7 +58,7 @@ class Job(virtool.jobs.job.Job):
             "ref_id": self.task_args["ref_id"],
 
             # The document id for the analysis being run.
-            "analysis_id": self.task_args["analysis_id"],
+            "analysis_id": self.task_args["analysis_id"]
         }
 
         # The parent folder for all data associated with the sample
@@ -99,6 +102,33 @@ class Job(virtool.jobs.job.Job):
                 sample["subtraction"]["id"].lower().replace(" ", "_"),
                 "reference"
             )
+        })
+
+        index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
+
+        sequences = dict()
+        sequence_otu_map = index_document.get("sequence_otu_map", None)
+
+        if sequence_otu_map is None:
+            sequence_otu_map = dict()
+
+            for otu_id, otu_version in index_document["manifest"].items():
+                _, patched, _ = virtool.db.sync.patch_otu_to_version(
+                    self.db,
+                    otu_id,
+                    otu_version
+                )
+
+                for isolate in patched["isolates"]:
+                    for sequence in isolate["sequences"]:
+                        sequence_id = sequence["_id"]
+                        sequences[sequence_id] = sequence["sequence"]
+                        sequence_otu_map[sequence_id] = patched["_id"]
+
+        self.intermediate["sequences"] = sequences
+        self.params.update({
+            "manifest": index_document["manifest"],
+            "sequence_otu_map":  sequence_otu_map
         })
 
     def mk_analysis_dir(self):
@@ -159,25 +189,30 @@ class Job(virtool.jobs.job.Job):
         Identifies otu hits from the initial default otu mapping.
 
         """
-        self.intermediate["otu_dict"] = self.task_args["otu_dict"]
-
-        self.intermediate["sequence_otu_map"] = {item[0]: item[1] for item in self.task_args["sequence_otu_map"]}
-
         fasta_path = os.path.join(self.params["analysis_path"], "isolate_index.fa")
 
-        sequence_ids = list(self.intermediate["to_otus"])
-
         ref_lengths = dict()
+
+        sequence_otu_map = self.params["sequence_otu_map"]
+
+        # The ids of OTUs whose default sequences had mappings.
+        otu_ids = {sequence_otu_map[sequence_id] for sequence_id in self.intermediate["to_otus"]}
+
+        # A mapping of all OTUs to lists of their member sequences.
+        otu_sequence_map = calculate_otu_sequence_map(self.params["sequence_otu_map"])
+
+        # All of the sequence ids that should be indexed for a complete isolate level mapping.
+        sequence_ids = set(itertools.chain.from_iterable([otu_sequence_map[otu_id] for otu_id in otu_ids]))
 
         # Get the database documents for the sequences
         with open(fasta_path, "w") as handle:
             # Iterate through each otu id referenced by the hit sequence ids.
-            for otu_id in self.db.sequences.distinct("otu_id", {"_id": {"$in": sequence_ids}}):
-                # Write all of the sequences for each otu to a FASTA file.
-                for document in self.db.sequences.find({"otu_id": otu_id}, ["sequence"]):
-                    handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
-                    ref_lengths[document["_id"]] = len(document["sequence"])
+            for sequence_id in sequence_ids:
+                sequence = self.intermediate["sequences"][sequence_id]
+                handle.write(">{}\n{}\n".format(sequence_id, sequence))
+                ref_lengths[sequence_id] = len(sequence)
 
+        del self.intermediate["sequences"]
         del self.intermediate["to_otus"]
 
         self.intermediate["ref_lengths"] = ref_lengths
@@ -353,16 +388,16 @@ class Job(virtool.jobs.job.Job):
 
         for ref_id, hit in report.items():
             # Get the otu info for the sequence id.
-            otu = self.intermediate["otu_dict"][self.intermediate["sequence_otu_map"][ref_id]]
-
-            # Raise exception if otu is ``False`` (meaning the otu had no ``last_indexed_version`` field).
-            if not otu:
-                raise ValueError("Document has no last_indexed_version field.")
+            otu_id = self.params["sequence_otu_map"][ref_id]
+            otu_version = self.params["manifest"][otu_id]
 
             hit["id"] = ref_id
 
             # Attach "otu" (id, version) to the hit.
-            hit["otu"] = otu
+            hit["otu"] = {
+                "version": otu_version,
+                "id": otu_id
+            }
 
             # Get the coverage for the sequence.
             hit_coverage = self.intermediate["coverage"][ref_id]
@@ -428,6 +463,15 @@ class Job(virtool.jobs.job.Job):
 
     def cleanup_indexes(self):
         pass
+
+
+def calculate_otu_sequence_map(sequence_otu_map):
+    otu_sequence_map = defaultdict(list)
+
+    for sequence_id, otu_id in sequence_otu_map.items():
+        otu_sequence_map[otu_id].append(sequence_id)
+
+    return otu_sequence_map
 
 
 def run_patho(vta_path, reassigned_path):
