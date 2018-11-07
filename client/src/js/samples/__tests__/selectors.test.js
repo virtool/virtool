@@ -1,4 +1,4 @@
-import { getCanModify } from "./selectors";
+import { getCanModify } from "../selectors";
 
 describe("Samples selector helper module", () => {
     let state;
