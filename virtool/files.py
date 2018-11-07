@@ -17,16 +17,16 @@ FILE_EXTENSION_FILTER = (
 )
 
 FILES_FLAGS = (
-    aionotify.Flags.CLOSE_WRITE |
-    aionotify.Flags.CREATE |
-    aionotify.Flags.DELETE |
-    aionotify.Flags.MOVED_TO |
-    aionotify.Flags.MOVED_FROM
+        aionotify.Flags.CLOSE_WRITE |
+        aionotify.Flags.CREATE |
+        aionotify.Flags.DELETE |
+        aionotify.Flags.MOVED_TO |
+        aionotify.Flags.MOVED_FROM
 )
 
 WATCH_FLAGS = (
-    aionotify.Flags.CLOSE_WRITE |
-    aionotify.Flags.MOVED_TO
+        aionotify.Flags.CLOSE_WRITE |
+        aionotify.Flags.MOVED_TO
 )
 
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.

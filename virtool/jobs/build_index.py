@@ -1,5 +1,4 @@
 import os
-import pymongo
 
 import virtool.db.history
 import virtool.db.indexes
@@ -17,6 +16,7 @@ class Job(virtool.jobs.job.Job):
     Job object that builds a new Bowtie2 index for a given reference.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -40,7 +40,7 @@ class Job(virtool.jobs.job.Job):
             self.params["ref_id"]
         )
 
-        self. params["index_path"] = os.path.join(
+        self.params["index_path"] = os.path.join(
             self.params["reference_path"],
             self.params["index_id"]
         )
@@ -74,7 +74,7 @@ class Job(virtool.jobs.job.Job):
 
             for isolate in joined["isolates"]:
                 for sequence in isolate["sequences"]:
-                    sequence_otu_map[sequence["id"]] = patch_id
+                    sequence_otu_map[sequence["_id"]] = patch_id
 
             # Extract the list of sequences from the joined patched patch.
             sequences = virtool.otus.extract_default_sequences(joined)

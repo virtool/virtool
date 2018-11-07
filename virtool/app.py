@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import sys
+from urllib.parse import quote_plus
 
 import aiofiles
 import aiojobs.aiohttp
@@ -10,17 +11,15 @@ import pymongo
 import pymongo.errors
 from aiohttp import client, web
 from motor import motor_asyncio
-from urllib.parse import quote_plus
 
 import virtool.app_auth
-import virtool.dispatcher
 import virtool.app_routes
-import virtool.settings
 import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
 import virtool.db.software
 import virtool.db.status
+import virtool.dispatcher
 import virtool.errors
 import virtool.files
 import virtool.http.errors
@@ -30,6 +29,7 @@ import virtool.jobs.manager
 import virtool.organize
 import virtool.resources
 import virtool.sentry
+import virtool.settings
 import virtool.setup
 import virtool.utils
 

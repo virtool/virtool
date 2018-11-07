@@ -1,7 +1,8 @@
-import aiofiles
 import logging
 import os
 import sys
+
+import aiofiles
 from aiohttp import web
 
 import virtool.api.account
@@ -25,9 +26,8 @@ import virtool.api.subtractions
 import virtool.api.uploads
 import virtool.api.users
 import virtool.api.websocket
-
-import virtool.utils
 import virtool.http.login
+import virtool.utils
 
 logger = logging.getLogger(__name__)
 

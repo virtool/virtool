@@ -1,6 +1,7 @@
-import dictdiffer
 import gzip
 import json
+
+import dictdiffer
 from cerberus import Validator
 
 import virtool.otus
@@ -97,7 +98,6 @@ def clean_export_list(otus, remote):
 
 
 def clean_otu(otu, otu_keys=None, sequence_keys=None):
-
     otu_keys = otu_keys or OTU_KEYS
     sequence_keys = sequence_keys or SEQUENCE_KEYS
 

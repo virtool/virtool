@@ -1,8 +1,9 @@
-import dictdiffer
 import logging
 import os
-import pymongo.errors
 import shutil
+
+import dictdiffer
+import pymongo.errors
 from pymongo import UpdateOne
 
 import virtool.db.history
@@ -10,8 +11,8 @@ import virtool.db.otus
 import virtool.db.references
 import virtool.db.samples
 import virtool.db.utils
-import virtool.references
 import virtool.otus
+import virtool.references
 import virtool.users
 import virtool.utils
 
@@ -39,30 +40,30 @@ async def delete_unready(collection):
 
 
 async def join_legacy_virus(db, virus_id):
-        """
-        Join the otu associated with the supplied ``virus_id`` with its sequences. If a otu entry is also passed,
-        the database will not be queried for the otu based on its id.
+    """
+    Join the otu associated with the supplied ``virus_id`` with its sequences. If a otu entry is also passed,
+    the database will not be queried for the otu based on its id.
 
-        :param db: the application database client
-        :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-        :param virus_id: the id of the virus to join
-        :type virus_id: str
+    :param virus_id: the id of the virus to join
+    :type virus_id: str
 
-        :return: the joined otu document
-        :rtype: Coroutine[dict]
+    :return: the joined otu document
+    :rtype: Coroutine[dict]
 
-        """
-        # Get the otu entry if a ``document`` parameter was not passed.
-        document = await db.otus.find_one(virus_id)
+    """
+    # Get the otu entry if a ``document`` parameter was not passed.
+    document = await db.otus.find_one(virus_id)
 
-        if document is None:
-            return None
+    if document is None:
+        return None
 
-        cursor = db.sequences.find({"virus_id": document["_id"]})
+    cursor = db.sequences.find({"virus_id": document["_id"]})
 
-        # Merge the sequence entries into the otu entry.
-        return virtool.otus.merge_otu(document, [d async for d in cursor])
+    # Merge the sequence entries into the otu entry.
+    return virtool.otus.merge_otu(document, [d async for d in cursor])
 
 
 async def organize(db, settings, server_version):

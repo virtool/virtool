@@ -6,7 +6,7 @@ import virtool.http.routes
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, json_response, not_found, no_content
+from virtool.api.utils import bad_request, json_response, no_content, not_found
 
 routes = virtool.http.routes.Routes()
 

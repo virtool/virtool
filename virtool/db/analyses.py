@@ -1,6 +1,7 @@
-import aiofiles
 import asyncio
 import json
+
+import aiofiles
 
 import virtool.analyses
 import virtool.bio
@@ -95,7 +96,7 @@ async def format_pathoscope(db, settings, document):
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["diagnosis"]}
 
     patched_otus = await asyncio.gather(*[
-          virtool.db.history.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
+        virtool.db.history.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
     ])
 
     patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}

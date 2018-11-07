@@ -1,14 +1,14 @@
 import copy
+import logging
 import os
 import sys
+from urllib.parse import quote_plus
 
 import motor.motor_asyncio
-import logging
-from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 from aiohttp import web
-from mako.template import Template
 from cerberus import Validator
-from urllib.parse import quote_plus
+from mako.template import Template
+from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 
 import virtool.settings
 import virtool.users

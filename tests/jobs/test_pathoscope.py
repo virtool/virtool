@@ -68,7 +68,7 @@ def mock_job(tmpdir, mocker, dbs, test_db_name, otu_resource):
         "db_name": test_db_name
     }
 
-    sequence_otu_map, otu_dict = otu_resource
+    sequence_otu_map, _ = otu_resource
 
     dbs.jobs.insert_one({
         "_id": "foobar",
@@ -77,12 +77,20 @@ def mock_job(tmpdir, mocker, dbs, test_db_name, otu_resource):
             "sample_id": "foobar",
             "analysis_id": "baz",
             "ref_id": "original",
-            "index_id": "index3",
-            "sequence_otu_map": sequence_otu_map,
-            "otu_dict": otu_dict
+            "index_id": "index3"
         },
         "proc": 2,
         "mem": 8
+    })
+
+    dbs.indexes.insert_one({
+        "_id": "index3",
+        "manifest": {
+            "foobar": 10,
+            "reo": 5,
+            "baz": 6
+        },
+        "sequence_otu_map": sequence_otu_map
     })
 
     queue = mocker.Mock()
@@ -278,6 +286,7 @@ def test_map_subtraction(dbs, mock_job):
     with open(TO_SUBTRACTION_PATH, "r") as handle:
         assert sorted(mock_job.intermediate["to_subtraction"]) == sorted(json.load(handle))
 
+
 def test_subtract_mapping(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
@@ -328,7 +337,7 @@ def test_pathoscope(dbs, mock_job):
         os.path.join(mock_job.params["analysis_path"], "to_isolates.vta")
     )
 
-    mock_job.intermediate["sequence_otu_map"] = {
+    mock_job.params["sequence_otu_map"] = {
         "NC_016509": "foobar",
         "NC_001948": "foobar",
         "13TF149_Reovirus_TF1_Seg06": "reo",
@@ -356,21 +365,6 @@ def test_pathoscope(dbs, mock_job):
         "NC_007448": "foobar"
     }
 
-    mock_job.intermediate["otu_dict"] = {
-        "foobar": {
-            "name": "Foobar",
-            "version": 10
-        },
-        "reo": {
-            "name": "Reovirus",
-            "version": 5
-        },
-        "baz": {
-            "name": "Bazvirus",
-            "version": 6
-        }
-    }
-
     mock_job.pathoscope()
 
     # Check that a new VTA is written.
@@ -388,11 +382,13 @@ def test_pathoscope(dbs, mock_job):
         assert updated_tsv == sorted([line.rstrip() for line in f])
 
     with open(DIAGNOSIS_PATH, "r") as handle:
-        assert mock_job.results == {
-            "diagnosis": json.load(handle),
-            "read_count": 20276,
-            "ready": True
-        }
+        expected = sorted(json.load(handle), key=lambda h: h["id"])
+        results = mock_job.results
+
+        assert results["read_count"] == 20276
+        assert results["ready"] is True
+
+        assert expected == sorted(results["diagnosis"], key=lambda h: h["id"])
 
 
 def test_import_results(dbs, mock_job):

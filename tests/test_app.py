@@ -42,6 +42,7 @@ class TestInitSettings:
         """
         Test that the :meth:`virtool.app_settings.Settings.load` method is called after the settings object is created.
         """
+
         class MockSettings:
 
             def __init__(self):
