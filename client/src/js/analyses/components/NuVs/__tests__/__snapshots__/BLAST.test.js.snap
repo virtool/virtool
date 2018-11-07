@@ -19,9 +19,8 @@ exports[`<NuVsBLAST /> renders <BLASTInProgress /> subcomponent 1`] = `
         grow={0}
         shrink={1}
       >
-        <ClipLoader
+        <Loader
           color="#000"
-          loading={true}
           size={16}
         />
       </FlexItem>
@@ -95,9 +94,8 @@ exports[`<NuVsBLAST /> renders <BLASTInProgress /> subcomponent 2`] = `
         grow={0}
         shrink={1}
       >
-        <ClipLoader
+        <Loader
           color="#000"
-          loading={true}
           size={16}
         />
       </FlexItem>

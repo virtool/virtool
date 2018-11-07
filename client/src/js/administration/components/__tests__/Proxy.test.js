@@ -1,6 +1,5 @@
-import { ClipLoader } from "halogenium";
 import { Panel } from "react-bootstrap";
-import { Checkbox, Icon, InputError, Button, FlexItem } from "../../../base/index";
+import { Checkbox, Icon, InputError, Button, FlexItem, Loader } from "../../../base/index";
 import * as actions from "../../actions";
 import ProxyOptionsContainer, { ProxyFooter, ProxyTestIcon, ProxyOptions } from "../Proxy";
 
@@ -31,7 +30,7 @@ describe("<Proxy />", () => {
     describe("renders ProxyTestIcon correctly", () => {
         it("show loading when pending", () => {
             wrapper = shallow(<ProxyTestIcon proxyTestPending={true} />);
-            expect(wrapper.find(ClipLoader).exists()).toBe(true);
+            expect(wrapper.find(Loader).exists()).toBe(true);
             expect(wrapper).toMatchSnapshot();
         });
 

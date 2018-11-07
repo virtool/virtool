@@ -24,29 +24,4 @@ exports[`<Samples /> renders <SamplesSettings /> 1`] = `
 </div>
 `;
 
-exports[`<Samples /> renders correctly when settings data available 1`] = `
-<div
-  className="container"
->
-  <Switch>
-    <Route
-      component={[Function]}
-      exact={true}
-      path="/samples"
-    />
-    <Route
-      component={[Function]}
-      exact={true}
-      path="/samples/files"
-    />
-    <Route
-      component={[Function]}
-      path="/samples/settings"
-    />
-    <Route
-      component={[Function]}
-      path="/samples/:sampleId"
-    />
-  </Switch>
-</div>
-`;
+exports[`<Samples /> renders correctly when settings data available 1`] = `<LoadingPlaceholder />`;

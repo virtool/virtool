@@ -1,13 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<LoadingPlaceholder /> displays ClipLoader spinner and passes it supplied color & size props 1`] = `
-<ClipLoader
-  color="blue"
-  loading={true}
-  size="30px"
-/>
-`;
-
 exports[`<LoadingPlaceholder /> displays provided message and margin 1`] = `
 <div
   className="text-center"
@@ -20,11 +12,7 @@ exports[`<LoadingPlaceholder /> displays provided message and margin 1`] = `
   <p>
     Test Message
   </p>
-  <ClipLoader
-    color="#3c8786"
-    loading={true}
-    size="22px"
-  />
+  <Loader />
 </div>
 `;
 
@@ -37,10 +25,6 @@ exports[`<LoadingPlaceholder /> renders correctly 1`] = `
     }
   }
 >
-  <ClipLoader
-    color="#3c8786"
-    loading={true}
-    size="22px"
-  />
+  <Loader />
 </div>
 `;
