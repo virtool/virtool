@@ -1,11 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { Link } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ScrollList, NoneFound } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
+import { getTerm } from "../selectors";
 import OTUToolbar from "./Toolbar";
 import OTUItem from "./Item";
 import CreateOTU from "./Create";
@@ -73,7 +74,7 @@ class OTUsList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.otus,
-    term: state.otus.term,
+    term: getTerm(state),
     refId: state.references.detail.id,
     unbuiltChangeCount: state.references.detail.unbuilt_change_count,
     detail: state.references.detail,

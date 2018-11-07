@@ -3,7 +3,7 @@ import { filter, map, get } from "lodash-es";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";

@@ -1,8 +1,8 @@
 import { includes } from "lodash-es";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import * as filesAPI from "../files/api";
-import { apiCall, putGenericError, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
 import {
     FIND_SAMPLES,
     FIND_READ_FILES,
@@ -17,7 +17,7 @@ import * as samplesAPI from "./api";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 export function* watchSamples() {
-    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
+    yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
@@ -29,6 +29,7 @@ export function* watchSamples() {
 
 export function* findSamples(action) {
     yield apiCall(samplesAPI.find, action, FIND_SAMPLES);
+    yield pushFindTerm(action.term);
 }
 
 export function* findReadFiles() {

@@ -2,6 +2,7 @@ import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../app/actionTypes";
 import { updateDocuments } from "../utils/reducers";
 
 export const initialState = {
+    term: "",
     process: null,
     documents: null,
     page: 0,

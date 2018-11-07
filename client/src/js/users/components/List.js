@@ -12,6 +12,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { ScrollList } from "../../base";
 import { findUsers } from "../actions";
+import { getTerm } from "../selectors";
 import UserItem from "./Item";
 
 export class UsersList extends React.Component {
@@ -35,11 +36,11 @@ export class UsersList extends React.Component {
 }
 
 export const mapStateToProps = state => {
-    const { documents, page, page_count, term } = state.users;
+    const { documents, page, page_count } = state.users;
 
     return {
         documents,
-        term,
+        term: getTerm(state),
         page,
         page_count
     };

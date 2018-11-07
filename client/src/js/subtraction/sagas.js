@@ -1,6 +1,6 @@
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
-import { apiCall, pushHistoryState, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
 import {
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
@@ -13,6 +13,7 @@ import { put, takeLatest, throttle, call } from "redux-saga/effects";
 
 export function* findSubtractions(action) {
     yield apiCall(subtractionAPI.find, action, FIND_SUBTRACTIONS);
+    yield pushFindTerm(action.term);
 }
 
 export function* getSubtraction(action) {

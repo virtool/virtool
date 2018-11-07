@@ -1,5 +1,5 @@
 import { MemoryRouter } from "react-router";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import ReferenceItemContainer, { ReferenceHeader, ReferenceMetadata, getOrigin, Item } from "../Item";
 
 describe("<Item />", () => {

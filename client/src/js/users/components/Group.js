@@ -5,7 +5,7 @@ import { Checkbox, ListGroupItem } from "../../base";
 
 export class UserGroup extends React.Component {
     static propTypes = {
-        id: PropTypes.string.required,
+        id: PropTypes.string.isRequired,
         toggled: PropTypes.bool.isRequired,
         onClick: PropTypes.func.isRequired
     };

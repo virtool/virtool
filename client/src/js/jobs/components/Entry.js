@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { ClipLoader } from "halogenium";
 import { Icon, RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { removeSubtraction } from "../actions";
 import { RemoveModal } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";

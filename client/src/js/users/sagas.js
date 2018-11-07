@@ -1,12 +1,13 @@
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
 import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER } from "../app/actionTypes";
 import * as usersAPI from "./api";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
 function* findUsers(action) {
     yield apiCall(usersAPI.find, action, FIND_USERS);
+    yield pushFindTerm(action.term);
 }
 
 function* getUser(action) {
@@ -15,11 +16,7 @@ function* getUser(action) {
 
 function* createUser(action) {
     const extraFunc = {
-        closeModal: put(
-            push(`/administration/users/${action.userId}`, {
-                state: { createUser: false }
-            })
-        )
+        closeModal: pushHistoryState({ createUser: false })
     };
 
     yield setPending(apiCall(usersAPI.create, action, CREATE_USER, {}, extraFunc));

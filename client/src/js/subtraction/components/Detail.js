@@ -2,7 +2,7 @@ import React from "react";
 import numbro from "numbro";
 import { map, get } from "lodash-es";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Col, Row, Table } from "react-bootstrap";
 

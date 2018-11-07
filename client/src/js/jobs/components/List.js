@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { LoadingPlaceholder, ScrollList, NoneFound, ViewHeader } from "../../base";
 import { findJobs } from "../actions";
 import { checkAdminOrPermission } from "../../utils/utils";
+import { getTerm } from "../selectors";
 import JobsToolbar from "./Toolbar";
 import Job from "./Entry";
 
@@ -51,6 +52,7 @@ export class JobsList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.jobs,
+    term: getTerm(state),
     canCancel: checkAdminOrPermission(state, "cancel_job")
 });
 

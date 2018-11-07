@@ -4,7 +4,7 @@ import { ClipLoader } from "halogenium";
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { installSoftwareUpdates } from "../actions";
 import { Button } from "../../base";

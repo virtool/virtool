@@ -2,7 +2,7 @@ import React from "react";
 import { filter, map, replace, split, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Modal, Row, Col, ControlLabel, InputGroup } from "react-bootstrap";
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
 import { findReadFiles, findReadyHosts, createSample } from "../../actions";
 import { clearError } from "../../../errors/actions";

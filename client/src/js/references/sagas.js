@@ -1,6 +1,6 @@
-import { push } from "react-router-redux";
+import { push } from "connected-react-router";
 
-import { apiCall, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import {
     CREATE_REFERENCE,
     GET_REFERENCE,
@@ -24,6 +24,7 @@ import { takeLatest, throttle, put, takeEvery } from "redux-saga/effects";
 
 export function* findReferences(action) {
     yield apiCall(referenceAPI.find, action, FIND_REFERENCES);
+    yield pushFindTerm(action.term);
 }
 
 export function* getReference(action) {

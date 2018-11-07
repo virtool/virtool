@@ -4,6 +4,7 @@ import { Panel, Button } from "react-bootstrap";
 import { remoteReference, findReferences } from "../actions";
 import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
+import { getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item";
 import ReferenceToolbar from "./Toolbar";
@@ -74,6 +75,7 @@ class ReferenceList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.references,
+    term: getTerm(state),
     showModal: routerLocationHasState(state, "newReference"),
     canCreate: checkAdminOrPermission(state, "create_ref")
 });
