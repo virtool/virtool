@@ -17,7 +17,7 @@ import {
     WS_UPDATE_REFERENCE
 } from "../app/actionTypes";
 import { insert, remove, update, updateDocuments, updateMember } from "../utils/reducers";
-import { checkHasOfficialRemote, removeMember } from "./utils";
+import { removeMember } from "./utils";
 
 export const initialState = {
     term: "",
@@ -33,24 +33,21 @@ export default function referenceReducer(state = initialState, action) {
         case WS_INSERT_REFERENCE: {
             const updated = insert(state, action, "name");
             return {
-                ...updated,
-                installOfficial: checkHasOfficialRemote(updated)
+                ...updated
             };
         }
 
         case WS_UPDATE_REFERENCE: {
             const updated = update(state, action);
             return {
-                ...updated,
-                installOfficial: checkHasOfficialRemote(updated)
+                ...updated
             };
         }
 
         case WS_REMOVE_REFERENCE: {
             const updated = remove(state, action);
             return {
-                ...updated,
-                installOfficial: checkHasOfficialRemote(updated)
+                ...updated
             };
         }
 
@@ -62,8 +59,7 @@ export default function referenceReducer(state = initialState, action) {
 
         case FIND_REFERENCES.SUCCEEDED:
             return {
-                ...updateDocuments(state, action),
-                installOfficial: checkHasOfficialRemote(state)
+                ...updateDocuments(state, action)
             };
 
         case GET_REFERENCE.REQUESTED:
