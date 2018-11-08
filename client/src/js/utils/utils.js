@@ -197,6 +197,10 @@ export const checkAdminOrPermission = (state, permission) =>
     state.account.administrator || state.account.permissions[permission];
 
 export const checkRefRight = (state, permission) => {
+    if (state.references.detail === null) {
+        return;
+    }
+
     if (state.account.administrator) {
         return true;
     }
