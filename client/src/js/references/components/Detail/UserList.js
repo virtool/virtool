@@ -49,7 +49,7 @@ class UsersList extends React.Component {
             <ScrollList
                 ref={this.scrollContainer}
                 documents={this.props.documents}
-                loadNextPage={this.props.loadNextPage}
+                onLoadNextPage={this.props.onLoadNextPage}
                 page={this.props.page}
                 pageCount={this.props.page_count}
                 renderRow={this.renderRow}
