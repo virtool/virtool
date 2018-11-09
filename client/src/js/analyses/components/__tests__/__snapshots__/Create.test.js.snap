@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateAnalysis /> renders correctly 1`] = `
+exports[`<CreateAnalysis /> renders 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -32,7 +32,7 @@ exports[`<CreateAnalysis /> renders correctly 1`] = `
     closeButton={false}
     closeLabel="Close"
   >
-    New Analysis
+    Analyze
   </ModalHeader>
   <form
     onSubmit={[Function]}
@@ -41,13 +41,46 @@ exports[`<CreateAnalysis /> renders correctly 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
+      <SamplesList
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
       <AlgorithmSelect
-        hasHmm={false}
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
       <IndexSelect
         error=""
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
         onSelect={[Function]}
         selected={Array []}
       />
@@ -56,28 +89,651 @@ exports[`<CreateAnalysis /> renders correctly 1`] = `
       bsClass="modal-footer"
       componentClass="div"
     >
-      <MultiSummary
-        algorithm="pathoscope_bowtie"
-        samples={null}
-        selected={Array []}
-      />
-      <Button
-        bsStyle="primary"
-        disabled={false}
-        icon="play"
-        pullRight={false}
-        tipPlacement="top"
-        type="submit"
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
       >
-        Start
-      </Button>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            algorithm="pathoscope_bowtie"
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={Array []}
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            bsStyle="primary"
+            disabled={false}
+            icon="play"
+            pullRight={false}
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
     </ModalFooter>
   </form>
 </Modal>
 `;
 
-exports[`<CreateAnalysis /> renders correctly 2`] = `null`;
+exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    Analyze
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <SamplesList
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
+      <AlgorithmSelect
+        onChange={[Function]}
+        value="nuvs"
+      />
+      <IndexSelect
+        error=""
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
+        onSelect={[Function]}
+        selected={Array []}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            algorithm="nuvs"
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={Array []}
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            bsStyle="primary"
+            disabled={false}
+            icon="play"
+            pullRight={false}
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
+    </ModalFooter>
+  </form>
+</Modal>
+`;
 
-exports[`<CreateAnalysis /> renders correctly 3`] = `null`;
+exports[`<CreateAnalysis /> renders with error 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    Analyze
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <SamplesList
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
+      <AlgorithmSelect
+        onChange={[Function]}
+        value="pathoscope_bowtie"
+      />
+      <IndexSelect
+        error="Please select reference(s)"
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
+        onSelect={[Function]}
+        selected={Array []}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            algorithm="pathoscope_bowtie"
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={Array []}
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            bsStyle="primary"
+            disabled={true}
+            icon="play"
+            pullRight={false}
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
+    </ModalFooter>
+  </form>
+</Modal>
+`;
 
-exports[`<CreateAnalysis /> renders correctly 4`] = `null`;
+exports[`<CreateAnalysis /> renders with index selected 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    Analyze
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <SamplesList
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
+      <AlgorithmSelect
+        onChange={[Function]}
+        value="pathoscope_bowtie"
+      />
+      <IndexSelect
+        error=""
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
+        onSelect={[Function]}
+        selected={
+          Array [
+            Object {
+              "id": "ref1",
+              "refId": "fer1",
+            },
+          ]
+        }
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            algorithm="pathoscope_bowtie"
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={
+              Array [
+                Object {
+                  "id": "ref1",
+                  "refId": "fer1",
+                },
+              ]
+            }
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            bsStyle="primary"
+            disabled={false}
+            icon="play"
+            pullRight={false}
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
+    </ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateAnalysis /> renders with summary 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={false}
+    closeLabel="Close"
+  >
+    Analyze
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <SamplesList
+        samples={
+          Array [
+            Object {
+              "id": "foo",
+              "name": "foo",
+            },
+            Object {
+              "id": "bar",
+              "name": "Bar",
+            },
+          ]
+        }
+      />
+      <AlgorithmSelect
+        onChange={[Function]}
+        value="nuvs"
+      />
+      <IndexSelect
+        error=""
+        indexes={
+          Array [
+            Object {
+              "id": "ref1",
+              "reference": Object {
+                "id": "fer1",
+                "name": "Ref1",
+              },
+              "version": 3,
+            },
+            Object {
+              "id": "ref2",
+              "reference": Object {
+                "id": "fer2",
+                "name": "Ref2",
+              },
+              "version": 1,
+            },
+          ]
+        }
+        onSelect={[Function]}
+        selected={
+          Array [
+            Object {
+              "id": "ref1",
+              "refId": "fer1",
+            },
+          ]
+        }
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          shrink={1}
+        >
+          <MultiSummary
+            algorithm="nuvs"
+            samples={
+              Array [
+                Object {
+                  "id": "foo",
+                  "name": "foo",
+                },
+                Object {
+                  "id": "bar",
+                  "name": "Bar",
+                },
+              ]
+            }
+            selected={
+              Array [
+                Object {
+                  "id": "ref1",
+                  "refId": "fer1",
+                },
+              ]
+            }
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <Button
+            bsStyle="primary"
+            disabled={false}
+            icon="play"
+            pullRight={false}
+            tipPlacement="top"
+            type="submit"
+          >
+            Start
+          </Button>
+        </FlexItem>
+      </Flex>
+    </ModalFooter>
+  </form>
+</Modal>
+`;

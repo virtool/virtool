@@ -1,7 +1,7 @@
 import { MemoryRouter } from "react-router-dom";
-import { SampleToolbar } from "../Toolbar";
+import { SampleSearchToolbar } from "../Toolbar";
 
-describe("<SampleToolbar />", () => {
+describe("<SampleSearchToolbar />", () => {
     let props;
 
     beforeEach(() => {
@@ -13,19 +13,19 @@ describe("<SampleToolbar />", () => {
     });
 
     describe("renders when [canCreate=true]", () => {
-        const wrapper = shallow(<SampleToolbar {...props} />);
+        const wrapper = shallow(<SampleSearchToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     describe("renders when [canCreate=false]", () => {
-        const wrapper = shallow(<SampleToolbar {...props} />);
+        const wrapper = shallow(<SampleSearchToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("Change in input dispatches filterSamples() action", () => {
         const wrapper = mount(
             <MemoryRouter>
-                <SampleToolbar {...props} />
+                <SampleSearchToolbar {...props} />
             </MemoryRouter>
         );
         const e = { target: { value: "foo" } };
