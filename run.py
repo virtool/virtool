@@ -4,7 +4,7 @@ import sys
 import json
 import uvloop
 import asyncio
-from aiohttp import web
+import signal
 
 import virtool.args
 import virtool.app
@@ -33,13 +33,6 @@ except FileNotFoundError:
     settings_temp = dict()
 
 if __name__ == "__main__":
-    app = virtool.app.create_app(
-        loop,
-        skip_setup=skip_setup,
-        force_version=args.force_version,
-        no_sentry=args.no_sentry
-    )
-
     host = args.host or settings_temp.get("server_host", "localhost")
 
     if args.port:
@@ -47,4 +40,11 @@ if __name__ == "__main__":
     else:
         port = settings_temp.get("server_port", 9950)
 
-    web.run_app(app, host=host, port=port)
+    loop.run_until_complete(virtool.app.run(
+        loop,
+        host,
+        port,
+        skip_setup,
+        args.force_version,
+        args.no_sentry
+    ))
