@@ -175,7 +175,7 @@ async def install(app, release, process_id):
 
         await asyncio.sleep(1.5, loop=app.loop)
 
-        await virtool.utils.reload(app)
+        app["events"]["restart"].set()
 
 
 async def refresh(app):
