@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize } from "lodash-es";
+import { capitalize, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Label, Panel, Table } from "react-bootstrap";
 
@@ -52,7 +52,7 @@ export class IsolateDetail extends React.Component {
 
         let modifyIcons;
 
-        if (this.props.canModify && !this.props.isRemote) {
+        if (this.props.canModify) {
             modifyIcons = (
                 <span>
                     <Icon
@@ -149,8 +149,7 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    isRemote: state.references.detail.remotes_from,
-    canModify: checkRefRight(state, "modify_otu")
+    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

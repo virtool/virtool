@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { map } from "lodash-es";
+import { get, map } from "lodash-es";
 
 import { Button, NoneFound } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
@@ -171,7 +171,7 @@ const mapStateToProps = state => ({
     schema: state.otus.detail.schema,
     detail: state.otus.detail,
     otuId: state.otus.detail.id,
-    canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
+    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({
