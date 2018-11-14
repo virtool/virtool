@@ -279,7 +279,6 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
 
     await connection.drop_database("foobar")
 
-    m_reload = mocker.patch("virtool.utils.reload")
     m_write_settings_file = mocker.patch("virtool.settings.write_settings_file", make_mocked_coro())
 
     data = tmpdir.mkdir("data")
@@ -294,6 +293,10 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
         "first_user_password": "hashed",
         "data_path": str(data),
         "watch_path": str(watch)
+    }
+
+    client.app["events"] = {
+        "restart": mocker.Mock()
     }
 
     await client.get("/setup/save")
@@ -334,8 +337,6 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
     for sub in sub_dirs:
         assert os.path.isdir(os.path.join(str(data), sub))
 
-    assert m_reload.called
-
     m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
         "data_path": str(data),
         "db_host": "localhost",
@@ -347,3 +348,5 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
         "db_username": "",
         "watch_path": str(watch)
     })
+
+    assert client.app["events"]["restart"].set.called

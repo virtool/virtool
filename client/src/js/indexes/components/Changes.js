@@ -13,7 +13,7 @@ class IndexChanges extends React.Component {
     }
 
     handlePage = page => {
-        this.props.loadNextPage(this.props.detail.id, page);
+        this.props.onLoadNextPage(this.props.detail.id, page);
     };
 
     rowRenderer = index => (
@@ -37,12 +37,10 @@ class IndexChanges extends React.Component {
         return (
             <div>
                 <ScrollList
-                    hasNextPage={this.props.history.page < this.props.history.page_count}
-                    isNextPageLoading={this.props.history.isLoading}
-                    isLoadError={this.props.history.errorLoad}
-                    list={this.props.history.documents}
-                    loadNextPage={this.handlePage}
+                    documents={this.props.history.documents}
+                    onLoadNextPage={this.handlePage}
                     page={this.props.history.page}
+                    pageCount={this.props.history.page_coount}
                     rowRenderer={this.rowRenderer}
                 />
             </div>
@@ -52,13 +50,11 @@ class IndexChanges extends React.Component {
 
 const mapStateToProps = state => ({
     detail: state.indexes.detail,
-    history: state.indexes.history,
-    isLoading: state.indexes.isLoading,
-    errorLoad: state.indexes.errorLoad
+    history: state.indexes.history
 });
 
 const mapDispatchToProps = dispatch => ({
-    loadNextPage: (indexId, page) => {
+    onLoadNextPage: (indexId, page) => {
         dispatch(getIndexHistory(indexId, page));
     }
 });

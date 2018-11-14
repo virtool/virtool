@@ -42,7 +42,7 @@ export class JobsList extends React.Component {
                     documents={this.props.documents}
                     page={this.props.page}
                     pageCount={this.props.page_count}
-                    loadNextPage={this.props.onLoadNextPage}
+                    onLoadNextPage={this.props.onLoadNextPage}
                     renderRow={this.renderRow}
                 />
             </div>

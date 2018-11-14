@@ -12,7 +12,9 @@ import {
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
     SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL
+    HIDE_SAMPLE_MODAL,
+    SELECT_SAMPLE,
+    CLEAR_SAMPLE_SELECTION
 } from "../app/actionTypes";
 
 export const wsInsertSample = data => ({
@@ -151,3 +153,10 @@ export const showRemoveSample = simpleActionCreator(SHOW_REMOVE_SAMPLE);
  * @returns {object}
  */
 export const hideSampleModal = simpleActionCreator(HIDE_SAMPLE_MODAL);
+
+export const selectSample = sampleId => ({
+    type: SELECT_SAMPLE,
+    sampleId
+});
+
+export const clearSampleSelection = simpleActionCreator(CLEAR_SAMPLE_SELECTION);

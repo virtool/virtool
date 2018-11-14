@@ -8,10 +8,12 @@ import virtool.samples
 import virtool.utils
 
 
-def handle_base_quality_nan(values):
-    for value in values:
+def handle_base_quality_nan(split):
+    values = split[1:]
+
+    for value in split[1:]:
         try:
-            value = round(int(value.split(".")[0]), 1)
+            value = round(int(value.split(".")[0]), 2)
             return [value for _ in values]
         except ValueError:
             pass
@@ -255,9 +257,10 @@ class Job(virtool.jobs.job.Job):
                     # Convert all fields except first to 2-decimal floats.
                     try:
                         values = [round(int(value.split(".")[0]), 1) for value in split[1:]]
+
                     except ValueError as err:
                         if "NaN" in str(err):
-                            values = handle_base_quality_nan(values)
+                            values = handle_base_quality_nan(split)
 
                     # Convert to position field to a one- or two-member tuple.
                     pos = [int(x) for x in split[0].split('-')]

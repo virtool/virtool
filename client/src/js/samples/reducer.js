@@ -1,3 +1,4 @@
+import { xor } from "lodash-es";
 import {
     WS_INSERT_SAMPLE,
     WS_UPDATE_SAMPLE,
@@ -10,7 +11,9 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     FIND_READ_FILES,
-    FIND_READY_HOSTS
+    FIND_READY_HOSTS,
+    SELECT_SAMPLE,
+    CLEAR_SAMPLE_SELECTION
 } from "../app/actionTypes";
 import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
@@ -24,7 +27,8 @@ export const initialState = {
     showRemove: false,
     editError: false,
     reservedFiles: [],
-    readyHosts: null
+    readyHosts: null,
+    selected: []
 };
 
 export default function samplesReducer(state = initialState, action) {
@@ -70,6 +74,18 @@ export default function samplesReducer(state = initialState, action) {
 
         case HIDE_SAMPLE_MODAL:
             return { ...state, showRemove: false };
+
+        case SELECT_SAMPLE:
+            return {
+                ...state,
+                selected: xor(state.selected, [action.sampleId])
+            };
+
+        case CLEAR_SAMPLE_SELECTION:
+            return {
+                ...state,
+                selected: []
+            };
 
         default:
             return state;

@@ -9,6 +9,16 @@ import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 
+const getActiveGroupId = ({ groups }) => {
+    console.log(groups);
+
+    if (groups) {
+        return groups[0].id;
+    }
+
+    return "";
+};
+
 class Group extends React.Component {
     handleClick = () => {
         this.props.onSelect(this.props.id);
@@ -39,45 +49,23 @@ class Groups extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.groups) {
-            this.setState({
-                activeId: this.props.groups[0].id
-            });
-        }
+        this.setState({
+            activeId: getActiveGroupId(this.props)
+        });
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.groups || !prevState.users) {
-            return prevState;
-        }
-
-        if (prevState.groups && !nextProps.groups) {
+        if (!prevState.groups || !nextProps.groups || nextProps.groups.length < prevState.groups.length) {
             return {
-                activeId: "",
-                createGroupId: "",
-                groups: nextProps.groups
-            };
-        }
-
-        if (!prevState.groups && nextProps.groups) {
-            return {
-                activeId: nextProps.groups[0].id,
-                createGroupId: "",
+                activeId: getActiveGroupId(nextProps),
                 groups: nextProps.groups
             };
         }
 
         if (prevState.groups.length < nextProps.groups.length) {
             return {
+                ...update,
                 activeId: prevState.createGroupId ? toLower(prevState.createGroupId) : prevState.activeId,
-                createGroupId: "",
-                groups: nextProps.groups
-            };
-        }
-
-        if (nextProps.groups.length < prevState.groups.length) {
-            return {
-                activeId: nextProps.groups[0].id,
                 createGroupId: "",
                 groups: nextProps.groups
             };

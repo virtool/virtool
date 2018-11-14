@@ -11,7 +11,7 @@ import ReferenceToolbar from "./Toolbar";
 
 class ReferenceList extends React.Component {
     componentDidMount() {
-        this.props.loadNextPage(this.props.term, 1);
+        this.props.onLoadNextPage(this.props.term, 1);
     }
 
     renderRow = index => <ReferenceItem key={this.props.documents[index].id} {...this.props.documents[index]} />;
@@ -43,7 +43,7 @@ class ReferenceList extends React.Component {
             referenceComponents = (
                 <ScrollList
                     documents={this.props.documents}
-                    loadNextPage={this.props.loadNextPage}
+                    onLoadNextPage={this.props.onLoadNextPage}
                     page={this.props.page}
                     pageCount={this.props.pageCount}
                     renderRow={this.renderRow}
@@ -86,7 +86,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(remoteReference());
     },
 
-    loadNextPage: (term, page) => {
+    onLoadNextPage: (term, page) => {
         dispatch(findReferences(term, page));
     }
 });

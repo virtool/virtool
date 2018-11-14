@@ -1,3 +1,5 @@
+import asyncio
+import signal
 import concurrent.futures
 import logging
 import os
@@ -361,6 +363,75 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         app.on_shutdown.append(on_shutdown)
 
     return app
+
+
+def create_events():
+    return {
+        "restart": asyncio.Event(),
+        "shutdown": asyncio.Event()
+    }
+
+
+async def wait_for_restart(runner, events):
+    await events["restart"].wait()
+    await asyncio.sleep(0.5)
+    await runner.cleanup()
+
+    exe = sys.executable
+
+    if exe.endswith("python") or "python3" in exe:
+        return os.execl(exe, exe, *sys.argv)
+
+    if exe.endswith("run"):
+        return os.execv(exe, sys.argv)
+
+    raise SystemError("Could not determine executable type")
+
+
+async def wait_for_shutdown(runner, events):
+    await events["shutdown"].wait()
+    await asyncio.sleep(0.5)
+    await runner.cleanup()
+
+
+async def create_runner(app, host, port):
+    runner = web.AppRunner(app)
+
+    await runner.setup()
+
+    site = web.TCPSite(runner, host, port)
+
+    await site.start()
+
+    logger.info("Listening at http://{}:{}", host, port)
+
+    return runner
+
+
+async def run(loop, host, port, skip_setup=False, force_version=None, no_sentry=False):
+    app = create_app(
+        loop,
+        skip_setup=skip_setup,
+        force_version=force_version,
+        no_sentry=no_sentry
+    )
+
+    events = create_events()
+
+    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
+    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
+
+    app["events"] = events
+
+    runner = await create_runner(app, host, port)
+
+    _, pending = await asyncio.wait(
+        [wait_for_restart(runner, events), wait_for_shutdown(runner, events)],
+        return_when=asyncio.FIRST_COMPLETED
+    )
+
+    for task in pending:
+        task.cancel()
 
 
 async def find_server_version(loop, install_path="."):

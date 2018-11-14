@@ -1,4 +1,4 @@
-import { includes } from "lodash-es";
+import { filter, get, includes } from "lodash-es";
 import { createSelector } from "reselect";
 import { getTermSelectorFactory } from "../utils/selectors";
 
@@ -30,3 +30,11 @@ export const getCanModifyRights = createSelector(
 const getStateTerm = state => state.samples.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
+
+const getSelectedIds = state => get(state, "router.location.state.createAnalysis", []);
+
+const getDocuments = state => state.samples.documents;
+
+export const getSelectedDocuments = createSelector([getSelectedIds, getDocuments], (selected, documents) =>
+    filter(documents, document => includes(selected, document.id))
+);

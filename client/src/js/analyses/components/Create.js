@@ -2,10 +2,30 @@ import React from "react";
 import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { get, map, find, forEach, xorBy } from "lodash-es";
-import { Modal, ListGroup, Col, Label } from "react-bootstrap";
-import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox } from "../../base/index";
+import { Badge, Modal, ListGroup, Col, Label } from "react-bootstrap";
+import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox, FlexItem, Flex } from "../../base/index";
+import { getSelectedDocuments } from "../../samples/selectors";
 import { getTaskDisplayName, routerLocationHasState } from "../../utils/utils";
 import { analyze } from "../actions";
+
+export const SamplesList = ({ samples }) => {
+    const sampleComponents = map(samples, ({ id, name }) => (
+        <ListGroupItem key={id} disabled>
+            {name}
+        </ListGroupItem>
+    ));
+
+    return (
+        <div style={{ marginBottom: "16px" }}>
+            <label className="control-label">
+                Samples <Badge>{samples.length}</Badge>
+            </label>
+            <div style={{ overflowY: "scroll", maxHeight: "220px" }}>
+                <ListGroup style={{ marginBottom: 0 }}>{sampleComponents}</ListGroup>
+            </div>
+        </div>
+    );
+};
 
 export const IndexSelect = ({ indexes, onSelect, selected, error }) => {
     const errorStyle = error.length ? { border: "1px solid #d44b40" } : { border: "1px solid transparent" };
@@ -54,21 +74,16 @@ export const IndexSelect = ({ indexes, onSelect, selected, error }) => {
 };
 
 const MultiSummary = ({ algorithm, samples, selected }) => {
-    let prefix;
-    let suffix;
+    const product = selected.length * samples.length;
 
-    if (selected.length) {
-        prefix = `Start ${selected.length} ${getTaskDisplayName(algorithm)} ${selected.length > 1 ? "jobs" : "job"}`;
-
-        if (samples) {
-            suffix = ` ${this.props.samples.length} ${this.props.samples.length > 1 ? "samples" : "sample"}.`;
-        }
+    if (product === 0) {
+        return null;
     }
 
     return (
-        <div style={{ float: "left" }}>
-            {prefix}
-            {suffix}
+        <div style={{ textAlign: "left" }}>
+            {product} job
+            {product === 1 ? "" : "s"} will be started
         </div>
     );
 };
@@ -85,6 +100,14 @@ export class CreateAnalysis extends React.Component {
         this.state = getInitialState();
     }
 
+    handleExited = () => {
+        this.setState(getInitialState());
+    };
+
+    handleSelectAlgorithm = e => {
+        this.setState({ algorithm: e.target.value });
+    };
+
     handleSelectIndex = index => {
         this.setState({ selected: xorBy(this.state.selected, [index], "id"), error: "" });
     };
@@ -96,21 +119,24 @@ export class CreateAnalysis extends React.Component {
             return this.setState({ error: "Please select reference(s)" });
         }
 
-        this.props.onAnalyze(this.props.sampleId, this.state.selected, this.state.algorithm, this.props.userId);
+        this.props.onAnalyze(this.props.documents, this.state.selected, this.state.algorithm, this.props.userId);
         this.props.onHide();
     };
 
     render() {
         const { selected, algorithm } = this.state;
 
+        const show = !!this.props.documents.length;
+
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={() => this.setState(getInitialState())}>
-                <Modal.Header>New Analysis</Modal.Header>
+            <Modal show={show} onHide={this.props.onHide} onExited={this.handleExited}>
+                <Modal.Header>Analyze</Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
+                        <SamplesList samples={this.props.documents} />
                         <AlgorithmSelect
                             value={algorithm}
-                            onChange={e => this.setState({ algorithm: e.target.value })}
+                            onChange={this.handleSelectAlgorithm}
                             hasHmm={this.props.hasHmm}
                         />
                         <IndexSelect
@@ -121,14 +147,20 @@ export class CreateAnalysis extends React.Component {
                         />
                     </Modal.Body>
                     <Modal.Footer>
-                        <MultiSummary
-                            algorithm={algorithm}
-                            samples={this.props.samples}
-                            selected={this.state.selected}
-                        />
-                        <Button type="submit" bsStyle="primary" icon="play" disabled={!!this.state.error}>
-                            Start
-                        </Button>
+                        <Flex alignItems="center">
+                            <FlexItem grow={1}>
+                                <MultiSummary
+                                    algorithm={algorithm}
+                                    samples={this.props.documents}
+                                    selected={this.state.selected}
+                                />
+                            </FlexItem>
+                            <FlexItem>
+                                <Button type="submit" bsStyle="primary" icon="play" disabled={!!this.state.error}>
+                                    Start
+                                </Button>
+                            </FlexItem>
+                        </Flex>
                     </Modal.Footer>
                 </form>
             </Modal>
@@ -137,17 +169,21 @@ export class CreateAnalysis extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "createAnalysis"),
-    sampleId: get(state, "samples.detail.id"),
-    indexes: state.analyses.readyIndexes
+    documents: getSelectedDocuments(state),
+    indexes: state.analyses.readyIndexes,
+    userId: state.account.id
 });
 
 const mapDispatchToProps = dispatch => ({
-    onAnalyze: (sampleId, references, algorithm, userId) => {
-        forEach(references, entry => dispatch(analyze(sampleId, entry.refId, algorithm, userId)));
+    onAnalyze: (samples, references, algorithm, userId) => {
+        forEach(samples, ({ id }) => {
+            forEach(references, ({ refId }) => {
+                dispatch(analyze(id, refId, algorithm, userId));
+            });
+        });
     },
     onHide: () => {
-        dispatch(push({ ...window.location, state: { createAnalysis: false } }));
+        dispatch(push({ state: {} }));
     }
 });
 

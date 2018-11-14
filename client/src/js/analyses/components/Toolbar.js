@@ -25,7 +25,7 @@ export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleI
             icon="plus-square fa-fw"
             tip="New Analysis"
             bsStyle="primary"
-            onClick={onShowCreate}
+            onClick={() => onShowCreate(sampleId)}
             disabled={!canModify}
         />
     </div>
@@ -38,8 +38,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onShowCreate: () => {
-        dispatch(push({ ...window.location, state: { createAnalysis: true } }));
+    onShowCreate: sampleId => {
+        dispatch(push({ ...window.location, state: { createAnalysis: [sampleId] } }));
     },
     onFind: (sampleId, term, page) => {
         dispatch(findAnalyses(sampleId, term, page));
