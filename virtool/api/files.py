@@ -3,6 +3,7 @@ Provides request handlers for managing and viewing files.
 
 """
 import os
+import pymongo
 
 import virtool.db.files
 import virtool.http.routes
@@ -37,7 +38,7 @@ async def find(req):
         db.files,
         db_query,
         req.query,
-        sort="uploaded_at",
+        sort=[("uploaded_at", pymongo.DESCENDING)],
         projection=virtool.db.files.PROJECTION,
         base_query=base_query
     )
