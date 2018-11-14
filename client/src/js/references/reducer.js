@@ -38,17 +38,11 @@ export default function referenceReducer(state = initialState, action) {
         }
 
         case WS_UPDATE_REFERENCE: {
-            const updated = update(state, action);
-            return {
-                ...updated
-            };
+            return update(state, action, "name");
         }
 
         case WS_REMOVE_REFERENCE: {
-            const updated = remove(state, action);
-            return {
-                ...updated
-            };
+            return remove(state, action);
         }
 
         case FIND_REFERENCES.REQUESTED:
@@ -58,9 +52,7 @@ export default function referenceReducer(state = initialState, action) {
             };
 
         case FIND_REFERENCES.SUCCEEDED:
-            return {
-                ...updateDocuments(state, action)
-            };
+            return updateDocuments(state, action, "name");
 
         case GET_REFERENCE.REQUESTED:
             return { ...state, detail: null };

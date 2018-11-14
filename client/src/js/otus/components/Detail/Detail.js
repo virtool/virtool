@@ -145,7 +145,7 @@ const mapStateToProps = state => {
         error: get(state, "errors.GET_OTU_ERROR", null),
         detail: state.otus.detail,
         refName: state.references.detail.name,
-        canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
+        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
     };
 };
 

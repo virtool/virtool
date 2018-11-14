@@ -121,7 +121,7 @@ export default function OTUsReducer(state = initialState, action) {
 
         case WS_UPDATE_OTU:
             if (action.data.reference.id === state.refId) {
-                return update(state, action);
+                return update(state, action, "name");
             }
 
             return state;
@@ -138,7 +138,7 @@ export default function OTUsReducer(state = initialState, action) {
             };
 
         case FIND_OTUS.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "name");
 
         case GET_OTU.REQUESTED:
         case REMOVE_OTU.SUCCEEDED:

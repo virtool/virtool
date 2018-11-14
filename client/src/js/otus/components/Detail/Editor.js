@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { map } from "lodash-es";
+import { get, map } from "lodash-es";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
@@ -74,7 +74,7 @@ const IsolateEditor = props => {
                     <Badge>{isolateComponents.length}</Badge>
                 </FlexItem>
 
-                {props.canModify && !props.isRemote ? (
+                {props.canModify ? (
                     <Icon
                         bsStyle="primary"
                         name="plus-square"
@@ -102,7 +102,7 @@ const mapStateToProps = state => ({
     isolates: state.otus.detail.isolates,
     activeIsolateId: state.otus.activeIsolateId,
     isRemote: state.references.detail.remotes_from,
-    canModify: checkRefRight(state, "modify_otu")
+    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

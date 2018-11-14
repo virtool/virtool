@@ -192,7 +192,7 @@ class OTUHistory extends React.Component {
 const mapStateToProps = state => ({
     otuId: state.otus.detail.id,
     history: state.otus.detailHistory,
-    canModify: !state.references.detail.remotes_from && checkRefRight(state, "modify_otu")
+    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
 });
 
 const mapDispatchToProps = dispatch => ({

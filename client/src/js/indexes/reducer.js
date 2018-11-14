@@ -39,7 +39,7 @@ export default function indexesReducer(state = initialState, action) {
 
         case WS_UPDATE_INDEX:
             if (action.data.reference.id === state.refId) {
-                return update(state, action);
+                return update(state, action, "version", true);
             }
 
             return state;
@@ -52,7 +52,7 @@ export default function indexesReducer(state = initialState, action) {
         }
 
         case FIND_INDEXES.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "version", true);
 
         case GET_INDEX.REQUESTED:
             return { ...state, refId: action.refId, detail: null };

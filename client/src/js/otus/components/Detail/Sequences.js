@@ -1,11 +1,11 @@
 import React from "react";
-import { find, map, filter, differenceWith, isEqual, get, sortBy, indexOf } from "lodash-es";
+import { get, find, map, filter, differenceWith, isEqual, sortBy, indexOf } from "lodash-es";
 import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
 import { Flex, Icon, NoneFound } from "../../../base";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
-import { formatIsolateName } from "../../../utils/utils";
+import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import AddSequence from "./AddSequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
@@ -60,7 +60,7 @@ class IsolateSequences extends React.Component {
                 <Sequence
                     key={sequence.id}
                     active={sequence.accession === this.props.activeSequenceId}
-                    canModify={this.props.hasModifyOTU && !this.props.isRemote}
+                    canModify={this.props.canModify}
                     showEditSequence={this.props.showEditSequence}
                     showRemoveSequence={this.props.showRemoveSequence}
                     {...sequence}
@@ -77,7 +77,7 @@ class IsolateSequences extends React.Component {
                     <span style={{ flex: "1 0 auto", marginLeft: "5px" }}>
                         <Badge>{this.props.sequences.length}</Badge>
                     </span>
-                    {this.props.hasModifyOTU && !this.props.isRemote ? (
+                    {this.props.canModify ? (
                         <Icon
                             name="plus-square"
                             bsStyle="primary"
@@ -130,7 +130,7 @@ const mapStateToProps = state => {
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
-        isRemote: state.references.detail.remotes_from,
+        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
         error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
     };
 };

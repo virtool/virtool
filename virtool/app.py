@@ -403,7 +403,7 @@ async def create_runner(app, host, port):
 
     await site.start()
 
-    logger.info("Listening at http://{}:{}", host, port)
+    logger.info(f"Listening at http://{host}:{port}")
 
     return runner
 

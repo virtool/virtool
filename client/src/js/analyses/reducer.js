@@ -188,7 +188,7 @@ export default function samplesReducer(state = initialState, action) {
             return { ...state, term: action.term };
 
         case FIND_ANALYSES.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "created_at", true);
 
         case GET_ANALYSIS.REQUESTED:
             return {

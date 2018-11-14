@@ -3,14 +3,10 @@ import { reject, map, includes, sortBy, unionBy } from "lodash-es";
 export const updateDocuments = (state, action, sortKey, sortReverse) => {
     const existing = action.data.page === 1 ? [] : state.documents || [];
 
-    let documents = unionBy(action.data.documents, existing, "id");
+    const documents = sortBy(unionBy(action.data.documents, existing, "id"), sortKey);
 
-    if (sortKey && documents) {
-        documents = sortBy(documents, sortKey);
-
-        if (sortReverse) {
-            documents.reverse();
-        }
+    if (sortReverse) {
+        documents.reverse();
     }
 
     return {
@@ -38,14 +34,10 @@ export const update = (state, action, sortKey, sortReverse = false) => {
         return state;
     }
 
-    let documents = updateMember(state.documents, action);
+    const documents = sortBy(updateMember(state.documents, action), sortKey);
 
-    if (sortKey && documents) {
-        documents = sortBy(documents, sortKey);
-
-        if (sortReverse) {
-            documents.reverse();
-        }
+    if (sortReverse) {
+        documents.reverse();
     }
 
     return {
