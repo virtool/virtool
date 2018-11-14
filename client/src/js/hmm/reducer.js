@@ -32,7 +32,7 @@ export default function hmmsReducer(state = initialState, action) {
             };
 
         case FIND_HMMS.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "cluster");
 
         case GET_HMM.REQUESTED:
             return { ...state, detail: null };

@@ -18,10 +18,10 @@ export const initialState = {
 export default function subtractionsReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_SUBTRACTION:
-            return insert(state, action);
+            return insert(state, action, "id");
 
         case WS_UPDATE_SUBTRACTION:
-            return update(state, action);
+            return update(state, action, "id");
 
         case WS_REMOVE_SUBTRACTION:
             return remove(state, action);
@@ -31,7 +31,7 @@ export default function subtractionsReducer(state = initialState, action) {
         }
 
         case FIND_SUBTRACTIONS.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "id");
 
         case GET_SUBTRACTION.REQUESTED:
             return { ...state, detail: null };

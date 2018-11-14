@@ -37,7 +37,7 @@ export default function samplesReducer(state = initialState, action) {
             return insert(state, action, "created_at", true);
 
         case WS_UPDATE_SAMPLE:
-            return update(state, action);
+            return update(state, action, "created_at", true);
 
         case WS_REMOVE_SAMPLE:
             return remove(state, action);
@@ -46,7 +46,7 @@ export default function samplesReducer(state = initialState, action) {
             return { ...state, term: action.term };
 
         case FIND_SAMPLES.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "created_at", true);
 
         case FIND_READ_FILES.SUCCEEDED:
             return { ...state, readFiles: action.data.documents };

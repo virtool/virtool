@@ -24,7 +24,7 @@ const reducer = (state = initialState, action) => {
             return insert(state, action, "id");
 
         case WS_UPDATE_USER:
-            return update(state, action);
+            return update(state, action, "id");
 
         case WS_REMOVE_USER:
             return remove(state, action);
@@ -36,7 +36,7 @@ const reducer = (state = initialState, action) => {
             };
 
         case FIND_USERS.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "id");
 
         case GET_USER.REQUESTED:
             return { ...state, detail: null };

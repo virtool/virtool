@@ -19,7 +19,7 @@ export default function jobsReducer(state = initialState, action) {
             return insert(state, action, "created_at");
 
         case WS_UPDATE_JOB:
-            return update(state, action);
+            return update(state, action, "created_at");
 
         case WS_REMOVE_JOB:
             return remove(state, action);
@@ -31,7 +31,7 @@ export default function jobsReducer(state = initialState, action) {
             };
 
         case FIND_JOBS.SUCCEEDED:
-            return updateDocuments(state, action);
+            return updateDocuments(state, action, "created_at");
 
         case GET_JOB.REQUESTED:
             return { ...state, detail: null };

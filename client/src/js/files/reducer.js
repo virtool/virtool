@@ -55,13 +55,13 @@ export default function fileReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_FILE:
             if (action.data.type === state.fileType) {
-                return insert(state, action, "created_at");
+                return insert(state, action, "created_at", true);
             }
 
             return state;
 
         case WS_UPDATE_FILE:
-            return update(state, action);
+            return update(state, action, "created_at", true);
 
         case WS_REMOVE_FILE:
             return remove(state, action);
@@ -73,7 +73,7 @@ export default function fileReducer(state = initialState, action) {
             };
 
         case FIND_FILES.SUCCEEDED:
-            return { ...updateDocuments(state, action), fileType: action.fileType };
+            return { ...updateDocuments(state, action, "created_at", true), fileType: action.fileType };
 
         case UPLOAD.REQUESTED: {
             const { name, size, type } = action.file;
