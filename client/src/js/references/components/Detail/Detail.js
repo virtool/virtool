@@ -118,8 +118,6 @@ class ReferenceDetail extends React.Component {
         let headerIcon;
         let exportButton;
 
-        const disableExport = !!(remotes_from || cloned_from || imported_from);
-
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from ? (
                 <Icon bsStyle="default" name="lock" pullRight style={{ fontSize: "65%" }} />
@@ -144,13 +142,13 @@ class ReferenceDetail extends React.Component {
                     <CustomToggle bsRole="toggle" />
                     <Dropdown.Menu className="export-ref-dropdown-menu">
                         <MenuItem header>Export</MenuItem>
-                        <MenuItem eventKey="built" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="built" onSelect={this.handleSelect}>
                             Built
                         </MenuItem>
-                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>
                             Unbuilt
                         </MenuItem>
-                        <MenuItem eventKey="unverified" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>
                             Unverified
                         </MenuItem>
                     </Dropdown.Menu>
