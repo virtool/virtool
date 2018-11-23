@@ -191,11 +191,4 @@ describe("Indexes Reducer", () => {
             }
         });
     });
-
-    it("should handle GET_INDEX_HISTORY_FAILED", () => {
-        const state = { history: null };
-        const action = { type: GET_INDEX_HISTORY.FAILED };
-        const result = reducer(state, action);
-        expect(result).toEqual({ history: { isLoading: false, errorLoad: true } });
-    });
 });
