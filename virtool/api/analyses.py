@@ -2,6 +2,7 @@
 Provides request handlers for managing and viewing analyses.
 
 """
+import os
 import aiojobs.aiohttp
 
 import virtool.analyses
@@ -79,6 +80,10 @@ async def remove(req):
         return conflict("Analysis is still running")
 
     await db.analyses.delete_one({"_id": analysis_id})
+
+    path = os.path.join(req.app["settings"]["data_path"], "samples", sample_id, "analysis", analysis_id)
+
+    await req.app["run_in_thread"](virtool.utils.rm, path, True)
 
     await virtool.db.samples.recalculate_algorithm_tags(db, sample_id)
 
