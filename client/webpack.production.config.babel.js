@@ -42,7 +42,7 @@ export default {
       },
 
       {
-        test: /\.woff$/,
+        test: /\.(woff|woff2)$/,
         use: {
           loader: "url-loader?limit=100000"
         }
