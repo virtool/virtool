@@ -699,7 +699,8 @@ async def create_sequence(req):
         "reference": {
             "id": ref_id
         },
-        "segment": segment
+        "segment": segment,
+        "sequence": data["sequence"].replace(" ", "").replace("\n", "")
     })
 
     old = await virtool.db.otus.join(db, otu_id, document)
@@ -776,6 +777,8 @@ async def edit_sequence(req):
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
         return not_found("Segment does not exist")
+
+    data["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
