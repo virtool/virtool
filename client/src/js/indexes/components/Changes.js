@@ -8,15 +8,11 @@ import { LoadingPlaceholder, ScrollList } from "../../base";
 class IndexChanges extends React.Component {
     componentDidMount() {
         if (!this.props.history) {
-            this.props.handlePage(1);
+            this.props.onLoadNextPage(this.props.detail.id, 1);
         }
     }
 
-    handlePage = page => {
-        this.props.onLoadNextPage(this.props.detail.id, page);
-    };
-
-    rowRenderer = index => (
+    renderRow = index => (
         <ListGroupItem key={this.props.history.documents[index].id} className="spaced">
             <Row>
                 <Col xs={12} md={6}>
@@ -38,10 +34,10 @@ class IndexChanges extends React.Component {
             <div>
                 <ScrollList
                     documents={this.props.history.documents}
-                    onLoadNextPage={this.handlePage}
+                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.detail.id, page)}
                     page={this.props.history.page}
-                    pageCount={this.props.history.page_coount}
-                    rowRenderer={this.rowRenderer}
+                    pageCount={this.props.history.page_count}
+                    renderRow={this.renderRow}
                 />
             </div>
         );
