@@ -86,9 +86,11 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404", "409"])
-async def test_remove(error, spawn_client, resp_is):
+async def test_remove(mocker, error, spawn_client, resp_is):
 
     client = await spawn_client(authorize=True)
+
+    client.app["settings"]["data_path"] = "data"
 
     if error != "400":
         await client.db.samples.insert_one({
@@ -116,6 +118,8 @@ async def test_remove(error, spawn_client, resp_is):
             }
         })
 
+    m_remove =  mocker.patch("virtool.utils.rm")
+
     resp = await client.delete("/api/analyses/foobar")
 
     if error == "400":
@@ -137,6 +141,8 @@ async def test_remove(error, spawn_client, resp_is):
     assert resp.status == 204
 
     assert await client.db.analyses.find_one() is None
+
+    assert m_remove.called_with("data/samples/baz/analyses/foobar", True)
 
 
 @pytest.mark.parametrize("error", [None, "400", "403", "404_analysis", "404_sequence", "409_algorithm", "409_ready"])
