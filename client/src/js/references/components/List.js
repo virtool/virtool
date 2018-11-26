@@ -50,7 +50,7 @@ class ReferenceList extends React.Component {
                     noContainer
                 />
             );
-        } else if (installOfficialComponent) {
+        } else if (!installOfficialComponent) {
             noRefs = <NoneFound noun="References" />;
         }
 
