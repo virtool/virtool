@@ -81,7 +81,8 @@ const getProgress = (detail, processes) => {
 };
 
 class ReferenceDetail extends React.Component {
-    componentWillMount() {
+    constructor(props) {
+        super(props);
         this.props.onGetReference(this.props.match.params.refId);
     }
 
