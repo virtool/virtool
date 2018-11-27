@@ -15,11 +15,12 @@ import {
     ProgressBar,
     NotFound
 } from "../../../base";
+import IndexDetail from "../../../indexes/components/Detail";
 import OTUDetail from "../../../otus/components/Detail/Detail";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
-import IndexList from "../../../indexes/components/List";
+import Indexes from "../../../indexes/components/Indexes";
 import SourceTypes from "../SourceTypes";
 import InternalControl from "./InternalControl";
 import ReferenceMembers from "./Members";
@@ -96,8 +97,6 @@ class ReferenceDetail extends React.Component {
 
         if (oldProgress !== 100 && newProgress === 100) {
             this.props.onGetReference(this.props.match.params.refId);
-            this.props.onListIndexes(this.props.match.params.refId, 1);
-            this.props.onListOTUs(this.props.match.params.refId, 1);
         }
     }
 
@@ -198,6 +197,7 @@ class ReferenceDetail extends React.Component {
             <div className="detail-container">
                 <Switch>
                     <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                    <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
                     <Route
                         path="/refs"
                         render={() => (
@@ -225,7 +225,7 @@ class ReferenceDetail extends React.Component {
                                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
                                     <Route path="/refs/:refId/otus" component={OTUList} />
-                                    <Route path="/refs/:refId/indexes" component={IndexList} />
+                                    <Route path="/refs/:refId/indexes" component={Indexes} />
                                     <Route
                                         path="/refs/:refId/settings"
                                         render={() => <ReferenceSettings isRemote={remotes_from} />}

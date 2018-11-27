@@ -1,7 +1,6 @@
 import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
-import IndexDetail from "../../indexes/components/Detail";
 import { LoadingPlaceholder } from "../../base";
 import SourceTypes from "./SourceTypes";
 import ReferenceList from "./List";
@@ -27,7 +26,6 @@ const References = props => {
                 <Route path="/refs" component={ReferenceList} exact />
                 <Redirect from="/refs/settings/*" to="/refs/settings" />
                 <Route path="/refs/settings" component={ReferenceSettings} />
-                <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
                 <Route path="/refs/:refId" component={ReferenceDetail} />
             </Switch>
         </div>
