@@ -229,7 +229,7 @@ async def remove(db, otu_id, user_id, document=None, silent=False):
         return None
 
     # Remove all sequences associated with the otu.
-    await db.sequences.delete_many({"otu_id": otu_id})
+    await db.sequences.delete_many({"otu_id": otu_id}, silent=True)
 
     # Remove the otu document itself.
     await db.otus.delete_one({"_id": otu_id}, silent=silent)
