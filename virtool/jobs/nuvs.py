@@ -393,11 +393,20 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("samples", "update", [sample_id])
 
     def cleanup(self):
+        self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
+
         try:
             self.temp_dir.cleanup()
         except AttributeError:
             pass
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, self.params["sample_id"])
+        try:
+            shutil.rmtree(self.params["analysis_path"])
+        except FileNotFoundError:
+            pass
 
-        super().cleanup()
+        sample_id = self.params["sample_id"]
+
+        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+
+        self.dispatch("samples", "update", [sample_id])

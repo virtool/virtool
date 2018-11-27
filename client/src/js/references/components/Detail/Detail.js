@@ -81,7 +81,8 @@ const getProgress = (detail, processes) => {
 };
 
 class ReferenceDetail extends React.Component {
-    componentDidMount() {
+    constructor(props) {
+        super(props);
         this.props.onGetReference(this.props.match.params.refId);
     }
 
@@ -109,16 +110,14 @@ class ReferenceDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null) {
+        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, cloned_from, imported_from, created_at, user } = this.props.detail;
+        const { name, id, remotes_from, created_at, user } = this.props.detail;
 
         let headerIcon;
         let exportButton;
-
-        const disableExport = !!(remotes_from || cloned_from || imported_from);
 
         if (this.props.pathname === `/refs/${id}/manage`) {
             headerIcon = remotes_from ? (
@@ -144,13 +143,13 @@ class ReferenceDetail extends React.Component {
                     <CustomToggle bsRole="toggle" />
                     <Dropdown.Menu className="export-ref-dropdown-menu">
                         <MenuItem header>Export</MenuItem>
-                        <MenuItem eventKey="built" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="built" onSelect={this.handleSelect}>
                             Built
                         </MenuItem>
-                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>
                             Unbuilt
                         </MenuItem>
-                        <MenuItem eventKey="unverified" onSelect={this.handleSelect} disabled={!disableExport}>
+                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>
                             Unverified
                         </MenuItem>
                     </Dropdown.Menu>

@@ -170,12 +170,23 @@ async def remove(req):
     Remove a user.
 
     """
+    db = req.app["db"]
+
     user_id = req.match_info["user_id"]
 
     if user_id == req["client"].user_id:
         return bad_request("Cannot remove own account")
 
-    delete_result = await req.app["db"].users.delete_one({"_id": user_id})
+    delete_result = await db.users.delete_one({"_id": user_id})
+
+    # Remove user from all references.
+    await db.references.update_many({}, {
+        "$pull": {
+            "users": {
+                "id": user_id
+            }
+        }
+    })
 
     if delete_result.deleted_count == 0:
         return not_found()

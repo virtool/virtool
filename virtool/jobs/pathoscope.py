@@ -439,7 +439,11 @@ class Job(virtool.jobs.job.Job):
         except FileNotFoundError:
             pass
 
-        virtool.db.sync.recalculate_algorithm_tags(self.db, self.params["sample_id"])
+        sample_id = self.params["sample_id"]
+
+        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+
+        self.dispatch("samples", "update", [sample_id])
 
     def cleanup_indexes(self):
         pass

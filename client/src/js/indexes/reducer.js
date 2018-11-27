@@ -30,9 +30,7 @@ export default function indexesReducer(state = initialState, action) {
 
         case WS_INSERT_INDEX:
             if (action.data.reference.id === state.refId) {
-                return {
-                    ...insert(state, action, "version", true)
-                };
+                return insert(state, action, "version", true);
             }
 
             return state;
@@ -67,17 +65,7 @@ export default function indexesReducer(state = initialState, action) {
             return {
                 ...state,
                 history: {
-                    ...updateDocuments(state.history, action)
-                }
-            };
-
-        case GET_INDEX_HISTORY.FAILED:
-            return {
-                ...state,
-                history: {
-                    ...state.history,
-                    isLoading: false,
-                    errorLoad: true
+                    ...updateDocuments(state.history, action, "otu.name")
                 }
             };
 
