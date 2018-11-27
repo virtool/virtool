@@ -188,10 +188,6 @@ class ReferenceManage extends React.Component {
     };
 
     render() {
-        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.refId) {
-            return <LoadingPlaceholder />;
-        }
-
         const {
             id,
             checkPending,
