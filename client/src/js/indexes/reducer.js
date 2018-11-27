@@ -30,9 +30,7 @@ export default function indexesReducer(state = initialState, action) {
 
         case WS_INSERT_INDEX:
             if (action.data.reference.id === state.refId) {
-                return {
-                    ...insert(state, action, "version", true)
-                };
+                return insert(state, action, "version", true);
             }
 
             return state;
