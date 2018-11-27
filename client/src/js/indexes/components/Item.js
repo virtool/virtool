@@ -52,14 +52,18 @@ export const IndexEntry = ({ activeId, document, refId }) => {
         <LinkContainer to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
             <ListGroupItem>
                 <Row>
-                    <Col md={3}>
-                        <Label>Version {document.version}</Label>
+                    <Col xs={3}>
+                        <strong>Version {document.version}</strong>
                     </Col>
-                    <Col md={3}>
+                    <Col xs={3}>
                         Created <RelativeTime time={document.created_at} />
                     </Col>
-                    <Col md={4}>{changeDescription}</Col>
-                    <Col md={2}>{activeIcon}</Col>
+                    <Col md={4} xsHidden smHidden>
+                        {changeDescription}
+                    </Col>
+                    <Col xs={6} md={2}>
+                        {activeIcon}
+                    </Col>
                 </Row>
             </ListGroupItem>
         </LinkContainer>
