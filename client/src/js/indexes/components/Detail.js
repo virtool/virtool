@@ -13,7 +13,6 @@ import IndexGeneral from "./General";
 export class IndexDetail extends React.Component {
     componentDidMount() {
         this.props.onGetIndex(this.props.match.params.indexId);
-        this.props.onGetReference(this.props.match.params.refId);
         this.props.onGetChanges(this.props.match.params.indexId, 1);
     }
 
@@ -22,7 +21,7 @@ export class IndexDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null || this.props.refDetail === null) {
+        if (this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
 
