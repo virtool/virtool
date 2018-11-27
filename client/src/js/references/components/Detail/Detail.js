@@ -114,7 +114,7 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, cloned_from, imported_from, created_at, user } = this.props.detail;
+        const { name, id, remotes_from, created_at, user } = this.props.detail;
 
         let headerIcon;
         let exportButton;
