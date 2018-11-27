@@ -92,6 +92,13 @@ def clean_export_list(otus, remote):
             except KeyError:
                 pass
 
+            for isolate in otu["isolates"]:
+                for sequence in isolate["sequences"]:
+                    try:
+                        sequence["_id"] = sequence["remote"]["id"]
+                    except KeyError:
+                        pass
+
         cleaned.append(clean_otu(otu, otu_keys, sequence_keys))
 
     return cleaned
