@@ -1124,12 +1124,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                     }
                 })
 
-        otu_query = {
-            "reference.id": ref_id,
-            "remote.id": remote_id
-        }
-
-        await db.otus.update_one(otu_query, {
+        await db.otus.update_one({"_id": old["_id"]}, {
             "$inc": {
                 "version": 1
             },
