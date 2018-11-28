@@ -152,13 +152,15 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
                     </span>
                 </ListGroupItem>
             ) : null}
-            <Release
-                release={release}
-                onCheckUpdates={onCheckUpdates}
-                isPending={isPending}
-                onInstall={onInstall}
-                isUpdating={isUpdating}
-            />
+            {isUpdating ? null : (
+                <Release
+                    release={release}
+                    onCheckUpdates={onCheckUpdates}
+                    isPending={isPending}
+                    onInstall={onInstall}
+                    isUpdating={isUpdating}
+                />
+            )}
         </ListGroup>
     </Panel>
 );
