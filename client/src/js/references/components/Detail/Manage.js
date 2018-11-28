@@ -12,7 +12,8 @@ import {
     LoadingPlaceholder,
     NoneFound,
     RelativeTime,
-    Button
+    Button,
+    Loader
 } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
@@ -48,13 +49,20 @@ const LatestBuild = ({ id, latestBuild }) => {
         );
     }
 
-    return <NoneFound noun="index builds" noListGroup />;
+    return <NoneFound noun="builds" noListGroup />;
 };
 
 const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) => {
+    let updateDetail;
     let updateStats;
 
     if (release.newer) {
+        updateDetail = (
+            <Well className="markdown-container" style={{ marginTop: "10px" }}>
+                <div dangerouslySetInnerHTML={{ __html: Marked(release.body) }} />
+            </Well>
+        );
+
         updateStats = (
             <span>
                 {" "}
@@ -63,16 +71,12 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
         );
     }
 
-    let updateDetail;
+    let checker;
 
-    if (release.newer) {
-        const html = Marked(release.body);
-
-        updateDetail = (
-            <Well className="markdown-container" style={{ marginTop: "10px" }}>
-                <div dangerouslySetInnerHTML={{ __html: html }} />
-            </Well>
-        );
+    if (isPending) {
+        checker = <Loader size="14px" />;
+    } else {
+        checker = <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />;
     }
 
     return (
@@ -86,17 +90,12 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
                     </strong>
                 </span>
                 {updateStats}
-                <span className="pull-right text-muted">
-                    Last checked <RelativeTime time={release.retrieved_at} />
-                    &nbsp;&nbsp;
-                    {isPending ? (
-                        <div style={{ display: "inline-block" }}>
-                            <LoadingPlaceholder margin="0" size="14px" />
-                        </div>
-                    ) : (
-                        <Icon name="sync" tip="Check for Updates" tipPlacement="left" onClick={onCheckUpdates} />
-                    )}
-                </span>
+                <Flex alignItems="center" className="pull-right">
+                    <span className="text-muted">
+                        Last checked <RelativeTime time={release.retrieved_at} />
+                    </span>
+                    <FlexItem pad={5}>{checker}</FlexItem>
+                </Flex>
             </div>
 
             {updateDetail}
@@ -111,13 +110,7 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
                     >
                         {isUpdating ? (
                             <div>
-                                <LoadingPlaceholder
-                                    margin="0"
-                                    size="14px"
-                                    color="#edf7f6"
-                                    style={{ display: "inline-block" }}
-                                />{" "}
-                                Installing
+                                <Loader size="14px" /> Installing
                             </div>
                         ) : (
                             "Install"
