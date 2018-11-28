@@ -56,7 +56,7 @@ const isRemoteUpdate = (detail, processes) => {
         return false;
     }
 
-    const process = find(processes, ["id", detail.process.id]);
+    const process = find(processes, { id: detail.process.id });
 
     if (!process) {
         return false;
@@ -182,8 +182,8 @@ class ReferenceDetail extends React.Component {
                     {referenceHeader}
                     {isUpdatingRemote ? (
                         <BSProgressBar>
-                            <BSProgressBar bsStyle="warning" now={50} />
-                            <BSProgressBar bsStyle="success" now={progress / 2} />
+                            <BSProgressBar bsStyle="warning" now={progress} />
+                            <BSProgressBar bsStyle="success" now={100 - progress} />
                         </BSProgressBar>
                     ) : (
                         <ProgressBar bsStyle="warning" now={progress} />
