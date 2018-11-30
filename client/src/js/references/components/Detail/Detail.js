@@ -2,19 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "connected-react-router";
-import { find, get } from "lodash-es";
+import { get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem, Dropdown, MenuItem, ProgressBar as BSProgressBar } from "react-bootstrap";
-import {
-    LoadingPlaceholder,
-    Icon,
-    ViewHeader,
-    Flex,
-    FlexItem,
-    RelativeTime,
-    ProgressBar,
-    NotFound
-} from "../../../base";
+import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, NotFound } from "../../../base";
 import IndexDetail from "../../../indexes/components/Detail";
 import OTUDetail from "../../../otus/components/Detail/Detail";
 import { checkRefRight, followDownload } from "../../../utils/utils";
@@ -51,53 +42,10 @@ const ReferenceSettings = ({ isRemote }) => (
     </div>
 );
 
-const isRemoteUpdate = (detail, processes) => {
-    if (!detail || !detail.process || !processes.length) {
-        return false;
-    }
-
-    const process = find(processes, { id: detail.process.id });
-
-    if (!process) {
-        return false;
-    }
-
-    return process.type === "update_remote_reference";
-};
-
-const getProgress = (detail, processes) => {
-    let progress = 0;
-
-    if (!detail || !detail.process) {
-        return 100;
-    }
-
-    if (detail.process.id && processes.length) {
-        const process = find(processes, ["id", detail.process.id]);
-        progress = process ? process.progress : 1;
-        progress *= 100;
-    }
-
-    return progress;
-};
-
 class ReferenceDetail extends React.Component {
     constructor(props) {
         super(props);
         this.props.onGetReference(this.props.match.params.refId);
-    }
-
-    componentDidUpdate(prevProps) {
-        if (prevProps.detail === null) {
-            return;
-        }
-
-        const oldProgress = getProgress(prevProps.detail, prevProps.processes);
-        const newProgress = getProgress(this.props.detail, this.props.processes);
-
-        if (oldProgress !== 100 && newProgress === 100) {
-            this.props.onGetReference(this.props.match.params.refId);
-        }
     }
 
     handleSelect = key => {
@@ -173,26 +121,6 @@ class ReferenceDetail extends React.Component {
             </ViewHeader>
         );
 
-        const progress = getProgress(this.props.detail, this.props.processes);
-        const isUpdatingRemote = isRemoteUpdate(this.props.detail, this.props.processes);
-
-        if (this.props.processes.length && progress !== 100) {
-            return (
-                <div>
-                    {referenceHeader}
-                    {isUpdatingRemote ? (
-                        <BSProgressBar>
-                            <BSProgressBar bsStyle="warning" now={progress} />
-                            <BSProgressBar bsStyle="success" now={100 - progress} />
-                        </BSProgressBar>
-                    ) : (
-                        <ProgressBar bsStyle="warning" now={progress} />
-                    )}
-                    <ReferenceManage match={this.props.match} isUpdating={isUpdatingRemote} />
-                </div>
-            );
-        }
-
         return (
             <div className="detail-container">
                 <Switch>
@@ -246,7 +174,6 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    processes: state.processes.documents,
     canModify: checkRefRight(state, "modify")
 });
 
