@@ -119,6 +119,7 @@ export const WS_INSERT_OTU = "WS_INSERT_OTU";
 export const WS_UPDATE_OTU = "WS_UPDATE_OTU";
 export const WS_REMOVE_OTU = "WS_REMOVE_OTU";
 export const FIND_OTUS = createRequestActionType("FIND_OTUS");
+export const REFRESH_OTUS = createRequestActionType("REFRESH_OTUS");
 export const GET_OTU = createRequestActionType("GET_OTU");
 export const CREATE_OTU = createRequestActionType("CREATE_OTU");
 export const EDIT_OTU = createRequestActionType("EDIT_OTU");
