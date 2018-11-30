@@ -1,5 +1,4 @@
 import React from "react";
-import Marked from "marked";
 import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup, Panel, Table, Well, Row } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -18,6 +17,21 @@ import {
 import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoveReference from "./RemoveReference";
+
+const Clone = ({ source }) => (
+    <Panel>
+        <Panel.Heading>Clone Reference</Panel.Heading>
+        <ListGroup>
+            <ListGroupItem>
+                <strong>Source Reference</strong>
+                <span>
+                    {" / "}
+                    <a href={`/refs/${source.id}`}>{source.name}</a>
+                </span>
+            </ListGroupItem>
+        </ListGroup>
+    </Panel>
+);
 
 const Contributors = ({ contributors }) => {
     if (contributors.length) {
@@ -145,21 +159,6 @@ const Remote = ({ installed, release, slug, onCheckUpdates, onInstall, isPending
                     isUpdating={isUpdating}
                 />
             )}
-        </ListGroup>
-    </Panel>
-);
-
-const Clone = ({ source }) => (
-    <Panel>
-        <Panel.Heading>Clone Reference</Panel.Heading>
-        <ListGroup>
-            <ListGroupItem>
-                <strong>Source Reference</strong>
-                <span>
-                    {" / "}
-                    <a href={`/refs/${source.id}`}>{source.name}</a>
-                </span>
-            </ListGroupItem>
         </ListGroup>
     </Panel>
 );

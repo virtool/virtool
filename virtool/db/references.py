@@ -333,14 +333,14 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
         release = updated
 
     if release:
-        release["retrieved_at"] = retrieved_at
-
         installed = document["installed"]
 
         release["newer"] = bool(
             installed and
             semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
         )
+
+        release["retrieved_at"] = retrieved_at
 
     await db.references.update_one({"_id": ref_id}, {
         "$set": {
@@ -1285,11 +1285,16 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
             "installed": virtool.github.create_update_subdocument(release, True, user_id),
-            "updates.$.ready": True,
-            "updating": False
+            "updates.$.ready": True
         }
     })
 
     await fetch_and_update_release(app, ref_id)
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "updating": False
+        }
+    })
 
     await virtool.db.processes.update(db, process_id, progress=1)
