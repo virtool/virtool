@@ -25,7 +25,8 @@ export const initialState = {
     documents: null,
     page: 0,
     total_count: 0,
-    detail: null
+    detail: null,
+    checking: false
 };
 
 export default function referenceReducer(state = initialState, action) {
@@ -73,15 +74,16 @@ export default function referenceReducer(state = initialState, action) {
             return { ...state, importData: { ...action.data } };
 
         case CHECK_REMOTE_UPDATES.REQUESTED:
-            return { ...state, detail: { ...state.detail, checkPending: true } };
+            return { ...state, checking: true };
 
         case CHECK_REMOTE_UPDATES.FAILED:
-            return { ...state, detail: { ...state.detail, checkPending: false } };
+            return { ...state, checking: false };
 
         case CHECK_REMOTE_UPDATES.SUCCEEDED:
             return {
                 ...state,
-                detail: { ...state.detail, checkPending: false, release: action.data }
+                checking: false,
+                detail: { ...state.detail, release: action.data }
             };
 
         case UPDATE_REMOTE_REFERENCE.SUCCEEDED:
