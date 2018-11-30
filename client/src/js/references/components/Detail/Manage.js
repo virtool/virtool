@@ -53,16 +53,9 @@ const LatestBuild = ({ id, latestBuild }) => {
 };
 
 const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) => {
-    let updateDetail;
     let updateStats;
 
     if (release.newer) {
-        updateDetail = (
-            <Well className="markdown-container" style={{ marginTop: "10px" }}>
-                <div dangerouslySetInnerHTML={{ __html: Marked(release.body) }} />
-            </Well>
-        );
-
         updateStats = (
             <span>
                 {" "}
@@ -98,15 +91,13 @@ const Release = ({ release, isPending, isUpdating, onCheckUpdates, onInstall }) 
                 </Flex>
             </div>
 
-            {updateDetail}
             {release.newer ? (
-                <Row style={{ margin: "0" }}>
+                <Row style={{ margin: "0", paddingTop: "1rem" }}>
                     <Button
                         icon={isUpdating ? null : "download"}
                         bsStyle="primary"
                         onClick={onInstall}
                         disabled={isUpdating}
-                        pullRight
                     >
                         {isUpdating ? (
                             <div>
