@@ -1200,6 +1200,9 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
 
     updated_list = list()
 
+    # The remote ids in the update otus.
+    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
+
     for otu in update_data["otus"]:
         old_or_id = await update_joined_otu(
             db,
@@ -1246,9 +1249,6 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
         )
 
         await progress_tracker.add(1)
-
-    # The remote ids in the update otus.
-    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
 
     # Delete OTUs with remote ids that were not in the update.
     to_delete = await db.otus.distinct("_id", {
