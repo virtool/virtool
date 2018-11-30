@@ -35,6 +35,7 @@ PROJECTION = [
     "remotes_from",
     "unbuilt_count",
     "updates",
+    "updating",
     "user"
 ]
 
