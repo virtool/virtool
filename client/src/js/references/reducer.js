@@ -38,7 +38,13 @@ export default function referenceReducer(state = initialState, action) {
         }
 
         case WS_UPDATE_REFERENCE: {
-            return update(state, action, "name");
+            const updated = update(state, action, "name");
+
+            if (state.detail && state.detail.id === action.data.id) {
+                return { ...state, detail: { ...state.detail, ...action.data } };
+            }
+
+            return updated;
         }
 
         case WS_REMOVE_REFERENCE: {
