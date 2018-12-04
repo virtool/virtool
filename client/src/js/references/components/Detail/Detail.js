@@ -36,7 +36,6 @@ class CustomToggle extends React.Component {
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
-        <InternalControl global />
         <ReferenceMembers noun="users" />
         <ReferenceMembers noun="groups" />
     </div>
