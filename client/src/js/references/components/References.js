@@ -11,7 +11,7 @@ export const ReferenceSettings = () => (
         <h3 className="view-header">
             <strong>Settings</strong>
         </h3>
-        <SourceTypes />
+        <SourceTypes global />
     </div>
 );
 
