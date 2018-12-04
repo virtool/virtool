@@ -877,7 +877,7 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         process_id,
         release["size"],
         factor=0.3,
-        increment=0.03
+        increment=0.02
     )
 
     try:
@@ -1167,7 +1167,7 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
         process_id,
         release["size"],
         factor=0.3,
-        increment=0.1
+        increment=0.02
     )
 
     try:
