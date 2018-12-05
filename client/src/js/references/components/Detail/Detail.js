@@ -24,7 +24,7 @@ class CustomToggle extends React.Component {
     render() {
         return (
             <Icon
-                name="ellipsis-v"
+                name="download"
                 tip="Options"
                 onClick={this.props.onClick}
                 style={{ fontSize: "65%", paddingLeft: "5px" }}
@@ -60,7 +60,7 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, created_at, user } = this.props.detail;
+        const { name, id, cloned_from, remotes_from, created_at, user } = this.props.detail;
 
         let headerIcon;
         let exportButton;
@@ -84,23 +84,32 @@ class ReferenceDetail extends React.Component {
                     headerIcon
                 );
 
-            exportButton = (
-                <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
-                    <CustomToggle bsRole="toggle" />
-                    <Dropdown.Menu className="export-ref-dropdown-menu">
-                        <MenuItem header>Export</MenuItem>
-                        <MenuItem eventKey="built" onSelect={this.handleSelect}>
-                            Built
+            if (!remotes_from) {
+                let remoteExport;
+                if (cloned_from) {
+                    remoteExport = (
+                        <MenuItem eventKey="remote" onSelect={this.handleSelect}>
+                            <div>Remote</div>
+                            <small>
+                                Export the reference using the OTU IDs from the source reference for this clone.
+                            </small>
                         </MenuItem>
-                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>
-                            Unbuilt
-                        </MenuItem>
-                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>
-                            Unverified
-                        </MenuItem>
-                    </Dropdown.Menu>
-                </Dropdown>
-            );
+                    );
+                }
+
+                exportButton = (
+                    <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
+                        <CustomToggle bsRole="toggle" />
+                        <Dropdown.Menu className="export-ref-dropdown-menu">
+                            <MenuItem eventKey="built" onSelect={this.handleSelect}>
+                                <div>Normal</div>
+                                <small>Export the reference with the local OTU IDs.</small>
+                            </MenuItem>
+                            {remoteExport}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                );
+            }
         }
 
         const referenceHeader = (
