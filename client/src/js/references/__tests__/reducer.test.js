@@ -138,26 +138,25 @@ describe("References Reducer", () => {
     it("should handle CHECK_REMOTE_UPDATES_REQUESTED", () => {
         const action = { type: CHECK_REMOTE_UPDATES.REQUESTED };
         const result = reducer({}, action);
-        expect(result).toEqual({ detail: { checking: true } });
+        expect(result).toEqual({ checking: true });
     });
 
     it("should handle CHECK_REMOTE_UPDATES_FAILED", () => {
-        const state = { detail: { checking: true } };
         const action = { type: CHECK_REMOTE_UPDATES.FAILED };
-        const result = reducer(state, action);
-        expect(result).toEqual({ detail: { checking: false } });
+        const result = reducer({}, action);
+        expect(result).toEqual({ checking: false });
     });
 
     it("should handle CHECK_REMOTE_UPDATES_SUCCEEDED", () => {
-        const state = { detail: { checking: true } };
+        const state = { checking: true };
         const action = {
             type: CHECK_REMOTE_UPDATES.SUCCEEDED,
             data: { foo: "bar" }
         };
         const result = reducer(state, action);
         expect(result).toEqual({
+            checking: false,
             detail: {
-                checking: false,
                 release: { foo: "bar" }
             }
         });

@@ -2,9 +2,9 @@
 
 exports[`<SourceTypeItem /> renders when [disabled=false] 1`] = `
 <ListGroupItem
-  allowFocus={false}
+  bsClass="list-group-item"
   disabled={false}
-  key="genotype"
+  listItem={false}
 >
   <span
     className="text-capitalize"
@@ -24,9 +24,9 @@ exports[`<SourceTypeItem /> renders when [disabled=false] 1`] = `
 
 exports[`<SourceTypeItem /> renders when [disabled=true] 1`] = `
 <ListGroupItem
-  allowFocus={false}
+  bsClass="list-group-item"
   disabled={true}
-  key="genotype"
+  listItem={false}
 >
   <span
     className="text-capitalize"
@@ -42,86 +42,95 @@ exports[`<SourceTypes /> renders when global 1`] = `
     bsClass="list-group"
   >
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
       <strong>
-        Source Types
+        Default Source Types
       </strong>
     </ListGroupItem>
+    <GlobalDescription />
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
-      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
-    </ListGroupItem>
-    <ListGroupItem
-      allowFocus={false}
-    >
-      <form
-        onSubmit={[Function]}
+      <div
+        className="clearfix"
       >
-        <FormGroup
-          bsClass="form-group"
+        <form
+          onSubmit={[Function]}
         >
-          <InputGroup
-            bsClass="input-group"
+          <FormGroup
+            bsClass="form-group"
           >
-            <FormControl
-              bsClass="form-control"
-              componentClass="input"
-              disabled={true}
-              inputRef={[Function]}
-              onChange={[Function]}
-              type="text"
-              value=""
-            />
-            <InputGroupButton
-              bsClass="input-group-btn"
+            <InputGroup
+              bsClass="input-group"
             >
-              <Button
-                bsStyle="primary"
-                disabled={true}
-                pullRight={false}
-                tipPlacement="top"
-                type="submit"
-              >
-                <Icon
-                  faStyle="fas"
-                  fixedWidth={false}
-                  name="plus-square"
-                  pullRight={false}
-                  style={
-                    Object {
-                      "paddingLeft": "3px",
-                    }
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "zIndex": 10000,
                   }
-                />
-              </Button>
-            </InputGroupButton>
-          </InputGroup>
-          <div
-            className="input-form-error-none"
-          >
-            <span
-              className="input-error-message"
+                }
+                type="text"
+                value=""
+              />
+              <InputGroupButton
+                bsClass="input-group-btn"
+              >
+                <Button
+                  active={false}
+                  block={false}
+                  bsClass="btn"
+                  bsStyle="primary"
+                  disabled={false}
+                  type="submit"
+                >
+                  <Icon
+                    faStyle="fas"
+                    fixedWidth={false}
+                    name="plus-square"
+                    pullRight={false}
+                    style={
+                      Object {
+                        "paddingLeft": "3px",
+                      }
+                    }
+                  />
+                </Button>
+              </InputGroupButton>
+            </InputGroup>
+            <div
+              className="input-form-error-none"
             >
-              None
-            </span>
-          </div>
-        </FormGroup>
-      </form>
-      <div>
-        <SourceTypeItem
-          disabled={false}
-          key="isolate"
-          onRemove={[Function]}
-          sourceType="isolate"
-        />
-        <SourceTypeItem
-          disabled={false}
-          key="serotype"
-          onRemove={[Function]}
-          sourceType="serotype"
-        />
+              <span
+                className="input-error-message"
+              >
+                None
+              </span>
+            </div>
+          </FormGroup>
+        </form>
+        <ListGroup
+          bsClass="list-group"
+        >
+          <SourceTypeItem
+            disabled={false}
+            key="isolate"
+            onRemove={[Function]}
+            sourceType="isolate"
+          />
+          <SourceTypeItem
+            disabled={false}
+            key="serotype"
+            onRemove={[Function]}
+            sourceType="serotype"
+          />
+        </ListGroup>
       </div>
     </ListGroupItem>
   </ListGroup>
@@ -134,10 +143,11 @@ exports[`<SourceTypes /> renders when not global and not remote 1`] = `
     bsClass="list-group"
   >
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
       <strong>
-        Source Types
+         Source Types
       </strong>
       <Checkbox
         checked={true}
@@ -147,80 +157,88 @@ exports[`<SourceTypes /> renders when not global and not remote 1`] = `
         pullRight={true}
       />
     </ListGroupItem>
+    <LocalDescription />
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
-      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
-    </ListGroupItem>
-    <ListGroupItem
-      allowFocus={false}
-    >
-      <form
-        onSubmit={[Function]}
+      <div
+        className="clearfix"
       >
-        <FormGroup
-          bsClass="form-group"
+        <form
+          onSubmit={[Function]}
         >
-          <InputGroup
-            bsClass="input-group"
+          <FormGroup
+            bsClass="form-group"
           >
-            <FormControl
-              bsClass="form-control"
-              componentClass="input"
-              disabled={true}
-              inputRef={[Function]}
-              onChange={[Function]}
-              type="text"
-              value=""
-            />
-            <InputGroupButton
-              bsClass="input-group-btn"
+            <InputGroup
+              bsClass="input-group"
             >
-              <Button
-                bsStyle="primary"
-                disabled={true}
-                pullRight={false}
-                tipPlacement="top"
-                type="submit"
-              >
-                <Icon
-                  faStyle="fas"
-                  fixedWidth={false}
-                  name="plus-square"
-                  pullRight={false}
-                  style={
-                    Object {
-                      "paddingLeft": "3px",
-                    }
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "zIndex": 10000,
                   }
-                />
-              </Button>
-            </InputGroupButton>
-          </InputGroup>
-          <div
-            className="input-form-error-none"
-          >
-            <span
-              className="input-error-message"
+                }
+                type="text"
+                value=""
+              />
+              <InputGroupButton
+                bsClass="input-group-btn"
+              >
+                <Button
+                  active={false}
+                  block={false}
+                  bsClass="btn"
+                  bsStyle="primary"
+                  disabled={false}
+                  type="submit"
+                >
+                  <Icon
+                    faStyle="fas"
+                    fixedWidth={false}
+                    name="plus-square"
+                    pullRight={false}
+                    style={
+                      Object {
+                        "paddingLeft": "3px",
+                      }
+                    }
+                  />
+                </Button>
+              </InputGroupButton>
+            </InputGroup>
+            <div
+              className="input-form-error-none"
             >
-              None
-            </span>
-          </div>
-        </FormGroup>
-      </form>
-      <div>
-        <SourceTypeItem
-          disabled={false}
-          key="isolate"
-          onRemove={[Function]}
-          sourceType="isolate"
-        />
-        <SourceTypeItem
-          disabled={false}
-          key="serotype"
-          onRemove={[Function]}
-          sourceType="serotype"
-        />
+              <span
+                className="input-error-message"
+              >
+                None
+              </span>
+            </div>
+          </FormGroup>
+        </form>
+        <ListGroup
+          bsClass="list-group"
+        >
+          <SourceTypeItem
+            disabled={false}
+            key="isolate"
+            onRemove={[Function]}
+            sourceType="isolate"
+          />
+          <SourceTypeItem
+            disabled={false}
+            key="serotype"
+            onRemove={[Function]}
+            sourceType="serotype"
+          />
+        </ListGroup>
       </div>
     </ListGroupItem>
   </ListGroup>
@@ -233,86 +251,95 @@ exports[`<SourceTypes /> renders when not global and remote 1`] = `
     bsClass="list-group"
   >
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
       <strong>
-        Source Types
+         Source Types
       </strong>
     </ListGroupItem>
+    <LocalDescription />
     <ListGroupItem
-      allowFocus={false}
+      bsClass="list-group-item"
+      listItem={false}
     >
-      Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a source type from this list. If this feature is disabled, users will be able to enter any string as a source type.
-    </ListGroupItem>
-    <ListGroupItem
-      allowFocus={false}
-    >
-      <form
-        onSubmit={[Function]}
+      <div
+        className="clearfix"
       >
-        <FormGroup
-          bsClass="form-group"
+        <form
+          onSubmit={[Function]}
         >
-          <InputGroup
-            bsClass="input-group"
+          <FormGroup
+            bsClass="form-group"
           >
-            <FormControl
-              bsClass="form-control"
-              componentClass="input"
-              disabled={false}
-              inputRef={[Function]}
-              onChange={[Function]}
-              type="text"
-              value=""
-            />
-            <InputGroupButton
-              bsClass="input-group-btn"
+            <InputGroup
+              bsClass="input-group"
             >
-              <Button
-                bsStyle="primary"
-                disabled={false}
-                pullRight={false}
-                tipPlacement="top"
-                type="submit"
-              >
-                <Icon
-                  faStyle="fas"
-                  fixedWidth={false}
-                  name="plus-square"
-                  pullRight={false}
-                  style={
-                    Object {
-                      "paddingLeft": "3px",
-                    }
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={true}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "zIndex": 10000,
                   }
-                />
-              </Button>
-            </InputGroupButton>
-          </InputGroup>
-          <div
-            className="input-form-error-none"
-          >
-            <span
-              className="input-error-message"
+                }
+                type="text"
+                value=""
+              />
+              <InputGroupButton
+                bsClass="input-group-btn"
+              >
+                <Button
+                  active={false}
+                  block={false}
+                  bsClass="btn"
+                  bsStyle="primary"
+                  disabled={true}
+                  type="submit"
+                >
+                  <Icon
+                    faStyle="fas"
+                    fixedWidth={false}
+                    name="plus-square"
+                    pullRight={false}
+                    style={
+                      Object {
+                        "paddingLeft": "3px",
+                      }
+                    }
+                  />
+                </Button>
+              </InputGroupButton>
+            </InputGroup>
+            <div
+              className="input-form-error-none"
             >
-              None
-            </span>
-          </div>
-        </FormGroup>
-      </form>
-      <div>
-        <SourceTypeItem
-          disabled={true}
-          key="isolate"
-          onRemove={[Function]}
-          sourceType="isolate"
-        />
-        <SourceTypeItem
-          disabled={true}
-          key="serotype"
-          onRemove={[Function]}
-          sourceType="serotype"
-        />
+              <span
+                className="input-error-message"
+              >
+                None
+              </span>
+            </div>
+          </FormGroup>
+        </form>
+        <ListGroup
+          bsClass="list-group"
+        >
+          <SourceTypeItem
+            disabled={true}
+            key="isolate"
+            onRemove={[Function]}
+            sourceType="isolate"
+          />
+          <SourceTypeItem
+            disabled={true}
+            key="serotype"
+            onRemove={[Function]}
+            sourceType="serotype"
+          />
+        </ListGroup>
       </div>
     </ListGroupItem>
   </ListGroup>
