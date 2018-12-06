@@ -13,7 +13,6 @@ import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
 import Indexes from "../../../indexes/components/Indexes";
 import SourceTypes from "../SourceTypes";
-import InternalControl from "./InternalControl";
 import ReferenceMembers from "./Members";
 import ReferenceManage from "./Manage";
 import EditReference from "./Edit";

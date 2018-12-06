@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Label } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, Loader } from "../../base";
 import { activeIndexIdSelector } from "../selectors";
 
