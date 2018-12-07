@@ -13,7 +13,9 @@ exports[`<References /> renders <ReferenceSettings /> correctly 1`] = `
       Settings
     </strong>
   </h3>
-  <Connect(SourceTypes) />
+  <Connect(SourceTypes)
+    global={true}
+  />
 </div>
 `;
 
@@ -35,10 +37,6 @@ exports[`<References /> renders correctly with settings data 1`] = `
     <Route
       component={[Function]}
       path="/refs/settings"
-    />
-    <Route
-      component={[Function]}
-      path="/refs/:refId/indexes/:indexId"
     />
     <Route
       component={[Function]}

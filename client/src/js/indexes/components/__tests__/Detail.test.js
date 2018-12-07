@@ -61,12 +61,8 @@ describe("<Detail />", () => {
 
     it("Component mount dispatches getIndex(), getIndexHistory(), getReference() actions", () => {
         const spyIndex = sinon.spy(actions, "getIndex");
-        const spyIndexHistory = sinon.spy(actions, "getIndexHistory");
-        const spyReference = sinon.spy(refActions, "getReference");
 
         expect(spyIndex.called).toBe(false);
-        expect(spyIndexHistory.called).toBe(false);
-        expect(spyReference.called).toBe(false);
 
         wrapper = mount(
             <MemoryRouter>
@@ -75,11 +71,7 @@ describe("<Detail />", () => {
         );
 
         expect(spyIndex.calledWith("test-index")).toBe(true);
-        expect(spyIndexHistory.calledWith("test-index", 1)).toBe(true);
-        expect(spyReference.calledWith("test-reference")).toBe(true);
 
         spyIndex.restore();
-        spyIndexHistory.restore();
-        spyReference.restore();
     });
 });

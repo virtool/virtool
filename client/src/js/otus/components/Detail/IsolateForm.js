@@ -11,7 +11,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { map, toLower } from "lodash-es";
+import { capitalize, map, toLower } from "lodash-es";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils/utils";
@@ -46,15 +46,15 @@ export default class IsolateForm extends React.Component {
 
         const sourceTypeInputProps = {
             label: "Source Type",
-            value: this.props.sourceType,
+            value: capitalize(this.props.sourceType),
             onChange: this.changeSourceType
         };
 
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
         if (this.props.restrictSourceTypes) {
             const optionComponents = map(this.props.allowedSourceTypes, sourceType => (
-                <option key={sourceType} value={sourceType} className="text-capitalize">
-                    {sourceType}
+                <option key={sourceType} value={capitalize(sourceType)}>
+                    {capitalize(sourceType)}
                 </option>
             ));
 

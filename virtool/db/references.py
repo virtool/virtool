@@ -35,6 +35,7 @@ PROJECTION = [
     "remotes_from",
     "unbuilt_count",
     "updates",
+    "updating",
     "user"
 ]
 
@@ -333,14 +334,14 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
         release = updated
 
     if release:
-        release["retrieved_at"] = retrieved_at
-
         installed = document["installed"]
 
         release["newer"] = bool(
             installed and
             semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
         )
+
+        release["retrieved_at"] = retrieved_at
 
     await db.references.update_one({"_id": ref_id}, {
         "$set": {
@@ -876,7 +877,7 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
         process_id,
         release["size"],
         factor=0.3,
-        increment=0.03
+        increment=0.02
     )
 
     try:
@@ -1124,12 +1125,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                     }
                 })
 
-        otu_query = {
-            "reference.id": ref_id,
-            "remote.id": remote_id
-        }
-
-        await db.otus.update_one(otu_query, {
+        await db.otus.update_one({"_id": old["_id"]}, {
             "$inc": {
                 "version": 1
             },
@@ -1171,7 +1167,7 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
         process_id,
         release["size"],
         factor=0.3,
-        increment=0.1
+        increment=0.02
     )
 
     try:
@@ -1204,6 +1200,9 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
     )
 
     updated_list = list()
+
+    # The remote ids in the update otus.
+    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
 
     for otu in update_data["otus"]:
         old_or_id = await update_joined_otu(
@@ -1252,9 +1251,6 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
 
         await progress_tracker.add(1)
 
-    # The remote ids in the update otus.
-    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
-
     # Delete OTUs with remote ids that were not in the update.
     to_delete = await db.otus.distinct("_id", {
         "reference.id": ref_id,
@@ -1290,11 +1286,16 @@ async def finish_update(app, ref_id, created_at, process_id, release, user_id):
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
         "$set": {
             "installed": virtool.github.create_update_subdocument(release, True, user_id),
-            "updates.$.ready": True,
-            "updating": False
+            "updates.$.ready": True
         }
     })
 
     await fetch_and_update_release(app, ref_id)
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "updating": False
+        }
+    })
 
     await virtool.db.processes.update(db, process_id, progress=1)

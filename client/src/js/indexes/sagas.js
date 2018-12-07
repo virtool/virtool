@@ -1,3 +1,4 @@
+import { get } from "lodash-es";
 import { push } from "connected-react-router";
 import { apiCall, setPending } from "../utils/sagas";
 import {
@@ -6,12 +7,20 @@ import {
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    LIST_READY_INDEXES
+    LIST_READY_INDEXES,
+    WS_INSERT_INDEX,
+    WS_UPDATE_INDEX,
+    WS_REMOVE_INDEX,
+    REFRESH_OTUS
 } from "../app/actionTypes";
+import * as otusAPI from "../otus/api";
 import * as indexesAPI from "./api";
-import { put, takeEvery, takeLatest } from "redux-saga/effects";
+import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 export function* watchIndexes() {
+    yield takeLatest(WS_INSERT_INDEX, wsChangeIndexes);
+    yield takeLatest(WS_UPDATE_INDEX, wsChangeIndexes);
+    yield takeLatest(WS_REMOVE_INDEX, wsChangeIndexes);
     yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
     yield takeLatest(GET_INDEX.REQUESTED, getIndex);
     yield takeLatest(GET_UNBUILT.REQUESTED, getUnbuilt);
@@ -20,11 +29,19 @@ export function* watchIndexes() {
     yield takeLatest(LIST_READY_INDEXES.REQUESTED, listReadyIndexes);
 }
 
+export function* wsChangeIndexes(action) {
+    const refId = yield select(state => get(state, "references.detail.id"));
+
+    yield apiCall(indexesAPI.find, { refId }, FIND_INDEXES);
+    yield apiCall(otusAPI.find, { refId }, REFRESH_OTUS);
+}
+
 export function* findIndexes(action) {
     yield apiCall(indexesAPI.find, action, FIND_INDEXES);
 }
 
 export function* getIndex(action) {
+    yield select();
     yield apiCall(indexesAPI.get, action, GET_INDEX);
 }
 

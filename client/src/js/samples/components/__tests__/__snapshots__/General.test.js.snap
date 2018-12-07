@@ -7,20 +7,6 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
   >
     <tbody>
       <tr
-        key="name"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          name
-        </th>
-        <td
-          className="col-xs-8"
-        >
-          test-name
-        </td>
-      </tr>
-      <tr
         key="host"
       >
         <th
@@ -215,20 +201,6 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
     className="table table-bordered"
   >
     <tbody>
-      <tr
-        key="name"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          name
-        </th>
-        <td
-          className="col-xs-8"
-        >
-          test-name
-        </td>
-      </tr>
       <tr
         key="host"
       >

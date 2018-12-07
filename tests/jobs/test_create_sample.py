@@ -65,7 +65,7 @@ def test_make_sample_dir(exists, tmpdir, test_create_sample_job):
     test_create_sample_job.make_sample_dir()
 
     assert os.listdir(samples_path) == ["baz"]
-    assert os.listdir(sample_path) == ["analysis", "fastqc"]
+    assert set(os.listdir(sample_path)) == {"analysis", "fastqc"}
 
 
 @pytest.mark.parametrize("paired", [True, False])

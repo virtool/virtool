@@ -114,15 +114,17 @@ describe("Indexes Reducer", () => {
     it("should handle FIND_INDEXES_REQUESTED", () => {
         const state = {};
         const term = "bar";
+        const refId = "foo";
         const action = {
             type: FIND_INDEXES.REQUESTED,
-            refId: "foo",
+            refId,
             term,
             page: 4
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            term
+            term,
+            refId
         });
     });
 
