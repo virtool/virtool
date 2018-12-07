@@ -5,13 +5,13 @@ steps:
   - name: install
     image: python:3.6-stretch
     commands:
-      - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - wget -q http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
-      - wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
       - unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
       - export PATH=${PATH}:${PWD}/bowtie2-2.3.2-legacy
-      - wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
+      - wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
       - tar -xvf 0.2.2.tar.gz
       - cd skewer-0.2.2
       - make
