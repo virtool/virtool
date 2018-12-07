@@ -5,21 +5,13 @@ steps:
   - name: install
     image: python:3.6-stretch
     commands:
-      - wget -q http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
-      - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
-      - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
       - wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
-      - tar -xf 0.2.2.tar.gz
+      - tar -xvf 0.2.2.tar.gz
       - cd skewer-0.2.2
       - make
+      - mv skewer /usr/local/bin
       - cd ..
-      - export PATH=${PATH}:${PWD}/skewer-0.2.2
-      - wget -q https://github.com/ablab/spades/releases/download/v3.11.0/SPAdes-3.11.0-Linux.tar.gz
-      - tar -xf SPAdes-3.11.0-Linux.tar.gz
-      - export PATH=${PATH}:${PWD}/SPAdes-3.11.0-Linux/bin
-      - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
-      - unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
-      - export PATH=${PATH}:${PWD}/bowtie2-2.3.2-legacy
+      - rm -r skewer
   - name: test
     image: python:3.6-stretch
     commands:
