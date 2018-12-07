@@ -894,6 +894,22 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
             errors=["Could not download reference data"]
         )
 
+    try:
+        data_type = import_data["data_type"]
+    except KeyError:
+        return await virtool.db.processes.update(
+            db,
+            process_id,
+            errors=["Could not infer data type"]
+        )
+
+    await db.references.update_one({"_id": ref_id}, {
+        "$set": {
+            "data_type": data_type,
+            "organism": import_data.get("organism", "Unknown")
+        }
+    })
+
     errors = virtool.references.check_import_data(
         import_data,
         strict=True,
