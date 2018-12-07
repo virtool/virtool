@@ -11,7 +11,7 @@ steps:
       - make
       - mv skewer /usr/local/bin
       - cd ..
-      - rm -r skewer
+      - rm -r skewer-0.2.2
   - name: test
     image: python:3.6-stretch
     commands:
