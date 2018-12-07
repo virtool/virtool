@@ -3,7 +3,7 @@ name: server
 
 steps:
   - name: install
-    image: python:3.6-alpine
+    image: python:3.6-stretch
     commands:
       - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
@@ -22,7 +22,7 @@ steps:
       - export PATH=${PATH}:${PWD}/SPAdes-3.11.0-Linux/bin
 
   - name: test
-    image: python:3.6-alpine
+    image: python:3.6-stretch
     commands:
       - pip install -r requirements.txt
       - pytest --aiohttp-loop uvloop --cov --cov-report xml
