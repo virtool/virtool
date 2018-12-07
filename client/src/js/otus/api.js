@@ -1,7 +1,7 @@
 import Request from "superagent";
 
 export const find = ({ refId, term, verified, page }) =>
-    Request.get(`/api/refs/${refId}/otus`).query({ find: term, page, verified: verified || undefined });
+    Request.get(`/api/refs/${refId}/otus`).query({ find: term, page, verified: verified ? false : undefined });
 
 export const listNames = ({ refId }) => Request.get(`/api/refs/${refId}/otus?names=true`);
 

@@ -1,8 +1,8 @@
 import gzip
 import json
 
-import dictdiffer
 from cerberus import Validator
+from operator import itemgetter
 
 import virtool.otus
 
@@ -71,12 +71,38 @@ def check_import_data(import_data, strict=True, verify=True):
 
 
 def check_will_change(old, imported):
-    result = dictdiffer.diff(
-        clean_otu(old),
-        clean_otu(imported)
-    )
+    for key in ["name", "abbreviation"]:
+        if old[key] != imported[key]:
+            return True
 
-    return bool(list(result))
+    # Will change if isolate ids have changed, meaning an isolate has been added or removed.
+    if {i["id"] for i in old["isolates"]} != {i["id"] for i in imported["isolates"]}:
+        return True
+
+    new_isolates = sorted(imported["isolates"], key=itemgetter("id"))
+    old_isolates = sorted(old["isolates"], key=itemgetter("id"))
+
+    # Check isolate by isolate. Order is ignored.
+    for new_isolate, old_isolate in zip(new_isolates, old_isolates):
+        # Will change if a value property of the isolate has changed.
+        for key in ISOLATE_KEYS:
+            if new_isolate[key] != old_isolate[key]:
+                return True
+
+        # Check if sequence ids have changed.
+        if {i["_id"] for i in new_isolate["sequences"]} != {i["remote"]["id"] for i in old_isolate["sequences"]}:
+            return True
+
+        # Check sequence-by-sequence. Order is ignored.
+        new_sequences = sorted(new_isolate["sequences"], key=itemgetter("_id"))
+        old_sequences = sorted(old_isolate["sequences"], key=lambda d: d["remote"]["id"])
+
+        for new_sequence, old_sequence in zip(new_sequences, old_sequences):
+            for key in SEQUENCE_KEYS:
+                if new_sequence[key] != old_sequence[key]:
+                    return True
+
+    return False
 
 
 def clean_export_list(otus, remote):

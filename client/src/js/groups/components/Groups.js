@@ -9,7 +9,7 @@ import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 
-const getActiveGroupId = ({ groups }) => (groups ? groups[0].id : "");
+const getActiveGroupId = ({ groups }) => (groups && groups.length ? groups[0].id : "");
 
 class Group extends React.Component {
     handleClick = () => {

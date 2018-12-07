@@ -20,15 +20,15 @@ export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     if (canRemove) {
         removalDropdown = (
             <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
-                <Button name="finished" onClick={onClear} tip="Clear Finished">
+                <Button onClick={() => onClear("finished")} tip="Clear Finished">
                     <Icon name="trash" />
                 </Button>
                 <Dropdown.Toggle />
                 <Dropdown.Menu>
-                    <MenuItem eventKey="removeFailed" name="failed" onClick={onClear}>
+                    <MenuItem eventKey="failed" onSelect={onClear}>
                         Failed
                     </MenuItem>
-                    <MenuItem eventKey="removeComplete" name="complete" onClick={onClear}>
+                    <MenuItem eventKey="complete" onSelect={onClear}>
                         Complete
                     </MenuItem>
                 </Dropdown.Menu>
@@ -62,8 +62,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(findJobs(e.target.value, 1));
     },
 
-    onClear: e => {
-        dispatch(clearJobs(e.target.name));
+    onClear: scope => {
+        dispatch(clearJobs(scope));
     }
 });
 

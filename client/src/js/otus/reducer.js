@@ -29,7 +29,8 @@ import {
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
     HIDE_OTU_MODAL,
-    GET_OTU_HISTORY
+    GET_OTU_HISTORY,
+    REFRESH_OTUS
 } from "../app/actionTypes";
 
 export const initialState = {
@@ -138,6 +139,7 @@ export default function OTUsReducer(state = initialState, action) {
             };
 
         case FIND_OTUS.SUCCEEDED:
+        case REFRESH_OTUS.SUCCEEDED:
             return updateDocuments(state, action, "name");
 
         case GET_OTU.REQUESTED:

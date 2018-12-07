@@ -33,11 +33,9 @@ export class AddReference extends React.Component {
     };
 
     handleHide = () => {
-        if (this.state.lock) {
-            return;
+        if (!this.state.lock) {
+            this.props.onHide();
         }
-
-        this.setState({ show: false });
     };
 
     renderForm = () => {
@@ -101,7 +99,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({ ...window.location, state: { newReference: false } }));
+        dispatch(push({ state: { newReference: false } }));
     }
 });
 

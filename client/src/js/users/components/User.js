@@ -58,9 +58,9 @@ export class UserItem extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const groupOptions = map(this.props.groups, group => (
-            <option key={group.id} value={group.id}>
-                {capitalize(group.id)}
+        const groupOptions = map(this.props.detail.groups, groupId => (
+            <option key={groupId} value={groupId}>
+                {capitalize(groupId)}
             </option>
         ));
 

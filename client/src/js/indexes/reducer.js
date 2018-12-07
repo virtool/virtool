@@ -45,7 +45,8 @@ export default function indexesReducer(state = initialState, action) {
         case FIND_INDEXES.REQUESTED: {
             return {
                 ...state,
-                term: action.term
+                term: action.term,
+                refId: action.refId
             };
         }
 

@@ -2,26 +2,17 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "connected-react-router";
-import { find, get } from "lodash-es";
+import { get } from "lodash-es";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem, Dropdown, MenuItem, ProgressBar as BSProgressBar } from "react-bootstrap";
-import {
-    LoadingPlaceholder,
-    Icon,
-    ViewHeader,
-    Flex,
-    FlexItem,
-    RelativeTime,
-    ProgressBar,
-    NotFound
-} from "../../../base";
+import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
+import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, NotFound } from "../../../base";
+import IndexDetail from "../../../indexes/components/Detail";
 import OTUDetail from "../../../otus/components/Detail/Detail";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
 import OTUList from "../../../otus/components/List";
-import IndexList from "../../../indexes/components/List";
+import Indexes from "../../../indexes/components/Indexes";
 import SourceTypes from "../SourceTypes";
-import InternalControl from "./InternalControl";
 import ReferenceMembers from "./Members";
 import ReferenceManage from "./Manage";
 import EditReference from "./Edit";
@@ -32,7 +23,7 @@ class CustomToggle extends React.Component {
     render() {
         return (
             <Icon
-                name="ellipsis-v"
+                name="download"
                 tip="Options"
                 onClick={this.props.onClick}
                 style={{ fontSize: "65%", paddingLeft: "5px" }}
@@ -44,61 +35,15 @@ class CustomToggle extends React.Component {
 const ReferenceSettings = ({ isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
-        <InternalControl global />
         <ReferenceMembers noun="users" />
         <ReferenceMembers noun="groups" />
     </div>
 );
 
-const isRemoteUpdate = (detail, processes) => {
-    if (!detail || !detail.process || !processes.length) {
-        return false;
-    }
-
-    const process = find(processes, ["id", detail.process.id]);
-
-    if (!process) {
-        return false;
-    }
-
-    return process.type === "update_remote_reference";
-};
-
-const getProgress = (detail, processes) => {
-    let progress = 0;
-
-    if (!detail || !detail.process) {
-        return 100;
-    }
-
-    if (detail.process.id && processes.length) {
-        const process = find(processes, ["id", detail.process.id]);
-        progress = process ? process.progress : 1;
-        progress *= 100;
-    }
-
-    return progress;
-};
-
 class ReferenceDetail extends React.Component {
     constructor(props) {
         super(props);
         this.props.onGetReference(this.props.match.params.refId);
-    }
-
-    componentDidUpdate(prevProps) {
-        if (prevProps.detail === null) {
-            return;
-        }
-
-        const oldProgress = getProgress(prevProps.detail, prevProps.processes);
-        const newProgress = getProgress(this.props.detail, this.props.processes);
-
-        if (oldProgress !== 100 && newProgress === 100) {
-            this.props.onGetReference(this.props.match.params.refId);
-            this.props.onListIndexes(this.props.match.params.refId, 1);
-            this.props.onListOTUs(this.props.match.params.refId, 1);
-        }
     }
 
     handleSelect = key => {
@@ -114,7 +59,7 @@ class ReferenceDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const { name, id, remotes_from, created_at, user } = this.props.detail;
+        const { name, id, cloned_from, remotes_from, created_at, user } = this.props.detail;
 
         let headerIcon;
         let exportButton;
@@ -138,23 +83,32 @@ class ReferenceDetail extends React.Component {
                     headerIcon
                 );
 
-            exportButton = (
-                <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
-                    <CustomToggle bsRole="toggle" />
-                    <Dropdown.Menu className="export-ref-dropdown-menu">
-                        <MenuItem header>Export</MenuItem>
-                        <MenuItem eventKey="built" onSelect={this.handleSelect}>
-                            Built
+            if (!remotes_from) {
+                let remoteExport;
+                if (cloned_from) {
+                    remoteExport = (
+                        <MenuItem eventKey="remote" onSelect={this.handleSelect}>
+                            <div>Remote</div>
+                            <small>
+                                Export the reference using the OTU IDs from the source reference for this clone.
+                            </small>
                         </MenuItem>
-                        <MenuItem eventKey="unbuilt" onSelect={this.handleSelect}>
-                            Unbuilt
-                        </MenuItem>
-                        <MenuItem eventKey="unverified" onSelect={this.handleSelect}>
-                            Unverified
-                        </MenuItem>
-                    </Dropdown.Menu>
-                </Dropdown>
-            );
+                    );
+                }
+
+                exportButton = (
+                    <Dropdown id="dropdown-export-reference" className="dropdown-export-reference">
+                        <CustomToggle bsRole="toggle" />
+                        <Dropdown.Menu className="export-ref-dropdown-menu">
+                            <MenuItem eventKey="built" onSelect={this.handleSelect}>
+                                <div>Normal</div>
+                                <small>Export the reference with the local OTU IDs.</small>
+                            </MenuItem>
+                            {remoteExport}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                );
+            }
         }
 
         const referenceHeader = (
@@ -174,30 +128,11 @@ class ReferenceDetail extends React.Component {
             </ViewHeader>
         );
 
-        const progress = getProgress(this.props.detail, this.props.processes);
-        const isUpdatingRemote = isRemoteUpdate(this.props.detail, this.props.processes);
-
-        if (this.props.processes.length && progress !== 100) {
-            return (
-                <div>
-                    {referenceHeader}
-                    {isUpdatingRemote ? (
-                        <BSProgressBar>
-                            <BSProgressBar bsStyle="warning" now={50} />
-                            <BSProgressBar bsStyle="success" now={progress / 2} />
-                        </BSProgressBar>
-                    ) : (
-                        <ProgressBar bsStyle="warning" now={progress} />
-                    )}
-                    <ReferenceManage match={this.props.match} isUpdating={isUpdatingRemote} />
-                </div>
-            );
-        }
-
         return (
             <div className="detail-container">
                 <Switch>
                     <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                    <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
                     <Route
                         path="/refs"
                         render={() => (
@@ -225,7 +160,7 @@ class ReferenceDetail extends React.Component {
                                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
                                     <Route path="/refs/:refId/manage" component={ReferenceManage} />
                                     <Route path="/refs/:refId/otus" component={OTUList} />
-                                    <Route path="/refs/:refId/indexes" component={IndexList} />
+                                    <Route path="/refs/:refId/indexes" component={Indexes} />
                                     <Route
                                         path="/refs/:refId/settings"
                                         render={() => <ReferenceSettings isRemote={remotes_from} />}
@@ -246,7 +181,6 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    processes: state.processes.documents,
     canModify: checkRefRight(state, "modify")
 });
 

@@ -1,8 +1,8 @@
 import React from "react";
 import { includes, map, toLower, without, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Panel, FormGroup, InputGroup, FormControl, ListGroup } from "react-bootstrap";
-import { Icon, Button, Checkbox, ListGroupItem } from "../../base/index";
+import { Button, Panel, FormGroup, InputGroup, FormControl, ListGroup, ListGroupItem } from "react-bootstrap";
+import { Icon, Checkbox } from "../../base/index";
 import { editReference } from "../actions";
 import { updateSetting } from "../../administration/actions";
 
@@ -11,8 +11,23 @@ const getInitialState = () => ({
     error: null
 });
 
+const GlobalDescription = () => (
+    <ListGroupItem>
+        Configure a list of default source types. New references will automatically take these values as their allowed
+        source types.
+    </ListGroupItem>
+);
+
+const LocalDescription = () => (
+    <ListGroupItem>
+        Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
+        source type from this list. If this feature is disabled, users will be able to enter any string as a source
+        type.
+    </ListGroupItem>
+);
+
 export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
-    <ListGroupItem key={sourceType} disabled={disabled}>
+    <ListGroupItem disabled={disabled}>
         <span className="text-capitalize">{sourceType}</span>
         {disabled ? null : <Icon name="trash" bsStyle="danger" onClick={() => onRemove(sourceType)} pullRight />}
     </ListGroupItem>
@@ -23,6 +38,10 @@ export class SourceTypes extends React.Component {
         super(props);
         this.state = getInitialState();
     }
+
+    handleChange = e => {
+        this.setState({ value: e.target.value, error: null });
+    };
 
     handleRemove = sourceType => {
         this.props.onUpdate(without(this.props.sourceTypes, sourceType), this.props.global, this.props.refId);
@@ -62,7 +81,7 @@ export class SourceTypes extends React.Component {
     };
 
     render() {
-        const disabled = !this.global && (this.props.remote || !this.props.restrictSourceTypes);
+        const disabled = !this.props.global && (this.props.remote || !this.props.restrictSourceTypes);
 
         let checkbox;
 
@@ -87,39 +106,41 @@ export class SourceTypes extends React.Component {
             </div>
         );
 
+        const title = `${this.props.global ? "Default" : ""} Source Types`;
+
         return (
             <Panel>
                 <ListGroup>
                     <ListGroupItem>
-                        <strong>Source Types</strong>
+                        <strong>{title}</strong>
                         {checkbox}
                     </ListGroupItem>
+
+                    {this.props.global ? <GlobalDescription /> : <LocalDescription />}
+
                     <ListGroupItem>
-                        Configure a list of allowable source types. When a user creates a new isolate they will only be
-                        able to select a source type from this list. If this feature is disabled, users will be able to
-                        enter any string as a source type.
-                    </ListGroupItem>
-                    <ListGroupItem>
-                        <form onSubmit={this.handleSubmit}>
-                            <FormGroup>
-                                <InputGroup ref={node => (this.containerNode = node)}>
-                                    <FormControl
-                                        type="text"
-                                        inputRef={node => (this.inputNode = node)}
-                                        disabled={!disabled}
-                                        onChange={e => this.setState({ value: e.target.value, error: null })}
-                                        value={this.state.value}
-                                    />
-                                    <InputGroup.Button>
-                                        <Button type="submit" bsStyle="primary" disabled={!disabled}>
-                                            <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                                {errorMessage}
-                            </FormGroup>
-                        </form>
-                        <div>{listComponents}</div>
+                        <div className="clearfix">
+                            <form onSubmit={this.handleSubmit}>
+                                <FormGroup>
+                                    <InputGroup>
+                                        <FormControl
+                                            type="text"
+                                            disabled={disabled}
+                                            onChange={this.handleChange}
+                                            value={this.state.value}
+                                            style={{ zIndex: 10000 }}
+                                        />
+                                        <InputGroup.Button>
+                                            <Button type="submit" bsStyle="primary" disabled={disabled}>
+                                                <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
+                                            </Button>
+                                        </InputGroup.Button>
+                                    </InputGroup>
+                                    {errorMessage}
+                                </FormGroup>
+                            </form>
+                            <ListGroup>{listComponents}</ListGroup>
+                        </div>
                     </ListGroupItem>
                 </ListGroup>
             </Panel>
@@ -127,9 +148,7 @@ export class SourceTypes extends React.Component {
     }
 }
 
-const mapStateToProps = (state, ownProps) => {
-    const global = ownProps.global;
-
+const mapStateToProps = (state, { global = false }) => {
     const sourceTypes = global
         ? state.settings.data.default_source_types
         : get(state, "references.detail.source_types", []);
@@ -139,7 +158,7 @@ const mapStateToProps = (state, ownProps) => {
         : get(state, "references.detail.restrict_source_types", false);
 
     let refId;
-    let remote;
+    let remote = false;
 
     if (!global) {
         refId = get(state, "references.detail.id");

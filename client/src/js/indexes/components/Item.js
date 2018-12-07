@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Label } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, Loader } from "../../base";
 import { activeIndexIdSelector } from "../selectors";
 
@@ -11,21 +11,21 @@ export const IndexEntry = ({ activeId, document, refId }) => {
     // Decide what icon/text should be shown at the right end of the index document. If the index is building a
     // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
     // content is shown at the right.
-    if (document.id === activeId) {
-        if (document.ready) {
-            activeIcon = (
-                <span className="pull-right">
-                    <Icon name="check" bsStyle="success" /> <strong>Active</strong>
-                </span>
-            );
-        } else {
-            activeIcon = (
-                <div className="pull-right">
-                    <Loader size="14px" color="#3c8786" style={{ display: "inline" }} />
-                    <strong> Building</strong>
-                </div>
-            );
-        }
+    if (document.id === activeId && document.ready) {
+        activeIcon = (
+            <span className="pull-right">
+                <Icon name="check" bsStyle="success" /> <strong>Active</strong>
+            </span>
+        );
+    }
+
+    if (!document.ready) {
+        activeIcon = (
+            <div className="pull-right">
+                <Loader size="14px" color="#3c8786" style={{ display: "inline" }} />
+                <strong> Building</strong>
+            </div>
+        );
     }
 
     // The description of
@@ -52,14 +52,18 @@ export const IndexEntry = ({ activeId, document, refId }) => {
         <LinkContainer to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
             <ListGroupItem>
                 <Row>
-                    <Col md={3}>
-                        <Label>Version {document.version}</Label>
+                    <Col xs={3}>
+                        <strong>Version {document.version}</strong>
                     </Col>
-                    <Col md={3}>
+                    <Col xs={3}>
                         Created <RelativeTime time={document.created_at} />
                     </Col>
-                    <Col md={4}>{changeDescription}</Col>
-                    <Col md={2}>{activeIcon}</Col>
+                    <Col md={4} xsHidden smHidden>
+                        {changeDescription}
+                    </Col>
+                    <Col xs={6} md={2}>
+                        {activeIcon}
+                    </Col>
                 </Row>
             </ListGroupItem>
         </LinkContainer>

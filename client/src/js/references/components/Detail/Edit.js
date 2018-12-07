@@ -20,7 +20,7 @@ const getInitialState = detail => ({
 export class EditReference extends React.Component {
     constructor(props) {
         super(props);
-        this.state = getInitialState(this.props.detail);
+        this.state = {};
     }
 
     handleChange = e => {
@@ -40,7 +40,7 @@ export class EditReference extends React.Component {
         this.props.onHide(this.props);
     };
 
-    handleModalExited = () => {
+    handleModalEnter = () => {
         this.setState(getInitialState(this.props.detail));
     };
 
@@ -63,13 +63,13 @@ export class EditReference extends React.Component {
                 organism: this.state.organism,
                 internal_control: this.state.internalControl
             });
-            this.props.onHide(window.location);
+            this.props.onHide();
         }
     };
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
+            <Modal show={this.props.show} onHide={this.handleHide} onEnter={this.handleModalEnter}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Reference
                 </Modal.Header>
@@ -97,8 +97,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(editReference(refId, update));
     },
 
-    onHide: ({ location }) => {
-        dispatch(push({ ...location, state: { editReference: false } }));
+    onHide: () => {
+        dispatch(push({ state: { editReference: false } }));
     },
 
     onClearError: error => {

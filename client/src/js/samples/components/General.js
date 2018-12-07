@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { IDRow } from "../../base";
 import EditSample from "./Edit";
 
-const cellNames = ["name", "host", "isolate", "locale"];
+const cellNames = ["host", "isolate", "locale"];
 
 const SampleDetailGeneral = props => (
     <div>

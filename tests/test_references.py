@@ -3,16 +3,6 @@ import pytest
 import virtool.references
 
 
-@pytest.mark.parametrize("index1,index2,result", [
-    (0, 1, True),
-    (1, 0, True),
-    (0, 0, False),
-    (1, 1, False)
-])
-def test_check_will_change(index1, index2, result, compare_otus):
-    assert virtool.references.check_will_change(compare_otus[index1], compare_otus[index2]) == result
-
-
 @pytest.mark.parametrize("empty", [True, False])
 @pytest.mark.parametrize("in_seen", [True, False])
 def test_detect_duplicate_abbreviation(in_seen, empty, test_otu):
