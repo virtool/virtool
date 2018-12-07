@@ -12,11 +12,22 @@ steps:
       - mv skewer /usr/local/bin
       - cd ..
       - rm -r skewer-0.2.2
+      - wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
+      - unzip fastqc_v0.11.5.zip
+      - cp -rv FastQC /opt
+      - chmod ugo+x /opt/FastQC/fastqc
+      - cd /usr/local/bin
+      - ln -s /opt/FastQC/fastqc
+      - cd ~
   - name: test
     image: python:3.6-stretch
     commands:
       - pip install -r requirements.txt
       - pytest --aiohttp-loop uvloop --cov --cov-report xml
+
+services:
+  - name: db
+    image: mongodb-3.6
 
 ---
 kind: pipeline
