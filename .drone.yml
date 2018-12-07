@@ -1,0 +1,98 @@
+kind: pipeline
+name: server
+
+steps:
+  - name: install
+    image: python:3.6-alpine
+    commands:
+      - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
+      - wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - export PATH=${PATH}:${PWD}/bowtie2-2.3.2-legacy
+      - wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
+      - tar -xvf 0.2.2.tar.gz
+      - cd skewer-0.2.2
+      - make
+      - cd ..
+      - export PATH=${PATH}:${PWD}/skewer-0.2.2
+      - wget https://github.com/ablab/spades/releases/download/v3.11.0/SPAdes-3.11.0-Linux.tar.gz
+      - tar -xvf SPAdes-3.11.0-Linux.tar.gz
+      - export PATH=${PATH}:${PWD}/SPAdes-3.11.0-Linux/bin
+
+  - name: test
+    image: python:3.6-alpine
+    commands:
+      - pip install -r requirements.txt
+      - pytest --aiohttp-loop uvloop --cov --cov-report xml
+
+  - name: dry build
+    image: python:3.6-alpine
+    commands:
+      - pip install -r requirements.txt
+      - python scripts/build.py src
+    when:
+      event:
+        excludes:
+          - tag
+
+  - name: build
+    image: python:3.6-alpine
+    commands:
+      - pip install -r requirements.txt
+      - python scripts/build.py src -V $DRONE_TAG
+      - gzip reference.json
+    when:
+      event:
+        - tag
+
+  - name: publish
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: GITHUB_TOKEN
+      files: reference.json.gz
+    when:
+      event:
+        - tag
+        -
+---
+kind: pipeline
+name: client
+
+steps:
+  - name: test
+    image: node:10-alpine
+    commands:
+      - cd client
+      - npm i
+      - npx jest --coverage
+
+---
+kind: pipeline
+name: build
+
+steps:
+  - name: client
+    image: node:10-alpine
+    commands:
+      - cd client
+      - npm i
+      - npx weback --config webpack.production.config.babel.js
+
+  - name: server
+  - image: python:3.6-alpine
+      - mkdir gh_build
+      - mkdir gh_build/virtool
+      - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+      - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
+      - python setup.py build
+      - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+      - cd gh_build
+      - tar -cvzf virtool.tar.gz virtool
+      - tar -tvf virtool.tar.gz
+
+depends_on:
+  - server
+  - client
