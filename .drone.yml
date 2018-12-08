@@ -5,6 +5,7 @@ steps:
   - name: install
     image: python:3.6-stretch
     commands:
+      - apt-get install unzip
       - wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
       - tar -xvf 0.2.2.tar.gz
       - cd skewer-0.2.2
@@ -12,13 +13,30 @@ steps:
       - mv skewer /usr/local/bin
       - cd ..
       - rm -r skewer-0.2.2
-      - wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
+      - wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
       - unzip fastqc_v0.11.5.zip
       - cp -rv FastQC /opt
       - chmod ugo+x /opt/FastQC/fastqc
       - cd /usr/local/bin
       - ln -s /opt/FastQC/fastqc
       - cd ~
+      - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - cp -r bowtie2-2.3.2-legacy /opt/bowtie2
+      - cd /usr/local/bin
+      - for FILE in /opt/bowtie2/bowtie*; do sudo ln -s $FILE; done
+      - cd ~
+      - wget -q http://spades.bioinf.spbau.ru/release3.11.1/SPAdes-3.11.1-Linux.tar.gz
+      - tar -xf SPAdes-3.11.1-Linux.tar.gz
+      - cp -r SPAdes-3.11.1-Linux /opt/spades
+      - cd /usr/local/bin
+      - ln -s /opt/spades/bin/spades.py
+      - cd ~
+      - wget -q http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
+      - cd /usr/local/bin
+      - for FILE in /opt/hmmer/binaries/*; do sudo ln -s $FILE; done
   - name: test
     image: python:3.6-stretch
     commands:
