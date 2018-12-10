@@ -44,7 +44,7 @@ steps:
     commands:
       - pip install -qr requirements.txt
       - ls
-      - pytest --aiohttp-loop uvloop --cov --cov-report xml
+      - pytest --aiohttp-loop uvloop --db-host db --cov --cov-report xml
 
 services:
   - name: db
