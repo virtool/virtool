@@ -148,11 +148,13 @@ class TestGet:
 
 
 @pytest.mark.parametrize("error", [None, "db_connection_error", "db_not_empty_error"])
-async def test_db(error, mocker, spawn_client, test_db_name, mock_setup):
+async def test_db(error, mocker, request, spawn_client, test_db_name, mock_setup):
     client = await spawn_client(setup_mode=True)
 
+    actual_host = request.config.getoption("db_host")
+
     update = {
-        "db_host": "foobar" if error == "db_connection_error" else "localhost",
+        "db_host": "foobar" if error == "db_connection_error" else actual_host,
         "db_port": 27017,
         "db_name": test_db_name,
         "db_username": "",
@@ -162,7 +164,7 @@ async def test_db(error, mocker, spawn_client, test_db_name, mock_setup):
     if error == "db_not_empty_error":
         db_client = motor.motor_asyncio.AsyncIOMotorClient(
             io_loop=client.app.loop,
-            host="localhost",
+            host=actual_host,
             port=27017
         )
 
@@ -265,14 +267,16 @@ async def test_clear(spawn_client, mock_setup):
     assert client.app["setup"] == mock_setup
 
 
-async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_time):
+async def test_save_and_reload(mocker, tmpdir, request, spawn_client, mock_setup, static_time):
     client = await spawn_client(setup_mode=True)
 
     mocker.patch("virtool.utils.reload", new=make_mocked_coro())
 
+    actual_host = request.config.getoption("db_host", "localhost")
+
     connection = motor.motor_asyncio.AsyncIOMotorClient(
         io_loop=client.app.loop,
-        host="localhost",
+        host=actual_host,
         port=27017,
         serverSelectionTimeoutMS=1500
     )
