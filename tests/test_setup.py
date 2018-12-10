@@ -290,7 +290,7 @@ async def test_save_and_reload(mocker, tmpdir, request, spawn_client, mock_setup
 
     client.app["setup"] = {
         **mock_setup,
-        "db_host": "localhost",
+        "db_host": actual_host
         "db_port": 27017,
         "db_name": "foobar",
         "first_user_id": "fred",
