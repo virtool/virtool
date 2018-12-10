@@ -221,7 +221,7 @@ async def test_user(mocker, spawn_client, mock_setup):
 
 @pytest.mark.parametrize("issue", [None, "not_empty", "not_found", "permission"])
 @pytest.mark.parametrize("prefix", ["data", "watch"])
-async def test(issue, prefix, tmpdir, spawn_client, mock_setup):
+async def test(mocker, issue, prefix, tmpdir, spawn_client, mock_setup):
     client = await spawn_client(setup_mode=True)
 
     path = os.path.join(str(tmpdir), "foobar", "data")
@@ -238,7 +238,7 @@ async def test(issue, prefix, tmpdir, spawn_client, mock_setup):
             handle.write("hello world")
 
     if issue == "permission":
-        os.chmod(path, 000)
+        mocker.patch("os.mkdir", side_effect=PermissionError)
 
     resp = await client.post_form("/setup/{}".format(prefix), update)
 
