@@ -19,7 +19,7 @@ def test_db_name(worker_id):
 
 @pytest.fixture
 def test_motor(test_db_name, loop):
-    client = motor.motor_asyncio.AsyncIOMotorClient(io_loop=loop)
+    client = motor.motor_asyncio.AsyncIOMotorClient(host="db", io_loop=loop)
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
     loop.run_until_complete(client.drop_database(test_db_name))
@@ -27,7 +27,7 @@ def test_motor(test_db_name, loop):
 
 @pytest.fixture
 def dbs(test_db_name):
-    client = pymongo.MongoClient()
+    client = pymongo.MongoClient(host="db")
     client.drop_database(test_db_name)
     yield client[test_db_name]
     client.drop_database(test_db_name)
