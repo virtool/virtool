@@ -5,6 +5,7 @@ steps:
   - name: install
     image: python:3.6-stretch
     commands:
+      - apt-get update
       - apt-get install unzip
       - wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
       - tar -xvf 0.2.2.tar.gz
@@ -73,6 +74,8 @@ steps:
 
   - name: server
   - image: python:3.6-alpine
+    commands:
+      - pip install -r requirements.txt
       - mkdir gh_build
       - mkdir gh_build/virtool
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
