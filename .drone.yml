@@ -42,7 +42,7 @@ steps:
   - name: test
     image: python:3.6-stretch
     commands:
-      - pip install -r requirements.txt
+      - pip install -qr requirements.txt
       - ls
       - pytest --aiohttp-loop uvloop --cov --cov-report xml
 
@@ -77,7 +77,7 @@ steps:
   - name: server
     image: python:3.6-stretch
     commands:
-      - pip install -r requirements.txt
+      - pip install -qr requirements.txt
       - mkdir gh_build
       - mkdir gh_build/virtool
       - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
