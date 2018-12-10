@@ -15,17 +15,17 @@ steps:
       - cd ..
       - rm -r skewer-0.2.2
       - wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
-      - unzip fastqc_v0.11.5.zip
+      - unzip -o fastqc_v0.11.5.zip
       - cp -rv FastQC /opt
       - chmod ugo+x /opt/FastQC/fastqc
       - cd /usr/local/bin
       - ln -s /opt/FastQC/fastqc
       - cd ~
       - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
-      - unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - unzip -o bowtie2-2.3.2-legacy-linux-x86_64.zip
       - cp -r bowtie2-2.3.2-legacy /opt/bowtie2
       - cd /usr/local/bin
-      - for FILE in /opt/bowtie2/bowtie*; do sudo ln -s $FILE; done
+      - for FILE in /opt/bowtie2/bowtie*; do ln -s $FILE; done
       - cd ~
       - wget -q http://spades.bioinf.spbau.ru/release3.11.1/SPAdes-3.11.1-Linux.tar.gz
       - tar -xf SPAdes-3.11.1-Linux.tar.gz
@@ -37,11 +37,13 @@ steps:
       - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
       - cd /usr/local/bin
-      - for FILE in /opt/hmmer/binaries/*; do sudo ln -s $FILE; done
+      - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE; done
+
   - name: test
     image: python:3.6-stretch
     commands:
       - pip install -r requirements.txt
+      - ls
       - pytest --aiohttp-loop uvloop --cov --cov-report xml
 
 services:
@@ -73,7 +75,7 @@ steps:
       - npx weback --config webpack.production.config.babel.js
 
   - name: server
-  - image: python:3.6-alpine
+    image: python:3.6-stretch
     commands:
       - pip install -r requirements.txt
       - mkdir gh_build
