@@ -76,6 +76,17 @@ steps:
       - tar -cvzf virtool.tar.gz virtool
       - tar -tvf virtool.tar.gz
 
+  - name: upload
+    image: plugins/s3
+    settings:
+      bucket: virtool
+      region: sfo2
+      access_key: ${SPACES_KEY}
+      secret_key: ${SPACES_SECRET}
+      source: gh_build/virtool.tar.gz
+      target: /
+      endpoint: https://digitaloceanspaces.com
+
 depends_on:
   - server
   - client
