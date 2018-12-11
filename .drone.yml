@@ -75,18 +75,29 @@ steps:
       - cd gh_build
       - tar -czf virtool.tar.gz virtool
 
-
-
   - name: upload
     image: plugins/s3
     settings:
       bucket: virtool
       region: sfo2
-      access_key: SPACES_KEY
-      secret_key: SPACES_SECRET
+      access_key:
+        from_secret: SPACES_KEY
+      secret_key:
+        from_secret: SPACES_SECRET
       source: gh_build/virtool.tar.gz
+      strip_prefix: gh_build/
       target: /
-      endpoint: https://digitaloceanspaces.com
+      endpoint: https://sfo2.digitaloceanspaces.com
+
+  - name: publish
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: GITHUB_TOKEN
+      files: gh_build/virtool.tar.gz
+    when:
+      event:
+        - tag
 
 depends_on:
   - server
