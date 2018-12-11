@@ -56,7 +56,7 @@ name: build
 
 steps:
   - name: client
-    image: node:10-jessie
+    image: node:10-stretch
     commands:
       - cd client
       - npm i
@@ -73,16 +73,17 @@ steps:
       - python setup.py build
       - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
       - cd gh_build
-      - tar -cvzf virtool.tar.gz virtool
-      - tar -tvf virtool.tar.gz
+      - tar -czf virtool.tar.gz virtool
+
+
 
   - name: upload
     image: plugins/s3
     settings:
       bucket: virtool
       region: sfo2
-      access_key: ${SPACES_KEY}
-      secret_key: ${SPACES_SECRET}
+      access_key: SPACES_KEY
+      secret_key: SPACES_SECRET
       source: gh_build/virtool.tar.gz
       target: /
       endpoint: https://digitaloceanspaces.com
