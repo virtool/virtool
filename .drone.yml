@@ -73,6 +73,7 @@ steps:
       - python setup.py build
       - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
       - cd gh_build
+      - 'if [ "$DRONE_TAG" ]; then echo $DRONE_TAG > gh_build/virtool/VERSION; else echo "v0.0.0" > gh_build/virtool/VERSION; fi'
       - tar -czf virtool.tar.gz virtool
 
   - name: upload
