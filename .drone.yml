@@ -87,7 +87,7 @@ steps:
         from_secret: SPACES_SECRET
       source: gh_build/virtool.tar.gz
       strip_prefix: gh_build/
-      target: /
+      target: /virtool-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT}.tar.gz
       endpoint: https://sfo2.digitaloceanspaces.com
 
   - name: publish
