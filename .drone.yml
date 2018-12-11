@@ -89,6 +89,10 @@ steps:
       strip_prefix: gh_build/
       target: /virtool-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT}
       endpoint: https://sfo2.digitaloceanspaces.com
+    when:
+      event:
+        - tag
+        - push
 
   - name: publish
     image: plugins/github-release
