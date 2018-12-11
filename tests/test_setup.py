@@ -343,7 +343,7 @@ async def test_save_and_reload(mocker, tmpdir, request, spawn_client, mock_setup
 
     m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
         "data_path": str(data),
-        "db_host": "localhost",
+        "db_host": actual_host,
         "db_name": "foobar",
         "db_password": "",
         "db_port": 27017,
