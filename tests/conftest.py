@@ -12,6 +12,7 @@ from tests.fixtures.response import *
 from tests.fixtures.users import *
 from tests.fixtures.otus import *
 
+
 def pytest_addoption(parser):
     parser.addoption(
         "--db-host",

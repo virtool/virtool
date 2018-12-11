@@ -7,10 +7,11 @@ import virtool.users
 
 class VTClient:
 
-    def __init__(self, loop, test_client, test_db_name, create_user):
+    def __init__(self, loop, test_client, db_host, test_db_name, create_user):
         self._loop = loop
         self._test_client = test_client
         self._create_user = create_user
+        self._db_host = db_host
         self._test_db_name = test_db_name
         self._client = None
 
@@ -23,6 +24,7 @@ class VTClient:
 
         app = virtool.app.create_app(
             self._loop,
+            self._db_host,
             self._test_db_name,
             disable_job_manager=not job_manager,
             disable_file_manager=not file_manager,
@@ -87,6 +89,7 @@ class VTClient:
 
 
 @pytest.fixture
-def spawn_client(loop, test_client, test_motor, test_db_name, create_user):
-    client = VTClient(loop, test_client, test_db_name, create_user)
+def spawn_client(loop, request, test_client, test_motor, test_db_name, create_user):
+    db_host = request.config.getoption("db_host", "localhost")
+    client = VTClient(loop, test_client, db_host, test_db_name, create_user)
     return client.connect

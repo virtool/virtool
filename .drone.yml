@@ -1,0 +1,109 @@
+kind: pipeline
+name: server
+
+steps:
+  - name: test
+    image: python:3.6-stretch
+    commands:
+      - apt-get update
+      - apt-get install unzip
+      - wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
+      - tar -xf 0.2.2.tar.gz
+      - cd skewer-0.2.2
+      - make
+      - mv skewer /usr/local/bin
+      - cd ..
+      - rm -r skewer-0.2.2
+      - wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
+      - unzip -qo fastqc_v0.11.5.zip
+      - cp -r FastQC /opt
+      - chmod ugo+x /opt/FastQC/fastqc
+      - ln -s /opt/FastQC/fastqc /usr/local/bin/fastqc
+      - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - unzip -qo bowtie2-2.3.2-legacy-linux-x86_64.zip
+      - cp -r bowtie2-2.3.2-legacy /opt/bowtie2
+      - for FILE in /opt/bowtie2/bowtie*; do ln -s $FILE /usr/local/bin/${FILE}; done
+      - wget -q http://spades.bioinf.spbau.ru/release3.11.1/SPAdes-3.11.1-Linux.tar.gz
+      - tar -xf SPAdes-3.11.1-Linux.tar.gz
+      - cp -r SPAdes-3.11.1-Linux /opt/spades
+      - ln -s /opt/spades/bin/spades.py /usr/local/bin/spades.py
+      - wget -q http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+      - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
+      - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE /usr/local/bin/${FILE}; done
+      - pip install -qr requirements.txt
+      - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
+
+services:
+  - name: db
+    image: mongo:3.6-stretch
+
+---
+kind: pipeline
+name: client
+
+steps:
+  - name: test
+    image: node:10-alpine
+    commands:
+      - cd client
+      - npm i
+      - npx jest --coverage
+
+---
+kind: pipeline
+name: build
+
+steps:
+  - name: client
+    image: node:10-stretch
+    commands:
+      - cd client
+      - npm i
+      - npx webpack --config webpack.production.config.babel.js
+
+  - name: server
+    image: python:3.6-stretch
+    commands:
+      - pip install -qr requirements.txt
+      - mkdir gh_build
+      - mkdir gh_build/virtool
+      - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+      - python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
+      - python setup.py build
+      - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+      - 'if [ "$DRONE_TAG" ]; then echo $DRONE_TAG > gh_build/virtool/VERSION; else echo "v0.0.0" > gh_build/virtool/VERSION; fi'
+      - cd gh_build
+      - tar -czf virtool.tar.gz virtool
+
+  - name: upload
+    image: plugins/s3
+    settings:
+      bucket: virtool
+      region: sfo2
+      access_key:
+        from_secret: SPACES_KEY
+      secret_key:
+        from_secret: SPACES_SECRET
+      source: gh_build/virtool.tar.gz
+      strip_prefix: gh_build/
+      target: /virtool-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT}
+      endpoint: https://sfo2.digitaloceanspaces.com
+    when:
+      event:
+        - tag
+        - push
+
+  - name: publish
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: GITHUB_TOKEN
+      files: gh_build/virtool.tar.gz
+    when:
+      event:
+        - tag
+
+depends_on:
+  - server
+  - client

@@ -50,7 +50,7 @@ def otu_resource():
 
 
 @pytest.fixture
-def mock_job(tmpdir, mocker, dbs, test_db_name, otu_resource):
+def mock_job(tmpdir, mocker, request, dbs, test_db_name, otu_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "references", "original", "index3"))
 
@@ -95,8 +95,10 @@ def mock_job(tmpdir, mocker, dbs, test_db_name, otu_resource):
 
     queue = mocker.Mock()
 
+    db_host = request.config.getoption("db_host", "localhost")
+
     job = virtool.jobs.pathoscope.Job(
-        "mongodb://localhost:27017",
+        f"mongodb://{db_host}:27017",
         test_db_name,
         settings,
         "foobar",

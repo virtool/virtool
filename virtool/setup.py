@@ -63,8 +63,10 @@ def setup_routes(app):
     app.router.add_post(r"/setup/watch", setup_watch)
     app.router.add_get(r"/setup/clear", clear)
     app.router.add_get(r"/setup/save", save_and_reload)
-    app.router.add_static("/static", app["client_path"])
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
+
+    if app["client_path"] is not None:
+        app.router.add_static("/static", app["client_path"])
 
 
 def create_connection_string(username, password, host, port, db_name, use_ssl):
