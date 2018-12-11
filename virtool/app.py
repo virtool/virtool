@@ -130,9 +130,10 @@ async def init_db(app):
     """
     settings = app["settings"]
 
+    app["db_host"] = app.get("db_host", None) or settings["db_host"]
     app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
-    db_host = settings.get("db_host", "localhost")
+    db_host = app["db_host"]
     db_port = settings.get("db_port", 27017)
 
     auth_string = ""
@@ -299,8 +300,19 @@ async def on_shutdown(app):
     await scheduler.close()
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, disable_refreshing=False,
-               force_version=None, ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
+def create_app(
+        loop,
+        db_host=None,
+        db_name=None,
+        disable_job_manager=False,
+        disable_file_manager=False,
+        disable_refreshing=False,
+        force_version=None,
+        ignore_settings=False,
+        no_sentry=False,
+        skip_db_checks=False,
+        skip_setup=False
+):
     """
     Creates the Virtool application.
 
@@ -324,6 +336,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     app["version"] = force_version
     app["db_name"] = db_name
+    app["db_host"] = db_host
 
     app.on_startup.append(init_client_path)
 
