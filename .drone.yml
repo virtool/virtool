@@ -38,6 +38,7 @@ steps:
       - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
       - cd /usr/local/bin
       - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE; done
+      - cd ~
       - pip install -qr requirements.txt
       - ls
       - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
