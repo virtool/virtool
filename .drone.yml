@@ -56,11 +56,11 @@ name: build
 
 steps:
   - name: client
-    image: node:10-alpine
+    image: node:10-jessie
     commands:
       - cd client
       - npm i
-      - npx weback --config webpack.production.config.babel.js
+      - npx webpack --config webpack.production.config.babel.js
 
   - name: server
     image: python:3.6-stretch
