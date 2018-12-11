@@ -2,7 +2,7 @@ kind: pipeline
 name: server
 
 steps:
-  - name: install
+  - name: test
     image: python:3.6-stretch
     commands:
       - apt-get update
@@ -27,6 +27,8 @@ steps:
       - cd /usr/local/bin
       - for FILE in /opt/bowtie2/bowtie*; do ln -s $FILE; done
       - cd ~
+      - bowtie2
+      - bowtie2-build
       - wget -q http://spades.bioinf.spbau.ru/release3.11.1/SPAdes-3.11.1-Linux.tar.gz
       - tar -xf SPAdes-3.11.1-Linux.tar.gz
       - cp -r SPAdes-3.11.1-Linux /opt/spades
@@ -38,10 +40,6 @@ steps:
       - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
       - cd /usr/local/bin
       - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE; done
-
-  - name: test
-    image: python:3.6-stretch
-    commands:
       - pip install -qr requirements.txt
       - ls
       - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
