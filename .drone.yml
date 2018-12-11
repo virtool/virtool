@@ -18,29 +18,20 @@ steps:
       - unzip -qo fastqc_v0.11.5.zip
       - cp -r FastQC /opt
       - chmod ugo+x /opt/FastQC/fastqc
-      - cd /usr/local/bin
-      - ln -s /opt/FastQC/fastqc
-      - cd ~
+      - ln -s /opt/FastQC/fastqc /usr/local/bin/fastqc
       - wget -q https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
       - unzip -qo bowtie2-2.3.2-legacy-linux-x86_64.zip
       - cp -r bowtie2-2.3.2-legacy /opt/bowtie2
-      - cd /usr/local/bin
-      - for FILE in /opt/bowtie2/bowtie*; do ln -s $FILE; done
-      - cd ~
+      - for FILE in /opt/bowtie2/bowtie*; do ln -s $FILE /usr/local/bin/${FILE}; done
       - wget -q http://spades.bioinf.spbau.ru/release3.11.1/SPAdes-3.11.1-Linux.tar.gz
       - tar -xf SPAdes-3.11.1-Linux.tar.gz
       - cp -r SPAdes-3.11.1-Linux /opt/spades
-      - cd /usr/local/bin
-      - ln -s /opt/spades/bin/spades.py
-      - cd ~
+      - ln -s /opt/spades/bin/spades.py /usr/local/bin/spades.py
       - wget -q http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
       - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
-      - cd /usr/local/bin
-      - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE; done
-      - cd ~
+      - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE /usr/local/bin/${FILE}; done
       - pip install -qr requirements.txt
-      - ls
       - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
 
 services:
