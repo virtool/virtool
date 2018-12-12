@@ -3,7 +3,7 @@ name: server
 
 steps:
   - name: test
-    image: python:3.6-stretch
+    image: python:3.6-jessie
     commands:
       - apt-get update
       - apt-get install unzip
@@ -36,7 +36,7 @@ steps:
 
 services:
   - name: db
-    image: mongo:3.6-stretch
+    image: mongo:3.6-jessie
 
 ---
 kind: pipeline
@@ -56,14 +56,14 @@ name: build
 
 steps:
   - name: client
-    image: node:10-stretch
+    image: node:10-jessie
     commands:
       - cd client
       - npm i
       - npx webpack --config webpack.production.config.babel.js
 
   - name: server
-    image: python:3.6-stretch
+    image: python:3.6-jessie
     commands:
       - pip install -qr requirements.txt
       - mkdir gh_build
