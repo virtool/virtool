@@ -6,7 +6,7 @@ import { removeSample } from "../actions";
 import { RemoveModal } from "../../base";
 
 export const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
-    <RemoveModal noun="OTU" name={name} show={show} onConfirm={() => onConfirm(id)} onHide={onHide} />
+    <RemoveModal noun="Sample" name={name} show={show} onConfirm={() => onConfirm(id)} onHide={onHide} />
 );
 
 const mapStateToProps = state => {
