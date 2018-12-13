@@ -17,7 +17,7 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases"
+VIRTOOL_RELEASES_URL = "https://www.virtool.ca/releases3"
 
 
 async def fetch_and_update_releases(app, ignore_errors=False):
@@ -62,7 +62,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
 
         return await virtool.db.utils.get_one_field(db.status, "releases", "software")
 
-    data = data["software"]
+    data = data["virtool"]
 
     channel = settings["software_channel"]
 
