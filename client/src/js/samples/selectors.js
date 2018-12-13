@@ -8,10 +8,15 @@ const getGroups = state => state.account.groups;
 const getSample = state => state.samples.detail;
 
 export const getCanModify = createSelector(
-    [getAdministrator, getGroups, getSample],
-    (administrator, groups, sample) => {
+    [getAdministrator, getGroups, getSample, getUserId],
+    (administrator, groups, sample, userId) => {
         if (sample) {
-            return administrator || sample.all_write || (sample.group_write && includes(groups, sample.group));
+            return (
+                administrator ||
+                sample.all_write ||
+                sample.user.id === userId ||
+                (sample.group_write && includes(groups, sample.group))
+            );
         }
     }
 );
