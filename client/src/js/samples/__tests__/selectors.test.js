@@ -1,52 +1,66 @@
 import { getCanModify } from "../selectors";
 
 describe("Samples selector helper module", () => {
-    let state;
-    let result;
+    describe("getCanModify", () => {
+        let state;
 
-    it("getCanModify: returns boolean value denoting whether user has sample modification rights", () => {
-        state = {
-            account: {
-                administrator: false,
-                groups: []
-            },
-            samples: {
-                detail: null
-            }
-        };
-        result = getCanModify(state);
-        expect(result).toEqual(undefined);
-
-        state = {
-            account: {
-                administrator: false,
-                groups: []
-            },
-            samples: {
-                detail: {
-                    all_write: false,
-                    group_write: true,
-                    group: ""
+        beforeEach(() => {
+            state = {
+                account: {
+                    id: "fred",
+                    administrator: false,
+                    groups: ["foo"]
+                },
+                samples: {
+                    detail: {
+                        all_write: false,
+                        group_write: false,
+                        group: "bar",
+                        user: {
+                            id: "bob"
+                        }
+                    }
                 }
-            }
-        };
-        result = getCanModify(state);
-        expect(result).toEqual(false);
+            };
+        });
 
-        state = {
-            account: {
+        it("should return [false] by default", () => {
+            expect(getCanModify(state)).toBe(false);
+        });
+
+        it("should return [false] when user is group member but [group_write=false]", () => {
+            state.account.groups.push("bar");
+            expect(getCanModify(state)).toBe(false);
+        });
+
+        it("should return [false] when [group_write=true] but user is not group member", () => {
+            state.samples.detail.group_write = true;
+            expect(getCanModify(state)).toBe(false);
+        });
+
+        it("should return [true] when user is group member and [group_write=true]", () => {
+            state.account.groups.push("bar");
+            state.samples.detail.group_write = true;
+            expect(getCanModify(state)).toBe(true);
+        });
+
+        it("should return [true] when [all_write=true]", () => {
+            state.samples.detail.all_write = true;
+            expect(getCanModify(state)).toBe(true);
+        });
+
+        it("should return [true] when user is owner", () => {
+            state.samples.detail.user.id = "fred";
+            expect(getCanModify(state)).toBe(true);
+        });
+
+        it("should return [true] when user is administrator", () => {
+            state.account = {
+                id: "fred",
                 administrator: true,
-                groups: ["foo", "bar"]
-            },
-            samples: {
-                detail: {
-                    all_write: true,
-                    group_write: true,
-                    group: "foo"
-                }
-            }
-        };
-        result = getCanModify(state);
-        expect(result).toEqual(true);
+                groups: []
+            };
+            expect(getCanModify(state)).toBe(true);
+        });
     });
 });
