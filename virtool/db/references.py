@@ -630,41 +630,6 @@ async def create_import(db, settings, name, description, import_from, user_id):
     return document
 
 
-async def create_original(db, settings):
-    # The `created_at` value should be the `created_at` value for the earliest history document.
-    first_change = await db.history.find_one({}, ["created_at"], sort=[("created_at", pymongo.ASCENDING)])
-    created_at = first_change["created_at"]
-
-    users = await asyncio.shield(db.users.find({}, ["_id", "administrator", "permissions"]).to_list(None))
-
-    for user in users:
-        permissions = user.pop("permissions")
-
-        user.update({
-            "id": user.pop("_id"),
-            "build_index": permissions.get("modify_virus", False),
-            "modify": user["administrator"],
-            "modify_otu": permissions.get("modify_virus", False)
-        })
-
-    document = await create_document(
-        db,
-        settings,
-        "Original",
-        "virus",
-        "Created from existing viruses after upgrade to Virtool v3",
-        "genome",
-        created_at=created_at,
-        ref_id="original",
-        user_id="virtool",
-        users=users
-    )
-
-    await db.references.insert_one(document)
-
-    return document
-
-
 async def create_remote(db, settings, release, remote_from, user_id):
     created_at = virtool.utils.timestamp()
 
