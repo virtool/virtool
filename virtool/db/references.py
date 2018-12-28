@@ -681,7 +681,6 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
 
 
 async def export(db, ref_id, scope):
-    # A list of joined viruses.
     otu_list = list()
 
     query = {
