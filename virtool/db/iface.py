@@ -198,7 +198,6 @@ class DB:
         await self.bind_collection("status")
         await self.bind_collection("subtraction", projection=virtool.db.subtractions.PROJECTION)
         await self.bind_collection("users", projection=virtool.db.users.PROJECTION)
-        await self.bind_collection("viruses", projection=virtool.db.otus.PROJECTION)
 
     async def bind_collection(self, name, processor=None, projection=None, silent=False):
         collection = Collection(
