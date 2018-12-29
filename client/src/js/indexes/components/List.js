@@ -74,7 +74,7 @@ class IndexesList extends React.Component {
 
                 <ScrollList
                     documents={this.props.documents}
-                    onLoadNextPage={this.props.onLoadNextPage}
+                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.detail.id, page)}
                     page={this.props.page}
                     pageCount={this.props.page_count}
                     renderRow={this.renderRow}
