@@ -219,7 +219,7 @@ async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
 
 async def get_unbuilt_stats(db, ref_id=None):
     """
-    Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metdata for a
+    Get the number of unbuilt changes and number of OTUs affected by those changes. Used to populate the metadata for a
     index find request.
 
     Can search against a specific reference or all references.

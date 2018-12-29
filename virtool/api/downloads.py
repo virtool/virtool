@@ -105,7 +105,7 @@ async def download_reference(req):
         "organism": document["organism"]
     }
 
-    # Convert the list of viruses to a JSON-formatted string.
+    # Convert the list of OTUs to a JSON-formatted string.
     json_string = json.dumps(data, cls=CustomEncoder)
 
     # Compress the JSON string with gzip.
