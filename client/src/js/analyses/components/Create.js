@@ -185,7 +185,8 @@ export class CreateAnalysis extends React.Component {
 const mapStateToProps = state => ({
     documents: getSelectedDocuments(state),
     indexes: state.analyses.readyIndexes,
-    userId: state.account.id
+    userId: state.account.id,
+    hasHmm: !!state.hmms.total_count
 });
 
 const mapDispatchToProps = dispatch => ({
