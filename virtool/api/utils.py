@@ -89,7 +89,7 @@ def no_content():
 def bad_gateway(message="Bad gateway"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``502`` status and the JSON body
-    ``{"message": "Bad gatway"}``.
+    ``{"message": "Bad gateway"}``.
 
     :param message: text to send instead of 'Bad gateway'
     :type message: str
