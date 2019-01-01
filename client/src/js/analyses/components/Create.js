@@ -15,12 +15,26 @@ export const SamplesList = ({ samples }) => {
         </ListGroupItem>
     ));
 
+    let labelContent = "Sample";
+
+    const style = {
+        maxHeight: "220px"
+    };
+
+    if (samples.length > 1) {
+        labelContent = (
+            <span>
+                Samples <Badge>{samples.length}</Badge>
+            </span>
+        );
+
+        style.overflowY = "scroll";
+    }
+
     return (
         <div style={{ marginBottom: "16px" }}>
-            <label className="control-label">
-                Samples <Badge>{samples.length}</Badge>
-            </label>
-            <div style={{ overflowY: "scroll", maxHeight: "220px" }}>
+            <label className="control-label">{labelContent}</label>
+            <div style={style}>
                 <ListGroup style={{ marginBottom: 0 }}>{sampleComponents}</ListGroup>
             </div>
         </div>
@@ -171,7 +185,8 @@ export class CreateAnalysis extends React.Component {
 const mapStateToProps = state => ({
     documents: getSelectedDocuments(state),
     indexes: state.analyses.readyIndexes,
-    userId: state.account.id
+    userId: state.account.id,
+    hasHmm: !!state.hmms.total_count
 });
 
 const mapDispatchToProps = dispatch => ({
