@@ -41,9 +41,9 @@ class AnalysisDetail extends React.Component {
                 </Panel>
             );
         } else if (detail.algorithm === "pathoscope_bowtie") {
-            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
+            content = <PathoscopeViewer />;
         } else if (detail.algorithm === "nuvs") {
-            content = <NuVsViewer history={this.props.history} location={this.props.location} {...detail} />;
+            content = <NuVsViewer />;
         } else {
             throw Error("Unusable analysis detail content");
         }

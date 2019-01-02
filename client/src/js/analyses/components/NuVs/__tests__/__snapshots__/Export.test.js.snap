@@ -1,111 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<NuVsExport /> renders correctly 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onExited={[Function]}
+<NuVsExport
+  analysisId="test-analysis"
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
+  results={Array []}
+  sampleName="test-sample"
   show={true}
->
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Export NuVs Data
-  </ModalHeader>
-  <form
-    onSubmit={[Function]}
-  >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
-      <ButtonGroup
-        block={false}
-        bsClass="btn-group"
-        justified={true}
-        style={
-          Object {
-            "marginBottom": "15px",
-          }
-        }
-        vertical={false}
-      >
-        <ButtonGroup
-          block={false}
-          bsClass="btn-group"
-          justified={false}
-          vertical={false}
-        >
-          <Button
-            active={true}
-            bsStyle="default"
-            onClick={[Function]}
-            pullRight={false}
-            tipPlacement="top"
-            type="button"
-          >
-            Contigs
-          </Button>
-        </ButtonGroup>
-        <ButtonGroup
-          block={false}
-          bsClass="btn-group"
-          justified={false}
-          vertical={false}
-        >
-          <Button
-            active={false}
-            bsStyle="default"
-            onClick={[Function]}
-            pullRight={false}
-            tipPlacement="top"
-            type="button"
-          >
-            ORFs
-          </Button>
-        </ButtonGroup>
-      </ButtonGroup>
-      <NuVsExportPreview
-        mode="contigs"
-      />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
-      <Button
-        bsStyle="primary"
-        icon="download"
-        pullRight={false}
-        tipPlacement="top"
-        type="submit"
-      >
-        Download
-      </Button>
-    </ModalFooter>
-  </form>
-</Modal>
+/>
 `;
