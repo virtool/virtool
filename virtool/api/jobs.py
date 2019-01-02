@@ -18,7 +18,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("term", None)
+    term = req.query.get("find", None)
 
     db_query = dict()
 
