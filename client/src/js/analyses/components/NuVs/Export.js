@@ -5,11 +5,14 @@
  *
  */
 import React from "react";
+import { push } from "connected-react-router";
+import { forEach, map, reduce, replace } from "lodash-es";
 import PropTypes from "prop-types";
-import { filter, map, reduce, replace } from "lodash-es";
+import { connect } from "react-redux";
+
 import { ButtonGroup, Modal } from "react-bootstrap";
 
-import { followDynamicDownload } from "../../../utils/utils";
+import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { Button } from "../../../base/index";
 import NuVsExportPreview from "./ExportPreview";
 
@@ -38,7 +41,7 @@ const getBestHit = items =>
 const downloadData = (analysisId, content, sampleName, suffix) =>
     followDynamicDownload(`nuvs.${replace(sampleName, " ", "_")}.${analysisId}.${suffix}.fa`, content.join("\n"));
 
-export default class NuVsExport extends React.Component {
+export class NuVsExport extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState();
@@ -63,6 +66,8 @@ export default class NuVsExport extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
 
+        const sampleName = this.props.sampleName;
+
         if (this.state.mode === "contigs") {
             const content = map(this.props.results, result => {
                 const orfNames = reduce(
@@ -82,25 +87,29 @@ export default class NuVsExport extends React.Component {
                     []
                 );
 
-                return `>sequence_${result.index}|${this.props.sampleName}|${orfNames.join("|")}\n${result.sequence}`;
+                return `>sequence_${result.index}|${sampleName}|${orfNames.join("|")}\n${result.sequence}`;
             });
 
-            return downloadData(this.props.analysisId, content, this.props.sampleName, "contigs");
+            return downloadData(this.props.analysisId, content, sampleName, "contigs");
         }
 
-        const sampleName = this.props.sampleName;
+        const content = reduce(
+            this.props.results,
+            (lines, result) => {
+                forEach(result.orfs, orf => {
+                    // Get the best hit for the current ORF.
+                    if (orf.hits.length) {
+                        const bestHit = getBestHit(orf.hits);
 
-        const content = map(this.props.results, (orfs, result) =>
-            filter(result.orfs, orf => {
-                // Get the best hit for the current ORF.
-                if (orf.hits.length) {
-                    const bestHit = getBestHit(orf.hits);
-
-                    if (bestHit.name) {
-                        return `>orf_${result.index}_${orf.index}|${sampleName}|${bestHit.name}\n${orf.pro}`;
+                        if (bestHit.name) {
+                            lines.push(`>orf_${result.index}_${orf.index}|${sampleName}|${bestHit.name}\n${orf.pro}`);
+                        }
                     }
-                }
-            })
+                });
+
+                return lines;
+            },
+            []
         );
 
         downloadData(this.props.analysisId, content, this.props.sampleName, "orfs");
@@ -148,3 +157,20 @@ export default class NuVsExport extends React.Component {
         );
     }
 }
+
+const mapStateToProps = state => ({
+    show: routerLocationHasState(state, "export"),
+    sampleName: state.samples.detail.name,
+    analysisId: state.analyses.detail.id
+});
+
+const mapDispatchToProps = dispatch => ({
+    onHide: () => {
+        dispatch(push({ state: { export: false } }));
+    }
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(NuVsExport);
