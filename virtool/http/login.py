@@ -1,10 +1,10 @@
 import os
-import random
 import sys
 
 from aiohttp import web
 from mako.template import Template
 
+import virtool.app_routes
 import virtool.db.users
 import virtool.users
 import virtool.utils
@@ -14,17 +14,11 @@ def get_login_template():
     return Template(filename=os.path.join(sys.path[0], "templates", "login.html"))
 
 
-def generate_verification_keys():
-    keys = list()
-
-    for _ in range(3):
-        key = random.choice(["", virtool.utils.random_alphanumeric(12, mixed_case=True)])
-        keys.append(key)
-
-    return keys
+def get_reset_template():
+    return Template(filename=os.path.join(sys.path[0], "templates", "reset.html"))
 
 
-async def login_handler(req):
+async def login_post_handler(req):
     db = req.app["db"]
     client = req["client"]
 
@@ -33,10 +27,14 @@ async def login_handler(req):
     user_id = form_data.get("username", None)
     password = form_data.get("password", None)
     location = form_data.get("location", "/")
+    verification_key = form_data.get("verification", None)
 
-    authenticated = await virtool.db.users.validate_credentials(db, user_id, password)
+    session = await db.sessions.find_one(client.session_id, ["key"])
 
-    if authenticated:
+    if session is None or session["key"] != verification_key:
+        return web.HTTPFound(location)
+
+    if await virtool.db.users.validate_credentials(db, user_id, password):
         user_document = await db.users.find_one(user_id)
 
         document = await req.app["db"].sessions.find_one_and_update({"_id": client.session_id}, {
@@ -52,4 +50,6 @@ async def login_handler(req):
 
         client.authorize(document, False)
 
-    return web.HTTPFound(location)
+    req["login_error"] = "Invalid username or password"
+
+    return await virtool.app_routes.index_handler(req)
