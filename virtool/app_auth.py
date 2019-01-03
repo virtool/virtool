@@ -12,10 +12,9 @@ AUTHORIZATION_PROJECTION = ["user", "administrator", "groups", "permissions"]
 
 class Client:
 
-    def __init__(self, ip, user_agent):
+    def __init__(self, ip):
         # These attributes are assigned even when the session is not authorized.
         self.ip = ip
-        self.user_agent = user_agent
 
         self.administrator = None
         self.authorized = False
@@ -40,9 +39,8 @@ class Client:
 @web.middleware
 async def middleware(req, handler):
     ip = req.transport.get_extra_info("peername")[0]
-    user_agent = req.headers.get("User-Agent", None)
 
-    req["client"] = Client(ip, user_agent)
+    req["client"] = Client(ip)
 
     authorization = req.headers.get("AUTHORIZATION", None)
 
@@ -72,8 +70,7 @@ async def middleware(req, handler):
     session_id = req.cookies.get("session_id", None)
 
     document = await req.app["db"].sessions.find_one({
-        "_id": session_id,
-        "user_agent": user_agent
+        "_id": session_id
     })
 
     if document:
@@ -91,8 +88,7 @@ async def middleware(req, handler):
 
         await req.app["db"].sessions.insert_one({
             "_id": session_id,
-            "ip": ip,
-            "user_agent": user_agent
+            "ip": ip
         })
 
     req["client"].set_session_id(session_id)
