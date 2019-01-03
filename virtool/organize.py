@@ -2,6 +2,7 @@ import logging
 
 import pymongo.errors
 
+import virtool.db.analyses
 import virtool.db.history
 import virtool.db.otus
 import virtool.db.references
@@ -19,12 +20,28 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
-async def organize(db, settings, server_version):
+async def organize(app):
+    db = app["db"]
+    settings = app["settings"]
+    server_version = app["version"]
+
+    await organize_analyses(app)
     await organize_files(db)
     await organize_groups(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_samples(db)
+
+
+async def organize_analyses(app):
+    """
+    Remove orphaned analysis directories.
+
+    :param app:
+    """
+    logger.info(" • analyses")
+
+    await virtool.db.analyses.remove_orphaned_directories(app)
 
 
 async def organize_files(db):
