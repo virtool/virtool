@@ -177,7 +177,7 @@ async def init_check_db(app):
     db = app["db"]
 
     logger.info("Checking database...")
-    await virtool.organize.organize(db, app["settings"], app["version"])
+    await virtool.organize.organize(app)
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")

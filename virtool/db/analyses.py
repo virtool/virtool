@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 import aiofiles
 
@@ -262,3 +263,25 @@ async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
     })
 
     return data, document
+
+
+async def remove_orphaned_directories(app):
+    """
+    Remove all analysis directories for which an analysis document does not exist in the database.
+
+    :param app:
+    """
+    db = app["db"]
+
+    samples_path = os.path.join(app["settings"]["data_path"], "samples")
+
+    existing_ids = set(await db.analyses.distinct("_id"))
+
+    for sample_id in os.listdir(samples_path):
+        analyses_path = os.path.join(samples_path, sample_id, "analysis")
+
+        to_delete = set(os.listdir(analyses_path)) - existing_ids
+
+        for analysis_id in to_delete:
+            analysis_path = os.path.join(analyses_path, analysis_id)
+            await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
