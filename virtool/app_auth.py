@@ -95,7 +95,7 @@ async def middleware(req, handler):
 
     response = await handler(req)
 
-    response.set_cookie("session_id", session_id)
+    response.set_cookie("session_id", session_id, httponly=True)
 
     return response
 
