@@ -48,6 +48,8 @@ def setup_routes(app):
     app.router.add_get("/ws", virtool.api.websocket.root)
     app.router.add_get("/login", virtool.http.auth.login_get_handler)
     app.router.add_post("/login", virtool.http.auth.login_post_handler)
+    app.router.add_get("/reset", virtool.http.auth.reset_get_handler)
+    app.router.add_post("/reset", virtool.http.auth.reset_post_handler)
 
     app.router.add_routes(virtool.api.account.routes)
     app.router.add_routes(virtool.api.analyses.routes)
