@@ -11,7 +11,7 @@ describe("<Password />", () => {
                 force_reset: false,
                 last_password_change: "2018-02-14T17:12:00.000000Z"
             },
-            minPassLen: 8,
+            minimumPasswordLength: 8,
             onSetForceReset: jest.fn()
         };
         wrapper = shallow(<Password {...props} />);
