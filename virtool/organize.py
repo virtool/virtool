@@ -28,6 +28,7 @@ async def organize(app):
     await organize_analyses(app)
     await organize_files(db)
     await organize_groups(db)
+    await organize_sessions(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_samples(db)
@@ -81,6 +82,13 @@ async def organize_samples(db):
 
     for sample_id in await motor_client.samples.distinct("_id"):
         await virtool.db.samples.recalculate_algorithm_tags(motor_client, sample_id)
+
+
+async def organize_sessions(db):
+    logger.info(" • sessions")
+
+    await db.sessions.delete_many({"created_at": {"$exists": False}})
+    await db.sessions.create_index("expiresAt", expireAfterSeconds=0)
 
 
 async def organize_status(db, server_version):
