@@ -1,16 +1,15 @@
 import base64
 import os
 import sys
+import urllib.parse
 
-import aiofiles
+import mako.template
 from aiohttp import web
-from mako.template import Template
 
 import virtool.app_routes
 import virtool.db.sessions
 import virtool.db.users
 import virtool.db.utils
-
 import virtool.errors
 import virtool.users
 import virtool.utils
@@ -58,7 +57,108 @@ class Client:
         self.session_id = session_id
 
 
-def decode_authorization(authorization):
+async def auth_response(req, return_to, user_id):
+    db = req.app["db"]
+    client = req["client"]
+
+    # Create a new authenticated session for the user. This is identical to the process followed for logging in.
+    session, token = await virtool.db.sessions.replace_session(db, client.session_id, get_ip(req), user_id)
+
+    req["client"].authorize(session, False)
+    req["client"].session_id = session["_id"]
+
+    unquoted_return_to = urllib.parse.unquote(urllib.parse.unquote(return_to))
+
+    resp = web.Response(status=302, headers={"Location": unquoted_return_to})
+
+    resp.set_cookie("session_token", token)
+
+    return resp
+
+
+async def client_path_error() -> web.Response:
+    """
+    Returns a response with a rendered error page indicating the the application client files could not be found.
+
+    :return: a response
+    """
+    html = get_client_file_error_template().render()
+    return web.Response(body=html, content_type="text/html")
+
+
+def get_ip(req: web.Request) -> str:
+    """
+    A convenience function for getting the client IP address from a :class:`~web.Request` object.
+
+    :param req: the request
+    :return: the client's IP address string
+
+    """
+    return req.transport.get_extra_info("peername")[0]
+
+
+def get_client_file_error_template() -> mako.template.Template:
+    """
+    A convenience function for getting a :class:`~mako.template.Template` for an error page returned when the client
+    files cannot be found.
+
+    :return: an error page template
+
+    """
+    return mako.template.Template(filename=os.path.join(sys.path[0], "templates", "client_path_error.html"))
+
+
+def get_login_template() -> mako.template.Template:
+    """
+    A convenience function for getting a :class:`~mako.template.Template` for the login page.
+
+    :return: a login page template
+    """
+    return mako.template.Template(filename=os.path.join(sys.path[0], "templates", "login.html"))
+
+
+def get_reset_template() -> mako.template.Template:
+    """
+    A convenience function for getting a :class:`~mako.template.Template` for the password reset page.
+
+    :return: a reset page template
+    """
+    return mako.template.Template(filename=os.path.join(sys.path[0], "templates", "reset.html"))
+
+
+def get_return_to_from_path(req: web.Request) -> str:
+    """
+    Get a quoted path from a request path. The returned path can be used as a query parameter in login and reset URLs.
+
+    :param req: the request to derive the quoted path from
+    :return: a quoted path
+
+    """
+    if req.path == "/login":
+        return urllib.parse.quote("/", safe="")
+
+    return urllib.parse.quote(req.path, safe="")
+
+
+def get_return_to_from_query(req: web.Request) -> str:
+    """
+    Get a quoted path from a request query string. The returned path can be used as a query parameter in login and reset URLs.
+
+    :param req: the request to derive the quoted path from
+    :return: a quoted path
+    """
+    return_to = req.query.get("return_to", "/")
+    return urllib.parse.quote(return_to, safe="")
+
+
+def decode_authorization(authorization: str) -> tuple:
+    """
+    Parse and decode an API key from an HTTP authorization header value. Thje
+
+    :param authorization: the authorization header value for a API request
+    :return: a tuple containing the user id and API key parsed from the authorization header
+
+    """
     split = authorization.split(" ")
 
     if len(split) != 2 or split[0] != "Basic":
@@ -66,19 +166,9 @@ def decode_authorization(authorization):
 
     decoded = base64.b64decode(split[1]).decode("utf-8")
 
-    return decoded.split(":")
+    user_id, key = decoded.split(":")
 
-
-def get_ip(req):
-    return req.transport.get_extra_info("peername")[0]
-
-
-def get_reset_template():
-    return Template(filename=os.path.join(sys.path[0], "templates", "reset.html"))
-
-
-def get_login_template():
-    return Template(filename=os.path.join(sys.path[0], "templates", "login.html"))
+    return user_id, key
 
 
 @web.middleware
@@ -94,7 +184,7 @@ async def middleware(req, handler):
     can_use_api_key = req.path[0:4] == "/api" or req.path[0:7] == "/upload"
 
     # Try API key authorization.
-    if req.app["settings"]["enable_api"] and authorization and can_use_api_key:
+    if req.app["settings"].get("enable_api", False) and authorization and can_use_api_key:
         try:
             user_id, key = decode_authorization(authorization)
         except virtool.errors.AuthError:
@@ -134,7 +224,16 @@ async def middleware(req, handler):
     return resp
 
 
-async def index_handler(req):
+async def index_handler(req: web.Request) -> web.Response:
+    """
+    A request handler for requests where the `index.html` should be returned.
+
+    This handler deals with redirecting to the login and password reset pages where appropriate.
+
+    :param req: the request to handle
+    :return: the response
+
+    """
     if req.app["client_path"] is None:
         try:
             client_path = await virtool.utils.get_client_path()
@@ -144,128 +243,205 @@ async def index_handler(req):
         req.app["client_path"] = client_path
         req.app.router.add_static("/static", client_path)
 
-    if req["client"].user_id:
-        if req["client"].force_reset:
-            return web.Response(status=302, headers={"Location", "/reset"})
+    force_reset = req["client"].force_reset
 
+    if req["client"].user_id and not force_reset:
         with open(os.path.join(req.app["client_path"], "index.html"), "r") as handle:
             return web.Response(body=handle.read(), content_type="text/html")
 
-    last_path = "/"
+    path_base = "login"
 
-    if req.path != "/login":
-        last_path = req.path
+    if force_reset:
+        path_base = "reset"
 
-    await virtool.db.sessions.set_last_path(req.app["db"], req["client"].session_id, last_path)
+    return_to = get_return_to_from_path(req)
 
-    return web.Response(status=302, headers={"Location": "/login"})
+    return web.Response(status=302, headers={"Location": f"/{path_base}?return_to={return_to}"})
 
 
-async def login_get_handler(req):
-    db = req.app["db"]
+async def login_get_handler(req: web.Request) -> web.Response:
+    """
+    Handle a request to `GET` the application login page.
 
-    session_id = req["client"].session_id
+    Returns a response with a rendered login page. The rendered template contains a hidden verification key to prevent
+    spamming of the login system.
 
-    last_path = await virtool.db.utils.get_one_field(db.sessions, "last_path", {"_id": session_id})
+    :param req: the request to handle
+    :return: the response
 
+    """
     try:
         static_hash = virtool.utils.get_static_hash(req.app["client_path"])
     except FileNotFoundError:
         return await client_path_error()
 
-    verification_key = virtool.utils.random_alphanumeric(32, mixed_case=True)
-
-    await db.sessions.update_one({"_id": session_id}, {
-        "$set": {
-            "key": verification_key,
-            "last_path": "/"
-        }
-    })
+    verification_key = await virtool.db.sessions.get_verification_key(req.app["db"], req["client"].session_id)
 
     error = req.get("login_error", None)
+
+    return_to = get_return_to_from_query(req)
 
     html = virtool.http.auth.get_login_template().render(
         verification_key=verification_key,
         hash=static_hash,
-        location=last_path,
+        return_to=return_to,
         error=error
     )
 
     return web.Response(body=html, content_type="text/html")
 
 
-async def login_post_handler(req):
+async def login_post_handler(req: web.Request) -> web.Response:
+    """
+    Handle a `POST` request to login.
+
+    Validates the verification key and the passed username and password. If the user is flagged for a password reset,
+    the session is redirected to the reset password page. If login succeeds the user is redirected to their previous
+    location using the `return_to` query parameter.
+
+    :param req: the request to handle
+    :return: a response
+
+    """
     db = req.app["db"]
 
     client = req["client"]
 
     form_data = await req.post()
 
-    user_id = form_data.get("username", None)
-    password = form_data.get("password", None)
-    location = form_data.get("location", "/")
-    remember = form_data.get("remember", None) == "on"
+    user_id = form_data.get("username", "")
+    password = form_data.get("password", "")
+
     verification_key = form_data.get("verification", None)
 
+    # When this value is set, the session will last for 1 month instead of the 1 hour default.
+    remember = form_data.get("remember", "off") == "on"
+
+    # This is the path the user initially navigated to before being redirected to the login page.
+    return_to = get_return_to_from_query(req)
+
     # Check that the hidden verification key matches the one attached to the logging-in session.
-    if not await db.sessions.count({"_id": client.session_id, "key": verification_key}):
-        return web.HTTPFound(location)
+    if not await virtool.db.sessions.check_verification_key(db, client.session_id, verification_key):
+        return web.Response(status=302, headers={"Location": return_to})
 
     # Re-render the login page with an error message if the username and/or password are invalid.
     if not await virtool.db.users.validate_credentials(db, user_id, password):
         req["login_error"] = "Invalid username or password"
         return await login_get_handler(req)
 
-    session, token = await virtool.db.sessions.replace_session(db, client.session_id, get_ip(req), user_id)
+    # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
+    # reset code is generated and added to the query string.
+    if await virtool.db.utils.get_one_field(db.users, "force_reset", user_id):
+        reset_code = await virtool.db.sessions.get_reset_code(db, client.session_id, user_id)
+        return web.Response(status=302, headers={"Location": f"/reset?return_to={return_to}&code={reset_code}"})
 
-    req["client"].authorize(session, False)
-    req["client"].session_id = session["_id"]
-
-    resp = web.Response(status=302, headers={"Location": location})
-
-    resp.set_cookie("session_token", token)
-
-    return resp
+    return await auth_response(req, return_to, user_id)
 
 
-async def reset_get_handler(req):
+async def reset_get_handler(req: web.Request) -> web.Response:
+    """
+    Handle a request to `GET` the application password reset page.
+
+    Returns a response with a rendered password reset page. When the user successfully logs in in and a reset is
+    necessary, a one-time reset code is generated. The user is redirected to a URL containing the reset code. This
+    handler validates the reset code query parameter (`code`) and expires it. Invalid reset codes will prevent password
+    reset.
+
+    A hidden verification key field is returned in the rendered template. This key can is only sent to the client once
+    and can only be used to verify a single post request. If the reset request fails with `4**`, a new verification key
+    is created and the template is re-rendered and returned.
+
+    :param req: the request to handle
+    :return: a response
+
+    """
     db = req.app["db"]
 
     session_id = req["client"].session_id
 
-    last_path = await virtool.db.utils.get_one_field(db.sessions, "last_path", {"_id": session_id})
+    reset_code = req.query.get("code", None)
+
+    return_to = get_return_to_from_query(req)
+
+    if reset_code is None or not await virtool.db.sessions.check_reset_code(db, session_id, reset_code):
+        return web.Response(status=302, headers={"Location": f"/login?return_to={return_to}"})
 
     try:
         static_hash = virtool.utils.get_static_hash(req.app["client_path"])
     except FileNotFoundError:
         return await client_path_error()
 
-    verification_key = virtool.utils.random_alphanumeric(32, mixed_case=True)
+    verification_key = req.get(
+        "verification_key",
+        await virtool.db.sessions.get_verification_key(db, session_id, mode="reset")
+    )
 
-    await db.sessions.update_one({"_id": session_id}, {
-        "$set": {
-            "key": verification_key,
-            "last_path": "/"
-        }
-    })
+    # Get any errors to render on the reset form. These are recorded from a previous failed reset request.
+    errors = await virtool.db.utils.get_one_field(db.sessions, "reset_errors", session_id)
 
-    error = req.get("login_error", None)
+    # Clear the reset errors for the next reset `POST` request.
+    await virtool.db.sessions.set_reset_errors(db, session_id)
 
-    html = virtool.http.auth.get_login_template().render(
-        verification_key=verification_key,
+    html = virtool.http.auth.get_reset_template().render(
+        errors=errors,
         hash=static_hash,
-        location=last_path,
-        error=error
+        return_to=return_to,
+        verification_key = verification_key
     )
 
     return web.Response(body=html, content_type="text/html")
 
 
-async def reset_post_handler(req):
-    pass
+async def reset_post_handler(req: web.Request) -> web.Response:
+    """
+    Handles `POST` requests for resetting the password for a session user.
 
+    :param req: the request to handle
+    :return: a response
 
-async def client_path_error():
-    async with aiofiles.open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as f:
-        body = await f.read()
-        return web.Response(body=body, content_type="text/html")
+    """
+    db = req.app["db"]
+
+    client = req["client"]
+
+    form_data = await req.post()
+
+    password = form_data.get("password", "")
+    confirm = form_data.get("confirm", "")
+    verification_key = form_data.get("verification", None)
+    return_to = get_return_to_from_query(req)
+
+    # Check that the hidden verification key matches the one attached to the logging-in session. Redirect to `return_to`
+    # URL if verification fails (this will end up on login page with correct query parameter.
+    if not await virtool.db.sessions.check_verification_key(db, client.session_id, verification_key, mode="reset"):
+        return web.Response(status=302, headers={"Location": return_to})
+
+    user_id = await virtool.db.utils.get_one_field(db.sessions, "reset_user_id", client.session_id)
+
+    if not user_id:
+        return web.Response(status=302, headers={"Location": return_to})
+
+    errors = list()
+
+    # Re-render the reset page with an error message if the new password is invalid.
+    if password != confirm:
+        errors.append("Passwords do not match")
+
+    minimum_password_length = req.app["settings"]["minimum_password_length"]
+
+    if len(password) < minimum_password_length:
+        errors.append(f"Password must contain at least {minimum_password_length} characters")
+
+    if errors:
+        reset_code = await virtool.db.sessions.set_reset_errors(db, client.session_id, errors)
+        return web.Response(status=302, headers={"Location": f"/reset?return_to={return_to}&code={reset_code}"})
+
+    # Unset all reset page errors.
+    await virtool.db.sessions.set_reset_errors(db, client.session_id)
+
+    # Update the user password and disable the `force_reset`.
+    await virtool.db.users.edit(db, user_id, force_reset=False, password=password)
+
+    # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
+    # successful login requests.
+    return await auth_response(req, return_to, user_id)
