@@ -42,13 +42,13 @@
 </div>
 <div class="panel panel-default panel-login">
     <div class="panel-body">
-        <form method="post" action="/login">
+        <form method="post" action="/login?return_to=${return_to}">
             <input type="text" id="verification" name="verification" style="display: none;" value="${verification_key}">
 
             % if error:
-                <div class="alert alert-danger">
-                    Incorrect username or password.
-                </div>
+            <div class="alert alert-danger">
+                Incorrect username or password.
+            </div>
             % endif
 
             <div class="form-group">
@@ -61,16 +61,14 @@
                 <input type="password" name="password" class="form-control" id="password">
             </div>
 
-            <input type="hidden" name="location" value="${location}">
-
-           <div class="checkbox">
-            <label>
-              <input type="checkbox" id="remember" name="remember" value="on"> Remember Me
-            </label>
-          </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="remember" name="remember" value="on"> Remember Me
+                </label>
+            </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-                <i class="i-key"></i>
+                <i class="fas fa-sign-in-alt"></i>
                 <span>Login</span>
             </button>
         </form>
