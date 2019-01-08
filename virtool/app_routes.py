@@ -1,9 +1,4 @@
 import logging
-import os
-import sys
-
-import aiofiles
-from aiohttp import web
 
 import virtool.api.account
 import virtool.api.analyses
@@ -26,77 +21,35 @@ import virtool.api.subtractions
 import virtool.api.uploads
 import virtool.api.users
 import virtool.api.websocket
-import virtool.http.login
+import virtool.http.auth
 import virtool.utils
+import virtool.http.auth
 
 logger = logging.getLogger(__name__)
 
-
-async def client_path_error():
-    async with aiofiles.open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as f:
-        body = await f.read()
-        return web.Response(body=body, content_type="text/html")
-
-
-async def index_handler(req):
-    if req.app["client_path"] is None:
-        try:
-            client_path = await virtool.utils.get_client_path()
-        except FileNotFoundError:
-            return await client_path_error()
-
-        req.app["client_path"] = client_path
-        req.app.router.add_static("/static", client_path)
-
-    try:
-        static_hash = virtool.utils.get_static_hash(req.app["client_path"])
-    except FileNotFoundError:
-        return await client_path_error()
-
-    if not req["client"].user_id:
-        keys = virtool.http.login.generate_verification_keys()
-
-        session_id = req["client"].session_id
-
-        await req.app["db"].sessions.update_one({"_id": session_id}, {
-            "$set": {
-                "keys": keys
-            }
-        })
-
-        html = virtool.http.login.get_login_template().render(
-            key_1=keys[0],
-            key_2=keys[1],
-            key_3=keys[2],
-            hash=static_hash,
-            location=req.path
-        )
-
-        return web.Response(body=html, content_type="text/html")
-
-    with open(os.path.join(req.app["client_path"], "index.html"), "r") as handle:
-        return web.Response(body=handle.read(), content_type="text/html")
+INDEX_PATHS = [
+    "/",
+    r"/account{suffix:.*}",
+    r"/administration{suffix:.*}",
+    r"/home{suffix:.*}",
+    r"/hmm{suffix:.*}",
+    r"/jobs{suffix:.*}",
+    r"/otus{suffix:.*}",
+    r"/refs{suffix:.*}",
+    r"/samples{suffix:.*}",
+    r"/subtraction{suffix:.*}"
+]
 
 
 def setup_routes(app):
-    index_paths = [
-        "/",
-        r"/account{suffix:.*}",
-        r"/administration{suffix:.*}",
-        r"/home{suffix:.*}",
-        r"/hmm{suffix:.*}",
-        r"/jobs{suffix:.*}",
-        r"/otus{suffix:.*}",
-        r"/refs{suffix:.*}",
-        r"/samples{suffix:.*}",
-        r"/subtraction{suffix:.*}"
-    ]
-
-    for path in index_paths:
-        app.router.add_get(path, index_handler)
+    for path in INDEX_PATHS:
+        app.router.add_get(path, virtool.http.auth.index_handler)
 
     app.router.add_get("/ws", virtool.api.websocket.root)
-    app.router.add_post("/login", virtool.http.login.login_handler)
+    app.router.add_get("/login", virtool.http.auth.login_get_handler)
+    app.router.add_post("/login", virtool.http.auth.login_post_handler)
+    app.router.add_get("/reset", virtool.http.auth.reset_get_handler)
+    app.router.add_post("/reset", virtool.http.auth.reset_post_handler)
 
     app.router.add_routes(virtool.api.account.routes)
     app.router.add_routes(virtool.api.analyses.routes)

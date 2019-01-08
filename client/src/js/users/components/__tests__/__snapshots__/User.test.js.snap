@@ -71,45 +71,7 @@ exports[`<UserItem /> renders correctly 1`] = `
     <label>
       Change Password
     </label>
-    <Connect(Password)
-      activeUser="test-user"
-      activeUserIsAdmin={true}
-      detail={
-        Object {
-          "identicon": "randomhashof15c",
-        }
-      }
-      error=""
-      groups={Array []}
-      groupsFetched={true}
-      match={
-        Object {
-          "params": Object {
-            "userId": "test-user",
-          },
-        }
-      }
-      onClose={[MockFunction]}
-      onGetUser={
-        [MockFunction] {
-          "calls": Array [
-            Array [
-              "test-user",
-            ],
-          ],
-          "results": Array [
-            Object {
-              "isThrow": false,
-              "value": undefined,
-            },
-          ],
-        }
-      }
-      onListGroups={[MockFunction]}
-      onRemoveUser={[MockFunction]}
-      onSetPrimaryGroup={[MockFunction]}
-      onSetUserRole={[MockFunction]}
-    />
+    <Connect(Password) />
     <label>
       Groups
     </label>

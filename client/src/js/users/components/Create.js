@@ -64,10 +64,10 @@ export class CreateUser extends React.PureComponent {
             this.setState({ errorUserId: "Please specify a username" });
         }
 
-        if (this.state.password.length < this.props.minPassLen) {
+        if (this.state.password.length < this.props.minimumPasswordLength) {
             hasError = true;
             this.setState({
-                errorPassword: `Passwords must contain at least ${this.props.minPassLen} characters`
+                errorPassword: `Passwords must contain at least ${this.props.minimumPasswordLength} characters`
             });
         }
 
@@ -144,7 +144,7 @@ export class CreateUser extends React.PureComponent {
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createUser"),
     pending: state.users.createPending,
-    minPassLen: state.settings.data.minimum_password_length,
+    minimumPasswordLength: state.settings.data.minimum_password_length,
     error: get(state, "errors.CREATE_USER_ERROR.message", "")
 });
 
