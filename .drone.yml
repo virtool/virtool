@@ -32,11 +32,14 @@ steps:
       - cp -r hmmer-3.1b2-linux-intel-x86_64 /opt/hmmer
       - for FILE in /opt/hmmer/binaries/*; do ln -s $FILE /usr/local/bin/${FILE}; done
       - pip install -qr requirements.txt
-      - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
+      - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
 
 services:
-  - name: db
-    image: mongo:3.6-jessie
+  - name: mongo
+    image: mongo:3.6
+    command: [ --smallfiles ]
+    ports:
+      - 27017
 
 ---
 kind: pipeline
