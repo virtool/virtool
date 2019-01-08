@@ -6,7 +6,8 @@ steps:
     image: mongo:3.6
     commands:
       - sleep 5
-      - mongo --host db --eval "db.version()"
+      - mongo --host mongo --eval "db.version()"
+
   - name: test
     image: python:3.6-jessie
     commands:
@@ -40,9 +41,11 @@ steps:
       - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
 
 services:
-  - name: db
+  - name: mongo
     image: mongo:3.6
     command: [ --smallfiles ]
+    ports:
+      - 27017
 
 ---
 kind: pipeline
