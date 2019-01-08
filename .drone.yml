@@ -37,7 +37,7 @@ steps:
 services:
   - name: db
     image: mongo:3.6
-    command: [ --smallfiles, --noprealloc, --nojournal ]
+    command: [ --smallfiles, --nojournal ]
 
 ---
 kind: pipeline
