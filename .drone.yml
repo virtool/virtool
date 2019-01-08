@@ -2,15 +2,24 @@ kind: pipeline
 name: server
 
 steps:
+  - name: ping
+    image: mongo:3.6
+    commands:
+      - sleep 5
+      - mongo --host mongo --eval "db.version()"
+
   - name: test
     image: virtool/external-tools:0.1.1
     commands:
       - pip install -qr requirements.txt
-      - pytest -x --aiohttp-loop uvloop --db-host db --cov --cov-report xml
+      - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
 
 services:
-  - name: db
-    image: mongo:3.6-jessie
+  - name: mongo
+    image: mongo:3.6
+    command: [ --smallfiles, --nojournal ]
+    ports:
+      - 27017
 
 ---
 kind: pipeline
