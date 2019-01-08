@@ -37,8 +37,14 @@ steps:
 services:
   - name: db
     image: mongo:3.6
-    command: [ --smallfiles, --nojournal ]
-
+    command: [ --smallfiles ]
+    volumes:
+      - name: mongo
+        path: /data/db    
+    
+volumes:
+  - name: mongo
+    temp: {}
 ---
 kind: pipeline
 name: client
