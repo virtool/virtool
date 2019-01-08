@@ -273,6 +273,7 @@ async def find_indexes(req):
     "data_type": {
         "type": "string",
         "allowed": [
+            "barcode",
             "genome"
         ],
         "default": "genome"
