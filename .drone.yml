@@ -43,7 +43,7 @@ steps:
 services:
   - name: mongo
     image: mongo:3.6
-    command: [ --smallfiles ]
+    command: [ --smallfiles, --nojournal ]
     ports:
       - 27017
 
