@@ -2,6 +2,12 @@ kind: pipeline
 name: server
 
 steps:
+  - name: ping
+    image: mongo:3.6
+    commands:
+      - sleep 5
+      - mongo --host mongo --eval "db.version()"
+
   - name: test
     image: python:3.6-jessie
     commands:
