@@ -36,7 +36,9 @@ steps:
 
 services:
   - name: db
-    image: mongo:3.6-stretch
+    image: mongo:3
+    command: [ --smallfiles ]
+    ports: 27017
 
 ---
 kind: pipeline
