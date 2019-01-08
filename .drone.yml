@@ -46,7 +46,7 @@ services:
     volumes:
       - name: dbdata
         path: /dbdata
-    command: [ "--dbpath /dbdata", --smallfiles ]
+    command: [ --dbpath /dbdata, --smallfiles ]
     ports:
       - 27017
 
