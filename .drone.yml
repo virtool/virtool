@@ -43,16 +43,8 @@ steps:
 services:
   - name: mongo
     image: mongo:3.6
-    volumes:
-      - name: dbdata
-        path: /dbdata
-    command: [ "--dbpath=/dbdata", "--smallfiles" ]
-    ports:
-      - 27017
-
-volumes:
-  - name: dbdata
-    temp: {}
+    commands:
+      - rm -r /data/db
 
 ---
 kind: pipeline
