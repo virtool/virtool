@@ -91,7 +91,7 @@ export class UserItem extends React.Component {
 
                 <div style={{ marginTop: "20px" }}>
                     <label>Change Password</label>
-                    <Password {...this.props} />
+                    <Password />
 
                     <label>Groups</label>
                     <UserGroups userId={this.props.detail.id} memberGroups={this.props.detail.groups} />

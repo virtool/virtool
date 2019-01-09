@@ -14,7 +14,7 @@ import pymongo.errors
 from aiohttp import client, web
 from motor import motor_asyncio
 
-import virtool.app_auth
+import virtool.http.auth
 import virtool.app_routes
 import virtool.db.hmm
 import virtool.db.iface
@@ -177,7 +177,7 @@ async def init_check_db(app):
     db = app["db"]
 
     logger.info("Checking database...")
-    await virtool.organize.organize(db, app["settings"], app["version"])
+    await virtool.organize.organize(app)
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")
@@ -328,7 +328,7 @@ def create_app(
     ]
 
     if skip_setup:
-        middlewares.append(virtool.app_auth.middleware)
+        middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 

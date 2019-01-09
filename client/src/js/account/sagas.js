@@ -69,5 +69,5 @@ export function* removeAPIKey(action) {
 
 export function* logout() {
     yield accountAPI.logout();
-    window.location.reload();
+    window.location = "/login";
 }

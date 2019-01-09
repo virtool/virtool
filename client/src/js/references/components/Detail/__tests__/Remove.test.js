@@ -1,6 +1,6 @@
 import { RemoveBanner } from "../../../../base/index";
 import * as actions from "../../../actions";
-import RemoveReference from "../RemoveReference";
+import RemoveReference from "../Remove";
 
 describe("<RemoveReference />", () => {
     const initialState = {

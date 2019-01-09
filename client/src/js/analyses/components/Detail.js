@@ -4,7 +4,7 @@ import React from "react";
 import { Label, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { IDRow, LoadingPlaceholder, NotFound, RelativeTime } from "../../base/index";
+import { LoadingPlaceholder, NotFound, RelativeTime } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
 import NuVsViewer from "./NuVs/Viewer";
@@ -41,14 +41,28 @@ class AnalysisDetail extends React.Component {
                 </Panel>
             );
         } else if (detail.algorithm === "pathoscope_bowtie") {
-            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
+            content = <PathoscopeViewer />;
         } else if (detail.algorithm === "nuvs") {
-            content = <NuVsViewer history={this.props.history} location={this.props.location} {...detail} />;
+            content = <NuVsViewer />;
         } else {
             throw Error("Unusable analysis detail content");
         }
 
-        const mappedPercent = numbro(detail.read_count / this.props.quality.count).format("0.00%");
+        let mappedReads;
+
+        if (detail.read_count) {
+            const mappedPercent = numbro(detail.read_count / this.props.quality.count).format("0.00%");
+
+            mappedReads = (
+                <tr>
+                    <th>Mapped Reads</th>
+                    <td>
+                        {numbro(detail.read_count).format({ thousandSeparated: true })}
+                        <span style={{ paddingLeft: "5px" }}>({mappedPercent})</span>
+                    </td>
+                </tr>
+            );
+        }
 
         return (
             <div>
@@ -65,17 +79,10 @@ class AnalysisDetail extends React.Component {
                                 <Label style={{ marginLeft: "5px" }}>{detail.index.version}</Label>
                             </td>
                         </tr>
-                        <IDRow id={detail.id} />
-                        <tr>
-                            <th>Mapped Reads</th>
-                            <td>
-                                {numbro(detail.read_count).format()}
-                                <span style={{ paddingLeft: "5px" }}>({mappedPercent})</span>
-                            </td>
-                        </tr>
+                        {mappedReads}
                         <tr>
                             <th>Library Read Count</th>
-                            <td>{numbro(this.props.quality.count).format()}</td>
+                            <td>{numbro(this.props.quality.count).format({ thousandSeparated: true })}</td>
                         </tr>
                         <tr>
                             <th>Created</th>

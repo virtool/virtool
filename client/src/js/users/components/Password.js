@@ -13,15 +13,15 @@ import React from "react";
 import CX from "classnames";
 import { connect } from "react-redux";
 import { ButtonToolbar, Col, Panel, Row } from "react-bootstrap";
-import { find } from "lodash-es";
+import { find, get } from "lodash-es";
 import { editUser } from "../actions";
 import { Alert, Button, SaveButton, Checkbox, InputError, RelativeTime } from "../../base";
 
-const getInitialState = props => ({
+const getInitialState = ({ lastPasswordChange }) => ({
     password: "",
     confirm: "",
     errors: [],
-    lastPasswordChange: props.detail.last_password_change
+    lastPasswordChange
 });
 
 export class Password extends React.Component {
@@ -31,7 +31,7 @@ export class Password extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.lastPasswordChange === nextProps.detail.last_password_change) {
+        if (prevState.lastPasswordChange === nextProps.lastPasswordChange) {
             return null;
         }
 
@@ -60,7 +60,7 @@ export class Password extends React.Component {
     };
 
     handleSetForceReset = () => {
-        this.props.onSetForceReset(this.props.detail.id, !this.props.detail.force_reset);
+        this.props.onSetForceReset(this.props.id, !this.props.forceReset);
     };
 
     handleSubmit = e => {
@@ -68,10 +68,10 @@ export class Password extends React.Component {
 
         const errors = [];
 
-        if (!this.state.password || this.state.password.length < this.props.minPassLen) {
+        if (!this.state.password || this.state.password.length < this.props.minimumPasswordLength) {
             errors.push({
                 id: 0,
-                message: `Passwords must contain at least ${this.props.minPassLen} characters`
+                message: `Passwords must contain at least ${this.props.minimumPasswordLength} characters`
             });
         }
 
@@ -87,20 +87,26 @@ export class Password extends React.Component {
             return;
         }
 
-        this.props.onSubmit(this.props.detail.id, this.state.password);
+        this.props.onSubmit(this.props.id, this.state.password);
         this.handleClear();
     };
 
     render() {
-        const errorPassLen = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorPassMatch = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
+        const passwordLengthError = find(this.state.errors, ["id", 0])
+            ? find(this.state.errors, ["id", 0]).message
+            : null;
+        const passwordMatchError = find(this.state.errors, ["id", 1])
+            ? find(this.state.errors, ["id", 1]).message
+            : null;
+
+        const { error, forceReset, lastPasswordChange } = this.props;
 
         return (
             <Panel>
                 <Panel.Body>
                     <p>
                         <em>
-                            Last changed <RelativeTime time={this.props.detail.last_password_change} em={true} />
+                            Last changed <RelativeTime time={lastPasswordChange} em={true} />
                         </em>
                     </p>
 
@@ -113,7 +119,7 @@ export class Password extends React.Component {
                                     placeholder="New Password"
                                     value={this.state.password}
                                     onChange={this.handleChange}
-                                    error={errorPassLen}
+                                    error={passwordLengthError}
                                 />
                             </Col>
 
@@ -124,7 +130,7 @@ export class Password extends React.Component {
                                     placeholder="Confirm Password"
                                     value={this.state.confirm}
                                     onChange={this.handleChange}
-                                    error={errorPassMatch}
+                                    error={passwordMatchError}
                                 />
                             </Col>
                         </Row>
@@ -132,7 +138,7 @@ export class Password extends React.Component {
                             <Col xs={12} md={6}>
                                 <Checkbox
                                     label="Force user to reset password on next login"
-                                    checked={this.props.force_reset}
+                                    checked={forceReset}
                                     onClick={this.handleSetForceReset}
                                 />
                             </Col>
@@ -157,16 +163,23 @@ export class Password extends React.Component {
                         </Row>
                     </form>
 
-                    {this.props.error ? <Alert bsStyle="danger">{this.props.error}</Alert> : null}
+                    {error ? <Alert bsStyle="danger">{error}</Alert> : null}
                 </Panel.Body>
             </Panel>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    minPassLen: state.settings.data.minimum_password_length
-});
+const mapStateToProps = state => {
+    const { force_reset, id, last_password_change } = state.users.detail;
+    return {
+        id,
+        forceReset: force_reset,
+        lastPasswordChange: last_password_change,
+        minimumPasswordLength: state.settings.data.minimum_password_length,
+        error: get(state, "errors.GET_USER_ERROR.message", "")
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onSubmit: (userId, password) => {

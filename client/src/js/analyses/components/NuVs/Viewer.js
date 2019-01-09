@@ -1,10 +1,11 @@
 import React from "react";
+import { connect } from "react-redux";
 import { forEach, reduce } from "lodash-es";
 
 import NuVsExport from "./Export";
 import NuVsList from "./List";
 
-const NuVsViewer = props => {
+export const NuVsViewer = props => {
     // The length of the longest sequence will be stored here.
     let maxSequenceLength = 0;
 
@@ -54,18 +55,12 @@ const NuVsViewer = props => {
 
     return (
         <div>
-            <NuVsExport
-                show={props.location.state && props.location.state.export}
-                sampleId={props.sample.id}
-                sampleName={props.sample.name}
-                analysisId={props.id}
-                results={sequences}
-                onHide={() => props.history.push({ state: { export: false } })}
-            />
-
+            <NuVsExport results={sequences} />
             <NuVsList data={sequences} analysisId={props.id} maxSequenceLength={maxSequenceLength} />
         </div>
     );
 };
 
-export default NuVsViewer;
+const mapStateToProps = state => state.analyses.detail;
+
+export default connect(mapStateToProps)(NuVsViewer);

@@ -9,7 +9,7 @@ describe("<CreateUser />", () => {
         props = {
             show: true,
             pending: false,
-            minPassLen: 8,
+            minimumPasswordLength: 8,
             error: "",
             onCreate: sinon.spy(),
             onHide: sinon.spy(),

@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/style.${hash}.css">
 
-    <title>Login - Virtool</title>
+    <title>Reset Password - Virtool</title>
 </head>
 <body class="body-login">
 <div class="container-login">
@@ -42,34 +42,38 @@
 </div>
 <div class="panel panel-default panel-login">
     <div class="panel-body">
-        <form method="post" action="/login?return_to=${return_to}">
+        <div class="alert alert-info">
+            <strong>Please set a new account password.</strong>
+        </div>
+
+        % if errors:
+            <div class="alert alert-danger">
+                <ul style="padding-left: 20px;">
+                % for error in errors:
+                    <li>${error}</li>
+                % endfor
+                </ul>
+            </div>
+        % endif
+
+        <form method="post" action="/reset?return_to=${return_to}">
             <input type="text" id="verification" name="verification" style="display: none;" value="${verification_key}">
 
-            % if error:
-            <div class="alert alert-danger">
-                Incorrect username or password.
-            </div>
-            % endif
 
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" name="username" class="form-control" id="username" autofocus>
-            </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" name="password" class="form-control" id="password">
+                <input type="password" name="password" class="form-control" id="password" autofocus>
             </div>
 
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" id="remember" name="remember" value="on"> Remember Me
-                </label>
+            <div class="form-group">
+                <label for="confirm">Confirm</label>
+                <input type="password" name="confirm" class="form-control" id="confirm">
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>Login</span>
+                <i class="fas fa-save"></i>
+                <span>Submit</span>
             </button>
         </form>
     </div>

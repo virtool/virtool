@@ -1,21 +1,22 @@
-import React from "react";
-import { connect } from "react-redux";
-import { Switch, Route, Redirect } from "react-router-dom";
 import { push } from "connected-react-router";
 import { get } from "lodash-es";
+import React from "react";
+import { Badge, Dropdown, MenuItem, Nav, NavItem } from "react-bootstrap";
+import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem, Dropdown, MenuItem } from "react-bootstrap";
-import { LoadingPlaceholder, Icon, ViewHeader, Flex, FlexItem, RelativeTime, NotFound } from "../../../base";
+import { Redirect, Route, Switch } from "react-router-dom";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, RelativeTime, ViewHeader } from "../../../base";
 import IndexDetail from "../../../indexes/components/Detail";
+import Indexes from "../../../indexes/components/Indexes";
 import OTUDetail from "../../../otus/components/Detail/Detail";
+import OTUList from "../../../otus/components/List";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
-import OTUList from "../../../otus/components/List";
-import Indexes from "../../../indexes/components/Indexes";
 import SourceTypes from "../SourceTypes";
-import ReferenceMembers from "./Members";
-import ReferenceManage from "./Manage";
 import EditReference from "./Edit";
+import RemoveReference from "./Remove";
+import ReferenceManage from "./Manage";
+import ReferenceMembers from "./Members";
 
 class CustomToggle extends React.Component {
     // Bootstrap Dropdown requires custom dropdown components to be class components
@@ -32,11 +33,12 @@ class CustomToggle extends React.Component {
     }
 }
 
-const ReferenceSettings = ({ isRemote }) => (
+const ReferenceSettings = ({ canRemove, isRemote }) => (
     <div className="settings-container">
         {isRemote ? null : <SourceTypes />}
         <ReferenceMembers noun="users" />
         <ReferenceMembers noun="groups" />
+        {canRemove ? <RemoveReference /> : null}
     </div>
 );
 
@@ -163,7 +165,12 @@ class ReferenceDetail extends React.Component {
                                     <Route path="/refs/:refId/indexes" component={Indexes} />
                                     <Route
                                         path="/refs/:refId/settings"
-                                        render={() => <ReferenceSettings isRemote={remotes_from} />}
+                                        render={() => (
+                                            <ReferenceSettings
+                                                canRemove={this.props.canRemove}
+                                                isRemote={remotes_from}
+                                            />
+                                        )}
                                     />
                                 </Switch>
 
@@ -181,7 +188,8 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    canModify: checkRefRight(state, "modify")
+    canModify: checkRefRight(state, "modify"),
+    canRemove: checkRefRight(state, "remove")
 });
 
 const mapDispatchToProps = dispatch => ({

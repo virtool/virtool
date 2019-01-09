@@ -51,9 +51,6 @@ exports[`<AnalysisDetail /> renders correctly 1`] = `
           </Label>
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
       <tr>
         <th>
           Mapped Reads
@@ -156,9 +153,6 @@ exports[`<AnalysisDetail /> renders correctly 2`] = `
           </Label>
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
       <tr>
         <th>
           Mapped Reads
@@ -200,30 +194,7 @@ exports[`<AnalysisDetail /> renders correctly 2`] = `
       </tr>
     </tbody>
   </Table>
-  <PathoscopeViewer
-    algorithm="pathoscope_bowtie"
-    created_at="2018-02-14T17:12:00.000000Z"
-    id="123abc"
-    index={
-      Object {
-        "version": 1,
-      }
-    }
-    maxReadLength={55}
-    read_count={456}
-    ready={true}
-    reference={
-      Object {
-        "id": "test-reference",
-        "name": "imported",
-      }
-    }
-    user={
-      Object {
-        "id": "test-user",
-      }
-    }
-  />
+  <PathoscopeViewer />
 </div>
 `;
 
@@ -274,9 +245,6 @@ exports[`<AnalysisDetail /> renders correctly 3`] = `
           </Label>
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
       <tr>
         <th>
           Mapped Reads
@@ -318,28 +286,6 @@ exports[`<AnalysisDetail /> renders correctly 3`] = `
       </tr>
     </tbody>
   </Table>
-  <NuVsViewer
-    algorithm="nuvs"
-    created_at="2018-02-14T17:12:00.000000Z"
-    id="123abc"
-    index={
-      Object {
-        "version": 1,
-      }
-    }
-    read_count={456}
-    ready={true}
-    reference={
-      Object {
-        "id": "test-reference",
-        "name": "imported",
-      }
-    }
-    user={
-      Object {
-        "id": "test-user",
-      }
-    }
-  />
+  <Connect(NuVsViewer) />
 </div>
 `;
