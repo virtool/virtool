@@ -4,10 +4,8 @@ import { Badge, ListGroup, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { ListGroupItem, NoneFound, RelativeTime } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoteReference from "./Remote";
-import RemoveReference from "./RemoveReference";
 
 const Clone = ({ source }) => (
     <Panel>
@@ -119,15 +117,12 @@ const ReferenceManage = ({ canRemove, detail }) => {
                 <Panel.Heading>Contributors</Panel.Heading>
                 <Contributors contributors={contributors} />
             </Panel>
-
-            {canRemove ? <RemoveReference /> : null}
         </div>
     );
 };
 
 const mapStateToProps = state => ({
-    detail: state.references.detail,
-    canRemove: checkRefRight(state, "remove")
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({
