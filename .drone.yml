@@ -9,7 +9,7 @@ steps:
       - mongo --host mongo --eval "db.version()"
 
   - name: test
-    image: virtool/external-tools:0.1.1
+    image: virtool/external-tools:0.1.2
     commands:
       - pip install -qr requirements.txt
       - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
