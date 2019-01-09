@@ -4,10 +4,8 @@ import { Badge, ListGroup, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { ListGroupItem, NoneFound, RelativeTime } from "../../../base";
-import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoteReference from "./Remote";
-import RemoveReference from "./RemoveReference";
 
 const Clone = ({ source }) => (
     <Panel>
@@ -91,7 +89,7 @@ const ReferenceManage = ({ canRemove, detail }) => {
                     </tr>
                     <tr>
                         <th>Data Type</th>
-                        <td>{data_type}</td>
+                        <td className="text-capitalize">{data_type}</td>
                     </tr>
                     <tr>
                         <th>Organism</th>
@@ -99,7 +97,7 @@ const ReferenceManage = ({ canRemove, detail }) => {
                     </tr>
                     <tr>
                         <th>Internal Control</th>
-                        <td>{internal_control ? internal_control.name : null}</td>
+                        <td>{internal_control ? internal_control.name : "None"}</td>
                     </tr>
                 </tbody>
             </Table>
@@ -119,15 +117,12 @@ const ReferenceManage = ({ canRemove, detail }) => {
                 <Panel.Heading>Contributors</Panel.Heading>
                 <Contributors contributors={contributors} />
             </Panel>
-
-            {canRemove ? <RemoveReference /> : null}
         </div>
     );
 };
 
 const mapStateToProps = state => ({
-    detail: state.references.detail,
-    canRemove: checkRefRight(state, "remove")
+    detail: state.references.detail
 });
 
 const mapDispatchToProps = dispatch => ({

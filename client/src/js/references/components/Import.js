@@ -66,10 +66,6 @@ class ImportReference extends React.Component {
             return this.setState({ errorName: "Required Field" });
         }
 
-        if (!this.state.dataType.length) {
-            return this.setState({ errorDataType: "Required Field" });
-        }
-
         if (!this.state.localId.length) {
             return this.setState({ errorFile: "A reference file must be uploaded" });
         }

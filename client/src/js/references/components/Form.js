@@ -1,15 +1,14 @@
 import React from "react";
-import { map } from "lodash-es";
+import { capitalize, map } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { InputError } from "../../base";
+import { dataTypes } from "../utils";
 
 export default class ReferenceForm extends React.Component {
     render() {
-        const acceptedDataTypes = ["", "genome"];
-
-        const dataOptions = map(acceptedDataTypes, type => (
-            <option key={type} value={type} className="text-capitalize" hidden={!type.length}>
-                {type}
+        const dataOptions = map(dataTypes, type => (
+            <option key={type} value={type} hidden={!type.length}>
+                {capitalize(type)}
             </option>
         ));
 
