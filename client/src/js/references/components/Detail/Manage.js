@@ -89,7 +89,7 @@ const ReferenceManage = ({ canRemove, detail }) => {
                     </tr>
                     <tr>
                         <th>Data Type</th>
-                        <td>{data_type}</td>
+                        <td className="text-capitalize">{data_type}</td>
                     </tr>
                     <tr>
                         <th>Organism</th>
