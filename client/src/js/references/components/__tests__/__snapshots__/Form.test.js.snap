@@ -79,18 +79,18 @@ exports[`<ReferenceForm /> renders correctly with errors 1`] = `
         value="test-datatype"
       >
         <option
-          className="text-capitalize"
-          hidden={true}
-          key=""
-          value=""
-        />
+          hidden={false}
+          key="barcode"
+          value="barcode"
+        >
+          Barcode
+        </option>
         <option
-          className="text-capitalize"
           hidden={false}
           key="genome"
           value="genome"
         >
-          genome
+          Genome
         </option>
       </InputError>
     </Col>
@@ -168,18 +168,18 @@ exports[`<ReferenceForm /> renders correctly without errors 1`] = `
         value="test-datatype"
       >
         <option
-          className="text-capitalize"
-          hidden={true}
-          key=""
-          value=""
-        />
+          hidden={false}
+          key="barcode"
+          value="barcode"
+        >
+          Barcode
+        </option>
         <option
-          className="text-capitalize"
           hidden={false}
           key="genome"
           value="genome"
         >
-          genome
+          Genome
         </option>
       </InputError>
     </Col>
