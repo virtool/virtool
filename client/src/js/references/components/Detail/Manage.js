@@ -97,7 +97,7 @@ const ReferenceManage = ({ canRemove, detail }) => {
                     </tr>
                     <tr>
                         <th>Internal Control</th>
-                        <td>{internal_control ? internal_control.name : null}</td>
+                        <td>{internal_control ? internal_control.name : "None"}</td>
                     </tr>
                 </tbody>
             </Table>
