@@ -17,9 +17,10 @@ import {
     REMOVE_SEQUENCE,
     REVERT
 } from "../app/actionTypes";
-import { createFindURL } from "../utils/utils";
 import * as otusAPI from "./api";
-import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+
+const getCurrentOTUsPath = state => `/refs/${state.references.detail.id}/otus`;
 
 export function* updateAndGetOTU(apiMethod, action, actionType) {
     yield setPending(
@@ -95,13 +96,19 @@ export function* removeSequence(action) {
 export function* revert(action) {
     try {
         yield otusAPI.revert(action);
-        const otuResponse = yield otusAPI.get(action);
-        const historyResponse = yield otusAPI.getHistory(action);
-        yield put({
-            type: REVERT.SUCCEEDED,
-            data: otuResponse.body,
-            history: historyResponse.body
-        });
+
+        if (action.otuVersion === 0) {
+            const path = yield select(getCurrentOTUsPath);
+            yield put(push(path));
+        } else {
+            const otuResponse = yield otusAPI.get(action);
+            const historyResponse = yield otusAPI.getHistory(action);
+            yield put({
+                type: REVERT.SUCCEEDED,
+                data: otuResponse.body,
+                history: historyResponse.body
+            });
+        }
     } catch (error) {
         yield put({ type: REVERT.FAILED, error });
     }

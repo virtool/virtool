@@ -82,7 +82,7 @@ const getMethodIcon = ({ method_name }) => {
 
 export class Change extends React.Component {
     handleRevert = () => {
-        this.props.revert(this.props.otu.id, this.props._id);
+        this.props.revert(this.props.otu.id, this.props.otu.version, this.props._id);
     };
 
     render() {
@@ -200,8 +200,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(getOTUHistory(otuId));
     },
 
-    revert: (otuId, changeId) => {
-        dispatch(revert(otuId, changeId));
+    revert: (otuId, otuVersion, changeId) => {
+        dispatch(revert(otuId, otuVersion, changeId));
     }
 });
 
