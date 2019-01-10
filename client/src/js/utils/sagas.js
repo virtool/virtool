@@ -29,7 +29,11 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
         yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
         yield all(extraFunctions);
     } catch (error) {
-        yield putGenericError(actionType, error);
+        if (error.response.statusCode === 401) {
+            window.location = `/login?expired=true&return_to=${window.location.pathname}`;
+        } else {
+            yield putGenericError(actionType, error);
+        }
     }
 }
 

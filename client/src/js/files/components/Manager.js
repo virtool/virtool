@@ -1,10 +1,9 @@
+import { capitalize, filter, forEach } from "lodash-es";
 import React from "react";
-import { capitalize, forEach } from "lodash-es";
 import { connect } from "react-redux";
-
+import { Alert, LoadingPlaceholder, NoneFound, ScrollList, UploadBar, ViewHeader } from "../../base";
+import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
-import { Alert, LoadingPlaceholder, NoneFound, ViewHeader, UploadBar, ScrollList } from "../../base";
-import { createRandomString, checkAdminOrPermission } from "../../utils/utils";
 import { filesSelector } from "../selectors";
 import File from "./File";
 

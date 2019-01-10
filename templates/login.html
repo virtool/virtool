@@ -45,6 +45,12 @@
         <form method="post" action="/login?return_to=${return_to}">
             <input type="text" id="verification" name="verification" style="display: none;" value="${verification_key}">
 
+            % if expired:
+            <div class="alert alert-info">
+                Session expired.
+            </div>
+            % endif
+
             % if error:
             <div class="alert alert-danger">
                 Incorrect username or password.

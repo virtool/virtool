@@ -57,12 +57,12 @@ class Client:
         self.session_id = session_id
 
 
-async def auth_response(req, return_to, user_id):
+async def auth_response(req, return_to, user_id, remember):
     db = req.app["db"]
     client = req["client"]
 
     # Create a new authenticated session for the user. This is identical to the process followed for logging in.
-    session, token = await virtool.db.sessions.replace_session(db, client.session_id, get_ip(req), user_id)
+    session, token = await virtool.db.sessions.replace_session(db, client.session_id, get_ip(req), user_id, remember)
 
     req["client"].authorize(session, False)
     req["client"].session_id = session["_id"]
@@ -279,9 +279,14 @@ async def login_get_handler(req: web.Request) -> web.Response:
 
     error = req.get("login_error", None)
 
+    expired = req.query.get("expired", "false") in ["True", "true"]
+
     return_to = get_return_to_from_query(req)
 
+
+
     html = virtool.http.auth.get_login_template().render(
+        expired=expired,
         verification_key=verification_key,
         hash=static_hash,
         return_to=return_to,
@@ -335,7 +340,7 @@ async def login_post_handler(req: web.Request) -> web.Response:
         reset_code = await virtool.db.sessions.get_reset_code(db, client.session_id, user_id)
         return web.Response(status=302, headers={"Location": f"/reset?return_to={return_to}&code={reset_code}"})
 
-    return await auth_response(req, return_to, user_id)
+    return await auth_response(req, return_to, user_id, remember)
 
 
 async def reset_get_handler(req: web.Request) -> web.Response:
@@ -444,4 +449,4 @@ async def reset_post_handler(req: web.Request) -> web.Response:
 
     # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
     # successful login requests.
-    return await auth_response(req, return_to, user_id)
+    return await auth_response(req, return_to, user_id, False)
