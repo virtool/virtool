@@ -14,7 +14,7 @@ class HMMList extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (prevProps.status && !prevProps.status.installed && this.props.status.installed) {
-            this.props.onLoadNextPage(1);
+            this.props.onLoadNextPage(this.props.term, 1);
         }
     }
 
