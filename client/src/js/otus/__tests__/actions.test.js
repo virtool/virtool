@@ -200,8 +200,9 @@ describe("OTUs Action Creators", () => {
 
     it("revert: returns action to undo the latest change of a particular otu", () => {
         const changeId = "123abc";
-        const result = revert(otuId, changeId);
-        expect(result).toEqual({ type: REVERT.REQUESTED, otuId, change_id: changeId });
+        const otuVersion = 3;
+        const result = revert(otuId, otuVersion, changeId);
+        expect(result).toEqual({ type: REVERT.REQUESTED, otuId, otuVersion, change_id: changeId });
     });
 
     it("selectIsolate: returns action to select isolate to expand", () => {
