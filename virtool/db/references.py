@@ -148,7 +148,16 @@ async def check_source_type(db, ref_id, source_type):
     return True
 
 
-async def cleanup_removed(db, process_id, ref_id, user_id):
+async def cleanup_removed(db, process_id: str, ref_id: str, user_id: str):
+    """
+    Cleanup OTUs removed as the result of a reference removal.
+
+    :param db:
+    :param process_id:
+    :param ref_id:
+    :param user_id:
+    :return:
+    """
     await virtool.db.processes.update(db, process_id, progress=0, step="delete_indexes")
 
     await db.indexes.delete_many({
