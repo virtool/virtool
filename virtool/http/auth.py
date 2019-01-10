@@ -279,9 +279,14 @@ async def login_get_handler(req: web.Request) -> web.Response:
 
     error = req.get("login_error", None)
 
+    expired = req.query.get("expired", "false") in ["True", "true"]
+
     return_to = get_return_to_from_query(req)
 
+
+
     html = virtool.http.auth.get_login_template().render(
+        expired=expired,
         verification_key=verification_key,
         hash=static_hash,
         return_to=return_to,
