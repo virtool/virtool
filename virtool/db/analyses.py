@@ -284,4 +284,7 @@ async def remove_orphaned_directories(app):
 
         for analysis_id in to_delete:
             analysis_path = os.path.join(analyses_path, analysis_id)
-            await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
+            try:
+                await app["run_in_thread"](virtool.utils.rm, analysis_path, True)
+            except FileNotFoundError:
+                pass
