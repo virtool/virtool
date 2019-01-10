@@ -7,6 +7,7 @@ import aiohttp
 import pymongo
 import semver
 
+import virtool.api.utils
 import virtool.db.history
 import virtool.db.otus
 import virtool.db.processes
@@ -188,6 +189,42 @@ async def cleanup_removed(db, process_id: str, ref_id: str, user_id: str):
         await progress_tracker.add(1)
 
     await virtool.db.processes.update(db, process_id, progress=1)
+
+
+def compose_base_find_query(user_id: str, administrator: bool, groups: list):
+    """
+    Compose a query for filtering reference search results based on user read rights.
+
+    :param user_id: the id of the user requesting the search
+    :param administrator: the administrator flag of the user requesting the search
+    :param groups: the id group membership of the user requesting the search
+    :return: a valid MongoDB query
+
+    """
+    if administrator:
+        return dict()
+
+    is_user_member = {
+        "users.id": user_id
+    }
+
+    is_group_member = {
+        "groups.id": {
+            "$in": groups
+        }
+    }
+
+    is_owner = {
+        "user.id": user_id
+    }
+
+    return {
+        "$or": [
+            is_group_member,
+            is_user_member,
+            is_owner
+        ]
+    }
 
 
 async def delete_group_or_user(db, ref_id, subdocument_id, field):

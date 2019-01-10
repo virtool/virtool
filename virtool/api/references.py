@@ -47,13 +47,20 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["name", "data_type"]))
+        db_query = compose_regex_query(term, ["name", "data_type"])
+
+    base_query = virtool.db.references.compose_base_find_query(
+        req["client"].user_id,
+        req["client"].administrator,
+        req["client"].groups
+    )
 
     data = await paginate(
         db.references,
         db_query,
         req.query,
         sort="name",
+        base_query=base_query,
         processor=virtool.utils.base_processor,
         projection=virtool.db.references.PROJECTION
     )
