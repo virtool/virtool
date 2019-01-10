@@ -241,6 +241,15 @@ async def init_file_manager(app):
 
     """
     files_path = os.path.join(app["settings"].get("data_path"), "files")
+    watch_path = app["settings"].get("watch_path")
+
+    if not os.path.exists(files_path):
+        logger.fatal(f"Files path path does not exist: '{files_path}'")
+        sys.exit(1)
+
+    if not os.path.exists(watch_path):
+        logger.fatal(f"Watch path does not exist: '{watch_path}'")
+        sys.exit(1)
 
     if os.path.isdir(files_path):
         app["file_manager"] = virtool.files.Manager(
@@ -248,13 +257,10 @@ async def init_file_manager(app):
             app["executor"],
             app["db"],
             files_path,
-            app["settings"].get("watch_path"),
             clean_interval=20
         )
 
         scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-
-        await scheduler.spawn(app["file_manager"].run())
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
