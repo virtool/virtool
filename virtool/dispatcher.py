@@ -138,6 +138,21 @@ class Dispatcher:
         self.connections.append(connection)
         logging.debug(f'Added connection to dispatcher: {connection.user_id}')
 
+    def update_connections(self, user: dict):
+        """
+        Given a user document, updates the `groups` and `permissions` attributes for all active
+        :class:`.Connection` objects.
+
+        :param user: a user document
+
+        """
+        user_id = user["id"]
+
+        for connection in self.connections:
+            if connection.user_id == user_id:
+                connection.groups = user["groups"]
+                connection.permissions = user["permissions"]
+
     def remove_connection(self, connection: Connection):
         """
         Remove a connection from the dispatcher. Make sure it is closed first.
