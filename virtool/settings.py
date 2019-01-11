@@ -211,13 +211,13 @@ class Settings:
 
     async def load(self):
         self._from_file = await self._load_from_file()
-        self._from_db = await self._load_from_db()
+        self._from_db = await self.load_from_db()
 
     async def load_from_db(self):
-
-    async def _load_from_db(self):
         settings = await self._db.settings.find_one("settings", projection=PROJECTION)
         self._from_db = virtool.utils.base_processor(settings)
+
+        return self.as_dict()
 
     async def _load_from_file(self):
         try:
@@ -229,14 +229,12 @@ class Settings:
 
         self._from_file = self.validate(content)
 
-    def __getitem__(self, key):
-        return self.data.get(key)
-
-    def __setitem__(self, key, value):
-        self.data[key] = value
+    def __getitem__(self, *args, **kwargs):
+        combined = {**self._from_file, **self._from_db}
+        return combined.__getitem__(*args, **kwargs)
 
     def as_dict(self):
-        return dict(self.data)
+        return {**self._from_file, **self._from_db}
 
     @staticmethod
     def validate(data):
