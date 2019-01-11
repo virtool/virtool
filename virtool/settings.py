@@ -4,12 +4,15 @@ import os
 import sys
 
 import aiofiles
-from cerberus import Validator
+import cerberus
 
 import virtool.resources
 import virtool.utils
+from virtool.db.settings import PROJECTION
 
 logger = logging.getLogger(__name__)
+
+PATH = os.path.join(sys.path[0], "settings.json")
 
 
 def get_default_boolean(default):
@@ -18,11 +21,6 @@ def get_default_boolean(default):
 
 def get_default_integer(default):
     return {"type": "integer", "coerce": int, "default": default}
-
-
-PROJECTION = {
-    "_id": False
-}
 
 
 DEFAULT_ANALYSIS_PROC = get_default_integer(6)
@@ -188,64 +186,69 @@ def check_task_specific_limits(proc, mem, update):
                 return "Exceeds mem resource specific limit"
 
 
-async def write_settings_file(path, settings_dict):
-    validated = Settings.validate(settings_dict)
+async def load(self):
+    await self._migrate()
 
-    with open(path, "w") as f:
-        json.dump(validated, f)
+    # Load settings from the database.
+    self._from_db = await self.load_from_db()
+
+    # Load settings from `settings.json`.
+    from_file = await self._load_from_file()
+    self._from_file = self.validate_file(from_file)
 
 
-class Settings:
+async def load_from_db(app):
+    await migrate(app)
 
-    def __init__(self, db):
-        self._db = db
+    settings = await app["db"].settings.find_one("settings", projection=PROJECTION)
 
-        #: The expected path to the settings file.
-        self._path = os.path.join(sys.path[0], "settings.json")
+    if settings:
+        return settings
 
-        #: The settings values derived from `settings.json`. This cannot be changed after app start.
-        self._from_file = None
+    return dict()
 
-        #: The settings values derived from the database. These values can change dynamically.
-        self._from_db = None
 
-    async def load(self):
-        self._from_file = await self._load_from_file()
-        self._from_db = await self.load_from_db()
+async def load_from_file():
+    try:
+        async with aiofiles.open(PATH, "r") as f:
+            return json.loads(await f.read())
+    except IOError:
+        logger.info("No settings file found. Using defaults.")
+        return dict()
 
-    async def load_from_db(self):
-        settings = await self._db.settings.find_one("settings", projection=PROJECTION)
-        self._from_db = virtool.utils.base_processor(settings)
 
-        return self.as_dict()
+async def migrate(app):
+    db = app["db"]
 
-    async def _load_from_file(self):
-        try:
-            async with aiofiles.open(self.path, "r") as f:
-                content = json.loads(await f.read())
-        except IOError:
-            logger.info("No settings file found. Using defaults.")
-            content = dict()
+    if await db.settings.count({"_id": "settings"}):
+        return
 
-        self._from_file = self.validate(content)
+    from_file = await load_from_file()
 
-    def __getitem__(self, *args, **kwargs):
-        combined = {**self._from_file, **self._from_db}
-        return combined.__getitem__(*args, **kwargs)
+    # Move settings stored in DB to database.
+    v = cerberus.Validator(API_SCHEMA, purge_unknown=True)
+    v.validate(from_file)
 
-    def as_dict(self):
-        return {**self._from_file, **self._from_db}
+    await db.settings.insert_one({"_id": "settings", **v.document})
 
-    @staticmethod
-    def validate(data):
-        v = Validator(FILE_SCHEMA, purge_unknown=True)
+    # Rewrite settings file without DB-stored settings.
+    v = cerberus.Validator(schema=FILE_SCHEMA, purge_unknown=True)
+    v.validate(from_file)
 
-        if not v.validate(data):
-            logger.critical("Could not validate settings file", v.errors)
+    async with aiofiles.open(PATH, "w") as f:
+        json_string = json.dumps(v.document, indent=4, sort_keys=True)
+        await f.write(json_string)
 
-            for error in v.errors:
-                logger.critical(f"\t{error}")
 
-            sys.exit(1)
+def validate_file(data):
+    v = cerberus.Validator(FILE_SCHEMA, purge_unknown=True)
 
-        return v.document
+    if not v.validate(data):
+        logger.critical("Could not validate settings file", v.errors)
+
+        for error in v.errors:
+            logger.critical(f"\t{error}")
+
+        sys.exit(1)
+
+    return v.document
