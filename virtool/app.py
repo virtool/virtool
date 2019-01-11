@@ -89,7 +89,7 @@ async def init_resources(app):
     app["resources"] = virtool.resources.get()
 
 
-async def init_settings(app):
+async def init_settings_from_file(app):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`~.Settings` object and attaches it to the
     ``app`` object.
@@ -98,8 +98,12 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["settings"] = virtool.settings.Settings()
-    await app["settings"].load()
+    app["settings"] = await virtool.settings.load_from_file()
+
+
+async def init_settings_from_db(app):
+    from_db = await virtool.settings.load_from_db(app)
+    app["settings"].update(from_db)
 
 
 async def init_sentry(app):
@@ -347,42 +351,48 @@ def create_app(
 
     app.on_startup.append(init_client_path)
 
+    # Run app in setup mode. The application will have to be configured and restarted before use.
     if not skip_setup:
         app.on_startup.append(init_setup)
+        return app
+
+    app.on_startup.append(init_version)
+    app.on_startup.append(init_http_client)
+    app.on_startup.append(init_routes)
+
+    if ignore_settings:
+        app["settings"] = dict()
+
     else:
-        app.on_startup.append(init_version)
-        app.on_startup.append(init_http_client)
-        app.on_startup.append(init_routes)
+        app.on_startup.append(init_settings_from_file)
 
-        if not ignore_settings:
-            app.on_startup.append(init_settings)
+        if not no_sentry:
+            app.on_startup.append(init_sentry)
 
-            if not no_sentry:
-                app.on_startup.append(init_sentry)
-        else:
-            app["settings"] = dict()
+    app.on_startup.append(init_executors)
+    app.on_startup.append(init_dispatcher)
+    app.on_startup.append(init_db)
 
-        app.on_startup.append(init_executors)
-        app.on_startup.append(init_dispatcher)
-        app.on_startup.append(init_db)
+    if not ignore_settings:
+        app.on_startup.append(init_settings_from_db)
 
-        if skip_db_checks:
-            logger.info("Skipping database checks.")
-        else:
-            app.on_startup.append(init_check_db)
+    if skip_db_checks:
+        logger.info("Skipping database checks.")
+    else:
+        app.on_startup.append(init_check_db)
 
-        app.on_startup.append(init_resources)
+    app.on_startup.append(init_resources)
 
-        if not disable_job_manager:
-            app.on_startup.append(init_job_manager)
+    if not disable_job_manager:
+        app.on_startup.append(init_job_manager)
 
-        if not disable_file_manager:
-            app.on_startup.append(init_file_manager)
+    if not disable_file_manager:
+        app.on_startup.append(init_file_manager)
 
-        if not disable_refreshing:
-            app.on_startup.append(init_refresh)
+    if not disable_refreshing:
+        app.on_startup.append(init_refresh)
 
-        app.on_shutdown.append(on_shutdown)
+    app.on_shutdown.append(on_shutdown)
 
     return app
 
