@@ -241,7 +241,7 @@ async def init_file_manager(app):
 
     """
     files_path = os.path.join(app["settings"].get("data_path"), "files")
-    watch_path = app["settings"].get("watch_path")
+    watch_path = app["settings"]["watch_path"]
 
     if not os.path.exists(files_path):
         logger.fatal(f"Files path path does not exist: '{files_path}'")
@@ -257,6 +257,7 @@ async def init_file_manager(app):
             app["executor"],
             app["db"],
             files_path,
+            watch_path,
             clean_interval=20
         )
 
