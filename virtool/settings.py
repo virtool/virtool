@@ -20,11 +20,46 @@ def get_default_integer(default):
     return {"type": "integer", "coerce": int, "default": default}
 
 
+PROJECTION = {
+    "_id": False
+}
+
+
 DEFAULT_ANALYSIS_PROC = get_default_integer(6)
 DEFAULT_ANALYSIS_MEM = get_default_integer(16)
 DEFAULT_ANALYSIS_INST = get_default_integer(6)
 
-SCHEMA = {
+API_SCHEMA = {
+    # Samples
+    "sample_group": {"type": "string", "default": "none"},
+    "sample_group_read": get_default_boolean(True),
+    "sample_group_write": get_default_boolean(False),
+    "sample_all_read": get_default_boolean(True),
+    "sample_all_write": get_default_boolean(False),
+    "sample_unique_names": get_default_boolean(True),
+
+    # HMM
+    "hmm_slug": {
+        "type": "string",
+        "default": "virtool/virtool-hmm"
+    },
+
+    "enable_api": {"type": "boolean", "default": False},
+
+    # External Services
+    "enable_sentry": {"type": "boolean", "default": True},
+
+    # Software Updates
+    "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
+
+    # Accounts
+    "minimum_password_length": {"type": "integer", "default": 8},
+
+    # Reference settings
+    "default_source_types": {"type": "list", "default": ["isolate", "strain"]}
+}
+
+FILE_SCHEMA = {
     # File paths
     "data_path": {"type": "string", "default": "data"},
     "watch_path": {"type": "string", "default": "watch"},
@@ -53,20 +88,6 @@ SCHEMA = {
     "build_index_mem": get_default_integer(4),
     "build_index_inst": get_default_integer(1),
 
-    # Samples
-    "sample_group": {"type": "string", "default": "none"},
-    "sample_group_read": get_default_boolean(True),
-    "sample_group_write": get_default_boolean(False),
-    "sample_all_read": get_default_boolean(True),
-    "sample_all_write": get_default_boolean(False),
-    "sample_unique_names": get_default_boolean(True),
-
-    # HMM
-    "hmm_slug": {
-        "type": "string",
-        "default": "virtool/virtool-hmm"
-    },
-
     # MongoDB
     "db_name": {"type": "string", "default": "virtool"},
     "db_host": {"type": "string", "default": "localhost"},
@@ -79,24 +100,13 @@ SCHEMA = {
     # HTTP Server
     "server_host": {"type": "string", "default": "localhost"},
     "server_port": get_default_integer(9950),
-    "enable_api": {"type": "boolean", "default": False},
 
     # Proxy Server
     "proxy_address": {"type": "string", "default": ""},
     "proxy_enable": get_default_boolean(False),
     "proxy_password": {"type": "string", "default": ""},
     "proxy_username": {"type": "string", "default": ""},
-    "proxy_trust": get_default_boolean(False),
-
-    # External Services
-    "enable_sentry": {"type": "boolean", "default": True},
-    "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
-
-    # Accounts
-    "minimum_password_length": {"type": "integer", "default": 8},
-
-    # Reference settings
-    "default_source_types": {"type": "list", "default": ["isolate", "strain"]}
+    "proxy_trust": get_default_boolean(False)
 }
 
 TASK_SPECIFIC_LIMIT_KEYS = [
@@ -187,9 +197,39 @@ async def write_settings_file(path, settings_dict):
 
 class Settings:
 
-    def __init__(self):
-        self.data = None
-        self.path = os.path.join(sys.path[0], "settings.json")
+    def __init__(self, db):
+        self._db = db
+
+        #: The expected path to the settings file.
+        self._path = os.path.join(sys.path[0], "settings.json")
+
+        #: The settings values derived from `settings.json`. This cannot be changed after app start.
+        self._from_file = None
+
+        #: The settings values derived from the database. These values can change dynamically.
+        self._from_db = None
+
+    async def load(self):
+        self._from_file = await self._load_from_file()
+        self._from_db = await self._load_from_db()
+
+    def get(self, *args, **kwargs):
+        combined = {**self._from_file, **self._from_db}
+        return combined.get(*args, **kwargs)
+
+    async def _load_from_db(self):
+        settings = await self._db.settings.find_one("settings", projection=PROJECTION)
+        self._from_db = virtool.utils.base_processor(settings)
+
+    async def _load_from_file(self):
+        try:
+            async with aiofiles.open(self.path, "r") as f:
+                content = json.loads(await f.read())
+        except IOError:
+            logger.info("No settings file found. Using defaults.")
+            content = dict()
+
+        self._from_file = self.validate(content)
 
     def __getitem__(self, key):
         return self.data.get(key)
@@ -197,49 +237,19 @@ class Settings:
     def __setitem__(self, key, value):
         self.data[key] = value
 
-    def update(self, update_dict):
-        self.data.update(update_dict)
-
-    def get(self, *args, **kwargs):
-        return self.data.get(*args, **kwargs)
-
-    def set(self, key, value):
-        self.data[key] = value
-        return self.data
-
-    async def load(self):
-        try:
-            async with aiofiles.open(self.path, "r") as f:
-                content = json.loads(await f.read())
-        except IOError:
-            content = dict()
-
-        if "rebuild_index_proc" in content:
-            content.update({
-                "build_index_proc": content["rebuild_index_proc"],
-                "build_index_mem": content["rebuild_index_mem"],
-                "build_index_inst": content["rebuild_index_inst"]
-            })
-
-        self.data = self.validate(content)
-
-        await self.write()
-
-    async def write(self):
-        self.data = self.validate(self.data)
-
-        async with aiofiles.open(self.path, "w") as f:
-            json_string = json.dumps(self.data, indent=4, sort_keys=True)
-            await f.write(json_string)
-
     def as_dict(self):
         return dict(self.data)
 
     @staticmethod
     def validate(data):
-        v = Validator(SCHEMA, purge_unknown=True)
+        v = Validator(FILE_SCHEMA, purge_unknown=True)
 
         if not v.validate(data):
-            raise ValueError("Could not validate settings file", v.errors)
+            logger.critical("Could not validate settings file", v.errors)
+
+            for error in v.errors:
+                logger.critical(f"\t{error}")
+
+            sys.exit(1)
 
         return v.document
