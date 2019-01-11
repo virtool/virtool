@@ -1,4 +1,4 @@
-import Jobs, { JobsSettings } from "../Jobs";
+import Jobs from "../Jobs";
 
 describe("<Jobs />", () => {
     let initialState;
@@ -16,11 +16,6 @@ describe("<Jobs />", () => {
         initialState = { settings: { data: null } };
         store = mockStore(initialState);
         wrapper = shallow(<Jobs store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders <JobsSettings /> subcomponent", () => {
-        wrapper = shallow(<JobsSettings />);
         expect(wrapper).toMatchSnapshot();
     });
 });
