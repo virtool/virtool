@@ -411,7 +411,7 @@ async def edit_isolate(req):
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
 
-        if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
+        if settings["restrict_source_types"] and data["source_type"] not in settings["allowed_source_types"]:
             return bad_request("Source type is not allowed")
 
     old_isolate_name = virtool.otus.format_isolate_name(isolate)

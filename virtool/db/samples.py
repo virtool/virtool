@@ -151,7 +151,7 @@ async def remove_samples(db, settings, id_list):
         "$in": id_list
     }})
 
-    samples_path = os.path.join(settings.get("data_path"), "samples")
+    samples_path = os.path.join(settings["data_path"], "samples")
 
     for sample_id in id_list:
         try:

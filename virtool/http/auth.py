@@ -184,7 +184,7 @@ async def middleware(req, handler):
     can_use_api_key = req.path[0:4] == "/api" or req.path[0:7] == "/upload"
 
     # Try API key authorization.
-    if req.app["settings"].get("enable_api", False) and authorization and can_use_api_key:
+    if req.app["settings"]["enable_api"] and authorization and can_use_api_key:
         try:
             user_id, key = decode_authorization(authorization)
         except virtool.errors.AuthError:

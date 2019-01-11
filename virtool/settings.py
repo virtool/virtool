@@ -213,9 +213,7 @@ class Settings:
         self._from_file = await self._load_from_file()
         self._from_db = await self._load_from_db()
 
-    def get(self, *args, **kwargs):
-        combined = {**self._from_file, **self._from_db}
-        return combined.get(*args, **kwargs)
+    async def load_from_db(self):
 
     async def _load_from_db(self):
         settings = await self._db.settings.find_one("settings", projection=PROJECTION)

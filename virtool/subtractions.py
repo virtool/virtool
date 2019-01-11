@@ -33,7 +33,7 @@ def calculate_fasta_gc(path):
 
 def calculate_index_path(settings, subtraction_id):
     return os.path.join(
-        settings.get("data_path"),
+        settings["data_path"],
         "subtractions",
         subtraction_id.replace(" ", "_").lower()
     )

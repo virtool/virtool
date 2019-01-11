@@ -37,9 +37,9 @@ class ProxyRequest:
         auth = None
         address = None
 
-        if settings.get("proxy_enable"):
+        if settings["proxy_enable"]:
 
-            trust = settings.get("proxy_trust")
+            trust = settings["proxy_trust"]
 
             if trust:
                 address = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
@@ -48,14 +48,14 @@ class ProxyRequest:
                     raise virtool.errors.ProxyError("Environmental variables not found")
 
             else:
-                address = settings.get("proxy_address", None)
+                address = settings["proxy_address", None]
 
                 if not address:
                     raise virtool.errors.ProxyError("No proxy address set")
 
                 if address:
-                    username = settings.get("proxy_username", None)
-                    password = settings.get("proxy_password", None)
+                    username = settings["proxy_username", None]
+                    password = settings["proxy_password", None]
 
                     if username and password:
                         auth = aiohttp.BasicAuth(username, password)

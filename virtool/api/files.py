@@ -50,7 +50,7 @@ async def find(req):
 async def remove(req):
     file_id = req.match_info["file_id"]
 
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
+    file_path = os.path.join(req.app["settings"]["data_path"], "files", file_id)
 
     delete_result = await req.app["db"].files.delete_one({"_id": file_id})
 

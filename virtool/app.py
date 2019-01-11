@@ -103,7 +103,7 @@ async def init_settings(app):
 
 
 async def init_sentry(app):
-    if app["settings"].get("enable_sentry", False):
+    if app["settings"]["enable_sentry"]:
         app["sentry"] = virtool.sentry.setup(app["version"])
 
 
@@ -134,11 +134,11 @@ async def init_db(app):
     app["db_name"] = app.get("db_name", None) or settings["db_name"]
 
     db_host = app["db_host"]
-    db_port = settings.get("db_port", 27017)
+    db_port = settings["db_port"]
 
     auth_string = ""
 
-    if settings.get("db_use_auth", False):
+    if settings["db_use_auth"]:
         db_username = quote_plus(settings["db_username"])
         db_password = quote_plus(settings["db_password"])
 
@@ -146,7 +146,7 @@ async def init_db(app):
 
     ssl_string = ""
 
-    if settings.get("db_use_ssl", False):
+    if settings["db_use_ssl"]:
         ssl_string += "?ssl=true"
 
     string = "mongodb://{}{}:{}/{}{}".format(auth_string, db_host, db_port, app["db_name"], ssl_string)
@@ -240,7 +240,7 @@ async def init_file_manager(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    files_path = os.path.join(app["settings"].get("data_path"), "files")
+    files_path = os.path.join(app["settings"]["data_path"], "files")
     watch_path = app["settings"]["watch_path"]
 
     if not os.path.exists(files_path):
