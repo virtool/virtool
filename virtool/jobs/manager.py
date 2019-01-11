@@ -66,7 +66,7 @@ class IntegratedManager:
                                 job["process"] = job["class"](
                                     self.db_connection_string,
                                     self.db_name,
-                                    self.settings.as_dict(),
+                                    self.settings,
                                     job_id,
                                     self.queue
                                 )

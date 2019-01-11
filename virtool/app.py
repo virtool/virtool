@@ -362,12 +362,8 @@ def create_app(
 
     if ignore_settings:
         app["settings"] = dict()
-
     else:
         app.on_startup.append(init_settings_from_file)
-
-        if not no_sentry:
-            app.on_startup.append(init_sentry)
 
     app.on_startup.append(init_executors)
     app.on_startup.append(init_dispatcher)
@@ -375,6 +371,9 @@ def create_app(
 
     if not ignore_settings:
         app.on_startup.append(init_settings_from_db)
+
+    if not no_sentry:
+        app.on_startup.append(init_sentry)
 
     if skip_db_checks:
         logger.info("Skipping database checks.")
