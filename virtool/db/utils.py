@@ -1,3 +1,4 @@
+import urllib.parse
 import virtool.utils
 
 
@@ -34,6 +35,27 @@ def apply_projection(document, projection):
         projection["_id"] = True
 
     return {key: document[key] for key in document if projection.get(key, False)}
+
+
+def get_connection_string(settings):
+    db_host = settings["db_host"]
+    db_port = settings["db_port"]
+    db_name = settings["db_name"]
+
+    auth_string = ""
+
+    if settings["db_use_auth"]:
+        db_username = urllib.parse.quote_plus(settings["db_username"])
+        db_password = urllib.parse.quote_plus(settings["db_password"])
+
+        auth_string = f"{db_username}:{db_password}@"
+
+    ssl_string = ""
+
+    if settings["db_use_ssl"]:
+        ssl_string += "?ssl=true"
+
+    return f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
 
 
 async def get_new_id(collection, excluded=None):
