@@ -1,5 +1,6 @@
 import pytest
 
+import virtool.config
 import virtool.settings
 import virtool.utils
 
@@ -52,4 +53,4 @@ def test_check_resource_limits(proc, mem, error_message, mocker):
 
     mocker.patch("virtool.resources.get", return_value=return_value)
 
-    assert virtool.settings.check_resource_limits(proc, mem, settings) == error_message
+    assert virtool.config.check_limits(proc, mem, settings) == error_message
