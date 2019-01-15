@@ -2,11 +2,12 @@ import argparse
 import json
 import logging
 import os
-import pymongo
 import sys
+import urllib.parse
 from typing import Union
 
 import cerberus
+import pymongo
 
 import virtool.db.settings
 import virtool.db.utils
@@ -68,6 +69,23 @@ JOB_LIMIT_KEYS = (
     "lg_mem",
     "sm_proc",
     "sm_mem"
+)
+
+LEGACY_SM_JOB_LIMIT_KEYS = (
+    "build_index",
+    "create_sample",
+    "create_subtraction",
+
+)
+
+LEGACY_LG_JOB_LIMIT_KEYS = (
+    "pathoscope_bowtie",
+    "nuvs"
+)
+
+RESOURCE_TYPES = (
+    "proc",
+    "mem"
 )
 
 
@@ -332,43 +350,135 @@ def migrate():
     # Load the legacy `settings.json` file. Return immediately if it is not found.
     try:
         with open(LEGACY_PATH, "r") as f:
-            settings = json.load(f)
+            legacy = json.load(f)
     except IOError:
         return None
 
-    db_string = virtool.db.utils.get_connection_string(settings)
+    # Convert database settings to a single connection string.
+    convert_db(legacy)
 
-    db = pymongo.MongoClient(db_string)
+    db = pymongo.MongoClient(legacy["db"])
 
     # Move settings that should be in database to database.
     v = cerberus.Validator(virtool.settings.SCHEMA, purge_unknown=True)
-    v.validate(settings)
+    v.validate(legacy)
 
     db.settings.insert_one({"_id": "settings", **v.document})
 
     # Rewrite settings file without DB-stored settings.
     v = cerberus.Validator(schema=SCHEMA, purge_unknown=True)
-    v.validate(settings)
+    v.validate(legacy)
 
     # Get default values from schema.
     defaults = get_defaults()
 
-    to_file = dict(v.document)
+    config = dict(v.document)
 
-    to_file["host"] = v.document.pop("server_host")
-    to_file["port"] = v.document.pop("server_port")
+    convert_job_limits(config)
+    convert_proxy(config)
+    remove_defaults(config)
 
-    # Transform proxy settings into a single connection string. Remove the old settings keys.
-    to_file["proxy"] = virtool.settings.create_proxy_string(to_file)
-
-    to_file = {key: value for key, value in to_file.items() if "proxy_" not in key}
-
-    # Only write non-default values to `config.json`.
-    to_file = {key: value for key, value in v.document.items() if value != defaults[key]}
-
-    virtool.args.write_to_file(to_file)
+    virtool.config.write_to_file(config)
 
     os.remove(LEGACY_PATH)
+
+
+def convert_db(config: dict):
+    """
+    Convert legacy database settings to a single connection string keyed by `db`. Remove all legacy database settings.
+
+    This function updates `settings in-place.
+
+    :param config: legacy settings
+
+    """
+    db_host = config.pop("db_host")
+    db_port = config.pop("db_port")
+    db_name = config.pop("db_name")
+
+    auth_string = ""
+    ssl_string = ""
+
+    username = config.pop("db_username")
+    password = config.pop("db_password")
+    use_auth = config.pop("db_use_auth")
+    use_ssl = config.pop("db_use_ssl")
+
+    if use_auth and username and password:
+        username = urllib.parse.quote_plus(username)
+        password = urllib.parse.quote_plus(password)
+
+        auth_string = f"{username}:{password}@"
+
+        # Only use SSL if enabled and auth is configured.
+        if use_ssl:
+            ssl_string += "?ssl=true"
+
+    config["db"] = f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
+
+
+def convert_job_limits(config: dict):
+    """
+    Remove old task-specific limit settings and replace them with `lg_proc`, `lg_mem`, `sm_proc`, and `sm_mem`.
+
+    This function updates `settings` in-place.
+
+    :param config: legacy settings
+
+    """
+    # Combine legacy job limits to lg scheme.
+    for resource in RESOURCE_TYPES:
+        config[f"lg_{resource}"] = max(config[f"{key}_{resource}"] for key in LEGACY_LG_JOB_LIMIT_KEYS)
+        config[f"sm_{resource}"] = max(config[f"{key}_{resource}"] for key in LEGACY_SM_JOB_LIMIT_KEYS)
+
+        for key in [*LEGACY_LG_JOB_LIMIT_KEYS, *LEGACY_SM_JOB_LIMIT_KEYS]:
+            del config[f"{key}_{resource}"]
+
+        for key in list(config.keys()):
+            if "_inst" in key or "dummy" in key:
+                del config[key]
+
+
+def convert_proxy(config: dict):
+    """
+    Transform proxy settings into a single connection string keyed by `proxy` and remove the old proxy settings keys.
+
+    This function updates `settings` in-place.
+
+    :param config: legacy settings
+
+    """
+    address = config.pop("proxy_address")
+    enable = config.pop("proxy_enable")
+    password = config.pop("proxy_password")
+    trust = config.pop("proxy_trust")
+    username = config.pop("proxy_username")
+
+    if trust or not enable or not address:
+        config["proxy"] = ""
+
+    elif username and password:
+        prefix, suffix = address.split("//")
+        config["proxy"] = f"{prefix}//{username}:{password}@{suffix}"
+
+    else:
+        config["proxy"] = address
+
+
+def remove_defaults(config: dict):
+    """
+    Remove all config pairs where the value matches the default settings. This keeps the config file minimal.
+
+    This function modifies the `config` in-place.
+
+    :param config: config dict
+
+    """
+    defaults = get_defaults()
+
+    for key in defaults:
+        if defaults[key] == config[key]:
+            config.pop(key, None)
 
 
 def resolve() -> dict:
