@@ -5,7 +5,6 @@ import logging
 import os
 import subprocess
 import sys
-from urllib.parse import quote_plus
 
 import aiofiles
 import aiojobs.aiohttp
@@ -14,13 +13,16 @@ import pymongo.errors
 from aiohttp import client, web
 from motor import motor_asyncio
 
+import virtool.db.settings
 import virtool.http.auth
 import virtool.app_routes
+import virtool.config
 import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
 import virtool.db.software
 import virtool.db.status
+import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
 import virtool.files
@@ -38,33 +40,64 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-async def init_http_client(app):
+async def init_http_client(app: web.Application):
+    """
+    Create an async HTTP client session for the server.
+
+    The client session is used to make requests to GitHub, NCBI, and https://www.virtool.ca.
+
+    :param app: the application object
+
+    """
+
     headers = {
-        "user-agent": "virtool/{}".format(app["version"]),
+        "User-Agent": "virtool/{}".format(app["version"]),
     }
 
     app["client"] = client.ClientSession(loop=app.loop, headers=headers)
 
 
-async def init_refresh(app):
+async def init_refresh(app: web.Application):
+    """
+    Start async jobs for checking for new remote reference, HMM, and software releases.
+
+    :param app: the application object
+
+    """
+    if app["settings"]["no_refreshing"]:
+        return logger.info("Running without automatic update checking.")
+
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
     await scheduler.spawn(virtool.db.references.refresh_remotes(app))
     await scheduler.spawn(virtool.db.hmm.refresh(app))
     await scheduler.spawn(virtool.db.software.refresh(app))
 
 
-async def init_version(app):
-    if app["version"] is None:
-        app["version"] = await find_server_version(app.loop, sys.path[0])
+async def init_version(app: web.Application):
+    """
+    Bind the application version to the application state `dict`.
+
+    The value will come by checking `--force-version`, the `VERSION` file, or the current Git tag if the containing
+    folder is a Git repository.
+
+    :param app: the application object
+
+    """
+    force_version = app["settings"]["force_version"]
+
+    if force_version:
+        app["version"] = force_version
+
+    app["version"] = await find_server_version(app.loop, sys.path[0])
 
 
-async def init_executors(app):
+async def init_executors(app: web.Application):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
     ``app`` object.
 
-    :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
+    :param app: the application object
 
     """
     thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
@@ -85,24 +118,29 @@ async def init_executors(app):
     app["process_executor"] = process_executor
 
 
-async def init_resources(app):
+async def init_resources(app: web.Application):
+    """
+    Set an initial value for the application resource values.
+
+    This value will be updated every time a client GETs `/api/jobs/resources`.
+
+    :param app: the application object
+
+    """
     app["resources"] = virtool.resources.get()
 
 
-async def init_settings_from_file(app):
+async def init_settings(app):
     """
-    An application ``on_startup`` callback that initializes a Virtool :class:`~.Settings` object and attaches it to the
-    ``app`` object.
+    Draws settings from the settings database collection and populates `app["settings"`.
+
+    Performs migration of old settings style to `v3.3.0` if necessary.
 
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["settings"] = await virtool.settings.load_from_file()
-
-
-async def init_settings_from_db(app):
-    from_db = await virtool.settings.load_from_db(app)
+    from_db = await virtool.db.settings.get(app)
     app["settings"].update(from_db)
 
 
@@ -134,31 +172,8 @@ async def init_db(app):
     """
     settings = app["settings"]
 
-    app["db_host"] = app.get("db_host", None) or settings["db_host"]
-    app["db_name"] = app.get("db_name", None) or settings["db_name"]
-
-    db_host = app["db_host"]
-    db_port = settings["db_port"]
-
-    auth_string = ""
-
-    if settings["db_use_auth"]:
-        db_username = quote_plus(settings["db_username"])
-        db_password = quote_plus(settings["db_password"])
-
-        auth_string = "{}:{}@".format(db_username, db_password)
-
-    ssl_string = ""
-
-    if settings["db_use_ssl"]:
-        ssl_string += "?ssl=true"
-
-    string = "mongodb://{}{}:{}/{}{}".format(auth_string, db_host, db_port, app["db_name"], ssl_string)
-
-    app["db_connection_string"] = string
-
     db_client = motor_asyncio.AsyncIOMotorClient(
-        string,
+        settings["db"],
         serverSelectionTimeoutMS=6000,
         io_loop=app.loop
     )
@@ -166,9 +181,8 @@ async def init_db(app):
     try:
         await db_client.database_names()
     except pymongo.errors.ServerSelectionTimeoutError:
-        raise virtool.errors.MongoConnectionError(
-            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
-        )
+        logger.critical("Could not connect to MongoDB server")
+        sys.exit(1)
 
     app["db"] = virtool.db.iface.DB(db_client[app["db_name"]], app["dispatcher"].dispatch, app.loop)
 
@@ -176,6 +190,9 @@ async def init_db(app):
 
 
 async def init_check_db(app):
+    if app["settings"]["no_db_checks"]:
+        return logger.info("Skipping database checks.")
+
     logger.info("Starting database checks. Do not interrupt. This may take several minutes.")
 
     db = app["db"]
@@ -209,20 +226,24 @@ async def init_client_path(app):
     app["client_path"] = await virtool.utils.get_client_path()
 
     if app["client_path"] is None:
-        return logger.warning("Client files not found")
+        logger.critical("Client files not found")
+        sys.exit(1)
 
     app.router.add_static("/static", app["client_path"])
 
 
 async def init_job_manager(app):
     """
-    An application ``on_startup`` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
-    attaches it to the ``app`` object.
+    An application `on_startup` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
+    puts it in app state.
 
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
     """
+    if app["settings"]["no_job_manager"]:
+        return logger.info("Running without job manager")
+
     capture_exception = None
 
     if "sentry" in app:
@@ -244,6 +265,9 @@ async def init_file_manager(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    if app["settings"]["no_file_manager"]:
+        return logger.info("Running without file manager")
+
     files_path = os.path.join(app["settings"]["data_path"], "files")
     watch_path = app["settings"]["watch_path"]
 
@@ -276,19 +300,20 @@ async def init_routes(app):
 
 
 async def init_setup(app):
-    virtool.setup.setup_routes(app)
+    if not app["settings"]["no_setup"]:
+        virtool.setup.setup_routes(app)
 
-    app["setup"] = {
-        **virtool.setup.DB_VALUES,
-        **virtool.setup.FIRST_USER_VALUES,
-        "data_path": "",
-        "watch_path": "",
-        "errors": {
-            **virtool.setup.DATA_ERRORS,
-            **virtool.setup.DB_ERRORS,
-            **virtool.setup.WATCH_ERRORS
+        app["setup"] = {
+            **virtool.setup.DB_VALUES,
+            **virtool.setup.FIRST_USER_VALUES,
+            "data_path": "",
+            "watch_path": "",
+            "errors": {
+                **virtool.setup.DATA_ERRORS,
+                **virtool.setup.DB_ERRORS,
+                **virtool.setup.WATCH_ERRORS
+            }
         }
-    }
 
 
 async def on_shutdown(app):
@@ -311,19 +336,7 @@ async def on_shutdown(app):
     await scheduler.close()
 
 
-def create_app(
-        loop,
-        db_host=None,
-        db_name=None,
-        disable_job_manager=False,
-        disable_file_manager=False,
-        disable_refreshing=False,
-        force_version=None,
-        ignore_settings=False,
-        no_sentry=False,
-        skip_db_checks=False,
-        skip_setup=False
-):
+def create_app(settings=None):
     """
     Creates the Virtool application.
 
@@ -332,78 +345,69 @@ def create_app(
     - initializes all main Virtool objects during ``on_startup``
 
     """
+    settings = settings or dict()
+
+    settings = {**virtool.config.resolve(), **settings}
+
     middlewares = [
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
     ]
 
-    if skip_setup:
+    if settings["no_setup"]:
         middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 
+    app["settings"] = settings
+
     aiojobs.aiohttp.setup(app)
 
-    app["version"] = force_version
-    app["db_name"] = db_name
-    app["db_host"] = db_host
-
-    app.on_startup.append(init_client_path)
-
-    # Run app in setup mode. The application will have to be configured and restarted before use.
-    if not skip_setup:
-        app.on_startup.append(init_setup)
-        return app
-
     app.on_startup.append(init_version)
+    app.on_startup.append(init_client_path)
+    app.on_startup.append(init_setup)
     app.on_startup.append(init_http_client)
     app.on_startup.append(init_routes)
-
-    if ignore_settings:
-        app["settings"] = dict()
-    else:
-        app.on_startup.append(init_settings_from_file)
-
     app.on_startup.append(init_executors)
     app.on_startup.append(init_dispatcher)
     app.on_startup.append(init_db)
-
-    if not ignore_settings:
-        app.on_startup.append(init_settings_from_db)
-
-    if not no_sentry:
-        app.on_startup.append(init_sentry)
-
-    if skip_db_checks:
-        logger.info("Skipping database checks.")
-    else:
-        app.on_startup.append(init_check_db)
-
+    app.on_startup.append(init_settings)
+    app.on_startup.append(init_sentry)
+    app.on_startup.append(init_check_db)
     app.on_startup.append(init_resources)
-
-    if not disable_job_manager:
-        app.on_startup.append(init_job_manager)
-
-    if not disable_file_manager:
-        app.on_startup.append(init_file_manager)
-
-    if not disable_refreshing:
-        app.on_startup.append(init_refresh)
+    app.on_startup.append(init_job_manager)
+    app.on_startup.append(init_file_manager)
+    app.on_startup.append(init_refresh)
 
     app.on_shutdown.append(on_shutdown)
 
     return app
 
 
-def create_events():
+def create_events() -> dict:
+    """
+    Create and store :class:`asyncio.Event` objects for triggering an application restart or shutdown.
+
+    :return: a `dict` containing :class:`~asyncio.Event` objects for restart and shutdown
+
+    """
     return {
         "restart": asyncio.Event(),
         "shutdown": asyncio.Event()
     }
 
 
-async def wait_for_restart(runner, events):
+async def wait_for_restart(runner: web.AppRunner, events: dict):
+    """
+    Wait for the shutdown event and restart if it is encountered.
+
+    Restart is accomplished using :func:`os.execl` or :func:`os.execv` after cleaning up the `runner`.
+
+    :param runner: the :class:`~aiohttp.web.AppRunner` returned by :func:`.create_app_runner`
+    :param events: a dict containing the `restart` and `shutdown` :class:`~asyncio.Event` objects
+
+    """
     await events["restart"].wait()
     await asyncio.sleep(0.5)
     await runner.cleanup()
@@ -419,13 +423,35 @@ async def wait_for_restart(runner, events):
     raise SystemError("Could not determine executable type")
 
 
-async def wait_for_shutdown(runner, events):
+async def wait_for_shutdown(runner: web.AppRunner, events: dict):
+    """
+    Wait for the shutdown event and terminate if it is encountered.
+
+    :param runner: the :class:`~aiohttp.web.AppRunner` returned by :func:`.create_app_runner`
+    :param events: a dict containing the `restart` and `shutdown` :class:`~asyncio.Event` objects
+
+    """
     await events["shutdown"].wait()
     await asyncio.sleep(0.5)
     await runner.cleanup()
 
 
-async def create_runner(app, host, port):
+async def create_app_runner(app: web.Application, host: str, port: int) -> web.AppRunner:
+    """
+    Create an :class:`aiohttp.web.AppRunner` to allow customization of signal handlers.
+
+    The basic :func:`aiohttp.web.run_app` sets up handlers for `SIGINT` and `SIGTERM` that can interfere with Virtool
+    code such as that for restarting the server after software update. This custom runner allows handling of signals
+    as well as restart and shutdown events from users.
+
+    https://docs.aiohttp.org/en/stable/web_advanced.html#application-runners
+
+    :param app: the application
+    :param host: the host to listen on
+    :param port: the port to listen on
+    :return: a custom :class:`~aiohttp.web.AppRunner`
+
+    """
     runner = web.AppRunner(app)
 
     await runner.setup()
@@ -439,13 +465,10 @@ async def create_runner(app, host, port):
     return runner
 
 
-async def run(loop, host, port, skip_setup=False, force_version=None, no_sentry=False):
-    app = create_app(
-        loop,
-        skip_setup=skip_setup,
-        force_version=force_version,
-        no_sentry=no_sentry
-    )
+async def run(loop):
+    app = create_app()
+
+    loop = asyncio.get_event_loop()
 
     events = create_events()
 
@@ -454,7 +477,7 @@ async def run(loop, host, port, skip_setup=False, force_version=None, no_sentry=
 
     app["events"] = events
 
-    runner = await create_runner(app, host, port)
+    runner = await create_app_runner(app, app["settings"]["host"], app["settings"]["port"])
 
     _, pending = await asyncio.wait(
         [wait_for_restart(runner, events), wait_for_shutdown(runner, events)],
