@@ -13,7 +13,7 @@ async def get(req):
     return json_response(req.app["settings"])
 
 
-@routes.patch("/api/settings", admin=True, schema=virtool.settings.API_SCHEMA)
+@routes.patch("/api/settings", admin=True, schema=virtool.settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
