@@ -30,11 +30,12 @@ import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
 import virtool.jobs.manager
+import virtool.logs
 import virtool.organize
 import virtool.resources
 import virtool.sentry
 import virtool.settings
-import virtool.setup
+import virtool.setup.setup
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,9 @@ async def init_refresh(app: web.Application):
     :param app: the application object
 
     """
+    if app["setup"] is not None:
+        return
+
     if app["settings"]["no_refreshing"]:
         return logger.info("Running without automatic update checking.")
 
@@ -84,12 +88,17 @@ async def init_version(app: web.Application):
     :param app: the application object
 
     """
+
     force_version = app["settings"]["force_version"]
 
     if force_version:
-        app["version"] = force_version
+        version = force_version
+    else:
+        version = await find_server_version(app.loop, sys.path[0])
 
-    app["version"] = await find_server_version(app.loop, sys.path[0])
+    logger.info(f"Virtool {version}")
+
+    app["version"] = version
 
 
 async def init_executors(app: web.Application):
@@ -100,6 +109,9 @@ async def init_executors(app: web.Application):
     :param app: the application object
 
     """
+    if app["setup"] is not None:
+        return
+
     thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
     app.loop.set_default_executor(thread_executor)
 
@@ -140,12 +152,13 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    from_db = await virtool.db.settings.get(app)
-    app["settings"].update(from_db)
+    if app["setup"] is None:
+        from_db = await virtool.db.settings.get(app["db"])
+        app["settings"].update(from_db)
 
 
 async def init_sentry(app):
-    if app["settings"]["enable_sentry"]:
+    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True):
         app["sentry"] = virtool.sentry.setup(app["version"])
 
 
@@ -158,7 +171,8 @@ async def init_dispatcher(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["dispatcher"] = virtool.dispatcher.Dispatcher()
+    if app["setup"] is None:
+        app["dispatcher"] = virtool.dispatcher.Dispatcher()
 
 
 async def init_db(app):
@@ -170,10 +184,13 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    if app["setup"] is not None:
+        return
+
     settings = app["settings"]
 
     db_client = motor_asyncio.AsyncIOMotorClient(
-        settings["db"],
+        settings["db_connection_string"],
         serverSelectionTimeoutMS=6000,
         io_loop=app.loop
     )
@@ -184,12 +201,19 @@ async def init_db(app):
         logger.critical("Could not connect to MongoDB server")
         sys.exit(1)
 
-    app["db"] = virtool.db.iface.DB(db_client[app["db_name"]], app["dispatcher"].dispatch, app.loop)
+    app["db"] = virtool.db.iface.DB(
+        db_client[settings["db_name"]],
+        app["dispatcher"].dispatch,
+        app.loop
+    )
 
     await app["db"].connect()
 
 
 async def init_check_db(app):
+    if app["setup"] is not None:
+        return
+
     if app["settings"]["no_db_checks"]:
         return logger.info("Skipping database checks.")
 
@@ -241,6 +265,9 @@ async def init_job_manager(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    if app["setup"] is not None:
+        return
+
     if app["settings"]["no_job_manager"]:
         return logger.info("Running without job manager")
 
@@ -265,6 +292,9 @@ async def init_file_manager(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    if app["setup"] is not None:
+        return
+
     if app["settings"]["no_file_manager"]:
         return logger.info("Running without file manager")
 
@@ -279,41 +309,30 @@ async def init_file_manager(app):
         logger.fatal(f"Watch path does not exist: '{watch_path}'")
         sys.exit(1)
 
-    if os.path.isdir(files_path):
-        app["file_manager"] = virtool.files.Manager(
-            app.loop,
-            app["executor"],
-            app["db"],
-            files_path,
-            watch_path,
-            clean_interval=20
-        )
+    app["file_manager"] = virtool.files.Manager(
+        app.loop,
+        app["executor"],
+        app["db"],
+        files_path,
+        watch_path,
+        clean_interval=20
+    )
 
-        scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
-    else:
-        logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
-        app["file_manager"] = None
+    scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+    await scheduler.spawn(app["file_manager"].run())
 
 
 async def init_routes(app):
-    virtool.app_routes.setup_routes(app)
+    if app["setup"] is None:
+        logger.debug("Setting up routes")
+        virtool.app_routes.setup_routes(app)
 
 
 async def init_setup(app):
-    if not app["settings"]["no_setup"]:
-        virtool.setup.setup_routes(app)
-
-        app["setup"] = {
-            **virtool.setup.DB_VALUES,
-            **virtool.setup.FIRST_USER_VALUES,
-            "data_path": "",
-            "watch_path": "",
-            "errors": {
-                **virtool.setup.DATA_ERRORS,
-                **virtool.setup.DB_ERRORS,
-                **virtool.setup.WATCH_ERRORS
-            }
-        }
+    if app["setup"] is not None:
+        virtool.setup.setup.setup_routes(app)
+        app["setup"] = {**virtool.setup.setup.SETUP}
 
 
 async def on_shutdown(app):
@@ -327,10 +346,21 @@ async def on_shutdown(app):
     logger.debug("Shutting down")
 
     await app["client"].close()
-    await app["dispatcher"].close()
 
-    app["executor"].shutdown(wait=True)
-    app["process_executor"].shutdown(wait=True)
+    try:
+        await app["dispatcher"].close()
+    except KeyError:
+        pass
+
+    try:
+        app["executor"].shutdown(wait=True)
+    except KeyError:
+        pass
+
+    try:
+        app["process_executor"].shutdown(wait=True)
+    except KeyError:
+        pass
 
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
     await scheduler.close()
@@ -345,9 +375,7 @@ def create_app(settings=None):
     - initializes all main Virtool objects during ``on_startup``
 
     """
-    settings = settings or dict()
-
-    settings = {**virtool.config.resolve(), **settings}
+    config = virtool.config.resolve()
 
     middlewares = [
         virtool.http.errors.middleware,
@@ -355,30 +383,40 @@ def create_app(settings=None):
         virtool.http.query.middleware
     ]
 
-    if settings["no_setup"]:
+    setup_required = not os.path.exists("config.json")
+    # setup_required = virtool.config.check_setup(config)
+
+    if not setup_required:
         middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 
-    app["settings"] = settings
+    app["settings"] = config
+
+    app["setup"] = None
+
+    if setup_required:
+        app["setup"] = dict()
 
     aiojobs.aiohttp.setup(app)
 
-    app.on_startup.append(init_version)
-    app.on_startup.append(init_client_path)
-    app.on_startup.append(init_setup)
-    app.on_startup.append(init_http_client)
-    app.on_startup.append(init_routes)
-    app.on_startup.append(init_executors)
-    app.on_startup.append(init_dispatcher)
-    app.on_startup.append(init_db)
-    app.on_startup.append(init_settings)
-    app.on_startup.append(init_sentry)
-    app.on_startup.append(init_check_db)
-    app.on_startup.append(init_resources)
-    app.on_startup.append(init_job_manager)
-    app.on_startup.append(init_file_manager)
-    app.on_startup.append(init_refresh)
+    app.on_startup.extend([
+        init_version,
+        init_client_path,
+        init_setup,
+        init_http_client,
+        init_routes,
+        init_executors,
+        init_dispatcher,
+        init_db,
+        init_settings,
+        init_sentry,
+        init_check_db,
+        init_resources,
+        init_job_manager,
+        init_file_manager,
+        init_refresh
+    ])
 
     app.on_shutdown.append(on_shutdown)
 
@@ -465,7 +503,9 @@ async def create_app_runner(app: web.Application, host: str, port: int) -> web.A
     return runner
 
 
-async def run(loop):
+async def run():
+    virtool.logs.configure(True)
+
     app = create_app()
 
     loop = asyncio.get_event_loop()
