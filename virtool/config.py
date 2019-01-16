@@ -116,36 +116,6 @@ RESOURCE_TYPES = (
 )
 
 
-def check_limits(proc: int, mem: int, settings: dict) -> Union[str, None]:
-    """
-    Return an error message if the `proc` or `mem` values exceed real system resources or any task-specific
-    limits.
-
-    :param proc: processor count
-    :param mem: memory in gigabytes
-    :param settings: the server settings
-    :return: an error message if applicable
-
-    """
-    if proc or mem:
-
-        resources = virtool.resources.get()
-
-        if proc:
-            if proc > len(resources["proc"]):
-                return "Exceeds system processor count"
-
-            if proc < max(settings[key] for key in JOB_LIMIT_KEYS if "_proc" in key):
-                return "Less than a task-specific proc limit"
-
-        if mem:
-            if mem > resources["mem"]["total"] / 1000000000:
-                return "Exceeds system memory"
-
-            if mem < max(settings[key] for key in JOB_LIMIT_KEYS if "_mem" in key):
-                return "Less than a task-specific mem limit"
-
-
 def get_defaults():
     return {key: SCHEMA[key]["default"] for key in SCHEMA}
 
