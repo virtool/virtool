@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/style.${hash}.css">
+
+    <style>
+        .setup-header {
+            margin-bottom: 20px;
+        }
+        .setup-footer {
+            margin-top: 25px;
+        }
+    </style>
+
+    <title>Setup - Virtool</title>
+</head>
+
+<body>
+<div class="container-noside">
+    <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
+            <div class="list-group">
+                <div class="list-group-item spaced clearfix">
+                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                        ${mode} Location
+                    </h4>
+
+                    <p class="text-muted" style="margin-bottom: 20px;">
+                        %if mode == "data":
+                            Virtool will store application data (<em>eg</em>. sample files) at this location.
+                        %else:
+                            Virtool automatically retrieve read files from this location and make them available for
+                            sample creation in the application.
+                        %endif
+                    </p>
+
+                    <form method="POST" action="/setup/${mode}">
+                        <div class="form-group">
+                            <label for="path">Path</label>
+                            <input type="text" class="form-control" name="path" id="path" placeholder="${mode}" value='${path or ""}'>
+                        </div>
+
+                        %if error == "not_found_error":
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong> Could not locate or create directory.</strong>
+                        </div>
+                        %endif
+
+                        %if error == "not_empty_error":
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong> The directory is not empty. Make sure it is empty then try to configure it again.</strong>
+                        </div>
+                        %endif
+
+                        %if error == "permission_error":
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong> Virtool does not have permission to create or write to the directory.</strong>
+                        </div>
+                        %endif
+
+                        %if ready:
+                        <div class="alert alert-success">
+                            <i class="fas fa-checkmark-circle"></i>
+                            <strong> Path is available an will be configured when setup is complete.</strong>
+                        </div>
+                        %endif
+
+                        <div class="setup-footer">
+                        %if ready:
+                            %if mode == "data":
+                            <a href="/setup/watch" class="btn btn-primary pull-right">
+                                <i class="fas fa-arrow-circle-right"></i> Next
+                            </a>
+                            %else:
+                            <a href="/setup/finish" class="btn btn-primary pull-right">
+                                <i class="fas fa-arrow-circle-right"></i> Next
+                            </a>
+                            %endif
+                        %else:
+                            <button type="submit" class="btn btn-primary pull-right">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        %endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
