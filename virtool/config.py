@@ -500,7 +500,9 @@ def resolve() -> dict:
 
     from_args = get_from_args()
 
-    return {**from_file, **from_args}
+    from_defaults = get_defaults()
+
+    return {**from_defaults, **from_file, **from_args}
 
 
 def validate(data: dict) -> dict:
