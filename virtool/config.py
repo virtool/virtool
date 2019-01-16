@@ -51,6 +51,24 @@ SCHEMA = {
         "default": 16
     },
 
+    # Job Limits
+    "lg_proc": {
+        "type": "integer",
+        "default": 8
+    },
+    "lg_mem": {
+        "type": "integer",
+        "default": 16
+    },
+    "sm_proc": {
+        "type": "integer",
+        "default": 2
+    },
+    "sm_mem": {
+        "type": "integer",
+        "default": 4
+    },
+
     # MongoDB
     "db_connection_string": {
         "type": "string",
@@ -63,6 +81,11 @@ SCHEMA = {
 
     # Proxy
     "proxy": {
+        "type": "string",
+        "default": ""
+    },
+
+    "force_version": {
         "type": "string",
         "default": ""
     }
