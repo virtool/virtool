@@ -13,6 +13,17 @@ import virtool.errors
 import virtool.jobs.classes
 import virtool.utils
 
+TASK_LG = "lg"
+TASK_SM = "sm"
+
+TASK_SIZES = {
+    "pathoscope_bowtie": TASK_LG,
+    "nuvs": TASK_LG,
+    "build_index": TASK_SM,
+    "create_sample": TASK_SM,
+    "create_subtraction": TASK_SM
+}
+
 
 class IntegratedManager:
     """
@@ -35,9 +46,9 @@ class IntegratedManager:
         #: The application database interface.
         self.dbi = app["db"]
 
-        self.db_connection_string = app["db_connection_string"]
+        self.db_connection_string = app["settings"]["db_connection_string"]
 
-        self.db_name = app["db_name"]
+        self.db_name = app["settings"]["db_name"]
 
         self.process_executor = app["process_executor"]
 
@@ -155,3 +166,12 @@ def get_used_resources(jobs):
         "proc": sum(j["proc"] for j in running_jobs),
         "mem": sum(j["mem"] for j in running_jobs)
     }
+
+
+def get_task_limits(settings, task_name):
+    size = TASK_SIZES[task_name]
+
+    proc = settings[f"{size}_proc"]
+    mem = settings[f"{size}_mem"]
+
+    return proc, mem
