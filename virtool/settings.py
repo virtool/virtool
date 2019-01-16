@@ -257,3 +257,7 @@ LEGACY_SCHEMA = {
         ]
     }
 }
+
+
+def get_defaults():
+    return {key: SCHEMA[key]["default"] for key in SCHEMA}
