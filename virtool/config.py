@@ -52,7 +52,11 @@ SCHEMA = {
     },
 
     # MongoDB
-    "db": {
+    "db_connection_string": {
+        "type": "string",
+        "default": ""
+    },
+    "db_name": {
         "type": "string",
         "default": ""
     },
@@ -394,7 +398,7 @@ def convert_db(config: dict):
     """
     db_host = config.pop("db_host")
     db_port = config.pop("db_port")
-    db_name = config.pop("db_name")
+    db_name = config["db_name"]
 
     auth_string = ""
     ssl_string = ""
@@ -414,7 +418,8 @@ def convert_db(config: dict):
         if use_ssl:
             ssl_string += "?ssl=true"
 
-    config["db"] = f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
+    config["db_connection_string"] = f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
+    config["db_name"] = config["db_name"]
 
 
 def convert_job_limits(config: dict):
