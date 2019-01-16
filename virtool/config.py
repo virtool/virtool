@@ -505,7 +505,7 @@ def remove_defaults(config: dict):
     defaults = get_defaults()
 
     for key in defaults:
-        if defaults[key] == config[key]:
+        if key in config and defaults[key] == config[key]:
             config.pop(key, None)
 
 
