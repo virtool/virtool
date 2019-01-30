@@ -86,6 +86,11 @@ SCHEMA = {
     },
 
     "force_version": {
+        "type": "boolean",
+        "default": False
+    },
+
+    "force_version": {
         "type": "string",
         "default": ""
     }
