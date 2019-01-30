@@ -85,7 +85,7 @@ SCHEMA = {
         "default": ""
     },
 
-    "force_version": {
+    "force_setup": {
         "type": "boolean",
         "default": False
     },
