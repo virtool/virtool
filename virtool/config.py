@@ -168,45 +168,17 @@ def get_from_args():
     )
 
     parser.add_argument(
-        "--db-host",
-        dest="db_host",
+        "--db",
+        dest="db_connection_string",
         default=None,
-        help="the MongoDB host"
-    )
-
-    parser.add_argument(
-        "--db-port",
-        dest="db_port",
-        default=None,
-        help="the MongoDB port"
+        help="the MongoDB connection string"
     )
 
     parser.add_argument(
         "--db-name",
         dest="db_name",
         default=None,
-        help="the name of the database to use"
-    )
-
-    parser.add_argument(
-        "--db-username",
-        dest="db_username",
-        default=None,
-        help="username to use for accessing MongoDB"
-    )
-
-    parser.add_argument(
-        "--db-password",
-        dest="db_password",
-        default=None,
-        help="password to use for accessing MongoDB"
-    )
-
-    parser.add_argument(
-        "--db-auth",
-        dest="db_use_auth",
-        default=None,
-        help="use auth parameters to connect to database"
+        help="the MongoDB database name"
     )
 
     parser.add_argument(
