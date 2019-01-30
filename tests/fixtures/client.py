@@ -5,35 +5,51 @@ import virtool.app
 import virtool.users
 
 
+def get_settings(no_job_manager, setup):
+    return {
+        "enable_api": True,
+        "force_setup": setup,
+        "force_version": "v0.0.0",
+        "no_db_checks": True,
+        "no_job_manager": no_job_manager,
+        "no_file_manager": True,
+        "no_refreshing": True,
+        "skip_db_checks": True,
+        "no_setup": True,
+        "no_sentry": True
+    }
+
+
 class VTClient:
 
-    def __init__(self, loop, test_client, db_host, test_db_name, create_user):
+    def __init__(self, loop, test_client, db_connection_string, db_name, create_user):
         self._loop = loop
         self._test_client = test_client
         self._create_user = create_user
-        self._db_host = db_host
-        self._test_db_name = test_db_name
+        self._db_connection_string = db_connection_string
+        self._db_name = db_name
         self._client = None
-
+        self.settings = None
         self.server = None
         self.app = None
         self.db = None
 
-    async def connect(self, authorize=False, administrator=False, groups=None, permissions=None, job_manager=False, file_manager=False,
-                      setup_mode=False):
+    async def connect(
+            self,
+            authorize=False,
+            administrator=False,
+            groups=None,
+            permissions=None,
+            no_job_manager=True,
+            setup=False
+    ):
 
-        app = virtool.app.create_app(
-            self._loop,
-            self._db_host,
-            self._test_db_name,
-            disable_job_manager=not job_manager,
-            disable_file_manager=not file_manager,
-            disable_refreshing=True,
-            ignore_settings=True,
-            skip_db_checks=True,
-            skip_setup=not setup_mode,
-            no_sentry=True
-        )
+        self.settings = get_settings(no_job_manager, setup)
+
+        self.settings["db_connection_string"] = self._db_connection_string
+        self.settings["db_name"] = self._db_name
+
+        app = virtool.app.create_app(self.settings)
 
         self._client = await self._test_client(app)
 
@@ -91,5 +107,9 @@ class VTClient:
 @pytest.fixture
 def spawn_client(loop, request, test_client, test_motor, test_db_name, create_user):
     db_host = request.config.getoption("db_host", "localhost")
-    client = VTClient(loop, test_client, db_host, test_db_name, create_user)
+
+    db_connection_string = f"mongodb://{db_host}:27017"
+
+    client = VTClient(loop, test_client, db_connection_string, test_db_name, create_user)
+
     return client.connect

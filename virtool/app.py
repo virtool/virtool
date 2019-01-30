@@ -332,7 +332,7 @@ async def init_routes(app):
 async def init_setup(app):
     if app["setup"] is not None:
         virtool.setup.setup.setup_routes(app)
-        app["setup"] = {**virtool.setup.setup.SETUP}
+        app["setup"] = virtool.setup.setup.get_defaults()
 
 
 async def on_shutdown(app):
@@ -388,8 +388,9 @@ def create_app(force_settings=None):
 
     setup_required = not os.path.exists("config.json")
 
-    if not config["force_setup"] or not config["no_setup"] or not setup_required:
-        middlewares.append(virtool.http.auth.middleware)
+    if config["no_setup"] and not setup_required:
+        if not config["force_setup"]:
+            middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 
@@ -397,7 +398,7 @@ def create_app(force_settings=None):
     app["settings"] = config
     app["setup"] = None
 
-    if setup_required:
+    if config["force_setup"] or setup_required:
         app["setup"] = dict()
 
     aiojobs.aiohttp.setup(app)

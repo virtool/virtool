@@ -12,7 +12,7 @@ steps:
     image: virtool/external-tools:0.1.2
     commands:
       - pip install -qr requirements.txt
-      - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
+      - pytest -x --aiohttp-loop uvloop --db-connection-string "mongodb://mongo:27017" --cov --cov-report xml
 
 services:
   - name: mongo

@@ -131,8 +131,8 @@ class TestCreate:
         client = await spawn_client(authorize=True)
 
         client.app["settings"].update({
-            "build_index_proc": 1,
-            "build_index_mem": 2
+            "sm_proc": 1,
+            "sm_mem": 2
         })
 
         await client.db.references.insert_one({

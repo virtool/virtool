@@ -9,9 +9,7 @@ class TestUpload:
     async def test(self, file_type, tmpdir, spawn_client, static_time, test_random_alphanumeric):
         client = await spawn_client(authorize=True, permissions=["upload_file"])
 
-        client.app["settings"] = {
-            "data_path": str(tmpdir)
-        }
+        client.app["settings"]["data_path"] = str(tmpdir)
 
         # This is where the file should end up.
         files_dir = tmpdir.mkdir("files")

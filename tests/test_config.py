@@ -94,9 +94,29 @@ def test_schema():
             "type": "integer",
             "default": 16
         },
+        "lg_mem": {
+            "default": 16,
+            "type": "integer"
+        },
+        "lg_proc": {
+            "default": 8,
+            "type": "integer"
+        },
+        "sm_mem": {
+            "default": 4,
+            "type": "integer"
+        },
+        "sm_proc": {
+            "default": 2,
+            "type": "integer"
+        },
 
         # MongoDB
-        "db": {
+        "db_connection_string": {
+            "type": "string",
+            "default": ""
+        },
+        "db_name": {
             "type": "string",
             "default": ""
         },
@@ -105,7 +125,18 @@ def test_schema():
         "proxy": {
             "type": "string",
             "default": ""
+        },
+
+        "force_setup": {
+            "type": "boolean",
+            "default": False
+        },
+
+        "force_version": {
+            "type": "string",
+            "default": ""
         }
+
     }
 
 
@@ -149,16 +180,17 @@ def test_convert_db(username, password, auth, ssl):
 
     virtool.config.convert_db(legacy_settings)
 
-    db = "mongodb://localhost:27017/virtool"
+    connection_string = "mongodb://localhost:27017/virtool"
 
     if username and password and auth:
-        db = "mongodb://foo:bar@localhost:27017/virtool"
+        connection_string = "mongodb://foo:bar@localhost:27017/virtool"
 
         if ssl:
-            db += "?ssl=true"
+            connection_string += "?ssl=true"
 
     assert legacy_settings == {
-        "db": db,
+        "db_connection_string": connection_string,
+        "db_name": "virtool",
         "enable_api": True
     }
 

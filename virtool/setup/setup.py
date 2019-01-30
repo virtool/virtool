@@ -9,36 +9,38 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-SETUP = {
-    "proxy": {
-        "proxy": "",
-        "ready": False,
-        "error": ""
-    },
-    "db": {
-        "db_connection_string": "",
-        "db_name": "",
-        "ready": False,
-        "error": None
-    },
-    "user": {
-        "id": "",
-        "password": "",
-        "placeholder": "",
-        "ready": False,
-        "error": None
-    },
-    "data": {
-        "path": "",
-        "ready": False,
-        "error": ""
-    },
-    "watch": {
-        "path": "",
-        "ready": False,
-        "error": ""
+
+def get_defaults() -> dict:
+    return {
+        "proxy": {
+            "proxy": "",
+            "ready": False,
+            "error": ""
+        },
+        "db": {
+            "db_connection_string": "",
+            "db_name": "",
+            "ready": False,
+            "error": None
+        },
+        "user": {
+            "id": "",
+            "password": "",
+            "placeholder": "",
+            "ready": False,
+            "error": None
+        },
+        "data": {
+            "path": "",
+            "ready": False,
+            "error": ""
+        },
+        "watch": {
+            "path": "",
+            "ready": False,
+            "error": ""
+        }
     }
-}
 
 
 def setup_routes(app):
