@@ -1,5 +1,5 @@
-import { GET_CONTROL_READAHEAD, GET_SETTINGS, TEST_PROXY, UPDATE_SETTINGS } from "../../app/actionTypes";
-import reducer, { initialState as reducerInitialState, proxyTestClear } from "../reducer";
+import { GET_CONTROL_READAHEAD, GET_SETTINGS, UPDATE_SETTINGS } from "../../app/actionTypes";
+import reducer, { initialState as reducerInitialState } from "../reducer";
 
 describe("Settings Reducer", () => {
     const initialState = reducerInitialState;
@@ -32,8 +32,7 @@ describe("Settings Reducer", () => {
         result = reducer(state, action);
         expected = {
             ...state,
-            data: action.data,
-            ...proxyTestClear
+            data: action.data
         };
         expect(result).toEqual(expected);
     });
@@ -52,20 +51,7 @@ describe("Settings Reducer", () => {
             data: {
                 ...state.data,
                 ...action.update
-            },
-            ...proxyTestClear
-        };
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle UPDATE_SETTINGS_FAILED", () => {
-        state = { data: { test: "target" } };
-        action = { type: UPDATE_SETTINGS.FAILED };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            data: { ...state.data },
-            ...proxyTestClear
+            }
         };
         expect(result).toEqual(expected);
     });
@@ -106,49 +92,6 @@ describe("Settings Reducer", () => {
         result = reducer(state, action);
         expected = {
             readaheadPending: false
-        };
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle TEST_PROXY_REQUESTED", () => {
-        state = {};
-        action = {
-            type: TEST_PROXY.REQUESTED
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            ...proxyTestClear,
-            proxyTestPending: true
-        };
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle TEST_PROXY_SUCCEEDED", () => {
-        state = {};
-        action = {
-            type: TEST_PROXY.SUCCEEDED
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            ...proxyTestClear,
-            proxyTestSucceeded: true
-        };
-        expect(result).toEqual(expected);
-    });
-
-    it("should handle TEST_PROXY_FAILED", () => {
-        state = {};
-        action = {
-            type: TEST_PROXY.FAILED,
-            message: "test_failed"
-        };
-        result = reducer(state, action);
-        expected = {
-            ...state,
-            ...proxyTestClear,
-            proxyTestFailed: true
         };
         expect(result).toEqual(expected);
     });

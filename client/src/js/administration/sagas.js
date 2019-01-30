@@ -23,10 +23,6 @@ function* updateSettings(action) {
     );
 }
 
-function* testProxy() {
-    yield apiCall(settingsAPI.proxy, {}, TEST_PROXY);
-}
-
 function* getControlReadahead(action) {
     yield setPending(apiCall(otusAPI.listNames, action, GET_CONTROL_READAHEAD));
 }
