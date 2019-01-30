@@ -141,25 +141,27 @@ def get_from_args():
         "-d", "--data-path",
         dest="data_path",
         default=None,
-        help="the location to read and write data files to"
+        help="the location to read and write data files to",
+        metavar="PATH"
     )
 
     parser.add_argument(
         "-w", "--watch-path",
         dest="watch_path",
         default=None,
-        help="a location to continually retrieve sequencing files from"
+        help="a location to continually retrieve sequencing files from",
+        metavar="PATH"
     )
 
     parser.add_argument(
-        "-c", "--proc",
+        "--proc",
         dest="proc",
         default=None,
         help="the processor limit for this Virtool and its subprocesses"
     )
 
     parser.add_argument(
-        "-m", "--mem",
+        "--mem",
         dest="mem",
         default=None,
         help="the memory limit (GB) for this Virtool and its subprocesses"
@@ -211,28 +213,32 @@ def get_from_args():
         "--lg-proc",
         dest="lg_proc",
         default=None,
-        help="processor limit for large jobs"
+        help="processor limit for large jobs",
+        metavar="PROC"
     )
 
     parser.add_argument(
         "--lg-mem",
         dest="lg_mem",
         default=None,
-        help="memory limit for large jobs"
+        help="memory limit for large jobs",
+        metavar="MEM"
     )
 
     parser.add_argument(
         "--sm-proc",
         dest="sm_proc",
         default=None,
-        help="processor limit for small jobs"
+        help="processor limit for small jobs",
+        metavar="PROC"
     )
 
     parser.add_argument(
         "--sm-mem",
         dest="sm_mem",
-        default=os.environ.get("VT_SM_MEM"),
-        help="memory limit for small jobs"
+        default=None,
+        help="memory limit for small jobs",
+        metavar="MEM"
     )
 
     parser.add_argument(
@@ -240,7 +246,7 @@ def get_from_args():
         action="store_true",
         default=False,
         dest="no_db_checks",
-        help="disable automatic checking for reference, HMM, and software releases"
+        help="disable validating and repairing database on start"
     )
 
     parser.add_argument(
@@ -272,7 +278,7 @@ def get_from_args():
         action="store_true",
         default=False,
         dest="no_sentry",
-        help="disable automatic checking for reference, HMM, and software releases"
+        help="disable automatic error reporting"
     )
 
     parser.add_argument(
@@ -284,19 +290,28 @@ def get_from_args():
     )
 
     parser.add_argument(
+        "--force-setup",
+        action="store_true",
+        default=False,
+        dest="force_setup",
+        help="force the server to start in setup mode"
+    )
+
+    parser.add_argument(
+        "--force-version",
+        dest="force_version",
+        const="v0.0.0",
+        help = "make the server think it is the passed VERSION (default=v0.0.0)",
+        metavar="VERSION",
+        nargs = "?"
+    )
+
+    parser.add_argument(
         "--dev",
         action="store_true",
         default=False,
         dest="dev",
         help="run in dev mode"
-    )
-
-    parser.add_argument(
-        "-V", "--force-version",
-        dest="force_version",
-        const="v1.8.5",
-        help = "make the server think it is the passed FORCE_VERSION or v1.8.5 if none provided",
-        nargs = "?"
     )
 
     parser.add_argument(
