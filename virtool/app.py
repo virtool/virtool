@@ -109,11 +109,11 @@ async def init_executors(app: web.Application):
     :param app: the application object
 
     """
-    if app["setup"] is not None:
-        return
+    loop = asyncio.get_event_loop()
 
     thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-    app.loop.set_default_executor(thread_executor)
+
+    loop.set_default_executor(thread_executor)
 
     async def run_in_thread(func, *args):
         return await app.loop.run_in_executor(thread_executor, func, *args)
@@ -152,7 +152,7 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    if app["setup"] is None:
+    if app["setup"] is None and app["force_settings"] is None:
         from_db = await virtool.db.settings.get(app["db"])
         app["settings"].update(from_db)
 
@@ -366,7 +366,7 @@ async def on_shutdown(app):
     await scheduler.close()
 
 
-def create_app(settings=None):
+def create_app(force_settings=None):
     """
     Creates the Virtool application.
 
@@ -375,7 +375,10 @@ def create_app(settings=None):
     - initializes all main Virtool objects during ``on_startup``
 
     """
-    config = virtool.config.resolve()
+    config = force_settings
+
+    if config is None:
+        config = virtool.config.resolve()
 
     middlewares = [
         virtool.http.errors.middleware,
@@ -384,15 +387,14 @@ def create_app(settings=None):
     ]
 
     setup_required = not os.path.exists("config.json")
-    # setup_required = virtool.config.check_setup(config)
 
-    if not setup_required:
+    if not config["force_setup"] or not config["no_setup"] or not setup_required:
         middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 
+    app["force_settings"] = force_settings
     app["settings"] = config
-
     app["setup"] = None
 
     if setup_required:
