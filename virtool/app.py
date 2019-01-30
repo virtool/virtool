@@ -388,7 +388,7 @@ def create_app(force_settings=None):
 
     setup_required = not os.path.exists("config.json")
 
-    if config["no_setup"] and not setup_required:
+    if not setup_required or config["no_setup"]:
         if not config["force_setup"]:
             middlewares.append(virtool.http.auth.middleware)
 
