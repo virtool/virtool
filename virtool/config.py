@@ -311,7 +311,7 @@ def get_from_env() -> dict:
         name = "VT_" + key.upper()
 
         try:
-            settings[name] = os.environ[name]
+            settings[key] = os.environ[name]
         except KeyError:
             pass
 
@@ -485,9 +485,11 @@ def resolve() -> dict:
 
     from_args = get_from_args()
 
+    from_env = get_from_env()
+
     from_defaults = get_defaults()
 
-    return {**from_defaults, **from_file, **from_args}
+    return {**from_defaults, **from_env, **from_file, **from_args}
 
 
 def validate(data: dict) -> dict:
