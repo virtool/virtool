@@ -6,6 +6,17 @@ PROJECTION = {
     "_id": False
 }
 
+CONFIG_PROJECTION = (
+    "data_path",
+    "watch_path",
+    "proc",
+    "mem",
+    "lg_proc",
+    "lg_mem",
+    "sm_proc",
+    "sm_mem"
+)
+
 
 async def get(db):
     settings = await db.settings.find_one("settings", projection=PROJECTION)
