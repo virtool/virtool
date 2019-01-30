@@ -112,6 +112,7 @@ class Job(virtool.jobs.job.Job):
         command = [
             "bowtie2-build",
             "-f",
+            "--threads", str(self.proc),
             os.path.join(self.params["index_path"], "ref.fa"),
             os.path.join(self.params["index_path"], "reference")
         ]
