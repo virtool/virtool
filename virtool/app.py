@@ -247,13 +247,14 @@ async def init_check_db(app):
 
 
 async def init_client_path(app):
-    app["client_path"] = await virtool.utils.get_client_path()
+    if not app["settings"]["no_client"]:
+        app["client_path"] = await virtool.utils.get_client_path()
 
-    if app["client_path"] is None:
-        logger.critical("Client files not found")
-        sys.exit(1)
+        if app["client_path"] is None:
+            logger.critical("Client files not found")
+            sys.exit(1)
 
-    app.router.add_static("/static", app["client_path"])
+        app.router.add_static("/static", app["client_path"])
 
 
 async def init_job_manager(app):

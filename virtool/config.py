@@ -219,6 +219,14 @@ def get_from_args():
     )
 
     parser.add_argument(
+        "--no-client",
+        action="store_true",
+        default=False,
+        dest="no_client",
+        help="run without servering client files"
+    )
+
+    parser.add_argument(
         "--no-db-checks",
         action="store_true",
         default=False,
