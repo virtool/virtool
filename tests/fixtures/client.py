@@ -10,6 +10,7 @@ def get_settings(no_job_manager, setup):
         "enable_api": True,
         "force_setup": setup,
         "force_version": "v0.0.0",
+        "no_client": True,
         "no_db_checks": True,
         "no_job_manager": no_job_manager,
         "no_file_manager": True,

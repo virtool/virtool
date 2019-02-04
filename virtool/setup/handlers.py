@@ -37,7 +37,7 @@ async def get_main(req):
     """
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup.html"))
 
-    html = template.render(hash=virtool.utils.get_static_hash(req.app["client_path"]))
+    html = template.render(hash=virtool.utils.get_static_hash(req))
 
     return web.Response(body=html, content_type="text/html")
 
@@ -48,7 +48,7 @@ async def get_proxy(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_proxy.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req.app["client_path"]),
+        hash=virtool.utils.get_static_hash(req),
         proxy=setup["proxy"]["proxy"],
         ready=setup["proxy"]["ready"],
         error=setup["proxy"]["error"]
@@ -81,7 +81,7 @@ async def get_db(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_db.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req.app["client_path"]),
+        hash=virtool.utils.get_static_hash(req),
         db_connection_string=db_connection_string,
         db_name=db_name,
         ready=ready,
@@ -115,7 +115,7 @@ async def get_user(req):
     data["password"] = data.pop("placeholder")
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req.app["client_path"]),
+        hash=virtool.utils.get_static_hash(req),
         **data
     )
 
@@ -151,7 +151,7 @@ async def get_path(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_path.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req.app["client_path"]),
+        hash=virtool.utils.get_static_hash(req),
         **req.app["setup"][mode],
         mode=mode
     )
@@ -205,7 +205,7 @@ async def get_finish(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_finish.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req.app["client_path"]),
+        hash=virtool.utils.get_static_hash(req),
         config_path=config_path,
         proxy=proxy,
         user_id=setup["user"]["id"],

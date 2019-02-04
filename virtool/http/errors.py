@@ -16,7 +16,7 @@ async def middleware(req, handler):
         response = await handler(req)
 
         if not is_api_call and response.status == 404:
-            return handle_404(req.app["client_path"])
+            return handle_404(req)
 
         return response
 
@@ -25,18 +25,16 @@ async def middleware(req, handler):
             return not_found()
 
         if ex.status == 404:
-            return handle_404(req.app["client_path"])
+            return handle_404(req)
 
         raise
 
 
-def handle_404(client_path):
+def handle_404(req):
     path = os.path.join(sys.path[0], "templates", "error_404.html")
 
-    try:
-        html = Template(filename=path).render(hash=virtool.utils.get_static_hash(client_path))
-    except FileNotFoundError:
-        with open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as handle:
-            return web.Response(body=handle.read(), content_type="text/html")
+    static_hash = virtool.utils.get_static_hash(req)
+
+    html = Template(filename=path).render(hash=static_hash)
 
     return web.Response(body=html, content_type="text/html", status=404)

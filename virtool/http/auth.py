@@ -270,10 +270,7 @@ async def login_get_handler(req: web.Request) -> web.Response:
     :return: the response
 
     """
-    try:
-        static_hash = virtool.utils.get_static_hash(req.app["client_path"])
-    except FileNotFoundError:
-        return await client_path_error()
+    static_hash = virtool.utils.get_static_hash(req)
 
     verification_key = await virtool.db.sessions.get_verification_key(req.app["db"], req["client"].session_id)
 
@@ -371,10 +368,7 @@ async def reset_get_handler(req: web.Request) -> web.Response:
     if reset_code is None or not await virtool.db.sessions.check_reset_code(db, session_id, reset_code):
         return web.Response(status=302, headers={"Location": f"/login?return_to={return_to}"})
 
-    try:
-        static_hash = virtool.utils.get_static_hash(req.app["client_path"])
-    except FileNotFoundError:
-        return await client_path_error()
+    static_hash = virtool.utils.get_static_hash(req)
 
     verification_key = req.get(
         "verification_key",

@@ -134,10 +134,18 @@ def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
 
 
-def get_static_hash(client_path):
-    for file_name in os.listdir(client_path):
-        if "style." in file_name:
-            return file_name.split(".")[1]
+def get_static_hash(req):
+    try:
+        client_path = req.app["client_path"]
+
+        for file_name in os.listdir(client_path):
+            if "style." in file_name:
+                return file_name.split(".")[1]
+
+    except (KeyError, FileNotFoundError):
+        pass
+
+    return ""
 
 
 async def reload(app):
