@@ -121,6 +121,16 @@ RESOURCE_TYPES = (
 )
 
 
+def file_exists():
+    for filename in ["config.json", "settings.json"]:
+        path = os.path.join(sys.path[0], filename)
+
+        if os.path.exists(path):
+            return True
+
+    return False
+
+
 def get_defaults():
     return {key: SCHEMA[key]["default"] for key in SCHEMA}
 
@@ -331,7 +341,6 @@ def load_from_file() -> dict:
         with open(PATH, "r") as f:
             return json.load(f)
     except IOError:
-        logger.info("No config file found. Entering setup. Use --no-setup to skip setup interface.")
         return dict()
 
 
@@ -499,6 +508,16 @@ def resolve() -> dict:
     from_defaults = get_defaults()
 
     return {**from_defaults, **from_env, **from_file, **from_args}
+
+
+def should_do_setup(config):
+    if config["force_setup"]:
+        return True
+
+    if config["no_setup"]:
+        return False
+
+    return not file_exists()
 
 
 def validate(data: dict) -> dict:
