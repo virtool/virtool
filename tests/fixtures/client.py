@@ -106,9 +106,7 @@ class VTClient:
 
 @pytest.fixture
 def spawn_client(loop, request, test_client, test_motor, test_db_name, create_user):
-    db_host = request.config.getoption("db_host", "localhost")
-
-    db_connection_string = f"mongodb://{db_host}:27017"
+    db_connection_string = request.config.getoption("db_connection_string", "mongodb://localhost:27017")
 
     client = VTClient(loop, test_client, db_connection_string, test_db_name, create_user)
 
