@@ -347,32 +347,33 @@ def migrate():
     # Load the legacy `settings.json` file. Return immediately if it is not found.
     try:
         with open(LEGACY_PATH, "r") as f:
-            legacy = json.load(f)
+            config = json.load(f)
     except IOError:
         return None
 
     # Convert database settings to a single connection string.
-    convert_db(legacy)
+    convert_db(config)
 
-    db = pymongo.MongoClient(legacy["db"])
+    db = pymongo.MongoClient(config["db_connection_string"])[config["db_name"]]
 
     # Move settings that should be in database to database.
     v = cerberus.Validator(virtool.settings.SCHEMA, purge_unknown=True)
-    v.validate(legacy)
+    v.validate(config)
 
-    db.settings.insert_one({"_id": "settings", **v.document})
+    db.settings.update_one({"_id": "settings"}, {
+        "$set": v.document
+    }, upsert=True)
 
     # Rewrite settings file without DB-stored settings.
     v = cerberus.Validator(schema=SCHEMA, purge_unknown=True)
-    v.validate(legacy)
-
-    # Get default values from schema.
-    defaults = get_defaults()
-
-    config = dict(v.document)
+    v.validate(config)
 
     convert_job_limits(config)
     convert_proxy(config)
+    remove_defaults(config)
+
+    config = dict(v.document)
+
     remove_defaults(config)
 
     virtool.config.write_to_file(config)
