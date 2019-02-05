@@ -262,6 +262,8 @@ async def init_file_manager(app):
         )
 
         scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
+
+        await scheduler.spawn(app["file_manager"].run())
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
