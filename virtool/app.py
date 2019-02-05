@@ -193,7 +193,7 @@ async def init_db(app):
         )
 
         try:
-            await db_client.database_names()
+            await db_client.list_database_names()
         except pymongo.errors.ServerSelectionTimeoutError:
             logger.critical("Could not connect to MongoDB server")
             sys.exit(1)
