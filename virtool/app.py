@@ -184,30 +184,27 @@ async def init_db(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    if app["setup"] is not None:
-        return
+    if app["setup"] is None:
+        settings = app["settings"]
 
-    settings = app["settings"]
+        db_client = motor_asyncio.AsyncIOMotorClient(
+            settings["db_connection_string"],
+            serverSelectionTimeoutMS=6000
+        )
 
-    db_client = motor_asyncio.AsyncIOMotorClient(
-        settings["db_connection_string"],
-        serverSelectionTimeoutMS=6000,
-        io_loop=app.loop
-    )
+        try:
+            await db_client.database_names()
+        except pymongo.errors.ServerSelectionTimeoutError:
+            logger.critical("Could not connect to MongoDB server")
+            sys.exit(1)
 
-    try:
-        await db_client.database_names()
-    except pymongo.errors.ServerSelectionTimeoutError:
-        logger.critical("Could not connect to MongoDB server")
-        sys.exit(1)
+        app["db"] = virtool.db.iface.DB(
+            db_client[settings["db_name"]],
+            app["dispatcher"].dispatch,
+            app.loop
+        )
 
-    app["db"] = virtool.db.iface.DB(
-        db_client[settings["db_name"]],
-        app["dispatcher"].dispatch,
-        app.loop
-    )
-
-    await app["db"].connect()
+        await app["db"].connect()
 
 
 async def init_check_db(app):
@@ -371,27 +368,25 @@ def create_app(force_settings=None):
     """
     Creates the Virtool application.
 
-    - creates an returns an instance of :class:`aiohttp.web.Application`
-    - sets up URL routing
-    - initializes all main Virtool objects during ``on_startup``
-
     """
-    config = force_settings
-
-    if config is None:
-        config = virtool.config.resolve()
-
     middlewares = [
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
     ]
 
-    setup_required = not os.path.exists("config.json")
+    if force_settings:
+        config = force_settings
+    else:
+        config = virtool.config.resolve()
 
-    if not setup_required or config["no_setup"]:
-        if not config["force_setup"]:
-            middlewares.append(virtool.http.auth.middleware)
+    do_setup = virtool.config.should_do_setup(config)
+
+    print("DO_SETUP", do_setup)
+
+    if not do_setup:
+        # Don't use authentication in setup mode.
+        middlewares.append(virtool.http.auth.middleware)
 
     app = web.Application(middlewares=middlewares)
 
@@ -399,7 +394,7 @@ def create_app(force_settings=None):
     app["settings"] = config
     app["setup"] = None
 
-    if config["force_setup"] or setup_required:
+    if do_setup:
         app["setup"] = dict()
 
     aiojobs.aiohttp.setup(app)
