@@ -15,7 +15,6 @@ def get_settings(no_job_manager, setup):
         "no_job_manager": no_job_manager,
         "no_file_manager": True,
         "no_refreshing": True,
-        "skip_db_checks": True,
         "no_setup": True,
         "no_sentry": True
     }
