@@ -42,7 +42,6 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
 export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
-export const TEST_PROXY = createRequestActionType("TEST_PROXY");
 
 // Analysis
 export const WS_INSERT_ANALYSIS = "WS_INSERT_ANALYSIS";

@@ -1,4 +1,4 @@
-import { GET_CONTROL_READAHEAD, GET_SETTINGS, TEST_PROXY, UPDATE_SETTINGS } from "../app/actionTypes";
+import { GET_CONTROL_READAHEAD, GET_SETTINGS, UPDATE_SETTINGS } from "../app/actionTypes";
 
 export const initialState = {
     data: null,
