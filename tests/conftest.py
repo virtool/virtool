@@ -9,13 +9,14 @@ from tests.fixtures.indexes import *
 from tests.fixtures.jobs import *
 from tests.fixtures.references import *
 from tests.fixtures.response import *
+from tests.fixtures.setup import *
 from tests.fixtures.users import *
 from tests.fixtures.otus import *
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--db-host",
+        "--db-connection-string",
         action="store",
-        default="localhost"
+        default="mongodb://localhost:27017"
     )

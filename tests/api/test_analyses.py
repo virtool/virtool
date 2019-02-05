@@ -240,18 +240,18 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     assert await resp.json() == blast
 
     m_initialize_ncbi_blast.assert_called_with(
-        {},
+        client.settings,
         "GGAGTTAGATTGG"
     )
 
     m_check_rid.assert_called_with(
-        {},
+        client.settings,
         "FOOBAR1337"
     )
 
     m_wait_for_blast_result.assert_called_with(
         client.db,
-        {},
+        client.settings,
         "foobar",
         5,
         "FOOBAR1337"

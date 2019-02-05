@@ -165,7 +165,7 @@ async def create(req):
 
     document = data
 
-    sample_group_setting = settings.get("sample_group")
+    sample_group_setting = settings["sample_group"]
 
     # Require a valid ``group`` field if the ``sample_group`` setting is ``users_primary_group``.
     if sample_group_setting == "force_choice":

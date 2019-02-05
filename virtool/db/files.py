@@ -79,6 +79,6 @@ async def release_reservations(db, file_ids):
 async def remove(loop, db, settings, file_id):
     await db.files.delete_one({"_id": file_id})
 
-    file_path = os.path.join(settings.get("data_path"), "files", file_id)
+    file_path = os.path.join(settings["data_path"], "files", file_id)
 
     await loop.run_in_executor(None, virtool.utils.rm, file_path)

@@ -1,45 +1,4 @@
 import pytest
-import virtool.jobs.manager
-
-
-class MockSettings:
-
-    def __init__(self):
-        self._data = {
-            "db_name": "test",
-            "db_host": "localhost",
-            "db_port": 27017,
-            "build_index_inst": 2,
-            "proc": 4,
-            "mem": 8
-        }
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def get(self, key):
-        return self._data[key]
-
-    def update(self, update_dict):
-        self._data.update(update_dict)
-
-    def as_dict(self):
-        return dict(self._data)
-
-
-@pytest.fixture
-def test_job_manager(dbs):
-    app = {
-        "db": dbs,
-        "settings": {}
-    }
-
-    manager = virtool.jobs.manager.IntegratedManager(
-        app,
-        MockSettings()
-    )
-
-    yield manager
 
 
 @pytest.fixture

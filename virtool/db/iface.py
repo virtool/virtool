@@ -10,6 +10,7 @@ import virtool.db.jobs
 import virtool.db.otus
 import virtool.db.references
 import virtool.db.samples
+import virtool.db.settings
 import virtool.db.subtractions
 import virtool.db.users
 import virtool.db.utils
@@ -193,6 +194,7 @@ class DB:
         await self.bind_collection("processes")
         await self.bind_collection("references", projection=virtool.db.references.PROJECTION)
         await self.bind_collection("samples", projection=virtool.db.samples.LIST_PROJECTION)
+        await self.bind_collection("settings", projection=virtool.db.settings.PROJECTION, processor=lambda d: d)
         await self.bind_collection("sequences")
         await self.bind_collection("sessions", silent=True)
         await self.bind_collection("status")
