@@ -15,6 +15,7 @@ Cerberus==1.2
 cffi==1.11.5
 chardet==3.0.4
 coloredlogs==10.0
+configobj==5.0.6
 coverage==4.5.1
 cx-Freeze==6.0b1
 dictdiffer==0.7.1
@@ -48,6 +49,8 @@ raven==6.9.0
 raven-aiohttp==0.7.0
 semver==2.8.1
 six==1.11.0
+snapshottest==0.5.0
+termcolor==1.1.0
 uvloop==0.11.2
 visvalingamwyatt==0.1.2
 yarl==1.2.6
