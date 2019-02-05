@@ -17,7 +17,7 @@ HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
 
 
 @pytest.fixture
-def mock_job(mocker, tmpdir, request, dbs):
+def mock_job(mocker, tmpdir, request, dbs, test_db_connection_string):
     # Add logs path.
     tmpdir.mkdir("logs").mkdir("jobs")
 
@@ -31,10 +31,8 @@ def mock_job(mocker, tmpdir, request, dbs):
         "data_path": str(tmpdir)
     }
 
-    db_host = request.config.getoption("db_host", "localhost")
-
     job = virtool.jobs.nuvs.Job(
-        f"mongodb://{db_host}:27017",
+        test_db_connection_string,
         "virtool",
         settings,
         "foo",

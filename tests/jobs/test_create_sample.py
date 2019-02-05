@@ -5,7 +5,7 @@ import virtool.jobs.create_sample
 
 
 @pytest.fixture
-def test_create_sample_job(mocker, tmpdir, loop, request, dbi, dbs, test_db_name):
+def test_create_sample_job(mocker, tmpdir, loop, request, dbi, dbs, test_db_connection_string, test_db_name):
     tmpdir.mkdir("samples")
     tmpdir.mkdir("logs").mkdir("jobs")
 
@@ -15,12 +15,10 @@ def test_create_sample_job(mocker, tmpdir, loop, request, dbi, dbs, test_db_name
         "create_sample_proc": 6
     }
 
-    db_host = request.config.getoption("db_host", "localhost")
-
     q = mocker.Mock()
 
     job = virtool.jobs.create_sample.Job(
-        f"mongodb://{db_host}:27017",
+        test_db_connection_string,
         test_db_name,
         settings,
         "foobar",
