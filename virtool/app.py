@@ -382,8 +382,6 @@ def create_app(force_settings=None):
 
     do_setup = virtool.config.should_do_setup(config)
 
-    print("DO_SETUP", do_setup)
-
     if not do_setup:
         # Don't use authentication in setup mode.
         middlewares.append(virtool.http.auth.middleware)
