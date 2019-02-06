@@ -224,13 +224,18 @@ async def create(req):
         }
     })
 
-    await db.samples.insert_one(document)
+    files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
+
+    await db.samples.insert_one({
+        **document,
+        "files": [virtool.utils.base_processor(file) for file in files]
+    })
 
     await virtool.db.files.reserve(db, data["files"])
 
     task_args = {
         "sample_id": sample_id,
-        "files": document["files"],
+        "files": data["files"],
         "srna": data["srna"]
     }
 
