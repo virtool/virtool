@@ -45,9 +45,9 @@ export class AnalysesList extends React.Component {
                     <Flex alignItems="center">
                         <Icon name="info-circle" />
                         <FlexItem pad={5}>
-                            <span>The HMM data is not installed. </span>
+                            <span>HMM data is not installed. </span>
                             <Link to="/hmm">Install HMMs</Link>
-                            <span> to use in further NuV analyses.</span>
+                            <span> to run NuV analyses.</span>
                         </FlexItem>
                     </Flex>
                 </Alert>
