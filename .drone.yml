@@ -13,6 +13,8 @@ steps:
     commands:
       - pip install -qr requirements.txt
       - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
+      - pip install codacy-coverage
+      - python-codacy-coverage -r coverage.xml
 
 services:
   - name: mongo
@@ -33,7 +35,7 @@ steps:
       - npm i      
       - npx jest --coverage
       - npm i codacy-coverage
-      - codacy-coverage
+      - npx codacy-coverage
 
 ---
 kind: pipeline
