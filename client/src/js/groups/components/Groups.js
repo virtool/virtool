@@ -79,15 +79,15 @@ class Groups extends React.Component {
 
         const activeGroup = find(this.props.groups, { id: this.props.activeId });
 
-        let members = [];
+        let members;
 
         if (activeGroup) {
-            members = filter(this.props.users.documents, user => includes(user.groups, activeGroup.id));
+            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
         }
 
         let memberComponents;
 
-        if (members.length) {
+        if (members && members.length) {
             memberComponents = map(members, member => (
                 <Label key={member.id} style={{ marginRight: "5px" }}>
                     {member.id}
