@@ -20,7 +20,8 @@ steps:
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN        
-    commands:    
+    commands:
+      - api add git
       - pip install codacy-coverage
       - python-codacy-coverage -r coverage.xml
     when:
