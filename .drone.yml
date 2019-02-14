@@ -16,7 +16,7 @@ steps:
       - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
       
   - name: coverage
-    image: python3:alpine
+    image: python:3.6-alpine
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN        
