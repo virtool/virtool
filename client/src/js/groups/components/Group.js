@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { ListGroupItem } from "../../base";
 import { changeActiveGroup } from "../actions";
 
-const Group = ({ id, active, onSelect }) => (
+export const Group = ({ id, active, onSelect }) => (
     <ListGroupItem key={id} active={active} onClick={onSelect}>
         <span className="text-capitalize">{id}</span>
     </ListGroupItem>
