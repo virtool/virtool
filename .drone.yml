@@ -30,8 +30,10 @@ steps:
     image: node:10-alpine
     commands:
       - cd client
-      - npm i
+      - npm i      
       - npx jest --coverage
+      - npm i codacy-coverage
+      - codacy-coverage
 
 ---
 kind: pipeline
