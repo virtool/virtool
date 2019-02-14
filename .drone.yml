@@ -21,7 +21,7 @@ steps:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN        
     commands:
-      - api add git
+      - apk add git
       - pip install codacy-coverage
       - python-codacy-coverage -r coverage.xml
     when:
