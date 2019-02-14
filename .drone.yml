@@ -52,6 +52,7 @@ steps:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN
     commands:
+      - cd client
       - npm i codacy-coverage
       - cat ./coverage/lcov.info | npx codacy-coverage
     when:
