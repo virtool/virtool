@@ -79,6 +79,7 @@ export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 export const WS_INSERT_GROUP = "WS_INSERT_GROUP";
 export const WS_UPDATE_GROUP = "WS_UPDATE_GROUP";
 export const WS_REMOVE_GROUP = "WS_REMOVE_GROUP";
+export const CHANGE_ACTIVE_GROUP = "CHANGE_ACTIVE_GROUP";
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
 export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
 export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSION");

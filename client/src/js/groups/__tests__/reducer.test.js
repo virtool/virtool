@@ -54,23 +54,25 @@ describe("Groups Reducer", () => {
         expect(result).toEqual({ ...state, documents: [{ id: "test", foo: "baz" }] });
     });
 
-    it("should handle WS_REMOVE-GROUP", () => {
-        const state = { documents: [{ id: "test" }] };
-        const action = { type: WS_REMOVE_GROUP, data: ["test"] };
+    it("should handle WS_REMOVE_GROUP", () => {
+        const state = { documents: [{ id: "foo" }, { id: "bar" }], activeId: "bar" };
+        const action = { type: WS_REMOVE_GROUP, data: ["bar"] };
         const result = reducer(state, action);
-        expect(result).toEqual({ ...state, documents: [] });
+        expect(result).toEqual({ ...state, documents: [{ id: "foo" }], activeId: "foo" });
     });
 
     it("should handle LIST_GROUPS_SUCCEEDED", () => {
         const state = { documents: null };
+        const data = [{ id: "foo" }, { id: "bar" }];
         const action = {
             type: LIST_GROUPS.SUCCEEDED,
-            data: [{ id: "foobar" }]
+            data
         };
         const result = reducer(state, action);
         expect(result).toEqual({
             ...state,
-            documents: [{ id: "foobar" }]
+            documents: data,
+            activeId: "foo"
         });
     });
 
@@ -100,15 +102,16 @@ describe("Groups Reducer", () => {
     });
 
     it("should handle CREATE_GROUP_SUCCEEDED", () => {
-        const action = { type: CREATE_GROUP.SUCCEEDED };
+        const id = "foo";
+        const action = { type: CREATE_GROUP.SUCCEEDED, data: { id } };
         const result = reducer({}, action);
-        expect(result).toEqual({ pending: false });
+        expect(result).toEqual({ pending: false, activeId: id });
     });
 
     it("should handle REMOVE_GROUP_SUCCEEDED", () => {
         const action = { type: REMOVE_GROUP.SUCCEEDED };
         const result = reducer({}, action);
-        expect(result).toEqual({ pending: false });
+        expect(result).toEqual({ pending: false, activeId: "" });
     });
 
     it("should handle SET_GROUP_PERMISSION_SUCCEEDED", () => {

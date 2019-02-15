@@ -6,7 +6,8 @@ import {
     LIST_GROUPS,
     CREATE_GROUP,
     SET_GROUP_PERMISSION,
-    REMOVE_GROUP
+    REMOVE_GROUP,
+    CHANGE_ACTIVE_GROUP
 } from "../app/actionTypes";
 
 export const wsInsertGroup = data => ({
@@ -22,6 +23,11 @@ export const wsUpdateGroup = data => ({
 export const wsRemoveGroup = data => ({
     type: WS_REMOVE_GROUP,
     data
+});
+
+export const changeActiveGroup = id => ({
+    type: CHANGE_ACTIVE_GROUP,
+    id
 });
 
 /**

@@ -1,69 +1,24 @@
-import React from "react";
-import { filter, find, includes, map, sortBy, transform, get, toLower } from "lodash-es";
-import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
-import { connect } from "react-redux";
 import { push } from "connected-react-router";
-
-import { createGroup, setGroupPermission, removeGroup } from "../actions";
-import { clearError } from "../../errors/actions";
+import { filter, find, get, includes, map, sortBy, transform } from "lodash-es";
+import React from "react";
+import { Col, InputGroup, Label, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { connect } from "react-redux";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
-const getActiveGroupId = ({ groups }) => (groups && groups.length ? groups[0].id : "");
-
-class Group extends React.Component {
-    handleClick = () => {
-        this.props.onSelect(this.props.id);
-    };
-
-    render() {
-        const { id, active } = this.props;
-
-        return (
-            <ListGroupItem key={id} active={active} onClick={this.handleClick}>
-                <span className="text-capitalize">{id}</span>
-            </ListGroupItem>
-        );
-    }
-}
+import { createGroup, removeGroup, setGroupPermission } from "../actions";
+import Group from "./Group";
 
 class Groups extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeId: "",
             createGroupId: "",
             spaceError: false,
             submitted: false,
-            error: "",
-            groups: this.props.groups
+            error: ""
         };
-    }
-
-    componentDidMount() {
-        this.setState({
-            activeId: getActiveGroupId(this.props)
-        });
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.groups || !nextProps.groups || nextProps.groups.length < prevState.groups.length) {
-            return {
-                activeId: getActiveGroupId(nextProps),
-                groups: nextProps.groups
-            };
-        }
-
-        if (prevState.groups.length < nextProps.groups.length) {
-            return {
-                ...update,
-                activeId: prevState.createGroupId ? toLower(prevState.createGroupId) : prevState.activeId,
-                createGroupId: "",
-                groups: nextProps.groups
-            };
-        }
-
-        return null;
     }
 
     handleModalExited = () => {
@@ -77,12 +32,6 @@ class Groups extends React.Component {
         if (this.props.error) {
             this.props.onClearError("CREATE_GROUP_ERROR");
         }
-    };
-
-    handleSelect = activeId => {
-        this.setState({
-            activeId
-        });
     };
 
     handleChange = e => {
@@ -126,21 +75,19 @@ class Groups extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const groupComponents = map(sortBy(this.props.groups, "id"), group => (
-            <Group key={group.id} {...group} active={this.state.activeId === group.id} onSelect={this.handleSelect} />
-        ));
+        const groupComponents = map(sortBy(this.props.groups, "id"), group => <Group key={group.id} {...group} />);
 
-        const activeGroup = find(this.props.groups, { id: this.state.activeId });
+        const activeGroup = find(this.props.groups, { id: this.props.activeId });
 
-        let members = [];
+        let members;
 
         if (activeGroup) {
-            members = filter(this.props.users.documents, user => includes(user.groups, activeGroup.id));
+            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
         }
 
         let memberComponents;
 
-        if (members.length) {
+        if (members && members.length) {
             memberComponents = map(members, member => (
                 <Label key={member.id} style={{ marginRight: "5px" }}>
                     {member.id}
@@ -247,6 +194,7 @@ const mapStateToProps = state => ({
     users: state.users.documents,
     groups: state.groups.documents,
     pending: state.groups.pending,
+    activeId: state.groups.activeId,
     error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
 });
 

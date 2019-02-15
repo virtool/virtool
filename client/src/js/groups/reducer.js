@@ -1,17 +1,31 @@
-import { sortBy, unionBy, concat } from "lodash-es";
+import { concat, get, some, sortBy, unionBy } from "lodash-es";
 import {
-    WS_INSERT_GROUP,
-    WS_UPDATE_GROUP,
-    WS_REMOVE_GROUP,
-    LIST_GROUPS,
+    CHANGE_ACTIVE_GROUP,
     CREATE_GROUP,
+    LIST_GROUPS,
+    REMOVE_GROUP,
     SET_GROUP_PERMISSION,
-    REMOVE_GROUP
+    WS_INSERT_GROUP,
+    WS_REMOVE_GROUP,
+    WS_UPDATE_GROUP
 } from "../app/actionTypes";
-import { update, remove, insert } from "../utils/reducers";
+import { insert, remove, update } from "../utils/reducers";
+
+export const updateActiveId = state => {
+    if (state.activeId && some(state.documents, { id: state.activeId })) {
+        return state;
+    }
+
+    return {
+        ...state,
+        activeId: get(state, "documents[0].id", "")
+    };
+};
 
 export const initialState = {
-    documents: null
+    documents: null,
+    pending: false,
+    activeId: ""
 };
 
 export const updateGroup = (state, update) => ({
@@ -31,10 +45,16 @@ export default function groupsReducer(state = initialState, action) {
             return update(state, action);
 
         case WS_REMOVE_GROUP:
-            return remove(state, action);
+            return updateActiveId(remove(state, action));
+
+        case CHANGE_ACTIVE_GROUP:
+            return {
+                ...state,
+                activeId: action.id
+            };
 
         case LIST_GROUPS.SUCCEEDED:
-            return { ...state, documents: action.data };
+            return updateActiveId({ ...state, documents: action.data });
 
         case CREATE_GROUP.REQUESTED:
         case REMOVE_GROUP.REQUESTED:
@@ -42,7 +62,11 @@ export default function groupsReducer(state = initialState, action) {
             return { ...state, pending: true };
 
         case CREATE_GROUP.SUCCEEDED:
+            return { ...state, pending: false, activeId: action.data.id };
+
         case REMOVE_GROUP.SUCCEEDED:
+            return updateActiveId({ ...state, pending: false });
+
         case SET_GROUP_PERMISSION.SUCCEEDED:
             return { ...state, pending: false };
 
