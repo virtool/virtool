@@ -10,11 +10,23 @@ steps:
 
   - name: test
     image: virtool/external-tools:0.1.2
+    
     commands:
       - pip install -qr requirements.txt
       - pytest -x --aiohttp-loop uvloop --db-host mongo --cov --cov-report xml
+      
+  - name: coverage
+    image: python:3.6-alpine
+    environment:
+      CODACY_PROJECT_TOKEN:
+        from_secret: CODACY_PROJECT_TOKEN        
+    commands:
+      - apk add git
       - pip install codacy-coverage
       - python-codacy-coverage -r coverage.xml
+    when:
+      event:
+        - push
 
 services:
   - name: mongo
@@ -34,8 +46,19 @@ steps:
       - cd client
       - npm i      
       - npx jest --coverage
+      
+  - name: coverage
+    image: node:10-alpine
+    environment:
+      CODACY_PROJECT_TOKEN:
+        from_secret: CODACY_PROJECT_TOKEN
+    commands:
+      - cd client
       - npm i codacy-coverage
-      - npx codacy-coverage
+      - cat ./coverage/lcov.info | npx codacy-coverage
+    when:
+      event:
+        - push
 
 ---
 kind: pipeline
