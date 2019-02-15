@@ -23,7 +23,7 @@ steps:
     commands:
       - apk add git
       - pip install codacy-coverage
-      - python-codacy-coverage -r coverage.xml
+      - python-codacy-coverage -r coverage.xml -c $DRONE_COMMIT_SHA -d $PWD
     when:
       event:
         - push
@@ -55,7 +55,7 @@ steps:
     commands:
       - cd client
       - npm i codacy-coverage
-      - cat ./coverage/lcov.info | npx codacy-coverage
+      - cat ./coverage/lcov.info | npx codacy-coverage -c $DRONE_COMMIT_SHA
     when:
       event:
         - push
