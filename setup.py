@@ -46,6 +46,6 @@ executables = [
 
 importlib.import_module("virtool")
 
-setup(name='virtool', executables=executables, options=options)
+setup(name='virtool', executables=executables, options=options, python_requires=">=3.6")
 
 
