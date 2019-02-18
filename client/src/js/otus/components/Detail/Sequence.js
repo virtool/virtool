@@ -9,7 +9,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { Table, Label, Collapse } from "react-bootstrap";
+import { Badge, Table, Label, Collapse } from "react-bootstrap";
 import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 
@@ -150,7 +150,9 @@ class Sequence extends React.Component {
                                 </tr>
 
                                 <tr>
-                                    <th>Sequence</th>
+                                    <th>
+                                        Sequence <Badge>{this.props.sequence.length}</Badge>
+                                    </th>
                                     <td className="sequence-cell">
                                         <textarea rows="5" value={this.props.sequence} readOnly />
                                     </td>
