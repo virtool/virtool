@@ -37,8 +37,10 @@ class OTUDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
+        const id = this.props.match.params.otuId;
+
         const refId = this.props.detail.reference.id;
-        const { id, name, abbreviation } = this.props.detail;
+        const { name, abbreviation } = this.props.detail;
 
         let iconButtons = [];
         let modifyOTUComponents;
