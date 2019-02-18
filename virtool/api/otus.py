@@ -111,8 +111,11 @@ async def create(req):
     if not await virtool.db.references.check_right(req, reference, "modify_otu"):
         return insufficient_rights()
 
+    name = data["name"].strip()
+    abbreviation = data["abbreviation"].strip()
+
     # Check if either the name or abbreviation are already in use. Send a ``400`` if they are.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
         return bad_request(message)
@@ -120,8 +123,8 @@ async def create(req):
     joined = await virtool.db.otus.create(
         db,
         ref_id,
-        data["name"],
-        data["abbreviation"]
+        name,
+        abbreviation
     )
 
     description = virtool.history.compose_create_description(joined)

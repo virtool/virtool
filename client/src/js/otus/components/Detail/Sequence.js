@@ -9,7 +9,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { Table, Label, Collapse } from "react-bootstrap";
+import { Badge, Table, Label, Collapse } from "react-bootstrap";
 import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 
@@ -26,6 +26,7 @@ class Sequence extends React.Component {
         accession: PropTypes.string,
         definition: PropTypes.string,
         host: PropTypes.string,
+        segment: PropTypes.string,
         sequence: PropTypes.string,
         showEditSequence: PropTypes.func,
         showRemoveSequence: PropTypes.func,
@@ -91,6 +92,18 @@ class Sequence extends React.Component {
             );
         }
 
+        let segment;
+
+        if (!this.state.in && this.props.segment) {
+            segment = (
+                <FlexItem>
+                    <Label bsStyle="info" className="text-mono">
+                        {this.props.segment}
+                    </Label>
+                </FlexItem>
+            );
+        }
+
         return (
             <ListGroupItem
                 className="spaced"
@@ -106,6 +119,7 @@ class Sequence extends React.Component {
                         <FlexItem className="sequence-header-definition" grow={1} shrink={1} pad={5}>
                             {this.props.definition}
                         </FlexItem>
+                        {segment}
                         {buttons}
                     </Flex>
                 </div>
@@ -119,15 +133,26 @@ class Sequence extends React.Component {
                                     <td>{accession}</td>
                                 </tr>
                                 <tr>
-                                    <th>Host</th>
-                                    <td>{this.props.host}</td>
-                                </tr>
-                                <tr>
                                     <th>Definition</th>
                                     <td>{this.props.definition}</td>
                                 </tr>
                                 <tr>
-                                    <th>Sequence</th>
+                                    <th>Segment</th>
+                                    <td>
+                                        <Label bsStyle="info" className="text-mono">
+                                            {this.props.segment}
+                                        </Label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Host</th>
+                                    <td>{this.props.host}</td>
+                                </tr>
+
+                                <tr>
+                                    <th>
+                                        Sequence <Badge>{this.props.sequence.length}</Badge>
+                                    </th>
                                     <td className="sequence-cell">
                                         <textarea rows="5" value={this.props.sequence} readOnly />
                                     </td>

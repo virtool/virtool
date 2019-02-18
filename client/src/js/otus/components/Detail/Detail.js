@@ -33,7 +33,7 @@ class OTUDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null) {
+        if (this.props.detail === null || this.props.detail.id !== this.props.match.params.otuId) {
             return <LoadingPlaceholder />;
         }
 

@@ -17,6 +17,16 @@ def evaluate_changes(data, document):
     abbreviation = data.get("abbreviation", None)
     schema = data.get("schema", None)
 
+    try:
+        name = name.strip()
+    except AttributeError:
+        pass
+
+    try:
+        abbreviation = abbreviation.strip()
+    except AttributeError:
+        pass
+
     if name == document["name"]:
         name = None
 
