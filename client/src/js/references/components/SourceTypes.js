@@ -128,7 +128,6 @@ export class SourceTypes extends React.Component {
                                             disabled={disabled}
                                             onChange={this.handleChange}
                                             value={this.state.value}
-                                            style={{ zIndex: 10000 }}
                                         />
                                         <InputGroup.Button>
                                             <Button type="submit" bsStyle="primary" disabled={disabled}>

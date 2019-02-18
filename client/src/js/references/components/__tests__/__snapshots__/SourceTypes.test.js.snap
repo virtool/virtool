@@ -71,11 +71,6 @@ exports[`<SourceTypes /> renders when global 1`] = `
                 componentClass="input"
                 disabled={false}
                 onChange={[Function]}
-                style={
-                  Object {
-                    "zIndex": 10000,
-                  }
-                }
                 type="text"
                 value=""
               />
@@ -179,11 +174,6 @@ exports[`<SourceTypes /> renders when not global and not remote 1`] = `
                 componentClass="input"
                 disabled={false}
                 onChange={[Function]}
-                style={
-                  Object {
-                    "zIndex": 10000,
-                  }
-                }
                 type="text"
                 value=""
               />
@@ -280,11 +270,6 @@ exports[`<SourceTypes /> renders when not global and remote 1`] = `
                 componentClass="input"
                 disabled={true}
                 onChange={[Function]}
-                style={
-                  Object {
-                    "zIndex": 10000,
-                  }
-                }
                 type="text"
                 value=""
               />
