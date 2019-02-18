@@ -45,7 +45,7 @@ export class IsolateDetail extends React.Component {
         const isolate = this.props.activeIsolate;
 
         const defaultIsolateLabel = (
-            <Label bsStyle="info" style={{ visibility: isolate.default ? "visible" : "hidden" }}>
+            <Label bsStyle="success" style={{ visibility: isolate.default ? "visible" : "hidden" }}>
                 <Icon name="star" /> Default Isolate
             </Label>
         );
