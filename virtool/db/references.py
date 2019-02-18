@@ -1062,6 +1062,7 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
                 **sequence,
                 "accession": sequence["accession"],
                 "isolate_id": isolate["id"],
+                "segment": sequence.get("segment", ""),
                 "reference": {
                     "id": ref_id
                 },
@@ -1143,6 +1144,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                     "accession": sequence["accession"],
                     "definition": sequence["definition"],
                     "host": sequence["host"],
+                    "segment": sequence.get("segment", ""),
                     "sequence": sequence["sequence"],
                     "otu_id": old["_id"],
                     "isolate_id": isolate["id"],
@@ -1162,7 +1164,8 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                 "abbreviation": otu["abbreviation"],
                 "name": otu["name"],
                 "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"]
+                "isolates": otu["isolates"],
+                "schema": otu.get("schema", list())
             }
         })
 
