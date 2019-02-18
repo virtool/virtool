@@ -32,7 +32,12 @@ class AddIsolate extends React.Component {
 
     handleSubmit = e => {
         e.preventDefault();
-        this.props.onSave(this.props.otuId, this.state.sourceType, this.state.sourceName);
+
+        const sourceType = this.state.sourceType || "unknown";
+
+        const sourceName = sourceType === "unknown" ? "" : this.state.sourceName;
+
+        this.props.onSave(this.props.otuId, sourceType, sourceName);
     };
 
     handleExit = () => {
@@ -41,12 +46,7 @@ class AddIsolate extends React.Component {
 
     render() {
         return (
-            <Modal
-                show={this.props.show}
-                onEntered={this.handleModalEntered}
-                onHide={this.props.onHide}
-                onExited={this.handleExit}
-            >
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleExit}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Isolate
                 </Modal.Header>
