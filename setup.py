@@ -44,8 +44,13 @@ executables = [
     Executable('run.py', base="Console")
 ]
 
+classifiers=[
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+]
+
 importlib.import_module("virtool")
 
-setup(name='virtool', executables=executables, options=options, python_requires=">=3.6")
+setup(name='virtool', executables=executables, options=options, classifiers=classifiers, python_requires=">=3.6")
 
 
