@@ -2,11 +2,12 @@ import { push } from "connected-react-router";
 import React from "react";
 import { connect } from "react-redux";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
+import { pushState } from "../../app/actions";
 import { Button, Icon } from "../../base";
 import { getCanModify } from "../../samples/selectors";
 import { findAnalyses } from "../actions";
 
-export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleId, term }) => (
+export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, routerLocation, sampleId, term }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -39,7 +40,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onShowCreate: sampleId => {
-        dispatch(push({ ...window.location, state: { createAnalysis: [sampleId] } }));
+        dispatch(pushState({ createAnalysis: [sampleId] }));
     },
     onFind: (sampleId, term, page) => {
         dispatch(findAnalyses(sampleId, term, page));
