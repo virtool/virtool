@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import psutil
 import sys
 import urllib.parse
 from typing import Union
@@ -507,7 +508,11 @@ def resolve() -> dict:
 
     from_defaults = get_defaults()
 
-    return {**from_defaults, **from_env, **from_file, **from_args}
+    resolved = {**from_defaults, **from_env, **from_file, **from_args}
+
+    validate_limits(resolved)
+
+    return resolved
 
 
 def should_do_setup(config):
@@ -520,18 +525,39 @@ def should_do_setup(config):
     return not file_exists()
 
 
-def validate(data: dict) -> dict:
-    v = cerberus.Validator(SCHEMA, purge_unknown=True)
+def validate_limits(config):
+    cpu_count = psutil.cpu_count()
+    mem_total = psutil.virtual_memory().total
 
-    if not v.validate(data):
-        logger.critical("Could not validate settings file", v.errors)
+    proc = int(config["proc"])
+    mem = int(config["mem"])
 
-        for error in v.errors:
-            logger.critical(f"\t{error}")
+    fatal = False
 
+    if proc > cpu_count:
+        fatal = True
+        logger.fatal(f"Configured proc limit ({proc}) exceeds host CPU count ({cpu_count})")
+
+    in_bytes = mem * 1024 * 1024 * 1024
+
+    if in_bytes > mem_total:
+        fatal = True
+        logger.fatal(f"Configured mem limit ({in_bytes}) exceeds host memory ({mem_total})")
+
+    for job_limit_key in JOB_LIMIT_KEYS:
+        resource_key = job_limit_key.split("_")[1]
+
+        job_limit = int(config[job_limit_key])
+        host_limit = int(config[resource_key])
+
+        if job_limit > host_limit:
+            fatal = True
+            logger.fatal(f"Configured {job_limit_key} ({job_limit}) exceeds instance {resource_key} limit ({host_limit})")
+
+    if fatal:
         sys.exit(1)
 
-    return v.document
+    return cpu_count, mem_total
 
 
 def write_to_file(data):
