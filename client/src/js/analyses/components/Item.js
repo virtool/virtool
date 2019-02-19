@@ -10,16 +10,24 @@ import { Icon, Loader, RelativeTime } from "../../base";
 import { removeAnalysis } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 
+export const RightIcon = ({ canModify, onRemove, ready }) => {
+    if (ready) {
+        if (canModify) {
+            return <Icon name="trash" bsStyle="danger" onClick={onRemove} style={{ fontSize: "17px" }} pullRight />;
+        }
+
+        return null;
+    }
+
+    return (
+        <div className="pull-right">
+            <Loader size="14px" color="#3c8786" />
+        </div>
+    );
+};
+
 export const AnalysisItem = props => {
     const itemClass = CX("list-group-item spaced", { hoverable: props.ready });
-    const loaderIcon = <Loader size="14px" color="#3c8786" style={{ display: "inline" }} />;
-    const canRemove = props.ready && props.canModify;
-
-    const endIcon = canRemove ? (
-        <Icon name="trash" bsStyle="danger" onClick={props.onRemove} style={{ fontSize: "17px" }} pullRight />
-    ) : (
-        <span className="pull-right">{loaderIcon}</span>
-    );
 
     const reference = props.placeholder ? null : (
         <span>
@@ -38,14 +46,9 @@ export const AnalysisItem = props => {
                     Started <RelativeTime time={props.created_at} />
                     {props.placeholder ? null : ` by ${props.user.id}`}
                 </Col>
-                <Col xs={2} sm={2} md={2}>
-                    {reference}
-                </Col>
-                <Col xs={1} smHidden mdHidden lgHidden>
-                    {endIcon}
-                </Col>
+                <Col xs={2}>{reference}</Col>
                 <Col xsHidden sm={2} md={2}>
-                    {canRemove ? endIcon : <strong className="pull-right">{loaderIcon} In Progress</strong>}
+                    <RightIcon {...props} />
                 </Col>
             </Row>
         </div>

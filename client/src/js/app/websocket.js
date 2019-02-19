@@ -1,3 +1,4 @@
+import { get } from "lodash-es";
 import { wsInsertAnalysis, wsUpdateAnalysis, wsRemoveAnalysis } from "../analyses/actions";
 import { wsInsertFile, wsUpdateFile, wsRemoveFile } from "../files/actions";
 import { wsInsertGroup, wsUpdateGroup, wsRemoveGroup } from "../groups/actions";
@@ -12,51 +13,75 @@ import { wsInsertSubtraction, wsUpdateSubtraction, wsRemoveSubtraction } from ".
 import { wsInsertUser, wsUpdateUser, wsRemoveUser } from "../users/actions";
 import { WS_CLOSED } from "./actionTypes";
 
-const documentInserters = {
-    analyses: wsInsertAnalysis,
-    files: wsInsertFile,
-    groups: wsInsertGroup,
-    history: wsInsertHistory,
-    indexes: wsInsertIndex,
-    jobs: wsInsertJob,
-    otus: wsInsertOTU,
-    processes: wsInsertProcess,
-    references: wsInsertReference,
-    samples: wsInsertSample,
-    subtraction: wsInsertSubtraction,
-    users: wsInsertUser
+const actionCreatorWrapper = actionCreator => {
+    return (state, message) => actionCreator(message.data);
 };
 
-const documentUpdaters = {
-    analyses: wsUpdateAnalysis,
-    files: wsUpdateFile,
-    groups: wsUpdateGroup,
-    indexes: wsUpdateIndex,
-    jobs: wsUpdateJob,
-    otus: wsUpdateOTU,
-    processes: wsUpdateProcess,
-    references: wsUpdateReference,
-    samples: wsUpdateSample,
-    status: wsUpdateStatus,
-    subtraction: wsUpdateSubtraction,
-    users: wsUpdateUser
+const inserters = {
+    analyses: (state, message) => {
+        const sampleId = get(state, "samples.detail.id");
+
+        if (sampleId && sampleId === message.data.sample.id) {
+            return wsInsertAnalysis(message.data);
+        }
+    },
+    files: actionCreatorWrapper(wsInsertFile),
+    groups: actionCreatorWrapper(wsInsertGroup),
+    history: actionCreatorWrapper(wsInsertHistory),
+    indexes: actionCreatorWrapper(wsInsertIndex),
+    jobs: actionCreatorWrapper(wsInsertJob),
+    otus: actionCreatorWrapper(wsInsertOTU),
+    processes: actionCreatorWrapper(wsInsertProcess),
+    references: actionCreatorWrapper(wsInsertReference),
+    samples: actionCreatorWrapper(wsInsertSample),
+    subtraction: actionCreatorWrapper(wsInsertSubtraction),
+    users: actionCreatorWrapper(wsInsertUser)
 };
 
-const documentRemovers = {
-    analyses: wsRemoveAnalysis,
-    files: wsRemoveFile,
-    groups: wsRemoveGroup,
-    jobs: wsRemoveJob,
-    otus: wsRemoveOTU,
-    references: wsRemoveReference,
-    samples: wsRemoveSample,
-    subtraction: wsRemoveSubtraction,
-    users: wsRemoveUser
+const updaters = {
+    analyses: (state, message) => {
+        const sampleId = get(state, "samples.detail.id");
+
+        if (sampleId && sampleId === message.data.sample.id) {
+            return wsUpdateAnalysis(message.data);
+        }
+    },
+    files: actionCreatorWrapper(wsUpdateFile),
+    groups: actionCreatorWrapper(wsUpdateGroup),
+    indexes: actionCreatorWrapper(wsUpdateIndex),
+    jobs: actionCreatorWrapper(wsUpdateJob),
+    otus: actionCreatorWrapper(wsUpdateOTU),
+    processes: actionCreatorWrapper(wsUpdateProcess),
+    references: actionCreatorWrapper(wsUpdateReference),
+    samples: actionCreatorWrapper(wsUpdateSample),
+    status: actionCreatorWrapper(wsUpdateStatus),
+    subtraction: actionCreatorWrapper(wsUpdateSubtraction),
+    users: actionCreatorWrapper(wsUpdateUser)
 };
 
-export default function WSConnection(dispatch) {
+const removers = {
+    analyses: actionCreatorWrapper(wsRemoveAnalysis),
+    files: actionCreatorWrapper(wsRemoveFile),
+    groups: actionCreatorWrapper(wsRemoveGroup),
+    jobs: actionCreatorWrapper(wsRemoveJob),
+    otus: actionCreatorWrapper(wsRemoveOTU),
+    references: actionCreatorWrapper(wsRemoveReference),
+    samples: actionCreatorWrapper(wsRemoveSample),
+    subtraction: actionCreatorWrapper(wsRemoveSubtraction),
+    users: actionCreatorWrapper(wsRemoveUser)
+};
+
+const modifiers = {
+    insert: inserters,
+    update: updaters,
+    delete: removers
+};
+
+export default function WSConnection({ getState, dispatch }) {
     // The Redux store's dispatch method.
     this.dispatch = dispatch;
+
+    this.getState = getState;
 
     // When a websocket message is received, this method is called with the message as the sole argument. Every message
     // has a property "operation" that tells the dispatcher what to do. Illegal operation names will throw an error.
@@ -66,16 +91,10 @@ export default function WSConnection(dispatch) {
 
         window.console.log(`${iface}.${operation}`);
 
-        if (operation === "insert" && documentInserters[iface]) {
-            return dispatch(documentInserters[iface](message.data));
-        }
+        const action = modifiers[operation][iface](getState(), message);
 
-        if (operation === "update" && documentUpdaters[iface]) {
-            return dispatch(documentUpdaters[iface](message.data));
-        }
-
-        if (operation === "delete" && documentRemovers[iface]) {
-            return dispatch(documentRemovers[iface](message.data));
+        if (action) {
+            return dispatch(action);
         }
     };
 

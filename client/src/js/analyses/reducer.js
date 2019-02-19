@@ -1,9 +1,8 @@
-import { sortBy, map, concat, forEach, slice } from "lodash-es";
+import { map } from "lodash-es";
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
-    ANALYZE,
     BLAST_NUVS,
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
@@ -17,7 +16,7 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_READS,
     SET_PATHOSCOPE_FILTER
 } from "../app/actionTypes";
-import { update, remove, updateDocuments } from "../utils/reducers";
+import { insert, update, remove, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
 
 export const initialState = {
@@ -107,58 +106,16 @@ export const toggleExpanded = (state, id) =>
         return item;
     });
 
-export const insert = (documents, action, sampleId) => {
-    const beforeList = documents ? slice(documents, 0, documents.length) : [];
-
-    forEach(documents, (document, i) => {
-        if (document.placeholder && document.sampleId === sampleId && document.userId === action.data.user.id) {
-            beforeList.splice(i, 1);
-            return false;
-        }
-    });
-
-    let newList = concat(beforeList, [{ ...action.data }]);
-    newList = sortBy(newList, "created_at");
-
-    return newList;
-};
-
-export default function samplesReducer(state = initialState, action) {
+export default function analysesReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_ANALYSIS:
-            if (action.data.sample.id === state.sampleId) {
-                return {
-                    ...state,
-                    documents: insert(state.documents, action, state, state.sortKey, state.sortDescending)
-                };
-            }
-
-            return state;
+            return insert(state, action, state.sortKey, state.sortDescending);
 
         case WS_UPDATE_ANALYSIS:
-            if (action.data.sample.id === state.sampleId) {
-                return update(state, action);
-            }
-
-            return state;
+            return update(state, action);
 
         case WS_REMOVE_ANALYSIS:
             return remove(state, action);
-
-        case ANALYZE.REQUESTED:
-            return {
-                ...state,
-                documents:
-                    state.documents === null
-                        ? null
-                        : concat(state.documents, [
-                              {
-                                  ...action.placeholder,
-                                  userId: action.userId,
-                                  sampleId: action.sampleId
-                              }
-                          ])
-            };
 
         case COLLAPSE_ANALYSIS:
             return { ...state, data: collapse(state) };

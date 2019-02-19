@@ -3,6 +3,7 @@ import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { get, map, find, forEach, xorBy } from "lodash-es";
 import { Badge, Modal, ListGroup, Col, Label } from "react-bootstrap";
+import { pushState } from "../../app/actions";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox, FlexItem, Flex } from "../../base/index";
 import { getSelectedDocuments } from "../../samples/selectors";
 import { getTaskDisplayName, routerLocationHasState } from "../../utils/utils";
@@ -140,7 +141,7 @@ export class CreateAnalysis extends React.Component {
     render() {
         const { selected, algorithm } = this.state;
 
-        const show = !!this.props.documents.length;
+        const show = !!(this.props.documents && this.props.documents.length);
 
         return (
             <Modal show={show} onHide={this.props.onHide} onExited={this.handleExited}>
@@ -198,7 +199,7 @@ const mapDispatchToProps = dispatch => ({
         });
     },
     onHide: () => {
-        dispatch(push({ state: {} }));
+        dispatch(pushState({}));
     }
 });
 

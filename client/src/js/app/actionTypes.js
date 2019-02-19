@@ -21,6 +21,7 @@ const createRequestActionType = root => ({
 });
 
 // App
+export const PUSH_STATE = "PUSH_STATE";
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
 export const WS_CLOSED = "WS_CLOSED";

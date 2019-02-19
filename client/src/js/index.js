@@ -18,7 +18,7 @@ window.Raven = Raven;
 const history = createHistory();
 
 window.store = createAppStore(history);
-window.ws = new WSConnection(window.store.dispatch);
+window.ws = new WSConnection(window.store);
 window.ws.establishConnection();
 
 window.store.dispatch(getAccount());
