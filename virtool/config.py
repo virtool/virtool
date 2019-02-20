@@ -378,6 +378,7 @@ def migrate():
     v = cerberus.Validator(schema=SCHEMA, purge_unknown=True)
     v.validate(config)
 
+    convert_http(config)
     convert_job_limits(config)
     convert_proxy(config)
     remove_defaults(config)
@@ -424,6 +425,11 @@ def convert_db(config: dict):
 
     config["db_connection_string"] = f"mongodb://{auth_string}{db_host}:{db_port}/{db_name}{ssl_string}"
     config["db_name"] = config["db_name"]
+
+
+def convert_http(config: dict):
+    config["host"] = config.pop("server_host", "localhost")
+    config["port"] = config.pop("server_port", 9950)
 
 
 def convert_job_limits(config: dict):
