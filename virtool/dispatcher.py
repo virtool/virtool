@@ -245,7 +245,7 @@ class Dispatcher:
         for connection in connections_to_remove:
             self.remove_connection(connection)
 
-        logging.debug("Dispatched {}.{}".format(interface, operation))
+        logging.debug(f"Dispatched {interface}.{operation}")
 
     async def close(self):
         logging.debug("Closing dispatcher")

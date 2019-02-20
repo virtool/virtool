@@ -43,7 +43,7 @@ async def download_isolate(req):
         raise
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": "attachment; filename='{}'".format(filename)
+        "Content-Disposition": f"attachment; filename='{filename}'"
     })
 
 
@@ -72,7 +72,7 @@ async def download_otu(req):
         return web.Response(status=404)
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": "attachment; filename='{}'".format(filename)
+        "Content-Disposition": f"attachment; filename='{filename}'"
     })
 
 
@@ -112,7 +112,7 @@ async def download_reference(req):
     body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": "attachment; filename='reference.{}.json.gz'".format(scope)},
+        headers={"Content-Disposition": f"attachment; filename='reference.{scope}.json.gz'"},
         content_type="application/gzip",
         body=body
     )
@@ -146,5 +146,5 @@ async def download_sequence(req):
         return web.Response(status=404)
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": "attachment; filename='{}'".format(filename)
+        "Content-Disposition": f"attachment; filename='{filename}'"
     })

@@ -23,7 +23,7 @@ def apply_projection(document, projection):
         return {key: document[key] for key in document if key in projection}
 
     if not isinstance(projection, dict):
-        raise TypeError("Invalid type for projection: {}".format(type(projection)))
+        raise TypeError(f"Invalid type for projection: {type(projection)}")
 
     if projection == {"_id": False}:
         return {key: document[key] for key in document if key != "_id"}

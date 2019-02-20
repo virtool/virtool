@@ -999,14 +999,18 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
     # Join the otu document into a complete otu record. This will be used for recording history.
     joined = await virtool.db.otus.join(db, otu_id)
 
+    name = joined["name"]
+
+    e = "" if verb[-1] == "e" else "e"
+
     # Build a ``description`` field for the otu creation change document.
-    description = "{}{}d {}".format(verb.capitalize(), "" if verb[-1] == "e" else "e", joined["name"])
+    description = f"{verb.capitalize()}{e}d {name}"
 
     abbreviation = joined.get("abbreviation", None)
 
     # Add the abbreviation to the description if there is one.
     if abbreviation:
-        description += " ({})".format(abbreviation)
+        description = f"{description} ({abbreviation})"
 
     await virtool.db.history.add(
         db,

@@ -631,7 +631,7 @@ async def add_group(req):
         raise
 
     headers = {
-        "Location": "/api/refs/{}/groups/{}".format(ref_id, subdocument["id"])
+        "Location": f"/api/refs/{ref_id}/groups/{subdocument['id']}"
     }
 
     return json_response(subdocument, headers=headers, status=201)
@@ -668,7 +668,7 @@ async def add_user(req):
         raise
 
     headers = {
-        "Location": "/api/refs/{}/users/{}".format(ref_id, subdocument["id"])
+        "Location": f"/api/refs/{ref_id}/users/{subdocument['id']}"
     }
 
     subdocument = await virtool.db.users.attach_identicons(db, subdocument)

@@ -242,5 +242,5 @@ def remove_unused_index_files(base_path, retained):
 def write_fasta_dict_to_file(path, fasta_dict):
     with open(path, "w") as handle:
         for sequence_id, sequence in fasta_dict.items():
-            line = ">{}\n{}\n".format(sequence_id, sequence)
+            line = f">{sequence_id}\n{sequence}\n"
             handle.write(line)
