@@ -23,8 +23,7 @@ import reducer, {
     toggleMedian,
     setFilter,
     setNuvsBLAST,
-    toggleExpanded,
-    insert
+    toggleExpanded
 } from "../reducer";
 
 describe("Analyses Reducer", () => {
@@ -42,27 +41,16 @@ describe("Analyses Reducer", () => {
     });
 
     describe("should handle WS_INSERT_ANALYSIS", () => {
-        it("return state if sample id does not match current sample", () => {
-            const state = { sampleId: "testSample" };
-            const action = {
-                type: WS_INSERT_ANALYSIS,
-                data: { sample: { id: "differentSample" } }
-            };
-            const result = reducer(state, action);
-            expect(result).toEqual(state);
-        });
-
-        it("otherwise insert entry into current list", () => {
+        it("it should insert analysis into [documents]", () => {
             const state = {
                 ...initialState,
                 documents: null,
-                sampleId: "testSample"
+                sampleId: "foo"
             };
             const action = {
                 type: WS_INSERT_ANALYSIS,
                 data: {
-                    sample: { id: "testSample" },
-                    id: "123abc",
+                    id: "foo",
                     created_at: "2018-01-01T00:00:00.000000Z"
                 }
             };
@@ -280,35 +268,6 @@ describe("Analyses Reducer", () => {
         const action = { type: CLEAR_ANALYSIS };
         const result = reducer(state, action);
         expect(result).toEqual({ data: null, detail: null });
-    });
-
-    describe("should handle ANALYZE_REQUESTED", () => {
-        it("when [state.documents=null], return state", () => {
-            const state = {
-                documents: null
-            };
-            const action = {
-                type: ANALYZE.REQUESTED
-            };
-            const result = reducer(state, action);
-            expect(result).toEqual(state);
-        });
-
-        it("otherwise append placeholder", () => {
-            const state = {
-                documents: []
-            };
-            const action = {
-                type: ANALYZE.REQUESTED,
-                placeholder: {}
-            };
-            const result = reducer(state, action);
-
-            expect(result).toEqual({
-                ...state,
-                documents: [{}]
-            });
-        });
     });
 
     it("should handle BLAST_NUVS_REQUESTED", () => {
@@ -608,69 +567,6 @@ describe("Analyses Reducer", () => {
                 const sequenceIndex = 3;
                 const result = setNuvsBLAST(state, analysisId, sequenceIndex);
                 expect(result).toEqual(state);
-            });
-        });
-
-        describe("insert", () => {
-            const action = {
-                type: "INSERT_ENTRY",
-                data: {
-                    user: { id: "foo" },
-                    created_at: "2018-01-01T00:00:00.000000Z"
-                }
-            };
-            const sampleId = "testSample";
-
-            it("insert new entry on empty list", () => {
-                const documents = null;
-                const result = insert(documents, action, sampleId);
-                expect(result).toEqual([{ ...action.data }]);
-            });
-
-            it("replace placeholder with new entry", () => {
-                const documents = [
-                    {
-                        user: { id: "foo" },
-                        created_at: "2018-02-01T00:00:00.000000Z"
-                    },
-                    {
-                        userId: "bar",
-                        placeholder: true,
-                        created_at: "2018-03-02T00:00:00.000000Z",
-                        sampleId: "testSample"
-                    },
-                    {
-                        user: { id: "foo" },
-                        created_at: "2018-04-01T00:00:00.000000Z"
-                    },
-                    {
-                        userId: "foo",
-                        placeholder: true,
-                        created_at: "2018-05-04T00:00:00.000000Z",
-                        sampleId: "testSample"
-                    }
-                ];
-                const result = insert(documents, action, sampleId);
-                expect(result).toEqual([
-                    {
-                        user: { id: "foo" },
-                        created_at: "2018-01-01T00:00:00.000000Z"
-                    },
-                    {
-                        user: { id: "foo" },
-                        created_at: "2018-02-01T00:00:00.000000Z"
-                    },
-                    {
-                        userId: "bar",
-                        placeholder: true,
-                        created_at: "2018-03-02T00:00:00.000000Z",
-                        sampleId: "testSample"
-                    },
-                    {
-                        user: { id: "foo" },
-                        created_at: "2018-04-01T00:00:00.000000Z"
-                    }
-                ]);
             });
         });
     });

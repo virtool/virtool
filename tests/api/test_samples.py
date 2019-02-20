@@ -209,8 +209,8 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"].update({
-            "create_sample_proc": 2,
-            "create_sample_mem": 4,
+            "sm_proc": 2,
+            "sm_mem": 4,
         })
 
         await client.db.subtraction.insert_one({
@@ -660,7 +660,7 @@ async def test_find_analyses(error, term, mocker, spawn_client, resp_is, static_
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
     mocker.patch("virtool.samples.get_sample_rights", return_value=(True, True))
 
-    client = await spawn_client(authorize=True, job_manager=True)
+    client = await spawn_client(authorize=True, no_job_manager=False)
 
     test_analysis = {
         "_id": "test_analysis",

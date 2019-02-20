@@ -15,7 +15,8 @@ ISOLATE_KEYS = [
 
 OTU_KEYS = [
     "name",
-    "abbreviation"
+    "abbreviation",
+    "schema"
 ]
 
 RIGHTS = [
@@ -77,6 +78,10 @@ def check_will_change(old, imported):
 
     # Will change if isolate ids have changed, meaning an isolate has been added or removed.
     if {i["id"] for i in old["isolates"]} != {i["id"] for i in imported["isolates"]}:
+        return True
+
+    # Will change if the schema has changed.
+    if json.dumps(old["schema"], sort_keys=True) != json.dumps(imported["schema"], sort_keys=True):
         return True
 
     new_isolates = sorted(imported["isolates"], key=itemgetter("id"))

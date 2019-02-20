@@ -12,22 +12,27 @@ class MockDeleteResult:
         self.deleted_count = deleted_count
 
 
-@pytest.fixture()
+@pytest.fixture
+def test_db_connection_string(request):
+    return request.config.getoption("db_connection_string")
+
+
+@pytest.fixture
 def test_db_name(worker_id):
     return "vt-test-{}".format(worker_id)
 
 
 @pytest.fixture
-def test_motor(test_db_name, loop, request):
-    client = motor.motor_asyncio.AsyncIOMotorClient(host=request.config.getoption("db_host"), io_loop=loop)
+def test_motor(test_db_connection_string, test_db_name, loop, request):
+    client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string, io_loop=loop)
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
     loop.run_until_complete(client.drop_database(test_db_name))
 
 
 @pytest.fixture
-def dbs(test_db_name, request):
-    client = pymongo.MongoClient(host=request.config.getoption("db_host"))
+def dbs(test_db_connection_string, test_db_name, request):
+    client = pymongo.MongoClient(test_db_connection_string)
     client.drop_database(test_db_name)
     yield client[test_db_name]
     client.drop_database(test_db_name)

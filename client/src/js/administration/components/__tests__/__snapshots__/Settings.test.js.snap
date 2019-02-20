@@ -4,8 +4,6 @@ exports[`<Settings /> renders Server subcomponent correctly 1`] = `
 <div
   className="settings-container"
 >
-  <Connect(HTTPOptions) />
-  <Connect(ProxyOptions) />
   <Connect(SentryOptions) />
 </div>
 `;
@@ -41,20 +39,6 @@ exports[`<Settings /> renders Settings subcomponent correctly 1`] = `
         disabled={false}
       >
         Server
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
-      to="/administration/data"
-    >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        Data
       </NavItem>
     </LinkContainer>
     <LinkContainer
@@ -128,20 +112,6 @@ exports[`<Settings /> renders Settings subcomponent correctly 2`] = `
       exact={false}
       replace={false}
       strict={false}
-      to="/administration/data"
-    >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        Data
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
       to="/administration/users"
     >
       <NavItem
@@ -176,10 +146,6 @@ exports[`<Settings /> renders Settings subcomponent correctly 2`] = `
     <Route
       component={[Function]}
       path="/administration/server"
-    />
-    <Route
-      component={[Function]}
-      path="/administration/data"
     />
     <Route
       component={[Function]}
@@ -236,20 +202,6 @@ exports[`<Settings /> renders correctly 1`] = `
       exact={false}
       replace={false}
       strict={false}
-      to="/administration/data"
-    >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        Data
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
       to="/administration/users"
     >
       <NavItem
@@ -284,10 +236,6 @@ exports[`<Settings /> renders correctly 1`] = `
     <Route
       component={[Function]}
       path="/administration/server"
-    />
-    <Route
-      component={[Function]}
-      path="/administration/data"
     />
     <Route
       component={[Function]}

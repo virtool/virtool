@@ -11,6 +11,7 @@ __pycache__
 /client/doc
 /client/coverage
 /.idea
+config.json
 settings.json
 /docs/_build
 /assets/prunus_persica

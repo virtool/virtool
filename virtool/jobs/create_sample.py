@@ -105,7 +105,7 @@ class Job(virtool.jobs.job.Job):
             "-l", "20" if self.params["srna"] else "50",
             "-q", "20",
             "-Q", "25",
-            "-t", str(self.settings["create_sample_proc"]),
+            "-t", str(self.proc),
             "-o", os.path.join(self.params["sample_path"], "reads"),
             "--quiet"
         ]
@@ -140,7 +140,7 @@ class Job(virtool.jobs.job.Job):
             "fastqc",
             "-f", "fastq",
             "-o", self.params["fastqc_path"],
-            "-t", "2",
+            "-t", str(self.proc),
             "--extract",
             self.params["sample_path"] + "/reads_1.fastq"
         ]

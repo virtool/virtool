@@ -57,7 +57,7 @@ async def format_analysis(db, settings, document):
 async def format_nuvs(db, settings, document):
     if document["results"] == "file":
         path = virtool.analyses.get_nuvs_json_path(
-            settings.get("data_path"),
+            settings["data_path"],
             document["_id"],
             document["sample"]["id"]
         )

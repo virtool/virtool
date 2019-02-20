@@ -138,6 +138,9 @@ async def check_source_type(db, ref_id, source_type):
     restrict_source_types = document.get("restrict_source_types", False)
     source_types = document.get("source_types", list())
 
+    if source_type == "unknown":
+        return True
+
     # Return `False` when source_types are restricted and source_type is not allowed.
     if source_type and restrict_source_types:
         return source_type in source_types
@@ -1059,6 +1062,7 @@ async def insert_joined_otu(db, otu, created_at, ref_id, user_id, remote=False):
                 **sequence,
                 "accession": sequence["accession"],
                 "isolate_id": isolate["id"],
+                "segment": sequence.get("segment", ""),
                 "reference": {
                     "id": ref_id
                 },
@@ -1140,6 +1144,7 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                     "accession": sequence["accession"],
                     "definition": sequence["definition"],
                     "host": sequence["host"],
+                    "segment": sequence.get("segment", ""),
                     "sequence": sequence["sequence"],
                     "otu_id": old["_id"],
                     "isolate_id": isolate["id"],
@@ -1159,7 +1164,8 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
                 "abbreviation": otu["abbreviation"],
                 "name": otu["name"],
                 "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"]
+                "isolates": otu["isolates"],
+                "schema": otu.get("schema", list())
             }
         })
 

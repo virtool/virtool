@@ -6,290 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/style.${hash}.css">
-
-    <style>
-        .setup-header {
-            margin-bottom: 20px;
-        }
-        .setup-footer {
-            margin-top: 25px;
-        }
-    </style>
-
     <title>Setup - Virtool</title>
 </head>
 
 <body>
-<nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-        <div class="navbar-header">
-            <a class="navbar-brand" href="#">
-                <span>Setup</span>
-            </a>
-        </div>
+<div class="container-noside">
+    <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
+            <div class="list-group">
+                <div class="list-group-item spaced clearfix">
+                    <h4>
+                        Virtool Setup
+                    </h4>
+                    <p>
+                        Virtool must be configured before you can start using it.
+                    </p>
+                    <p>
+                        Proceeding through this setup process will write a configuration file to your installation
+                        directory. Alternatively, you can configure Virtool by:
 
-        <div class="navbar-right">
-            %if setup["db_host"] and setup["db_port"] and setup["db_name"] and setup["first_user_id"] and setup["first_user_password"] and setup["data_path"] and setup["watch_path"]:
-                <a class="btn btn-default btn-sm navbar-btn" href="/setup/clear">
-                    Clear
-                </a>
-                <button type="button" class="btn btn-primary btn-sm navbar-btn" onClick="saveAndReload()">
-                    Save and Reload
-                </button>
-            %else:
-                <a class="btn btn-default btn-sm navbar-btn" href="/setup/clear">
-                    Clear
-                </a>
-                <button type="button" class="btn btn-primary btn-sm navbar-btn" onClick="saveAndReload()" disabled>
-                    Save and Reload
-                </button>
-            %endif
-        </div>
+                        <ul>
+                            <li>creating a configuration file manually</li>
+                            <li>passing configuration through command line parameters</li>
+                            <li>setting environmental variables</li>
+                        </ul>
 
-        <ul class="nav navbar-nav navbar-right">
-            <li>
-                <a target="_blank" href="https://www.virtool.ca/docs/manual/gs_setup/">
-                    <i class="i-question"></i>
-                </a>
-            </li>
-        </ul>
-    </div>
-</nav>
+                        <a href="https://www.virtool.ca/docs/gs_configuration">See more instructions and additional advanced configuration information</a>
+                    </p>
 
-<div class="container">
-    <div class="list-group">
-        <div class="list-group-item spaced clearfix">
-            <h4 class="setup-header">
-                Connect to MongoDB
-
-                %if setup["db_host"] and setup["db_port"] and setup["db_name"]:
-                    <small class="pull-right text-success">
-                        <i class="i-checkmark"></i> <strong>Ready</strong>
-                    </small>
-                %else:
-                    <small class="pull-right text-info">
-                        <i class="i-notification"></i> <strong>Required</strong>
-                    </small>
-                %endif
-            </h4>
-
-            <form method="POST" action="/setup/db">
-                <div class="form-group">
-                    <label for="db_host">Host</label>
-                    <input type="text" class="form-control" name="db_host" id="db_host" placeholder="localhost" value='${setup["db_host"] or ""}'>
-                </div>
-
-                <div class="form-group">
-                    <label for="db_port">Port</label>
-                    <input type="text" class="form-control" name="db_port" id="db_port" placeholder=27017 value='${setup["db_port"] or ""}'>
-                </div>
-
-                <div class="form-group">
-                    <label for="db_name">Database Name</label>
-                    <input type="text" class="form-control" name="db_name" id="db_name" placeholder="virtool" value='${setup["db_name"] or ""}'>
-                </div>
-
-                <div class="form-group">
-                    <label for="db_username">Username</label>
-                    <input type="text" class="form-control" name="db_username" id="db_username" value='${setup["db_username"] or ""}'>
-                </div>
-
-                <div class="form-group">
-                    <label for="db_password">Password</label>
-                    <input type="password" class="form-control" name="db_password" id="db_password" value='${setup["db_password"] or ""}'>
-                </div>
-
-                <div class="checkbox">
-                    <label for="db_use_ssl">
-                        <input id="db_use_ssl" name="db_use_ssl" type="checkbox"> Use SSL
-                    </label>
-                </div>
-
-                %if setup["errors"]["db_auth_error"]:
-                <div class="alert alert-danger">
-                    <i class="i-warning"></i>
-                    <strong> Authentication failed.</strong>
-                </div>
-                %endif
-
-                %if setup["errors"]["db_connection_error"]:
-                <div class="alert alert-danger">
-                    <i class="i-warning"></i>
-                    <strong> Could not connect to MongoDB using the provided parameters.</strong>
-                </div>
-                %endif
-
-                %if setup["errors"]["db_not_empty_error"]:
-                <div class="alert alert-danger">
-                    <i class="i-warning"></i>
-                    <strong> The specified database is not empty.</strong>
-                </div>
-                %endif
-
-                %if setup["errors"]["db_name_error"]:
-                <div class="alert alert-danger">
-                    <i class="i-warning"></i>
-                    <strong> Database names may not contain any of the following: <code>/\. "$</code>.</strong>
-                </div>
-                %endif
-
-                <div class="setup-footer">
-                    <button type="submit" class="btn btn-primary pull-right">
-                        Connect
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="list-group">
-        <div class="list-group-item spaced clearfix">
-            <h4 class="setup-header">
-                <span>Create First User</span>
-                %if setup["first_user_id"] and setup["first_user_password"]:
-                    <small class="pull-right text-success">
-                        <i class="i-checkmark"></i> <strong>Ready</strong>
-                    </small>
-                %else:
-                    <small class="pull-right text-info">
-                        <i class="i-notification"></i> <strong>Required</strong>
-                    </small>
-                %endif
-            </h4>
-
-            <form method="POST" action="/setup/user">
-                <div class="form-group">
-                    <label for="user_id">Username</label>
-                    <input type="text" class="form-control" name="user_id" id="user_id" value='${setup["first_user_id"] or ""}'>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" class="form-control" name="password" id="password" value='${setup["first_user_password"] or ""}'>
-                </div>
-
-                <div class="setup-footer">
-                    <button type="submit" class="btn btn-primary pull-right">
-                        Save
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="list-group">
-        <div class="list-group-item spaced clearfix">
-            <h4 class="setup-header">
-                Set Data Path
-
-                %if setup["data_path"]:
-                    <small class="pull-right text-success">
-                        <i class="i-checkmark"></i> <strong>Ready</strong>
-                    </small>
-                %else:
-                    <small class="pull-right text-info">
-                        <i class="i-notification"></i> <strong>Required</strong>
-                    </small>
-                %endif
-            </h4>
-
-            <form method="POST" action="/setup/data">
-                <div class="form-group">
-                    <label for="data_path">Data Path</label>
-                    <input type="text" class="form-control" name="data_path" id="data_path" placeholder="data" value='${setup["data_path"] or ""}'>
-                </div>
-
-                %if setup["errors"]["data_not_found_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> Could not locate or create directory.</strong>
+                    <div style="margin-top: 30px;">
+                        <a class="btn btn-primary pull-right" href="/setup/proxy">
+                            Setup
+                        </a>
                     </div>
-                %endif
-
-                %if setup["errors"]["data_not_empty_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> The directory is not empty. Make sure it is empty then try to configure it again.</strong>
-                    </div>
-                %endif
-
-                %if setup["errors"]["data_permission_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> Virtool does not have permission to create or write to the directory.</strong>
-                    </div>
-                %endif
-
-                <div class="setup-footer">
-                    <button type="submit" class="btn btn-primary pull-right">
-                        Save
-                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="list-group">
-        <div class="list-group-item spaced clearfix">
-            <h4 class="setup-header">
-                Set Watch Path
-
-                %if setup["watch_path"]:
-                    <small class="pull-right text-success">
-                        <i class="i-checkmark"></i> <strong>Ready</strong>
-                    </small>
-                %else:
-                    <small class="pull-right text-info">
-                        <i class="i-notification"></i> <strong>Required</strong>
-                    </small>
-                %endif
-            </h4>
-
-            <form method="POST" action="/setup/watch">
-                <div class="form-group">
-                    <label for="watch_path">Watch Path</label>
-                    <input type="text" class="form-control" name="watch_path" id="watch_path" placeholder="watch" value='${setup["watch_path"] or ""}'>
-                </div>
-
-                %if setup["errors"]["watch_not_found_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> Could not locate or create directory.</strong>
-                    </div>
-                %endif
-
-                %if setup["errors"]["watch_not_empty_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> The directory is not empty. Make sure it is empty then try to configure it again.</strong>
-                    </div>
-                %endif
-
-                %if setup["errors"]["watch_permission_error"]:
-                    <div class="alert alert-danger">
-                        <i class="i-warning"></i>
-                        <strong> Virtool does not have permission to create or write to the directory.</strong>
-                    </div>
-                %endif
-
-                <div class="setup-footer">
-                    <button type="submit" class="btn btn-primary pull-right">
-                        Save
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
-<script>
-    function saveAndReload () {
-        fetch("/setup/save");
-
-        setTimeout(function () {
-            window.location.replace("/");
-        }, 1600);
-    }
-</script>
 </body>
-
 </html>

@@ -186,7 +186,7 @@ async def test_initialize_ncbi_blast(mock_blast_server):
     """
     seq = "ATGTACAGGATCAGCATCGAGCTACGAT"
 
-    assert await virtool.bio.initialize_ncbi_blast({"proxy_enable": False}, seq) == ("YA40WNN5014", 19)
+    assert await virtool.bio.initialize_ncbi_blast({"proxy": ""}, seq) == ("YA40WNN5014", 19)
 
 
 def test_extract_blast_info():
@@ -207,9 +207,9 @@ async def test_check_rid(rid, expected, mock_blast_server):
     Test that check_rid() returns the correct result given HTML for a ready BLAST request and a waiting BLAST request.
 
     """
-    assert await virtool.bio.check_rid({"proxy_enable": False}, rid) == expected
+    assert await virtool.bio.check_rid({"proxy": ""}, rid) == expected
 
 
 async def test_get_ncbi_blast_result(mock_blast_server):
     with open(os.path.join(TEST_BIO_PATH, "blast.json"), "r") as f:
-        assert await virtool.bio.get_ncbi_blast_result({"proxy_enable": False}, "YA6M9135015") == json.load(f)
+        assert await virtool.bio.get_ncbi_blast_result({"proxy": ""}, "YA6M9135015") == json.load(f)

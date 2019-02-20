@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/style.${hash}.css">
+    <title>Setup - Virtool</title>
+</head>
+
+<body>
+
+<style>
+    small {
+        display: block;
+        font-family: mono;
+    }
+</style>
+
+<div class="container-noside">
+    <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
+            <div class="list-group">
+                <div class="list-group-item spaced clearfix">
+                    <h4>
+                        Finish Setup
+                    </h4>
+                    <p>
+                        Virtool is ready to restart. When you click <em>Finish</em>, the following will occur:
+                    </p>
+
+                    <div class="list-group">
+                        <div class="list-group-item" style="display: flex; align-items: center;">
+                            <div  style="padding-right: 20px;">
+                                <i class="fas fa-file-alt fa-fw"></i>
+                            </div>
+                            <div>
+                                A configuration file will be written to:
+                                <small class="text-info">${config_path}</small>
+                            </div>
+                        </div>
+                        %if proxy:
+                            <div class="list-group-item" style="display: flex; align-items: center;">
+                                <div  style="padding-right: 20px;">
+                                    <i class="fas fa-network-wired fa-fw"></i>
+                                </div>
+                                <div>
+                                    Virtool will use the proxy at:
+                                    <small class="text-info">${proxy}</small>
+                                </div>
+                            </div>
+                        %endif
+                        <div class="list-group-item" style="display: flex; align-items: center;">
+                            <div  style="padding-right: 20px;">
+                                <i class="fas fa-folder fa-fw"></i>
+                            </div>
+                            <div>
+                                A data directory will be setup at:
+                                <small class="text-info">${data_path}</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item" style="display: flex; align-items: center;">
+                            <div  style="padding-right: 20px;">
+                                <i class="fas fa-folder fa-fw"></i>
+                            </div>
+                            <div>
+                                A watch directory will be created at:
+                                <small class="text-info">${watch_path}</small>
+
+                            </div>
+                        </div>
+                        <div class="list-group-item" style="display: flex; align-items: center;">
+                            <div  style="padding-right: 20px;">
+                                <i class="fas fa-database fa-fw"></i>
+                            </div>
+                            <div>
+                                A database will be created with the name:
+                                <small class="text-info">${db_name}</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item" style="display: flex; align-items: center;">
+                            <div  style="padding-right: 20px;">
+                                <i class="fas fa-user fa-fw"></i>
+                            </div>
+                            <div>
+                                An administrative user will be created with the username:
+                                <small class="text-info">${user_id}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-primary pull-right" onClick="saveAndReload()">
+                            <i class="fas fa-redo-alt"></i> Save and Restart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function saveAndReload () {
+        fetch("/setup/save");
+            setTimeout(function () {
+                window.location.replace("/");
+            }, 1600);
+        }
+</script>
+</body>
+</html>

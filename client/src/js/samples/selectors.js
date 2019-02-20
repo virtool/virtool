@@ -40,6 +40,15 @@ const getSelectedIds = state => get(state, "router.location.state.createAnalysis
 
 const getDocuments = state => state.samples.documents;
 
-export const getSelectedDocuments = createSelector([getSelectedIds, getDocuments], (selected, documents) =>
-    filter(documents, document => includes(selected, document.id))
+const getDetail = state => state.samples.detail;
+
+export const getSelectedDocuments = createSelector(
+    [getSelectedIds, getDetail, getDocuments],
+    (selected, detail, documents) => {
+        if (detail && selected.length === 1 && selected[0] === detail.id) {
+            return [detail];
+        }
+
+        return filter(documents, document => includes(selected, document.id));
+    }
 );

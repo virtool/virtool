@@ -1041,6 +1041,14 @@ class TestEditIsolate:
 
         await client.db.otus.insert_one(test_otu)
 
+        await client.db.references.insert_one({
+            "_id": "hxn167",
+            "restrict_source_types": False,
+            "source_types": [
+                "isolate"
+            ]
+        })
+
         resp = await client.patch("/api/otus/6116cba1/isolates/test", data)
 
         if not check_ref_right:
@@ -1087,6 +1095,14 @@ class TestEditIsolate:
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
 
         await client.db.otus.insert_one(test_otu)
+
+        await client.db.references.insert_one({
+            "_id": "hxn167",
+            "restrict_source_types": False,
+            "source_types": [
+                "isolate"
+            ]
+        })
 
         data = {
             "source_type": "Variant",

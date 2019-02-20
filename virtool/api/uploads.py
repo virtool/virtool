@@ -47,7 +47,7 @@ async def upload(req):
         req["client"].user_id
     )
 
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", document["id"])
+    file_path = os.path.join(req.app["settings"]["data_path"], "files", document["id"])
 
     size = 0
 

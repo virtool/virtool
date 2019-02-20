@@ -1,5 +1,5 @@
-import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD, TEST_PROXY } from "../../app/actionTypes";
-import { getSettings, getControlReadahead, testProxy, updateSetting, updateSettings } from "../actions";
+import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../../app/actionTypes";
+import { getSettings, getControlReadahead, updateSetting, updateSettings } from "../actions";
 
 describe("Settings Action Creators:", () => {
     let result;
@@ -20,12 +20,6 @@ describe("Settings Action Creators:", () => {
             refId,
             term
         };
-        expect(result).toEqual(expected);
-    });
-
-    it("testProxy: returns simple action", () => {
-        result = testProxy();
-        expected = { type: TEST_PROXY.REQUESTED };
         expect(result).toEqual(expected);
     });
 

@@ -111,8 +111,11 @@ async def create(req):
     if not await virtool.db.references.check_right(req, reference, "modify_otu"):
         return insufficient_rights()
 
+    name = data["name"].strip()
+    abbreviation = data["abbreviation"].strip()
+
     # Check if either the name or abbreviation are already in use. Send a ``400`` if they are.
-    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, data["name"], data["abbreviation"])
+    message = await virtool.db.otus.check_name_and_abbreviation(db, ref_id, name, abbreviation)
 
     if message:
         return bad_request(message)
@@ -120,8 +123,8 @@ async def create(req):
     joined = await virtool.db.otus.create(
         db,
         ref_id,
-        data["name"],
-        data["abbreviation"]
+        name,
+        abbreviation
     )
 
     description = virtool.history.compose_create_description(joined)
@@ -389,7 +392,6 @@ async def edit_isolate(req):
 
     """
     db = req.app["db"]
-    settings = req.app["settings"]
     data = req["data"]
 
     otu_id = req.match_info["otu_id"]
@@ -400,8 +402,12 @@ async def edit_isolate(req):
     if not document:
         return not_found()
 
-    if not await virtool.db.references.check_right(req, document["reference"]["id"], "modify_otu"):
+    ref_id = document["reference"]["id"]
+
+    if not await virtool.db.references.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
+
+    reference = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
 
     isolates = deepcopy(document["isolates"])
 
@@ -411,7 +417,7 @@ async def edit_isolate(req):
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
 
-        if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
+        if reference["restrict_source_types"] and data["source_type"] not in reference["source_types"]:
             return bad_request("Source type is not allowed")
 
     old_isolate_name = virtool.otus.format_isolate_name(isolate)

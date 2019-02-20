@@ -1,21 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Jobs /> renders <JobsSettings /> subcomponent 1`] = `
-<div
-  className="settings-container"
->
-  <h3
-    className="view-header"
-  >
-    <strong>
-      Job Settings
-    </strong>
-  </h3>
-  <Connect(Resources) />
-  <Connect(TaskLimits) />
-</div>
-`;
-
 exports[`<Jobs /> renders <LoadingPlaceholder /> if settings data is unavailable 1`] = `<LoadingPlaceholder />`;
 
 exports[`<Jobs /> renders correctly 1`] = `
@@ -31,10 +15,6 @@ exports[`<Jobs /> renders correctly 1`] = `
     <Route
       component={[Function]}
       path="/jobs/resources"
-    />
-    <Route
-      component={[Function]}
-      path="/jobs/settings"
     />
     <Route
       component={[Function]}
