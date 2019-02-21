@@ -161,7 +161,7 @@ class Job(multiprocessing.Process):
                 name = method.__name__
 
                 self.add_status(stage=name, state="running")
-                self.add_log("Stage: {}".format(name))
+                self.add_log(f"Stage: {name}")
 
                 method()
 
@@ -199,7 +199,7 @@ class Job(multiprocessing.Process):
         :param env: environmental variables to
         :return:
         """
-        self.add_log("Command: {}".format(" ".join(command)))
+        self.add_log(f"Command: {' '.join(command)}")
 
         if stdout_handler:
             stdout = subprocess.PIPE
@@ -258,7 +258,7 @@ class Job(multiprocessing.Process):
                 break
 
         if self._process.returncode != 0:
-            raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
+            raise SubprocessError(f"Command failed: {' '.join(command)}. Check job log.")
 
         self._process = None
 
@@ -333,7 +333,9 @@ class Job(multiprocessing.Process):
     def add_log(self, line: str, indent=0):
         timestamp = virtool.utils.timestamp().isoformat()
 
-        self._log_buffer.append("{}{}    {}".format(timestamp, " " * indent * 4, line.rstrip()))
+        indent_string = " " * indent * 4
+
+        self._log_buffer.append(f"{timestamp}{indent_string}    {line.rstrip()}")
 
         if len(self._log_buffer) == 15:
             self.flush_log()

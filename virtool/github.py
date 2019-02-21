@@ -66,7 +66,7 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
     :rtype: Coroutine[dict]
 
     """
-    url = "{}/{}/releases/{}".format(BASE_URL, slug, release_id)
+    url = f"{BASE_URL}/{slug}/releases/{release_id}"
 
     headers = dict(HEADERS)
 
@@ -91,4 +91,4 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
             return None
 
         else:
-            raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
+            raise virtool.errors.GitHubError(f"Encountered error {resp.status}")

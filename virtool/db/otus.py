@@ -282,7 +282,7 @@ async def verify(db, otu_id, joined=None):
     joined = joined or await join(db, otu_id)
 
     if not joined:
-        raise virtool.errors.DatabaseError("Could not find otu '{}'".format(otu_id))
+        raise virtool.errors.DatabaseError(f"Could not find otu '{otu_id}'")
 
     return virtool.otus.verify(joined)
 

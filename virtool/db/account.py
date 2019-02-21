@@ -45,7 +45,7 @@ async def get_alternate_id(db, name):
     suffix = 0
 
     while True:
-        candidate = "{}_{}".format(name.lower(), suffix)
+        candidate = f"{name.lower()}_{suffix}"
 
         if candidate not in existing_alt_ids:
             return candidate

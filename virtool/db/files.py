@@ -24,7 +24,8 @@ async def create(db, filename, file_type, user_id=None):
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
-        file_id = "{}-{}".format(await virtool.db.utils.get_new_id(db.files), filename)
+        prefix = await virtool.db.utils.get_new_id(db.files)
+        file_id = f"{prefix}-{filename}"
 
     uploaded_at = virtool.utils.timestamp()
 

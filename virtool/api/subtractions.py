@@ -133,7 +133,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job_id)
 
     headers = {
-        "Location": "/api/account/keys/{}".format(data["subtraction_id"])
+        "Location": f"/api/account/keys/{subtraction_id}"
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)

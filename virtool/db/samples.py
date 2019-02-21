@@ -155,7 +155,7 @@ async def remove_samples(db, settings, id_list):
 
     for sample_id in id_list:
         try:
-            virtool.utils.rm(os.path.join(samples_path, "sample_{}".format(sample_id)), recursive=True)
+            virtool.utils.rm(os.path.join(samples_path, f"sample_{sample_id}"), recursive=True)
         except FileNotFoundError:
             pass
 

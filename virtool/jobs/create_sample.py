@@ -162,7 +162,7 @@ class Job(virtool.jobs.job.Job):
                 suffix = name.split("_")[1]
                 shutil.move(
                     os.path.join(self.params["fastqc_path"], name, "fastqc_data.txt"),
-                    os.path.join(self.params["sample_path"], "fastqc_{}.txt".format(suffix))
+                    os.path.join(self.params["sample_path"], f"fastqc_{suffix}.txt")
                 )
 
         # Dispose of the rest of the data files.
@@ -174,7 +174,7 @@ class Job(virtool.jobs.job.Job):
 
         # Parse data file(s)
         for suffix in [1, 2]:
-            path = os.path.join(self.params["sample_path"], "fastqc_{}.txt".format(suffix))
+            path = os.path.join(self.params["sample_path"], f"fastqc_{suffix}.txt")
 
             try:
                 handle = open(path, "r")

@@ -19,12 +19,15 @@ def calculate_diff(old, new):
 
 
 def compose_create_description(document):
+    name = document["name"]
+    abbreviation = document.get("abbreviation", None)
+
     # Build a ``description`` field for the otu creation change document.
-    description = "Created {}".format(document["name"])
+    description = f"Created {name}"
 
     # Add the abbreviation to the description if there is one.
-    if document["abbreviation"]:
-        return "{} ({})".format(description, document["abbreviation"])
+    if abbreviation:
+        return f"{description} ({abbreviation})"
 
     return description
 
@@ -33,23 +36,23 @@ def compose_edit_description(name, abbreviation, old_abbreviation, schema):
     description = None
 
     if name:
-        description = "Changed name to {}".format(name)
+        description = f"Changed name to {name}"
 
     if abbreviation is not None:
         # Abbreviation is being removed.
         if abbreviation == "" and old_abbreviation:
-            abbreviation_phrase = "removed abbreviation {}".format(old_abbreviation)
+            abbreviation_phrase = f"removed abbreviation {old_abbreviation}"
 
         # Abbreviation is being added where one didn't exist before
         elif abbreviation and not old_abbreviation:
-            abbreviation_phrase = "added abbreviation {}".format(abbreviation)
+            abbreviation_phrase = f"added abbreviation {abbreviation}"
 
         # Abbreviation is being changed from one value to another.
         else:
-            abbreviation_phrase = "changed abbreviation to {}".format(abbreviation)
+            abbreviation_phrase = f"changed abbreviation to {abbreviation}"
 
         if description:
-            description = "{} and {}".format(description, abbreviation_phrase)
+            description = f"{description} and {abbreviation_phrase}"
         else:
             description = abbreviation_phrase[:1].upper() + abbreviation_phrase[1:]
 
@@ -63,11 +66,12 @@ def compose_edit_description(name, abbreviation, old_abbreviation, schema):
 
 
 def compose_remove_description(document):
-    description = "Removed {}".format(document["name"])
-
+    name = document["name"]
     abbreviation = document.get("abbreviation", None)
 
+    description = f"Removed {name}"
+
     if abbreviation:
-        description += " ({})".format(abbreviation)
+        return f"{description} ({abbreviation})"
 
     return description

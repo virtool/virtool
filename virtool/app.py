@@ -50,9 +50,10 @@ async def init_http_client(app: web.Application):
     :param app: the application object
 
     """
+    version = app["version"]
 
     headers = {
-        "User-Agent": "virtool/{}".format(app["version"]),
+        "User-Agent": f"virtool/{version}",
     }
 
     app["client"] = client.ClientSession(loop=app.loop, headers=headers)

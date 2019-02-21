@@ -56,7 +56,7 @@ async def delete_unreferenced_hmms(db):
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
-    logger.debug("Deleted {} unreferenced HMMs".format(delete_result.deleted_count))
+    logger.debug(f"Deleted {delete_result.deleted_count} unreferenced HMMs")
 
 
 async def fetch_and_update_release(app, ignore_errors=False):
@@ -264,7 +264,7 @@ async def install(app, process_id, release, user_id):
             await db.hmm.insert_one(dict(annotation, hidden=False))
             await progress_tracker.add(1)
 
-        logger.debug("Inserted {} annotations".format(len(annotations)))
+        logger.debug(f"Inserted {len(annotations)} annotations")
 
         try:
             release_id = int(release["id"])

@@ -138,7 +138,7 @@ def read_fasta(path):
                 seq.append(line.rstrip())
                 continue
 
-            raise IOError("Illegal FASTA line: {}".format(line))
+            raise IOError(f"Illegal FASTA line: {line}")
 
         if header:
             data.append((header, "".join(seq)))
@@ -298,7 +298,7 @@ async def initialize_ncbi_blast(settings, sequence):
     async with aiohttp.ClientSession() as session:
         async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_URL, params=params, data=data) as resp:
             if resp.status != 200:
-                raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
+                raise virtool.errors.NCBIError(f"BLAST request returned status: {resp.status}")
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             return extract_blast_info(await resp.text())
@@ -349,7 +349,7 @@ async def check_rid(settings, rid):
     async with aiohttp.ClientSession() as session:
         async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
             if resp.status != 200:
-                raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
+                raise virtool.errors.NCBIError(f"RID check request returned status {resp.status}")
 
             return "Status=WAITING" not in await resp.text()
 
@@ -374,12 +374,12 @@ def parse_blast_content(content, rid):
     result = json.loads(string)
 
     if len(result) != 1:
-        raise virtool.errors.NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
+        raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
 
     result = result["BlastOutput2"]
 
     if len(result) != 1:
-        raise virtool.errors.NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
+        raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
 
     result = result["report"]
 
