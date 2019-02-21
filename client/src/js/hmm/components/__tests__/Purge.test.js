@@ -15,7 +15,7 @@ describe("<HMMPurge />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should not render" + " purge button when [canPurge=false]", () => {
+    it("should not render purge button when [canPurge=false]", () => {
         props.canPurge = false;
         const wrapper = shallow(<HMMPurge {...props} />);
         expect(wrapper).toMatchSnapshot();
