@@ -27,6 +27,7 @@ PROJECTION = [
     "created_at",
     "data_type",
     "imported_from",
+    "installed",
     "internal_control",
     "latest_build",
     "name",
