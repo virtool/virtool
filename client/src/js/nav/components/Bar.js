@@ -1,16 +1,14 @@
 import React from "react";
-import { startsWith } from "lodash-es";
+import { MenuItem, Nav, Navbar, NavDropdown, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
+import { withRouter } from "react-router-dom";
 
 import { logout } from "../../account/actions";
+import { AutoProgressBar, Icon, VTLogo } from "../../base";
 import { getSoftwareUpdates } from "../../updates/actions";
-import { Icon, AutoProgressBar, VTLogo } from "../../base";
+import { isHomeActive } from "../utils";
 import Update from "./Update";
-
-const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
 class Bar extends React.Component {
     componentDidMount() {

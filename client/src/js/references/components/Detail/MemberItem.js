@@ -1,7 +1,16 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { ListGroupItem, Icon, Identicon, Flex, FlexItem } from "../../../base";
 
 class MemberItem extends React.Component {
+    static propTypes = {
+        canModify: PropTypes.bool.isRequired,
+        id: PropTypes.string.isRequired,
+        identicon: PropTypes.string,
+        onEdit: PropTypes.func.isRequired,
+        onRemove: PropTypes.func.isRequired
+    };
+
     handleEdit = () => {
         this.props.onEdit(this.props.id);
     };

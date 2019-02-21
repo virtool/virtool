@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<OTUs /> should render 1`] = `
+<Switch>
+  <Route
+    component={[Function]}
+    exact={true}
+    path="/refs/:refId/otus"
+  />
+  <Route
+    component={[Function]}
+    path="/refs/:refId/otus/:otuId"
+  />
+</Switch>
+`;

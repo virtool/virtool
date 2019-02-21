@@ -1,22 +1,11 @@
+import { get, map } from "lodash-es";
 import React from "react";
-import { map, sortBy, get } from "lodash-es";
-import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
+import { Badge, Col, Label, Panel, Row, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { IDRow, ListGroupItem, LoadingPlaceholder, ViewHeader, NotFound } from "../../base";
+import { IDRow, LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
-
-const HMMTaxonomy = ({ counts }) => {
-    const sorted = sortBy(map(counts, (count, name) => ({ name, count })), "name");
-
-    const components = map(sorted, entry => (
-        <ListGroupItem key={entry.name}>
-            {entry.name} <Badge>{entry.count}</Badge>
-        </ListGroupItem>
-    ));
-
-    return <ListGroup style={{ maxHeight: 210, overflowY: "auto" }}>{components}</ListGroup>;
-};
+import { HMMTaxonomy } from "./Taxonomy";
 
 class HMMDetail extends React.Component {
     componentDidMount() {

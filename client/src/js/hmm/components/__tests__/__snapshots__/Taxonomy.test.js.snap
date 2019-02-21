@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HMMTaxonomy /> should render 1`] = `
+<ListGroup
+  bsClass="list-group"
+  style={
+    Object {
+      "maxHeight": 210,
+      "overflowY": "auto",
+    }
+  }
+>
+  <ListGroupItem
+    allowFocus={false}
+    key="Begomovirus"
+  >
+    Begomovirus
+     
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      191
+    </Badge>
+  </ListGroupItem>
+  <ListGroupItem
+    allowFocus={false}
+    key="Curtovirus"
+  >
+    Curtovirus
+     
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      3
+    </Badge>
+  </ListGroupItem>
+  <ListGroupItem
+    allowFocus={false}
+    key="None"
+  >
+    None
+     
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      1
+    </Badge>
+  </ListGroupItem>
+  <ListGroupItem
+    allowFocus={false}
+    key="Topocuvirus"
+  >
+    Topocuvirus
+     
+    <Badge
+      bsClass="badge"
+      pullRight={false}
+    >
+      1
+    </Badge>
+  </ListGroupItem>
+</ListGroup>
+`;

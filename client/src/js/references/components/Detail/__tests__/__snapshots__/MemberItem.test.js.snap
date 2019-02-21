@@ -1,0 +1,123 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<MemberItem /> should render with [canModify=true] 1`] = `
+<ListGroupItem
+  allowFocus={false}
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={0}
+      style={
+        Object {
+          "paddingRight": "8px",
+        }
+      }
+    >
+      <Identicon
+        hash="6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee"
+        size={24}
+      />
+    </FlexItem>
+    bob
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        className="pull-right"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <Icon
+          bsStyle="warning"
+          faStyle="fas"
+          fixedWidth={false}
+          name="edit"
+          onClick={[Function]}
+          pullRight={false}
+          tip="Modify"
+        />
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <Icon
+            bsStyle="danger"
+            faStyle="fas"
+            fixedWidth={false}
+            name="trash"
+            onClick={[Function]}
+            pullRight={false}
+            tip="Remove"
+          />
+        </FlexItem>
+      </Flex>
+    </FlexItem>
+  </Flex>
+</ListGroupItem>
+`;
+
+exports[`<MemberItem /> should render with identicon 1`] = `
+<ListGroupItem
+  allowFocus={false}
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      shrink={0}
+      style={
+        Object {
+          "paddingRight": "8px",
+        }
+      }
+    >
+      <Identicon
+        hash="6be6d0a72a16cb633144ec03cdaef77804c6f94770184f83e0899fe6bdcb77ee"
+        size={24}
+      />
+    </FlexItem>
+    bob
+  </Flex>
+</ListGroupItem>
+`;
+
+exports[`<MemberItem /> should render without identicon 1`] = `
+<ListGroupItem
+  allowFocus={false}
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    bob
+  </Flex>
+</ListGroupItem>
+`;
