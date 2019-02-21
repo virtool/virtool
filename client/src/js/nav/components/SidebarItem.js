@@ -1,17 +1,8 @@
+import PropTypes from "prop-types";
 import React from "react";
-import { includes } from "lodash-es";
 import { NavLink } from "react-router-dom";
 import { Icon } from "../../base";
-
-function excludePaths(paths = []) {
-    return function(match, location) {
-        if (includes(paths, location.pathname)) {
-            return false;
-        }
-
-        return !!match;
-    };
-}
+import { excludePaths } from "../utils";
 
 export default function SidebarItem({ exclude, icon, link, title }) {
     return (
@@ -23,3 +14,10 @@ export default function SidebarItem({ exclude, icon, link, title }) {
         </NavLink>
     );
 }
+
+SidebarItem.propTypes = {
+    exclude: PropTypes.arrayOf(PropTypes.string),
+    icon: PropTypes.string.isRequired,
+    link: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired
+};

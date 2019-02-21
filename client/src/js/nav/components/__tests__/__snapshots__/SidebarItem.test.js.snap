@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SidebarItem /> should render 1`] = `
+<NavLink
+  activeClassName="active"
+  aria-current="page"
+  className="sidebar-item"
+  isActive={[Function]}
+  to="/foo/bar"
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="fa-foo"
+    pullRight={false}
+  />
+  <div>
+    <small>
+      Foobar
+    </small>
+  </div>
+</NavLink>
+`;
