@@ -91,9 +91,10 @@ export default function WSConnection({ getState, dispatch }) {
 
         window.console.log(`${iface}.${operation}`);
 
-        const action = modifiers[operation][iface](getState(), message);
+        const modifier = get(modifiers, [operation, iface]);
 
-        if (action) {
+        if (modifier) {
+            const action = modifier(getState(), message);
             return dispatch(action);
         }
     };
