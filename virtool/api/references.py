@@ -101,9 +101,14 @@ async def get(req):
     except (KeyError, TypeError):
         internal_control_id = None
 
-    document.update(await virtool.db.references.get_computed(db, ref_id, internal_control_id))
+    computed = await asyncio.shield(virtool.db.references.get_computed(db, ref_id, internal_control_id))
 
-    document["users"] = await virtool.db.users.attach_identicons(db, document["users"])
+    users = await asyncio.shield(virtool.db.users.attach_identicons(db, document["users"]))
+
+    document.update({
+        **computed,
+        "users": users
+    })
 
     return json_response(virtool.utils.base_processor(document))
 
