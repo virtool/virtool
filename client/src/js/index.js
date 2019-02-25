@@ -1,7 +1,7 @@
 import createHistory from "history/createBrowserHistory";
 import React from "react";
 import ReactDOM from "react-dom";
-import Raven from "raven-js";
+import * as Sentry from "@sentry/browser";
 import App from "./app/App";
 import { createAppStore } from "./app/reducer";
 import WSConnection from "./app/websocket";
@@ -11,9 +11,11 @@ import { listProcesses } from "./processes/actions";
 
 export * from "../style/style.less";
 
-Raven.config("https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541").install();
+browser.Sentry.init({
+    dsn: "https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541"
+});
 
-window.Raven = Raven;
+window.Sentry = Sentry;
 
 const history = createHistory();
 
