@@ -171,9 +171,8 @@ class Collection:
 
 class DB:
 
-    def __init__(self, client, dispatch, loop):
+    def __init__(self, client, dispatch):
         self.dispatch = dispatch
-        self.loop = loop
 
         for collection_name in COLLECTION_NAMES:
             setattr(self, collection_name, None)

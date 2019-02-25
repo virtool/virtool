@@ -1098,7 +1098,7 @@ async def refresh_remotes(app):
                     ignore_errors=True
                 )
 
-            await asyncio.sleep(600, loop=app.loop)
+            await asyncio.sleep(600)
     except asyncio.CancelledError:
         pass
 

@@ -56,7 +56,7 @@ async def init_http_client(app: web.Application):
         "User-Agent": f"virtool/{version}",
     }
 
-    app["client"] = client.ClientSession(loop=app.loop, headers=headers)
+    app["client"] = client.ClientSession(headers=headers)
 
 
 async def init_refresh(app: web.Application):
@@ -95,7 +95,7 @@ async def init_version(app: web.Application):
     if force_version:
         version = force_version
     else:
-        version = await find_server_version(app.loop, sys.path[0])
+        version = await find_server_version(sys.path[0])
 
     logger.info(f"Virtool {version}")
 
@@ -117,7 +117,7 @@ async def init_executors(app: web.Application):
     loop.set_default_executor(thread_executor)
 
     async def run_in_thread(func, *args):
-        return await app.loop.run_in_executor(thread_executor, func, *args)
+        return await loop.run_in_executor(thread_executor, func, *args)
 
     app["run_in_thread"] = run_in_thread
     app["executor"] = thread_executor
@@ -125,7 +125,7 @@ async def init_executors(app: web.Application):
     process_executor = concurrent.futures.ProcessPoolExecutor()
 
     async def run_in_process(func, *args):
-        return await app.loop.run_in_executor(process_executor, func, *args)
+        return await loop.run_in_executor(process_executor, func, *args)
 
     app["run_in_process"] = run_in_process
     app["process_executor"] = process_executor
@@ -201,8 +201,7 @@ async def init_db(app):
 
         app["db"] = virtool.db.iface.DB(
             db_client[settings["db_name"]],
-            app["dispatcher"].dispatch,
-            app.loop
+            app["dispatcher"].dispatch
         )
 
         await app["db"].connect()
@@ -309,7 +308,6 @@ async def init_file_manager(app):
         sys.exit(1)
 
     app["file_manager"] = virtool.files.Manager(
-        app.loop,
         app["executor"],
         app["db"],
         files_path,
@@ -506,9 +504,9 @@ async def run():
 
     app = create_app()
 
-    loop = asyncio.get_event_loop()
-
     events = create_events()
+
+    loop = asyncio.get_event_loop()
 
     loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
     loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
@@ -526,8 +524,10 @@ async def run():
         task.cancel()
 
 
-async def find_server_version(loop, install_path="."):
+async def find_server_version(install_path="."):
     output = None
+
+    loop = asyncio.get_event_loop()
 
     try:
         output = await loop.run_in_executor(None, subprocess.check_output, ["git", "describe", "--tags"])

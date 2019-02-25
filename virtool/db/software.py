@@ -173,7 +173,7 @@ async def install(app, release, process_id):
             progress=1
         )
 
-        await asyncio.sleep(1.5, loop=app.loop)
+        await asyncio.sleep(1.5)
 
         app["events"]["restart"].set()
 
@@ -190,7 +190,7 @@ async def refresh(app):
 
         while True:
             await fetch_and_update_releases(app, ignore_errors=True)
-            await asyncio.sleep(43200, loop=app.loop)
+            await asyncio.sleep(43200)
     except asyncio.CancelledError:
         pass
 

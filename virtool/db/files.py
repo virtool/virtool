@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -81,5 +82,7 @@ async def remove(loop, db, settings, file_id):
     await db.files.delete_one({"_id": file_id})
 
     file_path = os.path.join(settings["data_path"], "files", file_id)
+
+    loop = asyncio.get_event_loop()
 
     await loop.run_in_executor(None, virtool.utils.rm, file_path)

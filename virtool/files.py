@@ -60,8 +60,8 @@ def has_read_extension(filename):
 
 class Manager:
 
-    def __init__(self, loop, executor, db, files_path, watch_path, clean_interval=20):
-        self.loop = loop
+    def __init__(self, executor, db, files_path, watch_path, clean_interval=20):
+        self.loop = asyncio.get_event_loop()
         self.executor = executor
         self.db = db
         self.files_path = files_path
@@ -109,7 +109,7 @@ class Manager:
                 threshold = self.clean_interval / 0.3
 
                 while count < threshold:
-                    await asyncio.sleep(0.3, loop=self.loop)
+                    await asyncio.sleep(0.3)
 
         except asyncio.CancelledError:
             pass

@@ -24,7 +24,7 @@ def test_db_name(worker_id):
 
 @pytest.fixture
 def test_motor(test_db_connection_string, test_db_name, loop, request):
-    client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string, io_loop=loop)
+    client = motor.motor_asyncio.AsyncIOMotorClient(test_db_connection_string)
     loop.run_until_complete(client.drop_database(test_db_name))
     yield client[test_db_name]
     loop.run_until_complete(client.drop_database(test_db_name))
@@ -40,7 +40,7 @@ def dbs(test_db_connection_string, test_db_name, request):
 
 @pytest.fixture
 def dbi(test_motor, loop):
-    i = virtool.db.iface.DB(test_motor, make_mocked_coro(), loop)
+    i = virtool.db.iface.DB(test_motor, make_mocked_coro())
     loop.run_until_complete(i.connect())
     return i
 
