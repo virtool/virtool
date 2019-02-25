@@ -246,8 +246,15 @@ async def index_handler(req: web.Request) -> web.Response:
     force_reset = req["client"].force_reset
 
     if req["client"].user_id and not force_reset:
-        with open(os.path.join(req.app["client_path"], "index.html"), "r") as handle:
-            return web.Response(body=handle.read(), content_type="text/html")
+        path = os.path.join(req.app["client_path"], "index.html")
+
+        html = mako.template.Template(filename=path).render()
+
+        html = html.replace("VERSION", req.app["version"])
+
+        html = html.replace('"DEV"', "true" if req.app["settings"]["dev"] else "false")
+
+        return web.Response(body=html, content_type="text/html")
 
     path_base = "login"
 

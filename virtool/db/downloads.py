@@ -22,7 +22,7 @@ def format_fasta_entry(otu_name, isolate_name, sequence_id, sequence):
     :rtype: str
 
     """
-    return ">{}|{}|{}|{}\n{}".format(otu_name, isolate_name, sequence_id, len(sequence), sequence)
+    return f">{otu_name}|{isolate_name}|{sequence_id}|{len(sequence)}\n{sequence}"
 
 
 def format_fasta_filename(*args):

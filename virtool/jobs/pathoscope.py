@@ -190,7 +190,7 @@ class Job(virtool.jobs.job.Job):
                 _, patched, _ = virtool.db.sync.patch_otu_to_version(self.db, otu_id, otu_version)
                 for isolate in patched["isolates"]:
                     for sequence in isolate["sequences"]:
-                        handle.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
+                        handle.write(f">{sequence['_id']}\n{sequence['sequence']}\n")
                         ref_lengths[sequence["_id"]] = len(sequence["sequence"])
 
         del self.intermediate["to_otus"]

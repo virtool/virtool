@@ -11,11 +11,13 @@ import {
     WS_INSERT_INDEX,
     WS_UPDATE_INDEX,
     WS_REMOVE_INDEX,
-    REFRESH_OTUS
+    REFRESH_OTUS,
+    GET_REFERENCE
 } from "../app/actionTypes";
 import * as otusAPI from "../otus/api";
+import * as refsAPI from "../references/api";
 import * as indexesAPI from "./api";
-import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { all, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 export function* watchIndexes() {
     yield takeLatest(WS_INSERT_INDEX, wsChangeIndexes);
@@ -30,10 +32,20 @@ export function* watchIndexes() {
 }
 
 export function* wsChangeIndexes(action) {
+    // The id of the ref accosicated with the WS update.
+    const indexDetailId = action.data.reference.id;
+
+    // The id of the current detailed ref.
     const refId = yield select(state => get(state, "references.detail.id"));
 
-    yield apiCall(indexesAPI.find, { refId }, FIND_INDEXES);
-    yield apiCall(otusAPI.find, { refId }, REFRESH_OTUS);
+    // Only update ref and indexes if refIds match.
+    if (indexDetailId === refId) {
+        yield all([
+            apiCall(refsAPI.get, { refId }, GET_REFERENCE),
+            apiCall(indexesAPI.find, { refId }, FIND_INDEXES),
+            apiCall(otusAPI.find, { refId }, REFRESH_OTUS)
+        ]);
+    }
 }
 
 export function* findIndexes(action) {

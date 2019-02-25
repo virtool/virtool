@@ -7,7 +7,7 @@ import { Button, Icon } from "../../base";
 import { getCanModify } from "../../samples/selectors";
 import { findAnalyses } from "../actions";
 
-export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, routerLocation, sampleId, term }) => (
+export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleId, term }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -32,13 +32,14 @@ export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, routerL
     </div>
 );
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
+    canModify: getCanModify(state),
+    page: state.analyses.page,
     sampleId: state.samples.detail.id,
-    term: state.analyses.term,
-    canModify: getCanModify(state)
+    term: state.analyses.term
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onShowCreate: sampleId => {
         dispatch(pushState({ createAnalysis: [sampleId] }));
     },

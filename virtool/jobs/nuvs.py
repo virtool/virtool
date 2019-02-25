@@ -281,7 +281,7 @@ class Job(virtool.jobs.job.Job):
         with open(os.path.join(self.params["analysis_path"], "orfs.fa"), "w") as f:
             for entry in self.results:
                 for orf in entry["orfs"]:
-                    f.write(">sequence_{}.{}\n{}\n".format(entry["index"], orf["index"], orf["pro"]))
+                    f.write(f">sequence_{entry['index']}.{orf['index']}\n{orf['pro']}\n")
 
     def press_hmm(self):
 

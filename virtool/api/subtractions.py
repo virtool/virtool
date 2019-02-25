@@ -133,7 +133,7 @@ async def create(req):
     await req.app["jobs"].enqueue(job_id)
 
     headers = {
-        "Location": "/api/account/keys/{}".format(data["subtraction_id"])
+        "Location": f"/api/account/keys/{subtraction_id}"
     }
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
@@ -183,6 +183,6 @@ async def remove(req):
 
     index_path = virtool.subtractions.calculate_index_path(settings, subtraction_id)
 
-    await req.loop.run_in_executor(None, shutil.rmtree, index_path, True)
+    await req.app["run_in_thread"](shutil.rmtree, index_path, True)
 
     return no_content()

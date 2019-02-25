@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HMMPurge /> should not render purge button when [canPurge=false] 1`] = `
+<Alert
+  bsStyle="warning"
+  icon="exclamation-circle"
+>
+  <strong>
+    You do not have permission to modify HMMs.
+  </strong>
+  <span>
+     Contact an administrator.
+  </span>
+</Alert>
+`;
+
+exports[`<HMMPurge /> should render purge button when [canPurge=true] 1`] = `
+<RemoveBanner
+  buttonText="Purge"
+  message="Delete all HMM profile annotations and data files."
+  onClick={[MockFunction]}
+/>
+`;

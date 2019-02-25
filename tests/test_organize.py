@@ -51,7 +51,8 @@ async def test_organize_groups(dbi):
             "permissions": {
                 "hello_world": True,
                 "create_sample": True
-            }
+            },
+            "_version": 3
         }
     ])
 

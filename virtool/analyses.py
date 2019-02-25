@@ -68,6 +68,6 @@ def get_nuvs_sequence_by_index(document, sequence_index):
 
     # Raise exception if more than one sequence has the provided index. This should never happen, just being careful.
     if len(sequences) > 1:
-        raise ValueError("More than one sequence with index {}".format(sequence_index))
+        raise ValueError(f"More than one sequence with index {sequence_index}")
 
     return sequences[0]

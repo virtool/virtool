@@ -206,7 +206,7 @@ async def create_api_key(req):
     document["key"] = raw
 
     headers = {
-        "Location": "/api/account/keys/{}".format(document["id"])
+        "Location": f"/api/account/keys/{document['id']}"
     }
 
     return json_response(document, headers=headers, status=201)

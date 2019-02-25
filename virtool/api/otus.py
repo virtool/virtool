@@ -357,7 +357,7 @@ async def add_isolate(req):
 
     isolate_name = virtool.otus.format_isolate_name(data)
 
-    description = "Added {}".format(isolate_name)
+    description = f"Added {isolate_name}"
 
     if will_be_default:
         description += " as default"
@@ -372,7 +372,7 @@ async def add_isolate(req):
     )
 
     headers = {
-        "Location": "/api/otus/{}/isolates/{}".format(otu_id, isolate_id)
+        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}"
     }
 
     return json_response(
@@ -450,7 +450,7 @@ async def edit_isolate(req):
         "edit_isolate",
         old,
         new,
-        "Renamed {} to {}".format(old_isolate_name, isolate_name),
+        f"Renamed {old_isolate_name} to {isolate_name}",
         req["client"].user_id
     )
 
@@ -522,7 +522,7 @@ async def set_as_default(req):
         "set_as_default",
         old,
         new,
-        "Set {} as default".format(isolate_name),
+        f"Set {isolate_name} as default",
         req["client"].user_id
     )
 
@@ -598,10 +598,13 @@ async def remove_isolate(req):
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"otu_id": otu_id, "isolate_id": isolate_id})
 
-    description = "Removed {}".format(virtool.otus.format_isolate_name(isolate_to_remove))
+    old_isolate_name = virtool.otus.format_isolate_name(isolate_to_remove)
+
+    description = f"Removed {old_isolate_name}"
 
     if isolate_to_remove["default"] and new_default:
-        description += " and set {} as default".format(virtool.otus.format_isolate_name(new_default))
+        new_isolate_name = virtool.otus.format_isolate_name(new_default)
+        description += f" and set {new_isolate_name} as default"
 
     await virtool.db.history.add(
         db,
@@ -733,12 +736,12 @@ async def create_sequence(req):
         "create_sequence",
         old,
         new,
-        "Created new sequence {} in {}".format(data["accession"], virtool.otus.format_isolate_name(isolate)),
+        f"Created new sequence {data['accession']} in {virtool.otus.format_isolate_name(isolate)}",
         req["client"].user_id
     )
 
     headers = {
-        "Location": "/api/otus/{}/isolates/{}/sequences/{}".format(otu_id, isolate_id, sequence_document["_id"])
+        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['_id']}"
     }
 
     return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
@@ -810,7 +813,7 @@ async def edit_sequence(req):
         "edit_sequence",
         old,
         new,
-        "Edited sequence {} in {}".format(sequence_id, virtool.otus.format_isolate_name(isolate)),
+        f"Edited sequence {sequence_id} in {virtool.otus.format_isolate_name(isolate)}",
         req["client"].user_id
     )
 
@@ -864,7 +867,7 @@ async def remove_sequence(req):
         "remove_sequence",
         old,
         new,
-        "Removed sequence {} from {}".format(sequence_id, isolate_name),
+        f"Removed sequence {sequence_id} from {isolate_name}",
         req["client"].user_id
     )
 

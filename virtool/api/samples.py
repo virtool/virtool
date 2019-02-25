@@ -427,10 +427,12 @@ async def analyze(req):
 
     await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
+    analysis_id = document["id"]
+
     return json_response(
         document,
         status=201,
         headers={
-            "Location": "/api/analyses/{}".format(document["id"])
+            "Location": f"/api/analyses/{analysis_id}"
         }
     )

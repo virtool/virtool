@@ -4,7 +4,7 @@ import { NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { Icon } from "../../base";
 
-const NotificationIcon = ({ visible }) => {
+export const NotificationIcon = ({ visible }) => {
     if (visible) {
         return (
             <NavItem>
@@ -18,7 +18,7 @@ const NotificationIcon = ({ visible }) => {
     return <div />;
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     visible: !!(state.account.administrator && state.updates.releases && state.updates.releases.length)
 });
 

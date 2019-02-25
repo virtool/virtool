@@ -66,7 +66,7 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
     :rtype: Coroutine[dict]
 
     """
-    url = "{}/{}/releases/{}".format(BASE_URL, slug, release_id)
+    url = f"{BASE_URL}/{slug}/releases/{release_id}"
 
     headers = dict(HEADERS)
 
@@ -74,13 +74,10 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
         headers["If-None-Match"] = etag
 
     async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
-        logger.debug("Fetched release: {}/{} ({} - {}/{})".format(
-            slug,
-            release_id,
-            resp.status,
-            resp.headers["X-RateLimit-Remaining"],
-            resp.headers["X-RateLimit-Limit"]
-        ))
+        rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
+        rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
+
+        logger.debug(f"Fetched release: {slug}/{release_id} ({resp.status} - {rate_limit_remaining}/{rate_limit})")
 
         if resp.status == 200:
             data = await resp.json()
@@ -94,4 +91,4 @@ async def get_release(settings, session, slug, etag=None, release_id="latest"):
             return None
 
         else:
-            raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
+            raise virtool.errors.GitHubError(f"Encountered error {resp.status}")
