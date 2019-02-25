@@ -1,4 +1,3 @@
-import asyncio
 import shutil
 
 import virtool.db.jobs
