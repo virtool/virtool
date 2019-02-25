@@ -18,7 +18,7 @@ def test_manager_instance(loop, dbi, tmpdir):
 
     scheduler = loop.run_until_complete(aiojobs.create_scheduler())
 
-    manager = virtool.files.Manager(loop, executor, dbi, files_path, watch_path)
+    manager = virtool.files.Manager(executor, dbi, files_path, watch_path)
 
     loop.run_until_complete(scheduler.spawn(manager.run()))
 

@@ -40,9 +40,6 @@ class IntegratedManager:
         #: A :class:`multiprocess.Queue` used to receive dispatch information from job processes.
         self.queue = multiprocessing.Queue()
 
-        #: The application IO loop
-        self.loop = app.loop
-
         #: The application database interface.
         self.dbi = app["db"]
 
@@ -96,7 +93,7 @@ class IntegratedManager:
                     msg = self.queue.get()
                     await self.dispatch(*msg)
 
-                await asyncio.sleep(0.1, loop=self.loop)
+                await asyncio.sleep(0.1)
 
         except asyncio.CancelledError:
             logging.debug("Cancelling running jobs")

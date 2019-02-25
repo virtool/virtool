@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 
 import virtool.db.jobs
@@ -183,6 +184,6 @@ async def remove(req):
 
     index_path = virtool.subtractions.calculate_index_path(settings, subtraction_id)
 
-    await req.loop.run_in_executor(None, shutil.rmtree, index_path, True)
+    await req.app["run_in_thread"](shutil.rmtree, index_path, True)
 
     return no_content()

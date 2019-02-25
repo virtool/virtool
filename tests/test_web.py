@@ -24,13 +24,13 @@ async def test_find_server_version(source, loop, mocker, tmpdir):
     tmpdir.join("VERSION")
 
     if source == "git":
-        assert await find_server_version(loop, str(tmpdir)) == "1.0.13"
+        assert await find_server_version(str(tmpdir)) == "1.0.13"
 
     elif source == "file":
         with open(os.path.join(str(tmpdir), "VERSION"), "w") as handle:
             handle.write("1.0.12")
 
-        assert await find_server_version(loop, str(tmpdir)) == "1.0.12"
+        assert await find_server_version(str(tmpdir)) == "1.0.12"
 
     else:
-        assert await find_server_version(loop, str(tmpdir)) == "Unknown"
+        assert await find_server_version(str(tmpdir)) == "Unknown"

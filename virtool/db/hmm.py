@@ -305,7 +305,7 @@ async def refresh(app):
 
         while True:
             await fetch_and_update_release(app)
-            await asyncio.sleep(600, loop=app.loop)
+            await asyncio.sleep(600)
     except asyncio.CancelledError:
         pass
 
