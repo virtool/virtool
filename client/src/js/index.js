@@ -11,11 +11,14 @@ import { listProcesses } from "./processes/actions";
 
 export * from "../style/style.less";
 
-browser.Sentry.init({
-    dsn: "https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541"
-});
+if (!window.virtool.dev) {
+    Sentry.init({
+        dsn: "https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541",
+        version: window.virtool.version
+    });
 
-window.Sentry = Sentry;
+    window.Sentry = Sentry;
+}
 
 const history = createHistory();
 
