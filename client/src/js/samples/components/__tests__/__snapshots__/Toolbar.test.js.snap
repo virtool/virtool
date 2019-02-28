@@ -1,65 +1,133 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[` 1`] = `
-<div
-  className="toolbar"
-  key="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
+<div>
+  <div
+    className="toolbar"
+    key="toolbar"
+    style={
+      Object {
+        "marginBottom": "7px",
+      }
+    }
   >
-    <InputGroup
-      bsClass="input-group"
+    <FormGroup
+      bsClass="form-group"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
+      <InputGroup
+        bsClass="input-group"
       >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search fa-fw"
-          pullRight={false}
+        <InputGroupAddon
+          bsClass="input-group-addon"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="search fa-fw"
+            pullRight={false}
+          />
+        </InputGroupAddon>
+        <FormControl
+          bsClass="form-control"
+          componentClass="input"
+          onChange={[Function]}
+          placeholder="Sample name"
+          type="text"
         />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Sample name"
-        type="text"
-      />
-    </InputGroup>
-  </FormGroup>
+      </InputGroup>
+    </FormGroup>
+  </div>
+  <ListGroup
+    bsClass="list-group"
+    style={
+      Object {
+        "marginBottom": "7px",
+      }
+    }
+  >
+    <ListGroupItem
+      bsClass="list-group-item"
+      listItem={false}
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={4}
+        >
+          <Connect(AlgorithmFilter) />
+        </Col>
+      </Row>
+    </ListGroupItem>
+  </ListGroup>
 </div>
 `;
 
 exports[` 2`] = `
-<div
-  className="toolbar"
-  key="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
+<div>
+  <div
+    className="toolbar"
+    key="toolbar"
+    style={
+      Object {
+        "marginBottom": "7px",
+      }
+    }
   >
-    <InputGroup
-      bsClass="input-group"
+    <FormGroup
+      bsClass="form-group"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
+      <InputGroup
+        bsClass="input-group"
       >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search fa-fw"
-          pullRight={false}
+        <InputGroupAddon
+          bsClass="input-group-addon"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="search fa-fw"
+            pullRight={false}
+          />
+        </InputGroupAddon>
+        <FormControl
+          bsClass="form-control"
+          componentClass="input"
+          onChange={[Function]}
+          placeholder="Sample name"
+          type="text"
         />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Sample name"
-        type="text"
-      />
-    </InputGroup>
-  </FormGroup>
+      </InputGroup>
+    </FormGroup>
+  </div>
+  <ListGroup
+    bsClass="list-group"
+    style={
+      Object {
+        "marginBottom": "7px",
+      }
+    }
+  >
+    <ListGroupItem
+      bsClass="list-group-item"
+      listItem={false}
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={4}
+        >
+          <Connect(AlgorithmFilter) />
+        </Col>
+      </Row>
+    </ListGroupItem>
+  </ListGroup>
 </div>
 `;
