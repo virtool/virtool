@@ -28,7 +28,9 @@ export const initialState = {
     editError: false,
     reservedFiles: [],
     readyHosts: null,
-    selected: []
+    selected: [],
+    pathoscopeCondition: [true, false, "ip"],
+    nuvsCondition: [true, false, "ip"]
 };
 
 export default function samplesReducer(state = initialState, action) {
@@ -42,8 +44,15 @@ export default function samplesReducer(state = initialState, action) {
         case WS_REMOVE_SAMPLE:
             return remove(state, action);
 
-        case FIND_SAMPLES.REQUESTED:
-            return { ...state, term: action.term };
+        case FIND_SAMPLES.REQUESTED: {
+            const { term, pathoscope, nuvs } = action;
+            return {
+                ...state,
+                term,
+                pathoscopeCondition: pathoscope,
+                nuvsCondition: nuvs
+            };
+        }
 
         case FIND_SAMPLES.SUCCEEDED:
             return updateDocuments(state, action, "created_at", true);
