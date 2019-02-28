@@ -14,6 +14,7 @@ import {
     REMOVE_SAMPLE
 } from "../app/actionTypes";
 import * as samplesAPI from "./api";
+import { createFindURL } from "./utils";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 export function* watchSamples() {
@@ -29,7 +30,12 @@ export function* watchSamples() {
 
 export function* findSamples(action) {
     yield apiCall(samplesAPI.find, action, FIND_SAMPLES);
-    yield pushFindTerm(action.term);
+
+    const { term, pathoscope, nuvs } = action;
+
+    const url = createFindURL(term, pathoscope, nuvs);
+
+    yield put(push(url.pathname + url.search));
 }
 
 export function* findReadFiles() {
