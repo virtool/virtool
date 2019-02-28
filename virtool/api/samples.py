@@ -44,6 +44,8 @@ async def find(req):
     """
     db = req.app["db"]
 
+    algorithm_query = virtool.db.samples.compose_analysis_query(req.query)
+
     v = Validator(QUERY_SCHEMA, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
@@ -77,6 +79,19 @@ async def find(req):
 
     if term:
         db_query = compose_regex_query(term, ["name", "user.id"])
+
+    if algorithm_query:
+        if db_query:
+            db_query = {
+                "$and": [
+                    db_query,
+                    algorithm_query
+                ]
+            }
+        else:
+            db_query = algorithm_query
+
+    print(db_query)
 
     data = await paginate(
         db.samples,
