@@ -73,6 +73,56 @@ async def check_rights(db, sample_id, client, write=True):
     return has_read and (write is False or has_write)
 
 
+def compose_algorithm_conditions(algorithm, url_query):
+    values = url_query.getall(algorithm, None)
+
+    if values is None:
+        return None
+
+    values = set(values)
+
+    conditions = list()
+
+    if values and values != {"true", "false", "ip"}:
+        if "true" in values:
+            conditions.append(True)
+
+        if "false" in values:
+            conditions.append(False)
+
+        if "ip" in values:
+            conditions.append("ip")
+
+    if conditions:
+        if len(conditions) == 1:
+            return {
+                algorithm: conditions[0]
+            }
+
+        return {
+            algorithm: {
+                "$in": conditions
+            }
+        }
+
+    return None
+
+
+def compose_analysis_query(url_query):
+    pathoscope = compose_algorithm_conditions("pathoscope", url_query)
+    nuvs = compose_algorithm_conditions("nuvs", url_query)
+
+    if pathoscope and nuvs:
+        return {
+            "$or": [
+                pathoscope,
+                nuvs
+            ]
+        }
+
+    return pathoscope or nuvs or None
+
+
 async def get_sample_owner(db, sample_id: str):
     """
     A Shortcut function for getting the owner user id of a sample given its ``sample_id``.

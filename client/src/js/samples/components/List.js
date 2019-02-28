@@ -22,9 +22,10 @@ export class SamplesList extends React.Component {
     }
 
     componentDidMount() {
+        const { nuvs, pathoscope, term } = this.props;
         this.props.onFindHmms();
         this.props.onListReadyIndexes();
-        this.props.onLoadNextPage(this.props.term, 1);
+        this.props.onLoadNextPage(term, 1, pathoscope, nuvs);
     }
 
     onSelect = (id, index, isShiftKey) => {
@@ -81,6 +82,8 @@ export class SamplesList extends React.Component {
             noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
         }
 
+        const { term, pathoscope, nuvs } = this.props;
+
         return (
             <div>
                 <ViewHeader title="Samples" totalCount={this.props.total_count} />
@@ -92,7 +95,7 @@ export class SamplesList extends React.Component {
                         documents={this.props.documents}
                         page={this.props.page}
                         pageCount={this.props.page_count}
-                        onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
+                        onLoadNextPage={page => this.props.onLoadNextPage(term, page, pathoscope, nuvs)}
                         renderRow={this.renderRow}
                     />
                 )}
@@ -108,12 +111,14 @@ const mapStateToProps = state => ({
     userId: state.account.id,
     ...state.samples,
     term: getTerm(state),
+    pathoscope: state.samples.pathoscopeCondition,
+    nuvs: state.samples.nuvsCondition,
     hmms: state.hmms
 });
 
 const mapDispatchToProps = dispatch => ({
-    onLoadNextPage: (term, page) => {
-        dispatch(findSamples(term, page));
+    onLoadNextPage: (term, page, pathoscope, nuvs) => {
+        dispatch(findSamples(term, page, pathoscope, nuvs));
     },
 
     onFindHmms: () => {

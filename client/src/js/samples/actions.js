@@ -46,10 +46,12 @@ export const wsRemoveSample = data => ({
     data
 });
 
-export const findSamples = (term, page = 1) => ({
+export const findSamples = (term, page = 1, pathoscope = [], nuvs = []) => ({
     type: FIND_SAMPLES.REQUESTED,
     term,
-    page
+    page,
+    pathoscope,
+    nuvs
 });
 
 export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);

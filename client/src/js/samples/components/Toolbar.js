@@ -1,12 +1,13 @@
-import React from "react";
 import { push } from "connected-react-router";
+import React from "react";
+
+import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-
-import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Button, Flex, FlexItem, Icon } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
-import { Icon, Button, Flex, FlexItem } from "../../base";
 import { clearSampleSelection, findSamples } from "../actions";
+import AlgorithmFilter from "./AlgorithmFilter";
 
 const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, onSelect, selected }) => (
     <Flex alignItems="stretch" style={{ marginBottom: "15px" }}>
@@ -29,7 +30,7 @@ const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, onSelect, selected })
     </Flex>
 );
 
-export const SampleSearchToolbar = ({ canCreate, onFind, term }) => {
+export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs }) => {
     let createButton;
 
     if (canCreate) {
@@ -41,16 +42,32 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term }) => {
     }
 
     return (
-        <div key="toolbar" className="toolbar">
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search fa-fw" />
-                    </InputGroup.Addon>
-                    <FormControl type="text" value={term} onChange={onFind} placeholder="Sample name" />
-                </InputGroup>
-            </FormGroup>
-            {createButton}
+        <div>
+            <div key="toolbar" className="toolbar" style={{ marginBottom: "7px" }}>
+                <FormGroup>
+                    <InputGroup>
+                        <InputGroup.Addon>
+                            <Icon name="search fa-fw" />
+                        </InputGroup.Addon>
+                        <FormControl
+                            type="text"
+                            value={term}
+                            onChange={e => onFind(e.target.value, pathoscope, nuvs)}
+                            placeholder="Sample name"
+                        />
+                    </InputGroup>
+                </FormGroup>
+                {createButton}
+            </div>
+            <ListGroup style={{ marginBottom: "7px" }}>
+                <ListGroupItem>
+                    <Row>
+                        <Col xs={4}>
+                            <AlgorithmFilter />
+                        </Col>
+                    </Row>
+                </ListGroupItem>
+            </ListGroup>
         </div>
     );
 };
@@ -63,15 +80,20 @@ const SampleToolbar = props => {
     return <SampleSearchToolbar {...props} />;
 };
 
-const mapStateToProps = state => ({
-    term: state.samples.term,
-    selected: state.samples.selected,
-    canCreate: checkAdminOrPermission(state, "create_sample")
-});
+const mapStateToProps = state => {
+    const { term, nuvsCondition, pathoscopeCondition, selected } = state.samples;
+    return {
+        term,
+        selected,
+        nuvs: nuvsCondition,
+        pathoscope: pathoscopeCondition,
+        canCreate: checkAdminOrPermission(state, "create_sample")
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
-    onFind: e => {
-        dispatch(findSamples(e.target.value, 1));
+    onFind: (term, pathoscope, nuvs) => {
+        dispatch(findSamples(term, 1, pathoscope, nuvs));
     },
     onClear: () => {
         dispatch(clearSampleSelection());

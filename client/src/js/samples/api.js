@@ -1,8 +1,11 @@
+import { forEach } from "lodash-es";
 import Request from "superagent";
 
-export const find = ({ term, page }) =>
+export const find = ({ term, page, pathoscope, nuvs }) =>
     Request.get("/api/samples").query({
         find: term,
+        pathoscope,
+        nuvs,
         page
     });
 

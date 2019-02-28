@@ -8,7 +8,9 @@ describe("<SampleSearchToolbar />", () => {
         props = {
             canCreate: true,
             onFind: jest.fn(),
-            term: ""
+            term: "",
+            pathoscope: [true, false],
+            nuvs: [true, false, "ip"]
         };
     });
 
@@ -23,13 +25,11 @@ describe("<SampleSearchToolbar />", () => {
     });
 
     it("Change in input dispatches filterSamples() action", () => {
-        const wrapper = mount(
-            <MemoryRouter>
-                <SampleSearchToolbar {...props} />
-            </MemoryRouter>
-        );
+        const wrapper = shallow(<SampleSearchToolbar {...props} />);
         const e = { target: { value: "foo" } };
-        wrapper.find("input").prop("onChange")(e);
-        expect(props.onFind).toBeCalledWith(e);
+
+        wrapper.find("FormControl").simulate("change", e);
+
+        expect(props.onFind).toBeCalledWith("foo", props.pathoscope, props.nuvs);
     });
 });
