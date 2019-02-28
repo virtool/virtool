@@ -8,18 +8,18 @@ import { Row, Col } from "react-bootstrap";
 import { Icon, Flex, FlexItem, ListGroupItem, RelativeTime, Checkbox, Loader } from "../../base";
 import { selectSample } from "../actions";
 
-const SampleEntryLabel = ({ icon, label, ready }) => (
+export const SampleEntryLabel = ({ icon, label, ready }) => (
     <Flex>
         <FlexItem className={CX("sample-label", { "bg-primary": ready })}>
             <Flex alignItems="center">
-                {ready === "ip" ? (
-                    <Loader size="10px" color="white" verticalAlign="middle" />
-                ) : (
-                    <Icon name={icon} style={{ lineHeight: "inherit" }} />
-                )}
-                <span style={{ paddingLeft: "3px" }} className="hidden-xs hidden-sm">
-                    {label}
+                <span style={{ width: "12px" }}>
+                    {ready === "ip" ? (
+                        <Loader size="10px" color="white" verticalAlign="middle" />
+                    ) : (
+                        <Icon name={icon} style={{ lineHeight: "inherit" }} fixedWidth />
+                    )}
                 </span>
+                <span className="sample-label-text">{label}</span>
             </Flex>
         </FlexItem>
     </Flex>
