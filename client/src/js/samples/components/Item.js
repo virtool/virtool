@@ -25,7 +25,7 @@ const SampleEntryLabel = ({ icon, label, ready }) => (
     </Flex>
 );
 
-const SampleEntryLabels = ({ nuvs, pathoscope }) => (
+export const SampleEntryLabels = ({ nuvs, pathoscope }) => (
     <Flex style={{ height: "20px" }}>
         <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />
         &nbsp;
