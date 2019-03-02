@@ -8,10 +8,13 @@ async def register(db, process_type, file_size=None):
 
     document = {
         "_id": process_id,
+        "complete": False,
         "count": 0,
         "created_at": virtool.utils.timestamp(),
         "file_size": file_size,
         "progress": 0,
+        "resumable": False,
+        "context": context or dict(),
         "step": virtool.processes.FIRST_STEPS[process_type],
         "type": process_type
     }
