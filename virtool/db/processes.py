@@ -49,5 +49,14 @@ async def update(db, process_id, count=None, progress=None, step=None, context_u
     return virtool.utils.base_processor(document)
 
 
+async def complete(db, process_id):
+    document = await db.processes.find_one_and_update({"_id": process_id}, {
+        "$set": {
+            "complete": True,
+            "progress": 1
+        }
+    })
+
+
 async def remove(db, process_id):
     await db.processes.delete_one({"_id": process_id})
