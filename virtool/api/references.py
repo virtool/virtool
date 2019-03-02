@@ -348,20 +348,22 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.db.processes.register(db, "clone_reference")
-
-        document["process"] = {
-            "id": process["id"]
+        context = {
+            "created_at": document["created_at"],
+            "manifest": manifest,
+            "ref_id": document["_id"],
+            "user_id": user_id
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_clone(
-            req.app,
-            document["_id"],
-            document["created_at"],
-            manifest,
-            process["id"],
-            user_id
-        ))
+        process = await virtool.db.processes.register(db, "clone_reference", context=context)
+
+        p = virtool.db.references.CloneReferenceProcess(db, process["id"])
+
+        document["process"] = {
+            "id": p.id
+        }
+
+        await aiojobs.aiohttp.spawn(req, p.run())
 
     elif import_from:
         if not await db.files.count({"_id": import_from}):

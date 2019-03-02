@@ -42,6 +42,60 @@ PROJECTION = [
 ]
 
 
+class CloneReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, db, process_id):
+        super().__init__(db, process_id)
+
+        self.steps = [
+            self.copy_otus,
+            self.create_history
+        ]
+
+    async def copy_otus(self):
+        manifest = self.context["manifest"]
+        created_at = self.context["created_at"]
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        tracker = self.get_tracker(len(manifest))
+
+        inserted_otu_ids = list()
+
+        for source_otu_id, version in manifest.items():
+            _, patched, _ = await virtool.db.history.patch_to_version(self.db, source_otu_id, version)
+
+            otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
+
+            inserted_otu_ids.append(otu_id)
+
+            await tracker.add(1)
+
+        await self.update_context({
+            "inserted_otu_ids": inserted_otu_ids
+        })
+
+    async def create_history(self):
+        user_id = self.context["user_id"]
+        inserted_otu_ids = self.context["inserted_otu_ids"]
+
+        tracker = self.get_tracker(len(inserted_otu_ids))
+
+        for otu_id in inserted_otu_ids:
+            await insert_change(self.db, otu_id, "clone", user_id)
+            await tracker.add(1)
+
+    async def cleanup(self):
+        ref_id = self.context["ref_id"]
+
+        query = {"reference.id": ref_id}
+
+        await asyncio.gather(
+            self.db.references.delete_one({"_id": ref_id}),
+            self.db.history.delete_many(query),
+            self.db.otus.delete_many(query),
+            self.db.sequences.delete_many(query)
+        )
 def processor(document):
     try:
         document["installed"] = document.pop("updates")[-1]
@@ -760,44 +814,6 @@ async def export(db, ref_id, scope):
             otu_list.append(current)
 
     return virtool.references.clean_export_list(otu_list, scope == "remote")
-
-
-async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
-    db = app["db"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(manifest),
-        factor=0.6
-    )
-
-    inserted_otu_ids = list()
-
-    for source_otu_id, version in manifest.items():
-        _, patched, _ = await virtool.db.history.patch_to_version(db, source_otu_id, version)
-
-        otu_id = await insert_joined_otu(db, patched, created_at, ref_id, user_id)
-
-        inserted_otu_ids.append(otu_id)
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(inserted_otu_ids),
-        factor=0.4,
-        initial=0.6
-    )
-
-    for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "clone", user_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def finish_import(app, path, ref_id, created_at, process_id, user_id):
