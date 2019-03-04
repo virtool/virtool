@@ -557,21 +557,23 @@ async def remove(req):
 
     user_id = req["client"].user_id
 
-    process = await virtool.db.processes.register(db, "delete_reference")
+    context = {
+        "ref_id": ref_id,
+        "user_id": user_id
+    }
+
+    process = await virtool.db.processes.register(db, "delete_reference", context=context)
 
     await db.references.delete_one({
         "_id": ref_id
     })
 
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
-        db,
-        process["id"],
-        ref_id,
-        user_id
-    ))
+    p = virtool.db.references.RemoveReferenceProcess(db, process["id"])
+
+    await aiojobs.aiohttp.spawn(req, p.run())
 
     headers = {
-        "Content-Location": "/api/processes/" + process["id"]
+        "Content-Location": f"/api/processes/{process['id']}"
     }
 
     return json_response(process, 202, headers)

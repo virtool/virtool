@@ -96,6 +96,66 @@ class CloneReferenceProcess(virtool.processes.Process):
             self.db.otus.delete_many(query),
             self.db.sequences.delete_many(query)
         )
+
+
+class RemoveReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, db, process_id):
+        super().__init__(db, process_id)
+
+        self.steps = [
+            self.remove_indexes,
+            self.remove_unreferenced_otus,
+            self.remove_referenced_otus
+        ]
+
+    async def remove_indexes(self):
+        ref_id = self.context["ref_id"]
+
+        await self.db.indexes.delete_many({
+            "reference.id": ref_id
+        })
+
+    async def remove_unreferenced_otus(self):
+        ref_id = self.context["ref_id"]
+
+        referenced_otu_ids = await self.db.analyses.distinct("diagnosis.otu.id", {"reference.id": ref_id})
+
+        unreferenced_otu_ids = await self.db.otus.distinct("_id", {
+            "reference.id": ref_id,
+            "_id": {
+                "$not": {
+                    "$in": referenced_otu_ids
+                }
+            }
+        })
+
+        await asyncio.gather(
+            self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
+            self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
+            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}})
+        )
+
+    async def remove_referenced_otus(self):
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        otu_count = await self.db.otus.count({"reference.id": ref_id})
+
+        tracker = self.get_tracker(otu_count)
+
+        async for document in self.db.otus.find({"reference.id": ref_id}):
+            await virtool.db.otus.remove(
+                self.db,
+                document["_id"],
+                user_id,
+                document=document,
+                silent=True
+            )
+
+            await tracker.add(1)
+
+
 def processor(document):
     try:
         document["installed"] = document.pop("updates")[-1]
@@ -207,46 +267,7 @@ async def check_source_type(db, ref_id, source_type):
     return True
 
 
-async def cleanup_removed(db, process_id: str, ref_id: str, user_id: str):
-    """
-    Cleanup OTUs removed as the result of a reference removal.
 
-    :param db:
-    :param process_id:
-    :param ref_id:
-    :param user_id:
-    :return:
-    """
-    await virtool.db.processes.update(db, process_id, progress=0, step="delete_indexes")
-
-    await db.indexes.delete_many({
-        "reference.id": ref_id
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=0.5, step="delete_otus")
-
-    otu_count = await db.otus.count({"reference.id": ref_id})
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        otu_count,
-        factor=0.5,
-        initial=0.5
-    )
-
-    async for document in db.otus.find({"reference.id": ref_id}):
-        await virtool.db.otus.remove(
-            db,
-            document["_id"],
-            user_id,
-            document=document,
-            silent=True
-        )
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 def compose_base_find_query(user_id: str, administrator: bool, groups: list):
