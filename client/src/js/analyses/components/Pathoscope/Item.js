@@ -6,6 +6,7 @@ import { Flex, FlexItem } from "../../../base/index";
 import { toScientificNotation } from "../../../utils/utils";
 import { toggleExpanded } from "../../actions";
 import AnalysisValueLabel from "../ValueLabel";
+import OTUCoverage from "./OTUCoverage";
 
 export const PathoscopeItem = props => {
     const className = CX("list-group-item", "spaced", {
@@ -54,6 +55,7 @@ export const PathoscopeItem = props => {
                     {closeButton}
                 </Col>
             </Row>
+            <OTUCoverage isolates={props.isolates} />
         </div>
     );
 };
