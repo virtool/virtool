@@ -98,6 +98,104 @@ class CloneReferenceProcess(virtool.processes.Process):
         )
 
 
+class ImportReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.load_file,
+            self.set_metadata,
+            self.validate,
+            self.import_otus,
+            self.create_history
+        ]
+
+        self.import_data = None
+
+    async def load_file(self):
+        path = self.context["path"]
+
+        try:
+            self.import_data = await self.run_in_thread(virtool.references.load_reference_file, path)
+        except json.decoder.JSONDecodeError as err:
+            return self.error([{
+                "id": "json_error",
+                "message": str(err).split("JSONDecodeError: ")[1]
+            }])
+        except OSError as err:
+            if "Not a gzipped file" in str(err):
+                return self.error([{
+                    "id": "not_gzipped",
+                    "message": "Not a gzipped file"
+                }])
+            else:
+                return self.error([{
+                    "id": "unhandled",
+                    "message": str(err)
+                }])
+
+    async def set_metadata(self):
+        ref_id = self.context["ref_id"]
+
+        try:
+            data_type = self.import_data["data_type"]
+        except (TypeError, KeyError):
+            data_type = "genome"
+
+        try:
+            organism = self.import_data["organism"]
+        except (TypeError, KeyError):
+            organism = ""
+
+        await self.db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "data_type": data_type,
+                "organism": organism
+            }
+        })
+
+    async def validate(self):
+        errors = virtool.references.check_import_data(
+            self.import_data,
+            strict=False,
+            verify=True
+        )
+
+        if errors:
+            return await self.error(errors)
+
+    async def import_otus(self):
+        created_at = self.context["created_at"]
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        otus = self.import_data["otus"]
+
+        tracker = self.get_tracker(len(otus))
+
+        inserted_otu_ids = list()
+
+        for otu in otus:
+            otu_id = await insert_joined_otu(self.db, otu, created_at, ref_id, user_id)
+            inserted_otu_ids.append(otu_id)
+            await tracker.add(1)
+
+        await self.update_context({
+            "inserted_otu_ids": inserted_otu_ids
+        })
+
+    async def create_history(self):
+        inserted_otu_ids = self.context["inserted_otu_ids"]
+        user_id = self.context["user_id"]
+
+        tracker = self.get_tracker(len(inserted_otu_ids))
+
+        for otu_id in inserted_otu_ids:
+            await insert_change(self.db, otu_id, "import", user_id)
+            await tracker.add(1)
+
+
 class RemoveReferenceProcess(virtool.processes.Process):
 
     def __init__(self, app, process_id):
@@ -265,9 +363,6 @@ async def check_source_type(db, ref_id, source_type):
     # - source_types are not restricted
     # - source_type is an allowed source_type
     return True
-
-
-
 
 
 def compose_base_find_query(user_id: str, administrator: bool, groups: list):
@@ -835,89 +930,6 @@ async def export(db, ref_id, scope):
             otu_list.append(current)
 
     return virtool.references.clean_export_list(otu_list, scope == "remote")
-
-
-async def finish_import(app, path, ref_id, created_at, process_id, user_id):
-    db = app["db"]
-
-    try:
-        import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
-    except json.decoder.JSONDecodeError as err:
-        return await virtool.db.processes.update(db, process_id, errors=[{
-            "id": "json_error",
-            "message": str(err).split("JSONDecodeError: ")[1]
-        }])
-    except OSError as err:
-        if "Not a gzipped file" in str(err):
-            return await virtool.db.processes.update(db, process_id, errors=[{
-                "id": "not_gzipped",
-                "message": "Not a gzipped file"
-            }])
-        else:
-            raise
-
-    try:
-        data_type = import_data["data_type"]
-    except (TypeError, KeyError):
-        data_type = "genome"
-
-    try:
-        organism = import_data["organism"]
-    except (TypeError, KeyError):
-        organism = ""
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "data_type": data_type,
-            "organism": organism
-        }
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=0.1, step="validate_documents")
-
-    errors = virtool.references.check_import_data(
-        import_data,
-        strict=False,
-        verify=True
-    )
-
-    if errors:
-        return await virtool.db.processes.update(db, process_id, errors=errors)
-
-    await virtool.db.processes.update(db, process_id, progress=0.2, step="import_otus")
-
-    otus = import_data["otus"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(otus),
-        factor=0.4,
-        initial=0.2
-    )
-
-    inserted_otu_ids = list()
-
-    for otu in otus:
-        otu_id = await insert_joined_otu(db, otu, created_at, ref_id, user_id)
-        inserted_otu_ids.append(otu_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(otus),
-        factor=0.4,
-        initial=0.6
-    )
-
-    for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "import", user_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def finish_remote(app, release, ref_id, created_at, process_id, user_id):

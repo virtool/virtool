@@ -380,20 +380,18 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.db.processes.register(db, "import_reference")
-
-        document["process"] = {
-            "id": process["id"]
+        context = {
+            "created_at": document["created_at"],
+            "path": path,
+            "ref_id": document["_id"],
+            "user_id": user_id
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_import(
-            req.app,
-            path,
-            document["_id"],
-            document["created_at"],
-            process["id"],
-            user_id
-        ))
+        process = await virtool.db.processes.register(db, "import_reference", context=context)
+
+        p = virtool.db.references.ImportReferenceProcess(req.app, process["id"])
+
+        await aiojobs.aiohttp.spawn(req, p.run())
 
     elif remote_from:
         try:
