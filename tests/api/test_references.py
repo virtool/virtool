@@ -76,7 +76,7 @@ async def test_list_updates(empty, mocker, spawn_client, id_exists, resp_is):
 
 
 @pytest.mark.parametrize("error", [None, "400"])
-async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, resp_is):
+async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, resp_is, static_time):
     client = await spawn_client(authorize=True)
 
     if error != "400":
@@ -87,7 +87,7 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
             }
         })
 
-    m_finish_update = mocker.patch("virtool.db.references.finish_update", make_mocked_coro())
+    m_process = mocker.patch("virtool.db.references.UpdateRemoteReferenceProcess")
 
     m_register = mocker.patch(
         "virtool.db.processes.register",
@@ -95,6 +95,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
             "id": "process"
         })
     )
+
+    m_spawn = mocker.patch("aiojobs.aiohttp.spawn", make_mocked_coro())
 
     m_update = mocker.patch(
         "virtool.db.references.update",
@@ -130,24 +132,27 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
 
     m_register.assert_called_with(
         client.db,
-        "update_remote_reference"
+        "update_remote_reference",
+        context={
+            "created_at": static_time.datetime,
+            "ref_id": "foo",
+            "release": {
+                "id": "bar"
+            },
+            "user_id": "test"
+        }
+    )
+
+    m_spawn.assert_called_with(
+        mocker.ANY,
+        m_process().run()
     )
 
     m_update.assert_called_with(
         client.app,
+        static_time.datetime,
         "process",
         "foo",
-        {
-            "id": "bar"
-        },
-        "test"
-    )
-
-    m_finish_update.assert_called_with(
-        client.app,
-        "foo",
-        "time",
-        "process",
         {
             "id": "bar"
         },

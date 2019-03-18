@@ -42,6 +42,353 @@ PROJECTION = [
 ]
 
 
+class CloneReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.copy_otus,
+            self.create_history
+        ]
+
+    async def copy_otus(self):
+        manifest = self.context["manifest"]
+        created_at = self.context["created_at"]
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        tracker = self.get_tracker(len(manifest))
+
+        inserted_otu_ids = list()
+
+        for source_otu_id, version in manifest.items():
+            _, patched, _ = await virtool.db.history.patch_to_version(self.db, source_otu_id, version)
+
+            otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
+
+            inserted_otu_ids.append(otu_id)
+
+            await tracker.add(1)
+
+        await self.update_context({
+            "inserted_otu_ids": inserted_otu_ids
+        })
+
+    async def create_history(self):
+        user_id = self.context["user_id"]
+        inserted_otu_ids = self.context["inserted_otu_ids"]
+
+        tracker = self.get_tracker(len(inserted_otu_ids))
+
+        for otu_id in inserted_otu_ids:
+            await insert_change(self.db, otu_id, "clone", user_id)
+            await tracker.add(1)
+
+    async def cleanup(self):
+        ref_id = self.context["ref_id"]
+
+        query = {"reference.id": ref_id}
+
+        await asyncio.gather(
+            self.db.references.delete_one({"_id": ref_id}),
+            self.db.history.delete_many(query),
+            self.db.otus.delete_many(query),
+            self.db.sequences.delete_many(query)
+        )
+
+
+class ImportReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.load_file,
+            self.set_metadata,
+            self.validate,
+            self.import_otus,
+            self.create_history
+        ]
+
+        self.import_data = None
+
+    async def load_file(self):
+        path = self.context["path"]
+
+        try:
+            self.import_data = await self.run_in_thread(virtool.references.load_reference_file, path)
+        except json.decoder.JSONDecodeError as err:
+            return self.error([{
+                "id": "json_error",
+                "message": str(err).split("JSONDecodeError: ")[1]
+            }])
+        except OSError as err:
+            if "Not a gzipped file" in str(err):
+                return self.error([{
+                    "id": "not_gzipped",
+                    "message": "Not a gzipped file"
+                }])
+            else:
+                return self.error([{
+                    "id": "unhandled",
+                    "message": str(err)
+                }])
+
+    async def set_metadata(self):
+        ref_id = self.context["ref_id"]
+
+        try:
+            data_type = self.import_data["data_type"]
+        except (TypeError, KeyError):
+            data_type = "genome"
+
+        try:
+            organism = self.import_data["organism"]
+        except (TypeError, KeyError):
+            organism = ""
+
+        await self.db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "data_type": data_type,
+                "organism": organism
+            }
+        })
+
+    async def validate(self):
+        errors = virtool.references.check_import_data(
+            self.import_data,
+            strict=False,
+            verify=True
+        )
+
+        if errors:
+            return await self.error(errors)
+
+    async def import_otus(self):
+        created_at = self.context["created_at"]
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        otus = self.import_data["otus"]
+
+        tracker = self.get_tracker(len(otus))
+
+        inserted_otu_ids = list()
+
+        for otu in otus:
+            otu_id = await insert_joined_otu(self.db, otu, created_at, ref_id, user_id)
+            inserted_otu_ids.append(otu_id)
+            await tracker.add(1)
+
+        await self.update_context({
+            "inserted_otu_ids": inserted_otu_ids
+        })
+
+    async def create_history(self):
+        inserted_otu_ids = self.context["inserted_otu_ids"]
+        user_id = self.context["user_id"]
+
+        tracker = self.get_tracker(len(inserted_otu_ids))
+
+        for otu_id in inserted_otu_ids:
+            await insert_change(self.db, otu_id, "import", user_id)
+            await tracker.add(1)
+
+
+class RemoveReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
+
+        self.steps = [
+            self.remove_indexes,
+            self.remove_unreferenced_otus,
+            self.remove_referenced_otus
+        ]
+
+    async def remove_indexes(self):
+        ref_id = self.context["ref_id"]
+
+        await self.db.indexes.delete_many({
+            "reference.id": ref_id
+        })
+
+    async def remove_unreferenced_otus(self):
+        ref_id = self.context["ref_id"]
+
+        referenced_otu_ids = await self.db.analyses.distinct("diagnosis.otu.id", {"reference.id": ref_id})
+
+        unreferenced_otu_ids = await self.db.otus.distinct("_id", {
+            "reference.id": ref_id,
+            "_id": {
+                "$not": {
+                    "$in": referenced_otu_ids
+                }
+            }
+        })
+
+        await asyncio.gather(
+            self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
+            self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
+            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}})
+        )
+
+    async def remove_referenced_otus(self):
+        ref_id = self.context["ref_id"]
+        user_id = self.context["user_id"]
+
+        otu_count = await self.db.otus.count({"reference.id": ref_id})
+
+        tracker = self.get_tracker(otu_count)
+
+        async for document in self.db.otus.find({"reference.id": ref_id}):
+            await virtool.db.otus.remove(
+                self.db,
+                document["_id"],
+                user_id,
+                document=document,
+                silent=True
+            )
+
+            await tracker.add(1)
+
+
+class UpdateRemoteReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.steps = [
+            self.download_and_extract,
+            self.update_otus,
+            self.create_history,
+            self.remove_otus,
+            self.update_reference
+        ]
+
+    async def download_and_extract(self):
+        url = self.context["release"]["download_url"]
+        file_size = self.context["release"]["size"]
+
+        tracker = self.get_tracker(file_size)
+
+        try:
+            with virtool.utils.get_temp_dir() as tempdir:
+                temp_path = str(tempdir)
+
+                download_path = os.path.join(temp_path, "reference.tar.gz")
+
+                await virtool.http.utils.download_file(
+                    self.app,
+                    url,
+                    download_path,
+                    tracker.add
+                )
+
+                self.intermediate["update_data"] = await self.run_in_thread(
+                    virtool.references.load_reference_file,
+                    download_path
+                )
+
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            return await self.error([{
+                "id": "download_error",
+                "message": "Could not download reference data"
+            }])
+
+    async def update_otus(self):
+        update_data = self.intermediate["update_data"]
+
+        tracker = self.get_tracker(len(update_data["otus"]))
+
+        # The remote ids in the update otus.
+        otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
+
+        updated_list = list()
+
+        for otu in update_data["otus"]:
+            old_or_id = await update_joined_otu(
+                self.db,
+                otu,
+                self.context["created_at"],
+                self.context["ref_id"],
+                self.context["user_id"]
+            )
+
+            if old_or_id is not None:
+                updated_list.append(old_or_id)
+
+            await tracker.add(1)
+
+        self.intermediate.update({
+            "otu_ids_in_update": otu_ids_in_update,
+            "updated_list": updated_list
+        })
+
+    async def create_history(self):
+        updated_list = self.intermediate["updated_list"]
+
+        tracker = self.get_tracker(len(updated_list))
+
+        for old_or_id in updated_list:
+            try:
+                otu_id = old_or_id["_id"]
+                old = old_or_id
+            except TypeError:
+                otu_id = old_or_id
+                old = None
+
+            await insert_change(
+                self.db,
+                otu_id,
+                "update" if old else "remote",
+                self.context["user_id"],
+                old
+            )
+
+            await tracker.add(1)
+
+    async def remove_otus(self):
+        # Delete OTUs with remote ids that were not in the update.
+        to_delete = await self.db.otus.distinct("_id", {
+            "reference.id": self.context["ref_id"],
+            "remote.id": {
+                "$nin": list(self.intermediate["otu_ids_in_update"])
+            }
+        })
+
+        tracker = self.get_tracker(len(to_delete))
+
+        for otu_id in to_delete:
+            await virtool.db.otus.remove(
+                self.db,
+                otu_id,
+                self.context["user_id"]
+            )
+
+            await tracker.add(1)
+
+    async def update_reference(self):
+        ref_id = self.context["ref_id"]
+        release = self.context["release"]
+
+        await self.db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
+            "$set": {
+                "installed": virtool.github.create_update_subdocument(release, True, self.context["user_id"]),
+                "updates.$.ready": True
+            }
+        })
+
+        await fetch_and_update_release(self.app, ref_id)
+
+        await self.db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "updating": False
+            }
+        })
+
+
 def processor(document):
     try:
         document["installed"] = document.pop("updates")[-1]
@@ -151,48 +498,6 @@ async def check_source_type(db, ref_id, source_type):
     # - source_types are not restricted
     # - source_type is an allowed source_type
     return True
-
-
-async def cleanup_removed(db, process_id: str, ref_id: str, user_id: str):
-    """
-    Cleanup OTUs removed as the result of a reference removal.
-
-    :param db:
-    :param process_id:
-    :param ref_id:
-    :param user_id:
-    :return:
-    """
-    await virtool.db.processes.update(db, process_id, progress=0, step="delete_indexes")
-
-    await db.indexes.delete_many({
-        "reference.id": ref_id
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=0.5, step="delete_otus")
-
-    otu_count = await db.otus.count({"reference.id": ref_id})
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        otu_count,
-        factor=0.5,
-        initial=0.5
-    )
-
-    async for document in db.otus.find({"reference.id": ref_id}):
-        await virtool.db.otus.remove(
-            db,
-            document["_id"],
-            user_id,
-            document=document,
-            silent=True
-        )
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 def compose_base_find_query(user_id: str, administrator: bool, groups: list):
@@ -710,26 +1015,6 @@ async def create_remote(db, settings, release, remote_from, user_id):
     return document
 
 
-async def download_and_parse_release(app, url, process_id, progress_handler):
-    db = app["db"]
-
-    with virtool.utils.get_temp_dir() as tempdir:
-        temp_path = str(tempdir)
-
-        download_path = os.path.join(temp_path, "reference.tar.gz")
-
-        await virtool.http.utils.download_file(
-            app,
-            url,
-            download_path,
-            progress_handler
-        )
-
-        await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
-
-        return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
-
-
 async def export(db, ref_id, scope):
     otu_list = list()
 
@@ -760,127 +1045,6 @@ async def export(db, ref_id, scope):
             otu_list.append(current)
 
     return virtool.references.clean_export_list(otu_list, scope == "remote")
-
-
-async def finish_clone(app, ref_id, created_at, manifest, process_id, user_id):
-    db = app["db"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(manifest),
-        factor=0.6
-    )
-
-    inserted_otu_ids = list()
-
-    for source_otu_id, version in manifest.items():
-        _, patched, _ = await virtool.db.history.patch_to_version(db, source_otu_id, version)
-
-        otu_id = await insert_joined_otu(db, patched, created_at, ref_id, user_id)
-
-        inserted_otu_ids.append(otu_id)
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(inserted_otu_ids),
-        factor=0.4,
-        initial=0.6
-    )
-
-    for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "clone", user_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
-
-
-async def finish_import(app, path, ref_id, created_at, process_id, user_id):
-    db = app["db"]
-
-    try:
-        import_data = await app["run_in_thread"](virtool.references.load_reference_file, path)
-    except json.decoder.JSONDecodeError as err:
-        return await virtool.db.processes.update(db, process_id, errors=[{
-            "id": "json_error",
-            "message": str(err).split("JSONDecodeError: ")[1]
-        }])
-    except OSError as err:
-        if "Not a gzipped file" in str(err):
-            return await virtool.db.processes.update(db, process_id, errors=[{
-                "id": "not_gzipped",
-                "message": "Not a gzipped file"
-            }])
-        else:
-            raise
-
-    try:
-        data_type = import_data["data_type"]
-    except (TypeError, KeyError):
-        data_type = "genome"
-
-    try:
-        organism = import_data["organism"]
-    except (TypeError, KeyError):
-        organism = ""
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "data_type": data_type,
-            "organism": organism
-        }
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=0.1, step="validate_documents")
-
-    errors = virtool.references.check_import_data(
-        import_data,
-        strict=False,
-        verify=True
-    )
-
-    if errors:
-        return await virtool.db.processes.update(db, process_id, errors=errors)
-
-    await virtool.db.processes.update(db, process_id, progress=0.2, step="import_otus")
-
-    otus = import_data["otus"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(otus),
-        factor=0.4,
-        initial=0.2
-    )
-
-    inserted_otu_ids = list()
-
-    for otu in otus:
-        otu_id = await insert_joined_otu(db, otu, created_at, ref_id, user_id)
-        inserted_otu_ids.append(otu_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=0.6, step="create_history")
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(otus),
-        factor=0.4,
-        initial=0.6
-    )
-
-    for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "import", user_id)
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(db, process_id, progress=1)
 
 
 async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
@@ -1105,10 +1269,8 @@ async def refresh_remotes(app):
     logging.debug("Stopped reference refresher")
 
 
-async def update(app, process_id, ref_id, release, user_id):
+async def update(app, created_at, process_id, ref_id, release, user_id):
     db = app["db"]
-
-    created_at = virtool.utils.timestamp()
 
     update_subdocument = virtool.github.create_update_subdocument(
         release,
@@ -1194,145 +1356,3 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
         user_id,
         remote=True
     )
-
-
-async def finish_update(app, ref_id, created_at, process_id, release, user_id):
-    db = app["db"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        release["size"],
-        factor=0.3,
-        increment=0.02
-    )
-
-    try:
-        update_data = await download_and_parse_release(
-            app,
-            release["download_url"],
-            process_id,
-            progress_tracker.add
-        )
-    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-        return await virtool.db.processes.update(
-            db,
-            process_id,
-            errors=["Could not download reference data"]
-        )
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.4,
-        step="update"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(update_data["otus"]),
-        factor=0.2,
-        initial=0.4
-    )
-
-    updated_list = list()
-
-    # The remote ids in the update otus.
-    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
-
-    for otu in update_data["otus"]:
-        old_or_id = await update_joined_otu(
-            db,
-            otu,
-            created_at,
-            ref_id,
-            user_id
-        )
-
-        if old_or_id is not None:
-            updated_list.append(old_or_id)
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.6,
-        step="create_history"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(updated_list),
-        factor=0.2,
-        initial=0.6
-    )
-
-    for old_or_id in updated_list:
-        try:
-            otu_id = old_or_id["_id"]
-            old = old_or_id
-        except TypeError:
-            otu_id = old_or_id
-            old = None
-
-        await insert_change(
-            db,
-            otu_id,
-            "update" if old else "remote",
-            user_id,
-            old
-        )
-
-        await progress_tracker.add(1)
-
-    # Delete OTUs with remote ids that were not in the update.
-    to_delete = await db.otus.distinct("_id", {
-        "reference.id": ref_id,
-        "remote.id": {
-            "$nin": list(otu_ids_in_update)
-        }
-    })
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.8,
-        step="clean"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(updated_list),
-        factor=0.2,
-        initial=0.8
-    )
-
-    for otu_id in to_delete:
-        await virtool.db.otus.remove(
-            db,
-            otu_id,
-            user_id
-        )
-
-        await progress_tracker.add(1)
-
-    await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
-        "$set": {
-            "installed": virtool.github.create_update_subdocument(release, True, user_id),
-            "updates.$.ready": True
-        }
-    })
-
-    await fetch_and_update_release(app, ref_id)
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "updating": False
-        }
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=1)
