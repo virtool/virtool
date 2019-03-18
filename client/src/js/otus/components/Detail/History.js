@@ -45,6 +45,10 @@ const methodIconProps = {
         name: "clone",
         bsStyle: "primary"
     },
+    import: {
+        name: "file-import",
+        bsStyle: "primary"
+    },
     remote: {
         name: "link",
         bsStyle: "primary"
