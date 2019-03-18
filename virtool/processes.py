@@ -33,6 +33,9 @@ class Process:
         await self.init_db()
 
         for i, func in enumerate(self.steps):
+            if self.errored:
+                break
+
             self.step = func
 
             await virtool.db.processes.update(
@@ -43,7 +46,8 @@ class Process:
 
             await func()
 
-        await virtool.db.processes.complete(self.db, self.id)
+        if not self.errored:
+            await virtool.db.processes.complete(self.db, self.id)
 
     async def update_context(self, update):
         with_prefix = {f"context.{key}": value for key, value in update.items()}
@@ -70,11 +74,17 @@ class Process:
             initial=initial
         )
 
-    def cleanup(self):
+    async def cleanup(self):
         pass
 
-    def error(self, message):
-        self.cleanup()
+    async def error(self, errors: list):
+        await virtool.db.processes.update(
+            self.db,
+            self.id,
+            errors=errors
+        )
+
+        await self.cleanup()
 
 
 class ProgressTracker:
