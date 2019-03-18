@@ -14,13 +14,16 @@ FIRST_STEPS = {
 
 class Process:
 
-    def __init__(self, db, process_id):
-        self.db = db
+    def __init__(self, app, process_id):
+        self.app = app
+        self.db = app["db"]
+        self.run_in_thread = app["run_in_thread"]
         self.id = process_id
         self.step = None
         self.steps = []
         self.document = None
         self.context = None
+        self.errored = False
 
     async def init_db(self):
         self.document = await self.db.processes.find_one(self.id, {"_id": False})

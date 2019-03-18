@@ -357,7 +357,7 @@ async def create(req):
 
         process = await virtool.db.processes.register(db, "clone_reference", context=context)
 
-        p = virtool.db.references.CloneReferenceProcess(db, process["id"])
+        p = virtool.db.references.CloneReferenceProcess(req.app, process["id"])
 
         document["process"] = {
             "id": p.id
@@ -568,7 +568,7 @@ async def remove(req):
         "_id": ref_id
     })
 
-    p = virtool.db.references.RemoveReferenceProcess(db, process["id"])
+    p = virtool.db.references.RemoveReferenceProcess(req.app, process["id"])
 
     await aiojobs.aiohttp.spawn(req, p.run())
 

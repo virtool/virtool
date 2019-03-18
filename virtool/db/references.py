@@ -100,8 +100,8 @@ class CloneReferenceProcess(virtool.processes.Process):
 
 class RemoveReferenceProcess(virtool.processes.Process):
 
-    def __init__(self, db, process_id):
-        super().__init__(db, process_id)
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
 
         self.steps = [
             self.remove_indexes,
