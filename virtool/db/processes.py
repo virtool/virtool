@@ -3,7 +3,7 @@ import virtool.processes
 import virtool.utils
 
 
-async def register(db, process_type, file_size=None):
+async def register(db, process_type, context=None):
     process_id = await virtool.db.utils.get_new_id(db.processes)
 
     document = {

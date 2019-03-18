@@ -44,8 +44,8 @@ PROJECTION = [
 
 class CloneReferenceProcess(virtool.processes.Process):
 
-    def __init__(self, db, process_id):
-        super().__init__(db, process_id)
+    def __init__(self, app, process_id):
+        super().__init__(app, process_id)
 
         self.steps = [
             self.copy_otus,
@@ -252,6 +252,141 @@ class RemoveReferenceProcess(virtool.processes.Process):
             )
 
             await tracker.add(1)
+
+
+class UpdateRemoteReferenceProcess(virtool.processes.Process):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.steps = [
+            self.download_and_extract,
+            self.update_otus,
+            self.create_history,
+            self.remove_otus,
+            self.update_reference
+        ]
+
+    async def download_and_extract(self):
+        url = self.context["release"]["download_url"]
+        file_size = self.context["release"]["size"]
+
+        tracker = self.get_tracker(file_size)
+
+        try:
+            with virtool.utils.get_temp_dir() as tempdir:
+                temp_path = str(tempdir)
+
+                download_path = os.path.join(temp_path, "reference.tar.gz")
+
+                await virtool.http.utils.download_file(
+                    self.app,
+                    url,
+                    download_path,
+                    tracker.add
+                )
+
+                self.intermediate["update_data"] = await self.run_in_thread(
+                    virtool.references.load_reference_file,
+                    download_path
+                )
+
+        except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
+            return await self.error([{
+                "id": "download_error",
+                "message": "Could not download reference data"
+            }])
+
+    async def update_otus(self):
+        update_data = self.intermediate["update_data"]
+
+        tracker = self.get_tracker(len(update_data["otus"]))
+
+        # The remote ids in the update otus.
+        otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
+
+        updated_list = list()
+
+        for otu in update_data["otus"]:
+            old_or_id = await update_joined_otu(
+                self.db,
+                otu,
+                self.context["created_at"],
+                self.context["ref_id"],
+                self.context["user_id"]
+            )
+
+            if old_or_id is not None:
+                updated_list.append(old_or_id)
+
+            await tracker.add(1)
+
+        self.intermediate.update({
+            "otu_ids_in_update": otu_ids_in_update,
+            "updated_list": updated_list
+        })
+
+    async def create_history(self):
+        updated_list = self.intermediate["updated_list"]
+
+        tracker = self.get_tracker(len(updated_list))
+
+        for old_or_id in updated_list:
+            try:
+                otu_id = old_or_id["_id"]
+                old = old_or_id
+            except TypeError:
+                otu_id = old_or_id
+                old = None
+
+            await insert_change(
+                self.db,
+                otu_id,
+                "update" if old else "remote",
+                self.context["user_id"],
+                old
+            )
+
+            await tracker.add(1)
+
+    async def remove_otus(self):
+        # Delete OTUs with remote ids that were not in the update.
+        to_delete = await self.db.otus.distinct("_id", {
+            "reference.id": self.context["ref_id"],
+            "remote.id": {
+                "$nin": list(self.intermediate["otu_ids_in_update"])
+            }
+        })
+
+        tracker = self.get_tracker(len(to_delete))
+
+        for otu_id in to_delete:
+            await virtool.db.otus.remove(
+                self.db,
+                otu_id,
+                self.context["user_id"]
+            )
+
+            await tracker.add(1)
+
+    async def update_reference(self):
+        ref_id = self.context["ref_id"]
+        release = self.context["release"]
+
+        await self.db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
+            "$set": {
+                "installed": virtool.github.create_update_subdocument(release, True, self.context["user_id"]),
+                "updates.$.ready": True
+            }
+        })
+
+        await fetch_and_update_release(self.app, ref_id)
+
+        await self.db.references.update_one({"_id": ref_id}, {
+            "$set": {
+                "updating": False
+            }
+        })
 
 
 def processor(document):
@@ -880,26 +1015,6 @@ async def create_remote(db, settings, release, remote_from, user_id):
     return document
 
 
-async def download_and_parse_release(app, url, process_id, progress_handler):
-    db = app["db"]
-
-    with virtool.utils.get_temp_dir() as tempdir:
-        temp_path = str(tempdir)
-
-        download_path = os.path.join(temp_path, "reference.tar.gz")
-
-        await virtool.http.utils.download_file(
-            app,
-            url,
-            download_path,
-            progress_handler
-        )
-
-        await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
-
-        return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
-
-
 async def export(db, ref_id, scope):
     otu_list = list()
 
@@ -1154,10 +1269,8 @@ async def refresh_remotes(app):
     logging.debug("Stopped reference refresher")
 
 
-async def update(app, process_id, ref_id, release, user_id):
+async def update(app, created_at, process_id, ref_id, release, user_id):
     db = app["db"]
-
-    created_at = virtool.utils.timestamp()
 
     update_subdocument = virtool.github.create_update_subdocument(
         release,
@@ -1243,145 +1356,3 @@ async def update_joined_otu(db, otu, created_at, ref_id, user_id):
         user_id,
         remote=True
     )
-
-
-async def finish_update(app, ref_id, created_at, process_id, release, user_id):
-    db = app["db"]
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        release["size"],
-        factor=0.3,
-        increment=0.02
-    )
-
-    try:
-        update_data = await download_and_parse_release(
-            app,
-            release["download_url"],
-            process_id,
-            progress_tracker.add
-        )
-    except (aiohttp.ClientConnectorError, virtool.errors.GitHubError):
-        return await virtool.db.processes.update(
-            db,
-            process_id,
-            errors=["Could not download reference data"]
-        )
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.4,
-        step="update"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(update_data["otus"]),
-        factor=0.2,
-        initial=0.4
-    )
-
-    updated_list = list()
-
-    # The remote ids in the update otus.
-    otu_ids_in_update = {otu["_id"] for otu in update_data["otus"]}
-
-    for otu in update_data["otus"]:
-        old_or_id = await update_joined_otu(
-            db,
-            otu,
-            created_at,
-            ref_id,
-            user_id
-        )
-
-        if old_or_id is not None:
-            updated_list.append(old_or_id)
-
-        await progress_tracker.add(1)
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.6,
-        step="create_history"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(updated_list),
-        factor=0.2,
-        initial=0.6
-    )
-
-    for old_or_id in updated_list:
-        try:
-            otu_id = old_or_id["_id"]
-            old = old_or_id
-        except TypeError:
-            otu_id = old_or_id
-            old = None
-
-        await insert_change(
-            db,
-            otu_id,
-            "update" if old else "remote",
-            user_id,
-            old
-        )
-
-        await progress_tracker.add(1)
-
-    # Delete OTUs with remote ids that were not in the update.
-    to_delete = await db.otus.distinct("_id", {
-        "reference.id": ref_id,
-        "remote.id": {
-            "$nin": list(otu_ids_in_update)
-        }
-    })
-
-    await virtool.db.processes.update(
-        db,
-        process_id,
-        progress=0.8,
-        step="clean"
-    )
-
-    progress_tracker = virtool.processes.ProgressTracker(
-        db,
-        process_id,
-        len(updated_list),
-        factor=0.2,
-        initial=0.8
-    )
-
-    for otu_id in to_delete:
-        await virtool.db.otus.remove(
-            db,
-            otu_id,
-            user_id
-        )
-
-        await progress_tracker.add(1)
-
-    await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
-        "$set": {
-            "installed": virtool.github.create_update_subdocument(release, True, user_id),
-            "updates.$.ready": True
-        }
-    })
-
-    await fetch_and_update_release(app, ref_id)
-
-    await db.references.update_one({"_id": ref_id}, {
-        "$set": {
-            "updating": False
-        }
-    })
-
-    await virtool.db.processes.update(db, process_id, progress=1)

@@ -21,6 +21,7 @@ class Process:
         self.id = process_id
         self.step = None
         self.steps = []
+        self.intermediate = dict()
         self.document = None
         self.context = None
         self.errored = False

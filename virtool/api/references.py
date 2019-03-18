@@ -176,24 +176,29 @@ async def update(req):
     if release is None:
         return bad_request("Target release does not exist")
 
-    process = await virtool.db.processes.register(db, "update_remote_reference")
+    created_at = virtool.utils.timestamp()
+
+    context = {
+        "created_at": created_at,
+        "ref_id": ref_id,
+        "release": await virtool.db.utils.get_one_field(db.references, "release", ref_id),
+        "user_id": user_id
+    }
+
+    process = await virtool.db.processes.register(db, "update_remote_reference", context=context)
 
     release, update_subdocument = await virtool.db.references.update(
         req.app,
+        created_at,
         process["id"],
         ref_id,
         release,
         user_id
     )
 
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_update(
-        req.app,
-        ref_id,
-        update_subdocument["created_at"],
-        process["id"],
-        release,
-        user_id
-    ))
+    p = virtool.db.references.UpdateRemoteReferenceProcess(req.app, process["id"])
+
+    await aiojobs.aiohttp.spawn(req, p.run())
 
     return json_response(update_subdocument, status=201)
 
@@ -390,6 +395,10 @@ async def create(req):
         process = await virtool.db.processes.register(db, "import_reference", context=context)
 
         p = virtool.db.references.ImportReferenceProcess(req.app, process["id"])
+
+        document["process"] = {
+            "id": p.id
+        }
 
         await aiojobs.aiohttp.spawn(req, p.run())
 
