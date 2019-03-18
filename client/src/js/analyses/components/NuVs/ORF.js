@@ -83,7 +83,7 @@ export default class NuVsORF extends React.Component {
                             <small className="text-primary text-strong">{this.props.pos[1] - this.props.pos[0]}</small>
                         </FlexItem>
                         <FlexItem pad={5}>
-                            <small className="text-danger text-strong">{hmm ? hmm.best_e : null}</small>
+                            <small className="text-danger text-strong">{hmm ? hmm.full_e : null}</small>
                         </FlexItem>
                     </Flex>
                 </div>
