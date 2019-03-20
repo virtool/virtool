@@ -120,6 +120,14 @@ async def get(req):
     if not virtool.samples.get_sample_rights(document, req["client"])[0]:
         return insufficient_rights()
 
+    for file in document["files"]:
+        snake_case = document["name"].replace(" ", "_")
+
+        file.update({
+            "display_name": file["name"].replace("reads_", f"{snake_case}_"),
+            "download_url": file["download_url"].replace("reads_", f"{snake_case}_")
+        })
+
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -226,16 +234,18 @@ async def create(req):
 
     files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
 
+    files = [virtool.utils.base_processor(file) for file in files]
+
     await db.samples.insert_one({
         **document,
-        "files": [virtool.utils.base_processor(file) for file in files]
+        "files": [{"from": file for file in files}]
     })
 
     await virtool.db.files.reserve(db, data["files"])
 
     task_args = {
         "sample_id": sample_id,
-        "files": data["files"],
+        "files": files,
         "srna": data["srna"]
     }
 
