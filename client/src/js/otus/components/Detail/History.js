@@ -153,9 +153,8 @@ class OTUHistory extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const changes = groupBy(
-            this.props.history,
-            change => (change.index.version === "unbuilt" ? "unbuilt" : "built")
+        const changes = groupBy(this.props.history, change =>
+            change.index.version === "unbuilt" ? "unbuilt" : "built"
         );
 
         let built;

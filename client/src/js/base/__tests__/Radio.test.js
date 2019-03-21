@@ -41,7 +41,6 @@ describe("<Radio />", () => {
             wrapper.find(Icon).simulate("click");
 
             expect(props.onClick).toHaveBeenCalled();
-            expect(wrapper).toMatchSnapshot();
         });
 
         it("if checked, [name='dot-circle']", () => {

@@ -29,7 +29,7 @@ describe("<UsersList />", () => {
     it("onLoadNextPage is called correctly", () => {
         const wrapper = mount(<UsersList {...props} />);
         wrapper.find(ScrollList).prop("onLoadNextPage")(8);
-        expect(props.onLoadNextPage).toBeCalledWith("foo", 8);
+        expect(props.onLoadNextPage).toHaveBeenCalledWith("foo", 8);
     });
 
     it("mapStateToProps returns props", () => {
@@ -54,7 +54,7 @@ describe("<UsersList />", () => {
 
         props.onLoadNextPage(term, page);
 
-        expect(dispatch).toBeCalledWith({
+        expect(dispatch).toHaveBeenCalledWith({
             type: FIND_USERS.REQUESTED,
             term,
             page

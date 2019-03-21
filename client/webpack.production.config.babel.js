@@ -1,13 +1,12 @@
-/* global __dirname */
-import path from "path";
-import webpack from "webpack";
-import HTMLPlugin from "html-webpack-plugin";
-import CleanPlugin from "clean-webpack-plugin";
-import ExtractTextPlugin from "extract-text-webpack-plugin";
-import UglifyJSPlugin from "uglifyjs-webpack-plugin";
+var path = require("path");
+var CleanWebpackPlugin = require("clean-webpack-plugin");
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var HTMLPlugin = require("html-webpack-plugin");
+var TerserWebpackPlugin = require("terser-webpack-plugin");
+var webpack = require("webpack");
 
-export default {
-  entry: ["babel-polyfill", "./src/js/index.js"],
+module.exports = {
+  entry: "./src/js/index.js",
 
   module: {
     rules: [
@@ -56,6 +55,12 @@ export default {
 
   mode: "production",
 
+  optimization: {
+    minimizer: [new TerserWebpackPlugin({
+      sourceMap: true
+    })]
+  },
+
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
@@ -78,12 +83,12 @@ export default {
       inject: "body"
     }),
 
-    new CleanPlugin(["dist"], {
-      verbose: true
-    }),
-
-    new UglifyJSPlugin({
-      sourceMap: true
+    new CleanWebpackPlugin({
+      dry: false,
+      verbose: false,
+      cleanStaleWebpackAssets: true,
+      protectWebpackAssets: true,
+      dangerouslyAllowCleanPatternsOutsideProject: false
     })
   ]
 };

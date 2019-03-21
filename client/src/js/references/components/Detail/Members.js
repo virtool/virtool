@@ -30,8 +30,13 @@ class ReferenceMembers extends React.Component {
 
     static propTypes = {
         canModify: PropTypes.bool.isRequired,
+        loading: PropTypes.bool.isRequired,
+        members: PropTypes.arrayOf(PropTypes.object).isRequired,
         noun: PropTypes.oneOf(["groups", "users"]).isRequired,
-        onRemove: PropTypes.func.isRequired
+        onAdd: PropTypes.func.isRequired,
+        onEdit: PropTypes.func.isRequired,
+        onRemove: PropTypes.func.isRequired,
+        refId: PropTypes.string.isRequired
     };
 
     add = () => {
@@ -51,9 +56,9 @@ class ReferenceMembers extends React.Component {
     };
 
     render() {
-        const { canModify, list, members, noun } = this.props;
+        const { canModify, loading, members, noun } = this.props;
 
-        if (list === null) {
+        if (loading) {
             return <LoadingPlaceholder />;
         }
 
@@ -105,8 +110,8 @@ const mapStateToProps = (state, ownProps) => {
 
     return {
         refId: state.references.detail.id,
+        loading: (noun === "users" ? state.users.documents : state.groups.documents) != null,
         members: sortBy(noun === "users" ? state.references.detail.users : state.references.detail.groups, "id"),
-        documents: noun === "users" ? state.users.documents : state.groups.documents,
         canModify: checkRefRight(state, "modify")
     };
 };
