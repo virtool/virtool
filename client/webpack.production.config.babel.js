@@ -2,10 +2,10 @@ var path = require("path");
 var CleanWebpackPlugin = require("clean-webpack-plugin");
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var HTMLPlugin = require("html-webpack-plugin");
-var UglifyJSPlugin = require("uglifyjs-webpack-plugin");
+var TerserWebpackPlugin = require("terser-webpack-plugin");
 var webpack = require("webpack");
 
-export default {
+module.exports = {
   entry: "./src/js/index.js",
 
   module: {
@@ -55,6 +55,12 @@ export default {
 
   mode: "production",
 
+  optimization: {
+    minimizer: [new TerserWebpackPlugin({
+      sourceMap: true
+    })]
+  },
+
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",
@@ -83,10 +89,6 @@ export default {
       cleanStaleWebpackAssets: true,
       protectWebpackAssets: true,
       dangerouslyAllowCleanPatternsOutsideProject: false
-    }),
-
-    new UglifyJSPlugin({
-      sourceMap: true
     })
   ]
 };
