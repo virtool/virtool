@@ -8,7 +8,7 @@ import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
-import { put, all } from "redux-saga/effects";
+import { call, put, all } from "redux-saga/effects";
 
 /**
  * Executes an API call by calling ``apiMethod`` with ``action``.
@@ -27,7 +27,9 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
     try {
         const response = yield apiMethod(action);
         yield put({ type: actionType.SUCCEEDED, data: response.body, ...extra });
-        yield all(extraFunctions);
+        if (extraFunctions) {
+            yield all(extraFunctions);
+        }
     } catch (error) {
         if (error.response.statusCode === 401) {
             window.location = `/login?expired=true&return_to=${window.location.pathname}`;
