@@ -83,7 +83,7 @@ class JobDetail extends React.Component {
 
                 <TaskArgs taskType={detail.task} taskArgs={detail.args} />
 
-                <JobSteps steps={detail.status} />
+                <JobSteps />
 
                 <JobError error={latest.error} />
             </div>

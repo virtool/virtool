@@ -1,43 +1,77 @@
-import JobStep from "../Step";
+jest.mock("../../utils");
 
-describe("<JobStep />", () => {
+import { getStepDescription } from "../../utils";
+import JobStep, { JobStepDescription, JobStepIcon } from "../Step";
+
+describe("<JobStepDescription />", () => {
     let props;
-    let wrapper;
 
-    it("renders Running step", () => {
+    getStepDescription.mockImplementation((stage, state, task) => ({
+        title: "Foo",
+        description: "Bar"
+    }));
+
+    beforeEach(() => {
         props = {
-            step: { state: "running", stage: "test" },
-            isDone: false
+            stage: "bowtie_build",
+            state: "running",
+            task: "create_subtraction"
         };
-        wrapper = shallow(<JobStep {...props} />);
-        expect(wrapper.find({ size: "14px" }).length).toEqual(1);
-
-        wrapper.setProps({ isDone: true });
-        expect(wrapper.find({ name: "check fa-fw" }).length).toEqual(1);
-        expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders Complete step", () => {
-        props = { step: { state: "complete", stage: "test" } };
-        wrapper = shallow(<JobStep {...props} />);
+    it("renders and calls getStepDescription", () => {
+        const wrapper = shallow(<JobStepDescription {...props} />);
+        const { stage, state, task } = props;
+        expect(getStepDescription).toHaveBeenCalledWith(stage, state, task);
         expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders Error step", () => {
-        props = { step: { state: "error", stage: "test" } };
-        wrapper = shallow(<JobStep {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders Cancelled step", () => {
-        props = { step: { state: "cancelled", stage: "test" } };
-        wrapper = shallow(<JobStep {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("otherwise returns null", () => {
-        props = { step: { state: "", stage: "" } };
-        wrapper = shallow(<JobStep {...props} />);
-        expect(wrapper.html()).toBeNull();
     });
 });
+
+describe("<JobStepIcon />", () => {
+    let props;
+
+    beforeEach(() => {
+        props = {
+            complete: false,
+            state: "running"
+        };
+    });
+
+    it("renders correct icon when step complete", () => {
+        props.complete = true;
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders correct icon when state complete", () => {
+        props.state = "complete";
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders correct icon when state running", () => {
+        props.state = "running";
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders correct icon when state cancelled", () => {
+        props.state = "cancelled";
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders correct icon when state error", () => {
+        props.state = "error";
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("renders correct icon when state waiting", () => {
+        props.state = "waiting";
+        const wrapper = shallow(<JobStepIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe;
