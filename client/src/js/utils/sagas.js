@@ -8,7 +8,7 @@ import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
-import { call, put, all } from "redux-saga/effects";
+import { put, all } from "redux-saga/effects";
 
 /**
  * Executes an API call by calling ``apiMethod`` with ``action``.
