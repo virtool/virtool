@@ -52,6 +52,12 @@ module.exports = {
     fs: "empty"
   },
 
+  optimization: {
+    splitChunks: {
+      chunks: "all"
+    }
+  },
+
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "app.[hash:8].js",

@@ -58,7 +58,10 @@ module.exports = {
   optimization: {
     minimizer: [new TerserWebpackPlugin({
       sourceMap: true
-    })]
+    })],
+    splitChunks: {
+      chunks: "all"
+    }
   },
 
   output: {
