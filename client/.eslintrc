@@ -17,6 +17,11 @@
     "plugin:jest/recommended",
     "plugin:prettier/recommended"
   ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "plugins": ["prettier", "import", "lodash", "react", "jest"],
   "rules": {
     "prettier/prettier": "error",

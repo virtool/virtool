@@ -92,48 +92,6 @@ exports[`<Radio /> Icon subcomponent if checked, [name='dot-circle'] 1`] = `
 </Flex>
 `;
 
-exports[`<Radio /> Icon subcomponent is clickable 1`] = `
-<Flex
-  alignContent="stretch"
-  alignItems="center"
-  direction="row"
-  justifyContent="flex-start"
-  style={
-    Object {
-      "marginBottom": "3px",
-    }
-  }
-  wrap="nowrap"
->
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="dot-circle"
-    onClick={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-        ],
-        "results": Array [
-          Object {
-            "isThrow": false,
-            "value": undefined,
-          },
-        ],
-      }
-    }
-    pullRight={false}
-  />
-  <FlexItem
-    alignSelf={null}
-    basis="auto"
-    grow={0}
-    pad={5}
-    shrink={1}
-  />
-</Flex>
-`;
-
 exports[`<Radio /> Icon subcomponent otherwise [name='circle'] 1`] = `
 <Flex
   alignContent="stretch"

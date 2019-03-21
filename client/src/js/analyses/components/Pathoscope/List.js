@@ -37,9 +37,8 @@ export class PathoscopeList extends React.Component {
 
     render() {
         if (this.props.data.length) {
-            let data = filter(
-                this.props.data,
-                otu => (this.props.filterOTUs ? otu.reads >= (otu.length * 0.8) / this.props.maxReadLength : true)
+            let data = filter(this.props.data, otu =>
+                this.props.filterOTUs ? otu.reads >= (otu.length * 0.8) / this.props.maxReadLength : true
             );
 
             if (this.props.filterIsolates) {

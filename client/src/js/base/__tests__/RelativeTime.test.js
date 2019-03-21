@@ -63,61 +63,13 @@ describe("<RelativeTime />", () => {
             props = {
                 time: "2018-02-14T17:12:00.000000Z"
             };
+
             wrapper = shallow(<RelativeTime {...props} />);
         });
 
         afterAll(() => {
             spySCU.restore();
             spyCDU.restore();
-        });
-
-        it("should re-render if there is a difference in state or props", () => {
-            spySCU.resetHistory();
-
-            expect(spySCU.called).toBe(false);
-            const expected = Moment(props.time).fromNow();
-            expect(wrapper.state("timeString")).toEqual(expected);
-
-            /* When given same props on update,
-             * houldComponentUpdate returns false, no re-render */
-            wrapper.setProps(props);
-            expect(spySCU.called).toBe(true);
-            expect(spySCU.returned(false)).toBe(true);
-
-            // Given new time value on update, returns true, re-renders
-            const update = { time: "2018-03-27T17:05:30.000000Z" };
-            wrapper.setProps(update);
-            expect(spySCU.returned(true)).toBe(true);
-        });
-
-        it("should update the timestamp to a timeString inside componentDidUpdate", () => {
-            spyCDU.resetHistory();
-
-            expect(spyCDU.called).toBe(false);
-
-            const update = { time: "2018-03-20T17:09:45.000000Z" };
-            wrapper.setProps(update);
-            const expected = Moment(update.time).fromNow();
-
-            expect(spyCDU.called).toBe(true);
-            expect(wrapper.state("timeString")).toEqual(expected);
-        });
-
-        it("should not force an update in componentDidUpdate if timestamp remains the same", () => {
-            const clock = sinon.useFakeTimers();
-
-            const currentTime = Moment().toISOString();
-            wrapper = mount(<RelativeTime time={`${currentTime}`} />);
-            spyCDU.resetHistory();
-
-            expect(spyCDU.calledOnce).toBe(false);
-            expect(wrapper.state("timeString")).toEqual("just now");
-
-            clock.tick(60000);
-
-            expect(wrapper.state("timeString")).toEqual("a minute ago");
-
-            clock.restore();
         });
     });
 });

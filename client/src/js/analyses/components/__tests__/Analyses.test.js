@@ -26,8 +26,8 @@ describe("<Analyses />", () => {
 
     it("should call API functions on mount", () => {
         shallow(<Analyses {...props} />);
-        expect(props.onFindAnalyses).toBeCalledWith("foo");
-        expect(props.onFindHmms).toBeCalled();
-        expect(props.onListReadyIndexes).toBeCalled();
+        expect(props.onFindAnalyses).toHaveBeenCalledWith("foo");
+        expect(props.onFindHmms).toHaveBeenCalled();
+        expect(props.onListReadyIndexes).toHaveBeenCalled();
     });
 });

@@ -1,12 +1,10 @@
-/* global __dirname */
-import path from "path";
-import HTMLPlugin from "html-webpack-plugin";
-import CleanPlugin from "clean-webpack-plugin";
-import ExtractTextPlugin from "extract-text-webpack-plugin";
-import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
+var path = require("path");
+var HTMLPlugin = require("html-webpack-plugin");
+var CleanWebpackPlugin = require("clean-webpack-plugin");
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-export default {
-  entry: ["babel-polyfill", "./src/js/index.js"],
+module.exports = {
+  entry: "./src/js/index.js",
 
   module: {
     rules: [
@@ -73,16 +71,12 @@ export default {
       inject: "body"
     }),
 
-    new CleanPlugin(["dist"], {
-      verbose: true,
-      watch: true
-    }),
-
-    new BundleAnalyzerPlugin({
-      analyzerMode: "server",
-      analyzerHost: "localhost",
-      analyzerPort: 8890,
-      openAnalyzer: false
+    new CleanWebpackPlugin({
+      dry: false,
+      verbose: false,
+      cleanStaleWebpackAssets: true,
+      protectWebpackAssets: true,
+      dangerouslyAllowCleanPatternsOutsideProject: false
     })
   ],
 
