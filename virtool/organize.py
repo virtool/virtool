@@ -118,7 +118,6 @@ async def organize_samples(app):
                 "download_url": f"/download/samples/{sample_id}/{name}",
                 "size": stats["size"],
                 "raw": False,
-                "compressed": False,
                 "from": {
                     "id": file,
                     "name": RE_FILE_PREFIX.sub("", file),

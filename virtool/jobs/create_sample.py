@@ -95,6 +95,7 @@ class Job(virtool.jobs.job.Job):
                 "name": name,
                 "size": stats["size"],
                 "download_url": f"/download/samples/{sample_id}/{name}",
+                "raw": True,
                 "from": file
             })
 
