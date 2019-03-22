@@ -1,18 +1,18 @@
-import { includes } from "lodash-es";
 import { push } from "connected-react-router";
-
-import * as filesAPI from "../files/api";
-import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
+import { includes } from "lodash-es";
 import {
-    FIND_SAMPLES,
+    CREATE_SAMPLE,
     FIND_READ_FILES,
     FIND_READY_HOSTS,
+    FIND_SAMPLES,
     GET_SAMPLE,
-    CREATE_SAMPLE,
+    REMOVE_SAMPLE,
     UPDATE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS,
-    REMOVE_SAMPLE
+    UPDATE_SAMPLE_RIGHTS
 } from "../app/actionTypes";
+
+import * as filesAPI from "../files/api";
+import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
 import { createFindURL } from "./utils";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";

@@ -168,7 +168,7 @@ def test_mk_analysis_dir(dbs, mock_job):
 
     assert not os.path.isdir(mock_job.params["analysis_path"])
 
-    mock_job.mk_analysis_dir()
+    mock_job.make_analysis_dir()
 
     assert os.path.isdir(mock_job.params["analysis_path"])
 
@@ -193,7 +193,7 @@ def test_map_otus(tmpdir, dbs, mock_job):
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
-    mock_job.map_otus()
+    mock_job.map_default_isolates()
 
     assert sorted(mock_job.intermediate["to_otus"]) == sorted([
         "NC_013110",

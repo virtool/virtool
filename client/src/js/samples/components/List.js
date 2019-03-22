@@ -1,16 +1,15 @@
+import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { forEach, slice, includes, pull } from "lodash-es";
 import CreateAnalysis from "../../analyses/components/Create";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader } from "../../base";
-import { findSamples } from "../actions";
-import { analyze } from "../../analyses/actions";
-import { listReadyIndexes } from "../../indexes/actions";
 import { findHmms } from "../../hmm/actions";
+import { listReadyIndexes } from "../../indexes/actions";
+import { findSamples } from "../actions";
 import { getTerm } from "../selectors";
 import CreateSample from "./Create/Create";
-import SampleToolbar from "./Toolbar";
 import SampleItem from "./Item";
+import SampleToolbar from "./Toolbar";
 
 export class SamplesList extends React.Component {
     constructor(props) {

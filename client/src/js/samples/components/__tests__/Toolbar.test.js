@@ -30,6 +30,6 @@ describe("<SampleSearchToolbar />", () => {
 
         wrapper.find("FormControl").simulate("change", e);
 
-        expect(props.onFind).toBeCalledWith("foo", props.pathoscope, props.nuvs);
+        expect(props.onFind).toHaveBeenCalledWith("foo", props.pathoscope, props.nuvs);
     });
 });
