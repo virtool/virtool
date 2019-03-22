@@ -55,7 +55,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFound noun="builds" noListGroup />;
 };
 
-const ReferenceManage = ({ canRemove, detail }) => {
+const ReferenceManage = ({ detail }) => {
     const {
         id,
         cloned_from,

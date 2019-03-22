@@ -1,4 +1,3 @@
-import { forEach } from "lodash-es";
 import Request from "superagent";
 
 export const find = ({ term, page, pathoscope, nuvs }) =>

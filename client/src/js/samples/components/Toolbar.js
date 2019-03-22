@@ -1,6 +1,5 @@
 import { push } from "connected-react-router";
 import React from "react";
-
 import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -9,7 +8,7 @@ import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
 import AlgorithmFilter from "./AlgorithmFilter";
 
-const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, onSelect, selected }) => (
+const SampleSelectionToolbar = ({ onClear, onQuickAnalyze, selected }) => (
     <Flex alignItems="stretch" style={{ marginBottom: "15px" }}>
         <FlexItem grow={1}>
             <div className="sample-selection-toolbar">

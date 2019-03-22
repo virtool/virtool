@@ -1,5 +1,3 @@
-import { forEach } from "lodash-es";
-
 export const setAlgorithmParameters = (url, algorithm, conditions) => {
     if (conditions.length === 0 || conditions.length === 3) {
         url.searchParams.delete(algorithm);

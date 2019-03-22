@@ -54,7 +54,7 @@ describe("<SourceTypes />", () => {
         it("called when remove() is called", () => {
             const wrapper = mount(<SourceTypes {...props} />);
             wrapper.instance().handleRemove("serotype");
-            expect(props.onUpdate).toBeCalledWith(["isolate"], true, "foo");
+            expect(props.onUpdate).toHaveBeenCalledWith(["isolate"], true, "foo");
         });
 
         it("called when handleSubmit() is called successfully", () => {
@@ -107,14 +107,14 @@ describe("<SourceTypes />", () => {
         it("when handleEnable() is called and [restrictSourceTypes=true]", () => {
             const wrapper = mount(<SourceTypes {...props} />);
             wrapper.instance().handleEnable();
-            expect(props.onToggle).toBeCalledWith("foo", false);
+            expect(props.onToggle).toHaveBeenCalledWith("foo", false);
         });
 
         it("when handleEnable() is called and [restrictSourceTypes=false]", () => {
             props.restrictSourceTypes = false;
             const wrapper = mount(<SourceTypes {...props} />);
             wrapper.instance().handleEnable();
-            expect(props.onToggle).toBeCalledWith("foo", true);
+            expect(props.onToggle).toHaveBeenCalledWith("foo", true);
         });
     });
 });
