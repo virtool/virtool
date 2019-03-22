@@ -18,10 +18,9 @@ class Job(virtool.jobs.job.Job):
         super().__init__(*args, **task_args)
         #: The job stages.
         self._stage_list = [
-            self.mk_subtraction_dir,
+            self.make_subtraction_dir,
             self.set_stats,
-            self.bowtie_build,
-            self.update_db
+            self.bowtie_build
         ]
 
     def check_db(self):
@@ -43,7 +42,7 @@ class Job(virtool.jobs.job.Job):
             )
         })
 
-    def mk_subtraction_dir(self):
+    def make_subtraction_dir(self):
         """
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
@@ -82,11 +81,6 @@ class Job(virtool.jobs.job.Job):
 
         self.run_subprocess(command)
 
-    def update_db(self):
-        """
-        Set the ``ready`` on the subtraction document ``True``.
-
-        """
         self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "ready": True

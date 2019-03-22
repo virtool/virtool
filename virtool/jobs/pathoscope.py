@@ -32,8 +32,8 @@ class Job(virtool.jobs.job.Job):
         super().__init__(*args, **kwargs)
 
         self._stage_list = [
-            self.mk_analysis_dir,
-            self.map_otus,
+            self.make_analysis_dir,
+            self.map_default_isolates,
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
@@ -115,14 +115,14 @@ class Job(virtool.jobs.job.Job):
             "sequence_otu_map": sequence_otu_map
         })
 
-    def mk_analysis_dir(self):
+    def make_analysis_dir(self):
         """
         Make a directory for the analysis in the sample/analysis directory.
 
         """
         os.mkdir(self.params["analysis_path"])
 
-    def map_otus(self):
+    def map_default_isolates(self):
         """
         Using ``bowtie2``, maps reads to the main otu reference. This mapping is used to identify candidate otus.
 

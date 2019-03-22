@@ -84,7 +84,7 @@ def test_map_otus(mock_job):
 
     os.mkdir(mock_job.params["analysis_path"])
 
-    mock_job.map_otus()
+    mock_job.eliminate_otus()
 
     actual_path = os.path.join(mock_job.params["analysis_path"], "unmapped_otus.fq")
 
@@ -109,7 +109,7 @@ def test_map_subtraction(mock_job):
         os.path.join(mock_job.params["analysis_path"], "unmapped_otus.fq")
     )
 
-    mock_job.map_subtraction()
+    mock_job.eliminate_subtraction()
 
 
 @pytest.mark.parametrize("is_paired", [False, True], ids=["unpaired", "paired"])
@@ -229,7 +229,7 @@ def test_press_hmm(mock_job):
         os.path.join(hmm_path, "profiles.hmm")
     )
 
-    mock_job.press_hmm()
+    mock_job.prepare_hmm()
 
     listing = os.listdir(mock_job.params["analysis_path"])
 

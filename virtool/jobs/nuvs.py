@@ -41,12 +41,12 @@ class Job(virtool.jobs.job.Job):
 
         self._stage_list = [
             self.make_analysis_dir,
-            self.map_otus,
-            self.map_subtraction,
+            self.eliminate_otus,
+            self.eliminate_subtraction,
             self.reunite_pairs,
             self.assemble,
             self.process_fasta,
-            self.press_hmm,
+            self.prepare_hmm,
             self.vfam,
             self.import_results
         ]
@@ -123,7 +123,7 @@ class Job(virtool.jobs.job.Job):
         """
         os.mkdir(self.params["analysis_path"])
 
-    def map_otus(self):
+    def eliminate_otus(self):
         """
         Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
         ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
@@ -141,7 +141,7 @@ class Job(virtool.jobs.job.Job):
 
         self.run_subprocess(command)
 
-    def map_subtraction(self):
+    def eliminate_subtraction(self):
         """
         Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -283,7 +283,7 @@ class Job(virtool.jobs.job.Job):
                 for orf in entry["orfs"]:
                     f.write(f">sequence_{entry['index']}.{orf['index']}\n{orf['pro']}\n")
 
-    def press_hmm(self):
+    def prepare_hmm(self):
 
         shutil.copy(os.path.join(self.settings["data_path"], "hmm", "profiles.hmm"), self.params["analysis_path"])
 
