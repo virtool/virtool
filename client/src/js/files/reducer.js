@@ -32,6 +32,16 @@ export const initialState = {
     showUploadOverlay: false
 };
 
+export const appendUpload = (state, action) => {
+    const { fileType, name, size, type } = action.file;
+
+    return {
+        ...state,
+        uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type, fileType }]),
+        showUploadOverlay: true
+    };
+};
+
 /**
  * If all uploads in ``state`` are complete, set the ``uploadsComplete`` property to ``true``.
  *
@@ -43,6 +53,18 @@ export const checkUploadsComplete = state => ({
     ...state,
     uploadsComplete: every(state.uploads, { progress: 100 })
 });
+
+export const pruneUploads = (state, action) => {
+    const uploads = map(state.uploads, upload => {
+        if (upload.localId !== action.localId) {
+            return upload;
+        }
+
+        return { ...upload, progress: action.progress };
+    });
+
+    return { ...state, uploads };
+};
 
 /**
  * A reducer for managing uploaded files.
@@ -73,30 +95,17 @@ export default function fileReducer(state = initialState, action) {
             };
 
         case FIND_FILES.SUCCEEDED:
-            return { ...updateDocuments(state, action, "created_at", true), fileType: action.fileType };
-
-        case UPLOAD.REQUESTED: {
-            const { name, size, type } = action.file;
-            const fileType = action.fileType;
-            const newState = {
-                ...state,
-                uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type, fileType }]),
-                showUploadOverlay: true
+            return {
+                ...updateDocuments(state, action, "created_at", true),
+                fileType: action.fileType
             };
 
-            return checkUploadsComplete(newState);
+        case UPLOAD.REQUESTED: {
+            return checkUploadsComplete(appendUpload(state, action));
         }
 
         case UPLOAD_PROGRESS: {
-            const uploads = map(state.uploads, upload => {
-                if (upload.localId !== action.localId) {
-                    return upload;
-                }
-
-                return { ...upload, progress: action.progress };
-            });
-
-            return checkUploadsComplete({ ...state, uploads });
+            return checkUploadsComplete(pruneUploads(state, action));
         }
 
         case HIDE_UPLOAD_OVERLAY:
