@@ -23,6 +23,7 @@ import virtool.utils
 #: Allowed interfaces. Calls to :meth:`.Dispatcher.dispatch` will be validated against these interfaces.
 INTERFACES = (
     "analyses",
+    "caches",
     "files",
     "groups",
     "history",
