@@ -1,9 +1,18 @@
+import aiohttp.web
 import asyncio
+import logging
 import os
+import pymongo.results
+import typing
 
+import virtool.db.jobs
+import virtool.db.utils
 import virtool.errors
 import virtool.samples
 import virtool.utils
+
+logger = logging.getLogger(__name__)
+
 
 LIST_PROJECTION = [
     "_id",
@@ -43,6 +52,42 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True
 }
+
+
+async def attempt_file_replacement(app, sample_id, user_id):
+    db = app["db"]
+
+    files = await refresh_replacements(db, sample_id)
+
+    print(files)
+
+    if not all([file["replacement"] for file in files]):
+        print("Foobar")
+        return None
+
+    logger.info(f"Starting file replacement for sample {sample_id}")
+
+    task_args = {
+        "sample_id": sample_id
+    }
+
+    job = await virtool.db.jobs.create(
+        db,
+        app["settings"],
+        "update_sample",
+        task_args,
+        user_id
+    )
+
+    await app["jobs"].enqueue(job["_id"])
+
+    await db.samples.update_one({"_id": sample_id}, {
+        "$set": {
+            "update_job": {
+                "id": job["_id"]
+            }
+        }
+    })
 
 
 async def check_name(db, settings, name, sample_id=None):
