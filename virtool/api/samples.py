@@ -112,7 +112,11 @@ async def get(req):
     Get a complete sample document.
 
     """
-    document = await req.app["db"].samples.find_one(req.match_info["sample_id"])
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    document = await db.samples.find_one(sample_id)
 
     if not document:
         return not_found()
@@ -120,12 +124,20 @@ async def get(req):
     if not virtool.samples.get_sample_rights(document, req["client"])[0]:
         return insufficient_rights()
 
-    for file in document["files"]:
+    caches = list()
+
+    async for cache in db.caches.find({"sample.id": sample_id}):
+        caches.append(virtool.utils.base_processor(cache))
+
+    document["caches"] = caches
+
+    for index, file in enumerate(document["files"]):
         snake_case = document["name"].replace(" ", "_")
 
         file.update({
             "display_name": file["name"].replace("reads_", f"{snake_case}_"),
-            "download_url": file["download_url"].replace("reads_", f"{snake_case}_")
+            "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
+            "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
         })
 
     return json_response(virtool.utils.base_processor(document))
