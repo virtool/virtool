@@ -53,7 +53,6 @@ export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const CLEAR_ANALYSIS = "CLEAR_ANALYSIS";
 export const COLLAPSE_ANALYSIS = "COLLAPSE_ANALYSIS";
-export const CROP_PATHOSCOPE = "CROP_PATHOSCOPE";
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 export const SET_PATHOSCOPE_FILTER = "SET_PATHOSCOPE_FILTER";
