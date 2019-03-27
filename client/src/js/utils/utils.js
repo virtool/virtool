@@ -35,7 +35,7 @@ export const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
  */
 export const byteSize = bytes => {
     if (bytes) {
-        return numbro(bytes).format("0.0 b");
+        return numbro(bytes).format({ output: "byte", base: "decimal", mantissa: 1 });
     }
 
     return "0.0B";
