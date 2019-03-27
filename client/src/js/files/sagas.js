@@ -1,7 +1,7 @@
 import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
 import { putGenericError, setPending, apiCall } from "../utils/sagas";
-import { FIND_FILES, REMOVE_FILE, UPLOAD } from "../app/actionTypes";
+import { FIND_FILES, REMOVE_FILE, UPLOAD, UPLOAD_SAMPLE_FILE } from "../app/actionTypes";
 import * as filesAPI from "./api";
 import { uploadProgress } from "./actions";
 import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
@@ -23,26 +23,12 @@ export function* removeFile(action) {
 }
 
 export function* upload(action) {
-    const { file, fileType, localId } = action;
-
-    const channel = yield call(createUploadChannel, file, fileType);
-
-    while (true) {
-        const { progress = 0, response, err } = yield take(channel);
-
-        if (err) {
-            return yield putGenericError(UPLOAD, err);
-        }
-
-        if (response) {
-            return yield put({ type: UPLOAD.SUCCEEDED, data: response.body });
-        }
-
-        yield put(uploadProgress(localId, progress));
-    }
+    const { localId } = action;
+    const channel = yield call(createUploadChannel, action, filesAPI.upload);
+    yield watchUploadChannel(channel, UPLOAD, localId);
 }
 
-const createUploadChannel = (file, fileType) =>
+export const createUploadChannel = (action, apiMethod) =>
     eventChannel(emitter => {
         const onProgress = e => {
             if (e.lengthComputable) {
@@ -60,7 +46,28 @@ const createUploadChannel = (file, fileType) =>
             emitter(END);
         };
 
-        filesAPI.upload(file, fileType, onProgress, onSuccess, onFailure);
+        apiMethod({
+            ...action,
+            onProgress,
+            onSuccess,
+            onFailure
+        });
 
         return noop;
     }, buffers.sliding(2));
+
+export function* watchUploadChannel(channel, actionType, localId) {
+    while (true) {
+        const { progress = 0, response, err } = yield take(channel);
+
+        if (err) {
+            return yield putGenericError(actionType, err);
+        }
+
+        if (response) {
+            return yield put({ type: actionType.SUCCEEDED, data: response.body });
+        }
+
+        yield put(uploadProgress(localId, progress));
+    }
+}

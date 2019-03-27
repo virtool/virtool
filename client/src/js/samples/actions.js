@@ -14,7 +14,8 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     SELECT_SAMPLE,
-    CLEAR_SAMPLE_SELECTION
+    CLEAR_SAMPLE_SELECTION,
+    UPLOAD_SAMPLE_FILE
 } from "../app/actionTypes";
 
 export const wsInsertSample = data => ({
@@ -126,6 +127,17 @@ export const updateSampleRights = (sampleId, update) => ({
     type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
     sampleId,
     update
+});
+
+export const uploadSampleFile = (localId, sampleId, suffix, file) => ({
+    type: UPLOAD_SAMPLE_FILE.REQUESTED,
+    sampleId,
+    suffix,
+    file,
+    context: {
+        sampleId,
+        suffix
+    }
 });
 
 /**

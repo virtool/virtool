@@ -12,7 +12,8 @@ import {
     FIND_FILES,
     UPLOAD,
     UPLOAD_PROGRESS,
-    HIDE_UPLOAD_OVERLAY
+    HIDE_UPLOAD_OVERLAY,
+    UPLOAD_SAMPLE_FILE
 } from "../app/actionTypes";
 
 /**
@@ -33,11 +34,12 @@ export const initialState = {
 };
 
 export const appendUpload = (state, action) => {
-    const { fileType, name, size, type } = action.file;
+    const { file, context } = action;
+    const { fileType, name, size } = file;
 
     return {
         ...state,
-        uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type, fileType }]),
+        uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, fileType, context }]),
         showUploadOverlay: true
     };
 };
@@ -100,13 +102,12 @@ export default function fileReducer(state = initialState, action) {
                 fileType: action.fileType
             };
 
-        case UPLOAD.REQUESTED: {
+        case UPLOAD.REQUESTED:
+        case UPLOAD_SAMPLE_FILE.REQUESTED:
             return checkUploadsComplete(appendUpload(state, action));
-        }
 
-        case UPLOAD_PROGRESS: {
+        case UPLOAD_PROGRESS:
             return checkUploadsComplete(pruneUploads(state, action));
-        }
 
         case HIDE_UPLOAD_OVERLAY:
             return { ...state, showUploadOverlay: false };
