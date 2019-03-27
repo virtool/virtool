@@ -212,7 +212,34 @@ async def recalculate_algorithm_tags(db, sample_id):
     return document
 
 
-async def remove_samples(db, settings, id_list):
+async def refresh_replacements(db, sample_id: str) -> list:
+    """
+    Remove sample file `replacement` fields if the linked files have been deleted.
+
+    :param db: the application database client
+    :param sample_id: the id of the sample to refresh
+    :return: the updated files list
+
+    """
+
+    files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+
+    for file in files:
+        replacement = file.get("replacement")
+
+        if not await db.files.count({"_id": replacement["id"]}):
+            file["replacement"] = None
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "files": files
+        }
+    })
+
+    return document["files"]
+
+
+async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
