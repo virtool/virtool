@@ -1,4 +1,4 @@
-import { filter, get, includes } from "lodash-es";
+import { every, filter, get, includes } from "lodash-es";
 import { createSelector } from "reselect";
 import { getTermSelectorFactory } from "../utils/selectors";
 
@@ -30,6 +30,13 @@ export const getCanModifyRights = createSelector(
 
         return administrator || sample.user.id === userId;
     }
+);
+
+export const getSampleFiles = state => state.samples.detail.files;
+
+export const getHasRawFilesOnly = createSelector(
+    [getSampleFiles],
+    files => every(files, "raw")
 );
 
 const getStateTerm = state => state.samples.term;
