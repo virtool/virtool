@@ -2,6 +2,7 @@ import datetime
 import gzip
 import os
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -211,17 +212,34 @@ def get_temp_dir():
     return tempfile.TemporaryDirectory()
 
 
-def compress_fastq(path: str, target: str):
+def compress_file(path: str, target: str, processes=1):
     """
     Compress the FASTQ file at `path` to a gzipped file at `target`.
 
-    :param path:
-    :param target:
-
     """
+    if processes > 1 and shutil.which("pigz"):
+        compress_file_with_pigz(path, target, processes)
+    else:
+        compress_file_with_gzip(path, target)
+
+
+def compress_file_with_gzip(path, target):
     with open(path, "rb") as f_in:
         with gzip.open(target, "wb", compresslevel=6) as f_out:
             shutil.copyfileobj(f_in, f_out)
+
+
+def compress_file_with_pigz(path, target, processes):
+    command = [
+        "pigz",
+        "-p", str(processes),
+        "-k",
+        "--stdout",
+        path
+    ]
+
+    with open(target, "wb") as f:
+        subprocess.call(command, stdout=f)
 
 
 def decompress_tgz(path: str, target: str):

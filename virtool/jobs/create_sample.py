@@ -87,7 +87,7 @@ class Job(virtool.jobs.job.Job):
             if virtool.utils.is_gzipped(path):
                 shutil.copyfile(path, target)
             else:
-                virtool.utils.compress_fastq(path, target)
+                virtool.utils.compress_file(path, target, processes=self.proc)
 
             stats = virtool.utils.file_stats(target)
 
