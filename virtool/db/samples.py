@@ -189,6 +189,49 @@ async def get_sample_owner(db, sample_id: str):
     return None
 
 
+async def periodically_prune_old_files(app: aiohttp.web.Application):
+    """
+    Removes old, not-in-use sample files when the sample flag `prune` is set to `True`.
+
+    :param app: the application object
+
+    """
+    db = app["db"]
+
+    logger.info("Running scheduled sample file pruning.")
+
+    async for sample in db.samples.find({"prune": True}, ["files"]):
+        sample_id = sample["_id"]
+
+        # Count running analyses that are still using the old non-cache trimmed files.
+        count = await db.analyses.count({
+            "sample.id": sample_id,
+            "ready": False,
+            "cache": {
+                "$exists": False
+            }
+        })
+
+        # If there are no analyses using the files, delete them and unset the prune field on the sample.
+        if not count:
+            logger.info(f"Pruning files for sample {sample_id}.")
+
+            aws = list()
+
+            for suffix in [1, 2]:
+                path = os.path.join(app["settings"]["data_path"], "samples", sample_id, f"reads_{suffix}.fastq")
+                future = app["run_in_thread"](virtool.utils.rm, path)
+                aws.append(aws)
+
+            await asyncio.gather(*aws)
+
+            await db.samples.update_one({"_id": sample_id}, {
+                "$unset": {
+                    "prune": ""
+                }
+            })
+
+
 async def recalculate_algorithm_tags(db, sample_id):
     """
     Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
