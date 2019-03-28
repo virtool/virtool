@@ -8,25 +8,7 @@ import virtool.jobs.job
 import virtool.samples
 import virtool.utils
 import virtool.jobs.create_sample
-
-LEGACY_TRIM_PARAMETERS = {
-    "program": "skewer",
-    "m": "pe",
-    "l": "20",
-    "q": "20",
-    "Q": "25"
-}
-
-ALT_LEGACY_TRIM_PARAMETERS = {
-    "program": "skewer",
-    "mode": "pe",
-    "max_error_rate": 0.1,
-    "max_indel_rate": 0.03,
-    "end_quality": 20,
-    "mean_quality": 25,
-    "min_length": 20,
-    "max_length": None
-}
+import virtool.samples
 
 
 class Job(virtool.jobs.job.Job):
@@ -273,7 +255,7 @@ class Job(virtool.jobs.job.Job):
         cache_id = virtool.db.caches.create(
             self.db,
             sample_id,
-            LEGACY_TRIM_PARAMETERS,
+            virtool.samples.LEGACY_TRIM_PARAMETERS,
             self.params["paired"],
             legacy=True
         )
