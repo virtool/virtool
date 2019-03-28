@@ -47,16 +47,6 @@ def create(db, sample_id, parameters, paired, legacy=False):
         return create(db, sample_id, parameters, paired, legacy=legacy)
 
 
-async def get(db, sample_id, parameters):
-    document = await db.find_one({
-        "_id": sample_id,
-        "hash": calculate_cache_hash(parameters)
-    })
-
-    if document:
-        return virtool.utils.base_processor(document)
-
-
 async def prune(app):
     """
     db = app["db"]
