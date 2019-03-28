@@ -131,6 +131,24 @@ async def organize_samples(app):
             }
         })
 
+    paired_query = {
+       "paired": {
+           "$exists": False
+       }
+    }
+
+    await motor_client.samples.update_many({**paired_query, "files": {"$size": 1}}, {
+        "$set": {
+            "paired": False
+        }
+    })
+
+    await motor_client.samples.update_many({**paired_query, "files": {"$size": 2}}, {
+        "$set": {
+            "paired": True
+        }
+    })
+
 
 async def organize_sessions(db):
     logger.info(" • sessions")
