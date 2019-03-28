@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import pymongo.results
-import typing
 
 import virtool.db.jobs
 import virtool.db.utils
@@ -168,6 +167,10 @@ def compose_analysis_query(url_query):
     return pathoscope or nuvs or None
 
 
+def get_sample_path(settings, sample_id):
+    return os.path.join(settings["data_path"], "samples", sample_id)
+
+
 async def get_sample_owner(db, sample_id: str):
     """
     A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
@@ -218,8 +221,10 @@ async def periodically_prune_old_files(app: aiohttp.web.Application):
 
             aws = list()
 
+            sample_path = get_sample_path(app["settings"], sample_id)
+
             for suffix in [1, 2]:
-                path = os.path.join(app["settings"]["data_path"], "samples", sample_id, f"reads_{suffix}.fastq")
+                path = os.path.join(sample_path, f"reads_{suffix}.fastq")
                 future = app["run_in_thread"](virtool.utils.rm, path)
                 aws.append(aws)
 
@@ -316,11 +321,10 @@ async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.D
         "$in": id_list
     }})
 
-    samples_path = os.path.join(settings["data_path"], "samples")
-
     for sample_id in id_list:
         try:
-            virtool.utils.rm(os.path.join(samples_path, f"sample_{sample_id}"), recursive=True)
+            path = get_sample_path(settings, sample_id)
+            virtool.utils.rm(path, recursive=True)
         except FileNotFoundError:
             pass
 
