@@ -1,9 +1,10 @@
 import hashlib
 import json
 import os
-import pymongo.errors
-import virtool.utils
 
+import pymongo.errors
+
+import virtool.utils
 
 PROJECTION = [
     "_id",
@@ -21,7 +22,7 @@ def calculate_cache_hash(parameters):
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-def create(db, sample_id, parameters, legacy=False):
+def create(db, sample_id, parameters, paired, legacy=False):
     try:
         cache_id = virtool.utils.random_alphanumeric(length=8)
 
@@ -31,6 +32,7 @@ def create(db, sample_id, parameters, legacy=False):
             "files": list(),
             "hash": calculate_cache_hash(parameters),
             "legacy": legacy,
+            "paired": paired,
             "parameters": parameters,
             "program": "skewer-0.2.2",
             "ready": False,
@@ -42,7 +44,7 @@ def create(db, sample_id, parameters, legacy=False):
         return cache_id
 
     except pymongo.errors.DuplicateKeyError:
-        return create(db, sample_id, parameters, legacy=legacy)
+        return create(db, sample_id, parameters, paired, legacy=legacy)
 
 
 async def get(db, sample_id, parameters):

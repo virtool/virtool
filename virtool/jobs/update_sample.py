@@ -274,6 +274,7 @@ class Job(virtool.jobs.job.Job):
             self.db,
             sample_id,
             LEGACY_TRIM_PARAMETERS,
+            self.params["paired"],
             legacy=True
         )
 
