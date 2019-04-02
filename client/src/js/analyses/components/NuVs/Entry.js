@@ -2,7 +2,6 @@ import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
-import AnalysisValue from "../Value";
 import { Flex, FlexItem } from "../../../base/index";
 
 export default class NuVsEntry extends React.Component {
@@ -20,9 +19,7 @@ export default class NuVsEntry extends React.Component {
     }
 
     handleToggleIn = () => {
-        if (!this.props.in) {
-            this.props.toggleIn(this.props.index);
-        }
+        this.props.toggleIn(this.props.index);
     };
 
     render() {
@@ -43,7 +40,7 @@ export default class NuVsEntry extends React.Component {
         }
 
         return (
-            <div className={className} onClick={this.handleToggleIn}>
+            <div className={className} onClick={this.props.in ? null : this.handleToggleIn}>
                 <Row>
                     <Col md={3}>
                         <strong>Sequence {this.props.index}</strong>
@@ -67,7 +64,7 @@ export default class NuVsEntry extends React.Component {
                     <Col md={3}>
                         <Flex alignItems="center">
                             <small className="text-muted text-strong">ORFS</small>
-                            <FlexItem pad>
+                            <FlexItem grow={1} pad>
                                 <strong>{this.props.orfs.length}</strong>
                             </FlexItem>
                             <FlexItem pad>{closeButton}</FlexItem>

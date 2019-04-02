@@ -9,7 +9,7 @@ import { AnalysisHeader, AnalysisHeaderAlgorithm, AnalysisHeaderCreated } from "
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 
-const AnalysisDetail = props => {
+export const AnalysisDetail = props => {
     useEffect(() => {
         props.getAnalysis(props.match.params.analysisId);
         return props.clearAnalysis;
@@ -42,7 +42,7 @@ const AnalysisDetail = props => {
     } else if (detail.algorithm === "nuvs") {
         content = <NuVsViewer />;
     } else {
-        throw Error("Unusable analysis detail content");
+        return <div>"Unusable analysis detail content")</div>;
     }
 
     return (
@@ -61,14 +61,14 @@ const AnalysisDetail = props => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     detail: state.analyses.detail,
     error: get(state, "errors.GET_ANALYSIS_ERROR", null),
     quality: state.samples.detail.quality,
     sampleName: state.samples.detail.name
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     getAnalysis: analysisId => {
         dispatch(getAnalysis(analysisId));
     },

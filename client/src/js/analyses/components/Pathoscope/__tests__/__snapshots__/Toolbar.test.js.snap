@@ -1,413 +1,141 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Toolbar /> renders correctly 1`] = `
-<div
-  className="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[Function]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-up"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value=""
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
-    active={false}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-bar"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Median Depth"
-    tipPlacement="top"
-    title="Median Depth"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="job-clear-dropdown"
-    onSelect={[Function]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
+<StyledComponent
+  filterIsolates={false}
+  filterOTUs={false}
+  forwardedComponent={
+    Object {
+      "$$typeof": Symbol(react.forward_ref),
+      "attrs": Array [],
+      "componentStyle": ComponentStyle {
+        "componentId": "Toolbar__StyledPathoscopeToolbar-sc-1p9czx-0",
+        "isStatic": true,
+        "rules": Array [
+          "margin-bottom:10px !important;",
+        ],
+      },
+      "displayName": "Toolbar__StyledPathoscopeToolbar",
+      "foldedComponentIds": Array [],
+      "render": [Function],
+      "styledComponentId": "Toolbar__StyledPathoscopeToolbar-sc-1p9czx-0",
+      "target": [Function],
+      "toString": [Function],
+      "warnTooManyClasses": [Function],
+      "withComponent": [Function],
     }
-  >
-    <Button
-      active={false}
-      bsStyle="default"
-      onClick={[Function]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
-</div>
+  }
+  forwardedRef={null}
+  onCollapse={[Function]}
+  onFilter={[Function]}
+  onSetSortKey={[Function]}
+  onToggleShowMedian={[Function]}
+  onToggleShowReads={[Function]}
+  onToggleSortDescending={[Function]}
+  showMedian={false}
+  showReads={false}
+  sortDescending={false}
+  sortKey=""
+  store={
+    Object {
+      "clearActions": [Function],
+      "dispatch": [Function],
+      "getActions": [Function],
+      "getState": [Function],
+      "replaceReducer": [Function],
+      "subscribe": [Function],
+    }
+  }
+  storeSubscription={
+    Subscription {
+      "listeners": Object {
+        "clear": [Function],
+        "get": [Function],
+        "notify": [Function],
+        "subscribe": [Function],
+      },
+      "onStateChange": [Function],
+      "parentSub": undefined,
+      "store": Object {
+        "clearActions": [Function],
+        "dispatch": [Function],
+        "getActions": [Function],
+        "getState": [Function],
+        "replaceReducer": [Function],
+        "subscribe": [Function],
+      },
+      "unsubscribe": [Function],
+    }
+  }
+/>
 `;
 
 exports[`<Toolbar /> renders correctly 2`] = `
-<div
-  className="toolbar"
->
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[Function]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value=""
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
-    active={false}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-bar"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Median Depth"
-    tipPlacement="top"
-    title="Median Depth"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="job-clear-dropdown"
-    onSelect={[Function]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
+<StyledComponent
+  filterIsolates={false}
+  filterOTUs={false}
+  forwardedComponent={
+    Object {
+      "$$typeof": Symbol(react.forward_ref),
+      "attrs": Array [],
+      "componentStyle": ComponentStyle {
+        "componentId": "Toolbar__StyledPathoscopeToolbar-sc-1p9czx-0",
+        "isStatic": true,
+        "rules": Array [
+          "margin-bottom:10px !important;",
+        ],
+      },
+      "displayName": "Toolbar__StyledPathoscopeToolbar",
+      "foldedComponentIds": Array [],
+      "render": [Function],
+      "styledComponentId": "Toolbar__StyledPathoscopeToolbar-sc-1p9czx-0",
+      "target": [Function],
+      "toString": [Function],
+      "warnTooManyClasses": [Function],
+      "withComponent": [Function],
     }
-  >
-    <Button
-      active={false}
-      bsStyle="default"
-      onClick={[Function]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
-</div>
+  }
+  forwardedRef={null}
+  onCollapse={[Function]}
+  onFilter={[Function]}
+  onSetSortKey={[Function]}
+  onToggleShowMedian={[Function]}
+  onToggleShowReads={[Function]}
+  onToggleSortDescending={[Function]}
+  showMedian={false}
+  showReads={false}
+  sortDescending={true}
+  sortKey=""
+  store={
+    Object {
+      "clearActions": [Function],
+      "dispatch": [Function],
+      "getActions": [Function],
+      "getState": [Function],
+      "replaceReducer": [Function],
+      "subscribe": [Function],
+    }
+  }
+  storeSubscription={
+    Subscription {
+      "listeners": Object {
+        "clear": [Function],
+        "get": [Function],
+        "notify": [Function],
+        "subscribe": [Function],
+      },
+      "onStateChange": [Function],
+      "parentSub": undefined,
+      "store": Object {
+        "clearActions": [Function],
+        "dispatch": [Function],
+        "getActions": [Function],
+        "getState": [Function],
+        "replaceReducer": [Function],
+        "subscribe": [Function],
+      },
+      "unsubscribe": [Function],
+    }
+  }
+/>
 `;

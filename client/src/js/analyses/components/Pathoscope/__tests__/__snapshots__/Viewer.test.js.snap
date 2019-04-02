@@ -2,7 +2,8 @@
 
 exports[`<PathoscopeViewer /> renders correctly 1`] = `
 <div>
-  <Connect(PathoscopeToolbar) />
+  <Connect(AnalysisMapping) />
+  <Connect(Toolbar__StyledPathoscopeToolbar) />
   <Connect(PathoscopeList) />
 </div>
 `;

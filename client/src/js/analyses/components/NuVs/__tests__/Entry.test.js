@@ -2,62 +2,49 @@ import NuVsEntry from "../Entry";
 
 describe("<NuVsEntry />", () => {
     let props;
-    let wrapper;
 
     beforeEach(() => {
         props = {
             in: false,
-            index: 0,
+            index: 4,
             sequence: "test-sequence",
             orfs: [],
             minE: 3,
-            toggleIn: sinon.spy()
+            toggleIn: jest.fn()
         };
     });
 
-    it("renders correctly", () => {
-        wrapper = shallow(<NuVsEntry {...props} />);
+    it("should render collapsed when [in=false]", () => {
+        const wrapper = shallow(<NuVsEntry {...props} />);
         expect(wrapper).toMatchSnapshot();
 
         wrapper.setProps({ ...props, in: true });
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("Clicking close button calls toggleIn callback prop", () => {
-        expect(props.toggleIn.called).toBe(false);
-
-        props = { ...props, in: true };
-        wrapper = shallow(<NuVsEntry {...props} />);
-
-        wrapper.find("button").prop("onClick")();
-        expect(props.toggleIn.calledWith(props.index)).toBe(true);
+    it("should render expanded when [in=true]", () => {
+        props.in = true;
+        const wrapper = shallow(<NuVsEntry {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("shouldComponentUpdate() returns true if change in props.in, otherwise false", () => {
-        const spy = sinon.spy(NuVsEntry.prototype, "shouldComponentUpdate");
-        expect(spy.called).toBe(false);
-
-        wrapper = shallow(<NuVsEntry {...props} />);
-
-        wrapper.setProps({ in: props.in });
-        expect(spy.returned(false)).toBe(true);
-
-        wrapper.setProps({ in: !props.in });
-        expect(spy.returned(true)).toBe(true);
-
-        spy.restore();
+    it("should call toggleIn(true) when clicked and not expanded", () => {
+        const wrapper = shallow(<NuVsEntry {...props} />);
+        wrapper.simulate("click");
+        expect(props.toggleIn).toHaveBeenCalledWith(props.index);
     });
 
-    it("handleToggleIn() calls toggleIn callback prop if [in=false]", () => {
-        expect(props.toggleIn.called).toBe(false);
+    it("should not call toggleIn(true) when clicked and expanded", () => {
+        props.in = true;
+        const wrapper = shallow(<NuVsEntry {...props} />);
+        wrapper.simulate("click");
+        expect(props.toggleIn).not.toHaveBeenCalled();
+    });
 
-        props = { ...props, in: true };
-        wrapper = shallow(<NuVsEntry {...props} />);
-        wrapper.prop("onClick")();
-        expect(props.toggleIn.called).toBe(false);
-
-        wrapper.setProps({ in: false });
-        wrapper.prop("onClick")();
-        expect(props.toggleIn.calledWith(0)).toBe(true);
+    it("should call toggleIn(false) when close button clicked", () => {
+        props.in = true;
+        const wrapper = shallow(<NuVsEntry {...props} />);
+        wrapper.find("button").simulate("click");
+        expect(props.toggleIn).toHaveBeenCalledWith(props.index);
     });
 });
