@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AnalysisValueLabel /> renders correctly with props 1`] = `
+exports[`<AnalysisValue /> renders correctly with props 1`] = `
 <Flex
   alignContent="stretch"
   alignItems="center"
@@ -42,7 +42,7 @@ exports[`<AnalysisValueLabel /> renders correctly with props 1`] = `
 </Flex>
 `;
 
-exports[`<AnalysisValueLabel /> renders correctly without props 1`] = `
+exports[`<AnalysisValue /> renders correctly without props 1`] = `
 <Flex
   alignContent="stretch"
   alignItems="center"

@@ -2,7 +2,7 @@ import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
-import AnalysisValueLabel from "../ValueLabel";
+import AnalysisValue from "../Value";
 import { Flex, FlexItem } from "../../../base/index";
 
 export default class NuVsEntry extends React.Component {
@@ -49,20 +49,15 @@ export default class NuVsEntry extends React.Component {
                         <strong>Sequence {this.props.index}</strong>
                     </Col>
                     <Col md={3}>
-                        <AnalysisValueLabel bsStyle="primary" label="Length" value={this.props.sequence.length} />
+                        <AnalysisValue bsStyle="primary" label="Length" value={this.props.sequence.length} />
                     </Col>
                     <Col md={3}>
-                        <AnalysisValueLabel bsStyle="danger" label="E-value" value={this.props.minE} />
+                        <AnalysisValue bsStyle="danger" label="E-value" value={this.props.minE} />
                     </Col>
                     <Col md={3}>
                         <Flex>
                             <FlexItem grow={1} shrink={0}>
-                                <AnalysisValueLabel
-                                    bsStyle="success"
-                                    grow={1}
-                                    label="ORFs"
-                                    value={this.props.orfs.length}
-                                />
+                                <AnalysisValue bsStyle="success" grow={1} label="ORFs" value={this.props.orfs.length} />
                             </FlexItem>
                             {closeButton}
                         </Flex>

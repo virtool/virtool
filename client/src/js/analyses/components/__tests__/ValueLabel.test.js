@@ -1,6 +1,6 @@
 import AnalysisValueLabel from "../ValueLabel";
 
-describe("<AnalysisValueLabel />", () => {
+describe("<AnalysisValue />", () => {
     let wrapper;
 
     it("renders correctly with props", () => {

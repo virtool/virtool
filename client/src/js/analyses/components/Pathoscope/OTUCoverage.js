@@ -1,18 +1,10 @@
-import { map, max, maxBy } from "lodash-es";
+import { max } from "lodash-es";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import PropTypes from "prop-types";
 import React from "react";
 import { Flex } from "../../../base";
-
-const mergeCoverage = isolates => {
-    const longest = maxBy(isolates, isolate => isolate.filled.length);
-
-    const coverages = map(isolates, isolate => isolate.filled);
-
-    return map(longest.filled, (depth, index) => max(map(coverages, coverage => coverage[index])));
-};
 
 const createChart = (element, data, width) => {
     let svg = select(element).append("svg");
@@ -69,7 +61,7 @@ const createChart = (element, data, width) => {
 
 export default class OTUCoverage extends React.Component {
     static propTypes = {
-        isolates: PropTypes.array
+        merged: PropTypes.array
     };
 
     componentDidMount() {
@@ -90,9 +82,7 @@ export default class OTUCoverage extends React.Component {
             this.chartNode.removeChild(this.chartNode.firstChild);
         }
 
-        const merged = mergeCoverage(this.props.isolates);
-
-        createChart(this.chartNode, merged, this.chartNode.scrollWidth);
+        createChart(this.chartNode, this.props.merged, this.chartNode.scrollWidth);
     };
 
     render() {

@@ -15,7 +15,7 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
       md={3}
     >
       <strong>
-        Sequence 
+        Sequence
         0
       </strong>
     </Col>
@@ -24,7 +24,7 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
       componentClass="div"
       md={3}
     >
-      <AnalysisValueLabel
+      <AnalysisValue
         bsStyle="primary"
         label="Length"
         value={13}
@@ -35,7 +35,7 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
       componentClass="div"
       md={3}
     >
-      <AnalysisValueLabel
+      <AnalysisValue
         bsStyle="danger"
         label="E-value"
         value={3}
@@ -59,7 +59,7 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
           grow={1}
           shrink={0}
         >
-          <AnalysisValueLabel
+          <AnalysisValue
             bsStyle="success"
             grow={1}
             label="ORFs"
@@ -87,7 +87,7 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
       md={3}
     >
       <strong>
-        Sequence 
+        Sequence
         0
       </strong>
     </Col>
@@ -96,7 +96,7 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
       componentClass="div"
       md={3}
     >
-      <AnalysisValueLabel
+      <AnalysisValue
         bsStyle="primary"
         label="Length"
         value={13}
@@ -107,7 +107,7 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
       componentClass="div"
       md={3}
     >
-      <AnalysisValueLabel
+      <AnalysisValue
         bsStyle="danger"
         label="E-value"
         value={3}
@@ -131,7 +131,7 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
           grow={1}
           shrink={0}
         >
-          <AnalysisValueLabel
+          <AnalysisValue
             bsStyle="success"
             grow={1}
             label="ORFs"
