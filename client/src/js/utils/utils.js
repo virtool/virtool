@@ -177,6 +177,8 @@ export const taskDisplayNames = {
     build_index: "Build Index"
 };
 
+export const toThousand = number => numbro(number).format({ thousandSeparated: true });
+
 /**
  * Converts a ``number`` to a scientific notation string.
  *

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NuVsEntry /> renders correctly 1`] = `
+exports[`<NuVsEntry /> should render collapsed when [in=false] 1`] = `
 <div
   className="list-group-item spaced hoverable"
   onClick={[Function]}
@@ -16,30 +16,8 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
     >
       <strong>
         Sequence 
-        0
+        4
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-    >
-      <AnalysisValueLabel
-        bsStyle="primary"
-        label="Length"
-        value={13}
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-    >
-      <AnalysisValueLabel
-        bsStyle="danger"
-        label="E-value"
-        value={3}
-      />
     </Col>
     <Col
       bsClass="col"
@@ -48,34 +26,104 @@ exports[`<NuVsEntry /> renders correctly 1`] = `
     >
       <Flex
         alignContent="stretch"
-        alignItems="stretch"
+        alignItems="center"
         direction="row"
         justifyContent="flex-start"
         wrap="nowrap"
       >
+        <small
+          className="text-muted text-strong"
+        >
+          LENGTH
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            13
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          E-VALUE
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            3
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          ORFS
+        </small>
         <FlexItem
           alignSelf={null}
           basis="auto"
           grow={1}
-          shrink={0}
+          pad={true}
+          shrink={1}
         >
-          <AnalysisValueLabel
-            bsStyle="success"
-            grow={1}
-            label="ORFs"
-            value={0}
-          />
+          <strong>
+            0
+          </strong>
         </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        />
       </Flex>
     </Col>
   </Row>
 </div>
 `;
 
-exports[`<NuVsEntry /> renders correctly 2`] = `
+exports[`<NuVsEntry /> should render collapsed when [in=false] 2`] = `
 <div
   className="list-group-item spaced"
-  onClick={[Function]}
+  onClick={null}
 >
   <Row
     bsClass="row"
@@ -88,30 +136,8 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
     >
       <strong>
         Sequence 
-        0
+        4
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-    >
-      <AnalysisValueLabel
-        bsStyle="primary"
-        label="Length"
-        value={13}
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-    >
-      <AnalysisValueLabel
-        bsStyle="danger"
-        label="E-value"
-        value={3}
-      />
     </Col>
     <Col
       bsClass="col"
@@ -120,39 +146,247 @@ exports[`<NuVsEntry /> renders correctly 2`] = `
     >
       <Flex
         alignContent="stretch"
-        alignItems="stretch"
+        alignItems="center"
         direction="row"
         justifyContent="flex-start"
         wrap="nowrap"
       >
+        <small
+          className="text-muted text-strong"
+        >
+          LENGTH
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            13
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          E-VALUE
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            3
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          ORFS
+        </small>
         <FlexItem
           alignSelf={null}
           basis="auto"
           grow={1}
-          shrink={0}
+          pad={true}
+          shrink={1}
         >
-          <AnalysisValueLabel
-            bsStyle="success"
-            grow={1}
-            label="ORFs"
-            value={0}
-          />
+          <strong>
+            0
+          </strong>
         </FlexItem>
         <FlexItem
           alignSelf={null}
           basis="auto"
           grow={0}
-          shrink={0}
+          pad={true}
+          shrink={1}
         >
-          <button
-            className="close"
-            onClick={[Function]}
-            type="button"
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={0}
           >
-            <span>
-              ×
-            </span>
-          </button>
+            <button
+              className="close"
+              onClick={[Function]}
+              type="button"
+            >
+              <span>
+                ×
+              </span>
+            </button>
+          </FlexItem>
+        </FlexItem>
+      </Flex>
+    </Col>
+  </Row>
+</div>
+`;
+
+exports[`<NuVsEntry /> should render expanded when [in=true] 1`] = `
+<div
+  className="list-group-item spaced"
+  onClick={null}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <strong>
+        Sequence 
+        4
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          LENGTH
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            13
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          E-VALUE
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            3
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <small
+          className="text-muted text-strong"
+        >
+          ORFS
+        </small>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={1}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            0
+          </strong>
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={0}
+          >
+            <button
+              className="close"
+              onClick={[Function]}
+              type="button"
+            >
+              <span>
+                ×
+              </span>
+            </button>
+          </FlexItem>
         </FlexItem>
       </Flex>
     </Col>

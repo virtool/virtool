@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AnalysisValue /> should render 1`] = `
+<Value__AnalysisValue>
+  <Value__AnalysisValueNumber
+    color="red"
+  >
+    1312
+  </Value__AnalysisValueNumber>
+  <Value__AnalysisValueLabel>
+    foo
+  </Value__AnalysisValueLabel>
+</Value__AnalysisValue>
+`;
+
+exports[`<AnalysisValue /> should render without props 1`] = `
+<Value__AnalysisValue>
+  <Value__AnalysisValueNumber />
+  <Value__AnalysisValueLabel />
+</Value__AnalysisValue>
+`;

@@ -1,4 +1,6 @@
+import CX from "classnames";
 import React from "react";
+import styled from "styled-components";
 import { Dropdown, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Button, Checkbox, Flex, FlexItem, Icon } from "../../../base";
@@ -13,6 +15,7 @@ import {
 
 export const PathoscopeToolbar = props => {
     const {
+        className,
         filterIsolates,
         filterOTUs,
         onCollapse,
@@ -28,7 +31,7 @@ export const PathoscopeToolbar = props => {
     } = props;
 
     return (
-        <div className="toolbar">
+        <div className={CX("toolbar", className)}>
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Button>
@@ -145,7 +148,11 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
+const StyledPathoscopeToolbar = styled(PathoscopeToolbar)`
+    margin-bottom: 10px !important;
+`;
+
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(PathoscopeToolbar);
+)(StyledPathoscopeToolbar);
