@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@sentry/browser": "^5.0.0-beta1",
+    "babel-plugin-styled-components": "^1.10.0",
     "classnames": "^2.2.6",
     "connected-react-router": "^5.0.1",
     "d3-axis": "^1.0.12",
