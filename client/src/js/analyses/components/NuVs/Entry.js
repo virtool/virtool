@@ -35,7 +35,7 @@ export default class NuVsEntry extends React.Component {
         if (this.props.in) {
             closeButton = (
                 <FlexItem grow={0} shrink={0}>
-                    <button type="button" className="close" onClick={() => this.props.toggleIn(this.props.index)}>
+                    <button type="button" className="close" onClick={this.handleToggleIn}>
                         <span>×</span>
                     </button>
                 </FlexItem>
@@ -49,17 +49,28 @@ export default class NuVsEntry extends React.Component {
                         <strong>Sequence {this.props.index}</strong>
                     </Col>
                     <Col md={3}>
-                        <AnalysisValue bsStyle="primary" label="Length" value={this.props.sequence.length} />
-                    </Col>
-                    <Col md={3}>
-                        <AnalysisValue bsStyle="danger" label="E-value" value={this.props.minE} />
-                    </Col>
-                    <Col md={3}>
-                        <Flex>
-                            <FlexItem grow={1} shrink={0}>
-                                <AnalysisValue bsStyle="success" grow={1} label="ORFs" value={this.props.orfs.length} />
+                        <Flex alignItems="center">
+                            <small className="text-muted text-strong">LENGTH</small>
+                            <FlexItem pad>
+                                <strong>{this.props.sequence.length}</strong>
                             </FlexItem>
-                            {closeButton}
+                        </Flex>
+                    </Col>
+                    <Col md={3}>
+                        <Flex alignItems="center">
+                            <small className="text-muted text-strong">E-VALUE</small>
+                            <FlexItem pad>
+                                <strong>{this.props.minE}</strong>
+                            </FlexItem>
+                        </Flex>
+                    </Col>
+                    <Col md={3}>
+                        <Flex alignItems="center">
+                            <small className="text-muted text-strong">ORFS</small>
+                            <FlexItem pad>
+                                <strong>{this.props.orfs.length}</strong>
+                            </FlexItem>
+                            <FlexItem pad>{closeButton}</FlexItem>
                         </Flex>
                     </Col>
                 </Row>
