@@ -361,11 +361,11 @@ class Job(virtool.jobs.job.Job):
             self.intermediate["ref_lengths"]
         )
 
-        self.results = {
+        self.results.update({
             "ready": True,
             "read_count": read_count,
             "diagnosis": list()
-        }
+        })
 
         for ref_id, hit in report.items():
             # Get the otu info for the sequence id.

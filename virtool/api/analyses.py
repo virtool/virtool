@@ -33,7 +33,7 @@ async def get(req):
     if document is None:
         return not_found()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.db.samples.PROJECTION)
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, {"quality": False})
 
     if not sample:
         return bad_request("Parent sample does not exist")
@@ -42,6 +42,10 @@ async def get(req):
 
     if not read:
         return insufficient_rights()
+
+    document["subtraction"] = {
+        "id": sample["subtraction"]["id"]
+    }
 
     if document["ready"]:
         document = await virtool.db.analyses.format_analysis(db, req.app["settings"], document)
