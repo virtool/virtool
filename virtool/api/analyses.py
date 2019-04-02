@@ -43,12 +43,12 @@ async def get(req):
     if not read:
         return insufficient_rights()
 
+    if document["ready"]:
+        document = await virtool.db.analyses.format_analysis(db, req.app["settings"], document)
+
     document["subtraction"] = {
         "id": sample["subtraction"]["id"]
     }
-
-    if document["ready"]:
-        document = await virtool.db.analyses.format_analysis(db, req.app["settings"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
