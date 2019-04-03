@@ -27,7 +27,7 @@ export function* watchJobs() {
 export function* wsUpdateJob(action) {
     const jobDetailId = yield select(getJobDetailId);
     if (action.data.id === jobDetailId) {
-        yield apiCall(jobsAPI.get, { id: jobDetailId }, GET_JOB);
+        yield apiCall(jobsAPI.get, { jobId: jobDetailId }, GET_JOB);
     }
 }
 
