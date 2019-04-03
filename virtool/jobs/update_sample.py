@@ -5,9 +5,9 @@ import virtool.db.caches
 import virtool.db.files
 import virtool.db.samples
 import virtool.jobs.job
+import virtool.jobs.utils
 import virtool.samples
 import virtool.utils
-import virtool.jobs.create_sample
 import virtool.samples
 
 
@@ -217,7 +217,7 @@ class Job(virtool.jobs.job.Job):
 
                     except ValueError as err:
                         if "NaN" in str(err):
-                            values = virtool.jobs.create_sample.handle_base_quality_nan(split)
+                            values = virtool.jobs.utils.handle_base_quality_nan(split)
 
                     # Convert to position field to a one- or two-member tuple.
                     pos = [int(x) for x in split[0].split('-')]

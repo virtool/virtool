@@ -3,6 +3,24 @@ PATHOSCOPE_TASK_NAMES = [
     "pathoscope_barracuda"
 ]
 
+LEGACY_TRIM_PARAMETERS = {
+    "program": "skewer",
+    "m": "pe",
+    "l": "20",
+    "q": "20",
+    "Q": "25"
+}
+
+TRIM_PARAMETERS = {
+    "end_quality": "20",
+    "mode": "pe",
+    "max_error_rate": "0.1",
+    "max_indel_rate": "0.03",
+    "max_length": None,
+    "mean_quality": "25",
+    "min_length": "20"
+}
+
 
 def calculate_algorithm_tags(analyses):
     """
@@ -51,19 +69,4 @@ def get_sample_rights(sample: dict, client):
     return read, write
 
 
-LEGACY_TRIM_PARAMETERS = {
-    "program": "skewer",
-    "m": "pe",
-    "l": "20",
-    "q": "20",
-    "Q": "25"
-}
-TRIM_PARAMETERS = {
-    "end_quality": 20,
-    "mode": "pe",
-    "max_error_rate": 0.1,
-    "max_indel_rate": 0.03,
-    "max_length": None,
-    "mean_quality": 25,
-    "min_length": 20
-}
+

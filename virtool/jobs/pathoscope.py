@@ -10,10 +10,16 @@ import shutil
 import pymongo
 import pymongo.errors
 
+import virtool.db.caches
 import virtool.db.sync
 import virtool.jobs.job
+import virtool.jobs.utils
 import virtool.otus
 import virtool.pathoscope
+import virtool.samples
+import virtool.db.samples
+
+TRIMMING_PROGRAM = "skewer-0.2.2"
 
 
 class Job(virtool.jobs.job.Job):
@@ -33,6 +39,8 @@ class Job(virtool.jobs.job.Job):
 
         self._stage_list = [
             self.make_analysis_dir,
+            self.prepare_reads,
+            self.prepare_qc,
             self.map_default_isolates,
             self.generate_isolate_fasta,
             self.build_isolate_index,
@@ -79,22 +87,11 @@ class Job(virtool.jobs.job.Job):
         # Get the complete sample document from the database.
         sample = self.db.samples.find_one(self.params["sample_id"])
 
-        read_paths = [os.path.join(sample_path, "reads_1.fastq")]
-
-        paired = sample.get("paired", None)
-
-        if paired is None:
-            paired = len(sample["files"]) == 2
-
-        if paired:
-            read_paths.append(os.path.join(sample_path, "reads_2.fastq"))
-
         self.params.update({
-            "paired": paired,
-
+            "paired": sample["paired"],
             #: The number of reads in the sample library. Assigned after database connection is made.
             "read_count": int(sample["quality"]["count"]),
-            "read_paths": read_paths,
+            "srna": sample.get("srna", False),
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
@@ -121,6 +118,118 @@ class Job(virtool.jobs.job.Job):
 
         """
         os.mkdir(self.params["analysis_path"])
+
+    def prepare_reads(self):
+        """
+        Fetch cache
+
+        """
+        self.intermediate["qc"] = None
+
+        paired = self.params["paired"]
+        srna = self.params["srna"]
+        sample_id = self.params["sample_id"]
+
+        parameters = virtool.jobs.utils.get_trimming_parameters(
+            paired,
+            self.params["srna"]
+        )
+
+        cache = virtool.jobs.utils.get_cache(
+            self.db,
+            sample_id,
+            TRIMMING_PROGRAM,
+            parameters
+        )
+
+        print("FOUND CACHE", cache)
+
+        paths = None
+
+        if cache:
+            paths = virtool.jobs.utils.get_cache_read_paths(self.settings, cache)
+
+            if paths:
+                self.intermediate["qc"] = cache["quality"]
+                self.params["read_paths"] = paths
+                return
+
+        if paths is None:
+            sample = self.db.samples.find_one(sample_id)
+            paths = virtool.jobs.utils.get_legacy_read_paths(self.settings, sample)
+
+            if paths:
+                self.intermediate["qc"] = sample["quality"]
+                self.params["read_paths"] = paths
+                return
+
+        if paths is None:
+            cache_id = virtool.db.caches.create(
+                self.db,
+                sample_id,
+                parameters,
+                paired
+            )
+
+            self.intermediate["cache_id"] = cache_id
+
+            # The path for the nascent cache. Trimmed file will be written here.
+            cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+
+            os.makedirs(cache_path)
+
+            # Paths for the trimmed read file(s).
+            paths = virtool.jobs.utils.get_untrimmed_read_paths(
+                self.settings,
+                sample_id,
+                paired
+            )
+
+            command = virtool.jobs.utils.get_trimming_command(
+                cache_path,
+                parameters,
+                self.proc,
+                paths
+            )
+
+            env = dict(os.environ, LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu")
+
+            self.run_subprocess(command, env=env)
+
+            virtool.jobs.utils.move_trimming_results(cache_path, paired)
+
+        self.params["read_paths"] = paths
+
+    def prepare_qc(self):
+        if self.intermediate["qc"]:
+            return
+
+        cache_id = self.intermediate["cache_id"]
+
+        cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+
+        fastqc_path = os.path.join(cache_path, "fastqc")
+
+        os.makedirs(fastqc_path)
+
+        virtool.jobs.utils.run_fastqc(
+            self.run_subprocess,
+            self.proc,
+            self.params["read_paths"],
+            fastqc_path
+        )
+
+        qc = virtool.jobs.utils.parse_fastqc(fastqc_path, cache_path)
+
+        self.intermediate["qc"] = qc
+
+        self.db.caches.update_one({"_id": cache_id}, {
+            "$set": {
+                "quality": qc
+            }
+        })
+
+        self.dispatch("caches", "update", [cache_id])
 
     def map_default_isolates(self):
         """
@@ -433,6 +542,16 @@ class Job(virtool.jobs.job.Job):
         algorithm tags for the sample document.
 
         """
+        cache_id = self.intermediate.get("cache_id")
+
+        if cache_id:
+            self.db.caches.delete_one({"_id": cache_id})
+            cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+            try:
+                shutil.rmtree(cache_path)
+            except FileNotFoundError:
+                pass
+
         self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
 
         try:
