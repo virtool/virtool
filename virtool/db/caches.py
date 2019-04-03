@@ -22,7 +22,7 @@ def calculate_cache_hash(parameters):
     return hashlib.sha1(string.encode()).hexdigest()
 
 
-def create(db, sample_id, parameters, paired, legacy=False):
+def create(db, sample_id, parameters, paired, legacy=False, program="skewer-0.2.2"):
     try:
         cache_id = virtool.utils.random_alphanumeric(length=8)
 
@@ -34,7 +34,7 @@ def create(db, sample_id, parameters, paired, legacy=False):
             "legacy": legacy,
             "paired": paired,
             "parameters": parameters,
-            "program": "skewer-0.2.2",
+            "program": program,
             "ready": False,
             "sample": {
                 "id": sample_id
