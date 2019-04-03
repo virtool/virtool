@@ -8,10 +8,6 @@ import virtool.utils
 
 
 def get_cache(db, sample_id, program, parameters):
-    hash = virtool.db.caches.calculate_cache_hash(parameters)
-
-    print(hash)
-
     document = db.caches.find_one({
         "sample.id": sample_id,
         "program": program,
