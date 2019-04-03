@@ -142,8 +142,6 @@ class Job(virtool.jobs.job.Job):
             parameters
         )
 
-        print("FOUND CACHE", cache)
-
         paths = None
 
         if cache:
