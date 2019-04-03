@@ -8,7 +8,7 @@ import { byteSize } from "../../utils/utils";
 import { hideUploadOverlay } from "../actions";
 import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 
-export const UploadItem = ({ localId, name, progress, size }) => (
+export const UploadItem = ({ name, progress, size }) => (
     <ListGroupItem>
         <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
         <Flex>

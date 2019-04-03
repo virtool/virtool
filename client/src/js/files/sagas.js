@@ -1,7 +1,7 @@
 import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
 import { putGenericError, setPending, apiCall } from "../utils/sagas";
-import { FIND_FILES, REMOVE_FILE, UPLOAD, UPLOAD_SAMPLE_FILE } from "../app/actionTypes";
+import { FIND_FILES, REMOVE_FILE, UPLOAD } from "../app/actionTypes";
 import * as filesAPI from "./api";
 import { uploadProgress } from "./actions";
 import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
