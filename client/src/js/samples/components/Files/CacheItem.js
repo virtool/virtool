@@ -1,8 +1,12 @@
+import { sumBy } from "lodash-es";
 import React from "react";
 import { ListGroupItem } from "react-bootstrap";
-import { Flex, FlexItem } from "../../../base";
+import { Flex, FlexItem, RelativeTime } from "../../../base";
+import { byteSize } from "../../../utils/utils";
 
-const SampleCacheItem = ({ hash, id }) => (
+const calculateSize = files => byteSize(sumBy(files, "size"));
+
+const SampleCacheItem = ({ created_at, files, hash }) => (
     <ListGroupItem>
         <Flex alignItems="flex-start" justifyContent="space-between">
             <FlexItem>
@@ -10,10 +14,12 @@ const SampleCacheItem = ({ hash, id }) => (
                     <i className="fas fa-archive fa-fw" style={{ fontSize: "24px" }} />
                     <FlexItem pad={10}>
                         <div>
-                            <strong className="text-uppercase">{id}</strong>
+                            <strong>{hash}</strong>
                         </div>
                         <div>
-                            <small>Created from SOMETHING</small>
+                            <small>
+                                Created <RelativeTime time={created_at} />
+                            </small>
                         </div>
                     </FlexItem>
                 </Flex>
@@ -21,7 +27,7 @@ const SampleCacheItem = ({ hash, id }) => (
             <FlexItem>
                 <div className="text-right">
                     <div>
-                        <strong>SIZE</strong>
+                        <strong>{calculateSize(files)}</strong>
                     </div>
                 </div>
             </FlexItem>
