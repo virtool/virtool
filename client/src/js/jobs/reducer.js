@@ -1,4 +1,12 @@
-import { WS_INSERT_JOB, WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, GET_RESOURCES } from "../app/actionTypes";
+import {
+    WS_INSERT_JOB,
+    WS_UPDATE_JOB,
+    WS_REMOVE_JOB,
+    FIND_JOBS,
+    GET_JOB,
+    GET_RESOURCES,
+    GET_LINKED_JOB
+} from "../app/actionTypes";
 import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
@@ -10,7 +18,19 @@ export const initialState = {
     filter: "",
     fetched: false,
     refetchPage: false,
-    resources: null
+    resources: null,
+    linkedJobs: {}
+};
+
+const updatedLinkedJobs = (state, action) => {
+    if (state.linkedJobs.hasOwnProperty(action.data.id)) {
+        return {
+            ...state,
+            linkedJobs: { ...state.linkedJobs, [action.data.id]: action.data }
+        };
+    }
+
+    return state;
 };
 
 export default function jobsReducer(state = initialState, action) {
@@ -19,10 +39,13 @@ export default function jobsReducer(state = initialState, action) {
             return insert(state, action, "created_at");
 
         case WS_UPDATE_JOB:
-            return update(state, action, "created_at");
+            return updatedLinkedJobs(update(state, action, "created_at"));
 
         case WS_REMOVE_JOB:
             return remove(state, action);
+
+        case GET_LINKED_JOB.SUCCEEDED:
+            return { ...state, linkedJobs: { ...state.linkedJobs, [action.data.id]: action.data } };
 
         case FIND_JOBS.REQUESTED:
             return {
