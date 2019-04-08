@@ -1,5 +1,25 @@
 import { get, startCase } from "lodash-es";
 
+const importResultsDescription = {
+    title: "Save Results",
+    description: "Annotate the results and save them in the database."
+};
+
+const makeAnalysisDirDescription = {
+    title: "Create Directory",
+    description: "Create a directory where the job will run and analysis files will be stored."
+};
+
+const prepareReadsDescription = {
+    title: "Prepare Reads",
+    description: "Get existing trimmed data or create a cache."
+};
+
+const prepareQCDescription = {
+    title: "Check QC",
+    description: "Run FastQC if a new cache was created."
+};
+
 const buildIndexDescriptions = {
     mk_index_dir: {
         title: "Create Directory",
@@ -58,10 +78,9 @@ const createSubtractionDescriptions = {
 };
 
 const pathoscopeBowtieDescriptions = {
-    make_analysis_dir: {
-        title: "Create Directory",
-        description: "Create a directory where the job will run and analysis files will be stored."
-    },
+    make_analysis_dir: makeAnalysisDirDescription,
+    prepare_reads: prepareReadsDescription,
+    prepare_qc: prepareQCDescription,
     map_default_isolates: {
         title: "Map to Default Isolates",
         description: "Map the sequences of all OTU default isolates."
@@ -90,10 +109,7 @@ const pathoscopeBowtieDescriptions = {
         title: "Pathoscope",
         description: "Reassign ambiguous mappings using Pathoscope 2.0."
     },
-    import_results: {
-        title: "Save Results",
-        description: "Parse and save the analysis results in the database."
-    },
+    import_results: importResultsDescription,
     cleanup_indexes: {
         title: "Clean-up Indexes",
         description: "Prune stale OTU indexes if they are no longer being used."
@@ -101,10 +117,9 @@ const pathoscopeBowtieDescriptions = {
 };
 
 const nuvsDescriptions = {
-    make_analysis_dir: {
-        title: "Create Directory",
-        description: "Create a directory where the job will run and analysis files will be stored."
-    },
+    make_analysis_dir: makeAnalysisDirDescription,
+    prepare_reads: prepareReadsDescription,
+    prepare_qc: prepareQCDescription,
     eliminate_otus: {
         title: "Eliminate OTUs",
         description: "Map against the OTU index and eliminate reads that match."
@@ -133,10 +148,7 @@ const nuvsDescriptions = {
         title: "VFam",
         description: "Use hmmscan and vfam profiles to find viral motifs in the assembled contigs."
     },
-    import_results: {
-        title: "Save Results",
-        description: "Annotate the results and save them in the database."
-    }
+    import_results: importResultsDescription
 };
 
 const updateSampleDescriptions = {
