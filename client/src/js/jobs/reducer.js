@@ -39,7 +39,7 @@ export default function jobsReducer(state = initialState, action) {
             return insert(state, action, "created_at");
 
         case WS_UPDATE_JOB:
-            return updatedLinkedJobs(update(state, action, "created_at"));
+            return updatedLinkedJobs(update(state, action, "created_at"), action);
 
         case WS_REMOVE_JOB:
             return remove(state, action);

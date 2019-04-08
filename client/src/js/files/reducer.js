@@ -34,12 +34,12 @@ export const initialState = {
 };
 
 export const appendUpload = (state, action) => {
-    const { file, context } = action;
-    const { fileType, name, size } = file;
+    const { context, file, fileType, localId } = action;
+    const { name, size } = file;
 
     return {
         ...state,
-        uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, fileType, context }]),
+        uploads: state.uploads.concat([{ localId, progress: 0, name, size, type: fileType, context }]),
         showUploadOverlay: true
     };
 };

@@ -1,5 +1,5 @@
-import * as actions from "../actions";
-import FileContainer from "./File";
+import * as actions from "../../actions";
+import FileContainer from "../File";
 
 describe("<File />", () => {
     const initialState = {
