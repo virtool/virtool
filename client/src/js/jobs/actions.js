@@ -8,7 +8,8 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    GET_RESOURCES
+    GET_RESOURCES,
+    GET_LINKED_JOB
 } from "../app/actionTypes";
 
 export const wsInsertJob = data => ({
@@ -62,6 +63,11 @@ export const findJobs = (term, page) => ({
  */
 export const getJob = jobId => ({
     type: GET_JOB.REQUESTED,
+    jobId
+});
+
+export const getLinkedJob = jobId => ({
+    type: GET_LINKED_JOB.REQUESTED,
     jobId
 });
 

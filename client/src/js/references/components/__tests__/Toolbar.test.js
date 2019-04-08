@@ -37,6 +37,6 @@ describe("<ReferenceToolbar />", () => {
         );
         const e = { target: { value: "baz" } };
         wrapper.find("input").prop("onChange")(e);
-        expect(props.onFind).toBeCalledWith(e);
+        expect(props.onFind).toHaveBeenCalledWith(e);
     });
 });

@@ -24,4 +24,12 @@ export const update = ({ sampleId, update }) => Request.patch(`/api/samples/${sa
 
 export const updateRights = ({ sampleId, update }) => Request.patch(`/api/samples/${sampleId}/rights`).send(update);
 
+export const uploadSampleFile = ({ sampleId, suffix, file, onProgress, onSuccess, onFailure }) =>
+    Request.post(`/upload/samples/${sampleId}/files/${suffix}`)
+        .query({ name: file.name })
+        .attach("file", file)
+        .on("progress", onProgress)
+        .then(onSuccess)
+        .catch(onFailure);
+
 export const remove = ({ sampleId }) => Request.delete(`/api/samples/${sampleId}`);

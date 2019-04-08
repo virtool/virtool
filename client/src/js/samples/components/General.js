@@ -29,8 +29,12 @@ const SampleDetailGeneral = props => (
             <Table bordered>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Read Count</th>
-                        <td className="col-xs-8">{props.count}</td>
+                        <th className="col-xs-4">Encoding</th>
+                        <td className="col-xs-8">{props.encoding}</td>
+                    </tr>
+                    <tr>
+                        <th>Read Count</th>
+                        <td>{props.count}</td>
                     </tr>
                     <tr>
                         <th>Read Size</th>
@@ -47,22 +51,6 @@ const SampleDetailGeneral = props => (
                     <tr>
                         <th>Paired</th>
                         <td>{props.paired ? "Yes" : "No"}</td>
-                    </tr>
-                </tbody>
-            </Table>
-        </Panel>
-
-        <Panel>
-            <Panel.Heading>Files</Panel.Heading>
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th className="col-xs-4">Original Files</th>
-                        <td className="col-xs-8">{props.files.join(", ")}</td>
-                    </tr>
-                    <tr>
-                        <th>Encoding</th>
-                        <td>{props.encoding}</td>
                     </tr>
                 </tbody>
             </Table>

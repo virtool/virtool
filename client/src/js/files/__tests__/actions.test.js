@@ -20,38 +20,40 @@ import {
 } from "../actions";
 
 describe("Files Action Creators", () => {
-    let data;
-    let result;
-    let expected;
-
     it("wsInsertFile: returns action with websocket file insert data", () => {
-        data = {};
-        result = wsInsertFile(data);
-        expected = {
+        const data = {
+            id: "foo"
+        };
+
+        const result = wsInsertFile(data);
+
+        expect(result).toEqual({
             type: WS_INSERT_FILE,
             data
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("wsUpdateFile: returns action with websocket file update data", () => {
-        data = {};
-        result = wsUpdateFile(data);
-        expected = {
+        const data = {
+            id: "foo"
+        };
+
+        const result = wsUpdateFile(data);
+
+        expect(result).toEqual({
             type: WS_UPDATE_FILE,
             data
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("wsRemoveFile: returns action with websocket file remove data", () => {
-        data = {};
-        result = wsRemoveFile(data);
-        expected = {
+        const data = ["foo", "bar"];
+        const result = wsRemoveFile(data);
+
+        expect(result).toEqual({
             type: WS_REMOVE_FILE,
             data
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("findFiles: returns action with find file documents", () => {
@@ -68,46 +70,45 @@ describe("Files Action Creators", () => {
     });
 
     it("upload: returns action with file upload to server", () => {
-        const localId = "randomstring";
-        const file = {};
+        const localId = "random_string";
+        const file = {
+            id: "foo"
+        };
         const fileType = "reads";
-        result = upload(localId, file, fileType);
-        expected = {
+        const result = upload(localId, file, fileType);
+        expect(result).toEqual({
             type: UPLOAD.REQUESTED,
+            context: {},
             localId,
             file,
             fileType
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("removeFile: returns action with file remove", () => {
-        const fileId = "testerfileid";
-        result = removeFile(fileId);
-        expected = {
+        const fileId = "foo";
+        const result = removeFile(fileId);
+        expect(result).toEqual({
             type: REMOVE_FILE.REQUESTED,
             fileId
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("uploadProgress: returns action with upload progress", () => {
-        const localId = "randomstring";
+        const localId = "random_string";
         const progress = 6;
-        result = uploadProgress(localId, progress);
-        expected = {
+        const result = uploadProgress(localId, progress);
+        expect(result).toEqual({
             type: UPLOAD_PROGRESS,
             localId,
             progress
-        };
-        expect(result).toEqual(expected);
+        });
     });
 
     it("hideUploadOverlay: returns simple action", () => {
-        result = hideUploadOverlay();
-        expected = {
+        const result = hideUploadOverlay();
+        expect(result).toEqual({
             type: HIDE_UPLOAD_OVERLAY
-        };
-        expect(result).toEqual(expected);
+        });
     });
 });

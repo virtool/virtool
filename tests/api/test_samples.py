@@ -184,7 +184,15 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
     if not error:
         await client.db.samples.insert_one({
             "_id": "test",
-            "created_at": static_time.datetime
+            "name": "Test",
+            "created_at": static_time.datetime,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz"
+                }
+            ]
         })
 
     resp = await client.get("api/samples/test")
@@ -197,7 +205,18 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
 
     assert await resp.json() == {
         "id": "test",
-        "created_at": static_time.iso
+        "name": "Test",
+        "created_at": "2015-10-06T20:00:00Z",
+        "files": [
+            {
+                "id": "foo",
+                "name": "Bar.fq.gz",
+                "download_url": "/download/samples/files/file_1.fq.gz",
+                "display_name": "Bar.fq.gz",
+                "replace_url": "/upload/samples/test/files/1"
+            }
+        ],
+        "caches": []
     }
 
 
@@ -267,7 +286,9 @@ class TestCreate:
 
         expected = {
             "name": "Foobar",
-            "files": ["test.fq"],
+            "files": [{
+                "id": "test.fq"
+            }],
             "subtraction": {
                 "id": "apple"
             },
@@ -286,6 +307,7 @@ class TestCreate:
             "all_read": True,
             "all_write": True,
             "srna": False,
+            "paired": False,
             "user": {
                 "id": "test"
             },
@@ -293,6 +315,7 @@ class TestCreate:
         }
 
         assert await resp.json() == expected
+
 
         expected.update({
             "_id": expected.pop("id"),

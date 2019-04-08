@@ -73,11 +73,19 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
           <th
             className="col-xs-4"
           >
-            Read Count
+            Encoding
           </th>
           <td
             className="col-xs-8"
           >
+            test
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Count
+          </th>
+          <td>
             100.0
           </td>
         </tr>
@@ -111,45 +119,6 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
           </th>
           <td>
             No
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Files
-    </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
-      <tbody>
-        <tr>
-          <th
-            className="col-xs-4"
-          >
-            Original Files
-          </th>
-          <td
-            className="col-xs-8"
-          >
-            foobar
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Encoding
-          </th>
-          <td>
-            test
           </td>
         </tr>
       </tbody>
@@ -268,11 +237,19 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
           <th
             className="col-xs-4"
           >
-            Read Count
+            Encoding
           </th>
           <td
             className="col-xs-8"
           >
+            test
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Count
+          </th>
+          <td>
             100.0
           </td>
         </tr>
@@ -306,45 +283,6 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
           </th>
           <td>
             Yes
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Files
-    </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
-      <tbody>
-        <tr>
-          <th
-            className="col-xs-4"
-          >
-            Original Files
-          </th>
-          <td
-            className="col-xs-8"
-          >
-            hello, world
-          </td>
-        </tr>
-        <tr>
-          <th>
-            Encoding
-          </th>
-          <td>
-            test
           </td>
         </tr>
       </tbody>

@@ -8,14 +8,16 @@ import {
     GET_SAMPLE,
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS
+    UPDATE_SAMPLE_RIGHTS,
+    UPLOAD_SAMPLE_FILE
 } from "../app/actionTypes";
 
 import * as filesAPI from "../files/api";
+import { createUploadChannel, watchUploadChannel } from "../files/sagas";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
 import { createFindURL } from "./utils";
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 export function* watchSamples() {
     yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
@@ -25,6 +27,7 @@ export function* watchSamples() {
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
+    yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
 }
 
@@ -33,9 +36,9 @@ export function* findSamples(action) {
 
     const { term, pathoscope, nuvs } = action;
 
-    const url = createFindURL(term, pathoscope, nuvs);
+    const { pathname, search } = createFindURL(term, pathoscope, nuvs);
 
-    yield put(push(url.pathname + url.search));
+    yield put(push(pathname + search));
 }
 
 export function* findReadFiles() {
@@ -86,6 +89,13 @@ export function* updateSample(action) {
 
 export function* updateSampleRights(action) {
     yield setPending(apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS));
+}
+
+export function* uploadSampleFile(action) {
+    const { localId, sampleId } = action;
+    const channel = yield call(createUploadChannel, action, samplesAPI.uploadSampleFile);
+    yield watchUploadChannel(channel, UPLOAD_SAMPLE_FILE, localId);
+    yield samplesAPI.get({ sampleId });
 }
 
 export function* removeSample(action) {

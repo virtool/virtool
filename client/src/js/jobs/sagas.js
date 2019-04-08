@@ -7,7 +7,8 @@ import {
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES,
-    WS_UPDATE_JOB
+    WS_UPDATE_JOB,
+    GET_LINKED_JOB
 } from "../app/actionTypes";
 import * as jobsAPI from "./api";
 import { select, takeEvery, takeLatest } from "redux-saga/effects";
@@ -22,12 +23,13 @@ export function* watchJobs() {
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
+    yield takeEvery(GET_LINKED_JOB.REQUESTED, getLinkedJob);
 }
 
 export function* wsUpdateJob(action) {
     const jobDetailId = yield select(getJobDetailId);
     if (action.data.id === jobDetailId) {
-        yield apiCall(jobsAPI.get, { id: jobDetailId }, GET_JOB);
+        yield apiCall(jobsAPI.get, { jobId: jobDetailId }, GET_JOB);
     }
 }
 
@@ -38,6 +40,10 @@ export function* findJobs(action) {
 
 export function* getJob(action) {
     yield setPending(apiCall(jobsAPI.get, action, GET_JOB));
+}
+
+export function* getLinkedJob(action) {
+    yield setPending(apiCall(jobsAPI.get, action, GET_LINKED_JOB));
 }
 
 export function* cancelJob(action) {

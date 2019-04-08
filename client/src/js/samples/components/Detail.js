@@ -10,6 +10,7 @@ import { getSample, hideSampleModal, showRemoveSample } from "../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
 import { getCanModify } from "../selectors";
 import General from "./General";
+import Files from "./Files/Files";
 import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
@@ -85,6 +86,8 @@ class SampleDetail extends React.Component {
 
         const { created_at, user } = this.props.detail;
 
+        const prefix = `/samples/${sampleId}`;
+
         return (
             <div>
                 <ViewHeader title={`${detail.name} - Samples`}>
@@ -102,13 +105,16 @@ class SampleDetail extends React.Component {
                 </ViewHeader>
 
                 <Nav bsStyle="tabs">
-                    <LinkContainer to={`/samples/${sampleId}/general`}>
+                    <LinkContainer to={`${prefix}/general`}>
                         <NavItem>General</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/samples/${sampleId}/quality`}>
+                    <LinkContainer to={`${prefix}/files`}>
+                        <NavItem>Files</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`${prefix}/quality`}>
                         <NavItem>Quality</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/samples/${sampleId}/analyses`}>
+                    <LinkContainer to={`${prefix}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
                     {rightsTab}
@@ -117,6 +123,7 @@ class SampleDetail extends React.Component {
                 <Switch>
                     <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact />
                     <Route path="/samples/:sampleId/general" component={General} />
+                    <Route path="/samples/:sampleId/files" component={Files} />
                     <Route path="/samples/:sampleId/quality" component={Quality} />
                     <Route path="/samples/:sampleId/analyses" component={Analyses} />
                     <Route path="/samples/:sampleId/rights" component={Rights} />

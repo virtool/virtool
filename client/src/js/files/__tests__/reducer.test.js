@@ -107,23 +107,33 @@ describe("Files Reducer", () => {
     });
 
     it("should handle UPLOAD_REQUESTED", () => {
+        const localId = "baz";
+        const name = "test.fq.gz";
+        const size = 100;
+        const type = "foo";
+        const context = {
+            foo: "bar"
+        };
+
         const state = {
             uploads: []
         };
+
         const action = {
             type: UPLOAD.REQUESTED,
+            localId,
+            context,
+            fileType: type,
             file: {
-                name: "test.fq.gz",
-                size: 100,
-                type: "reads"
-            },
-            localId: "foo"
+                name,
+                size
+            }
         };
-        const { name, size, type } = action.file;
 
         const result = reducer(state, action);
+
         expect(result).toEqual({
-            uploads: state.uploads.concat([{ localId: action.localId, progress: 0, name, size, type }]),
+            uploads: [...state.uploads, { localId, name, context, size, type, progress: 0 }],
             showUploadOverlay: true,
             uploadsComplete: false
         });

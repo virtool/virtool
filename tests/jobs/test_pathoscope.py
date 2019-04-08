@@ -140,10 +140,6 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     if paired:
         expected_read_filenames.append("reads_2.fastq")
 
-    assert mock_job.params["read_paths"] == [
-        os.path.join(sample_path, filename) for filename in expected_read_filenames
-    ]
-
     assert mock_job.params["subtraction_path"] == os.path.join(
         str(tmpdir),
         "subtractions",
@@ -152,7 +148,7 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     )
 
 
-def test_mk_analysis_dir(dbs, mock_job):
+def test_make_analysis_dir(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,

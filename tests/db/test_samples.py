@@ -170,7 +170,7 @@ class TestRemoveSamples:
     @pytest.mark.parametrize("id_list,ls,samples,analyses", [
         (
             ["test_1"],
-            ["sample_test_2", "sample_test_3"],
+            ["test_2", "test_3"],
             [{"_id": "test_2"}, {"_id": "test_3"}],
             [
                 {"_id": "a_3", "sample": {"id": "test_2"}},
@@ -184,7 +184,7 @@ class TestRemoveSamples:
         ),
         (
             ["test_1", "test_2"],
-            ["sample_test_3"],
+            ["test_3"],
             [{"_id": "test_3"}],
             [
                 {"_id": "a_6", "sample": {"id": "test_3"}},
@@ -201,9 +201,9 @@ class TestRemoveSamples:
         """
         samples_dir = tmpdir.mkdir("samples")
 
-        sample_1_file = samples_dir.mkdir("sample_test_1").join("test.txt")
-        sample_2_file = samples_dir.mkdir("sample_test_2").join("test.txt")
-        sample_3_file = samples_dir.mkdir("sample_test_3").join("test.txt")
+        sample_1_file = samples_dir.mkdir("test_1").join("test.txt")
+        sample_2_file = samples_dir.mkdir("test_2").join("test.txt")
+        sample_3_file = samples_dir.mkdir("test_3").join("test.txt")
 
         for handle in [sample_1_file, sample_2_file, sample_3_file]:
             handle.write("hello world")
@@ -258,7 +258,7 @@ class TestRemoveSamples:
         """
         samples_dir = tmpdir.mkdir("samples")
 
-        sample_1_file = samples_dir.mkdir("sample_test_1").join("test.txt")
+        sample_1_file = samples_dir.mkdir("test_1").join("test.txt")
 
         sample_1_file.write("hello world")
 

@@ -2,6 +2,7 @@
 Provides request handlers for file downloads.
 
 """
+import os
 import gzip
 import json
 
@@ -15,9 +16,68 @@ import virtool.db.references
 import virtool.errors
 import virtool.http.routes
 import virtool.otus
-from virtool.api.utils import CustomEncoder, not_found
+import virtool.utils
+from virtool.api.utils import CustomEncoder, bad_request, not_found
 
 routes = virtool.http.routes.Routes()
+
+
+@routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq")
+async def download_uncompressed_sample_reads(req):
+    db = req.app["db"]
+    data_path = req.app["settings"]["data_path"]
+
+    sample_id = req.match_info["sample_id"]
+
+    document = await db.samples.find_one(sample_id, ["paired", "files"])
+
+    if document is None or not document.get("files", False):
+        return not_found()
+
+    suffix = req.match_info["suffix"]
+
+    path = os.path.join(data_path, "samples", sample_id, f"reads_{suffix}.fastq")
+
+    if not os.path.isfile(path):
+        return not_found()
+
+    file_stats = virtool.utils.file_stats(path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "text"
+    }
+
+    return web.FileResponse(path, chunk_size=1024*1024, headers=headers)
+
+
+@routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq.gz")
+async def download_sample_reads(req):
+    db = req.app["db"]
+    data_path = req.app["settings"]["data_path"]
+
+    sample_id = req.match_info["sample_id"]
+
+    document = await db.samples.find_one(sample_id, ["paired", "files"])
+
+    if document is None or not document.get("files", False):
+        return not_found()
+
+    suffix = req.match_info["suffix"]
+
+    path = os.path.join(data_path, "samples", sample_id, f"reads_{suffix}.fq.gz")
+
+    if not os.path.isfile(path):
+        return not_found()
+
+    file_stats = virtool.utils.file_stats(path)
+
+    headers = {
+        "Content-Length": file_stats["size"],
+        "Content-Type": "application/gzip"
+    }
+
+    return web.FileResponse(path, chunk_size=1024*1024, headers=headers)
 
 
 @routes.get("/download/otus/{otu_id}/isolates/{isolate_id}")
