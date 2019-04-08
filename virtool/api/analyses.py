@@ -118,7 +118,7 @@ async def blast(req):
     if not document["ready"]:
         return conflict("Analysis is still running")
 
-    sequence = virtool.analyses.get_nuvs_sequence_by_index(document, sequence_index)
+    sequence = virtool.analyses.find_nuvs_sequence_by_index(document, sequence_index)
 
     if sequence is None:
         return not_found("Sequence not found")
