@@ -27,7 +27,7 @@ def naive_validator(req):
     }, allow_unknown=True)
 
     if not v.validate(dict(req.query)):
-        return invalid_query(v.errors)
+        return v.errors
 
 
 async def naive_writer(req, file_id):
@@ -56,10 +56,10 @@ async def upload(req):
     if file_type not in FILE_TYPES:
         return not_found()
 
-    error_resp = naive_validator(req)
+    errors = naive_validator(req)
 
-    if error_resp:
-        return error_resp
+    if errors:
+        return invalid_query(errors)
 
     filename = req.query["name"]
 

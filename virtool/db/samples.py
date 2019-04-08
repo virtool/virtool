@@ -58,10 +58,7 @@ async def attempt_file_replacement(app, sample_id, user_id):
 
     files = await refresh_replacements(db, sample_id)
 
-    print(files)
-
     if not all([file["replacement"] for file in files]):
-        print("Foobar")
         return None
 
     logger.info(f"Starting file replacement for sample {sample_id}")

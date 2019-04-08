@@ -1,3 +1,4 @@
+from copy import deepcopy
 from cerberus import Validator
 
 import virtool.db.analyses
@@ -90,8 +91,6 @@ async def find(req):
             }
         else:
             db_query = algorithm_query
-
-    print(db_query)
 
     data = await paginate(
         db.samples,
@@ -198,7 +197,7 @@ async def create(req):
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
-    document = data
+    document = deepcopy(data)
 
     sample_group_setting = settings["sample_group"]
 
@@ -241,17 +240,17 @@ async def create(req):
         },
         "user": {
             "id": user_id
-        }
+        },
+        "paired": len(data["files"]) == 2
     })
 
     files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
 
     files = [virtool.utils.base_processor(file) for file in files]
 
-    await db.samples.insert_one({
-        **document,
-        "files": [{"from": file for file in files}]
-    })
+    document["files"] = files
+
+    await db.samples.insert_one(document)
 
     await virtool.db.files.reserve(db, data["files"])
 
