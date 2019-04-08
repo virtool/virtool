@@ -27,7 +27,7 @@ describe("Group", () => {
         props.active = true;
         const wrapper = shallow(<Group {...props} />);
         wrapper.simulate("click");
-        expect(props.onSelect).toBeCalled();
+        expect(props.onSelect).toHaveBeenCalled();
     });
 });
 
