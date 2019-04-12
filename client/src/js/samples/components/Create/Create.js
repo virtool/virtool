@@ -9,6 +9,7 @@ import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { routerLocationHasState, getTargetChange } from "../../../utils/utils";
 import ReadSelector from "./ReadSelector";
+import { SampleUserGroup } from "./UserGroup";
 
 const getReadyHosts = props => (props.readyHosts && props.readyHosts.length ? props.readyHosts[0].id || "" : "");
 
@@ -26,25 +27,6 @@ const getInitialState = props => ({
     errorFile: "",
     readyHosts: props.readyHosts
 });
-
-const SampleUserGroup = ({ group, groups, onChange }) => {
-    const groupComponents = map(groups, groupId => (
-        <option key={groupId} value={groupId} className="text-capitalize">
-            {groupId}
-        </option>
-    ));
-
-    return (
-        <Col md={3}>
-            <InputError type="select" label="User Group" value={group} onChange={onChange}>
-                <option key="none" value="none">
-                    None
-                </option>
-                {groupComponents}
-            </InputError>
-        </Col>
-    );
-};
 
 class CreateSample extends React.Component {
     constructor(props) {
