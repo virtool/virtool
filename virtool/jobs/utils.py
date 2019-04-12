@@ -7,6 +7,24 @@ import virtool.samples
 import virtool.utils
 
 
+def join_sample_read_paths(sample_path, paired):
+    paths = [
+        os.path.join(sample_path, "reads_1.fq.gz")
+    ]
+
+    if paired:
+        paths.append(os.path.join(sample_path, "reads_2.fq.gz"))
+
+    return paths
+
+
+def copy_or_compress(path, target, proc):
+    if virtool.utils.is_gzipped(path):
+        shutil.copyfile(path, target)
+    else:
+        virtool.utils.compress_file(path, target, processes=proc)
+
+
 def get_cache(db, sample_id, program, parameters):
     document = db.caches.find_one({
         "sample.id": sample_id,
@@ -59,6 +77,28 @@ def get_legacy_read_paths(settings, sample):
 
 def get_read_path(sample_path, suffix):
     return os.path.join(sample_path, f"reads_{suffix}.fq.gz")
+
+
+def get_sample_params(db, settings, task_args):
+    params = dict(task_args)
+
+    sample_id = params["sample_id"]
+
+    sample_path = os.path.join(
+        settings["data_path"],
+        "samples",
+        sample_id
+    )
+
+    document = db.samples.find_one(sample_id)
+
+    params.update({
+        "sample_path": sample_path,
+        "analysis_path": os.path.join(sample_path, "analysis"),
+        "fastqc_path": os.path.join(sample_path, "fastqc"),
+        "document": document,
+        "files": document["files"]
+    })
 
 
 def get_untrimmed_read_paths(settings: dict, sample_id: str, paired: bool):
@@ -161,14 +201,14 @@ def move_trimming_results(path, paired):
     )
 
 
-def parse_fastqc(fastqc_path, sample_path):
+def parse_fastqc(fastqc_path, sample_path, prefix="fastqc_"):
     # Get the text data files from the FastQC output
     for name in os.listdir(fastqc_path):
         if "reads" in name and "." not in name:
             suffix = name.split("_")[1]
             shutil.move(
                 os.path.join(fastqc_path, name, "fastqc_data.txt"),
-                os.path.join(sample_path, f"fastqc_{suffix}.txt")
+                os.path.join(sample_path, f"{prefix}{suffix}.txt")
             )
 
     # Dispose of the rest of the data files.
@@ -180,7 +220,7 @@ def parse_fastqc(fastqc_path, sample_path):
 
     # Parse data file(s)
     for suffix in [1, 2]:
-        path = os.path.join(sample_path, f"fastqc_{suffix}.txt")
+        path = os.path.join(sample_path, f"{prefix}{suffix}.txt")
 
         try:
             handle = open(path, "r")

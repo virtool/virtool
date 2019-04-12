@@ -24,20 +24,11 @@ class Job(virtool.jobs.job.Job):
         ]
 
     def check_db(self):
-        self.params = dict(self.task_args)
-
-        self.params["sample_path"] = os.path.join(
-            self.settings["data_path"],
-            "samples",
-            self.params["sample_id"]
+        self.params = virtool.jobs.utils.get_sample_params(
+            self.db,
+            self.settings,
+            self.task_args
         )
-
-        self.params["analysis_path"] = os.path.join(self.params["sample_path"], "analysis")
-
-        self.params.update({
-            "fastqc_path": os.path.join(self.params["sample_path"], "fastqc"),
-            "paired": len(self.params["files"]) == 2
-        })
 
     def make_sample_dir(self):
         """
@@ -72,10 +63,7 @@ class Job(virtool.jobs.job.Job):
 
             target = os.path.join(self.params["sample_path"], name)
 
-            if virtool.utils.is_gzipped(path):
-                shutil.copyfile(path, target)
-            else:
-                virtool.utils.compress_file(path, target, processes=self.proc)
+            virtool.jobs.utils.copy_or_compress(path, target, proc=self.proc)
 
             stats = virtool.utils.file_stats(target)
 
@@ -98,14 +86,14 @@ class Job(virtool.jobs.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        read_paths = [
-            os.path.join(self.params["sample_path"], "reads_1.fq.gz")
-        ]
+        read_paths = virtool.jobs.utils.join_sample_read_paths(self.params["sample_path"], self.params["paired"])
 
-        if self.params["paired"]:
-            read_paths.append(os.path.join(self.params["sample_path"], "reads_2.fq.gz"))
-
-        virtool.jobs.utils.run_fastqc(self.run_subprocess, self.proc, read_paths, self.params["fastqc_path"])
+        virtool.jobs.utils.run_fastqc(
+            self.run_subprocess,
+            self.proc,
+            read_paths,
+            self.params["fastqc_path"]
+        )
 
     def parse_fastqc(self):
         """
