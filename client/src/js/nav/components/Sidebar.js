@@ -32,7 +32,6 @@ export const Sidebar = ({ administrator }) => (
                     icon="th-list"
                 />
                 <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
-                {administrator ? <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" /> : null}
             </StyledSidebar>
         </Route>
         <Route path="/samples">
