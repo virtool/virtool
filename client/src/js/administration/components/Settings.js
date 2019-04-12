@@ -1,13 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
-import { Nav, NavItem } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
 
 import User from "../../users/components/User";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
-import { LoadingPlaceholder, ViewHeader } from "../../base";
+import { LoadingPlaceholder, Tabs, TabLink, ViewHeader } from "../../base";
 import Sentry from "./Sentry";
 
 export const Server = () => (
@@ -39,17 +37,11 @@ export const Settings = ({ settings }) => {
                 <strong>Administration</strong>
             </ViewHeader>
 
-            <Nav bsStyle="tabs">
-                <LinkContainer to="/administration/server">
-                    <NavItem>Server</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/administration/users">
-                    <NavItem>Users</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/administration/updates">
-                    <NavItem>Updates</NavItem>
-                </LinkContainer>
-            </Nav>
+            <Tabs bsStyle="tabs">
+                <TabLink to="/administration/server">Server</TabLink>
+                <TabLink to="/administration/users">Users</TabLink>
+                <TabLink to="/administration/updates">Updates</TabLink>
+            </Tabs>
 
             {content}
         </div>

@@ -30,6 +30,9 @@ import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
+export * from "./TabLink";
+export * from "./Tabs";
+
 export {
     Alert,
     AlgorithmSelect,

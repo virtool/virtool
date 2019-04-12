@@ -1,13 +1,21 @@
 import React from "react";
 import { includes, get } from "lodash-es";
-import { Nav, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect, Link } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
 
 import Analyses from "../../analyses/components/Analyses";
 import { getSample, hideSampleModal, showRemoveSample } from "../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
+import {
+    Flex,
+    FlexItem,
+    Icon,
+    LoadingPlaceholder,
+    ViewHeader,
+    RelativeTime,
+    Tabs,
+    TabLink,
+    NotFound
+} from "../../base";
 import { getCanModify } from "../selectors";
 import General from "./General";
 import Files from "./Files/Files";
@@ -42,7 +50,7 @@ class SampleDetail extends React.Component {
 
         let editIcon;
         let removeIcon;
-        let rightsTab;
+        let rightsTabLink;
 
         if (this.props.canModify) {
             if (includes(this.props.history.location.pathname, "general")) {
@@ -75,12 +83,10 @@ class SampleDetail extends React.Component {
                 </Link>
             );
 
-            rightsTab = (
-                <LinkContainer to={`/samples/${sampleId}/rights`}>
-                    <NavItem>
-                        <Icon name="key" />
-                    </NavItem>
-                </LinkContainer>
+            rightsTabLink = (
+                <TabLink to={`/samples/${sampleId}/rights`}>
+                    <Icon name="key" />
+                </TabLink>
             );
         }
 
@@ -104,21 +110,13 @@ class SampleDetail extends React.Component {
                     </div>
                 </ViewHeader>
 
-                <Nav bsStyle="tabs">
-                    <LinkContainer to={`${prefix}/general`}>
-                        <NavItem>General</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`${prefix}/files`}>
-                        <NavItem>Files</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`${prefix}/quality`}>
-                        <NavItem>Quality</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`${prefix}/analyses`}>
-                        <NavItem>Analyses</NavItem>
-                    </LinkContainer>
-                    {rightsTab}
-                </Nav>
+                <Tabs bsStyle="tabs">
+                    <TabLink to={`${prefix}/general`}>General</TabLink>
+                    <TabLink to={`${prefix}/files`}>Files</TabLink>
+                    <TabLink to={`${prefix}/quality`}>Quality</TabLink>
+                    <TabLink to={`${prefix}/analyses`}>Analyses</TabLink>
+                    {rightsTabLink}
+                </Tabs>
 
                 <Switch>
                     <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact />

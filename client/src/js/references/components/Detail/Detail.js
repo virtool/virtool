@@ -1,11 +1,20 @@
 import { push } from "connected-react-router";
 import { get } from "lodash-es";
 import React from "react";
-import { Badge, Dropdown, MenuItem, Nav, NavItem } from "react-bootstrap";
+import { Badge, Dropdown, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { Redirect, Route, Switch } from "react-router-dom";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, RelativeTime, ViewHeader } from "../../../base";
+import {
+    Flex,
+    FlexItem,
+    Icon,
+    LoadingPlaceholder,
+    NotFound,
+    RelativeTime,
+    Tabs,
+    TabLink,
+    ViewHeader
+} from "../../../base";
 import IndexDetail from "../../../indexes/components/Detail";
 import Indexes from "../../../indexes/components/Indexes";
 import OTUDetail from "../../../otus/components/Detail/Detail";
@@ -141,22 +150,14 @@ class ReferenceDetail extends React.Component {
                             <div>
                                 {referenceHeader}
 
-                                <Nav bsStyle="tabs">
-                                    <LinkContainer to={`/refs/${id}/manage`}>
-                                        <NavItem>Manage</NavItem>
-                                    </LinkContainer>
-                                    <LinkContainer to={`/refs/${id}/otus`}>
-                                        <NavItem>
-                                            OTUs <Badge>{this.props.detail.otu_count}</Badge>
-                                        </NavItem>
-                                    </LinkContainer>
-                                    <LinkContainer to={`/refs/${id}/indexes`}>
-                                        <NavItem>Indexes</NavItem>
-                                    </LinkContainer>
-                                    <LinkContainer to={`/refs/${id}/settings`}>
-                                        <NavItem>Settings</NavItem>
-                                    </LinkContainer>
-                                </Nav>
+                                <Tabs>
+                                    <TabLink to={`/refs/${id}/manage`}>Manage</TabLink>
+                                    <TabLink to={`/refs/${id}/otus`}>
+                                        OTUs <Badge>{this.props.detail.otu_count}</Badge>
+                                    </TabLink>
+                                    <TabLink to={`/refs/${id}/indexes`}>Indexes</TabLink>
+                                    <TabLink to={`/refs/${id}/settings`}>Settings</TabLink>
+                                </Tabs>
 
                                 <Switch>
                                     <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />

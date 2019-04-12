@@ -1,10 +1,8 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { Switch, Redirect, Route } from "react-router-dom";
-import { Nav, NavItem } from "react-bootstrap";
 
-import { ViewHeader } from "../../base";
+import { TabLink, Tabs, ViewHeader } from "../../base";
 import { getAccount } from "../actions";
 import AccountGeneral from "./General";
 import AccountSettings from "./Settings";
@@ -18,17 +16,12 @@ export const Account = ({ userId, onGet }) => {
             <ViewHeader title="Account">
                 <strong>Account</strong>
             </ViewHeader>
-            <Nav bsStyle="tabs">
-                <LinkContainer to="/account/general">
-                    <NavItem>General</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/account/settings">
-                    <NavItem>Settings</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/account/api">
-                    <NavItem>API</NavItem>
-                </LinkContainer>
-            </Nav>
+
+            <Tabs>
+                <TabLink to="/account/general">General</TabLink>
+                <TabLink to="/account/settings">Settings</TabLink>
+                <TabLink to="/account/api">API</TabLink>
+            </Tabs>
 
             <Switch>
                 <Redirect from="/account" to="/account/general" exact />

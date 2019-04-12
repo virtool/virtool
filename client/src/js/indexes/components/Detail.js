@@ -2,11 +2,11 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Nav, NavItem, Breadcrumb } from "react-bootstrap";
+import { Badge, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getReference } from "../../references/actions";
 import { getIndex, getIndexHistory } from "../actions";
-import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound } from "../../base";
+import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound, TabLink, Tabs } from "../../base";
 import IndexChanges from "./Changes";
 import IndexGeneral from "./General";
 
@@ -58,16 +58,12 @@ export class IndexDetail extends React.Component {
                     </div>
                 </ViewHeader>
 
-                <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${refId}/indexes/${indexId}/general`}>
-                        <NavItem>General</NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={`/refs/${refId}/indexes/${indexId}/changes`}>
-                        <NavItem>
-                            Changes <Badge>{this.props.detail.change_count}</Badge>
-                        </NavItem>
-                    </LinkContainer>
-                </Nav>
+                <Tabs>
+                    <TabLink to={`/refs/${refId}/indexes/${indexId}/general`}>General</TabLink>
+                    <TabLink to={`/refs/${refId}/indexes/${indexId}/changes`}>
+                        Changes <Badge>{this.props.detail.change_count}</Badge>
+                    </TabLink>
+                </Tabs>
 
                 <Switch>
                     <Redirect
