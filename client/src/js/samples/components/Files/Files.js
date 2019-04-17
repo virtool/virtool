@@ -1,3 +1,4 @@
+import { get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { getLinkedJob } from "../../../jobs/actions";
@@ -26,7 +27,7 @@ const mapStateToProps = state => {
     let jobId;
 
     if (!getHasRawFilesOnly(state)) {
-        jobId = state.samples.detail.update_job.id;
+        jobId = get(state, "samples.detail.update_job.id");
     }
 
     return {

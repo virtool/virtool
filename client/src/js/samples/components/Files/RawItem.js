@@ -51,7 +51,7 @@ export const SampleRawItemStatus = ({ job, raw, replacement, upload }) => {
 };
 
 const SampleRawItem = props => {
-    const { display_name, download_url, from, name, onDrop, raw, sampleId, size, suffix, upload, replacement } = props;
+    const { name, download_url, from, onDrop, raw, sampleId, size, suffix, upload, replacement } = props;
 
     const { getRootProps } = useDropzone({ onDrop: files => onDrop(sampleId, suffix, files[0]) });
 
@@ -70,7 +70,7 @@ const SampleRawItem = props => {
                             <div>
                                 <strong>
                                     <a href={download_url} download>
-                                        {display_name}
+                                        {name}
                                     </a>
                                 </strong>
                             </div>

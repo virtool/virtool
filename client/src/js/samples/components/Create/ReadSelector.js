@@ -121,7 +121,13 @@ export default class ReadSelector extends React.PureComponent {
                                     </InputGroup.Button>
                                 </InputGroup>
                             </FormGroup>
-                            <Button icon="retweet" tip="Swap Orientations" tipPlacement="top" onClick={this.swap} />
+                            <Button
+                                type="button"
+                                icon="retweet"
+                                tip="Swap Orientations"
+                                tipPlacement="top"
+                                onClick={this.swap}
+                            />
                         </div>
 
                         <div style={{ maxHeight: "400px", overflowY: "auto" }}>
