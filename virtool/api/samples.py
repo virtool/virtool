@@ -134,7 +134,7 @@ async def get(req):
         snake_case = document["name"].replace(" ", "_")
 
         file.update({
-            "display_name": file["name"].replace("reads_", f"{snake_case}_"),
+            "name": file["name"].replace("reads_", f"{snake_case}_"),
             "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
             "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
         })

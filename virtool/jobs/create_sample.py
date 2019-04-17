@@ -3,6 +3,7 @@ import shutil
 
 import virtool.db.files
 import virtool.db.samples
+import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples
@@ -36,43 +37,43 @@ class Job(virtool.jobs.job.Job):
         analysis data will be stored here.
 
         """
-
         try:
+            os.makedirs(self.params["sample_path"])
             os.makedirs(self.params["analysis_path"])
             os.makedirs(self.params["fastqc_path"])
         except OSError:
             # If the path already exists, remove it and try again.
             shutil.rmtree(self.params["sample_path"])
-            os.makedirs(self.params["analysis_path"])
-            os.makedirs(self.params["fastqc_path"])
+            self.make_sample_dir()
 
     def copy_files(self):
         """
         Copy the files from the files directory to the nascent sample directory.
 
         """
+        files = self.params["files"]
         sample_id = self.params["sample_id"]
         paired = self.params["paired"]
 
+        paths = [os.path.join(self.settings["data_path"], "files", file["id"]) for file in files]
+
+        sizes = virtool.jobs.utils.copy_files_to_sample(
+            paths,
+            self.params["sample_path"],
+            self.proc
+        )
+
         raw = list()
 
-        for index, file in enumerate(self.params["files"]):
-            path = os.path.join(self.settings["data_path"], "files", file["id"])
-
+        for index, file in enumerate(files):
             name = f"reads_{index + 1}.fq.gz"
-
-            target = os.path.join(self.params["sample_path"], name)
-
-            virtool.jobs.utils.copy_or_compress(path, target, proc=self.proc)
-
-            stats = virtool.utils.file_stats(target)
 
             raw.append({
                 "name": name,
-                "size": stats["size"],
                 "download_url": f"/download/samples/{sample_id}/{name}",
-                "raw": True,
-                "from": file
+                "size": sizes[index],
+                "from": file,
+                "raw": True
             })
 
         self.db.samples.update_one({"_id": sample_id}, {
@@ -86,9 +87,9 @@ class Job(virtool.jobs.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        read_paths = virtool.jobs.utils.join_sample_read_paths(self.params["sample_path"], self.params["paired"])
+        read_paths = virtool.jobs.utils.join_read_paths(self.params["sample_path"], self.params["paired"])
 
-        virtool.jobs.utils.run_fastqc(
+        virtool.jobs.fastqc.run_fastqc(
             self.run_subprocess,
             self.proc,
             read_paths,
@@ -101,7 +102,7 @@ class Job(virtool.jobs.job.Job):
         in the main run() method
 
         """
-        qc = virtool.jobs.utils.parse_fastqc(self.params["fastqc_path"], self.params["sample_path"])
+        qc = virtool.jobs.fastqc.parse_fastqc(self.params["fastqc_path"], self.params["sample_path"])
 
         self.db.samples.update_one({"_id": self.params["sample_id"]}, {
             "$set": {

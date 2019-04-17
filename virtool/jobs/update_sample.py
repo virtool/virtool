@@ -4,6 +4,7 @@ import shutil
 import virtool.db.caches
 import virtool.db.files
 import virtool.db.samples
+import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples
@@ -39,26 +40,25 @@ class Job(virtool.jobs.job.Job):
         The files are named replacement_reads_<suffix>.fq.gz. They will be compressed if necessary.
 
         """
+        files = self.params["files"]
         sample_id = self.params["sample_id"]
         paired = self.params["paired"]
 
+        paths = [os.path.join(self.settings["data_path"], "files", file["replacement"]["id"]) for file in files]
+
+        sizes = virtool.jobs.utils.copy_files_to_sample(
+            paths,
+            self.params["sample_path"],
+            self.proc
+        )
+
         raw = list()
 
-        for file in enumerate(self.params["files"]):
-            path = os.path.join(self.settings["data_path"], "files", file["replacement"]["id"])
-
-            name = f"reads_{index + 1}.fq.gz"
-
-            target = os.path.join(self.params["sample_path"], name)
-
-            virtool.jobs.utils.copy_or_compress(path, target, self.proc)
-
-            stats = virtool.utils.file_stats(target)
-
+        for index, file in enumerate(files):
             raw.append({
-                "name": name,
-                "size": stats["size"],
+                "name": f"reads_{index + 1}.fq.gz",
                 "download_url": f"/download/samples/{sample_id}/{name}",
+                "size": sizes[index],
                 "from": file
             })
 
@@ -78,7 +78,7 @@ class Job(virtool.jobs.job.Job):
 
         os.mkdir(fastq_path)
 
-        virtool.jobs.utils.run_fastqc(
+        virtool.jobs.fastqc.run_fastqc(
             self.run_subprocess,
             self.proc,
             self.params["read_paths"],
@@ -91,7 +91,7 @@ class Job(virtool.jobs.job.Job):
         in the main run() method
 
         """
-        self.intermediate["qc"] = virtool.jobs.utils.parse_fastqc(
+        self.intermediate["qc"] = virtool.jobs.fastqc.parse_fastqc(
             self.params["fastqc_path"],
             self.params["sample_path"],
             prefix="replacement_fastqc_"
@@ -118,7 +118,7 @@ class Job(virtool.jobs.job.Job):
 
         files = list()
 
-        cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+        cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
 
         os.makedirs(cache_path)
 
