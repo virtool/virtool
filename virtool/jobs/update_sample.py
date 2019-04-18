@@ -202,3 +202,54 @@ class Job(virtool.jobs.job.Job):
         })
 
         self.dispatch("samples", "update", [self.params["sample_id"]])
+
+    def cleanup(self):
+        # Remove cache
+        cache_id = self.intermediate.get("cache_id")
+
+        if cache_id:
+            self.db.delete_one({"_id": cache_id})
+            cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
+            self.dispatch("caches", "delete", [cache_id])
+
+            # Remove cache directory.
+            try:
+                virtool.utils.rm(cache_path, recursive=True)
+            except FileNotFoundError:
+                pass
+
+        sample_id = self.params["sample_id"]
+
+        # Undo analysis cache field addition.
+        analysis_query = {"sample.id": sample_id}
+
+        self.db.analyses.update_many(analysis_query, {
+            "$unset": {
+                "cache": ""
+            }
+        })
+        analysis_ids = self.db.analyses.distinct("_id", analysis_query)
+        self.dispatch("analyses", "update", analysis_ids)
+
+        # Undo sample document changes.
+        self.db.samples.update_one({"_id": sample_id}, {
+            "$set": {
+                # Use old files and quality fields.
+                "files": self.params["files"],
+                "quality": self.params["document"]["quality"]
+            },
+            "$unset": {
+                "prune": "",
+                "update_job": ""
+            }
+        })
+        self.dispatch("samples", "update", [sample_id])
+
+        # Remove sample files.
+        paths = virtool.jobs.utils.join_read_paths(self.params["sample_path"], paired=True)
+
+        for path in paths:
+            try:
+                virtool.utils.rm(path)
+            except FileNotFoundError:
+                pass
