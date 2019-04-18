@@ -61,6 +61,11 @@ async def attempt_file_replacement(app, sample_id, user_id):
     if not all([file["replacement"] for file in files]):
         return None
 
+    update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
+
+    if update_job and await virtool.db.utils.id_exists(db.jobs, update_job["id"]):
+        return
+
     logger.info(f"Starting file replacement for sample {sample_id}")
 
     task_args = {

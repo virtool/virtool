@@ -139,6 +139,8 @@ async def get(req):
             "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
         })
 
+    update_job = document.get("update_job")
+
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -309,6 +311,21 @@ async def edit(req):
     processed = virtool.utils.base_processor(document)
 
     return json_response(processed)
+
+
+@routes.put("/api/samples/{sample_id}/update_job")
+async def replace(req):
+    sample_id = req.match_info["sample_id"]
+
+    await virtool.db.samples.attempt_file_replacement(
+        req.app,
+        sample_id,
+        req["client"].user_id
+    )
+
+    document = await req.app["db"].samples.find_one(sample_id, virtool.db.samples.PROJECTION)
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 @routes.patch("/api/samples/{sample_id}/rights", schema={
