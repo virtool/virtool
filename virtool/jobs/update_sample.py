@@ -198,6 +198,9 @@ class Job(virtool.jobs.job.Job):
                 "files": files,
                 "prune": True,
                 "quality": self.intermediate["qc"]
+            },
+            "$unset": {
+                "update_job": ""
             }
         })
 
