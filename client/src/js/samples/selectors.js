@@ -43,10 +43,7 @@ export const getHasRawFilesOnly = createSelector(
 
 export const getIsReadyToReplace = createSelector(
     [getSampleFiles, getSampleUpdateJobId],
-    (files, jobId) => {
-        console.log(files, jobId);
-        return every(files, "replacement.id") && !jobId;
-    }
+    (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
 const getStateTerm = state => state.samples.term;

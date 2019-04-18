@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { Alert, ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Box, BoxTitle, Flex } from "../../../base";
-import { getHasRawFilesOnly } from "../../selectors";
+import { getHasRawFilesOnly, getSampleUpdateJobId } from "../../selectors";
 
 const SampleFilesJobStatus = styled.span`
     color: #777777;
@@ -13,17 +13,32 @@ const SampleFilesJobStatus = styled.span`
     text-transform: uppercase;
 `;
 
+const updateJobInProgress = "Update job in progress";
+
 export const SampleFilesJobMessage = ({ job }) => {
-    const latest = last(job.status);
+    let link;
+    let progress = 0;
+    let status;
+
+    if (job) {
+        const latest = last(job.status);
+        link = <Link to={`/jobs/${job.id}`}>{updateJobInProgress}</Link>;
+        progress = latest.progress * 100;
+        status = latest.state;
+    } else {
+        link = <span>{updateJobInProgress}</span>;
+        status = "Waiting";
+    }
+
     return (
         <Box>
             <BoxTitle>
                 <Flex alignItems="flex-end" justifyContent="space-between">
-                    <Link to={`/jobs/${job.id}`}>Update job in progress</Link>
-                    <SampleFilesJobStatus>{latest.state}</SampleFilesJobStatus>
+                    {link}
+                    <SampleFilesJobStatus>{status}</SampleFilesJobStatus>
                 </Flex>
             </BoxTitle>
-            <ProgressBar now={latest.progress * 100} />
+            <ProgressBar now={progress} />
         </Box>
     );
 };
@@ -63,13 +78,12 @@ export const SampleFilesMessage = ({ job, showJob, showLegacy }) => {
 
 const mapStateToProps = state => {
     const hasRawFilesOnly = getHasRawFilesOnly(state);
-    const jobId = get(state, "samples.detail.update_job.id");
-
+    const jobId = getSampleUpdateJobId(state);
     const job = get(state, ["jobs", "linkedJobs", jobId]);
 
     return {
         job,
-        showJob: !!job && !hasRawFilesOnly,
+        showJob: !!jobId,
         showLegacy: !hasRawFilesOnly
     };
 };

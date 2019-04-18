@@ -1,19 +1,17 @@
-import { get } from "lodash-es";
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import {
+    CANCEL_JOB,
+    CLEAR_JOBS,
     FIND_JOBS,
     GET_JOB,
-    CANCEL_JOB,
-    REMOVE_JOB,
-    CLEAR_JOBS,
+    GET_LINKED_JOB,
     GET_RESOURCES,
-    WS_UPDATE_JOB,
-    GET_LINKED_JOB
+    REMOVE_JOB,
+    WS_UPDATE_JOB
 } from "../app/actionTypes";
+import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import * as jobsAPI from "./api";
+import { getJobDetailId, getLinkedJobs } from "./selectors";
 import { select, takeEvery, takeLatest } from "redux-saga/effects";
-
-const getJobDetailId = state => get(state, "jobs.detail.id");
 
 export function* watchJobs() {
     yield takeLatest(FIND_JOBS.REQUESTED, findJobs);
@@ -27,9 +25,17 @@ export function* watchJobs() {
 }
 
 export function* wsUpdateJob(action) {
+    const jobId = action.data.id;
     const jobDetailId = yield select(getJobDetailId);
-    if (action.data.id === jobDetailId) {
-        yield apiCall(jobsAPI.get, { jobId: jobDetailId }, GET_JOB);
+
+    if (jobId === jobDetailId) {
+        yield apiCall(jobsAPI.get, { jobId }, GET_JOB);
+    }
+
+    const linkedJobs = yield select(getLinkedJobs);
+
+    if (linkedJobs.hasOwnProperty(jobId)) {
+        yield apiCall(jobsAPI.get, { jobId }, GET_LINKED_JOB);
     }
 }
 

@@ -7,12 +7,12 @@ import SampleFilesCache from "./Cache";
 import SampleFilesMessage from "./LegacyAlert";
 import SampleFilesRaw from "./Raw";
 
-const SampleDetailFiles = ({ onGetJob, jobId, sampleId }) => {
+const SampleDetailFiles = ({ onGetJob, jobId }) => {
     useEffect(() => {
         if (jobId) {
             onGetJob(jobId);
         }
-    }, [sampleId]);
+    }, [jobId]);
 
     return (
         <div>
@@ -31,8 +31,7 @@ const mapStateToProps = state => {
     }
 
     return {
-        jobId,
-        sampleId: state.samples.detail.id
+        jobId
     };
 };
 

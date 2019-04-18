@@ -17,7 +17,7 @@ const SampleFilesRawHeader = styled(Panel.Heading)`
     }
 `;
 
-export const SampleFilesRaw = ({ id, files, isReadyToReplace, prefix }) => {
+export const SampleFilesRaw = ({ id, files, isReadyToReplace, prefix, onReplace }) => {
     const fileComponents = map(files, (file, index) => (
         <SampleRawItem key={file.name} {...file} prefix={prefix} suffix={index + 1} />
     ));
@@ -26,7 +26,7 @@ export const SampleFilesRaw = ({ id, files, isReadyToReplace, prefix }) => {
 
     if (isReadyToReplace) {
         replaceLink = (
-            <a onClick={() => console.log(id)}>
+            <a onClick={() => onReplace(id)}>
                 <Icon name="exchange" /> Redo
             </a>
         );
