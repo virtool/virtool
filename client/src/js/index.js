@@ -1,12 +1,12 @@
-import createHistory from "history/createBrowserHistory";
+import * as Sentry from "@sentry/browser";
+import { createBrowserHistory } from "history";
 import React from "react";
 import ReactDOM from "react-dom";
-import * as Sentry from "@sentry/browser";
+import { getAccount } from "./account/actions";
+import { getSettings } from "./administration/actions";
 import App from "./app/App";
 import { createAppStore } from "./app/reducer";
 import WSConnection from "./app/websocket";
-import { getAccount } from "./account/actions";
-import { getSettings } from "./administration/actions";
 import { listProcesses } from "./processes/actions";
 
 export * from "../style/style.less";
@@ -20,7 +20,7 @@ if (!window.virtool.dev) {
     window.Sentry = Sentry;
 }
 
-const history = createHistory();
+const history = createBrowserHistory();
 
 window.store = createAppStore(history);
 window.ws = new WSConnection(window.store);

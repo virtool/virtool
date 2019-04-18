@@ -19,6 +19,7 @@ import virtool.utils
 
 COLLECTION_NAMES = [
     "analyses",
+    "caches",
     "files",
     "groups",
     "history",
@@ -181,6 +182,7 @@ class DB:
 
     async def connect(self):
         await self.bind_collection("analyses", projection=virtool.db.analyses.PROJECTION)
+        await self.bind_collection("caches", projection=virtool.db.caches.PROJECTION)
         await self.bind_collection("files", projection=virtool.db.files.PROJECTION)
         await self.bind_collection("groups")
         await self.bind_collection("history", projection=virtool.db.history.LIST_PROJECTION)

@@ -23,7 +23,7 @@ exports[`<InternalControl /> renders correctly 1`] = `
       bsClass="list-group-item"
       listItem={false}
     >
-      <AsyncContainer(OnClickOutside(TypeaheadContainer(WrappedTypeahead)))
+      <AsyncContainer(TypeaheadContainer(WrappedTypeahead))
         allowNew={false}
         delay={200}
         disabled={false}

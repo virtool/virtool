@@ -1,291 +1,61 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AnalysisDetail /> renders <LoadingPlaceholder /> when detail data is not available 1`] = `<LoadingPlaceholder />`;
-
-exports[`<AnalysisDetail /> renders <NotFound /> if GET_ANALYSIS_ERROR exists in store 1`] = `<NotFound />`;
-
-exports[`<AnalysisDetail /> renders correctly 1`] = `
+exports[`<AnalysisDetail /> should render 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
-    <tbody>
-      <tr>
-        <th
-          className="col-md-3"
-        >
-          Algorithm
-        </th>
-        <td
-          className="col-md-9"
-        >
-          Test Algorithm
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Reference
-        </th>
-        <td>
-          <Link
-            replace={false}
-            to="/refs/test-reference"
-          >
-            imported
-          </Link>
-          <Label
-            bsClass="label"
-            bsStyle="default"
-            style={
-              Object {
-                "marginLeft": "5px",
-              }
-            }
-          >
-            1
-          </Label>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Mapped Reads
-        </th>
-        <td>
-          456
-          <span
-            style={
-              Object {
-                "paddingLeft": "5px",
-              }
-            }
-          >
-            (
-            370.73%
-            )
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Library Read Count
-        </th>
-        <td>
-          123
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Created
-        </th>
-        <td>
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-           by 
-          test-user
-        </td>
-      </tr>
-    </tbody>
-  </Table>
-  <Uncontrolled(Panel)>
-    <PanelBody
-      bsClass="panel"
-      collapsible={false}
-    >
-      <LoadingPlaceholder
-        margin="1.2rem"
-        message="Analysis in progress"
-      />
-    </PanelBody>
-  </Uncontrolled(Panel)>
-</div>
-`;
-
-exports[`<AnalysisDetail /> renders correctly 2`] = `
-<div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
-    <tbody>
-      <tr>
-        <th
-          className="col-md-3"
-        >
-          Algorithm
-        </th>
-        <td
-          className="col-md-9"
-        >
-          PathoscopeBowtie
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Reference
-        </th>
-        <td>
-          <Link
-            replace={false}
-            to="/refs/test-reference"
-          >
-            imported
-          </Link>
-          <Label
-            bsClass="label"
-            bsStyle="default"
-            style={
-              Object {
-                "marginLeft": "5px",
-              }
-            }
-          >
-            1
-          </Label>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Mapped Reads
-        </th>
-        <td>
-          456
-          <span
-            style={
-              Object {
-                "paddingLeft": "5px",
-              }
-            }
-          >
-            (
-            370.73%
-            )
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Library Read Count
-        </th>
-        <td>
-          123
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Created
-        </th>
-        <td>
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-           by 
-          test-user
-        </td>
-      </tr>
-    </tbody>
-  </Table>
+  <Header__AnalysisHeader>
+    <Header__AnalysisHeaderAlgorithm>
+      PathoscopeBowtie
+       for 
+      bar
+    </Header__AnalysisHeaderAlgorithm>
+    <Header__AnalysisHeaderCreated>
+      bob
+       started 
+      <RelativeTime />
+    </Header__AnalysisHeaderCreated>
+  </Header__AnalysisHeader>
   <PathoscopeViewer />
 </div>
 `;
 
-exports[`<AnalysisDetail /> renders correctly 3`] = `
+exports[`<AnalysisDetail /> should render error when detail.algorithm is invalid] 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
-    <tbody>
-      <tr>
-        <th
-          className="col-md-3"
-        >
-          Algorithm
-        </th>
-        <td
-          className="col-md-9"
-        >
-          NuVs
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Reference
-        </th>
-        <td>
-          <Link
-            replace={false}
-            to="/refs/test-reference"
-          >
-            imported
-          </Link>
-          <Label
-            bsClass="label"
-            bsStyle="default"
-            style={
-              Object {
-                "marginLeft": "5px",
-              }
-            }
-          >
-            1
-          </Label>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Mapped Reads
-        </th>
-        <td>
-          456
-          <span
-            style={
-              Object {
-                "paddingLeft": "5px",
-              }
-            }
-          >
-            (
-            370.73%
-            )
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Library Read Count
-        </th>
-        <td>
-          123
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Created
-        </th>
-        <td>
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-           by 
-          test-user
-        </td>
-      </tr>
-    </tbody>
-  </Table>
+  "Unusable analysis detail content")
+</div>
+`;
+
+exports[`<AnalysisDetail /> should render expected view when [detail.algorithm='nuvs'] 1`] = `
+<div>
+  <Header__AnalysisHeader>
+    <Header__AnalysisHeaderAlgorithm>
+      NuVs
+       for 
+      bar
+    </Header__AnalysisHeaderAlgorithm>
+    <Header__AnalysisHeaderCreated>
+      bob
+       started 
+      <RelativeTime />
+    </Header__AnalysisHeaderCreated>
+  </Header__AnalysisHeader>
   <Connect(NuVsViewer) />
 </div>
+`;
+
+exports[`<AnalysisDetail /> should render loading when [detail=null] 1`] = `<LoadingPlaceholder />`;
+
+exports[`<AnalysisDetail /> should render message when error is not null 1`] = `<NotFound />`;
+
+exports[`<AnalysisDetail /> should render pending when [detail.ready=false] 1`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <LoadingPlaceholder
+      margin="1.2rem"
+      message="Analysis in progress"
+    />
+  </PanelBody>
+</Uncontrolled(Panel)>
 `;

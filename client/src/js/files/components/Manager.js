@@ -1,4 +1,4 @@
-import { capitalize, filter, forEach } from "lodash-es";
+import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, LoadingPlaceholder, NoneFound, ScrollList, UploadBar, ViewHeader } from "../../base";

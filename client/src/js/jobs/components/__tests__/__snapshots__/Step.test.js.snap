@@ -1,105 +1,78 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<JobStep /> renders Cancelled step 1`] = `
-<div
-  className="step-entry"
->
-  <div
-    className="step-entry-icon"
-  >
-    <Icon
-      bsStyle="danger"
-      faStyle="fas"
-      fixedWidth={false}
-      name="times fa-fw"
-      pullRight={false}
-    />
+exports[`<JobStepDescription /> renders and calls getStepDescription 1`] = `
+<div>
+  <div>
+    <strong>
+      Foo
+    </strong>
   </div>
-  <div
-    className="step-entry-content"
+  <small
+    className="text-muted"
   >
-    Test
-  </div>
-  <div
-    className="step-entry-nobar"
-  />
+    Bar
+  </small>
 </div>
 `;
 
-exports[`<JobStep /> renders Complete step 1`] = `
-<div
-  className="step-entry"
->
-  <div
-    className="step-entry-icon"
-  >
-    <Icon
-      bsStyle="success"
-      faStyle="fas"
-      fixedWidth={false}
-      name="check fa-fw"
-      pullRight={false}
-    />
-  </div>
-  <div
-    className="step-entry-content"
-  >
-    Test
-  </div>
-  <div
-    className="step-entry-nobar"
-  />
-</div>
+exports[`<JobStepIcon /> renders correct icon when state cancelled 1`] = `
+<Icon
+  bsStyle="danger"
+  faStyle="fas"
+  fixedWidth={true}
+  name="ban"
+  pullRight={false}
+/>
 `;
 
-exports[`<JobStep /> renders Error step 1`] = `
-<div
-  className="step-entry"
->
-  <div
-    className="step-entry-icon"
-  >
-    <Icon
-      bsStyle="danger"
-      faStyle="fas"
-      fixedWidth={false}
-      name="times fa-fw"
-      pullRight={false}
-    />
-  </div>
-  <div
-    className="step-entry-content"
-  >
-    Test
-  </div>
-  <div
-    className="step-entry-nobar"
-  />
-</div>
+exports[`<JobStepIcon /> renders correct icon when state complete 1`] = `
+<Icon
+  bsStyle="success"
+  faStyle="fas"
+  fixedWidth={true}
+  name="check"
+  pullRight={false}
+/>
 `;
 
-exports[`<JobStep /> renders Running step 1`] = `
-<div
-  className="step-entry"
->
-  <div
-    className="step-entry-icon"
-  >
-    <Icon
-      bsStyle="success"
-      faStyle="fas"
-      fixedWidth={false}
-      name="check fa-fw"
-      pullRight={false}
-    />
-  </div>
-  <div
-    className="step-entry-content"
-  >
-    Test
-  </div>
-  <div
-    className="step-entry-bar-success"
-  />
-</div>
+exports[`<JobStepIcon /> renders correct icon when state error 1`] = `
+<Icon
+  bsStyle="danger"
+  faStyle="fas"
+  fixedWidth={true}
+  name="times"
+  pullRight={false}
+/>
+`;
+
+exports[`<JobStepIcon /> renders correct icon when state running 1`] = `
+<Loader
+  color="#07689d"
+  size="12px"
+  style={
+    Object {
+      "padding": "0 1.5px",
+    }
+  }
+/>
+`;
+
+exports[`<JobStepIcon /> renders correct icon when state waiting 1`] = `
+<Icon
+  bsStyle="info"
+  faStyle="fas"
+  fixedWidth={true}
+  name="pause"
+  pullRight={false}
+/>
+`;
+
+exports[`<JobStepIcon /> renders correct icon when step complete 1`] = `
+<Icon
+  bsStyle="primary"
+  faStyle="fas"
+  fixedWidth={true}
+  name="arrow-circle-down"
+  pullRight={false}
+/>
 `;

@@ -32,7 +32,7 @@ describe("<UserGroups />", () => {
 
     it("calls onList props when component mounts", () => {
         mount(<UserGroups {...props} />);
-        expect(props.onList).toBeCalled();
+        expect(props.onList).toHaveBeenCalled();
     });
 
     describe("calls onEditGroup when group is edited", () => {
@@ -44,12 +44,12 @@ describe("<UserGroups />", () => {
 
         it("enables membership", () => {
             wrapper.instance().handleEdit("bar");
-            expect(props.onEditGroup).toBeCalledWith("bob", ["foo", "bar"]);
+            expect(props.onEditGroup).toHaveBeenCalledWith("bob", ["foo", "bar"]);
         });
 
         it("disables membership", () => {
             wrapper.instance().handleEdit("foo");
-            expect(props.onEditGroup).toBeCalledWith("bob", []);
+            expect(props.onEditGroup).toHaveBeenCalledWith("bob", []);
         });
     });
 
@@ -85,13 +85,13 @@ describe("<UserGroups />", () => {
 
         it("returns onList", () => {
             props.onList();
-            expect(dispatch).toBeCalledWith(listGroups());
+            expect(dispatch).toHaveBeenCalledWith(listGroups());
         });
 
         it("returns onEditGroup", () => {
             const groups = ["foo", "bar"];
             props.onEditGroup("bob", groups);
-            expect(dispatch).toBeCalledWith(editUser("bob", { groups }));
+            expect(dispatch).toHaveBeenCalledWith(editUser("bob", { groups }));
         });
     });
 });

@@ -1,12 +1,10 @@
 import React from "react";
-import { push } from "connected-react-router";
 import { connect } from "react-redux";
-import { get, map, find, forEach, xorBy } from "lodash-es";
+import { map, forEach, xorBy } from "lodash-es";
 import { Badge, Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { pushState } from "../../app/actions";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox, FlexItem, Flex } from "../../base/index";
 import { getSelectedDocuments } from "../../samples/selectors";
-import { getTaskDisplayName, routerLocationHasState } from "../../utils/utils";
 import { analyze } from "../actions";
 
 export const SamplesList = ({ samples }) => {
@@ -88,7 +86,7 @@ export const IndexSelect = ({ indexes, onSelect, selected, error }) => {
     );
 };
 
-const MultiSummary = ({ algorithm, samples, selected }) => {
+const MultiSummary = ({ samples, selected }) => {
     const product = selected.length * samples.length;
 
     if (product === 0) {

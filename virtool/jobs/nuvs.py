@@ -14,14 +14,14 @@ import pymongo.errors
 
 import virtool.bio
 import virtool.db.sync
-import virtool.jobs.job
+import virtool.jobs.analysis
 
 
 class SubprocessError(Exception):
     pass
 
 
-class Job(virtool.jobs.job.Job):
+class Job(virtool.jobs.analysis.Job):
     """
     A job class for NuVs, a custom workflow used for identifying potential viral sequences from sample libraries. The
     workflow consists of the following steps:
@@ -41,89 +41,19 @@ class Job(virtool.jobs.job.Job):
 
         self._stage_list = [
             self.make_analysis_dir,
-            self.map_otus,
-            self.map_subtraction,
+            self.prepare_reads,
+            self.prepare_qc,
+            self.eliminate_otus,
+            self.eliminate_subtraction,
             self.reunite_pairs,
             self.assemble,
             self.process_fasta,
-            self.press_hmm,
+            self.prepare_hmm,
             self.vfam,
             self.import_results
         ]
 
-    def check_db(self):
-        """
-        Get some initial information from the database that will be required during the course of the job.
-
-        """
-        self.params = {
-            # The id of the parent sample for the analysis being run.
-            "sample_id": self.task_args["sample_id"],
-
-            # The document id for the analysis being run.
-            "analysis_id": self.task_args["analysis_id"],
-
-            "ref_id": self.task_args["ref_id"],
-
-            # The path to the directory where all analysis result files will be written.
-            "analysis_path": None
-        }
-
-        # The document for the sample being analyzed. Assigned after database connection is made.
-        sample = self.db.samples.find_one(self.params["sample_id"])
-
-        sample_path = os.path.join(self.settings["data_path"], "samples", self.params["sample_id"])
-
-        self.params.update({
-            # The path to the directory where all analysis result files will be written.
-            "analysis_path": os.path.join(sample_path, "analysis", self.params["analysis_id"]),
-
-            # The path to a virus Bowtie2 index to subtract against.
-            "index_path": os.path.join(
-                self.settings["data_path"],
-                "references",
-                self.params["ref_id"],
-                self.task_args["index_id"],
-                "reference"
-            ),
-
-            # The path to a host Bowtie2 index to subtract against.
-            "subtraction_path": os.path.join(
-                self.settings["data_path"],
-                "subtractions",
-                sample["subtraction"]["id"].lower().replace(" ", "_"),
-                "reference"
-            ),
-
-            "srna": sample.get("srna", False),
-
-            # The number of reads in the sample library. Assigned after database connection is made.
-            "read_count": int(sample["quality"]["count"])
-        })
-
-        read_paths = [os.path.join(sample_path, "reads_1.fastq")]
-
-        paired = sample.get("paired", None)
-
-        if paired is None:
-            paired = len(sample["files"]) == 2
-
-        if paired:
-            read_paths.append(os.path.join(sample_path, "reads_2.fastq"))
-
-        self.params.update({
-            "read_paths": read_paths,
-            "paired": paired
-        })
-
-    def make_analysis_dir(self):
-        """
-        Make a directory for the analysis in the sample/analysis directory.
-
-        """
-        os.mkdir(self.params["analysis_path"])
-
-    def map_otus(self):
+    def eliminate_otus(self):
         """
         Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
         ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_otus.fq``.
@@ -141,7 +71,7 @@ class Job(virtool.jobs.job.Job):
 
         self.run_subprocess(command)
 
-    def map_subtraction(self):
+    def eliminate_subtraction(self):
         """
         Maps unaligned reads from :meth:`.map_otus` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -283,7 +213,7 @@ class Job(virtool.jobs.job.Job):
                 for orf in entry["orfs"]:
                     f.write(f">sequence_{entry['index']}.{orf['index']}\n{orf['pro']}\n")
 
-    def press_hmm(self):
+    def prepare_hmm(self):
 
         shutil.copy(os.path.join(self.settings["data_path"], "hmm", "profiles.hmm"), self.params["analysis_path"])
 

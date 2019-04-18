@@ -176,24 +176,29 @@ async def update(req):
     if release is None:
         return bad_request("Target release does not exist")
 
-    process = await virtool.db.processes.register(db, "update_remote_reference")
+    created_at = virtool.utils.timestamp()
+
+    context = {
+        "created_at": created_at,
+        "ref_id": ref_id,
+        "release": await virtool.db.utils.get_one_field(db.references, "release", ref_id),
+        "user_id": user_id
+    }
+
+    process = await virtool.db.processes.register(db, "update_remote_reference", context=context)
 
     release, update_subdocument = await virtool.db.references.update(
         req.app,
+        created_at,
         process["id"],
         ref_id,
         release,
         user_id
     )
 
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_update(
-        req.app,
-        ref_id,
-        update_subdocument["created_at"],
-        process["id"],
-        release,
-        user_id
-    ))
+    p = virtool.db.references.UpdateRemoteReferenceProcess(req.app, process["id"])
+
+    await aiojobs.aiohttp.spawn(req, p.run())
 
     return json_response(update_subdocument, status=201)
 
@@ -348,20 +353,22 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.db.processes.register(db, "clone_reference")
-
-        document["process"] = {
-            "id": process["id"]
+        context = {
+            "created_at": document["created_at"],
+            "manifest": manifest,
+            "ref_id": document["_id"],
+            "user_id": user_id
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_clone(
-            req.app,
-            document["_id"],
-            document["created_at"],
-            manifest,
-            process["id"],
-            user_id
-        ))
+        process = await virtool.db.processes.register(db, "clone_reference", context=context)
+
+        p = virtool.db.references.CloneReferenceProcess(req.app, process["id"])
+
+        document["process"] = {
+            "id": p.id
+        }
+
+        await aiojobs.aiohttp.spawn(req, p.run())
 
     elif import_from:
         if not await db.files.count({"_id": import_from}):
@@ -378,20 +385,22 @@ async def create(req):
             user_id
         )
 
-        process = await virtool.db.processes.register(db, "import_reference")
-
-        document["process"] = {
-            "id": process["id"]
+        context = {
+            "created_at": document["created_at"],
+            "path": path,
+            "ref_id": document["_id"],
+            "user_id": user_id
         }
 
-        await aiojobs.aiohttp.spawn(req, virtool.db.references.finish_import(
-            req.app,
-            path,
-            document["_id"],
-            document["created_at"],
-            process["id"],
-            user_id
-        ))
+        process = await virtool.db.processes.register(db, "import_reference", context=context)
+
+        p = virtool.db.references.ImportReferenceProcess(req.app, process["id"])
+
+        document["process"] = {
+            "id": p.id
+        }
+
+        await aiojobs.aiohttp.spawn(req, p.run())
 
     elif remote_from:
         try:
@@ -555,21 +564,23 @@ async def remove(req):
 
     user_id = req["client"].user_id
 
-    process = await virtool.db.processes.register(db, "delete_reference")
+    context = {
+        "ref_id": ref_id,
+        "user_id": user_id
+    }
+
+    process = await virtool.db.processes.register(db, "delete_reference", context=context)
 
     await db.references.delete_one({
         "_id": ref_id
     })
 
-    await aiojobs.aiohttp.spawn(req, virtool.db.references.cleanup_removed(
-        db,
-        process["id"],
-        ref_id,
-        user_id
-    ))
+    p = virtool.db.references.RemoveReferenceProcess(req.app, process["id"])
+
+    await aiojobs.aiohttp.spawn(req, p.run())
 
     headers = {
-        "Content-Location": "/api/processes/" + process["id"]
+        "Content-Location": f"/api/processes/{process['id']}"
     }
 
     return json_response(process, 202, headers)

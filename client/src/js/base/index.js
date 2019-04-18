@@ -1,6 +1,7 @@
 import { Alert } from "./Alert";
 import { AlgorithmSelect } from "./AlgorithmSelect";
 import { AutoProgressBar, ProgressBar } from "./ProgressBar";
+import { Box, BoxTitle, SpacedBox } from "./Box";
 import { bsStyles } from "./utils";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -33,6 +34,8 @@ export {
     Alert,
     AlgorithmSelect,
     AutoProgressBar,
+    Box,
+    BoxTitle,
     bsStyles,
     Button,
     Checkbox,
@@ -58,6 +61,7 @@ export {
     RemoveModal,
     SaveButton,
     ScrollList,
+    SpacedBox,
     Tooltip,
     UploadBar,
     ViewHeader,

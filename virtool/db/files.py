@@ -21,7 +21,7 @@ PROJECTION = [
 ]
 
 
-async def create(db, filename, file_type, user_id=None):
+async def create(db, filename, file_type, reserved=False, user_id=None):
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
@@ -50,7 +50,7 @@ async def create(db, filename, file_type, user_id=None):
         "uploaded_at": uploaded_at,
         "expires_at": expires_at,
         "created": False,
-        "reserved": False,
+        "reserved": reserved,
         "ready": False
     }
 
@@ -73,7 +73,7 @@ async def reserve(db, file_ids):
 async def release_reservations(db, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
-            "reserve": False
+            "reserved": False
         }
     })
 

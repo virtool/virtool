@@ -31,7 +31,7 @@ describe("<Remove />", () => {
             .find(RemoveModal)
             .props()
             .onConfirm();
-        expect(props.onConfirm).toBeCalledWith("foo");
+        expect(props.onConfirm).toHaveBeenCalledWith("foo");
     });
 
     it("calls onHide() when RemoveModal.onHide() is called", () => {
@@ -40,6 +40,6 @@ describe("<Remove />", () => {
             .find(RemoveModal)
             .props()
             .onHide();
-        expect(props.onHide).toBeCalled();
+        expect(props.onHide).toHaveBeenCalled();
     });
 });

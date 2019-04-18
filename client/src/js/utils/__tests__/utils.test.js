@@ -12,7 +12,7 @@ describe("Utility constants and functions module", () => {
 
         bytes = 1024;
         result = utils.byteSize(bytes);
-        expected = "1.0KiB";
+        expected = "1.0KB";
         expect(result).toEqual(expected);
 
         bytes = NaN;

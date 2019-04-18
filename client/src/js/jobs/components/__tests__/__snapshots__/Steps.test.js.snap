@@ -1,23 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<JobSteps /> renders correctly 1`] = `
-<div
-  className="steps-container"
+exports[`<JobSteps /> should render 1`] = `
+<ListGroup
+  bsClass="list-group"
 >
   <JobStep
-    isDone={true}
+    complete={true}
     key="0"
-    step="one"
+    step={
+      Object {
+        "state": "waiting",
+      }
+    }
+    task="bowtie_build"
   />
   <JobStep
-    isDone={true}
+    complete={false}
     key="1"
-    step="two"
+    step={
+      Object {
+        "state": "running",
+      }
+    }
+    task="bowtie_build"
   />
-  <JobStep
-    isDone={false}
-    key="2"
-    step="three"
-  />
-</div>
+</ListGroup>
 `;

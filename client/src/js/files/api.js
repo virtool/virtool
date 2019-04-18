@@ -42,9 +42,11 @@ export const remove = ({ fileId }) => Request.delete(`/api/files/${fileId}`);
  * @param file {object} the file object to upload
  * @param fileType {string} the file type to assign to the uploaded file
  * @param onProgress {function} a callback to call with ``ProgressEvent``s when they are fired
+ * @param onSuccess {function} a callback to call when the upload succeeds
+ * @param onFailure {function} a callback to call when the upload fails
  * @returns {promise}
  */
-export const upload = (file, fileType, onProgress, onSuccess, onFailure) =>
+export const upload = ({ file, fileType, onProgress, onSuccess, onFailure }) =>
     Request.post(`/upload/${fileType}`)
         .query({ name: file.name })
         .attach("file", file)

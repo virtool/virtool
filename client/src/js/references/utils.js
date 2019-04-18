@@ -1,4 +1,4 @@
-import { pull, reject, some } from "lodash-es";
+import { pull, reject } from "lodash-es";
 
 export const dataTypes = ["barcode", "genome"];
 

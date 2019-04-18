@@ -17,6 +17,11 @@
     "plugin:jest/recommended",
     "plugin:prettier/recommended"
   ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "plugins": ["prettier", "import", "lodash", "react", "jest"],
   "rules": {
     "prettier/prettier": "error",
@@ -41,6 +46,7 @@
     "no-undef-init": [1],
     "no-unneeded-ternary": [1],
     "no-unused-expressions": [1],
+    "no-unused-vars": [1],
     "no-useless-concat": [1],
     "no-useless-rename": [1],
     "no-useless-return": [1],

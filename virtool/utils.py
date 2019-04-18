@@ -1,6 +1,8 @@
 import datetime
+import gzip
 import os
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -210,16 +212,57 @@ def get_temp_dir():
     return tempfile.TemporaryDirectory()
 
 
-def decompress_tgz(path, target):
+def compress_file(path: str, target: str, processes=1):
+    """
+    Compress the FASTQ file at `path` to a gzipped file at `target`.
+
+    """
+    if processes > 1 and shutil.which("pigz"):
+        compress_file_with_pigz(path, target, processes)
+    else:
+        compress_file_with_gzip(path, target)
+
+
+def compress_file_with_gzip(path, target):
+    with open(path, "rb") as f_in:
+        with gzip.open(target, "wb", compresslevel=6) as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+
+def compress_file_with_pigz(path, target, processes):
+    command = [
+        "pigz",
+        "-p", str(processes),
+        "-k",
+        "--stdout",
+        path
+    ]
+
+    with open(target, "wb") as f:
+        subprocess.call(command, stdout=f)
+
+
+def decompress_tgz(path: str, target: str):
     """
     Decompress the tar.gz file at ``path`` to the directory ``target``.
 
     :param path: the path to the tar.gz file.
-    :type path: str
-
     :param target: the path to directory into which to decompress the tar.gz file.
-    :type target: str
 
     """
     with tarfile.open(path, "r:gz") as tar:
         tar.extractall(target)
+
+
+def is_gzipped(path):
+    try:
+        with gzip.open(path, "rb") as f:
+            f.peek(1)
+
+    except OSError as err:
+        if "Not a gzipped file" in str(err):
+            return False
+
+        raise
+
+    return True

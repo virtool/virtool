@@ -1,9 +1,17 @@
+import aiohttp.web
 import asyncio
+import logging
 import os
+import pymongo.results
 
+import virtool.db.jobs
+import virtool.db.utils
 import virtool.errors
 import virtool.samples
 import virtool.utils
+
+logger = logging.getLogger(__name__)
+
 
 LIST_PROJECTION = [
     "_id",
@@ -43,6 +51,39 @@ RIGHTS_PROJECTION = {
     "all_write": True,
     "user": True
 }
+
+
+async def attempt_file_replacement(app, sample_id, user_id):
+    db = app["db"]
+
+    files = await refresh_replacements(db, sample_id)
+
+    if not all([file["replacement"] for file in files]):
+        return None
+
+    logger.info(f"Starting file replacement for sample {sample_id}")
+
+    task_args = {
+        "sample_id": sample_id
+    }
+
+    job = await virtool.db.jobs.create(
+        db,
+        app["settings"],
+        "update_sample",
+        task_args,
+        user_id
+    )
+
+    await app["jobs"].enqueue(job["_id"])
+
+    await db.samples.update_one({"_id": sample_id}, {
+        "$set": {
+            "update_job": {
+                "id": job["_id"]
+            }
+        }
+    })
 
 
 async def check_name(db, settings, name, sample_id=None):
@@ -123,6 +164,10 @@ def compose_analysis_query(url_query):
     return pathoscope or nuvs or None
 
 
+def get_sample_path(settings, sample_id):
+    return os.path.join(settings["data_path"], "samples", sample_id)
+
+
 async def get_sample_owner(db, sample_id: str):
     """
     A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
@@ -142,6 +187,51 @@ async def get_sample_owner(db, sample_id: str):
         return document["user"]["id"]
 
     return None
+
+
+async def periodically_prune_old_files(app: aiohttp.web.Application):
+    """
+    Removes old, not-in-use sample files when the sample flag `prune` is set to `True`.
+
+    :param app: the application object
+
+    """
+    db = app["db"]
+
+    logger.info("Running scheduled sample file pruning.")
+
+    async for sample in db.samples.find({"prune": True}, ["files"]):
+        sample_id = sample["_id"]
+
+        # Count running analyses that are still using the old non-cache trimmed files.
+        count = await db.analyses.count({
+            "sample.id": sample_id,
+            "ready": False,
+            "cache": {
+                "$exists": False
+            }
+        })
+
+        # If there are no analyses using the files, delete them and unset the prune field on the sample.
+        if not count:
+            logger.info(f"Pruning files for sample {sample_id}.")
+
+            aws = list()
+
+            sample_path = get_sample_path(app["settings"], sample_id)
+
+            for suffix in [1, 2]:
+                path = os.path.join(sample_path, f"reads_{suffix}.fastq")
+                future = app["run_in_thread"](virtool.utils.rm, path)
+                aws.append(aws)
+
+            await asyncio.gather(*aws)
+
+            await db.samples.update_one({"_id": sample_id}, {
+                "$unset": {
+                    "prune": ""
+                }
+            })
 
 
 async def recalculate_algorithm_tags(db, sample_id):
@@ -167,7 +257,34 @@ async def recalculate_algorithm_tags(db, sample_id):
     return document
 
 
-async def remove_samples(db, settings, id_list):
+async def refresh_replacements(db, sample_id: str) -> list:
+    """
+    Remove sample file `replacement` fields if the linked files have been deleted.
+
+    :param db: the application database client
+    :param sample_id: the id of the sample to refresh
+    :return: the updated files list
+
+    """
+
+    files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
+
+    for file in files:
+        replacement = file.get("replacement")
+
+        if not await db.files.count({"_id": replacement["id"]}):
+            file["replacement"] = None
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": {
+            "files": files
+        }
+    })
+
+    return document["files"]
+
+
+async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.DeleteResult:
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
@@ -201,11 +318,10 @@ async def remove_samples(db, settings, id_list):
         "$in": id_list
     }})
 
-    samples_path = os.path.join(settings["data_path"], "samples")
-
     for sample_id in id_list:
         try:
-            virtool.utils.rm(os.path.join(samples_path, f"sample_{sample_id}"), recursive=True)
+            path = get_sample_path(settings, sample_id)
+            virtool.utils.rm(path, recursive=True)
         except FileNotFoundError:
             pass
 

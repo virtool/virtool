@@ -1,5 +1,6 @@
-import * as actions from "../actions";
-import UploadOverlay, { UploadItem } from "./UploadOverlay";
+import * as actions from "../../actions";
+import { UploadItem } from "../UploadItem";
+import UploadOverlay from "../UploadOverlay";
 
 describe("<UploadOverlay />", () => {
     let initialState;

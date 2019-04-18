@@ -3,7 +3,6 @@
 exports[`<UploadOverlay /> renders <UploadItem /> subcomponent correctly 1`] = `
 <ListGroupItem
   allowFocus={false}
-  key="123abc"
 >
   <ProgressBar
     affixed={true}
@@ -32,7 +31,7 @@ exports[`<UploadOverlay /> renders <UploadItem /> subcomponent correctly 1`] = `
       pad={15}
       shrink={0}
     >
-      1.0KiB
+      1.0KB
     </FlexItem>
   </Flex>
 </ListGroupItem>

@@ -10,13 +10,20 @@ import shutil
 import pymongo
 import pymongo.errors
 
+import virtool.db.caches
 import virtool.db.sync
+import virtool.jobs.analysis
 import virtool.jobs.job
+import virtool.jobs.utils
 import virtool.otus
 import virtool.pathoscope
+import virtool.samples
+import virtool.db.samples
+
+TRIMMING_PROGRAM = "skewer-0.2.2"
 
 
-class Job(virtool.jobs.job.Job):
+class Job(virtool.jobs.analysis.Job):
     """
     A base class for all analysis job objects. Functions include:
 
@@ -32,8 +39,10 @@ class Job(virtool.jobs.job.Job):
         super().__init__(*args, **kwargs)
 
         self._stage_list = [
-            self.mk_analysis_dir,
-            self.map_otus,
+            self.make_analysis_dir,
+            self.prepare_reads,
+            self.prepare_qc,
+            self.map_default_isolates,
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
@@ -44,85 +53,7 @@ class Job(virtool.jobs.job.Job):
             self.cleanup_indexes
         ]
 
-    def check_db(self):
-        """
-        Get some initial information from the database that will be required during the course of the job.
-
-        """
-        self.params = {
-            # The document id for the sample being analyzed. and the analysis document the results will be committed to.
-            "sample_id": self.task_args["sample_id"],
-
-            # The document id for the reference to analyze against.
-            "ref_id": self.task_args["ref_id"],
-
-            # The document id for the analysis being run.
-            "analysis_id": self.task_args["analysis_id"]
-        }
-
-        # The parent folder for all data associated with the sample
-        sample_path = os.path.join(self.settings["data_path"], "samples", self.params["sample_id"])
-
-        self.params.update({
-            # The path to the directory where all analysis result files will be written.
-            "analysis_path": os.path.join(sample_path, "analysis", self.params["analysis_id"]),
-
-            "index_path": os.path.join(
-                self.settings["data_path"],
-                "references",
-                self.params["ref_id"],
-                self.task_args["index_id"],
-                "reference"
-            )
-        })
-
-        # Get the complete sample document from the database.
-        sample = self.db.samples.find_one(self.params["sample_id"])
-
-        read_paths = [os.path.join(sample_path, "reads_1.fastq")]
-
-        paired = sample.get("paired", None)
-
-        if paired is None:
-            paired = len(sample["files"]) == 2
-
-        if paired:
-            read_paths.append(os.path.join(sample_path, "reads_2.fastq"))
-
-        self.params.update({
-            "paired": paired,
-
-            #: The number of reads in the sample library. Assigned after database connection is made.
-            "read_count": int(sample["quality"]["count"]),
-            "read_paths": read_paths,
-            "subtraction_path": os.path.join(
-                self.settings["data_path"],
-                "subtractions",
-                sample["subtraction"]["id"].lower().replace(" ", "_"),
-                "reference"
-            )
-        })
-
-        index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
-
-        sequence_otu_map = index_document.get("sequence_otu_map", None)
-
-        if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(self.db, index_document["manifest"])
-
-        self.params.update({
-            "manifest": index_document["manifest"],
-            "sequence_otu_map": sequence_otu_map
-        })
-
-    def mk_analysis_dir(self):
-        """
-        Make a directory for the analysis in the sample/analysis directory.
-
-        """
-        os.mkdir(self.params["analysis_path"])
-
-    def map_otus(self):
+    def map_default_isolates(self):
         """
         Using ``bowtie2``, maps reads to the main otu reference. This mapping is used to identify candidate otus.
 
@@ -361,11 +292,11 @@ class Job(virtool.jobs.job.Job):
             self.intermediate["ref_lengths"]
         )
 
-        self.results = {
+        self.results.update({
             "ready": True,
             "read_count": read_count,
             "diagnosis": list()
-        }
+        })
 
         for ref_id, hit in report.items():
             # Get the otu info for the sequence id.
@@ -433,6 +364,16 @@ class Job(virtool.jobs.job.Job):
         algorithm tags for the sample document.
 
         """
+        cache_id = self.intermediate.get("cache_id")
+
+        if cache_id:
+            self.db.caches.delete_one({"_id": cache_id})
+            cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+            try:
+                shutil.rmtree(cache_path)
+            except FileNotFoundError:
+                pass
+
         self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
 
         try:
@@ -448,24 +389,6 @@ class Job(virtool.jobs.job.Job):
 
     def cleanup_indexes(self):
         pass
-
-
-def get_sequence_otu_map(db, manifest):
-    sequence_otu_map = dict()
-
-    for otu_id, otu_version in manifest.items():
-        _, patched, _ = virtool.db.sync.patch_otu_to_version(
-            db,
-            otu_id,
-            otu_version
-        )
-
-        for isolate in patched["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence_id = sequence["_id"]
-                sequence_otu_map[sequence_id] = patched["_id"]
-
-    return sequence_otu_map
 
 
 def run_patho(vta_path, reassigned_path):

@@ -67,14 +67,15 @@ export const findFiles = (fileType, term, page) => ({
  * @param localId {string} the local id for the upload (NOT the fileId)
  * @param file {object} file to be uploaded
  * @param fileType {string} file type
- * @param onProgress {function} callback function for uploadProgress API call
+ * @param context {object} extra information to attach to the upload object
  * @returns {object}
  */
-export const upload = (localId, file, fileType) => ({
+export const upload = (localId, file, fileType, context = {}) => ({
     type: UPLOAD.REQUESTED,
     localId,
     file,
-    fileType
+    fileType,
+    context
 });
 
 /**

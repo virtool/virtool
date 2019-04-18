@@ -1,145 +1,127 @@
-import * as actions from "../../actions";
-import AnalysisDetail from "../Detail";
+import { get } from "lodash-es";
+import { AnalysisDetail, mapStateToProps } from "../Detail";
 
 describe("<AnalysisDetail />", () => {
-    let initialState;
-    let store;
     let props;
-    let wrapper;
 
     beforeEach(() => {
-        initialState = {
-            errors: null,
+        props = {
+            detail: {
+                id: "foo",
+                algorithm: "pathoscope_bowtie",
+                ready: true,
+                user: {
+                    id: "bob"
+                }
+            },
+            error: null,
+            quality: {
+                read_count: 1432
+            },
+            sampleName: "bar",
+            match: {
+                params: {
+                    analysisId: "foo"
+                }
+            }
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render message when error is not null", () => {
+        props = {
+            ...props,
+            detail: null,
+            error: {
+                id: "test_error"
+            }
+        };
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render loading when [detail=null]", () => {
+        props.detail = null;
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render pending when [detail.ready=false]", () => {
+        props.detail.ready = false;
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render expected view when [detail.algorithm='nuvs']", () => {
+        props.detail.algorithm = "nuvs";
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render error when detail.algorithm is invalid]", () => {
+        props.detail.algorithm = "baz";
+        const wrapper = shallow(<AnalysisDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps", () => {
+    let state;
+    let expected;
+
+    beforeEach(() => {
+        state = {
             analyses: {
                 detail: {
-                    created_at: "2018-02-14T17:12:00.000000Z",
-                    user: { id: "test-user" },
-                    read_count: 456,
-                    id: "123abc",
-                    index: { version: 1 },
-                    reference: {
-                        name: "imported",
-                        id: "test-reference"
-                    },
-                    algorithm: "test-algorithm"
+                    id: "foo"
+                }
+            },
+            errors: {
+                GET_SAMPLE_ERROR: {
+                    id: "test_error"
                 }
             },
             samples: {
                 detail: {
-                    quality: { count: 123, length: [25, 55] }
+                    name: "Baz",
+                    quality: { read_count: 1231 }
                 }
             }
         };
-        props = { match: { params: { analysisId: "test-analysis" } } };
-    });
 
-    it("renders correctly", () => {
-        store = mockStore(initialState);
-        wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-        expect(wrapper).toMatchSnapshot();
-
-        wrapper.setProps({
+        expected = {
             detail: {
-                ...initialState.analyses.detail,
-                ready: true,
-                algorithm: "pathoscope_bowtie"
-            }
-        });
-        expect(wrapper).toMatchSnapshot();
-
-        wrapper.setProps({
-            detail: {
-                ...initialState.analyses.detail,
-                ready: true,
-                algorithm: "nuvs"
-            }
-        });
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("throws error on malformed analysis detail", () => {
-        store = mockStore(initialState);
-        wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-
-        let error;
-
-        try {
-            wrapper.setProps({ detail: { ready: true, algorithm: "error" } });
-        } catch (e) {
-            error = e;
-        }
-
-        expect(error).toBeInstanceOf(Error);
-    });
-
-    it("renders <NotFound /> if GET_ANALYSIS_ERROR exists in store", () => {
-        initialState = {
-            ...initialState,
-            errors: { GET_ANALYSIS_ERROR: { status: 404 } }
+                id: "foo"
+            },
+            error: null,
+            quality: {
+                read_count: 1231
+            },
+            sampleName: "Baz"
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-        expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <LoadingPlaceholder /> when detail data is not available", () => {
-        initialState = { ...initialState, analyses: { detail: null } };
-        store = mockStore(initialState);
-        wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-        expect(wrapper).toMatchSnapshot();
+    it("should return props", () => {
+        const props = mapStateToProps(state);
+        expect(props).toEqual(expected);
     });
 
-    describe("Dispatch functions", () => {
-        let spy;
+    it("should return error when it exists", () => {
+        const error = {
+            id: "test_get_analysis_error"
+        };
 
-        beforeAll(() => {
-            initialState = {
-                errors: null,
-                analyses: {
-                    detail: {
-                        created_at: "2018-02-14T17:12:00.000000Z",
-                        user: { id: "test-user" },
-                        read_count: 456,
-                        id: "123abc",
-                        index: { version: 1 },
-                        reference: {
-                            name: "imported",
-                            id: "test-reference"
-                        },
-                        algorithm: "test-algorithm"
-                    }
-                },
-                samples: {
-                    detail: {
-                        quality: { count: 123 }
-                    }
-                }
-            };
-            store = mockStore(initialState);
-            props = { match: { params: { analysisId: "test-analysis" } } };
-        });
+        state.errors.GET_ANALYSIS_ERROR = error;
 
-        afterEach(() => {
-            spy.restore();
-        });
+        const props = mapStateToProps(state);
 
-        it("Component mount dispatches get() action", () => {
-            spy = sinon.spy(actions, "getAnalysis");
-            expect(spy.called).toBe(false);
-
-            wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-
-            expect(spy.calledWith("test-analysis")).toBe(true);
-        });
-
-        it("Component unmount disptaches clearAnalysis() action", () => {
-            spy = sinon.spy(actions, "clearAnalysis");
-            expect(spy.called).toBe(false);
-
-            wrapper = shallow(<AnalysisDetail store={store} {...props} />).dive();
-            wrapper.unmount();
-
-            expect(spy.calledOnce).toBe(true);
+        expect(props).toEqual({
+            ...expected,
+            error
         });
     });
 });

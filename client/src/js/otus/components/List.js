@@ -1,16 +1,15 @@
-import React from "react";
-import { get } from "lodash-es";
-import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { Link } from "react-router-dom";
+import React from "react";
 import { Alert } from "react-bootstrap";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ScrollList, NoneFound } from "../../base";
+import { connect } from "react-redux";
+import { Link } from "react-router-dom";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 import { getTerm } from "../selectors";
-import OTUToolbar from "./Toolbar";
-import OTUItem from "./Item";
 import CreateOTU from "./Create";
+import OTUItem from "./Item";
+import OTUToolbar from "./Toolbar";
 
 class OTUsList extends React.Component {
     componentDidMount() {

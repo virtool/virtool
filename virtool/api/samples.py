@@ -1,3 +1,4 @@
+from copy import deepcopy
 from cerberus import Validator
 
 import virtool.db.analyses
@@ -91,8 +92,6 @@ async def find(req):
         else:
             db_query = algorithm_query
 
-    print(db_query)
-
     data = await paginate(
         db.samples,
         db_query,
@@ -112,13 +111,33 @@ async def get(req):
     Get a complete sample document.
 
     """
-    document = await req.app["db"].samples.find_one(req.match_info["sample_id"])
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    document = await db.samples.find_one(sample_id)
 
     if not document:
         return not_found()
 
     if not virtool.samples.get_sample_rights(document, req["client"])[0]:
         return insufficient_rights()
+
+    caches = list()
+
+    async for cache in db.caches.find({"sample.id": sample_id}):
+        caches.append(virtool.utils.base_processor(cache))
+
+    document["caches"] = caches
+
+    for index, file in enumerate(document["files"]):
+        snake_case = document["name"].replace(" ", "_")
+
+        file.update({
+            "display_name": file["name"].replace("reads_", f"{snake_case}_"),
+            "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
+            "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
+        })
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -178,7 +197,7 @@ async def create(req):
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
-    document = data
+    document = deepcopy(data)
 
     sample_group_setting = settings["sample_group"]
 
@@ -221,8 +240,15 @@ async def create(req):
         },
         "user": {
             "id": user_id
-        }
+        },
+        "paired": len(data["files"]) == 2
     })
+
+    files = [await db.files.find_one(file_id, ["_id", "name", "size"]) for file_id in data["files"]]
+
+    files = [virtool.utils.base_processor(file) for file in files]
+
+    document["files"] = files
 
     await db.samples.insert_one(document)
 
@@ -230,7 +256,7 @@ async def create(req):
 
     task_args = {
         "sample_id": sample_id,
-        "files": document["files"],
+        "files": files,
         "srna": data["srna"]
     }
 

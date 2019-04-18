@@ -1,10 +1,9 @@
 import React from "react";
-import { connect } from "react-redux";
-import { get } from "lodash-es";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
+import { connect } from "react-redux";
 import { Icon } from "../../base";
 import { findHmms } from "../actions";
-import { getStateTerm, getTerm } from "../selectors";
+import { getStateTerm } from "../selectors";
 
 export const HMMToolbar = ({ onFind, term }) => (
     <FormGroup>

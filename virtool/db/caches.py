@@ -1,0 +1,81 @@
+import hashlib
+import json
+import os
+
+import pymongo.errors
+
+import virtool.utils
+
+PROJECTION = [
+    "_id",
+    "files",
+    "hash",
+    "parameters",
+    "program",
+    "ready",
+    "sample"
+]
+
+
+def calculate_cache_hash(parameters):
+    string = json.dumps(parameters, sort_keys=True)
+    return hashlib.sha1(string.encode()).hexdigest()
+
+
+def create(db, sample_id, parameters, paired, legacy=False, program="skewer-0.2.2"):
+    try:
+        cache_id = virtool.utils.random_alphanumeric(length=8)
+
+        db.caches.insert_one({
+            "_id": cache_id,
+            "created_at": virtool.utils.timestamp(),
+            "files": list(),
+            "hash": calculate_cache_hash(parameters),
+            "legacy": legacy,
+            "paired": paired,
+            "parameters": parameters,
+            "program": program,
+            "ready": False,
+            "sample": {
+                "id": sample_id
+            }
+        })
+
+        return cache_id
+
+    except pymongo.errors.DuplicateKeyError:
+        return create(db, sample_id, parameters, paired, legacy=legacy)
+
+
+async def prune(app):
+    """
+    db = app["db"]
+
+    seen_hashes = set()
+
+    pipeline = [
+
+    ]
+
+    cursor =
+
+    async for document in db.caches.find({"ready": True}, ["hash"]):
+        if document["hash"] in seen_hashes:
+    """
+    pass
+
+
+async def remove(app, cache_id):
+    db = app["db"]
+    settings = app["settings"]
+
+    await db.caches.delete_one({
+        "_id": cache_id
+    })
+
+    path = os.path.join(settings["data_path"], "caches", cache_id)
+
+    try:
+        await app["run_in_thread"](virtool.utils.rm, path, True)
+    except FileNotFoundError:
+        pass

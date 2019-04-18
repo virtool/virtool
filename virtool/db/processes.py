@@ -3,15 +3,17 @@ import virtool.processes
 import virtool.utils
 
 
-async def register(db, process_type, file_size=None):
+async def register(db, process_type, context=None):
     process_id = await virtool.db.utils.get_new_id(db.processes)
 
     document = {
         "_id": process_id,
+        "complete": False,
         "count": 0,
         "created_at": virtool.utils.timestamp(),
-        "file_size": file_size,
         "progress": 0,
+        "resumable": False,
+        "context": context or dict(),
         "step": virtool.processes.FIRST_STEPS[process_type],
         "type": process_type
     }
@@ -21,7 +23,7 @@ async def register(db, process_type, file_size=None):
     return virtool.utils.base_processor(document)
 
 
-async def update(db, process_id, count=None, progress=None, step=None, file_progress=None, file_size=None, errors=None):
+async def update(db, process_id, count=None, progress=None, step=None, context_update=None, errors=None):
     update_dict = dict()
 
     if count is not None:
@@ -33,20 +35,27 @@ async def update(db, process_id, count=None, progress=None, step=None, file_prog
     if step:
         update_dict["step"] = step
 
-    if file_progress:
-        update_dict["file_progress"] = file_progress
-
-    if file_size:
-        update_dict["file_size"] = file_size
-
     if errors is not None:
         update_dict["errors"] = errors
+
+    if context_update:
+        for key, value in context_update.items():
+            update_dict[f"context.{key}"] = value
 
     document = await db.processes.find_one_and_update({"_id": process_id}, {
         "$set": update_dict
     })
 
     return virtool.utils.base_processor(document)
+
+
+async def complete(db, process_id):
+    document = await db.processes.find_one_and_update({"_id": process_id}, {
+        "$set": {
+            "complete": True,
+            "progress": 1
+        }
+    })
 
 
 async def remove(db, process_id):
