@@ -18,7 +18,7 @@ def test_collapse_pathoscope_coverage(coverage, expected):
     Test that two sample coverage data sets are correctly converted to coordinates.
 
     """
-    assert virtool.analyses.coverage_to_coordinates(coverage) == expected
+    assert virtool.analyses.transform_coverage_to_coordinates(coverage) == expected
 
 
 @pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
@@ -28,7 +28,7 @@ def test_get_json_path(name):
     and `analysis_id` arguments.
 
     """
-    func = virtool.analyses.get_nuvs_json_path if name == "nuvs" else virtool.analyses.get_pathoscope_json_path
+    func = virtool.analyses.join_nuvs_json_path if name == "nuvs" else virtool.analyses.join_pathoscope_json_path
 
     path = func("data_foo", "analysis_bar", "sample_foo")
 

@@ -1,7 +1,13 @@
-import pytest
+import os
+import sys
 import shutil
 
+import pytest
+
 import virtool.jobs.analysis
+
+TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
+FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
 
 
 @pytest.fixture

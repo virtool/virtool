@@ -56,7 +56,7 @@ async def format_analysis(db, settings, document):
 
 async def format_nuvs(db, settings, document):
     if document["results"] == "file":
-        path = virtool.analyses.get_nuvs_json_path(
+        path = virtool.analyses.join_nuvs_json_path(
             settings["data_path"],
             document["_id"],
             document["sample"]["id"]
@@ -82,7 +82,7 @@ async def format_nuvs(db, settings, document):
 
 async def format_pathoscope(db, settings, document):
     if document["diagnosis"] == "file":
-        path = virtool.analyses.get_pathoscope_json_path(
+        path = virtool.analyses.join_pathoscope_json_path(
             settings["data_path"],
             document["_id"],
             document["sample"]["id"]
@@ -158,7 +158,7 @@ async def format_pathoscope(db, settings, document):
                 sequence["id"] = sequence.pop("_id")
 
                 if "align" in sequence:
-                    sequence["align"] = virtool.analyses.coverage_to_coordinates(sequence["align"])
+                    sequence["align"] = virtool.analyses.transform_coverage_to_coordinates(sequence["align"])
 
                 del sequence["sequence"]
 

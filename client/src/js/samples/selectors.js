@@ -34,23 +34,32 @@ export const getCanModifyRights = createSelector(
 
 export const getSampleFiles = state => state.samples.detail.files;
 
+export const getSampleUpdateJobId = state => get(state, "samples.detail.update_job.id");
+
 export const getHasRawFilesOnly = createSelector(
     [getSampleFiles],
     files => every(files, "raw")
+);
+
+export const getIsReadyToReplace = createSelector(
+    [getSampleFiles, getSampleUpdateJobId],
+    (files, jobId) => every(files, "replacement.id") && !jobId
 );
 
 const getStateTerm = state => state.samples.term;
 
 export const getTerm = getTermSelectorFactory(getStateTerm);
 
-const getSelectedIds = state => get(state, "router.location.state.createAnalysis", []);
+export const getSampleDetail = state => state.samples.detail;
 
-const getDocuments = state => state.samples.documents;
+export const getSampleDetailId = state => get(state, "samples.detail.id");
 
-const getDetail = state => state.samples.detail;
+export const getSampleDocuments = state => state.samples.documents;
+
+export const getSelectedSampleIds = state => get(state, "router.location.state.createAnalysis", []);
 
 export const getSelectedDocuments = createSelector(
-    [getSelectedIds, getDetail, getDocuments],
+    [getSelectedSampleIds, getSampleDetail, getSampleDocuments],
     (selected, detail, documents) => {
         if (detail && selected.length === 1 && selected[0] === detail.id) {
             return [detail];

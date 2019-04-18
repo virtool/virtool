@@ -8,6 +8,7 @@ import {
     FIND_READY_HOSTS,
     GET_SAMPLE,
     CREATE_SAMPLE,
+    REPLACE_LEGACY_FILES,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
@@ -138,6 +139,11 @@ export const uploadSampleFile = (localId, sampleId, suffix, file) => ({
         sampleId,
         suffix
     }
+});
+
+export const replaceLegacyFiles = sampleId => ({
+    type: REPLACE_LEGACY_FILES.REQUESTED,
+    sampleId
 });
 
 /**
