@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import virtool.db.caches
 import virtool.db.files
@@ -55,8 +54,10 @@ class Job(virtool.jobs.job.Job):
         raw = list()
 
         for index, file in enumerate(files):
+            name = f"reads_{index + 1}.fq.gz"
+
             raw.append({
-                "name": f"reads_{index + 1}.fq.gz",
+                "name": name,
                 "download_url": f"/download/samples/{sample_id}/{name}",
                 "size": sizes[index],
                 "from": file
@@ -78,10 +79,15 @@ class Job(virtool.jobs.job.Job):
 
         os.mkdir(fastq_path)
 
+        paths = virtool.jobs.utils.join_read_paths(
+            self.params["sample_path"],
+            self.params["paired"]
+        )
+
         virtool.jobs.fastqc.run_fastqc(
             self.run_subprocess,
             self.proc,
-            self.params["read_paths"],
+            paths,
             fastq_path
         )
 
@@ -106,13 +112,15 @@ class Job(virtool.jobs.job.Job):
         """
         sample_id = self.params["sample_id"]
 
-        cache_id = virtool.db.caches.create(
+        self.intermediate["cache_id"] = virtool.db.caches.create(
             self.db,
             sample_id,
             virtool.samples.LEGACY_TRIM_PARAMETERS,
             self.params["paired"],
             legacy=True
         )
+
+        cache_id = self.intermediate["cache_id"]
 
         self.dispatch("caches", "insert", [cache_id])
 
@@ -189,7 +197,7 @@ class Job(virtool.jobs.job.Job):
             "$set": {
                 "files": files,
                 "prune": True,
-                "quality": self.intermediate["quality"]
+                "quality": self.intermediate["qc"]
             }
         })
 
