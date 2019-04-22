@@ -32,4 +32,6 @@ export const uploadSampleFile = ({ sampleId, suffix, file, onProgress, onSuccess
         .then(onSuccess)
         .catch(onFailure);
 
+export const replaceLegacyFiles = ({ sampleId }) => Request.put(`/api/samples/${sampleId}/replacement`);
+
 export const remove = ({ sampleId }) => Request.delete(`/api/samples/${sampleId}`);

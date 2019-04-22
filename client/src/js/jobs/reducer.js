@@ -22,24 +22,13 @@ export const initialState = {
     linkedJobs: {}
 };
 
-const updatedLinkedJobs = (state, action) => {
-    if (state.linkedJobs.hasOwnProperty(action.data.id)) {
-        return {
-            ...state,
-            linkedJobs: { ...state.linkedJobs, [action.data.id]: action.data }
-        };
-    }
-
-    return state;
-};
-
 export default function jobsReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_JOB:
             return insert(state, action, "created_at");
 
         case WS_UPDATE_JOB:
-            return updatedLinkedJobs(update(state, action, "created_at"), action);
+            return update(state, action, "created_at");
 
         case WS_REMOVE_JOB:
             return remove(state, action);

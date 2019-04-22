@@ -368,7 +368,7 @@ class Job(virtool.jobs.analysis.Job):
 
         if cache_id:
             self.db.caches.delete_one({"_id": cache_id})
-            cache_path = virtool.jobs.utils.get_cache_path(self.settings, cache_id)
+            cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
             try:
                 shutil.rmtree(cache_path)
             except FileNotFoundError:

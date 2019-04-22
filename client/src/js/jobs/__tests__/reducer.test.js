@@ -50,12 +50,7 @@ describe("Job Reducer", () => {
                     id: "bar",
                     task: "running_job"
                 }
-            ],
-            linkedJobs: {
-                bar: {
-                    task: "running_job"
-                }
-            }
+            ]
         };
         const action = {
             type: WS_UPDATE_JOB,
@@ -76,13 +71,7 @@ describe("Job Reducer", () => {
                     id: "bar",
                     task: "finish_job"
                 }
-            ],
-            linkedJobs: {
-                bar: {
-                    id: "bar",
-                    task: "finish_job"
-                }
-            }
+            ]
         });
     });
 

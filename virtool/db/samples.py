@@ -58,8 +58,13 @@ async def attempt_file_replacement(app, sample_id, user_id):
 
     files = await refresh_replacements(db, sample_id)
 
-    if not all([file["replacement"] for file in files]):
+    if not all([file.get("replacement") for file in files]):
         return None
+
+    update_job = await virtool.db.utils.get_one_field(db.samples, "update_job", sample_id)
+
+    if update_job and await virtool.db.utils.id_exists(db.jobs, update_job["id"]):
+        return
 
     logger.info(f"Starting file replacement for sample {sample_id}")
 
@@ -266,13 +271,12 @@ async def refresh_replacements(db, sample_id: str) -> list:
     :return: the updated files list
 
     """
-
     files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
 
     for file in files:
         replacement = file.get("replacement")
 
-        if not await db.files.count({"_id": replacement["id"]}):
+        if replacement and not await db.files.count({"_id": replacement["id"]}):
             file["replacement"] = None
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {

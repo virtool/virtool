@@ -212,7 +212,6 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
                 "id": "foo",
                 "name": "Bar.fq.gz",
                 "download_url": "/download/samples/files/file_1.fq.gz",
-                "display_name": "Bar.fq.gz",
                 "replace_url": "/upload/samples/test/files/1"
             }
         ],
@@ -315,7 +314,6 @@ class TestCreate:
         }
 
         assert await resp.json() == expected
-
 
         expected.update({
             "_id": expected.pop("id"),

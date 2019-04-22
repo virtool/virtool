@@ -1,35 +1,75 @@
-import React from "react";
+import React, { useCallback } from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
-import { Row, Col } from "react-bootstrap";
 
 import { byteSize } from "../../../utils/utils";
 import { Icon, ListGroupItem } from "../../../base";
 
-export default class ReadItem extends React.PureComponent {
-    static propTypes = {
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        size: PropTypes.number.isRequired,
-        onSelect: PropTypes.func.isRequired,
-        selected: PropTypes.bool
-    };
+const ReadIcon = styled.span`
+    font-size: 24px;
+    margin-right: 15px;
+`;
 
-    static defaultProps = {
-        selected: false
-    };
+const ReadTitle = styled.div`
+    align-items: center;
+    display: flex;
+`;
 
-    onSelect = () => {
-        this.props.onSelect(this.props.id);
-    };
+const StyledReadItem = styled(ListGroupItem)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+`;
 
-    render = () => (
-        <ListGroupItem onClick={this.onSelect} active={this.props.selected}>
-            <Row>
-                <Col md={8}>
-                    <Icon name="file" /> {this.props.name}
-                </Col>
-                <Col md={4}>{byteSize(this.props.size)}</Col>
-            </Row>
-        </ListGroupItem>
+const StyledReadOrientation = styled.div`
+    background-color: #07689d;
+    border: 2px solid #ffffff;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    width: 48px;
+`;
+
+const ReadOrientation = ({ index, selected }) => {
+    if (selected) {
+        return <StyledReadOrientation>{index === 0 ? "LEFT" : "RIGHT"}</StyledReadOrientation>;
+    }
+
+    return null;
+};
+
+const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
+    const select = useCallback(() => onSelect(id), []);
+
+    return (
+        <StyledReadItem onClick={select} active={selected}>
+            <ReadTitle>
+                <ReadIcon>
+                    <Icon name="file" />
+                </ReadIcon>
+                <div>
+                    <strong>{name}</strong>
+                    <div>{byteSize(size)}</div>
+                </div>
+            </ReadTitle>
+            <ReadOrientation index={index} selected={selected} />
+        </StyledReadItem>
     );
-}
+};
+
+ReadItem.defaultProps = {
+    selected: false
+};
+
+ReadItem.propTypes = {
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    index: PropTypes.number.isRequired,
+    size: PropTypes.number.isRequired,
+    onSelect: PropTypes.func.isRequired,
+    selected: PropTypes.bool
+};
+
+export default ReadItem;

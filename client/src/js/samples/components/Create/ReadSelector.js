@@ -9,7 +9,7 @@
  * @exports ReadSelector
  */
 import React from "react";
-import { filter, includes, intersection, map, sortBy, toLower, without } from "lodash-es";
+import { filter, includes, indexOf, intersection, map, sortBy, toLower, without } from "lodash-es";
 import PropTypes from "prop-types";
 import { Panel, FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -54,6 +54,10 @@ export default class ReadSelector extends React.PureComponent {
         this.props.onSelect(selected);
     };
 
+    swap = () => {
+        this.props.onSelect(this.props.selected.slice().reverse());
+    };
+
     reset = e => {
         e.preventDefault();
         this.setState({ filter: "" }, () => this.props.onSelect([]));
@@ -69,14 +73,10 @@ export default class ReadSelector extends React.PureComponent {
             file => !this.state.filter || includes(toLower(file.name), loweredFilter)
         );
 
-        let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file => (
-            <ReadItem
-                key={file.id}
-                {...file}
-                selected={includes(this.props.selected, file.id)}
-                onSelect={this.onSelect}
-            />
-        ));
+        let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file => {
+            const index = indexOf(this.props.selected, file.id);
+            return <ReadItem key={file.id} {...file} index={index} selected={index > -1} onSelect={this.onSelect} />;
+        });
 
         if (!fileComponents.length) {
             fileComponents = (
@@ -121,6 +121,13 @@ export default class ReadSelector extends React.PureComponent {
                                     </InputGroup.Button>
                                 </InputGroup>
                             </FormGroup>
+                            <Button
+                                type="button"
+                                icon="retweet"
+                                tip="Swap Orientations"
+                                tipPlacement="top"
+                                onClick={this.swap}
+                            />
                         </div>
 
                         <div style={{ maxHeight: "400px", overflowY: "auto" }}>

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, forEach, xorBy } from "lodash-es";
+import { map, forEach, some, xorBy } from "lodash-es";
 import { Badge, Modal, ListGroup, Col, Label } from "react-bootstrap";
 import { pushState } from "../../app/actions";
 import { AlgorithmSelect, Button, ListGroupItem, NoneFound, Checkbox, FlexItem, Flex } from "../../base/index";
@@ -56,22 +56,25 @@ export const IndexSelect = ({ indexes, onSelect, selected, error }) => {
                             ...errorStyle
                         }}
                     >
-                        {map(indexes, index => (
-                            <ListGroupItem
-                                key={index.id}
-                                onClick={() => onSelect({ id: index.id, refId: index.reference.id })}
-                            >
-                                <Col xs={1}>
-                                    <Checkbox checked={!!find(selected, ["id", index.id])} />
-                                </Col>
-                                <Col xs={8}>
-                                    <strong>{index.reference.name}</strong>
-                                </Col>
-                                <Col xs={3}>
-                                    Index Version <Label>{index.version}</Label>
-                                </Col>
-                            </ListGroupItem>
-                        ))}
+                        {map(indexes, index => {
+                            const isSelected = some(selected, { id: index.id });
+                            return (
+                                <ListGroupItem
+                                    key={index.id}
+                                    onClick={() => onSelect({ id: index.id, refId: index.reference.id })}
+                                >
+                                    <Col xs={1}>
+                                        <Checkbox checked={isSelected} />
+                                    </Col>
+                                    <Col xs={8}>
+                                        <strong>{index.reference.name}</strong>
+                                    </Col>
+                                    <Col xs={3}>
+                                        Index Version <Label>{index.version}</Label>
+                                    </Col>
+                                </ListGroupItem>
+                            );
+                        })}
                     </ListGroup>
                     <Col xs={12}>
                         <div className="input-form-error">

@@ -9,13 +9,15 @@ import {
     REMOVE_SAMPLE,
     UPDATE_SAMPLE,
     UPDATE_SAMPLE_RIGHTS,
-    UPLOAD_SAMPLE_FILE
+    UPLOAD_SAMPLE_FILE,
+    WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
 
 import * as filesAPI from "../files/api";
 import { createUploadChannel, watchUploadChannel } from "../files/sagas";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
+import { getSampleDetailId } from "./selectors";
 import { createFindURL } from "./utils";
 import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
@@ -29,6 +31,14 @@ export function* watchSamples() {
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
+    yield takeEvery(WS_UPDATE_SAMPLE, wsUpdateSample);
+}
+
+export function* wsUpdateSample(action) {
+    const sampleDetailId = yield select(getSampleDetailId);
+    if (action.data.id === sampleDetailId) {
+        yield apiCall(samplesAPI.get, { sampleId: sampleDetailId }, GET_SAMPLE);
+    }
 }
 
 export function* findSamples(action) {

@@ -1,14 +1,15 @@
-import React from "react";
-import { filter, map, replace, split, get } from "lodash-es";
-import { connect } from "react-redux";
-import { Modal, Row, Col, ControlLabel, InputGroup } from "react-bootstrap";
 import { push } from "connected-react-router";
-
-import { findReadFiles, findReadyHosts, createSample } from "../../actions";
-import { clearError } from "../../../errors/actions";
+import { filter, get, map, replace, split } from "lodash-es";
+import React from "react";
+import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
+import { connect } from "react-redux";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
-import { routerLocationHasState, getTargetChange } from "../../../utils/utils";
+import { clearError } from "../../../errors/actions";
+import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
+
+import { createSample, findReadFiles, findReadyHosts } from "../../actions";
 import ReadSelector from "./ReadSelector";
+import { SampleUserGroup } from "./UserGroup";
 
 const getReadyHosts = props => (props.readyHosts && props.readyHosts.length ? props.readyHosts[0].id || "" : "");
 
@@ -26,25 +27,6 @@ const getInitialState = props => ({
     errorFile: "",
     readyHosts: props.readyHosts
 });
-
-const SampleUserGroup = ({ group, groups, onChange }) => {
-    const groupComponents = map(groups, groupId => (
-        <option key={groupId} value={groupId} className="text-capitalize">
-            {groupId}
-        </option>
-    ));
-
-    return (
-        <Col md={3}>
-            <InputError type="select" label="User Group" value={group} onChange={onChange}>
-                <option key="none" value="none">
-                    None
-                </option>
-                {groupComponents}
-            </InputError>
-        </Col>
-    );
-};
 
 class CreateSample extends React.Component {
     constructor(props) {
@@ -68,8 +50,7 @@ class CreateSample extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onFindHosts();
-        this.props.onFindFiles();
+        this.props.onFindHostsAndFiles();
     }
 
     handleHide = () => {
@@ -239,7 +220,7 @@ class CreateSample extends React.Component {
                         </Row>
 
                         <Row>
-                            <Col xs={12} md={6}>
+                            <Col xs={12} sm={6}>
                                 <InputError
                                     name="srna"
                                     type="select"
@@ -253,7 +234,7 @@ class CreateSample extends React.Component {
                             </Col>
 
                             {userGroup}
-                            <Col xs={12} md={6}>
+                            <Col xs={12} sm={6}>
                                 <InputError type="text" label="Library Type" value={libraryType} readOnly={true} />
                             </Col>
                         </Row>
@@ -285,11 +266,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onFindHosts: () => {
+    onFindHostsAndFiles: () => {
         dispatch(findReadyHosts());
-    },
-
-    onFindFiles: () => {
         dispatch(findReadFiles());
     },
 
