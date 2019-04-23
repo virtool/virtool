@@ -8,6 +8,7 @@ import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples
+import virtool.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
 
@@ -148,6 +149,8 @@ class Job(virtool.jobs.job.Job):
                 paired
             )
 
+            self.dispatch("caches", "update", [cache_id])
+
             self.intermediate["cache_id"] = cache_id
 
             # The path for the nascent cache. Trimmed file will be written here.
@@ -173,6 +176,28 @@ class Job(virtool.jobs.job.Job):
             self.run_subprocess(command, env=env)
 
             move_trimming_results(cache_path, paired)
+
+            cached_read_paths = virtool.jobs.utils.join_read_paths(cache_path, paired)
+
+            cache_files = list()
+
+            for index, path in enumerate(cached_read_paths):
+                name = f"reads_{index + 1}.fq.gz"
+
+                stats = virtool.utils.file_stats(path)
+
+                cache_files.append({
+                    "name": name,
+                    "size": stats["size"]
+                })
+
+            self.db.caches.update_one({"_id": cache_id}, {
+                "$set": {
+                    "files": cache_files
+                }
+            })
+
+            self.dispatch("caches", "update", [cache_id])
 
         self.params["read_paths"] = paths
 
@@ -201,6 +226,7 @@ class Job(virtool.jobs.job.Job):
 
         self.db.caches.update_one({"_id": cache_id}, {
             "$set": {
+                "ready": True,
                 "quality": qc
             }
         })
