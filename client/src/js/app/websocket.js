@@ -95,7 +95,10 @@ export default function WSConnection({ getState, dispatch }) {
 
         if (modifier) {
             const action = modifier(getState(), message);
-            return dispatch(action);
+
+            if (action) {
+                return dispatch(action);
+            }
         }
     };
 
