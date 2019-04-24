@@ -1,7 +1,7 @@
 import CX from "classnames";
 import React from "react";
 import styled from "styled-components";
-import { Dropdown, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import { Dropdown, DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Button, Checkbox, Flex, FlexItem, Icon } from "../../../base";
 import {
@@ -12,6 +12,12 @@ import {
     toggleShowPathoscopeMedian,
     toggleShowPathoscopeReads
 } from "../../actions";
+
+const DownloadDropdownTitle = () => (
+    <span>
+        <Icon name="file-download" /> Export
+    </span>
+);
 
 export const PathoscopeToolbar = props => {
     const {
@@ -29,6 +35,8 @@ export const PathoscopeToolbar = props => {
         sortDescending,
         sortKey
     } = props;
+
+    const analysisId = props.detail.id;
 
     return (
         <div className={CX("toolbar", className)}>
@@ -110,6 +118,15 @@ export const PathoscopeToolbar = props => {
                     </MenuItem>
                 </Dropdown.Menu>
             </Dropdown>
+
+            <DropdownButton id="download-dropdown" title={<DownloadDropdownTitle />} pullRight style={{ zIndex: 1 }}>
+                <MenuItem href={`/download/analyses/${analysisId}.csv`}>
+                    <Icon name="file-csv" /> CSV
+                </MenuItem>
+                <MenuItem href={`/download/analyses/${analysisId}.xlsx`}>
+                    <Icon name="file-excel" /> Excel
+                </MenuItem>
+            </DropdownButton>
         </div>
     );
 };
