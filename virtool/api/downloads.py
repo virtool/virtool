@@ -22,34 +22,36 @@ from virtool.api.utils import CustomEncoder, bad_request, not_found
 
 routes = virtool.http.routes.Routes()
 
-ANALYSIS_DOWNLOAD_FORMATS = (
-    "csv",
-    "excel"
-)
 
-
-@routes.get("/download/analyses/{analysis_id}")
+@routes.get("/download/analyses/{analysis_id}.{extension}")
 async def download_analysis(req):
     db = req.app["db"]
+    run_in_thread = req.app["run_in_thread"]
     settings = req.app["settings"]
 
     analysis_id = req.match_info["analysis_id"]
-    file_format = req.query.get("format")
-
-    if file_format not in ANALYSIS_DOWNLOAD_FORMATS:
-        file_format = "csv"
-
-    print(file_format)
+    extension = req.match_info["extension"]
 
     document = await db.analyses.find_one(analysis_id)
 
+    if extension == "xlsx":
+        formatted = await virtool.db.analyses.format_analysis_to_excel(db, settings, document)
+
+        headers = {
+            "Content-Disposition": f"attachment; filename={analysis_id}.xlsx",
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+
+        return web.Response(body=formatted, headers=headers)
+
     formatted = await virtool.db.analyses.format_analysis_to_csv(db, settings, document)
 
-    filename = f"{analysis_id}.csv"
+    headers = {
+        "Content-Disposition": f"attachment; filename={analysis_id}.csv",
+        "Content-Type": "text/csv"
+    }
 
-    return web.Response(text=formatted, headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
+    return web.Response(text=formatted, headers=headers)
 
 
 @routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq")
