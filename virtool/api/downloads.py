@@ -9,6 +9,7 @@ import json
 from aiohttp import web
 
 import virtool.bio
+import virtool.db.analyses
 import virtool.db.downloads
 import virtool.db.history
 import virtool.db.otus
@@ -20,6 +21,35 @@ import virtool.utils
 from virtool.api.utils import CustomEncoder, bad_request, not_found
 
 routes = virtool.http.routes.Routes()
+
+ANALYSIS_DOWNLOAD_FORMATS = (
+    "csv",
+    "excel"
+)
+
+
+@routes.get("/download/analyses/{analysis_id}")
+async def download_analysis(req):
+    db = req.app["db"]
+    settings = req.app["settings"]
+
+    analysis_id = req.match_info["analysis_id"]
+    file_format = req.query.get("format")
+
+    if file_format not in ANALYSIS_DOWNLOAD_FORMATS:
+        file_format = "csv"
+
+    print(file_format)
+
+    document = await db.analyses.find_one(analysis_id)
+
+    formatted = await virtool.db.analyses.format_analysis_to_csv(db, settings, document)
+
+    filename = f"{analysis_id}.csv"
+
+    return web.Response(text=formatted, headers={
+        "Content-Disposition": f"attachment; filename={filename}"
+    })
 
 
 @routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq")

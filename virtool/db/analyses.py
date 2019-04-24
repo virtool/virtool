@@ -1,5 +1,7 @@
 import asyncio
+import csv
 import json
+import io
 import os
 
 import aiofiles
@@ -11,7 +13,18 @@ import virtool.db.indexes
 import virtool.db.jobs
 import virtool.db.samples
 import virtool.db.utils
+import virtool.otus
 import virtool.utils
+
+CSV_HEADERS = (
+    "otu",
+    "isolate",
+    "sequence",
+    "length",
+    "weight",
+    "depth",
+    "coverage"
+)
 
 PROJECTION = [
     "_id",
@@ -52,6 +65,33 @@ async def format_analysis(db, settings, document):
         return await format_pathoscope(db, settings, document)
 
     raise ValueError("Could not determine analysis algorithm")
+
+
+async def format_analysis_to_csv(db, settings, document):
+    formatted = await format_analysis(db, settings, document)
+
+    output = io.StringIO()
+
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    writer.writerow(CSV_HEADERS)
+
+    for otu in formatted["diagnosis"]:
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                row = [
+                    otu["name"],
+                    virtool.otus.format_isolate_name(isolate),
+                    sequence["accession"],
+                    sequence["length"],
+                    sequence["pi"],
+                    0,
+                    0
+                ]
+
+                writer.writerow(row)
+
+    return output.getvalue()
 
 
 async def format_nuvs(db, settings, document):
