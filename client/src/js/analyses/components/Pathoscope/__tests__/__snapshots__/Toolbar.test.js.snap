@@ -2,6 +2,11 @@
 
 exports[`<Toolbar /> renders correctly 1`] = `
 <StyledComponent
+  detail={
+    Object {
+      "id": "foobar",
+    }
+  }
   filterIsolates={false}
   filterOTUs={false}
   forwardedComponent={
@@ -72,6 +77,11 @@ exports[`<Toolbar /> renders correctly 1`] = `
 
 exports[`<Toolbar /> renders correctly 2`] = `
 <StyledComponent
+  detail={
+    Object {
+      "id": "foobar",
+    }
+  }
   filterIsolates={false}
   filterOTUs={false}
   forwardedComponent={

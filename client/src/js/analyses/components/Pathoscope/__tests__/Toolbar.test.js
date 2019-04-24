@@ -4,6 +4,9 @@ import PathoscopeToolbarContainer from "../Toolbar";
 describe("<Toolbar />", () => {
     const initialState = {
         analyses: {
+            detail: {
+                id: "foobar"
+            },
             filterIsolates: false,
             filterOTUs: false,
             showMedian: false,
