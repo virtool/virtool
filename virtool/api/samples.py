@@ -139,8 +139,6 @@ async def get(req):
             "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
         })
 
-    update_job = document.get("update_job")
-
     return json_response(virtool.utils.base_processor(document))
 
 

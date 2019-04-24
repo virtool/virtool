@@ -227,7 +227,7 @@ async def periodically_prune_old_files(app: aiohttp.web.Application):
 
             for suffix in [1, 2]:
                 path = os.path.join(sample_path, f"reads_{suffix}.fastq")
-                future = app["run_in_thread"](virtool.utils.rm, path)
+                app["run_in_thread"](virtool.utils.rm, path)
                 aws.append(aws)
 
             await asyncio.gather(*aws)

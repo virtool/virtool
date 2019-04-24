@@ -146,8 +146,6 @@ async def format_analysis_to_excel(db, settings, document):
 
                 rows.append(row)
 
-    col_count = len(CSV_HEADERS)
-
     for row_index, row in enumerate(rows):
         row_number = row_index + 2
         for col_index, value in enumerate(row):

@@ -8,7 +8,6 @@ import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.samples
 import virtool.utils
-import virtool.samples
 
 
 class Job(virtool.jobs.job.Job):
@@ -41,7 +40,6 @@ class Job(virtool.jobs.job.Job):
         """
         files = self.params["files"]
         sample_id = self.params["sample_id"]
-        paired = self.params["paired"]
 
         paths = [os.path.join(self.settings["data_path"], "files", file["replacement"]["id"]) for file in files]
 

@@ -18,7 +18,7 @@ import virtool.errors
 import virtool.http.routes
 import virtool.otus
 import virtool.utils
-from virtool.api.utils import CustomEncoder, bad_request, not_found
+from virtool.api.utils import CustomEncoder, not_found
 
 routes = virtool.http.routes.Routes()
 
@@ -26,7 +26,6 @@ routes = virtool.http.routes.Routes()
 @routes.get("/download/analyses/{analysis_id}.{extension}")
 async def download_analysis(req):
     db = req.app["db"]
-    run_in_thread = req.app["run_in_thread"]
     settings = req.app["settings"]
 
     analysis_id = req.match_info["analysis_id"]
