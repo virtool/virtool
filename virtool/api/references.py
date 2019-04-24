@@ -420,9 +420,6 @@ async def create(req):
 
             raise
 
-        except aiohttp.ClientConnectorError:
-            return bad_gateway("Could not reach GitHub")
-
         release = virtool.github.format_release(release)
 
         document = await virtool.db.references.create_remote(

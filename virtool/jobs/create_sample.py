@@ -53,7 +53,6 @@ class Job(virtool.jobs.job.Job):
         """
         files = self.params["files"]
         sample_id = self.params["sample_id"]
-        paired = self.params["paired"]
 
         paths = [os.path.join(self.settings["data_path"], "files", file["id"]) for file in files]
 

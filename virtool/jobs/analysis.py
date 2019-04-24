@@ -61,13 +61,7 @@ class Job(virtool.jobs.job.Job):
                 "reference"
             ),
 
-            "sample_path": sample_path
-        })
-
-        # Get the complete sample document from the database.
-        sample = self.db.samples.find_one(self.params["sample_id"])
-
-        self.params.update({
+            "sample_path": sample_path,
             "paired": sample["paired"],
             #: The number of reads in the sample library. Assigned after database connection is made.
             "read_count": int(sample["quality"]["count"]),
@@ -107,7 +101,6 @@ class Job(virtool.jobs.job.Job):
         self.intermediate["qc"] = None
 
         paired = self.params["paired"]
-        srna = self.params["srna"]
         sample_id = self.params["sample_id"]
 
         parameters = get_trimming_parameters(

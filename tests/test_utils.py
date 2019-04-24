@@ -165,30 +165,3 @@ class TestAverageList:
     def test_wrong_arg_type(self):
         with pytest.raises(TypeError):
             virtool.utils.average_list([2, 5, 6], "a")
-
-
-@pytest.mark.parametrize("method", ["execl", "execv", None], ids=["execl", "execv", "error"])
-async def test_reload(method, mocker):
-    if method:
-        mocker.patch("sys.executable", "python" if method == "execl" else "run")
-    else:
-        mocker.patch("sys.executable", "foobar")
-
-    execl = mocker.patch("os.execl")
-    execv = mocker.patch("os.execv")
-
-    app = mocker.Mock()
-
-    setattr(app, "on_shutdown", [
-        make_mocked_coro(),
-        make_mocked_coro()
-    ])
-
-    if method:
-        await virtool.utils.reload(app)
-    else:
-        with pytest.raises(SystemError):
-            await virtool.utils.reload(app)
-
-    assert execl.called is (method == "execl")
-    assert execv.called is (method == "execv")

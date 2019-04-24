@@ -50,7 +50,7 @@ async def update(db, process_id, count=None, progress=None, step=None, context_u
 
 
 async def complete(db, process_id):
-    document = await db.processes.find_one_and_update({"_id": process_id}, {
+    await db.processes.update_one({"_id": process_id}, {
         "$set": {
             "complete": True,
             "progress": 1

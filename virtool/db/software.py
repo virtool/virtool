@@ -38,7 +38,7 @@ async def fetch_and_update_releases(app, ignore_errors=False):
     session = app["client"]
     settings = app["settings"]
 
-    if app is None or version is "Unknown":
+    if app is None or version == "Unknown":
         return list()
 
     try:

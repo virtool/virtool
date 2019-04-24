@@ -1,6 +1,11 @@
 import asyncio
+import csv
 import json
+import io
 import os
+import openpyxl
+import openpyxl.styles
+import statistics
 
 import aiofiles
 
@@ -11,7 +16,18 @@ import virtool.db.indexes
 import virtool.db.jobs
 import virtool.db.samples
 import virtool.db.utils
+import virtool.otus
 import virtool.utils
+
+CSV_HEADERS = (
+    "OTU",
+    "Isolate",
+    "Sequence",
+    "Length",
+    "Weight",
+    "Median Depth",
+    "Coverage"
+)
 
 PROJECTION = [
     "_id",
@@ -24,6 +40,15 @@ PROJECTION = [
     "user",
     "sample"
 ]
+
+
+def calculate_median_depths(document):
+    depths = dict()
+
+    for hit in document["diagnosis"]:
+        depths[hit["id"]] = statistics.median(hit["align"])
+
+    return depths
 
 
 async def format_analysis(db, settings, document):
@@ -52,6 +77,83 @@ async def format_analysis(db, settings, document):
         return await format_pathoscope(db, settings, document)
 
     raise ValueError("Could not determine analysis algorithm")
+
+
+async def format_analysis_to_csv(db, settings, document):
+    depths = calculate_median_depths(document)
+
+    formatted = await format_analysis(db, settings, document)
+
+    output = io.StringIO()
+
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    writer.writerow(CSV_HEADERS)
+
+    for otu in formatted["diagnosis"]:
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                row = [
+                    otu["name"],
+                    virtool.otus.format_isolate_name(isolate),
+                    sequence["accession"],
+                    sequence["length"],
+                    sequence["pi"],
+                    depths.get(sequence["id"], 0),
+                    sequence["coverage"]
+                ]
+
+                writer.writerow(row)
+
+    return output.getvalue()
+
+
+async def format_analysis_to_excel(db, settings, document):
+    depths = calculate_median_depths(document)
+
+    formatted = await format_analysis(db, settings, document)
+
+    output = io.BytesIO()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+
+    ws.title = f"Pathoscope for {document['sample']['id']}"
+
+    header_font = openpyxl.styles.Font(name="Calibri", bold=True)
+
+    for index, header in enumerate(CSV_HEADERS):
+        col = index + 1
+        cell = ws.cell(column=col, row=1, value=header)
+        cell.font = header_font
+
+    rows = list()
+
+    for otu in formatted["diagnosis"]:
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                row = [
+                    otu["name"],
+                    virtool.otus.format_isolate_name(isolate),
+                    sequence["accession"],
+                    sequence["length"],
+                    sequence["pi"],
+                    depths.get(sequence["id"], 0),
+                    sequence["coverage"]
+                ]
+
+                assert len(row) == len(CSV_HEADERS)
+
+                rows.append(row)
+
+    for row_index, row in enumerate(rows):
+        row_number = row_index + 2
+        for col_index, value in enumerate(row):
+            ws.cell(column=col_index + 1, row=row_number, value=value)
+
+    wb.save(output)
+
+    return output.getvalue()
 
 
 async def format_nuvs(db, settings, document):

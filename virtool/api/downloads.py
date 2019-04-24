@@ -9,6 +9,7 @@ import json
 from aiohttp import web
 
 import virtool.bio
+import virtool.db.analyses
 import virtool.db.downloads
 import virtool.db.history
 import virtool.db.otus
@@ -17,9 +18,39 @@ import virtool.errors
 import virtool.http.routes
 import virtool.otus
 import virtool.utils
-from virtool.api.utils import CustomEncoder, bad_request, not_found
+from virtool.api.utils import CustomEncoder, not_found
 
 routes = virtool.http.routes.Routes()
+
+
+@routes.get("/download/analyses/{analysis_id}.{extension}")
+async def download_analysis(req):
+    db = req.app["db"]
+    settings = req.app["settings"]
+
+    analysis_id = req.match_info["analysis_id"]
+    extension = req.match_info["extension"]
+
+    document = await db.analyses.find_one(analysis_id)
+
+    if extension == "xlsx":
+        formatted = await virtool.db.analyses.format_analysis_to_excel(db, settings, document)
+
+        headers = {
+            "Content-Disposition": f"attachment; filename={analysis_id}.xlsx",
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+
+        return web.Response(body=formatted, headers=headers)
+
+    formatted = await virtool.db.analyses.format_analysis_to_csv(db, settings, document)
+
+    headers = {
+        "Content-Disposition": f"attachment; filename={analysis_id}.csv",
+        "Content-Type": "text/csv"
+    }
+
+    return web.Response(text=formatted, headers=headers)
 
 
 @routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq")
@@ -103,7 +134,7 @@ async def download_isolate(req):
         raise
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename='{filename}'"
+        "Content-Disposition": f"attachment; filename={filename}"
     })
 
 
@@ -132,7 +163,7 @@ async def download_otu(req):
         return web.Response(status=404)
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename='{filename}'"
+        "Content-Disposition": f"attachment; filename={filename}"
     })
 
 
@@ -172,7 +203,7 @@ async def download_reference(req):
     body = await req.app["run_in_process"](gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
-        headers={"Content-Disposition": f"attachment; filename='reference.{scope}.json.gz'"},
+        headers={"Content-Disposition": f"attachment; filename=reference.{scope}.json.gz"},
         content_type="application/gzip",
         body=body
     )
@@ -206,5 +237,5 @@ async def download_sequence(req):
         return web.Response(status=404)
 
     return web.Response(text=fasta, headers={
-        "Content-Disposition": f"attachment; filename='{filename}'"
+        "Content-Disposition": f"attachment; filename={filename}"
     })

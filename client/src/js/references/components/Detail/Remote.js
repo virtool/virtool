@@ -13,7 +13,7 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
     if (!updating && release.newer) {
         button = (
             <Row style={{ margin: "0", paddingTop: "1rem" }}>
-                <Button icon={updating ? null : "download"} bsStyle="primary" onClick={onUpdate} disabled={updating}>
+                <Button icon="download" bsStyle="primary" onClick={onUpdate} disabled={updating}>
                     Install
                 </Button>
             </Row>

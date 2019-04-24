@@ -449,10 +449,12 @@ async def wait_for_restart(runner: web.AppRunner, events: dict):
     exe = sys.executable
 
     if exe.endswith("python") or "python3" in exe:
-        return os.execl(exe, exe, *sys.argv)
+        os.execl(exe, exe, *sys.argv)
+        return
 
     if exe.endswith("run"):
-        return os.execv(exe, sys.argv)
+        os.execv(exe, sys.argv)
+        return
 
     raise SystemError("Could not determine executable type")
 

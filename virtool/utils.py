@@ -150,21 +150,6 @@ def get_static_hash(req):
     return ""
 
 
-async def reload(app):
-    exe = sys.executable
-
-    for callback in app.on_shutdown:
-        await callback(app)
-
-    if exe.endswith("python") or "python3" in exe:
-        return os.execl(exe, exe, *sys.argv)
-
-    if exe.endswith("run"):
-        return os.execv(exe, sys.argv)
-
-    raise SystemError("Could not determine executable type")
-
-
 async def update_status_process(db, _id, progress, step=None, error=None):
     """
     Update the process field in a status document. These fields are used to track long-running asynchronous processes

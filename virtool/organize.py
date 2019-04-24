@@ -26,7 +26,6 @@ async def delete_unready(collection):
 
 async def organize(app):
     db = app["db"]
-    settings = app["settings"]
     server_version = app["version"]
 
     await organize_analyses(app)
