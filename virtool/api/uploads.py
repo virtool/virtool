@@ -70,9 +70,15 @@ async def upload(req):
         user_id=req["client"].user_id
     )
 
-    await naive_writer(req, document["id"])
+    file_id = document["id"]
 
-    return json_response(document, status=201)
+    await naive_writer(req, file_id)
+
+    headers = {
+        "Location": f"/api/files/{file_id}"
+    }
+
+    return json_response(document, status=201, headers=headers)
 
 
 @routes.post("/upload/samples/{sample_id}/files/{suffix}")
