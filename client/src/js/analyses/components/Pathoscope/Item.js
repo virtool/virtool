@@ -64,7 +64,6 @@ export const PathoscopeItem = props => {
 
 const mapStateToProps = (state, ownProps) => ({
     ...state.analyses.data[ownProps.index],
-    showMedian: state.analyses.showMedian,
     showReads: state.analyses.showReads
 });
 

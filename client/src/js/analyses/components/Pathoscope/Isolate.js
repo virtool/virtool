@@ -13,8 +13,6 @@ export default class PathoscopeIsolate extends React.Component {
         coverage: PropTypes.number,
         depth: PropTypes.number,
         maxDepth: PropTypes.number,
-        meanDepth: PropTypes.number,
-        medianDepth: PropTypes.number,
         reads: PropTypes.number,
         sequences: PropTypes.arrayOf(PropTypes.object),
         setScroll: PropTypes.func,

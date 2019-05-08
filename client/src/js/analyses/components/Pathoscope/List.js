@@ -111,14 +111,13 @@ export class PathoscopeList extends React.Component {
 }
 
 const mapStateToProps = state => {
-    const { data, filterOTUs, filterIsolates, showMedian, sortDescending, sortKey } = state.analyses;
+    const { data, filterOTUs, filterIsolates, sortDescending, sortKey } = state.analyses;
 
     return {
         data,
         filterIsolates,
         filterOTUs,
         maxReadLength: state.samples.detail.quality.length[1],
-        showMedian,
         sortDescending,
         sortKey
     };

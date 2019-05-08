@@ -13,7 +13,6 @@ import {
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS
 } from "../../app/actionTypes";
 import {
@@ -25,7 +24,6 @@ import {
     setPathoscopeFilter,
     setSortKey,
     togglePathoscopeSortDescending,
-    toggleShowPathoscopeMedian,
     toggleShowPathoscopeReads,
     findAnalyses,
     getAnalysis,
@@ -97,10 +95,6 @@ describe("Analyses Action Creators:", () => {
 
     it("togglePathoscopeSortDescending: returns action to sort listings", () => {
         expect(togglePathoscopeSortDescending()).toEqual({ type: TOGGLE_SORT_PATHOSCOPE_DESCENDING });
-    });
-
-    it("toggleShowPathoscopeMedian: returns action to display median", () => {
-        expect(toggleShowPathoscopeMedian()).toEqual({ type: TOGGLE_SHOW_PATHOSCOPE_MEDIAN });
     });
 
     it("toggleShowPathoscopeReads: returns action to display reads", () => {
