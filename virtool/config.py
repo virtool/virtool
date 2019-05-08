@@ -5,7 +5,6 @@ import os
 import psutil
 import sys
 import urllib.parse
-from typing import Union
 
 import cerberus
 import pymongo
@@ -297,9 +296,9 @@ def get_from_args():
         "--force-version",
         dest="force_version",
         const="v0.0.0",
-        help = "make the server think it is the passed VERSION (default=v0.0.0)",
+        help="make the server think it is the passed VERSION (default=v0.0.0)",
         metavar="VERSION",
-        nargs = "?"
+        nargs="?"
     )
 
     parser.add_argument(
@@ -558,7 +557,9 @@ def validate_limits(config):
 
         if job_limit > host_limit:
             fatal = True
-            logger.fatal(f"Configured {job_limit_key} ({job_limit}) exceeds instance {resource_key} limit ({host_limit})")
+            logger.fatal(
+                f"Configured {job_limit_key} ({job_limit}) exceeds instance {resource_key} limit ({host_limit})"
+            )
 
     if fatal:
         sys.exit(1)

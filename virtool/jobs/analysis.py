@@ -3,6 +3,7 @@ import shutil
 
 import virtool.db
 import virtool.db.caches
+import virtool.db.samples
 import virtool.db.sync
 import virtool.jobs.fastqc
 import virtool.jobs.job

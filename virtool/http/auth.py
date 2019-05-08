@@ -142,7 +142,8 @@ def get_return_to_from_path(req: web.Request) -> str:
 
 def get_return_to_from_query(req: web.Request) -> str:
     """
-    Get a quoted path from a request query string. The returned path can be used as a query parameter in login and reset URLs.
+    Get a quoted path from a request query string. The returned path can be used as a query parameter in login and reset
+    URLs.
 
     :param req: the request to derive the quoted path from
     :return: a quoted path
@@ -287,8 +288,6 @@ async def login_get_handler(req: web.Request) -> web.Response:
 
     return_to = get_return_to_from_query(req)
 
-
-
     html = virtool.http.auth.get_login_template().render(
         expired=expired,
         verification_key=verification_key,
@@ -392,7 +391,7 @@ async def reset_get_handler(req: web.Request) -> web.Response:
         errors=errors,
         hash=static_hash,
         return_to=return_to,
-        verification_key = verification_key
+        verification_key=verification_key
     )
 
     return web.Response(body=html, content_type="text/html")

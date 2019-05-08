@@ -2,6 +2,7 @@ import pymongo
 import pymongo.errors
 
 import virtool.db.analyses
+import virtool.db.caches
 import virtool.db.files
 import virtool.db.history
 import virtool.db.hmm

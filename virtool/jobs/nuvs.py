@@ -53,6 +53,9 @@ class Job(virtool.jobs.analysis.Job):
             self.import_results
         ]
 
+        # Contigs that contain at least one acceptable ORF.
+        self.results = list()
+
     def eliminate_otus(self):
         """
         Maps reads to the main otu reference using ``bowtie2``. Bowtie2 is set to use the search parameter
@@ -171,9 +174,6 @@ class Job(virtool.jobs.analysis.Job):
         Contigs with no acceptable ORFs are discarded.
 
         """
-        # Contigs that contain at least one acceptable ORF.
-        self.results = list()
-
         assembly_path = os.path.join(self.params["analysis_path"], "assembly.fa")
 
         assembly = virtool.bio.read_fasta(assembly_path)
