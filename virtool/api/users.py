@@ -91,7 +91,7 @@ async def create(req):
         return bad_request("User already exists")
 
     headers = {
-        "Location": "/api/users/" + user_id
+        "Location": f"/api/users/{user_id}"
     }
 
     return json_response(
