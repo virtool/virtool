@@ -1,4 +1,4 @@
-import { compact, fill, flatMap, fromPairs, map, max, maxBy, mean, round, sortBy, sum, sumBy, unzip } from "lodash-es";
+import { compact, fill, flatMap, fromPairs, map, max, maxBy, round, sortBy, sum, sumBy, unzip } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
 
 export const fillAlign = ({ align, length }) => {
@@ -30,7 +30,7 @@ export const formatData = detail => {
 
     return map(detail.diagnosis, otu => {
         // Go through each isolate associated with the OTU, adding properties for weight, read count,
-        // mean depth, and coverage. These values will be calculated from the sequences owned by each isolate.
+        // median depth, and coverage. These values will be calculated from the sequences owned by each isolate.
         let isolates = map(otu.isolates, isolate => {
             // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
             let name = formatIsolateName(isolate);
@@ -46,8 +46,7 @@ export const formatData = detail => {
                     return {
                         ...sequence,
                         reads: round(sequence.pi * mappedReadCount),
-                        meanDepth: mean(filled),
-                        medianDepth: median(filled),
+                        depth: median(filled),
                         sumDepth: sum(filled),
                         filled
                     };
@@ -71,8 +70,7 @@ export const formatData = detail => {
                 pi: sumBy(sequences, "pi"),
                 reads: sumBy(sequences, "reads"),
                 maxDepth: max(filled),
-                meanDepth: mean(filled),
-                medianDepth: median(filled)
+                depth: median(filled)
             };
         });
 
@@ -82,12 +80,9 @@ export const formatData = detail => {
 
         const zipped = unzip(map(isolates, "sequences"));
 
-        const maxByMean = map(zipped, sequences => maxBy(sequences, "meanDepth"));
+        const maxByDepth = map(zipped, sequences => maxBy(sequences, "depth"));
 
-        const maxByMedian = map(zipped, sequences => maxBy(sequences, "medianDepth"));
-
-        const meanFilled = flatMap(maxByMean, "filled");
-        const medianFilled = flatMap(maxByMedian, "filled");
+        const filled = flatMap(maxByDepth, "filled");
 
         return {
             ...otu,
@@ -96,8 +91,7 @@ export const formatData = detail => {
             coverage: maxBy(isolates, "coverage").coverage,
             maxGenomeLength: maxBy(isolates, "length").length,
             maxDepth: maxBy(isolates, "maxDepth").maxDepth,
-            meanDepth: mean(meanFilled),
-            medianDepth: median(medianFilled),
+            depth: median(filled),
             reads: pi * mappedReadCount
         };
     });

@@ -2,7 +2,6 @@ import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
-    ANALYZE,
     BLAST_NUVS,
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
@@ -12,15 +11,12 @@ import {
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS,
     SET_PATHOSCOPE_FILTER
 } from "../../app/actionTypes";
 import reducer, {
     initialState as reducerInitialState,
-    addDepth,
     collapse,
-    toggleMedian,
     setFilter,
     setNuvsBLAST,
     toggleExpanded
@@ -125,17 +121,6 @@ describe("Analyses Reducer", () => {
             ...state,
             filterIsolates: true,
             filterOTUs: true
-        });
-    });
-
-    it("should handle TOGGLE_SHOW_PATHOSCOPE_MEDIAN", () => {
-        const state = initialState;
-        const action = { type: TOGGLE_SHOW_PATHOSCOPE_MEDIAN };
-        const result = reducer(state, action);
-        expect(result).toEqual({
-            ...state,
-            data: [],
-            showMedian: !state.showMedian
         });
     });
 
@@ -318,156 +303,21 @@ describe("Analyses Reducer", () => {
     });
 
     describe("Analyses Reducer Helper Functions", () => {
-        describe("addDepth", () => {
-            const data = [
-                {
-                    id: "test1",
-                    medianDepth: 1,
-                    meanDepth: 2,
-                    isolates: [{ id: "a", medianDepth: 3, meanDepth: 4 }]
-                },
-                {
-                    id: "test2",
-                    medianDepth: 1,
-                    meanDepth: 2,
-                    isolates: [{ id: "b", medianDepth: 3, meanDepth: 4 }]
-                },
-                {
-                    id: "test3",
-                    medianDepth: 1,
-                    meanDepth: 2,
-                    isolates: [{ id: "c", medianDepth: 3, meanDepth: 4 }]
-                }
-            ];
-
-            it("when [showMedian=true], depth = medianDepth", () => {
-                const result = addDepth(data, true);
-                expect(result).toEqual([
-                    {
-                        id: "test1",
-                        depth: 1,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "a",
-                                depth: 3,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    },
-                    {
-                        id: "test2",
-                        depth: 1,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "b",
-                                depth: 3,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    },
-                    {
-                        id: "test3",
-                        depth: 1,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "c",
-                                depth: 3,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    }
-                ]);
-            });
-
-            it("otherwise, depth = meanDepth", () => {
-                const showMedian = false;
-                const result = addDepth(data, showMedian);
-                expect(result).toEqual([
-                    {
-                        id: "test1",
-                        depth: 2,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "a",
-                                depth: 4,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    },
-                    {
-                        id: "test2",
-                        depth: 2,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "b",
-                                depth: 4,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    },
-                    {
-                        id: "test3",
-                        depth: 2,
-                        medianDepth: 1,
-                        meanDepth: 2,
-                        isolates: [
-                            {
-                                id: "c",
-                                depth: 4,
-                                medianDepth: 3,
-                                meanDepth: 4
-                            }
-                        ]
-                    }
-                ]);
-            });
-        });
-
         describe("collapse", () => {
-            const state = {
-                data: [
-                    { id: "test1", expanded: true },
-                    { id: "test2", expanded: false },
-                    { id: "test3", expanded: true }
-                ]
-            };
-
             it("should set all entries 'expanded' to false", () => {
+                const state = {
+                    data: [
+                        { id: "test1", expanded: true },
+                        { id: "test2", expanded: false },
+                        { id: "test3", expanded: true }
+                    ]
+                };
                 const result = collapse(state);
                 expect(result).toEqual([
                     { id: "test1", expanded: false },
                     { id: "test2", expanded: false },
                     { id: "test3", expanded: false }
                 ]);
-            });
-        });
-
-        describe("toggleMedian", () => {
-            it("toggles showMedian value in state", () => {
-                const state = {
-                    data: [],
-                    showMedian: true
-                };
-                const result = toggleMedian(state);
-                expect(result).toEqual({
-                    data: [],
-                    showMedian: false
-                });
             });
         });
 

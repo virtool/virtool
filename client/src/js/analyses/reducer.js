@@ -12,7 +12,6 @@ import {
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS,
     SET_PATHOSCOPE_FILTER
 } from "../app/actionTypes";
@@ -31,33 +30,14 @@ export const initialState = {
     // Pathoscope-specific
     filterOTUs: true,
     filterIsolates: true,
-    showMedian: true,
     showReads: false
 };
-
-export const addDepth = (data, showMedian) =>
-    map(data, item => ({
-        ...item,
-        depth: showMedian ? item.medianDepth : item.meanDepth,
-        isolates: map(item.isolates, isolate => ({
-            ...isolate,
-            depth: showMedian ? isolate.medianDepth : isolate.meanDepth
-        }))
-    }));
 
 export const collapse = state =>
     map(state.data, item => ({
         ...item,
         expanded: false
     }));
-
-export const toggleMedian = state => {
-    const showMedian = !state.showMedian;
-
-    const data = addDepth(state.data, showMedian);
-
-    return { ...state, data, showMedian };
-};
 
 export const setFilter = (state, key) => {
     if (key) {
@@ -123,9 +103,6 @@ export default function analysesReducer(state = initialState, action) {
         case SET_PATHOSCOPE_FILTER:
             return setFilter(state, action.key);
 
-        case TOGGLE_SHOW_PATHOSCOPE_MEDIAN:
-            return toggleMedian(state);
-
         case TOGGLE_SHOW_PATHOSCOPE_READS:
             return { ...state, showReads: !state.showReads };
 
@@ -158,7 +135,7 @@ export default function analysesReducer(state = initialState, action) {
             let data;
 
             if (action.data.algorithm === "pathoscope_bowtie" && action.data.ready) {
-                data = addDepth(formatData(action.data), state.showMedian);
+                data = formatData(action.data);
             } else {
                 data = action.data;
             }

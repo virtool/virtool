@@ -3,6 +3,7 @@ import io
 import json
 import re
 import zipfile
+from typing import Awaitable
 
 import aiohttp
 
@@ -265,18 +266,16 @@ def find_orfs(sequence):
     return orfs
 
 
-async def initialize_ncbi_blast(settings, sequence):
+async def initialize_ncbi_blast(settings: dict, sequence: str) -> Awaitable[tuple]:
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
 
     :param sequence: the nucleotide sequence to BLAST
-    :type sequence: str
 
     :return: the RID and RTOE for the request
-    :rtype: Coroutine[tuple]
+    :rtype:
 
     """
     # Parameters passed in the URL string. eg. ?CMD=Put&DATABASE=nr

@@ -9,7 +9,6 @@ import {
     setPathoscopeFilter,
     setSortKey,
     togglePathoscopeSortDescending,
-    toggleShowPathoscopeMedian,
     toggleShowPathoscopeReads
 } from "../../actions";
 
@@ -27,10 +26,8 @@ export const PathoscopeToolbar = props => {
         onCollapse,
         onFilter,
         onSetSortKey,
-        onToggleShowMedian,
         onToggleShowReads,
         onToggleSortDescending,
-        showMedian,
         showReads,
         sortDescending,
         sortKey
@@ -77,15 +74,6 @@ export const PathoscopeToolbar = props => {
                 active={!showReads}
                 className="hidden-xs"
                 onClick={onToggleShowReads}
-            />
-
-            <Button
-                icon="chart-bar"
-                title="Median Depth"
-                tip="Median Depth"
-                active={showMedian}
-                className="hidden-xs"
-                onClick={onToggleShowMedian}
             />
 
             <Dropdown
@@ -154,10 +142,6 @@ const mapDispatchToProps = dispatch => ({
 
     onSetSortKey: e => {
         dispatch(setSortKey(e.target.value));
-    },
-
-    onToggleShowMedian: () => {
-        dispatch(toggleShowPathoscopeMedian());
     },
 
     onToggleShowReads: () => {

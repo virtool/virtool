@@ -50,7 +50,7 @@ async def check_setup(db_connection_string, db_name):
     db = get_db(db_connection_string, db_name)
 
     try:
-        collection_names = await db.collection_names(include_system_collections=False)
+        await db.collection_names(include_system_collections=False)
     except OperationFailure as err:
         if any(substr in str(err) for substr in ["Authentication failed", "no users authenticated"]):
             return {

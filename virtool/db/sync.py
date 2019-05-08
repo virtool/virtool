@@ -9,6 +9,7 @@ import dictdiffer
 import pymongo
 
 import virtool.otus
+import virtool.samples
 
 
 def get_active_index_ids(db, ref_id):

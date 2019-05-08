@@ -9,7 +9,6 @@ describe("<Toolbar />", () => {
             },
             filterIsolates: false,
             filterOTUs: false,
-            showMedian: false,
             showReads: false,
             sortDescending: false,
             sortKey: ""
@@ -77,15 +76,6 @@ describe("<Toolbar />", () => {
             });
 
             expect(spy.calledWith("test")).toBe(true);
-        });
-
-        it("Depth button click dispatches toggleShowPathoscopeMedian() action", () => {
-            spy = sinon.spy(actions, "toggleShowPathoscopeMedian");
-            expect(spy.called).toBe(false);
-
-            wrapper.findWhere(node => node.prop("title") === "Median Depth").prop("onClick")();
-
-            expect(spy.calledOnce).toBe(true);
         });
 
         it("Weight format button click dispatches toggleShowPathoscopeReads() action", () => {

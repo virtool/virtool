@@ -13,7 +13,6 @@ import {
     SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_MEDIAN,
     TOGGLE_SHOW_PATHOSCOPE_READS
 } from "../app/actionTypes";
 import { simpleActionCreator } from "../utils/utils";
@@ -65,8 +64,6 @@ export const setSortKey = key => ({
 });
 
 export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
-
-export const toggleShowPathoscopeMedian = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_MEDIAN);
 
 export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 
