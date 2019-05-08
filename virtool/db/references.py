@@ -1015,6 +1015,26 @@ async def create_remote(db, settings, release, remote_from, user_id):
     return document
 
 
+async def download_and_parse_release(app, url, process_id, progress_handler):
+    db = app["db"]
+
+    with virtool.utils.get_temp_dir() as tempdir:
+        temp_path = str(tempdir)
+
+        download_path = os.path.join(temp_path, "reference.tar.gz")
+
+        await virtool.http.utils.download_file(
+            app,
+            url,
+            download_path,
+            progress_handler
+        )
+
+        await virtool.db.processes.update(db, process_id, progress=0.3, step="unpack")
+
+        return await app["run_in_thread"](virtool.references.load_reference_file, download_path)
+
+
 async def export(db, ref_id, scope):
     otu_list = list()
 
