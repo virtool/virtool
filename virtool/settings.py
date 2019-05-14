@@ -1,4 +1,5 @@
 import logging
+import virtool.validators
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ SCHEMA = {
     # HMM
     "hmm_slug": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "default": "virtool/virtool-hmm"
     },
 

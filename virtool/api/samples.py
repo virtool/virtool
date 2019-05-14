@@ -1,6 +1,7 @@
 from copy import deepcopy
 from cerberus import Validator
 
+import virtool.analyses
 import virtool.db.analyses
 import virtool.db.files
 import virtool.db.jobs
@@ -10,6 +11,7 @@ import virtool.errors
 import virtool.http.routes
 import virtool.samples
 import virtool.utils
+import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, insufficient_rights, invalid_query, \
     json_response, no_content, not_found, paginate
 
@@ -17,7 +19,7 @@ QUERY_SCHEMA = {
     "find": {
         "type": "string",
         "default": "",
-        "coerce": str
+        "coerce": (str, virtool.validators.strip)
     },
     "page": {
         "type": "integer",
@@ -145,20 +147,24 @@ async def get(req):
 @routes.post("/api/samples", permission="create_sample", schema={
     "name": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False,
         "required": True
     },
     "host": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip,
     },
     "isolate": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip,
     },
     "group": {
         "type": "string"
     },
     "locale": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip,
     },
     "srna": {
         "type": "boolean",
@@ -279,10 +285,23 @@ async def create(req):
 
 
 @routes.patch("/api/samples/{sample_id}", schema={
-    "name": {"type": "string", "minlength": 1},
-    "host": {"type": "string"},
-    "isolate": {"type": "string"},
-    "locale": {"type": "string"}
+    "name": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False
+    },
+    "host": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    },
+    "isolate": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    },
+    "locale": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    }
 })
 async def edit(req):
     """
@@ -327,11 +346,21 @@ async def replace(req):
 
 
 @routes.patch("/api/samples/{sample_id}/rights", schema={
-    "group": {"type": "string"},
-    "all_read": {"type": "boolean"},
-    "all_write": {"type": "boolean"},
-    "group_read": {"type": "boolean"},
-    "group_write": {"type": "boolean"}
+    "group": {
+        "type": "string"
+    },
+    "all_read": {
+        "type": "boolean"
+    },
+    "all_write": {
+        "type": "boolean"
+    },
+    "group_read": {
+        "type": "boolean"
+    },
+    "group_write": {
+        "type": "boolean"
+    }
 })
 async def set_rights(req):
     """
@@ -439,8 +468,15 @@ async def find_analyses(req):
 
 
 @routes.post("/api/samples/{sample_id}/analyses", schema={
-    "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]},
-    "ref_id": {"type": "string", "required": True}
+    "algorithm": {
+        "type": "string",
+        "required": True,
+        "allowed": virtool.analyses.ALGORITHM_NAMES
+    },
+    "ref_id": {
+        "type": "string",
+        "required": True
+    }
 })
 async def analyze(req):
     """

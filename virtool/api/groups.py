@@ -24,8 +24,9 @@ async def find(req):
 @routes.post("/api/groups", admin=True, schema={
     "group_id": {
         "type": "string",
-        "required": True,
-        "minlength": 1
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
     }
 })
 async def create(req):

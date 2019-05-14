@@ -6,6 +6,7 @@ import virtool.groups
 import virtool.http.routes
 import virtool.users
 import virtool.utils
+import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
     paginate
 
@@ -55,6 +56,7 @@ async def get(req):
 @routes.post("/api/users", admin=True, schema={
     "user_id": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False,
         "required": True
     },
