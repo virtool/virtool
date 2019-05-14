@@ -83,11 +83,13 @@ async def get(req):
 @routes.post("/api/refs/{ref_id}/otus", schema={
     "name": {
         "type": "string",
-        "required": True,
-        "empty": False
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
     },
     "abbreviation": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "default": ""
     },
     "schema": SCHEMA_VALIDATOR
@@ -150,10 +152,12 @@ async def create(req):
 @routes.patch("/api/otus/{otu_id}", schema={
     "name": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False
     },
     "abbreviation": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip
     },
     "schema": SCHEMA_VALIDATOR
 })
@@ -300,9 +304,20 @@ async def get_isolate(req):
 
 
 @routes.post("/api/otus/{otu_id}/isolates", schema={
-    "source_type": {"type": "string", "default": ""},
-    "source_name": {"type": "string", "default": ""},
-    "default": {"type": "boolean", "default": False}
+    "source_type": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "default": ""
+    },
+    "source_name": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "default": ""
+    },
+    "default": {
+        "type": "boolean",
+        "default": False
+    }
 })
 async def add_isolate(req):
     """
@@ -383,8 +398,14 @@ async def add_isolate(req):
 
 
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
-    "source_type": {"type": "string"},
-    "source_name": {"type": "string"}
+    "source_type": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    },
+    "source_name": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    }
 })
 async def edit_isolate(req):
     """
@@ -533,10 +554,7 @@ async def set_as_default(req):
             return json_response(isolate)
 
 
-@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}", schema={
-    "source_type": {"type": "string"},
-    "source_name": {"type": "string"}
-})
+@routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}")
 async def remove_isolate(req):
     """
     Remove an isolate and its sequences from a otu.
@@ -668,11 +686,31 @@ async def get_sequence(req):
 
 
 @routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences", schema={
-    "accession": {"type": "string", "minlength": 1, "required": True},
-    "definition": {"type": "string", "minlength": 1, "required": True},
-    "host": {"type": "string"},
-    "segment": {"type": "string"},
-    "sequence": {"type": "string", "minlength": 1, "required": True}
+    "accession": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "definition": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "host": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+    },
+    "segment": {
+        "type": "string",
+    },
+    "sequence": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    }
 })
 async def create_sequence(req):
     """
@@ -750,13 +788,16 @@ async def create_sequence(req):
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
     "accession": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False
     },
     "host": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip
     },
     "definition": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False
     },
     "segment": {
@@ -764,6 +805,7 @@ async def create_sequence(req):
     },
     "sequence": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "empty": False
     }
 })

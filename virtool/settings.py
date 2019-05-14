@@ -32,6 +32,7 @@ SCHEMA = {
     # HMM
     "hmm_slug": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "default": "virtool/virtool-hmm"
     },
 

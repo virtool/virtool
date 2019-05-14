@@ -17,6 +17,7 @@ import virtool.http.routes
 import virtool.otus
 import virtool.references
 import virtool.utils
+import virtool.validators
 from virtool.api.utils import bad_gateway, bad_request, compose_regex_query, insufficient_rights, json_response, \
     no_content, not_found, paginate
 
@@ -281,10 +282,12 @@ async def find_indexes(req):
 @routes.post("/api/refs", permission="create_ref", schema={
     "name": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "default": ""
     },
     "description": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "default": ""
     },
     "data_type": {
@@ -469,17 +472,21 @@ async def create(req):
 
 @routes.patch("/api/refs/{ref_id}", schema={
     "name": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False
     },
     "description": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip
     },
     "data_type": {
         "type": "string",
         "allowed": ["genome", "barcode"]
     },
     "organism": {
-        "type": "string"
+        "type": "string",
+        "coerce": virtool.validators.strip
     },
     "internal_control": {
         "type": "string"
@@ -490,7 +497,9 @@ async def create(req):
     "source_types": {
         "type": "list",
         "schema": {
-            "type": "string"
+            "type": "string",
+            "coerce": virtool.validators.strip,
+            "empty": False
         }
     }
 })

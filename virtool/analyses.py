@@ -3,6 +3,11 @@ from typing import Union
 
 import visvalingamwyatt as vw
 
+ALGORITHM_NAMES = (
+    "nuvs",
+    "pathoscope_bowtie"
+)
+
 
 def transform_coverage_to_coordinates(coverage_list: list) -> list:
     """

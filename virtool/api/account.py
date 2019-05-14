@@ -1,3 +1,4 @@
+import virtool.analyses
 import virtool.db.account
 import virtool.db.users
 import virtool.db.utils
@@ -23,6 +24,7 @@ SETTINGS_SCHEMA = {
     },
     "quick_analyze_algorithm": {
         "type": "string",
+        "allowed": virtool.analyses.ALGORITHM_NAMES,
         "required": False
     }
 }
@@ -46,6 +48,7 @@ async def get(req):
 @routes.patch("/api/account", schema={
     "email": {
         "type": "string",
+        "coerce": virtool.validators.strip,
         "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     },
     "old_password": {
@@ -160,9 +163,21 @@ async def get_api_key(req):
 
 
 @routes.post("/api/account/keys", schema={
-    "name": {"type": "string", "required": True, "minlength": 1},
-    "administrator": {"type": "boolean", "default": False},
-    "permissions": {"type": "dict", "default": {}, "validator": virtool.validators.is_permission_dict}
+    "name": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "administrator": {
+        "type": "boolean",
+        "default": False
+    },
+    "permissions": {
+        "type": "dict",
+        "default": {},
+        "validator": virtool.validators.is_permission_dict
+    }
 })
 async def create_api_key(req):
     """
@@ -213,8 +228,13 @@ async def create_api_key(req):
 
 
 @routes.patch("/api/account/keys/{key_id}", schema={
-    "administrator": {"type": "boolean"},
-    "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
+    "administrator": {
+        "type": "boolean"
+    },
+    "permissions": {
+        "type": "dict",
+        "validator": virtool.validators.is_permission_dict
+    }
 })
 async def update_api_key(req):
     db = req.app["db"]

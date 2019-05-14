@@ -7,6 +7,7 @@ import virtool.http.routes
 import virtool.samples
 import virtool.subtractions
 import virtool.utils
+import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
 routes = virtool.http.routes.Routes()
@@ -69,9 +70,21 @@ async def get(req):
 
 
 @routes.post("/api/subtractions", permission="modify_subtraction", schema={
-    "subtraction_id": {"type": "string", "required": True},
-    "nickname": {"type": "string", "default": ""},
-    "file_id": {"type": "string", "required": True}
+    "subtraction_id": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "nickname": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "default": ""
+    },
+    "file_id": {
+        "type": "string",
+        "required": True
+    }
 })
 async def create(req):
     """
@@ -140,7 +153,11 @@ async def create(req):
 
 
 @routes.patch("/api/subtractions/{subtraction_id}", permission="modify_subtraction", schema={
-    "nickname": {"type": "string", "required": True}
+    "nickname": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "required": True
+    }
 })
 async def edit(req):
     """
