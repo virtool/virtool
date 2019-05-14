@@ -1,4 +1,5 @@
 import logging
+import virtool.validators
 
 logger = logging.getLogger(__name__)
 
