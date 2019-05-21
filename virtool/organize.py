@@ -6,6 +6,7 @@ import pymongo.errors
 
 import virtool.db.analyses
 import virtool.db.history
+import virtool.db.jobs
 import virtool.db.otus
 import virtool.db.references
 import virtool.db.samples
@@ -87,6 +88,13 @@ async def organize_groups(db):
                 "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
             }
         }, silent=True)
+
+
+async def organize_jobs(app):
+    logger.info(" • jobs")
+    motor_client = app["db"].motor_client
+
+    await virtool.db.jobs.delete_zombies(motor_client)
 
 
 async def organize_samples(app):
