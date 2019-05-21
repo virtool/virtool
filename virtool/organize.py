@@ -45,6 +45,9 @@ async def organize_analyses(app):
     """
     logger.info(" • analyses")
 
+    motor_client = app["db"].motor_client
+
+    await delete_unready(motor_client.analyses)
     await virtool.db.analyses.remove_orphaned_directories(app)
 
 
