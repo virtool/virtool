@@ -67,6 +67,10 @@ const createSubtractionDescriptions = {
         title: "Create Directory",
         description: "Create a data directory for the new subtraction."
     },
+    unpack: {
+        title: "Unpack",
+        description: "Decompress the sequence file if necessary."
+    },
     set_stats: {
         title: "Save Sequence Statistics",
         description: "Save the GC content and sequence count to the database."
@@ -74,6 +78,10 @@ const createSubtractionDescriptions = {
     bowtie_build: {
         title: "Bowtie Build",
         description: "Build a Bowtie2 index from the FASTA file provided by the user."
+    },
+    compress: {
+        title: "Compress FASTA",
+        description: "Compress the FASTA data for long-term storage."
     }
 };
 
