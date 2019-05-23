@@ -93,6 +93,18 @@ async def create(db, settings, task_name, task_args, user_id, job_id=None):
     return await db.jobs.insert_one(document)
 
 
+async def delete_zombies(db):
+    await db.jobs.delete_many({
+        "status.state": {
+            "$nin": [
+                "complete",
+                "cancelled",
+                "error"
+            ]
+        }
+    })
+
+
 async def get_waiting_and_running_ids(db):
     cursor = db.jobs.aggregate([
         {"$project": {
