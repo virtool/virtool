@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import os
+import re
 import shutil
+import sys
 
 import aionotify
 
@@ -24,6 +26,8 @@ FILES_FLAGS = (
         aionotify.Flags.MOVED_FROM
 )
 
+PATH_RE = re.compile("Error setting up watch on (.*) with flags ([0-9]+):")
+
 WATCH_FLAGS = (
         aionotify.Flags.CLOSE_WRITE |
         aionotify.Flags.MOVED_TO
@@ -41,6 +45,13 @@ TYPE_NAME_DICT = {
 logger = logging.getLogger(__name__)
 
 
+def format_path(path):
+    if path[0] == "/":
+        return path
+
+    return os.path.join(sys.path[0], path)
+
+
 def get_event_type(event):
     flags = aionotify.Flags.parse(event.flags)
 
@@ -52,6 +63,27 @@ def get_event_type(event):
 
     if aionotify.Flags.CLOSE_WRITE in flags:
         return "close"
+
+
+def handle_watch_error(err: Exception):
+    """
+    Handle exceptions raised during inotify watch setup.
+
+    If exception is expected, a critical error  will be logged and the application will exit.
+
+    :param err: an exception
+
+    """
+    match = PATH_RE.match(str(err))
+
+    path = match.group(1)
+    flags = match.group(2)
+
+    if match:
+        logger.critical(f"Could not set up watch on {format_path(path)} ({flags})")
+        sys.exit(1)
+
+    raise
 
 
 def has_read_extension(filename):
@@ -117,7 +149,10 @@ class Manager:
     async def watch(self):
         logging.debug("Started file manager")
 
-        await self.watcher.setup(self.loop)
+        try:
+            await self.watcher.setup(self.loop)
+        except OSError as err:
+            handle_watch_error(err)
 
         try:
             while True:
