@@ -3,8 +3,8 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { getLinkedJob } from "../../../jobs/actions";
 import { getHasRawFilesOnly } from "../../selectors";
+import SampleFilesMessage from "../LegacyAlert";
 import SampleFilesCache from "./Cache";
-import SampleFilesMessage from "./LegacyAlert";
 import SampleFilesRaw from "./Raw";
 
 const SampleDetailFiles = ({ onGetJob, jobId }) => {
