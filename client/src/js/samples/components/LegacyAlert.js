@@ -4,8 +4,8 @@ import React from "react";
 import styled from "styled-components";
 import { Alert, ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Box, BoxTitle, Flex } from "../../../base";
-import { getHasRawFilesOnly, getSampleUpdateJobId } from "../../selectors";
+import { Box, BoxTitle, Flex } from "../../base";
+import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`
     color: #777777;
@@ -56,7 +56,7 @@ export const SampleFilesLegacyAlert = () => (
             When replacements have been uploaded for all data files, an update job will start. No new analyses can be
             started for the sample during this time.
         </p>
-
+        <p>QC charts are based on trimmed data for older samples and raw data for post-3.4.0 samples.</p>
         <p>
             <a target="_blank" rel="noopener noreferrer" href="https://www.virtool.ca/docs">
                 More information
