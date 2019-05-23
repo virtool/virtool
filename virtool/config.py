@@ -13,6 +13,7 @@ import virtool.db.settings
 import virtool.db.utils
 import virtool.resources
 import virtool.settings
+import virtool.utils
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ SCHEMA = {
     },
     "port": {
         "type": "integer",
+        "coerce": int,
         "default": 9950
     },
 
@@ -44,28 +46,34 @@ SCHEMA = {
     # Host resource limits
     "proc": {
         "type": "integer",
+        "coerce": int,
         "default": 8
     },
     "mem": {
         "type": "integer",
+        "coerce": int,
         "default": 16
     },
 
     # Job Limits
     "lg_proc": {
         "type": "integer",
+        "coerce": int,
         "default": 8
     },
     "lg_mem": {
         "type": "integer",
+        "coerce": int,
         "default": 16
     },
     "sm_proc": {
         "type": "integer",
+        "coerce": int,
         "default": 2
     },
     "sm_mem": {
         "type": "integer",
+        "coerce": int,
         "default": 4
     },
 
@@ -87,6 +95,7 @@ SCHEMA = {
 
     "force_setup": {
         "type": "boolean",
+        "coerce": virtool.utils.to_bool,
         "default": False
     },
 
@@ -119,6 +128,15 @@ RESOURCE_TYPES = (
     "proc",
     "mem"
 )
+
+
+def coerce(key, value):
+    try:
+        func = SCHEMA[key]["coerce"]
+    except KeyError:
+        return value
+
+    return func(value)
 
 
 def file_exists():
@@ -515,9 +533,11 @@ def resolve() -> dict:
 
     resolved = {**from_defaults, **from_env, **from_file, **from_args}
 
-    validate_limits(resolved)
+    coerced = {key: coerce(key, value) for key, value in resolved.items()}
 
-    return resolved
+    validate_limits(coerced)
+
+    return coerced
 
 
 def should_do_setup(config):
