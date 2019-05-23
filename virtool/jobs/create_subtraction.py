@@ -4,6 +4,7 @@ import pymongo
 
 import virtool.db.subtractions
 import virtool.jobs.job
+import virtool.jobs.utils
 import virtool.subtractions
 import virtool.utils
 
@@ -19,26 +20,43 @@ class Job(virtool.jobs.job.Job):
         #: The job stages.
         self._stage_list = [
             self.make_subtraction_dir,
+            self.unpack,
             self.set_stats,
-            self.bowtie_build
+            self.bowtie_build,
+            self.compress
         ]
 
     def check_db(self):
         self.params = dict(self.task_args)
 
+        name = self.params["subtraction_id"].lower().replace(" ", "_")
+
+        subtraction_path = os.path.join(
+            self.settings["data_path"],
+            "subtractions",
+            name
+        )
+
         self.params.update({
-            # The path to the FASTA file being added as a host reference.
-            "fasta_path": os.path.join(
+            "subtraction_path": subtraction_path,
+
+            # The path to the uploaded FASTA file to be used for creating a subtraction.
+            "file_path": os.path.join(
                 self.settings["data_path"],
                 "files",
                 self.params["file_id"]
             ),
 
-            # The path to the directory the Bowtie2 index will be written to.
+            # The path to the copied and retained FASTA file to be used for index generation.
+            "fasta_path": os.path.join(
+                subtraction_path,
+                f"{name}.fa"
+            ),
+
+            # The root name the Bowtie2 index will be written to.
             "index_path": os.path.join(
-                self.settings["data_path"],
-                "subtractions",
-                self.params["subtraction_id"].lower().replace(" ", "_")
+                subtraction_path,
+                "reference"
             )
         })
 
@@ -47,7 +65,18 @@ class Job(virtool.jobs.job.Job):
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
         """
-        os.mkdir(self.params["index_path"])
+        os.mkdir(self.params["subtraction_path"])
+
+    def unpack(self):
+        """
+        Unpack the FASTA file if it is gzipped.
+
+        """
+        virtool.jobs.utils.copy_or_decompress(
+            self.params["file_path"],
+            self.params["fasta_path"],
+            self.proc
+        )
 
     def set_stats(self):
         """
@@ -76,7 +105,7 @@ class Job(virtool.jobs.job.Job):
             "-f",
             "--threads", str(self.proc),
             self.params["fasta_path"],
-            os.path.join(self.params["index_path"], "reference")
+            self.params["index_path"]
         ]
 
         self.run_subprocess(command)
@@ -89,6 +118,19 @@ class Job(virtool.jobs.job.Job):
 
         self.dispatch("subtraction", "update", [self.params["subtraction_id"]])
 
+    def compress(self):
+        """
+        Compress the subtraction FASTA file for long-term storage and download. Remove the uncompressed file afterwards.
+
+        """
+        virtool.utils.compress_file(
+            self.params["fasta_path"],
+            self.params["fasta_path"] + ".gz",
+            self.proc
+        )
+
+        virtool.utils.rm(self.params["fasta_path"])
+
     def cleanup(self):
         """
         Clean up if the job process encounters an error or is cancelled. Removes the host document from the database
@@ -97,11 +139,10 @@ class Job(virtool.jobs.job.Job):
         """
         # Remove the nascent index directory and fail silently if it doesn't exist.
         try:
-            virtool.utils.rm(self.params["index_path"], True)
+            virtool.utils.rm(self.params["subtraction_path"], True)
         except FileNotFoundError:
             pass
 
         # Remove the associated subtraction document.
         self.db.subtraction.delete_one({"_id": self.params["subtraction_id"]})
-
         self.dispatch("subtraction", "delete", [self.params["subtraction_id"]])
