@@ -199,10 +199,10 @@ def get_temp_dir():
 
 def compress_file(path: str, target: str, processes=1):
     """
-    Compress the FASTQ file at `path` to a gzipped file at `target`.
+    Compress the file at `path` to a gzipped file at `target`.
 
     """
-    if processes > 1 and shutil.which("pigz"):
+    if should_use_pigz(processes):
         compress_file_with_pigz(path, target, processes)
     else:
         compress_file_with_gzip(path, target)
@@ -224,6 +224,41 @@ def compress_file_with_pigz(path, target, processes):
     ]
 
     with open(target, "wb") as f:
+        subprocess.call(command, stdout=f)
+
+
+def decompress_file(path: str, target: str, processes=1):
+    """
+    Decompress the gzip-compressed file at `path` to a `target` file.
+
+    :param path:
+    :param target:
+    :param processes:
+
+    """
+    if processes > 1 and shutil.which("pigz"):
+        decompress_file_with_pigz(path, target, processes)
+    else:
+        decompress_file_with_gzip(path, target)
+
+
+def decompress_file_with_gzip(path, target):
+    with gzip.open(path, "rb") as f_in:
+        with open(target, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+
+def decompress_file_with_pigz(path: str, target: str, processes: int):
+    command = [
+        "pigz",
+        "-p", str(processes),
+        "-d",
+        "-k",
+        "--stdout",
+        path
+    ]
+
+    with open(target, "w") as f:
         subprocess.call(command, stdout=f)
 
 
@@ -251,3 +286,7 @@ def is_gzipped(path):
         raise
 
     return True
+
+
+def should_use_pigz(processes: 1):
+    return processes > 1 and shutil.which("pigz")
