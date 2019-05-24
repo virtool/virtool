@@ -1,11 +1,11 @@
 import { ListGroupItem } from "../../../../base/index";
-import APIPermissions from "../Permissions";
+import { APIPermissions } from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;
     let wrapper;
 
-    beforeAll(() => {
+    beforeEach(() => {
         props = {
             userPermissions: {
                 test_create: true,
@@ -24,11 +24,11 @@ describe("<Permissions />", () => {
         wrapper = shallow(<APIPermissions {...props} />);
     });
 
-    it("renders correctly", () => {
+    it("should render correctly", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("clicking invokes onChange callback", () => {
+    it("should call onChange when permission clicked", () => {
         wrapper
             .find(ListGroupItem)
             .at(1)
