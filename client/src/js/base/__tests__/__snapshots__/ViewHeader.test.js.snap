@@ -1,16 +1,40 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ViewHeader /> renders correctly an html <head><title> element 1`] = `
+exports[`<ViewHeader /> should render renders children 1`] = `
 <h3
   className="view-header"
 >
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
-  >
-    <title>
-      tester
-    </title>
-  </HelmetWrapper>
+    title="test-child"
+  />
+  <div>
+    Hello world
+  </div>
+</h3>
+`;
+
+exports[`<ViewHeader /> should render with count 1`] = `
+<h3
+  className="view-header"
+>
+  <HelmetWrapper
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="Foo"
+  />
+</h3>
+`;
+
+exports[`<ViewHeader /> should render with title 1`] = `
+<h3
+  className="view-header"
+>
+  <HelmetWrapper
+    defer={true}
+    encodeSpecialCharacters={true}
+    title="Foo"
+  />
 </h3>
 `;
