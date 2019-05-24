@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<APIKey /> renders correctly 1`] = `
+exports[`<APIKey /> should render when [state.changed=true] 1`] = `
 <ListGroupItem
   allowFocus={false}
   className="spaced"
@@ -26,7 +26,7 @@ exports[`<APIKey /> renders correctly 1`] = `
       xs={4}
     >
       <span>
-        0
+        1
          perm
       </span>
       <span
@@ -34,7 +34,6 @@ exports[`<APIKey /> renders correctly 1`] = `
       >
         ission
       </span>
-      s
     </Col>
     <Col
       bsClass="col"
@@ -63,5 +62,208 @@ exports[`<APIKey /> renders correctly 1`] = `
       xs={1}
     />
   </Row>
+</ListGroupItem>
+`;
+
+exports[`<APIKey /> should render when collapsed 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  className="spaced"
+  key="123abc"
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <strong>
+        tester
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <span>
+        1
+         perm
+      </span>
+      <span
+        className="hidden-xs hidden-sm"
+      >
+        ission
+      </span>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      smHidden={true}
+      xsHidden={true}
+    >
+      Created 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      lgHidden={true}
+      mdHidden={true}
+      xs={3}
+    >
+      18-02-14
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={1}
+    />
+  </Row>
+</ListGroupItem>
+`;
+
+exports[`<APIKey /> should render when expanded 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  className="spaced"
+  key="123abc"
+  onClick={null}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <strong>
+        tester
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={4}
+    >
+      <span>
+        1
+         perm
+      </span>
+      <span
+        className="hidden-xs hidden-sm"
+      >
+        ission
+      </span>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      smHidden={true}
+      xsHidden={true}
+    >
+      Created 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      lgHidden={true}
+      mdHidden={true}
+      xs={3}
+    >
+      18-02-14
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={1}
+    >
+      <button
+        className="close"
+        onClick={[Function]}
+        type="button"
+      >
+        <span>
+          ×
+        </span>
+      </button>
+    </Col>
+  </Row>
+  <div>
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={12}
+      >
+        <Connect(APIPermissions)
+          keyPermissions={
+            Object {
+              "bar": true,
+              "baz": false,
+              "foo": false,
+            }
+          }
+          onChange={[Function]}
+          style={
+            Object {
+              "marginTop": "15px",
+            }
+          }
+        />
+      </Col>
+    </Row>
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={12}
+      >
+        <ButtonToolbar
+          bsClass="btn-toolbar"
+          className="pull-right"
+        >
+          <Button
+            bsStyle="danger"
+            icon="trash"
+            onClick={[Function]}
+            pullRight={false}
+            tipPlacement="top"
+          >
+            Remove
+          </Button>
+          <Button
+            bsStyle="primary"
+            disabled={true}
+            icon="save"
+            onClick={[Function]}
+            pullRight={false}
+            tipPlacement="top"
+          >
+            Update
+          </Button>
+        </ButtonToolbar>
+      </Col>
+    </Row>
+  </div>
 </ListGroupItem>
 `;
