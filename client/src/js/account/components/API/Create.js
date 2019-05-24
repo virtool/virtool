@@ -1,14 +1,15 @@
 import CX from "classnames";
-import React from "react";
 import { push } from "connected-react-router";
-import { connect } from "react-redux";
-import { CopyToClipboard } from "react-copy-to-clipboard";
 import { mapValues } from "lodash-es";
+import React from "react";
 import { Col, Modal, Row } from "react-bootstrap";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import { connect } from "react-redux";
 
-import { Button, Icon, Input, InputError, Flex, FlexItem, SaveButton } from "../../../base";
+import { Button, Flex, FlexItem, Icon, Input, InputError, SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
+import CreateAPIKeyInfo from "./CreateInfo";
 import APIPermissions from "./Permissions";
 
 export const getInitialState = props => ({
@@ -33,6 +34,14 @@ export class CreateAPIKey extends React.Component {
         return null;
     }
 
+    handleChange = e => {
+        this.setState({ name: e.target.value, error: "" });
+    };
+
+    handleCopy = () => {
+        this.setState({ copied: true });
+    };
+
     handleModalExited = () => {
         this.setState(getInitialState(this.props));
     };
@@ -40,7 +49,7 @@ export class CreateAPIKey extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
 
-        const { name, permissions, submitted, copied } = this.state;
+        const { name, permissions } = this.state;
 
         if (!this.state.name) {
             this.setState({
@@ -50,7 +59,7 @@ export class CreateAPIKey extends React.Component {
         }
 
         this.setState({ submitted: true }, () => {
-            this.props.onCreate({ name, permissions, submitted, copied });
+            this.props.onCreate(name, permissions);
         });
     };
 
@@ -84,10 +93,7 @@ export class CreateAPIKey extends React.Component {
                                         readOnly
                                     />
                                 </FlexItem>
-                                <CopyToClipboard
-                                    text={this.props.newKey}
-                                    onCopy={() => this.setState({ copied: true })}
-                                >
+                                <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
                                     <Button icon="paste" bsStyle="primary" />
                                 </CopyToClipboard>
                             </Flex>
@@ -101,28 +107,30 @@ export class CreateAPIKey extends React.Component {
             );
         } else {
             content = (
-                <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <InputError
-                            label="Name"
-                            value={this.state.name}
-                            onChange={e => this.setState({ name: e.target.value, error: "" })}
-                            error={this.state.error}
-                        />
+                <React.Fragment>
+                    <CreateAPIKeyInfo />
+                    <form onSubmit={this.handleSubmit}>
+                        <Modal.Body>
+                            <InputError
+                                label="Name"
+                                value={this.state.name}
+                                onChange={this.handleChange}
+                                error={this.state.error}
+                            />
 
-                        <label>Permissions</label>
+                            <label>Permissions</label>
 
-                        <APIPermissions
-                            userPermissions={this.props.permissions}
-                            keyPermissions={this.state.permissions}
-                            onChange={this.handlePermissionChange}
-                        />
-                    </Modal.Body>
+                            <APIPermissions
+                                keyPermissions={this.state.permissions}
+                                onChange={this.handlePermissionChange}
+                            />
+                        </Modal.Body>
 
-                    <Modal.Footer>
-                        <SaveButton />
-                    </Modal.Footer>
-                </form>
+                        <Modal.Footer>
+                            <SaveButton />
+                        </Modal.Footer>
+                    </form>
+                </React.Fragment>
             );
         }
 
@@ -138,14 +146,14 @@ export class CreateAPIKey extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createAPIKey"),
     newKey: state.account.newKey,
     permissions: state.account.permissions
 });
 
-const mapDispatchToProps = dispatch => ({
-    onCreate: ({ name, permissions }) => {
+export const mapDispatchToProps = dispatch => ({
+    onCreate: (name, permissions) => {
         dispatch(createAPIKey(name, permissions));
     },
 
