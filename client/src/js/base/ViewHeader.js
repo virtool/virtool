@@ -15,9 +15,7 @@ import { Flex, FlexItem } from "./index";
  */
 export const ViewHeader = ({ title, totalCount, children }) => (
     <h3 className="view-header">
-        <Helmet>
-            <title>{title}</title>
-        </Helmet>
+        <Helmet title={title} />
         {isUndefined(totalCount) ? null : (
             <Flex alignItems="flex-end">
                 <FlexItem grow={0} shrink={0}>

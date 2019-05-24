@@ -83,9 +83,11 @@ class Bar extends React.Component {
                                 <LinkContainer to="/account" activeClassName="">
                                     <MenuItem>Account</MenuItem>
                                 </LinkContainer>
-                                <LinkContainer to="/administration">
-                                    <MenuItem>Administration</MenuItem>
-                                </LinkContainer>
+                                {this.props.administrator ? (
+                                    <LinkContainer to="/administration">
+                                        <MenuItem>Administration</MenuItem>
+                                    </LinkContainer>
+                                ) : null}
                                 <MenuItem href="https://gitreports.com/issue/virtool/virtool" target="_blank">
                                     Report Issue
                                 </MenuItem>

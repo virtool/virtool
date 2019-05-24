@@ -4,32 +4,22 @@ import { ViewHeader } from "../ViewHeader";
 describe("<ViewHeader />", () => {
     let wrapper;
 
-    it("renders correctly an html <head><title> element", () => {
-        wrapper = shallow(<ViewHeader title="tester" />);
-
-        expect(wrapper.find("title").text()).toEqual("tester");
+    it("should render with title", () => {
+        wrapper = shallow(<ViewHeader title="Foo" />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders visible <h3> title and supplied total count", () => {
-        wrapper = shallow(<ViewHeader title="test-title" totalCount={10} />);
-
-        expect(wrapper.find("strong").text()).toEqual("test-title");
-        expect(
-            wrapper
-                .find(Badge)
-                .children()
-                .text()
-        ).toEqual("10");
+    it("should render with count", () => {
+        wrapper = shallow(<ViewHeader title="Foo" count={10} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders children if supplied", () => {
+    it("should render renders children", () => {
         wrapper = shallow(
             <ViewHeader title="test-child">
-                <div>Tester</div>
+                <div>Hello world</div>
             </ViewHeader>
         );
-
-        expect(wrapper.find("div").text()).toEqual("Tester");
+        expect(wrapper).toMatchSnapshot();
     });
 });

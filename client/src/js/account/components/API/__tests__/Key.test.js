@@ -1,115 +1,178 @@
-import { Button } from "../../../../base/index";
-import * as actions from "../../../actions";
-import APIKeyContainer, { APIKey } from "../Key";
+import { REMOVE_API_KEY, UPDATE_API_KEY } from "../../../../app/actionTypes";
+import { APIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Key";
+
+describe("getInitialState()", () => {
+    it("should return expected initial state", () => {
+        const props = {
+            apiKey: {
+                permissions: { foo: false, bar: true, baz: false }
+            }
+        };
+
+        const result = getInitialState(props);
+
+        expect(result).toEqual({
+            in: false,
+            changed: false,
+            permissions: props.apiKey.permissions
+        });
+    });
+});
 
 describe("<APIKey />", () => {
-    const initialState = {
-        account: {
-            permissions: { foo: false, test: false }
-        }
-    };
-    const store = mockStore(initialState);
-    let wrapper;
-    let props = {
-        apiKey: {
-            permissions: { foo: false },
-            created_at: "2018-02-14T17:12:00.000000Z",
-            name: "tester",
-            id: "123abc"
-        }
-    };
+    let props;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<APIKeyContainer store={store} {...props} />).dive();
+    beforeEach(() => {
+        props = {
+            apiKey: {
+                permissions: { foo: false, bar: true, baz: false },
+                created_at: "2018-02-14T17:12:00.000000Z",
+                name: "tester",
+                id: "123abc"
+            },
+            onRemove: jest.fn(),
+            onUpdate: jest.fn()
+        };
+    });
+
+    it("should render when collapsed", () => {
+        const wrapper = shallow(<APIKey {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("toggleIn(): toggles api key between list entry and expanded state", () => {
-        props = {
-            ...props,
-            apiKey: { ...props.apiKey, permissions: { foo: true } },
-            permissions: { foo: false, test: false }
+    it("should render when expanded", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ in: true });
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render when [state.changed=true]", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ changed: true });
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should set [state.in=true] when clicked while collapsed", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.simulate("click");
+        expect(wrapper.state("in")).toBe(true);
+    });
+
+    it("should set [state.in=false] when close button clicked while expanded", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ in: true });
+        wrapper.find(".close").simulate("click");
+        expect(wrapper.state("in")).toBe(false);
+    });
+
+    it("should not set [state.in=false] when clicked while expanded", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ in: true });
+        wrapper.simulate("click");
+        expect(wrapper.state("in")).toBe(true);
+    });
+
+    it("should call props.onUpdate when update button clicked", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ changed: true, in: true });
+        wrapper
+            .find("Button")
+            .find({ icon: "save" })
+            .simulate("click");
+        expect(props.onUpdate).toHaveBeenCalledWith(props.apiKey.id, props.apiKey.permissions);
+    });
+
+    it("should call props.onRemove when remove button clicked", () => {
+        const wrapper = shallow(<APIKey {...props} />);
+        wrapper.setState({ in: true });
+        wrapper
+            .find("Button")
+            .find({ icon: "trash" })
+            .simulate("click");
+        expect(props.onRemove).toHaveBeenCalledWith(props.apiKey.id);
+    });
+
+    describe("onPermissionChange()", () => {
+        it("should update state.permissions correctly", () => {
+            const wrapper = shallow(<APIKey {...props} />);
+
+            // State should initially match permissions in props.
+            expect(wrapper.state("permissions")).toEqual(props.apiKey.permissions);
+
+            wrapper.instance().onPermissionChange("foo", true);
+
+            expect(wrapper.state("permissions")).toEqual({ ...props.apiKey.permissions, foo: true });
+        });
+
+        it("should have [state.changed=true] when permissions changed", () => {
+            const wrapper = shallow(<APIKey {...props} />);
+
+            // [state.changed] should be false initially.
+            expect(wrapper.state("changed")).toBe(false);
+
+            wrapper.instance().onPermissionChange("foo", true);
+
+            // [state.changed] should be true when permissions have changed.
+            expect(wrapper.state("changed")).toBe(true);
+        });
+
+        it("should have [state.changed=false] when permissions are unchanged", () => {
+            const wrapper = shallow(<APIKey {...props} />);
+
+            // [state.changed] should be false initially.
+            expect(wrapper.state("changed")).toBe(false);
+
+            // Call method twice with a net non-change in permissions.
+            wrapper.instance().onPermissionChange("foo", true);
+            wrapper.instance().onPermissionChange("foo", false);
+
+            // Since no net change, [changed=false].
+            expect(wrapper.state("changed")).toBe(false);
+        });
+    });
+});
+
+describe("mapStateToProps", () => {
+    it("should return expected props", () => {
+        const permissions = { foo: false, bar: true, baz: false };
+
+        const state = {
+            account: {
+                permissions
+            }
         };
-        wrapper = mount(<APIKey {...props} />);
 
-        expect(wrapper.state()).toEqual({
-            in: false,
-            changed: false,
-            permissions: props.apiKey.permissions
+        expect(mapStateToProps(state)).toEqual({
+            permissions
         });
-        wrapper.setState({
-            in: true,
-            changed: true,
-            permissions: { foo: false, test: true }
-        });
-        wrapper.instance().toggleIn();
+    });
+});
 
-        expect(wrapper.state()).toEqual({
-            in: false,
-            changed: true,
-            permissions: { foo: true }
+describe("mapDispatchToProps", () => {
+    let dispatch;
+    let result;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
+        result = mapDispatchToProps(dispatch);
+    });
+
+    it("should return functional props.onRemove()", () => {
+        const keyId = "foo";
+        result.onRemove(keyId);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: REMOVE_API_KEY.REQUESTED,
+            keyId
         });
     });
 
-    it("onPermissionChange(): sets updated permissions to component state", () => {
-        props = {
-            ...props,
-            apiKey: { ...props.apiKey, permissions: { foo: true, test: true } },
-            permissions: { foo: false, test: false }
-        };
-        wrapper = mount(<APIKey {...props} />);
-
-        expect(wrapper.state()).toEqual({
-            in: false,
-            changed: false,
-            permissions: props.apiKey.permissions
-        });
-        wrapper.instance().onPermissionChange("foo", false);
-
-        expect(wrapper.state()).toEqual({
-            in: false,
-            changed: true,
-            permissions: { foo: false, test: true }
-        });
-    });
-
-    describe("dispatch functions", () => {
-        let spy;
-
-        it("Clicking Remove button dispatches removeAPIKey() action", () => {
-            spy = sinon.spy(actions, "removeAPIKey");
-            expect(spy.called).toBe(false);
-
-            wrapper = mount(<APIKeyContainer store={store} {...props} />);
-            wrapper
-                .children()
-                .instance()
-                .toggleIn();
-            wrapper.update();
-            wrapper
-                .find(Button)
-                .at(0)
-                .prop("onClick")();
-
-            expect(spy.calledWith(props.apiKey.id)).toBe(true);
-        });
-
-        it("Clicking Update button dispatches updateAPIKey() action", () => {
-            spy = sinon.spy(actions, "updateAPIKey");
-            expect(spy.called).toBe(false);
-
-            wrapper = mount(<APIKeyContainer store={store} {...props} />);
-            wrapper
-                .children()
-                .instance()
-                .toggleIn();
-            wrapper.update();
-            wrapper
-                .find(Button)
-                .at(1)
-                .prop("onClick")();
-
-            expect(spy.calledWith(props.apiKey.id, props.apiKey.permissions)).toBe(true);
+    it("should return functional props.onUpdate()", () => {
+        const permissions = { bar: true };
+        result.onUpdate("foo", permissions);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: UPDATE_API_KEY.REQUESTED,
+            keyId: "foo",
+            permissions
         });
     });
 });
