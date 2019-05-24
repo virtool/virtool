@@ -35,6 +35,7 @@ export const APIPermissions = ({ administrator, style, userPermissions, keyPermi
 };
 
 APIPermissions.propTypes = {
+    administrator: PropTypes.bool.isRequired,
     userPermissions: PropTypes.object.isRequired,
     keyPermissions: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
