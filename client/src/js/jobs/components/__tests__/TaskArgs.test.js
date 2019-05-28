@@ -1,53 +1,61 @@
-import TaskArgs from "../TaskArgs";
+import {
+    AnalysisRows,
+    BuildIndexRows,
+    CreateSampleRows,
+    CreateSubtractionRows,
+    TaskArgsRows,
+    UpdateSampleRows
+} from "../TaskArgs";
+
+const taskTypes = ["build_index", "create_sample", "create_subtraction", "pathoscope_bowtie", "nuvs", "update_sample"];
 
 describe("<TaskArgs />", () => {
     let props;
-    let wrapper;
 
-    it("renders nuvs job", () => {
+    it.each(taskTypes)("renders <TaskArgsRows /> correctly when task type is %p", taskType => {
         props = {
-            taskType: "nuvs",
+            taskType,
             taskArgs: {
                 sample_id: "123abc",
-                sample_name: "test-nuvs",
                 analysis_id: "test-analysis"
             }
         };
-        wrapper = shallow(<TaskArgs {...props} />);
+        const wrapper = shallow(<TaskArgsRows {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders pathoscope_bowtie job", () => {
-        props = {
-            taskType: "pathoscope_bowtie",
-            taskArgs: {
-                sample_id: "456def",
-                sample_name: "test-pathoscope",
-                analysis_id: "test-analysis"
-            }
-        };
-        wrapper = shallow(<TaskArgs {...props} />);
+describe("<AnalysisRows />", () => {
+    it("renders correctly", () => {
+        const wrapper = shallow(<AnalysisRows analysis_id="foo" sample_id="bar" />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders rebuild_index job", () => {
-        props = {
-            taskType: "rebuild_index",
-            taskArgs: { index_version: 0 }
-        };
-        wrapper = shallow(<TaskArgs {...props} />);
+describe("<BuildIndexRows />", () => {
+    it("renders correctly", () => {
+        const wrapper = shallow(<BuildIndexRows ref_id="foo" index_id="bar" />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders other types of jobs", () => {
-        props = {
-            taskType: "test_job",
-            taskArgs: {
-                test: { hello: "world" },
-                manifest: { foo: "bar" }
-            }
-        };
-        wrapper = shallow(<TaskArgs {...props} />);
+describe("<CreateSampleRows />", () => {
+    it("renders correctly", () => {
+        const wrapper = shallow(<CreateSampleRows sample_id="foo" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("<CreateSubtractionRows />", () => {
+    it("renders correctly", () => {
+        const wrapper = shallow(<CreateSubtractionRows subtraction_id="foo" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("<UpdateSampleRows />", () => {
+    it("renders correctly", () => {
+        const wrapper = shallow(<UpdateSampleRows sample_id="foo" />);
         expect(wrapper).toMatchSnapshot();
     });
 });

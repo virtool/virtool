@@ -10,7 +10,7 @@ const TaskArgsRow = ({ children, title }) => (
     </tr>
 );
 
-const AnalysisRows = ({ sample_id, analysis_id }) => (
+export const AnalysisRows = ({ sample_id, analysis_id }) => (
     <React.Fragment>
         <TaskArgsRow title="Sample">
             <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
@@ -21,7 +21,7 @@ const AnalysisRows = ({ sample_id, analysis_id }) => (
     </React.Fragment>
 );
 
-const BuildIndexRows = ({ index_id, ref_id }) => (
+export const BuildIndexRows = ({ index_id, ref_id }) => (
     <React.Fragment>
         <TaskArgsRow title="Reference">
             <Link to={`/refs/${ref_id}`}>{ref_id}</Link>
@@ -32,7 +32,7 @@ const BuildIndexRows = ({ index_id, ref_id }) => (
     </React.Fragment>
 );
 
-const CreateSampleRows = ({ sample_id }) => (
+export const CreateSampleRows = ({ sample_id }) => (
     <React.Fragment>
         <TaskArgsRow title="Sample">
             <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
@@ -40,19 +40,19 @@ const CreateSampleRows = ({ sample_id }) => (
     </React.Fragment>
 );
 
-const CreateSubtractionRows = ({ subtraction_id }) => (
+export const CreateSubtractionRows = ({ subtraction_id }) => (
     <TaskArgsRow title="Subtraction">
         <Link to={`/subtraction/${subtraction_id}`}>{subtraction_id}</Link>
     </TaskArgsRow>
 );
 
-const UpdateSampleRows = ({ sample_id }) => (
+export const UpdateSampleRows = ({ sample_id }) => (
     <TaskArgsRow title="Subtraction">
         <Link to={`/samples/${sample_id}`}>{sample_id}</Link>
     </TaskArgsRow>
 );
 
-const TaskArgsRows = ({ taskType, taskArgs }) => {
+export const TaskArgsRows = ({ taskType, taskArgs }) => {
     switch (taskType) {
         case "build_index":
             return <BuildIndexRows {...taskArgs} />;

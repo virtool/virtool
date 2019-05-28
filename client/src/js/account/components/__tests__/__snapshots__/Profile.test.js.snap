@@ -34,7 +34,7 @@ exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true
       <h5>
         <strong>
           testid
-
+           
           <Icon
             bsStyle="primary"
             faStyle="fas"
@@ -111,7 +111,7 @@ exports[`<AccountProfile /> renders correctly without icon otherwise 1`] = `
       <h5>
         <strong>
           testid
-
+           
         </strong>
       </h5>
       <div>

@@ -1,31 +1,41 @@
-import * as actions from "../../actions";
-import { Button } from "../../../base/index";
-import UniqueNamesContainer from "../UniqueNames";
+import { UPDATE_SETTINGS } from "../../../app/actionTypes";
+import { UniqueNames, mapStateToProps, mapDispatchToProps } from "../UniqueNames";
 
 describe("<UniqueNames />", () => {
-    const initialState = {
-        settings: {
-            data: { sample_unique_names: true }
-        }
-    };
-    const store = mockStore(initialState);
-    let wrapper;
-    let spy;
-
-    it("renders correctly", () => {
-        wrapper = shallow(<UniqueNamesContainer store={store} />).dive();
+    it.each([true, false])("should render when [enabled=%p]", enabled => {
+        const props = {
+            sample_unique_names: enabled
+        };
+        const wrapper = shallow(<UniqueNames {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("dispatches updateSettings when enable checkbox is toggled", () => {
-        spy = sinon.spy(actions, "updateSetting");
-        expect(spy.called).toBe(false);
+describe("mapStateToProps()", () => {
+    it.each([true, false])("should return props when [enabled=true]", enabled => {
+        const state = {
+            settings: {
+                data: {
+                    sample_unique_names: enabled
+                }
+            }
+        };
 
-        wrapper = mount(<UniqueNamesContainer store={store} />);
-        wrapper.find(Button).prop("onClick")();
+        const props = mapStateToProps(state);
 
-        expect(spy.calledWith("sample_unique_names", false)).toBe(true);
+        expect(props).toEqual({ enabled });
+    });
+});
 
-        spy.restore();
+describe("mapDispatchToProps()", () => {
+    it.each([true, false])("should return props when [enabled=true]", enabled => {
+        const dispatch = jest.fn();
+        const props = mapDispatchToProps(dispatch);
+        props.onToggle(enabled);
+
+        expect(dispatch).toHaveBeenCalledWith({
+            type: UPDATE_SETTINGS.REQUESTED,
+            update: { sample_unique_names: enabled }
+        });
     });
 });

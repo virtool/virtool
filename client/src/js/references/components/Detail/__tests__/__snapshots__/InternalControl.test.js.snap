@@ -27,6 +27,7 @@ exports[`<InternalControl /> renders correctly 1`] = `
         allowNew={false}
         delay={200}
         disabled={false}
+        id="internal-control"
         isLoading={false}
         labelKey="name"
         minLength={2}

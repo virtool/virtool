@@ -1,166 +1,134 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<TaskArgs /> renders nuvs job 1`] = `
-<Table
-  bordered={true}
-  bsClass="table"
-  condensed={false}
-  hover={false}
-  responsive={false}
-  striped={false}
->
-  <tbody>
-    <tr>
-      <th
-        className="col-xs-4"
-      >
-        Sample
-      </th>
-      <td
-        className="col-xs-8"
-      >
-        <Link
-          replace={false}
-          to="/samples/123abc"
-        >
-          test-nuvs
-        </Link>
-      </td>
-    </tr>
-    <tr>
-      <th>
-        Analysis
-      </th>
-      <td>
-        <Link
-          replace={false}
-          to="/samples/123abc/analyses"
-        >
-          test-analysis
-        </Link>
-      </td>
-    </tr>
-  </tbody>
-</Table>
-`;
-
-exports[`<TaskArgs /> renders other types of jobs 1`] = `
-<Table
-  bordered={true}
-  bsClass="table"
-  condensed={false}
-  hover={false}
-  responsive={false}
-  striped={false}
->
-  <tbody>
-    <tr
-      key="test"
+exports[`<AnalysisRows /> renders correctly 1`] = `
+<Fragment>
+  <TaskArgsRow
+    title="Sample"
+  >
+    <Link
+      replace={false}
+      to="/samples/bar"
     >
-      <th
-        className="col-xs-4"
-      >
-        <code>
-          test
-        </code>
-      </th>
-      <td
-        className="col-xs-8"
-      >
-        {"hello":"world"}
-      </td>
-    </tr>
-    <tr
-      key="manifest"
+      bar
+    </Link>
+  </TaskArgsRow>
+  <TaskArgsRow
+    title="Analysis"
+  >
+    <Link
+      replace={false}
+      to="/samples/bar/analyses/foo"
     >
-      <th>
-        <code>
-          manifest
-        </code>
-      </th>
-      <td
-        className="sequence-cell"
-      >
-        <textarea
-          readOnly={true}
-          rows="5"
-          value="{\\"foo\\":\\"bar\\"}"
-        />
-      </td>
-    </tr>
-  </tbody>
-</Table>
+      foo
+    </Link>
+  </TaskArgsRow>
+</Fragment>
 `;
 
-exports[`<TaskArgs /> renders pathoscope_bowtie job 1`] = `
-<Table
-  bordered={true}
-  bsClass="table"
-  condensed={false}
-  hover={false}
-  responsive={false}
-  striped={false}
->
-  <tbody>
-    <tr>
-      <th
-        className="col-xs-4"
-      >
-        Sample
-      </th>
-      <td
-        className="col-xs-8"
-      >
-        <Link
-          replace={false}
-          to="/samples/456def"
-        >
-          test-pathoscope
-        </Link>
-      </td>
-    </tr>
-    <tr>
-      <th>
-        Analysis
-      </th>
-      <td>
-        <Link
-          replace={false}
-          to="/samples/456def/analyses"
-        >
-          test-analysis
-        </Link>
-      </td>
-    </tr>
-  </tbody>
-</Table>
+exports[`<BuildIndexRows /> renders correctly 1`] = `
+<Fragment>
+  <TaskArgsRow
+    title="Reference"
+  >
+    <Link
+      replace={false}
+      to="/refs/foo"
+    >
+      foo
+    </Link>
+  </TaskArgsRow>
+  <TaskArgsRow
+    title="Index"
+  >
+    <Link
+      replace={false}
+      to="/refs/foo/indexes/bar"
+    >
+      bar
+    </Link>
+  </TaskArgsRow>
+</Fragment>
 `;
 
-exports[`<TaskArgs /> renders rebuild_index job 1`] = `
-<Table
-  bordered={true}
-  bsClass="table"
-  condensed={false}
-  hover={false}
-  responsive={false}
-  striped={false}
+exports[`<CreateSampleRows /> renders correctly 1`] = `
+<Fragment>
+  <TaskArgsRow
+    title="Sample"
+  >
+    <Link
+      replace={false}
+      to="/samples/foo"
+    >
+      foo
+    </Link>
+  </TaskArgsRow>
+</Fragment>
+`;
+
+exports[`<CreateSubtractionRows /> renders correctly 1`] = `
+<TaskArgsRow
+  title="Subtraction"
 >
-  <tbody>
-    <tr>
-      <th>
-        Index Version
-      </th>
-      <td>
-        <Link
-          replace={false}
-          to="/otus/indexes/0"
-        >
-          <span>
-            0
-          </span>
-        </Link>
-      </td>
-    </tr>
-  </tbody>
-</Table>
+  <Link
+    replace={false}
+    to="/subtraction/foo"
+  >
+    foo
+  </Link>
+</TaskArgsRow>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "build_index" 1`] = `
+<BuildIndexRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "create_sample" 1`] = `
+<CreateSampleRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "create_subtraction" 1`] = `
+<CreateSubtractionRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "nuvs" 1`] = `
+<AnalysisRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "pathoscope_bowtie" 1`] = `
+<AnalysisRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<TaskArgs /> renders <TaskArgsRows /> correctly when task type is "update_sample" 1`] = `
+<UpdateSampleRows
+  analysis_id="test-analysis"
+  sample_id="123abc"
+/>
+`;
+
+exports[`<UpdateSampleRows /> renders correctly 1`] = `
+<TaskArgsRow
+  title="Subtraction"
+>
+  <Link
+    replace={false}
+    to="/samples/foo"
+  >
+    foo
+  </Link>
+</TaskArgsRow>
 `;

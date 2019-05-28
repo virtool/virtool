@@ -84,49 +84,24 @@ exports[`<Detail /> renders correctly 1`] = `
       test-user
     </div>
   </ViewHeader>
-  <Nav
-    bsClass="nav"
-    bsStyle="tabs"
-    justified={false}
-    pullLeft={false}
-    pullRight={false}
-    stacked={false}
-  >
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+  <Tabs>
+    <TabLink
       to="/refs/test-reference/indexes/test-index/general"
     >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        General
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+      General
+    </TabLink>
+    <TabLink
       to="/refs/test-reference/indexes/test-index/changes"
     >
-      <NavItem
-        active={false}
-        disabled={false}
+      Changes 
+      <Badge
+        bsClass="badge"
+        pullRight={false}
       >
-        Changes 
-        <Badge
-          bsClass="badge"
-          pullRight={false}
-        >
-          3
-        </Badge>
-      </NavItem>
-    </LinkContainer>
-  </Nav>
+        3
+      </Badge>
+    </TabLink>
+  </Tabs>
   <Switch>
     <Redirect
       exact={true}

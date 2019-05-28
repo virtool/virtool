@@ -1,75 +1,29 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Sentry /> renders SentryFooter correctly 1`] = `
-<small
-  className="text-warning"
+exports[`<Sentry /> should render correctly when disabled 1`] = `
+<SettingsCheckbox
+  enabled={false}
+  onToggle={[MockFunction]}
 >
-  <Icon
-    faStyle="fas"
-    fixedWidth={false}
-    name="exclamation-triangle"
-    pullRight={false}
-  />
-   Changes to these settings will only take effect when the server is reloaded.
-</small>
+  <strong>
+    Sentry
+  </strong>
+  <small>
+    Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future errors.
+  </small>
+</SettingsCheckbox>
 `;
 
-exports[`<Sentry /> renders SentryOptions correctly 1`] = `
-<AdministrationSection
-  content={
-    <PanelBody
-      bsClass="panel"
-      collapsible={false}
-    >
-      <Button
-        block={true}
-        bsStyle="default"
-        onClick={[Function]}
-        pullRight={false}
-        tipPlacement="top"
-      >
-        <Checkbox
-          checked={false}
-          partial={false}
-          pullRight={false}
-        />
-         Enable
-      </Button>
-    </PanelBody>
-  }
-  description="Enable or disable Sentry error reporting.
-        Error reporting allows the developers to prevent future errors."
-  footerComponent={<SentryFooter />}
-  title="Sentry"
-/>
-`;
-
-exports[`<Sentry /> renders correctly 1`] = `
-<AdministrationSection
-  content={
-    <PanelBody
-      bsClass="panel"
-      collapsible={false}
-    >
-      <Button
-        block={true}
-        bsStyle="default"
-        onClick={[Function]}
-        pullRight={false}
-        tipPlacement="top"
-      >
-        <Checkbox
-          checked={false}
-          partial={false}
-          pullRight={false}
-        />
-         Enable
-      </Button>
-    </PanelBody>
-  }
-  description="Enable or disable Sentry error reporting.
-        Error reporting allows the developers to prevent future errors."
-  footerComponent={<SentryFooter />}
-  title="Sentry"
-/>
+exports[`<Sentry /> should render correctly when enabled 1`] = `
+<SettingsCheckbox
+  enabled={true}
+  onToggle={[MockFunction]}
+>
+  <strong>
+    Sentry
+  </strong>
+  <small>
+    Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future errors.
+  </small>
+</SettingsCheckbox>
 `;

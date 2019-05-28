@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { updateSetting } from "../actions";
 import { SettingsCheckbox } from "./SettingsCheckbox";
 
-const UniqueNames = ({ enabled, onToggle }) => (
+export const UniqueNames = ({ enabled, onToggle }) => (
     <SettingsCheckbox enabled={enabled} onToggle={onToggle}>
         <strong>Unique Sample Names</strong>
         <small>
@@ -13,11 +13,11 @@ const UniqueNames = ({ enabled, onToggle }) => (
     </SettingsCheckbox>
 );
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     enabled: state.settings.data.sample_unique_names
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onToggle: value => {
         dispatch(updateSetting("sample_unique_names", value));
     }

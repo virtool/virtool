@@ -12,11 +12,11 @@ export const SentryOptions = ({ enabled, onToggle }) => (
     </SettingsCheckbox>
 );
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     enabled: state.settings.data.enable_sentry
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onToggle: value => {
         dispatch(updateSetting("enable_sentry", value));
     }
