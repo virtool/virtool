@@ -21,7 +21,7 @@ export class IndexDetail extends React.Component {
             return <NotFound />;
         }
 
-        if (this.props.detail === null) {
+        if (this.props.detail === null || this.props.refDetail === null) {
             return <LoadingPlaceholder />;
         }
 
