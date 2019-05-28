@@ -1,6 +1,6 @@
 import { Checkbox } from "../../../base/index";
 import * as actions from "../../actions";
-import AccountSettings from "../Settings";
+import AccountSettings from "../Profile";
 
 describe("<Settings />", () => {
     let wrapper;

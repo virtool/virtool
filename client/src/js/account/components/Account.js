@@ -4,8 +4,7 @@ import { Switch, Redirect, Route } from "react-router-dom";
 
 import { TabLink, Tabs, ViewHeader } from "../../base";
 import { getAccount } from "../actions";
-import AccountGeneral from "./General";
-import AccountSettings from "./Settings";
+import AccountProfile from "./Profile";
 import APIKeys from "./API/API";
 
 export const Account = ({ userId, onGet }) => {
@@ -18,15 +17,13 @@ export const Account = ({ userId, onGet }) => {
             </ViewHeader>
 
             <Tabs>
-                <TabLink to="/account/general">General</TabLink>
-                <TabLink to="/account/settings">Settings</TabLink>
+                <TabLink to="/account/profile">Profile</TabLink>
                 <TabLink to="/account/api">API</TabLink>
             </Tabs>
 
             <Switch>
-                <Redirect from="/account" to="/account/general" exact />
-                <Route path="/account/general" component={AccountGeneral} />
-                <Route path="/account/settings" component={AccountSettings} />
+                <Redirect from="/account" to="/account/profile" exact />
+                <Route path="/account/profile" component={AccountProfile} />
                 <Route path="/account/api" component={APIKeys} />
             </Switch>
         </div>

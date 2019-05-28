@@ -7,7 +7,7 @@ import { Flex, FlexItem, Identicon, Icon } from "../../base";
 import ChangePassword from "./Password";
 import Email from "./Email";
 
-export const AccountGeneral = ({ id, groups, hash, isAdmin }) => {
+export const AccountProfile = ({ id, groups, hash, isAdmin }) => {
     const groupLabels = map(groups, groupId => (
         <Label key={groupId} style={{ marginRight: "3px" }}>
             {capitalize(groupId)}
@@ -52,4 +52,4 @@ const mapStateToProps = state => ({
     isAdmin: state.account.administrator
 });
 
-export default connect(mapStateToProps)(AccountGeneral);
+export default connect(mapStateToProps)(AccountProfile);
