@@ -1,13 +1,18 @@
 import React from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { Modal, Nav, NavItem } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
+import { Modal } from "react-bootstrap";
 import { routerLocationHasState } from "../../utils/utils";
+import { TabLink, Tabs } from "../../base";
 
 import ImportReference from "./Import";
 import CreateReference from "./Create";
 import CloneReference from "./Clone";
+
+const AddReferenceTabs = styled(Tabs)`
+    margin-bottom: 0;
+`;
 
 export class AddReference extends React.Component {
     constructor(props) {
@@ -57,26 +62,26 @@ export class AddReference extends React.Component {
                     New Reference
                 </Modal.Header>
 
-                <Nav bsStyle="tabs" style={{ marginBottom: 0 }}>
-                    <LinkContainer
+                <AddReferenceTabs>
+                    <TabLink
                         to={{ state: { newReference: true, createReference: true } }}
                         isActive={this.checkActive("isCreate")}
                     >
-                        <NavItem>Create</NavItem>
-                    </LinkContainer>
-                    <LinkContainer
+                        Create
+                    </TabLink>
+                    <TabLink
                         to={{ state: { newReference: true, importReference: true } }}
                         isActive={this.checkActive("isImport")}
                     >
-                        <NavItem>Import</NavItem>
-                    </LinkContainer>
-                    <LinkContainer
+                        Import
+                    </TabLink>
+                    <TabLink
                         to={{ state: { newReference: true, cloneReference: true } }}
                         isActive={this.checkActive("isClone")}
                     >
-                        <NavItem>Clone</NavItem>
-                    </LinkContainer>
-                </Nav>
+                        Clone
+                    </TabLink>
+                </AddReferenceTabs>
 
                 {this.renderForm()}
             </Modal>

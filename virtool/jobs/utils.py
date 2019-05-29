@@ -41,6 +41,13 @@ def copy_or_compress(path: str, target: str, proc: int):
         virtool.utils.compress_file(path, target, processes=proc)
 
 
+def copy_or_decompress(path: str, target: str, proc: int):
+    if virtool.utils.is_gzipped(path):
+        virtool.utils.decompress_file(path, target, proc)
+    else:
+        shutil.copyfile(path, target)
+
+
 def get_sample_params(db, settings: dict, task_args: dict) -> dict:
     """
     Return a `dict` of parameters that can be assigned to `self.params` in the `create_sample` and `update_sample` jobs.

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateAPIKey /> renders correctly 1`] = `
+exports[`<CreateAPIKey /> should render correctly 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -22,7 +22,7 @@ exports[`<CreateAPIKey /> renders correctly 1`] = `
     }
   }
   onExited={[Function]}
-  onHide={[Function]}
+  onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
   show={true}
@@ -31,7 +31,215 @@ exports[`<CreateAPIKey /> renders correctly 1`] = `
     bsClass="modal-header"
     closeButton={true}
     closeLabel="Close"
-    onHide={[Function]}
+    onHide={[MockFunction]}
+  >
+    Create API Key
+  </ModalHeader>
+  <Connect(CreateAPIKeyInfo) />
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <InputError
+        error=""
+        label="Name"
+        onChange={[Function]}
+        value=""
+      />
+      <label>
+        Permissions
+      </label>
+      <Connect(APIPermissions)
+        keyPermissions={
+          Object {
+            "bar": false,
+            "foo": false,
+          }
+        }
+        onChange={[Function]}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <SaveButton />
+    </ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateAPIKey /> should render correctly when [props.newKey] and [state.copied] set 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+    onHide={[MockFunction]}
+  >
+    Create API Key
+  </ModalHeader>
+  <ModalBody
+    bsClass="modal-body"
+    className="text-center"
+    componentClass="div"
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={12}
+      >
+        <strong
+          className="text-success"
+        >
+          Here is your key.
+        </strong>
+      </Col>
+    </Row>
+    <small>
+      Make note of it now. For security purposes, it will not be shown again.
+    </small>
+    <Row
+      bsClass="row"
+      componentClass="div"
+      style={
+        Object {
+          "marginBottom": "5px",
+          "marginTop": "10px",
+        }
+      }
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={8}
+        mdOffset={2}
+        xs={12}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={1}
+            shrink={1}
+          >
+            <Input
+              autoComplete={true}
+              className="text-center"
+              formGroupStyle={
+                Object {
+                  "marginBottom": 0,
+                }
+              }
+              readOnly={true}
+              style={
+                Object {
+                  "marginBottom": 0,
+                }
+              }
+              type="text"
+              value="123abc"
+            />
+          </FlexItem>
+          <CopyToClipboard
+            onCopy={[Function]}
+            text="123abc"
+          >
+            <Button
+              bsStyle="primary"
+              icon="paste"
+              pullRight={false}
+              tipPlacement="top"
+            />
+          </CopyToClipboard>
+        </Flex>
+      </Col>
+    </Row>
+    <small
+      className="text-primary"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="check"
+        pullRight={false}
+      />
+       Copied
+    </small>
+  </ModalBody>
+</Modal>
+`;
+
+exports[`<CreateAPIKey /> should render correctly when [state.newKey] set 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+    onHide={[MockFunction]}
   >
     Create API Key
   </ModalHeader>

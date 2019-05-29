@@ -52,7 +52,7 @@ export class APIKeys extends React.Component {
 
                 <ListGroup>{keyComponents}</ListGroup>
 
-                <CreateAPIKey permissions={this.props.permissions} onCreate={this.props.onCreate} />
+                <CreateAPIKey />
             </div>
         );
     }

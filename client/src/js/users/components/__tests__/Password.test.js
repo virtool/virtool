@@ -6,11 +6,9 @@ describe("<Password />", () => {
 
     it("renders correctly", () => {
         props = {
-            detail: {
-                id: "test-user",
-                force_reset: false,
-                last_password_change: "2018-02-14T17:12:00.000000Z"
-            },
+            id: "bob",
+            forceReset: false,
+            lastPasswordChange: "2018-02-14T17:12:00.000000Z",
             minimumPasswordLength: 8,
             onSetForceReset: jest.fn()
         };

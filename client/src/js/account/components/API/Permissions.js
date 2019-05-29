@@ -1,18 +1,19 @@
 import React from "react";
+import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { map, sortBy } from "lodash-es";
 import { ListGroup, Panel } from "react-bootstrap";
 
 import { ListGroupItem, Checkbox } from "../../../base/index";
 
-export default function APIPermissions({ style, userPermissions, keyPermissions, onChange }) {
+export const APIPermissions = ({ administrator, style, userPermissions, keyPermissions, onChange }) => {
     const permissions = map(keyPermissions, (value, key) => ({
         name: key,
         allowed: value
     }));
 
     const rowComponents = map(sortBy(permissions, "name"), permission => {
-        const disabled = !userPermissions[permission.name];
+        const disabled = !administrator && !userPermissions[permission.name];
 
         return (
             <ListGroupItem
@@ -28,16 +29,22 @@ export default function APIPermissions({ style, userPermissions, keyPermissions,
 
     return (
         <Panel style={style}>
-            <Panel.Body>
-                <ListGroup>{rowComponents}</ListGroup>
-            </Panel.Body>
+            <ListGroup>{rowComponents}</ListGroup>
         </Panel>
     );
-}
+};
 
 APIPermissions.propTypes = {
+    administrator: PropTypes.bool.isRequired,
     userPermissions: PropTypes.object.isRequired,
     keyPermissions: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
     style: PropTypes.object
 };
+
+const mapStateToProps = state => ({
+    administrator: state.account.administrator,
+    userPermissions: state.account.permissions
+});
+
+export default connect(mapStateToProps)(APIPermissions);

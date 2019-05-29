@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Account /> renders correctly 1`] = `
+exports[`<Account /> should render 1`] = `
 <div
   className="container-noside"
 >
@@ -11,71 +11,28 @@ exports[`<Account /> renders correctly 1`] = `
       Account
     </strong>
   </ViewHeader>
-  <Nav
-    bsClass="nav"
-    bsStyle="tabs"
-    justified={false}
-    pullLeft={false}
-    pullRight={false}
-    stacked={false}
-  >
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
-      to="/account/general"
+  <Tabs>
+    <TabLink
+      to="/account/profile"
     >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        General
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
-      to="/account/settings"
-    >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        Settings
-      </NavItem>
-    </LinkContainer>
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+      Profile
+    </TabLink>
+    <TabLink
       to="/account/api"
     >
-      <NavItem
-        active={false}
-        disabled={false}
-      >
-        API
-      </NavItem>
-    </LinkContainer>
-  </Nav>
+      API
+    </TabLink>
+  </Tabs>
   <Switch>
     <Redirect
       exact={true}
       from="/account"
       push={false}
-      to="/account/general"
+      to="/account/profile"
     />
     <Route
       component={[Function]}
-      path="/account/general"
-    />
-    <Route
-      component={[Function]}
-      path="/account/settings"
+      path="/account/profile"
     />
     <Route
       component={[Function]}

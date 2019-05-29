@@ -1,5 +1,6 @@
 import pytest
 import virtool.config
+import virtool.utils
 
 
 @pytest.fixture
@@ -72,6 +73,7 @@ def test_schema():
         },
         "port": {
             "type": "integer",
+            "coerce": int,
             "default": 9950
         },
 
@@ -88,26 +90,32 @@ def test_schema():
         # Host resource limits
         "proc": {
             "type": "integer",
+            "coerce": int,
             "default": 8
         },
         "mem": {
             "type": "integer",
+            "coerce": int,
             "default": 16
         },
         "lg_mem": {
             "default": 16,
+            "coerce": int,
             "type": "integer"
         },
         "lg_proc": {
             "default": 8,
+            "coerce": int,
             "type": "integer"
         },
         "sm_mem": {
             "default": 4,
+            "coerce": int,
             "type": "integer"
         },
         "sm_proc": {
             "default": 2,
+            "coerce": int,
             "type": "integer"
         },
 
@@ -129,6 +137,7 @@ def test_schema():
 
         "force_setup": {
             "type": "boolean",
+            "coerce": virtool.utils.to_bool,
             "default": False
         },
 

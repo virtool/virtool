@@ -1,143 +1,200 @@
-import { CopyToClipboard } from "react-copy-to-clipboard";
-import { Modal } from "react-bootstrap";
-import { InputError } from "../../../../base/index";
-import * as actions from "../../../actions";
-import CreateAPIKeyContainer, { getInitialState, CreateAPIKey } from "../Create";
+import { CLEAR_API_KEY, CREATE_API_KEY } from "../../../../app/actionTypes";
+import { CreateAPIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Create";
+import * as utils from "../../../../utils/utils";
+
+const connectedReactRouter = require("connected-react-router");
+
+jest.mock("connected-react-router");
+
+const createMockEvent = value => {
+    const e = {
+        preventDefault: jest.fn()
+    };
+
+    if (value) {
+        e.target = {
+            value
+        };
+    }
+
+    return e;
+};
+
+const expectedInitialState = {
+    name: "",
+    permissions: { foo: false, bar: false },
+    submitted: false,
+    copied: false,
+    error: "",
+    show: false
+};
+
+describe("getInitialState()", () => {
+    it("should return correct initial state", () => {
+        const props = {
+            permissions: { foo: false, bar: true }
+        };
+
+        expect(getInitialState(props)).toEqual(expectedInitialState);
+    });
+});
 
 describe("<CreateAPIKey />", () => {
-    let initialState;
-    let store;
     let props;
-    let wrapper;
-    let spy;
 
-    it("renders correctly", () => {
-        initialState = {
-            router: {
-                location: {
-                    state: { createAPIKey: true }
-                }
-            },
-            account: {
-                newKey: "123abc",
-                permissions: { foo: true, bar: false }
-            }
+    beforeEach(() => {
+        props = {
+            newKey: "",
+            permissions: { foo: false, bar: true },
+            onCreate: jest.fn(),
+            onHide: jest.fn(),
+            show: true
         };
-        store = mockStore(initialState);
+    });
 
-        wrapper = shallow(<CreateAPIKeyContainer store={store} />).dive();
+    it("should render correctly", () => {
+        const wrapper = shallow(<CreateAPIKey {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("getDerivedStateFromProps()", () => {
-        let nextProps = { newKey: "123abc" };
-        let prevState = { show: false };
-        let result = CreateAPIKey.getDerivedStateFromProps(nextProps, prevState);
-        expect(result).toEqual({ show: true });
-
-        nextProps = { newKey: "" };
-        prevState = { show: true };
-        result = CreateAPIKey.getDerivedStateFromProps(nextProps, prevState);
-        expect(result).toEqual(null);
+    it("should render correctly when [state.newKey] set", () => {
+        props.newKey = "123abc";
+        const wrapper = shallow(<CreateAPIKey {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleModalExited()", () => {
-        props = { permissions: { foo: true } };
-        wrapper = shallow(<CreateAPIKey {...props} />);
-
-        const initialState = getInitialState(props);
-        expect(wrapper.state()).toEqual(initialState);
-
-        wrapper.setProps({ permissions: { test: false } });
-        wrapper.find(Modal).prop("onExited")();
-
-        expect(wrapper.state()).toEqual({
-            ...initialState,
-            permissions: { test: false }
-        });
+    it("should render correctly when [props.newKey] and [state.copied] set", () => {
+        props.newKey = "123abc";
+        const wrapper = shallow(<CreateAPIKey {...props} />);
+        wrapper.setState({ copied: true });
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("handlePermissionChange()", () => {
-        props = { permissions: { foo: false } };
-        wrapper = mount(<CreateAPIKey {...props} />);
-        spy = sinon.spy(wrapper.instance(), "handlePermissionChange");
-        wrapper.instance().handlePermissionChange("foo", true);
-
-        expect(spy.called).toBe(true);
-        expect(wrapper.state("permissions")).toEqual({ foo: true });
-    });
-
-    it("Clicking copy button sets state.copied to true", () => {
-        props = {
-            show: true,
-            permissions: { foo: false }
-        };
-        wrapper = mount(<CreateAPIKey {...props} />);
+    it("should set [state.copied=true] when key copied", () => {
+        props.newKey = "123abc";
+        const wrapper = shallow(<CreateAPIKey {...props} />);
         expect(wrapper.state("copied")).toBe(false);
-
-        wrapper.setState({ show: true });
-        wrapper.find(CopyToClipboard).prop("onCopy")();
+        wrapper.find("CopyToClipboard").prop("onCopy")();
         expect(wrapper.state("copied")).toBe(true);
     });
 
-    it("User input sets state.name", () => {
-        props = {
-            show: true,
-            permissions: { foo: false }
-        };
-        wrapper = mount(<CreateAPIKey {...props} />);
-        expect(wrapper.state("name")).toEqual("");
-
-        wrapper.find(InputError).prop("onChange")({ target: { value: "test" } });
-        expect(wrapper.state("name")).toEqual("test");
+    it("should update [state.name] and [state.error] when input changes", () => {
+        const wrapper = shallow(<CreateAPIKey {...props} />);
+        wrapper.find("InputError").prop("onChange")(createMockEvent("foo"));
+        expect(wrapper.state("name")).toBe("foo");
     });
 
-    describe("dispatch functions", () => {
-        beforeAll(() => {
-            initialState = {
-                router: {
-                    location: {
-                        state: { createAPIKey: true }
-                    }
-                },
-                account: {
-                    newKey: "",
-                    permissions: { foo: false, bar: true }
-                }
-            };
-            store = mockStore(initialState);
+    describe("handleModalExited()", () => {
+        it("should update state when called", () => {
+            const wrapper = shallow(<CreateAPIKey {...props} />);
+            wrapper.setState({
+                permissions: { foo: true }
+            });
+            wrapper.instance().handleModalExited();
+            expect(wrapper.state()).toEqual(expectedInitialState);
+        });
+    });
 
-            wrapper = mount(<CreateAPIKeyContainer store={store} />);
+    describe("handlePermissionChange()", () => {
+        it("should update [state.permissions]", () => {
+            const wrapper = shallow(<CreateAPIKey {...props} />);
+            wrapper.instance().handlePermissionChange("foo", true);
+            expect(wrapper.state("permissions")).toEqual({ foo: true, bar: false });
+        });
+    });
+
+    describe("handleSubmit()", () => {
+        it("should call preventDefault on event", () => {
+            const wrapper = shallow(<CreateAPIKey {...props} />);
+            const e = createMockEvent();
+            wrapper.instance().handleSubmit(e);
+            expect(e.preventDefault).toHaveBeenCalled();
         });
 
-        afterEach(() => {
-            spy.restore();
+        it("should set [state.error='Required Field'] on submit when name missing", () => {
+            const wrapper = shallow(<CreateAPIKey {...props} />);
+            wrapper.instance().handleSubmit(createMockEvent());
+            expect(wrapper.state("error")).toBe("Required Field");
         });
 
-        it("Form submit dispatches createAPIKey() action", () => {
-            spy = sinon.spy(actions, "createAPIKey");
-            expect(spy.called).toBe(false);
+        it("should set [state.submitted=true] and call props.onCreate()", () => {
+            const name = "Foo 1";
+            const permissions = { foo: true, bar: true };
 
-            const target = wrapper.find("form");
+            const wrapper = shallow(<CreateAPIKey {...props} />);
+            wrapper.setState({
+                name,
+                permissions
+            });
+            wrapper.instance().handleSubmit(createMockEvent());
 
-            target.prop("onSubmit")({ preventDefault: jest.fn() });
-            expect(spy.called).toBe(false);
+            expect(wrapper.state("submitted")).toBe(true);
+            expect(props.onCreate).toHaveBeenCalledWith(name, permissions);
+        });
+    });
+});
 
-            wrapper
-                .children()
-                .instance()
-                .setState({ name: "test" });
-            target.prop("onSubmit")({ preventDefault: jest.fn() });
+describe("mapStateToProps", () => {
+    it.each([true, false])("should return props when routerLocationHasState() returns %p", show => {
+        const spy = jest.spyOn(utils, "routerLocationHasState");
 
-            expect(spy.calledWith("test", { foo: false, bar: false })).toBe(true);
+        spy.mockImplementation(() => show);
+
+        const newKey = "123abc";
+        const permissions = { foo: true };
+
+        const state = {
+            account: {
+                newKey,
+                permissions
+            }
+        };
+
+        expect(mapStateToProps(state)).toEqual({
+            newKey,
+            permissions,
+            show
         });
 
-        it("Modal exit closes modal and dispatches clearAPIKey() action", () => {
-            spy = sinon.spy(actions, "clearAPIKey");
-            expect(spy.called).toBe(false);
+        expect(utils.routerLocationHasState).toHaveBeenCalledWith(state, "createAPIKey");
+    });
+});
 
-            wrapper.children().prop("onHide")();
-            expect(spy.calledOnce).toBe(true);
+describe("mapDispatchToProps()", () => {
+    let dispatch;
+    let props;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
+
+    it("should return functional props.onCreate", () => {
+        const name = "foo";
+        const permissions = { bar: true };
+
+        props.onCreate(name, permissions);
+
+        expect(dispatch).toHaveBeenCalledWith({
+            type: CREATE_API_KEY.REQUESTED,
+            name,
+            permissions
+        });
+    });
+
+    it("should return functional props.onHide", () => {
+        const pushAction = {
+            type: "PUSH",
+            foo: "bar"
+        };
+
+        connectedReactRouter.push.mockReturnValue(pushAction);
+
+        props.onHide();
+
+        expect(dispatch).toHaveBeenCalledWith(pushAction);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: CLEAR_API_KEY
         });
     });
 });

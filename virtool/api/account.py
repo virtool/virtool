@@ -198,6 +198,9 @@ async def create_api_key(req):
         **data["permissions"]
     }
 
+    if not user["administrator"]:
+        permissions = virtool.users.limit_permissions(permissions, user["permissions"])
+
     raw, hashed = virtool.db.account.get_api_key()
 
     document = {
@@ -206,7 +209,7 @@ async def create_api_key(req):
         "name": name,
         "administrator": user["administrator"] and data["administrator"],
         "groups": req["client"].groups,
-        "permissions": virtool.users.limit_permissions(permissions, user["permissions"]),
+        "permissions": permissions,
         "created_at": virtool.utils.timestamp(),
         "user": {
             "id": user_id

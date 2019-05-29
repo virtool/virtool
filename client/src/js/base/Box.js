@@ -9,6 +9,18 @@ export const Box = styled.div`
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
 `;
 
+export const BoxSection = styled.div`
+    margin: -10px -15px;
+    padding: 10px 15px;
+    &:not(:last-child) {
+        border-bottom: 1px #dddddd solid;
+    }
+`;
+
+export const BoxHeader = styled(BoxSection)`
+    padding: 10px 15px 20px 15px;
+`;
+
 export const BoxTitle = styled.h1`
     font-size: 14px;
     font-weight: bold;

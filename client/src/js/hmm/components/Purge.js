@@ -1,3 +1,4 @@
+import React from "react";
 import { connect } from "react-redux";
 import { Alert, RemoveBanner } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";

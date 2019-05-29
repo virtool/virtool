@@ -1,20 +1,12 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Switch, Redirect, Route } from "react-router-dom";
-import { Nav, NavItem } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
+import { Redirect, Route, Switch } from "react-router-dom";
+import { LoadingPlaceholder, TabLink, Tabs, ViewHeader } from "../../base";
+import Updates from "../../updates/components/Viewer";
 
 import User from "../../users/components/User";
 import Users from "../../users/components/Users";
-import Updates from "../../updates/components/Viewer";
-import { LoadingPlaceholder, ViewHeader } from "../../base";
-import Sentry from "./Sentry";
-
-export const Server = () => (
-    <div className="settings-container">
-        <Sentry />
-    </div>
-);
+import { ServerSettings } from "./Server";
 
 export const Settings = ({ settings }) => {
     let content;
@@ -24,8 +16,8 @@ export const Settings = ({ settings }) => {
     } else {
         content = (
             <Switch>
-                <Redirect from="/administration" to="/administration/server" exact />
-                <Route path="/administration/server" component={Server} />
+                <Redirect from="/administration" to="/administration/settings" exact />
+                <Route path="/administration/settings" component={ServerSettings} />
                 <Route path="/administration/users" component={Users} exact />
                 <Route path="/administration/updates" component={Updates} />
                 <Route path="/administration/users/:userId" component={User} />
@@ -39,17 +31,11 @@ export const Settings = ({ settings }) => {
                 <strong>Administration</strong>
             </ViewHeader>
 
-            <Nav bsStyle="tabs">
-                <LinkContainer to="/administration/server">
-                    <NavItem>Server</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/administration/users">
-                    <NavItem>Users</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/administration/updates">
-                    <NavItem>Updates</NavItem>
-                </LinkContainer>
-            </Nav>
+            <Tabs bsStyle="tabs">
+                <TabLink to="/administration/settings">Settings</TabLink>
+                <TabLink to="/administration/users">Users</TabLink>
+                <TabLink to="/administration/updates">Updates</TabLink>
+            </Tabs>
 
             {content}
         </div>

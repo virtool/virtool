@@ -1,12 +1,12 @@
 import { ListGroupItem } from "../../../../base/index";
-import APIPermissions from "../Permissions";
+import { APIPermissions } from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;
-    let wrapper;
 
-    beforeAll(() => {
+    beforeEach(() => {
         props = {
+            administrator: false,
             userPermissions: {
                 test_create: true,
                 test_edit: true,
@@ -21,14 +21,21 @@ describe("<Permissions />", () => {
             },
             onChange: jest.fn()
         };
-        wrapper = shallow(<APIPermissions {...props} />);
     });
 
-    it("renders correctly", () => {
+    it("should render correctly", () => {
+        const wrapper = shallow(<APIPermissions {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("clicking invokes onChange callback", () => {
+    it("should render no permission disabled when [props.administrator=true]", () => {
+        props.administrator = true;
+        const wrapper = shallow(<APIPermissions {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onChange when permission clicked", () => {
+        const wrapper = shallow(<APIPermissions {...props} />);
         wrapper
             .find(ListGroupItem)
             .at(1)

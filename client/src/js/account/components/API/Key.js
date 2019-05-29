@@ -8,10 +8,10 @@ import { Button, ListGroupItem, RelativeTime } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
 
-const getInitialState = props => ({
+export const getInitialState = ({ apiKey }) => ({
     in: false,
     changed: false,
-    permissions: props.apiKey.permissions
+    permissions: apiKey.permissions
 });
 
 export class APIKey extends React.Component {
@@ -120,11 +120,11 @@ export class APIKey extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     permissions: state.account.permissions
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onUpdate: (keyId, permissions) => {
         dispatch(updateAPIKey(keyId, permissions));
     },

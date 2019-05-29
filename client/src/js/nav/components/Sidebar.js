@@ -1,18 +1,30 @@
 import React from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router-dom";
-import { Nav } from "react-bootstrap";
 import SidebarItem from "./SidebarItem";
+
+const StyledSidebar = styled.nav`
+    position: fixed;
+    top: 45px;
+    left: 0;
+    bottom: 0;
+    padding: 45px 0 0 15px;
+    min-width: 8.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+`;
 
 export const Sidebar = ({ administrator }) => (
     <Switch>
         <Route path="/home">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem title="About" link="/home" icon="info-circle" />
-            </Nav>
+            </StyledSidebar>
         </Route>
         <Route path="/jobs">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem
                     exclude={["/jobs/resources", "/jobs/settings"]}
                     title="Browse"
@@ -20,11 +32,10 @@ export const Sidebar = ({ administrator }) => (
                     icon="th-list"
                 />
                 <SidebarItem title="Resources" link="/jobs/resources" icon="tachometer-alt" />
-                {administrator ? <SidebarItem title="Settings" link="/jobs/settings" icon="cogs" /> : null}
-            </Nav>
+            </StyledSidebar>
         </Route>
         <Route path="/samples">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem
                     exclude={["/samples/files", "/samples/settings"]}
                     title="Browse"
@@ -33,25 +44,25 @@ export const Sidebar = ({ administrator }) => (
                 />
                 <SidebarItem title="Files" link="/samples/files" icon="folder-open" />
                 {administrator ? <SidebarItem title="Settings" link="/samples/settings" icon="cogs" /> : null}
-            </Nav>
+            </StyledSidebar>
         </Route>
         <Route path="/refs">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem exclude={["/refs/settings"]} title="Browse" link="/refs" icon="th-list" />
                 {administrator ? <SidebarItem title="Settings" link="/refs/settings" icon="cogs" /> : null}
-            </Nav>
+            </StyledSidebar>
         </Route>
         <Route path="/subtraction">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem exclude={["/subtraction/files"]} title="Browse" link="/subtraction" icon="th-list" />
                 <SidebarItem title="Files" link="/subtraction/files" icon="folder-open" />
-            </Nav>
+            </StyledSidebar>
         </Route>
         <Route path="/hmm">
-            <Nav className="sidebar">
+            <StyledSidebar>
                 <SidebarItem exclude={["/hmm/settings"]} title="Browse" link="/hmm" icon="th-list" />
                 {administrator ? <SidebarItem title="Settings" link="/hmm/settings" icon="cogs" /> : null}
-            </Nav>
+            </StyledSidebar>
         </Route>
     </Switch>
 );
