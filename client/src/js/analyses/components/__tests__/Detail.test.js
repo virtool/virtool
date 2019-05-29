@@ -8,6 +8,7 @@ describe("<AnalysisDetail />", () => {
         props = {
             detail: {
                 id: "foo",
+                created_at: "2019-05-28T19:04:25.201000Z",
                 algorithm: "pathoscope_bowtie",
                 ready: true,
                 user: {

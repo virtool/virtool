@@ -21,6 +21,7 @@ class InternalControl extends React.Component {
                     </ListGroupItem>
                     <ListGroupItem>
                         <AsyncTypeahead
+                            id="internal-control"
                             labelKey="name"
                             allowNew={false}
                             isLoading={this.props.readaheadPending}

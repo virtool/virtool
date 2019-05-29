@@ -1,26 +1,25 @@
-import SettingsContainer, { Settings, Server } from "../Settings";
+import { Settings } from "../Settings";
 
 describe("<Settings />", () => {
-    let wrapper;
+    let props;
 
-    it("renders correctly", () => {
-        const initialState = { settings: { data: {} } };
-        const store = mockStore(initialState);
-        wrapper = shallow(<SettingsContainer store={store} />).dive();
+    beforeEach(() => {
+        props = {
+            settings: {
+                enable_api: true,
+                enable_sentry: true
+            }
+        };
+    });
 
+    it("should render", () => {
+        const wrapper = shallow(<Settings {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders Settings subcomponent correctly", () => {
-        wrapper = shallow(<Settings settings={null} />);
-        expect(wrapper).toMatchSnapshot();
-
-        wrapper = shallow(<Settings settings={{}} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders Server subcomponent correctly", () => {
-        wrapper = shallow(<Server />);
+    it("should render placeholder when loading", () => {
+        props.settings = null;
+        const wrapper = shallow(<Settings {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

@@ -1,40 +1,53 @@
-import * as actions from "../../actions";
-import { Button } from "../../../base/index";
-import SentryOptionsContainer, { SentryFooter, SentryOptions } from "../Sentry";
+import { UPDATE_SETTINGS } from "../../../app/actionTypes";
+import { SentryOptions, mapDispatchToProps, mapStateToProps } from "../Sentry";
 
 describe("<Sentry />", () => {
-    const initialState = { settings: { data: { enable_sentry: false } } };
-    const store = mockStore(initialState);
-    let wrapper;
+    let props;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<SentryOptionsContainer store={store} />).dive();
+    beforeEach(() => {
+        props = { enabled: true, onToggle: jest.fn() };
+    });
+
+    it("should render correctly when enabled", () => {
+        const wrapper = shallow(<SentryOptions {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders SentryFooter correctly", () => {
-        wrapper = shallow(<SentryFooter />);
+    it("should render correctly when disabled", () => {
+        props.enabled = false;
+        const wrapper = shallow(<SentryOptions {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders SentryOptions correctly", () => {
-        const props = {
-            enabled: false,
-            onToggle: jest.fn()
+describe("mapStateToProps", () => {
+    it.each([true, false])("should return props when [enable_sentry=%p]", enabled => {
+        const state = {
+            settings: {
+                data: {
+                    enable_sentry: enabled
+                }
+            }
         };
-        wrapper = shallow(<SentryOptions {...props} />);
-        expect(wrapper).toMatchSnapshot();
+
+        expect(mapStateToProps(state)).toEqual({
+            enabled
+        });
     });
+});
 
-    it("dispatches updateSetting() action on checkbox toggle to update 'enable_sentry' field", () => {
-        const spy = sinon.spy(actions, "updateSetting");
-        expect(spy.called).toBe(false);
+describe("mapDispatchToProps", () => {
+    it.each([true, false])("should return functional onToggle() when [enabled=%p]", enabled => {
+        const dispatch = jest.fn();
+        const props = mapDispatchToProps(dispatch);
 
-        wrapper = mount(<SentryOptionsContainer store={store} />);
-        wrapper.find(Button).prop("onClick")();
+        props.onToggle(enabled);
 
-        expect(spy.calledWith("enable_sentry", true)).toBe(true);
-
-        spy.restore();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: UPDATE_SETTINGS.REQUESTED,
+            update: {
+                enable_sentry: enabled
+            }
+        });
     });
 });

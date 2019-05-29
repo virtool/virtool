@@ -1,13 +1,10 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { Switch, Redirect, Route } from "react-router-dom";
-import { Nav, NavItem } from "react-bootstrap";
 
-import { ViewHeader } from "../../base";
+import { TabLink, Tabs, ViewHeader } from "../../base";
 import { getAccount } from "../actions";
-import AccountGeneral from "./General";
-import AccountSettings from "./Settings";
+import AccountProfile from "./Profile";
 import APIKeys from "./API/API";
 
 export const Account = ({ userId, onGet }) => {
@@ -18,22 +15,15 @@ export const Account = ({ userId, onGet }) => {
             <ViewHeader title="Account">
                 <strong>Account</strong>
             </ViewHeader>
-            <Nav bsStyle="tabs">
-                <LinkContainer to="/account/general">
-                    <NavItem>General</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/account/settings">
-                    <NavItem>Settings</NavItem>
-                </LinkContainer>
-                <LinkContainer to="/account/api">
-                    <NavItem>API</NavItem>
-                </LinkContainer>
-            </Nav>
+
+            <Tabs>
+                <TabLink to="/account/profile">Profile</TabLink>
+                <TabLink to="/account/api">API</TabLink>
+            </Tabs>
 
             <Switch>
-                <Redirect from="/account" to="/account/general" exact />
-                <Route path="/account/general" component={AccountGeneral} />
-                <Route path="/account/settings" component={AccountSettings} />
+                <Redirect from="/account" to="/account/profile" exact />
+                <Route path="/account/profile" component={AccountProfile} />
                 <Route path="/account/api" component={APIKeys} />
             </Switch>
         </div>

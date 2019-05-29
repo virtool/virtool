@@ -1,7 +1,7 @@
 import { Icon } from "../../../base/index";
-import AccountGeneral from "../General";
+import AccountGeneral from "../Profile";
 
-describe("<AccountGeneral />", () => {
+describe("<AccountProfile />", () => {
     describe("renders correctly", () => {
         let initialState;
         let store;

@@ -2,10 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem, Breadcrumb } from "react-bootstrap";
+import { Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, TabLink, Tabs } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
@@ -113,19 +113,11 @@ class OTUDetail extends React.Component {
                     </Flex>
                 </h3>
 
-                <Nav bsStyle="tabs">
-                    <LinkContainer to={`/refs/${refId}/otus/${id}/otu`}>
-                        <NavItem>OTU</NavItem>
-                    </LinkContainer>
-
-                    <LinkContainer to={`/refs/${refId}/otus/${id}/schema`}>
-                        <NavItem>Schema</NavItem>
-                    </LinkContainer>
-
-                    <LinkContainer to={`/refs/${refId}/otus/${id}/history`}>
-                        <NavItem>History</NavItem>
-                    </LinkContainer>
-                </Nav>
+                <Tabs>
+                    <TabLink to={`/refs/${refId}/otus/${id}/otu`}>OTU</TabLink>
+                    <TabLink to={`/refs/${refId}/otus/${id}/schema`}>Schema</TabLink>
+                    <TabLink to={`/refs/${refId}/otus/${id}/history`}>History</TabLink>
+                </Tabs>
 
                 {modifyOTUComponents}
 

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AccountGeneral /> renders correctly with admin icon when [isAdmin=true] 1`] = `
+exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true] 1`] = `
 <div>
   <Flex
     alignContent="stretch"
@@ -77,7 +77,7 @@ exports[`<AccountGeneral /> renders correctly with admin icon when [isAdmin=true
 </div>
 `;
 
-exports[`<AccountGeneral /> renders correctly without icon otherwise 1`] = `
+exports[`<AccountProfile /> renders correctly without icon otherwise 1`] = `
 <div>
   <Flex
     alignContent="stretch"
