@@ -72,10 +72,27 @@ exports[`<App /> renders correctly 1`] = `
     }
   }
 >
-  <Connect(ConnectedRouter)
-    history={Object {}}
+  <ThemeProvider
+    theme={
+      Object {
+        "color": Object {
+          "greyDark": "#555",
+          "greyLight": "#dddddd",
+        },
+        "fontSize": Object {
+          "lg": "18px",
+          "md": "16px",
+          "sm": "14px",
+          "xs": "12px",
+        },
+      }
+    }
   >
-    <withRouter(Connect(Inner)) />
-  </Connect(ConnectedRouter)>
+    <Connect(ConnectedRouter)
+      history={Object {}}
+    >
+      <withRouter(Connect(Inner)) />
+    </Connect(ConnectedRouter)>
+  </ThemeProvider>
 </Provider>
 `;
