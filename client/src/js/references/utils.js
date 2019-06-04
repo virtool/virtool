@@ -1,6 +1,6 @@
 import { pull, reject } from "lodash-es";
 
-export const dataTypes = ["barcode", "genome"];
+export const dataTypes = ["genome"];
 
 export const removeMember = (list, pendingRemoves) => {
     const target = pendingRemoves[0];

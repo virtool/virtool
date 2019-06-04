@@ -88,16 +88,8 @@ const ReferenceManage = ({ detail }) => {
                         <td className="col-xs-8">{description}</td>
                     </tr>
                     <tr>
-                        <th>Data Type</th>
-                        <td className="text-capitalize">{data_type}</td>
-                    </tr>
-                    <tr>
                         <th>Organism</th>
                         <td>{organism}</td>
-                    </tr>
-                    <tr>
-                        <th>Internal Control</th>
-                        <td>{internal_control ? internal_control.name : "None"}</td>
                     </tr>
                 </tbody>
             </Table>

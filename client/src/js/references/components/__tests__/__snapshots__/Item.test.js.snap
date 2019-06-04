@@ -69,16 +69,6 @@ exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 1`] = `
   <tbody>
     <tr>
       <th>
-        Data Type
-      </th>
-      <td
-        className="text-capitalize"
-      >
-        test-genome
-      </td>
-    </tr>
-    <tr>
-      <th>
         Organism
       </th>
       <td
@@ -140,16 +130,6 @@ exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 2`] = `
   <tbody>
     <tr>
       <th>
-        Data Type
-      </th>
-      <td
-        className="text-capitalize"
-      >
-        test-genome
-      </td>
-    </tr>
-    <tr>
-      <th>
         Organism
       </th>
       <td
@@ -185,16 +165,6 @@ exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 3`] = `
   striped={false}
 >
   <tbody>
-    <tr>
-      <th>
-        Data Type
-      </th>
-      <td
-        className="text-capitalize"
-      >
-        test-genome
-      </td>
-    </tr>
     <tr>
       <th>
         Organism
@@ -233,16 +203,6 @@ exports[`<Item /> renders <ReferenceMetadata /> subcomponent correctly 4`] = `
   striped={false}
 >
   <tbody>
-    <tr>
-      <th>
-        Data Type
-      </th>
-      <td
-        className="text-capitalize"
-      >
-        test-genome
-      </td>
-    </tr>
     <tr>
       <th>
         Organism
