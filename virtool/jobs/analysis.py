@@ -227,6 +227,33 @@ class Job(virtool.jobs.job.Job):
 
         self.dispatch("caches", "update", [cache_id])
 
+    def cleanup(self):
+        cache_id = self.intermediate.get("cache_id", None)
+
+        if cache_id:
+            cache = self.db.caches.find_one(cache_id, ["ready"])
+
+            if not cache.get("ready"):
+                self.db.caches.delete_one({"_id": cache_id})
+                cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
+                try:
+                    virtool.utils.rm(cache_path, recursive=True)
+                except FileNotFoundError:
+                    pass
+
+        self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
+
+        try:
+            shutil.rmtree(self.params["analysis_path"])
+        except FileNotFoundError:
+            pass
+
+        sample_id = self.params["sample_id"]
+
+        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
+
+        self.dispatch("samples", "update", [sample_id])
+
 
 def get_sequence_otu_map(db, manifest):
     sequence_otu_map = dict()

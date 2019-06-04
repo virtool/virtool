@@ -101,12 +101,12 @@ class Job(virtool.jobs.analysis.Job):
             unmapped_roots = {h.split(" ")[0] for h in headers}
 
             with open(os.path.join(self.params["analysis_path"], "unmapped_1.fq"), "w") as f:
-                for header, seq, quality in virtool.bio.read_fastq(self.params["read_paths"][0]):
+                for header, seq, quality in virtool.bio.read_fastq_from_path(self.params["read_paths"][0]):
                     if header.split(" ")[0] in unmapped_roots:
                         f.write("\n".join([header, seq, "+", quality]) + "\n")
 
             with open(os.path.join(self.params["analysis_path"], "unmapped_2.fq"), "w") as f:
-                for header, seq, quality in virtool.bio.read_fastq(self.params["read_paths"][1]):
+                for header, seq, quality in virtool.bio.read_fastq_from_path(self.params["read_paths"][1]):
                     if header.split(" ")[0] in unmapped_roots:
                         f.write("\n".join([header, seq, "+", quality]) + "\n")
 
@@ -323,20 +323,9 @@ class Job(virtool.jobs.analysis.Job):
         self.dispatch("samples", "update", [sample_id])
 
     def cleanup(self):
-        self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
+        super().cleanup()
 
         try:
             self.temp_dir.cleanup()
         except AttributeError:
             pass
-
-        try:
-            shutil.rmtree(self.params["analysis_path"])
-        except FileNotFoundError:
-            pass
-
-        sample_id = self.params["sample_id"]
-
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
-
-        self.dispatch("samples", "update", [sample_id])
