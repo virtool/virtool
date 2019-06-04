@@ -18,7 +18,7 @@ class FileManager extends React.Component {
         }
     };
 
-    renderRow = index => <File key={index} index={index} canRemove={this.props.canRemove} />;
+    renderRow = index => <File key={index} index={index} />;
 
     render() {
         if (
@@ -73,7 +73,6 @@ const mapStateToProps = state => {
         page_count,
         total_count,
         canUpload: checkAdminOrPermission(state, "upload_file"),
-        canRemove: checkAdminOrPermission(state, "remove_file"),
         storedFileType: state.files.fileType
     };
 };

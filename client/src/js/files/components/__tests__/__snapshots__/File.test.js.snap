@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<File /> renders correctly 1`] = `
+exports[`<File /> should render 1`] = `
 <ListGroupItem
   allowFocus={false}
   className="spaced"
@@ -22,7 +22,7 @@ exports[`<File /> renders correctly 1`] = `
       xs={4}
     >
       <strong>
-        test-file
+        foo.fa
       </strong>
     </Col>
     <Col
@@ -31,9 +31,7 @@ exports[`<File /> renders correctly 1`] = `
       md={2}
       sm={2}
       xs={2}
-    >
-      10.0B
-    </Col>
+    />
     <Col
       bsClass="col"
       componentClass="div"
@@ -47,7 +45,7 @@ exports[`<File /> renders correctly 1`] = `
           time="2018-02-14T17:12:00.000000Z"
         />
          by 
-        test-user
+        bill
       </span>
     </Col>
     <Col
@@ -56,12 +54,26 @@ exports[`<File /> renders correctly 1`] = `
       md={1}
       sm={1}
       xs={1}
-    />
+    >
+      <Icon
+        bsStyle="danger"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        pullRight={true}
+        style={
+          Object {
+            "fontSize": "17px",
+          }
+        }
+      />
+    </Col>
   </Row>
 </ListGroupItem>
 `;
 
-exports[`<File /> renders correctly 2`] = `
+exports[`<File /> should render when [canRemove=false] 1`] = `
 <ListGroupItem
   allowFocus={false}
   className="spaced"
@@ -83,7 +95,7 @@ exports[`<File /> renders correctly 2`] = `
       xs={4}
     >
       <strong>
-        test-file
+        foo.fa
       </strong>
     </Col>
     <Col
@@ -92,9 +104,66 @@ exports[`<File /> renders correctly 2`] = `
       md={2}
       sm={2}
       xs={2}
+    />
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={5}
+      sm={5}
+      xs={5}
     >
-      10.0B
+      <span>
+        Uploaded 
+        <RelativeTime
+          time="2018-02-14T17:12:00.000000Z"
+        />
+         by 
+        bill
+      </span>
     </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={1}
+      sm={1}
+      xs={1}
+    />
+  </Row>
+</ListGroupItem>
+`;
+
+exports[`<File /> should render when [user=null] 1`] = `
+<ListGroupItem
+  allowFocus={false}
+  className="spaced"
+  style={
+    Object {
+      "color": "#555",
+    }
+  }
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+      sm={4}
+      xs={4}
+    >
+      <strong>
+        foo.fa
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={2}
+      sm={2}
+      xs={2}
+    />
     <Col
       bsClass="col"
       componentClass="div"
