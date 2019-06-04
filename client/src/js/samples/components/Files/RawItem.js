@@ -98,7 +98,7 @@ const mapStateToProps = (state, ownProps) => {
 
     const upload = find(
         state.files.uploads,
-        ({ context, progress }) => context.sampleId === sampleId && context.suffix === ownProps.suffix && progress < 100
+        ({ context }) => context.sampleId === sampleId && context.suffix === ownProps.suffix
     );
 
     return {

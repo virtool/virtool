@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UploadItem /> should render when [progress === 0] 1`] = `
+<UploadItem__StyledUploadItem>
+  <ProgressBar
+    affixed={true}
+    bsStyle="primary"
+    now={0}
+  />
+  <UploadItem__UploadItemTitle>
+    Foo.fa
+  </UploadItem__UploadItemTitle>
+</UploadItem__StyledUploadItem>
+`;
+
+exports[`<UploadItem /> should render when [progress > 0] 1`] = `
+<UploadItem__StyledUploadItem>
+  <ProgressBar
+    affixed={true}
+    bsStyle="primary"
+    now={51}
+  />
+  <UploadItem__UploadItemTitle>
+    Foo.fa
+  </UploadItem__UploadItemTitle>
+</UploadItem__StyledUploadItem>
+`;
