@@ -3,7 +3,7 @@
  *
  * @module files/reducer
  */
-import { every, map } from "lodash-es";
+import { map, reject } from "lodash-es";
 import { updateDocuments, insert, update, remove } from "../utils/reducers";
 import {
     WS_INSERT_FILE,
@@ -27,9 +27,7 @@ export const initialState = {
     found_count: 0,
     page: 0,
     total_count: 0,
-    uploads: [],
-    uploadsComplete: true,
-    showUploadOverlay: false
+    uploads: []
 };
 
 export const appendUpload = (state, action) => {
@@ -38,30 +36,34 @@ export const appendUpload = (state, action) => {
 
     return {
         ...state,
-        uploads: state.uploads.concat([{ localId, progress: 0, name, size, type: fileType, context }]),
-        showUploadOverlay: true
+        uploads: state.uploads.concat([{ localId, progress: 0, name, size, type: fileType, context }])
     };
 };
 
 /**
- * If all uploads in ``state`` are complete, set the ``uploadsComplete`` property to ``true``.
+ * Remove finished uploads.
  *
  * @func
  * @param state {object}
  * @returns {object}
  */
-export const checkUploadsComplete = state => ({
+export const cleanUploads = state => ({
     ...state,
-    uploadsComplete: every(state.uploads, { progress: 100 })
+    uploads: reject(state.uploads, { progress: 100 })
 });
 
-export const pruneUploads = (state, action) => {
+/**
+ * Update the progress for an upload.
+ *
+ * @param state
+ * @param action
+ */
+export const updateProgress = (state, action) => {
     const uploads = map(state.uploads, upload => {
-        if (upload.localId !== action.localId) {
-            return upload;
+        if (upload.localId === action.localId) {
+            return { ...upload, progress: action.progress };
         }
-
-        return { ...upload, progress: action.progress };
+        return upload;
     });
 
     return { ...state, uploads };
@@ -103,11 +105,10 @@ export default function fileReducer(state = initialState, action) {
 
         case UPLOAD.REQUESTED:
         case UPLOAD_SAMPLE_FILE.REQUESTED:
-            return checkUploadsComplete(appendUpload(state, action));
+            return cleanUploads(appendUpload(state, action));
 
         case UPLOAD_PROGRESS:
-            return checkUploadsComplete(pruneUploads(state, action));
-
+            return cleanUploads(updateProgress(state, action));
     }
 
     return state;

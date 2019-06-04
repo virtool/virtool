@@ -5,8 +5,7 @@ import {
     FIND_FILES,
     REMOVE_FILE,
     UPLOAD,
-    UPLOAD_PROGRESS,
-    HIDE_UPLOAD_OVERLAY
+    UPLOAD_PROGRESS
 } from "../../app/actionTypes";
 import {
     wsInsertFile,
@@ -15,8 +14,7 @@ import {
     findFiles,
     upload,
     removeFile,
-    uploadProgress,
-    hideUploadOverlay
+    uploadProgress
 } from "../actions";
 
 describe("Files Action Creators", () => {
@@ -102,13 +100,6 @@ describe("Files Action Creators", () => {
             type: UPLOAD_PROGRESS,
             localId,
             progress
-        });
-    });
-
-    it("hideUploadOverlay: returns simple action", () => {
-        const result = hideUploadOverlay();
-        expect(result).toEqual({
-            type: HIDE_UPLOAD_OVERLAY
         });
     });
 });
