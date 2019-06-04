@@ -149,7 +149,7 @@ def test_fastq(headers_only, tmpdir):
     if headers_only:
         assert virtool.bio.read_fastq_headers(str(tmpfile)) == [i[0] for i in expected]
     else:
-        assert virtool.bio.read_fastq(str(tmpfile)) == expected
+        assert list(virtool.bio.read_fastq_from_path(str(tmpfile))) == expected
 
 
 def test_reverse_complement():

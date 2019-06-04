@@ -1,4 +1,5 @@
 import asyncio
+import gzip
 import io
 import json
 import re
@@ -147,7 +148,7 @@ def read_fasta(path):
     return data
 
 
-def read_fastq(path):
+def read_fastq(f):
     data = list()
 
     had_plus = False
@@ -155,28 +156,38 @@ def read_fastq(path):
     header = None
     seq = None
 
-    with open(path, "r") as f:
-        for line in f:
-            if line == "+\n":
-                had_plus = True
+    for line in f:
+        if line == "+\n":
+            had_plus = True
+            continue
+
+        if not had_plus:
+            if line[0] == "@":
+                header = line.rstrip()
                 continue
 
-            if not had_plus:
-                if line[0] == "@":
-                    header = line.rstrip()
-                    continue
+            seq = line.rstrip()
+            continue
 
-                seq = line.rstrip()
-                continue
+        if had_plus:
+            yield (header, seq, line.rstrip())
 
-            if had_plus:
-                data.append((header, seq, line.rstrip()))
-
-                header = None
-                seq = None
-                had_plus = False
+            header = None
+            seq = None
+            had_plus = False
 
     return data
+
+
+def read_fastq_from_path(path):
+    try:
+        with open(path, "r") as f:
+            for record in read_fastq(f):
+                yield record
+    except UnicodeDecodeError:
+        with gzip.open(path, "rt") as f:
+            for record in read_fastq(f):
+                yield record
 
 
 def read_fastq_headers(path):
