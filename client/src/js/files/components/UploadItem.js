@@ -1,15 +1,21 @@
 import React from "react";
-import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
-import { byteSize } from "../../utils/utils";
+import styled from "styled-components";
+import { ProgressBar } from "../../base";
 
-export const UploadItem = ({ name, progress, size }) => (
-    <ListGroupItem>
-        <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
-        <Flex>
-            <FlexItem grow={1}>{name}</FlexItem>
-            <FlexItem shrink={0} grow={0} pad={15}>
-                {byteSize(size)}
-            </FlexItem>
-        </Flex>
-    </ListGroupItem>
+const StyledUploadItem = styled.div`
+    padding: 0;
+`;
+
+const UploadItemTitle = styled.div`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+`;
+
+export const UploadItem = ({ name, progress }) => (
+    <StyledUploadItem>
+        <ProgressBar now={progress} affixed />
+        <UploadItemTitle>{name}</UploadItemTitle>
+    </StyledUploadItem>
 );

@@ -2,7 +2,6 @@ import { get } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { getLinkedJob } from "../../../jobs/actions";
-import { getHasRawFilesOnly } from "../../selectors";
 import SampleFilesMessage from "../LegacyAlert";
 import SampleFilesCache from "./Cache";
 import SampleFilesRaw from "./Raw";
@@ -23,17 +22,9 @@ const SampleDetailFiles = ({ onGetJob, jobId }) => {
     );
 };
 
-const mapStateToProps = state => {
-    let jobId;
-
-    if (!getHasRawFilesOnly(state)) {
-        jobId = get(state, "samples.detail.update_job.id");
-    }
-
-    return {
-        jobId
-    };
-};
+const mapStateToProps = state => ({
+    jobId: get(state, "samples.detail.update_job.id")
+});
 
 const mapDispatchToProps = dispatch => ({
     onGetJob: jobId => {

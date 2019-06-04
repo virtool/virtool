@@ -1,72 +1,60 @@
-import CX from "classnames";
-import { concat, reduce } from "lodash-es";
-import PropTypes from "prop-types";
 import React from "react";
-import { Badge, ListGroup } from "react-bootstrap";
+import styled from "styled-components";
+import { map, reject, sortBy } from "lodash-es";
+import { Badge } from "react-bootstrap";
 import { connect } from "react-redux";
-import { hideUploadOverlay } from "../actions";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
 import { UploadItem } from "./UploadItem";
 
-export const UploadOverlay = props => {
-    const classNames = CX("upload-overlay", { hidden: !props.showUploadOverlay });
+const StyledUploadOverlay = styled.div`
+    ${props => (props.show ? "" : "display: none;")};
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 35%;
+    max-width: 500px;
+    z-index: 1040;
+    padding: 0 15px 15px 0;
+`;
 
-    const pendingEntries = [];
+const UploadOverlayContent = styled(BoxGroup)`
+    background-color: #ffffff;
+    box-shadow: 0 0 6px 0 #d5d5d5;
+    margin: 0;
 
-    const loadingEntries = reduce(
-        props.uploads,
-        (result, upload) => {
-            if (upload.progress === 100 || upload.fileType === "reference") {
-                return result;
-            } else if (upload.progress === 0) {
-                pendingEntries.push(<UploadItem key={upload.localId} {...upload} />);
-            } else {
-                result.push(<UploadItem key={upload.localId} {...upload} />);
-            }
-            return result;
-        },
-        []
-    );
-
-    const uploadComponents = concat(loadingEntries, pendingEntries);
-
-    const content =
-        props.uploadsComplete || !uploadComponents.length ? null : (
-            <div className={classNames}>
-                <div className="upload-overlay-content">
-                    <h5>
-                        <span>
-                            <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
-                        </span>
-                        <button type="button" className="close pullRight" onClick={props.onClose}>
-                            <span>&times;</span>
-                        </button>
-                    </h5>
-                    <ListGroup style={{ height: "auto", maxHeight: "175px", overflowX: "hidden" }}>
-                        {uploadComponents}
-                    </ListGroup>
-                </div>
-            </div>
-        );
-
-    return <div>{content}</div>;
-};
-
-UploadOverlay.propTypes = {
-    uploads: PropTypes.arrayOf(PropTypes.object),
-    showUploadOverlay: PropTypes.bool,
-    uploadsComplete: PropTypes.bool,
-    onClose: PropTypes.func
-};
-
-const mapStateToProps = state => ({ ...state.files });
-
-const mapDispatchToProps = dispatch => ({
-    onClose: () => {
-        dispatch(hideUploadOverlay());
+    ${BoxGroupHeader} {
+        display: block;
     }
-});
+`;
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(UploadOverlay);
+const UploadOverlayList = styled(BoxGroupSection)`
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+    padding: 0;
+`;
+
+export const UploadOverlay = ({ uploads }) => {
+    if (uploads.length) {
+        const uploadComponents = map(uploads, upload => <UploadItem key={upload.localId} {...upload} />);
+
+        return (
+            <StyledUploadOverlay show={uploads.length}>
+                <UploadOverlayContent>
+                    <BoxGroupHeader>
+                        <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
+                    </BoxGroupHeader>
+                    <UploadOverlayList>{uploadComponents}</UploadOverlayList>
+                </UploadOverlayContent>
+            </StyledUploadOverlay>
+        );
+    }
+
+    return null;
+};
+
+export const mapStateToProps = state => {
+    return { uploads: sortBy(reject(state.files.uploads, { fileType: "reference" }), "progress") };
+};
+
+export default connect(mapStateToProps)(UploadOverlay);

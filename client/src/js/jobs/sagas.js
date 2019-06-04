@@ -49,7 +49,7 @@ export function* getJob(action) {
 }
 
 export function* getLinkedJob(action) {
-    yield setPending(apiCall(jobsAPI.get, action, GET_LINKED_JOB));
+    yield apiCall(jobsAPI.get, action, GET_LINKED_JOB);
 }
 
 export function* cancelJob(action) {
