@@ -89,7 +89,7 @@ const ReferenceManage = ({ detail }) => {
                     </tr>
                     <tr>
                         <th>Organism</th>
-                        <td>{organism}</td>
+                        <td className="text-capitalize">{organism}</td>
                     </tr>
                 </tbody>
             </Table>
