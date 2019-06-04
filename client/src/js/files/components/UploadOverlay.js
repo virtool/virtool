@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { hideUploadOverlay } from "../actions";
 import { UploadItem } from "./UploadItem";
 
 export const UploadOverlay = props => {
@@ -37,9 +36,6 @@ export const UploadOverlay = props => {
                         <span>
                             <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
                         </span>
-                        <button type="button" className="close pullRight" onClick={props.onClose}>
-                            <span>&times;</span>
-                        </button>
                     </h5>
                     <ListGroup style={{ height: "auto", maxHeight: "175px", overflowX: "hidden" }}>
                         {uploadComponents}
@@ -53,20 +49,10 @@ export const UploadOverlay = props => {
 
 UploadOverlay.propTypes = {
     uploads: PropTypes.arrayOf(PropTypes.object),
-    showUploadOverlay: PropTypes.bool,
     uploadsComplete: PropTypes.bool,
     onClose: PropTypes.func
 };
 
 const mapStateToProps = state => ({ ...state.files });
 
-const mapDispatchToProps = dispatch => ({
-    onClose: () => {
-        dispatch(hideUploadOverlay());
-    }
-});
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(UploadOverlay);
+export default connect(mapStateToProps)(UploadOverlay);

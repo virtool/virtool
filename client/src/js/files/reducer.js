@@ -12,7 +12,6 @@ import {
     FIND_FILES,
     UPLOAD,
     UPLOAD_PROGRESS,
-    HIDE_UPLOAD_OVERLAY,
     UPLOAD_SAMPLE_FILE
 } from "../app/actionTypes";
 
@@ -109,8 +108,6 @@ export default function fileReducer(state = initialState, action) {
         case UPLOAD_PROGRESS:
             return checkUploadsComplete(pruneUploads(state, action));
 
-        case HIDE_UPLOAD_OVERLAY:
-            return { ...state, showUploadOverlay: false };
     }
 
     return state;

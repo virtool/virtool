@@ -74,7 +74,6 @@ export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
 export const UPLOAD = createRequestActionType("UPLOAD");
 export const UPLOAD_SAMPLE_FILE = createRequestActionType("UPLOAD_SAMPLE_FILE");
 export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
-export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 
 // Groups
 export const WS_INSERT_GROUP = "WS_INSERT_GROUP";

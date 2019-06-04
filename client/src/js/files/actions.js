@@ -103,11 +103,3 @@ export const uploadProgress = (localId, progress) => ({
     localId,
     progress
 });
-
-/**
- * A simple action that causes the upload dialog overlay to be hidden.
- *
- * @func
- * @returns {object}
- */
-export const hideUploadOverlay = simpleActionCreator(HIDE_UPLOAD_OVERLAY);
