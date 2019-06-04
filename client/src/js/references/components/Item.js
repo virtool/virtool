@@ -69,10 +69,6 @@ export const ReferenceMetadata = ({ id, data_type, organism, origin, latest_buil
         <Table bordered>
             <tbody>
                 <tr>
-                    <th>Data Type</th>
-                    <td className="text-capitalize">{data_type}</td>
-                </tr>
-                <tr>
                     <th>Organism</th>
                     <td className="text-capitalize">{organism || "unknown"}</td>
                 </tr>

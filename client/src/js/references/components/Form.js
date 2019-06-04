@@ -54,18 +54,6 @@ export default class ReferenceForm extends React.Component {
                 <Row>
                     <Col xs={12} md={6}>
                         <InputError
-                            label="Data Type"
-                            name="dataType"
-                            type="select"
-                            value={this.props.state.dataType}
-                            onChange={this.props.onChange}
-                            error={this.props.state.errorDataType}
-                        >
-                            {dataOptions}
-                        </InputError>
-                    </Col>
-                    <Col xs={12} md={6}>
-                        <InputError
                             label="Organism"
                             name="organism"
                             value={this.props.state.organism}

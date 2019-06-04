@@ -358,35 +358,6 @@ class Job(virtool.jobs.analysis.Job):
         self.dispatch("analyses", "update", [analysis_id])
         self.dispatch("samples", "update", [sample_id])
 
-    def cleanup(self):
-        """
-        Remove the analysis document and the analysis files. Dispatch the removal op. Recalculate and update the
-        algorithm tags for the sample document.
-
-        """
-        cache_id = self.intermediate.get("cache_id")
-
-        if cache_id:
-            self.db.caches.delete_one({"_id": cache_id})
-            cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
-            try:
-                shutil.rmtree(cache_path)
-            except FileNotFoundError:
-                pass
-
-        self.db.analyses.delete_one({"_id": self.params["analysis_id"]})
-
-        try:
-            shutil.rmtree(self.params["analysis_path"])
-        except FileNotFoundError:
-            pass
-
-        sample_id = self.params["sample_id"]
-
-        virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
-
-        self.dispatch("samples", "update", [sample_id])
-
     def cleanup_indexes(self):
         pass
 

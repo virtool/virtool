@@ -72,35 +72,6 @@ exports[`<ReferenceForm /> renders correctly with errors 1`] = `
       xs={12}
     >
       <InputError
-        error=""
-        label="Data Type"
-        name="dataType"
-        type="select"
-        value="test-datatype"
-      >
-        <option
-          hidden={false}
-          key="barcode"
-          value="barcode"
-        >
-          Barcode
-        </option>
-        <option
-          hidden={false}
-          key="genome"
-          value="genome"
-        >
-          Genome
-        </option>
-      </InputError>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      <InputError
         label="Organism"
         name="organism"
         value="test-organism"
@@ -154,35 +125,6 @@ exports[`<ReferenceForm /> renders correctly without errors 1`] = `
     bsClass="row"
     componentClass="div"
   >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      <InputError
-        error=""
-        label="Data Type"
-        name="dataType"
-        type="select"
-        value="test-datatype"
-      >
-        <option
-          hidden={false}
-          key="barcode"
-          value="barcode"
-        >
-          Barcode
-        </option>
-        <option
-          hidden={false}
-          key="genome"
-          value="genome"
-        >
-          Genome
-        </option>
-      </InputError>
-    </Col>
     <Col
       bsClass="col"
       componentClass="div"
