@@ -1,98 +1,78 @@
-import * as actions from "../../actions";
-import { UploadItem } from "../UploadItem";
-import UploadOverlay from "../UploadOverlay";
+import { UploadOverlay, mapStateToProps } from "../UploadOverlay";
 
 describe("<UploadOverlay />", () => {
-    let initialState;
-    let store;
-    let wrapper;
+    let props;
 
-    it("renders correctly", () => {
-        initialState = {
+    beforeEach(() => {
+        props = {
+            uploads: [
+                {
+                    fileType: "subtraction",
+                    localId: "123abc",
+                    name: "test_reads.fastq.gz",
+                    progress: 100,
+                    size: 1024
+                },
+                {
+                    fileType: "reads",
+                    localId: "456def",
+                    name: "test_reads.fastq.gz",
+                    progress: 0,
+                    size: 1024
+                },
+                {
+                    fileType: "reads",
+                    localId: "789ghi",
+                    name: "test_reads.fastq.gz",
+                    progress: 50,
+                    size: 1024
+                }
+            ]
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<UploadOverlay {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should return null if no uploads", () => {
+        props.uploads = [];
+        const wrapper = shallow(<UploadOverlay {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
             files: {
                 uploads: [
-                    {
-                        fileType: "reference",
-                        localId: "123abc",
-                        name: "test_reads.fastq.gz",
-                        progress: 100,
-                        size: 1024
-                    },
-                    {
-                        fileType: "reads",
-                        localId: "456def",
-                        name: "test_reads.fastq.gz",
-                        progress: 0,
-                        size: 1024
-                    },
-                    {
-                        fileType: "reads",
-                        localId: "789ghi",
-                        name: "test_reads.fastq.gz",
-                        progress: 50,
-                        size: 1024
-                    }
-                ],
-                showUploadOverlay: true,
-                uploadsComplete: false
+                    { localId: "foo", progress: 0 },
+                    { localId: "bar", progress: 12 },
+                    { localId: "baz", progress: 37 }
+                ]
             }
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<UploadOverlay store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders empty <div /> if no uploads or all uploads are complete", () => {
-        initialState = {
-            uploads: [],
-            showUploadOverlay: false,
-            uploadsComplete: true
-        };
-        store = mockStore(initialState);
-        wrapper = shallow(<UploadOverlay store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
+    it("should return sorted uploads in props", () => {
+        const props = mapStateToProps(state);
+        const [baz, bar, foo] = props.uploads;
+
+        expect(props).toEqual({
+            uploads: [baz, bar, foo]
+        });
     });
 
-    it("renders <UploadItem /> subcomponent correctly", () => {
-        const props = {
-            localId: "123abc",
-            name: "test-file",
-            progress: 25,
-            size: 1024
-        };
-        wrapper = shallow(<UploadItem {...props} />);
-        expect(wrapper).toMatchSnapshot();
-
-        expect(wrapper.find({ bsStyle: "success" }).length).toEqual(1);
-
-        wrapper.setProps({ progress: 100 });
-        expect(wrapper.find({ bsStyle: "primary" }).length).toEqual(1);
-    });
-
-    it("Clicking on close icon dispatches hideUploadOverlay() action", () => {
-        const spy = sinon.spy(actions, "hideUploadOverlay");
-        expect(spy.called).toBe(false);
-
-        initialState = {
-            files: {
-                uploads: [
-                    {
-                        fileType: "reads",
-                        localId: "123abc",
-                        name: "test_reads.fastq.gz",
-                        progress: 50,
-                        size: 1024
-                    }
-                ],
-                showUploadOverlay: true,
-                uploadsComplete: false
-            }
-        };
-        store = mockStore(initialState);
-        wrapper = mount(<UploadOverlay store={store} />);
-        wrapper.find("button").prop("onClick")();
-        expect(spy.calledOnce).toBe(true);
-
-        spy.restore();
+    it("should exclude reference uploads", () => {
+        state.files.uploads[1].fileType = "reference";
+        const props = mapStateToProps(state);
+        const [baz, foo] = props.uploads;
+        expect(props).toEqual({
+            uploads: [baz, foo]
+        });
     });
 });

@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveReference /> renders correctly 1`] = `
+exports[`<RemoveReference /> should not render when user does not have permission 1`] = `""`;
+
+exports[`<RemoveReference /> should render when user has permission 1`] = `
 <RemoveBanner
   buttonText="Delete"
   message="Click the Delete button to permanently remove this reference."

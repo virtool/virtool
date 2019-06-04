@@ -1,103 +1,50 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UploadOverlay /> renders <UploadItem /> subcomponent correctly 1`] = `
-<ListGroupItem
-  allowFocus={false}
+exports[`<UploadOverlay /> should render 1`] = `
+<UploadOverlay__StyledUploadOverlay
+  show={3}
 >
-  <ProgressBar
-    affixed={true}
-    bsStyle="success"
-    now={25}
-  />
-  <Flex
-    alignContent="stretch"
-    alignItems="stretch"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
-  >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      shrink={1}
-    >
-      test-file
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={15}
-      shrink={0}
-    >
-      1.0KB
-    </FlexItem>
-  </Flex>
-</ListGroupItem>
-`;
-
-exports[`<UploadOverlay /> renders correctly 1`] = `
-<div>
-  <div
-    className="upload-overlay"
-  >
-    <div
-      className="upload-overlay-content"
-    >
-      <h5>
-        <span>
-          <strong>
-            Uploads
-          </strong>
-           
-          <Badge
-            bsClass="badge"
-            pullRight={false}
-          >
-            2
-          </Badge>
-        </span>
-        <button
-          className="close pullRight"
-          onClick={[Function]}
-          type="button"
-        >
-          <span>
-            ×
-          </span>
-        </button>
-      </h5>
-      <ListGroup
-        bsClass="list-group"
-        style={
-          Object {
-            "height": "auto",
-            "maxHeight": "175px",
-            "overflowX": "hidden",
-          }
-        }
+  <UploadOverlay__UploadOverlayContent>
+    <Box__BoxGroupHeader>
+      <strong>
+        Uploads
+      </strong>
+       
+      <Badge
+        bsClass="badge"
+        pullRight={false}
       >
-        <UploadItem
-          fileType="reads"
-          key="789ghi"
-          localId="789ghi"
-          name="test_reads.fastq.gz"
-          progress={50}
-          size={1024}
-        />
-        <UploadItem
-          fileType="reads"
-          key="456def"
-          localId="456def"
-          name="test_reads.fastq.gz"
-          progress={0}
-          size={1024}
-        />
-      </ListGroup>
-    </div>
-  </div>
-</div>
+        3
+      </Badge>
+    </Box__BoxGroupHeader>
+    <UploadOverlay__UploadOverlayList>
+      <UploadItem
+        fileType="subtraction"
+        key="123abc"
+        localId="123abc"
+        name="test_reads.fastq.gz"
+        progress={100}
+        size={1024}
+      />
+      <UploadItem
+        fileType="reads"
+        key="456def"
+        localId="456def"
+        name="test_reads.fastq.gz"
+        progress={0}
+        size={1024}
+      />
+      <UploadItem
+        fileType="reads"
+        key="789ghi"
+        localId="789ghi"
+        name="test_reads.fastq.gz"
+        progress={50}
+        size={1024}
+      />
+    </UploadOverlay__UploadOverlayList>
+  </UploadOverlay__UploadOverlayContent>
+</UploadOverlay__StyledUploadOverlay>
 `;
 
-exports[`<UploadOverlay /> renders empty <div /> if no uploads or all uploads are complete 1`] = `<div />`;
+exports[`<UploadOverlay /> should return null if no uploads 1`] = `""`;

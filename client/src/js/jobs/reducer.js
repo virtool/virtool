@@ -17,7 +17,6 @@ export const initialState = {
     detail: null,
     filter: "",
     fetched: false,
-    refetchPage: false,
     resources: null,
     linkedJobs: {}
 };

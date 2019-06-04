@@ -4,23 +4,14 @@ import {
     WS_REMOVE_FILE,
     UPLOAD,
     UPLOAD_PROGRESS,
-    HIDE_UPLOAD_OVERLAY,
     FIND_FILES
 } from "../../app/actionTypes";
-import reducer, { initialState as reducerInitialState, checkUploadsComplete } from "../reducer";
+import reducer, { initialState, cleanUploads } from "../reducer";
 
-describe("Files Reducer", () => {
+describe("filesReducer()", () => {
     it("should return the initial state on first pass", () => {
         const result = reducer(undefined, {});
-        expect(result).toEqual(reducerInitialState);
-    });
-
-    it("should return the given state on other action types", () => {
-        const action = {
-            type: "UNHANDLED_ACTION"
-        };
-        const result = reducer(reducerInitialState, action);
-        expect(result).toEqual(reducerInitialState);
+        expect(result).toEqual(initialState);
     });
 
     describe("should handle WS_INSERT_FILE", () => {
@@ -78,7 +69,7 @@ describe("Files Reducer", () => {
     });
 
     it("should handle LIST_FILES_REQUESTED", () => {
-        const state = reducerInitialState;
+        const state = {};
         const action = {
             type: FIND_FILES.REQUESTED,
             term: "foo",
@@ -86,7 +77,6 @@ describe("Files Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            ...reducerInitialState,
             term: "foo"
         });
     });
@@ -133,129 +123,84 @@ describe("Files Reducer", () => {
         const result = reducer(state, action);
 
         expect(result).toEqual({
-            uploads: [...state.uploads, { localId, name, context, size, type, progress: 0 }],
-            showUploadOverlay: true,
-            uploadsComplete: false
+            uploads: [...state.uploads, { localId, name, context, size, type, progress: 0 }]
         });
     });
 
     describe("should handle UPLOAD_PROGRESS", () => {
-        it("with no uploads", () => {
-            const state = {
-                uploads: []
+        let state;
+
+        beforeEach(() => {
+            state = {
+                uploads: [
+                    { localId: "foo", progress: 50 },
+                    { localId: "bar", progress: 0 },
+                    { localId: "baz", progress: 100 }
+                ]
             };
+        });
+
+        it("when there are no uploads", () => {
+            state.uploads = [];
             const action = {
                 type: UPLOAD_PROGRESS,
-                localId: "testid",
+                localId: "foo",
                 progress: 5
             };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                ...state,
-                uploadsComplete: true
+            expect(reducer(state, action)).toEqual({
+                uploads: []
             });
         });
 
-        it("with incomplete uploads", () => {
-            const state = {
-                uploads: [
-                    { localId: "test1", progress: 50 },
-                    { localId: "test2", progress: 0 },
-                    { localId: "test3", progress: 100 }
-                ]
-            };
+        it("when a zero-progress upload is updated", () => {
             const action = {
                 type: UPLOAD_PROGRESS,
-                localId: "test2",
-                progress: 30
+                localId: "bar",
+                progress: 22
             };
             const result = reducer(state, action);
             expect(result).toEqual({
-                uploads: [
-                    { localId: "test1", progress: 50 },
-                    { localId: "test2", progress: 30 },
-                    { localId: "test3", progress: 100 }
-                ],
-                uploadsComplete: false
+                uploads: [{ localId: "foo", progress: 50 }, { localId: "bar", progress: 22 }]
             });
         });
 
-        it("with complete uploads", () => {
-            const state = {
-                uploads: [
-                    { localId: "test1", progress: 90 },
-                    { localId: "test2", progress: 100 },
-                    { localId: "test3", progress: 100 }
-                ]
-            };
+        it("when a partial upload is updated", () => {
             const action = {
                 type: UPLOAD_PROGRESS,
-                localId: "test1",
+                localId: "foo",
+                progress: 65
+            };
+            const result = reducer(state, action);
+            expect(result).toEqual({
+                uploads: [{ localId: "foo", progress: 65 }, { localId: "bar", progress: 0 }]
+            });
+        });
+
+        it("when an update that brings a progress value to 100", () => {
+            const action = {
+                type: UPLOAD_PROGRESS,
+                localId: "foo",
                 progress: 100
             };
             const result = reducer(state, action);
             expect(result).toEqual({
+                uploads: [{ localId: "bar", progress: 0 }]
+            });
+        });
+    });
+
+    describe("cleanUploads()", () => {
+        it("should remove all and only finished uploads", () => {
+            const state = {
                 uploads: [
-                    { localId: "test1", progress: 100 },
-                    { localId: "test2", progress: 100 },
-                    { localId: "test3", progress: 100 }
-                ],
-                uploadsComplete: true
-            });
-        });
-    });
+                    { localId: "foo", progress: 32 },
+                    { localId: "bar", progress: 100 },
+                    { localId: "baz", progress: 0 }
+                ]
+            };
 
-    it("should handle HIDE_UPLOAD_OVERLAY", () => {
-        const action = {
-            type: HIDE_UPLOAD_OVERLAY
-        };
-        const result = reducer({}, action);
-        expect(result).toEqual({
-            showUploadOverlay: false
-        });
-    });
-
-    describe("Files Reducer Helper Functions", () => {
-        describe("checkUploadsComplete", () => {
-            it("sets [uploadsComplete=true] if all uploads have [progress=100]", () => {
-                const state = {
-                    uploads: [
-                        { localId: "test1", progress: 100 },
-                        { localId: "test2", progress: 100 },
-                        { localId: "test3", progress: 100 }
-                    ]
-                };
-                const result = checkUploadsComplete(state);
-                expect(result).toEqual({
-                    ...state,
-                    uploadsComplete: true
-                });
-            });
-
-            it("sets [uploadsComplete=true] if there are no uploads", () => {
-                const state = {
-                    uploads: []
-                };
-                const result = checkUploadsComplete(state);
-                expect(result).toEqual({
-                    ...state,
-                    uploadsComplete: true
-                });
-            });
-
-            it("sets [uploadsComplete=false] otherwise", () => {
-                const state = {
-                    uploads: [
-                        { localId: "test1", progress: 0 },
-                        { localId: "test2", progress: 50 },
-                        { localId: "test3", progress: 100 }
-                    ]
-                };
-                const result = checkUploadsComplete(state);
-                expect(result).toEqual({
-                    ...state,
-                    uploadsComplete: false
-                });
+            expect(cleanUploads(state)).toEqual({
+                uploads: [state.uploads[0], state.uploads[2]]
             });
         });
     });

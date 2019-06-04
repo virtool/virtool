@@ -13,6 +13,12 @@ const SampleFilesJobStatus = styled.span`
     text-transform: uppercase;
 `;
 
+const SampleFilesJobTitle = styled(BoxTitle)`
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+`;
+
 const updateJobInProgress = "Update job in progress";
 
 export const SampleFilesJobMessage = ({ job }) => {
@@ -32,12 +38,10 @@ export const SampleFilesJobMessage = ({ job }) => {
 
     return (
         <Box>
-            <BoxTitle>
-                <Flex alignItems="flex-end" justifyContent="space-between">
-                    {link}
-                    <SampleFilesJobStatus>{status}</SampleFilesJobStatus>
-                </Flex>
-            </BoxTitle>
+            <SampleFilesJobTitle>
+                {link}
+                <SampleFilesJobStatus>{status}</SampleFilesJobStatus>
+            </SampleFilesJobTitle>
             <ProgressBar now={progress} />
         </Box>
     );

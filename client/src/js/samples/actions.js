@@ -132,9 +132,10 @@ export const updateSampleRights = (sampleId, update) => ({
 
 export const uploadSampleFile = (localId, sampleId, suffix, file) => ({
     type: UPLOAD_SAMPLE_FILE.REQUESTED,
+    file,
+    localId,
     sampleId,
     suffix,
-    file,
     context: {
         sampleId,
         suffix

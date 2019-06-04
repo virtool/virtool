@@ -4,7 +4,6 @@
  * @module files/actions
  */
 
-import { simpleActionCreator } from "../utils/utils";
 import {
     WS_INSERT_FILE,
     WS_UPDATE_FILE,
@@ -12,8 +11,7 @@ import {
     FIND_FILES,
     REMOVE_FILE,
     UPLOAD,
-    UPLOAD_PROGRESS,
-    HIDE_UPLOAD_OVERLAY
+    UPLOAD_PROGRESS
 } from "../app/actionTypes";
 
 export const wsInsertFile = data => ({
@@ -103,11 +101,3 @@ export const uploadProgress = (localId, progress) => ({
     localId,
     progress
 });
-
-/**
- * A simple action that causes the upload dialog overlay to be hidden.
- *
- * @func
- * @returns {object}
- */
-export const hideUploadOverlay = simpleActionCreator(HIDE_UPLOAD_OVERLAY);

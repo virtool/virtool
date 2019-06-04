@@ -1,9 +1,9 @@
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 import { map, sortBy } from "lodash-es";
-import { Button, LoadingPlaceholder, NoneFound } from "../../../base";
+import { BoxGroup, Icon } from "../../../base";
 import {
     addReferenceUser,
     editReferenceUser,
@@ -22,6 +22,28 @@ const getInitialState = () => ({
     showEdit: false
 });
 
+const NewMemberLink = styled.a`
+    cursor: pointer;
+`;
+
+const NoMembers = styled(BoxGroup.Section)`
+    align-items: center;
+    justify-content: center;
+    display: flex;
+
+    i {
+        padding-right: 3px;
+    }
+`;
+
+const ReferenceMembersHeader = styled(BoxGroup.Header)`
+    padding-bottom: 10px;
+
+    h2 {
+        text-transform: capitalize;
+    }
+`;
+
 class ReferenceMembers extends React.Component {
     constructor(props) {
         super(props);
@@ -30,9 +52,8 @@ class ReferenceMembers extends React.Component {
 
     static propTypes = {
         canModify: PropTypes.bool.isRequired,
-        loading: PropTypes.bool.isRequired,
         members: PropTypes.arrayOf(PropTypes.object).isRequired,
-        noun: PropTypes.oneOf(["groups", "users"]).isRequired,
+        noun: PropTypes.oneOf(["group", "user"]).isRequired,
         onAdd: PropTypes.func.isRequired,
         onEdit: PropTypes.func.isRequired,
         onRemove: PropTypes.func.isRequired,
@@ -56,11 +77,9 @@ class ReferenceMembers extends React.Component {
     };
 
     render() {
-        const { canModify, loading, members, noun } = this.props;
+        const { canModify, members, noun } = this.props;
 
-        if (loading) {
-            return <LoadingPlaceholder />;
-        }
+        const plural = `${noun}s`;
 
         let memberComponents;
 
@@ -75,32 +94,34 @@ class ReferenceMembers extends React.Component {
                 />
             ));
         } else {
-            memberComponents = <NoneFound noun={noun} style={{ margin: 0 }} noListGroup />;
+            memberComponents = (
+                <NoMembers>
+                    <Icon name="exclamation-circle" /> None Found
+                </NoMembers>
+            );
         }
 
         let addButton;
 
         if (this.props.canModify) {
-            addButton = (
-                <Button bsSize="xsmall" bsStyle="primary" icon="plus-square" onClick={this.add} pullRight>
-                    Add
-                </Button>
-            );
+            addButton = <NewMemberLink onClick={this.add}>Add {noun}</NewMemberLink>;
         }
 
         return (
-            <Panel>
-                <ListGroup>
-                    <ListGroupItem key="heading">
-                        <strong className="text-capitalize">{noun}</strong>
-                        {addButton}
-                    </ListGroupItem>
-                    <ListGroupItem>Manage membership and rights for reference {noun}.</ListGroupItem>
+            <React.Fragment>
+                <BoxGroup>
+                    <ReferenceMembersHeader>
+                        <h2>
+                            <strong>{plural}</strong>
+                            {addButton}
+                        </h2>
+                        <p>Manage membership and rights for reference {plural}.</p>
+                    </ReferenceMembersHeader>
                     {memberComponents}
-                </ListGroup>
+                </BoxGroup>
                 <AddReferenceMember show={this.state.showAdd} noun={noun} onHide={this.handleHide} />
                 <EditReferenceMember show={this.state.showEdit} noun={noun} onHide={this.handleHide} />
-            </Panel>
+            </React.Fragment>
         );
     }
 }
@@ -110,25 +131,24 @@ const mapStateToProps = (state, ownProps) => {
 
     return {
         refId: state.references.detail.id,
-        loading: (noun === "users" ? state.users.documents : state.groups.documents) != null,
-        members: sortBy(noun === "users" ? state.references.detail.users : state.references.detail.groups, "id"),
+        members: sortBy(noun === "user" ? state.references.detail.users : state.references.detail.groups, "id"),
         canModify: checkRefRight(state, "modify")
     };
 };
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
     onAdd: (refId, member) => {
-        const actionCreator = ownProps.noun === "users" ? addReferenceUser : addReferenceGroup;
+        const actionCreator = ownProps.noun === "user" ? addReferenceUser : addReferenceGroup;
         dispatch(actionCreator(refId, member));
     },
 
     onEdit: (refId, id, update) => {
-        const actionCreator = ownProps.noun === "users" ? editReferenceUser : editReferenceGroup;
+        const actionCreator = ownProps.noun === "user" ? editReferenceUser : editReferenceGroup;
         dispatch(actionCreator(refId, id, update));
     },
 
     onRemove: (refId, id) => {
-        const actionCreator = ownProps.noun === "users" ? removeReferenceUser : removeReferenceGroup;
+        const actionCreator = ownProps.noun === "user" ? removeReferenceUser : removeReferenceGroup;
         dispatch(actionCreator(refId, id));
     }
 });

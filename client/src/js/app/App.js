@@ -1,6 +1,7 @@
 import React from "react";
 import { keys } from "lodash-es";
 import { Helmet } from "react-helmet";
+import { ThemeProvider } from "styled-components";
 import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "connected-react-router";
 import { Switch, Route, withRouter, Redirect } from "react-router-dom";
@@ -16,7 +17,8 @@ import Subtraction from "../subtraction/components/Subtraction";
 import Administration from "../administration/components/Settings";
 import Account from "../account/components/Account";
 import UploadOverlay from "../files/components/UploadOverlay";
-import { LoadingPlaceholder } from "../base/index";
+import { LoadingPlaceholder } from "../base";
+import { theme } from "./theme";
 
 export const Inner = props => {
     if (props.ready) {
@@ -56,9 +58,11 @@ export const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
 
 const App = ({ store, history }) => (
     <Provider store={store}>
-        <ConnectedRouter history={history}>
-            <InnerContainer />
-        </ConnectedRouter>
+        <ThemeProvider theme={theme}>
+            <ConnectedRouter history={history}>
+                <InnerContainer />
+            </ConnectedRouter>
+        </ThemeProvider>
     </Provider>
 );
 
