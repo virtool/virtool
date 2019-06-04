@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<MemberRight /> should render 1`] = `
+<MemberRight__StyledMemberRight>
+  <MemberRight__MemberRightCheckbox
+    checked={true}
+    key="build"
+    onClick={[Function]}
+  />
+  <MemberRight__MemberRightDescription>
+    <strong>
+      build
+    </strong>
+    <small>
+      Can build new indexes for the reference.
+    </small>
+  </MemberRight__MemberRightDescription>
+</MemberRight__StyledMemberRight>
+`;
+
+exports[`<MemberRight /> should render when right is modify_otu 1`] = `
+<MemberRight__StyledMemberRight>
+  <MemberRight__MemberRightCheckbox
+    checked={true}
+    key="modify_otu"
+    onClick={[Function]}
+  />
+  <MemberRight__MemberRightDescription>
+    <strong>
+      modify_otu
+    </strong>
+    <small>
+      Can modify OTU records in the reference.
+    </small>
+  </MemberRight__MemberRightDescription>
+</MemberRight__StyledMemberRight>
+`;
+
+exports[`<MemberRight /> should render when right is not enabled 1`] = `
+<MemberRight__StyledMemberRight>
+  <MemberRight__MemberRightCheckbox
+    checked={false}
+    key="build"
+    onClick={[Function]}
+  />
+  <MemberRight__MemberRightDescription>
+    <strong>
+      build
+    </strong>
+    <small>
+      Can build new indexes for the reference.
+    </small>
+  </MemberRight__MemberRightDescription>
+</MemberRight__StyledMemberRight>
+`;

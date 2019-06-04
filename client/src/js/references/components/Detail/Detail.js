@@ -11,8 +11,8 @@ import {
     LoadingPlaceholder,
     NotFound,
     RelativeTime,
-    Tabs,
     TabLink,
+    Tabs,
     ViewHeader
 } from "../../../base";
 import IndexDetail from "../../../indexes/components/Detail";
@@ -21,11 +21,9 @@ import OTUDetail from "../../../otus/components/Detail/Detail";
 import OTUList from "../../../otus/components/List";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { getReference } from "../../actions";
-import SourceTypes from "../SourceTypes";
 import EditReference from "./Edit";
-import RemoveReference from "./Remove";
 import ReferenceManage from "./Manage";
-import ReferenceMembers from "./Members";
+import { ReferenceSettings } from "./Settings";
 
 class CustomToggle extends React.Component {
     // Bootstrap Dropdown requires custom dropdown components to be class components
@@ -41,15 +39,6 @@ class CustomToggle extends React.Component {
         );
     }
 }
-
-const ReferenceSettings = ({ canRemove, isRemote }) => (
-    <div className="settings-container">
-        {isRemote ? null : <SourceTypes />}
-        <ReferenceMembers noun="users" />
-        <ReferenceMembers noun="groups" />
-        {canRemove ? <RemoveReference /> : null}
-    </div>
-);
 
 class ReferenceDetail extends React.Component {
     constructor(props) {
@@ -166,12 +155,7 @@ class ReferenceDetail extends React.Component {
                                     <Route path="/refs/:refId/indexes" component={Indexes} />
                                     <Route
                                         path="/refs/:refId/settings"
-                                        render={() => (
-                                            <ReferenceSettings
-                                                canRemove={this.props.canRemove}
-                                                isRemote={remotes_from}
-                                            />
-                                        )}
+                                        render={() => <ReferenceSettings isRemote={remotes_from} />}
                                     />
                                 </Switch>
 
@@ -189,8 +173,7 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_REFERENCE_ERROR", null),
     detail: state.references.detail,
     pathname: state.router.location.pathname,
-    canModify: checkRefRight(state, "modify"),
-    canRemove: checkRefRight(state, "remove")
+    canModify: checkRefRight(state, "modify")
 });
 
 const mapDispatchToProps = dispatch => ({

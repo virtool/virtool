@@ -2,8 +2,9 @@ import React from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 import { find, map } from "lodash-es";
-import { Button, Checkbox } from "../../../base";
+import { Button } from "../../../base";
 import { editReferenceGroup, editReferenceUser } from "../../actions";
+import { MemberRight } from "./MemberRight";
 
 const getInitialState = () => ({
     build: false,
@@ -20,17 +21,16 @@ export class EditReferenceMember extends React.Component {
         this.state = getInitialState();
     }
 
-    handleChange = (key, value) => {
+    handleChange = (key, enabled) => {
         const { modify_otu, build, modify, remove } = this.props;
 
         const update = {
             modify_otu,
             build,
             modify,
-            remove
+            remove,
+            [key]: enabled
         };
-
-        update[key] = value;
 
         this.props.onEdit(this.props.refId, this.props.show, update);
     };
@@ -51,12 +51,7 @@ export class EditReferenceMember extends React.Component {
 
     render() {
         const rightComponents = map(rights, right => (
-            <Checkbox
-                key={right}
-                checked={this.props[right]}
-                label={right}
-                onClick={() => this.handleChange(right, !this.props[right])}
-            />
+            <MemberRight key={right} right={right} enabled={this.props[right]} onToggle={this.handleChange} />
         ));
 
         return (
