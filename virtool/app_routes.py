@@ -2,6 +2,7 @@ import logging
 
 import virtool.api.account
 import virtool.api.analyses
+import virtool.api.caches
 import virtool.api.downloads
 import virtool.api.files
 import virtool.api.genbank
@@ -53,6 +54,7 @@ def setup_routes(app):
 
     app.router.add_routes(virtool.api.account.routes)
     app.router.add_routes(virtool.api.analyses.routes)
+    app.router.add_routes(virtool.api.caches.routes)
     app.router.add_routes(virtool.api.downloads.routes)
     app.router.add_routes(virtool.api.files.routes)
     app.router.add_routes(virtool.api.genbank.routes)

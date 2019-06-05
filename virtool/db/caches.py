@@ -8,9 +8,9 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
+    "created_at",
     "files",
     "hash",
-    "parameters",
     "program",
     "ready",
     "sample"
@@ -45,6 +45,11 @@ def create(db, sample_id, parameters, paired, legacy=False, program="skewer-0.2.
 
     except pymongo.errors.DuplicateKeyError:
         return create(db, sample_id, parameters, paired, legacy=legacy)
+
+
+async def get(db, cache_id):
+    document = await db.caches.find_one(cache_id)
+    return virtool.utils.base_processor(document)
 
 
 async def prune(app):
