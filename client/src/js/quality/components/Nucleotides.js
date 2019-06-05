@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import { line } from "d3-shape";
 import { forEach, unzip } from "lodash-es";
 
-import { appendLegend, createSVG } from "../../chartUtils";
+import { appendLegend, createSVG } from "../../samples/chartUtils";
 
 const series = [
     { color: "#428bca", label: "Guanine" },

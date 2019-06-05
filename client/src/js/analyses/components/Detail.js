@@ -2,10 +2,17 @@ import { get } from "lodash-es";
 import React, { useEffect } from "react";
 import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NotFound, RelativeTime } from "../../base/index";
+import {
+    SubviewHeader,
+    SubviewHeaderTitle,
+    SubviewHeaderAttribution,
+    LoadingPlaceholder,
+    NotFound,
+    RelativeTime
+} from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
-import { AnalysisHeader, AnalysisHeaderAlgorithm, AnalysisHeaderCreated } from "./Header";
+import AnalysisCache from "./CacheLink";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 
@@ -47,14 +54,15 @@ export const AnalysisDetail = props => {
 
     return (
         <div>
-            <AnalysisHeader>
-                <AnalysisHeaderAlgorithm>
+            <SubviewHeader>
+                <SubviewHeaderTitle>
                     {getTaskDisplayName(detail.algorithm)} for {sampleName}
-                </AnalysisHeaderAlgorithm>
-                <AnalysisHeaderCreated>
+                    <AnalysisCache />
+                </SubviewHeaderTitle>
+                <SubviewHeaderAttribution>
                     {detail.user.id} started <RelativeTime time={detail.created_at} />
-                </AnalysisHeaderCreated>
-            </AnalysisHeader>
+                </SubviewHeaderAttribution>
+            </SubviewHeader>
 
             {content}
         </div>

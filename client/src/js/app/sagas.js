@@ -8,6 +8,7 @@ import { push } from "connected-react-router";
 import { watchAccount } from "../account/sagas";
 import { watchSettings } from "../administration/sagas";
 import { watchAnalyses } from "../analyses/sagas";
+import { watchCaches } from "../caches/sagas";
 import { watchFiles } from "../files/sagas";
 import { watchGroups } from "../groups/sagas";
 import { watchHmms } from "../hmm/sagas";
@@ -43,6 +44,7 @@ function* rootSaga() {
     yield all([
         watchAccount(),
         watchAnalyses(),
+        watchCaches(),
         watchFiles(),
         watchSubtraction(),
         watchHmms(),

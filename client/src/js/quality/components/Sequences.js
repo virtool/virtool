@@ -2,8 +2,8 @@ import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash-es";
-import { createSVG } from "../../chartUtils";
-import { toScientificNotation } from "../../../utils/utils";
+import { createSVG } from "../../samples/chartUtils";
+import { toScientificNotation } from "../../utils/utils";
 
 const CreateSequencesChart = (element, data, baseWidth) => {
     const svg = createSVG(element, baseWidth);
@@ -45,7 +45,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .attr("dy", "10px")
         .attr("class", "axis-label")
         .attr("fill", "black")
-        .text("Read Quality");
+        .text("Read quality");
 
     // Append a labelled y-axis to the SVG. The label is on the plot-side of the axis and is oriented vertically.
     svg.append("g")
