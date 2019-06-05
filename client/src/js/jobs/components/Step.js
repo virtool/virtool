@@ -1,7 +1,7 @@
 import Moment from "moment";
 import React from "react";
 import styled from "styled-components";
-import { BoxGroupSection, Flex, FlexItem, Icon, Loader } from "../../base";
+import { BoxGroupSection, Icon, Loader } from "../../base";
 import { getStepDescription } from "../utils";
 
 const StyledJobStepTimestamp = styled.div`

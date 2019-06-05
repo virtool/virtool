@@ -4,7 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import { Alert, ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Box, BoxTitle, Flex } from "../../base";
+import { Box, BoxTitle } from "../../base";
 import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`

@@ -56,17 +56,7 @@ const LatestBuild = ({ id, latestBuild }) => {
 };
 
 const ReferenceManage = ({ detail }) => {
-    const {
-        id,
-        cloned_from,
-        contributors,
-        data_type,
-        description,
-        internal_control,
-        latest_build,
-        organism,
-        remotes_from
-    } = detail;
+    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from } = detail;
 
     let remote;
     let clone;
