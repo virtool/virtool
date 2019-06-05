@@ -1,8 +1,5 @@
 import React from "react";
-import styled from "styled-components";
-import { connect } from "react-redux";
 import { Button } from "../../base";
-import LegacyAlert from "../../samples/components/LegacyAlert";
 import Chart from "./Chart";
 import Bases from "./Bases";
 import Nucleotides from "./Nucleotides";
