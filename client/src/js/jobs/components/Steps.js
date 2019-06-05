@@ -1,7 +1,7 @@
 import { map } from "lodash-es";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
+import { BoxGroup } from "../../base";
 import JobStep from "./Step";
 
 export const JobSteps = ({ status, task }) => {
@@ -11,7 +11,7 @@ export const JobSteps = ({ status, task }) => {
         <JobStep key={index} complete={index < currentIndex} step={step} task={task} />
     ));
 
-    return <ListGroup>{stepComponents}</ListGroup>;
+    return <BoxGroup>{stepComponents}</BoxGroup>;
 };
 
 export const mapStateToProps = state => {
