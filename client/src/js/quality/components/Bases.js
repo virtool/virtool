@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import { line, area } from "d3-shape";
 import { forEach, map, min, values } from "lodash-es";
 
-import { appendLegend, createSVG } from "../../chartUtils";
+import { appendLegend, createSVG } from "../../samples/chartUtils";
 
 const series = [
     { label: "Mean", color: "#a94442" },
@@ -120,7 +120,7 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .attr("class", "y axis")
         .call(axisLeft(y))
         .append("text")
-        .text("Quality")
+        .text("quality")
         .attr("dy", "10px")
         .attr("y", 6)
         .attr("fill", "black")
