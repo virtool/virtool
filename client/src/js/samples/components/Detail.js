@@ -17,6 +17,7 @@ import {
     NotFound
 } from "../../base";
 import { getCanModify } from "../selectors";
+import Cache from "../../caches/components/Detail";
 import General from "./General";
 import Files from "./Files/Files";
 import Quality from "./Quality";
@@ -121,7 +122,8 @@ class SampleDetail extends React.Component {
                 <Switch>
                     <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact />
                     <Route path="/samples/:sampleId/general" component={General} />
-                    <Route path="/samples/:sampleId/files" component={Files} />
+                    <Route path="/samples/:sampleId/files" component={Files} exact />
+                    <Route path="/samples/:sampleId/files/:cacheId" component={Cache} />
                     <Route path="/samples/:sampleId/quality" component={Quality} />
                     <Route path="/samples/:sampleId/analyses" component={Analyses} />
                     <Route path="/samples/:sampleId/rights" component={Rights} />
