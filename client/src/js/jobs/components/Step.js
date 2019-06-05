@@ -1,19 +1,46 @@
 import Moment from "moment";
 import React from "react";
-import { ListGroupItem } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Loader } from "../../base";
+import styled from "styled-components";
+import { BoxGroupSection, Icon, Loader } from "../../base";
 import { getStepDescription } from "../utils";
 
-export const JobStepDescription = ({ stage, state, task }) => {
+const StyledJobStepTimestamp = styled.div`
+    align-items: center;
+    display: flex;
+    margin-top: 10px;
+
+    i:not(:first-child) {
+        padding-left: 10px;
+    }
+
+    & > span {
+        padding-left: 5px;
+    }
+`;
+
+const JobStepTimestamp = ({ timestamp }) => (
+    <StyledJobStepTimestamp>
+        <Icon name="clock" />
+        <span>{Moment(timestamp).format("hh:mm:ss")}</span>
+        <Icon name="calendar" />
+        <span>{Moment(timestamp).format("YYYY-MM-DD")}</span>
+    </StyledJobStepTimestamp>
+);
+
+const StyledJobStepDescription = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
+export const JobStepDescription = ({ stage, state, task, timestamp }) => {
     const { description, title } = getStepDescription(stage, state, task);
 
     return (
-        <div>
-            <div>
-                <strong>{title}</strong>
-            </div>
+        <StyledJobStepDescription>
+            <strong>{title}</strong>
             <small className="text-muted">{description}</small>
-        </div>
+            <JobStepTimestamp timestamp={timestamp} />
+        </StyledJobStepDescription>
     );
 };
 
@@ -43,27 +70,27 @@ export const JobStepIcon = ({ complete, state }) => {
     }
 };
 
+const JobStepIconContainer = styled.div`
+    align-items: center;
+    display: flex;
+    height: 16px;
+    margin-right: 4px;
+    padding-top: 3px;
+    width: 16px;
+`;
+
+const StyledJobStep = styled(BoxGroupSection)`
+    align-items: flex-start;
+    display: flex;
+`;
+
 const JobStep = ({ complete, step, task }) => (
-    <ListGroupItem>
-        <Flex alignItems="flex-start">
-            <FlexItem>
-                <JobStepIcon state={step.state} complete={complete} />
-            </FlexItem>
-            <FlexItem pad={12}>
-                <JobStepDescription {...step} task={task} />
-                <Flex alignItems="center" style={{ marginTop: "10px" }}>
-                    <FlexItem>
-                        <Icon name="clock" fixedWidth />
-                    </FlexItem>
-                    <FlexItem pad={10}>{Moment(step.timestamp).format("hh:mm:ss")}</FlexItem>
-                    <FlexItem pad={10}>
-                        <Icon name="calendar" fixedWidth />
-                    </FlexItem>
-                    <FlexItem pad={10}>{Moment(step.timestamp).format("YYYY-MM-DD")}</FlexItem>
-                </Flex>
-            </FlexItem>
-        </Flex>
-    </ListGroupItem>
+    <StyledJobStep>
+        <JobStepIconContainer>
+            <JobStepIcon state={step.state} complete={complete} />
+        </JobStepIconContainer>
+        <JobStepDescription {...step} task={task} />
+    </StyledJobStep>
 );
 
 export default JobStep;
