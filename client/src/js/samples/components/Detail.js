@@ -19,7 +19,7 @@ import {
 import { getCanModify } from "../selectors";
 import General from "./General";
 import Files from "./Files/Files";
-import Quality from "./Quality/Quality";
+import Quality from "./Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
 
