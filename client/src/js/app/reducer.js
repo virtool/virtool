@@ -2,6 +2,7 @@ import { connectRouter, routerMiddleware } from "connected-react-router";
 import { applyMiddleware, combineReducers, createStore } from "redux";
 import createSagaMiddleware from "redux-saga";
 import accountReducer from "../account/reducer";
+import cachesReducer from "../caches/reducer";
 import settingsReducer from "../administration/reducer";
 import analysesReducer from "../analyses/reducer";
 import errorsReducer from "../errors/reducer";
@@ -44,6 +45,7 @@ export const createAppStore = history => {
             account: accountReducer,
             analyses: analysesReducer,
             app: appReducer,
+            caches: cachesReducer,
             errors: errorsReducer,
             files: filesReducer,
             groups: groupsReducer,
