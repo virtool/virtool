@@ -122,6 +122,7 @@ class Job(virtool.jobs.job.Job):
             paths = virtool.jobs.utils.join_cache_read_paths(self.settings, cache)
 
             if paths:
+                self.intermediate["cache_id"] = cache["id"]
                 self.intermediate["qc"] = cache["quality"]
                 self.params["read_paths"] = paths
                 return
@@ -197,6 +198,17 @@ class Job(virtool.jobs.job.Job):
 
     def prepare_qc(self):
         if self.intermediate["qc"]:
+            cache_id = self.intermediate.get("cache_id", None)
+
+            if cache_id:
+                self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
+                    "$set": {
+                        "cache": {
+                            "id": cache_id
+                        }
+                    }
+                })
+
             return
 
         cache_id = self.intermediate["cache_id"]
