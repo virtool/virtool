@@ -12,6 +12,7 @@ import {
 } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
+import AnalysisCache from "./CacheLink";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
 
@@ -56,6 +57,7 @@ export const AnalysisDetail = props => {
             <SubviewHeader>
                 <SubviewHeaderTitle>
                     {getTaskDisplayName(detail.algorithm)} for {sampleName}
+                    <AnalysisCache />
                 </SubviewHeaderTitle>
                 <SubviewHeaderAttribution>
                     {detail.user.id} started <RelativeTime time={detail.created_at} />
