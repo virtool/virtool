@@ -1,8 +1,9 @@
-import React from "react";
-import PropTypes from "prop-types";
-import Helmet from "react-helmet";
-import { Badge } from "react-bootstrap";
 import { isUndefined } from "lodash-es";
+import PropTypes from "prop-types";
+import React from "react";
+import { Badge } from "react-bootstrap";
+import Helmet from "react-helmet";
+import styled from "styled-components";
 import { Flex, FlexItem } from "./index";
 
 /**
@@ -32,3 +33,16 @@ ViewHeader.propTypes = {
     totalCount: PropTypes.number,
     children: PropTypes.node
 };
+export const SubviewHeader = styled.div`
+    margin-bottom: 15px;
+`;
+export const SubviewHeaderTitle = styled.div`
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 0;
+`;
+export const SubviewHeaderAttribution = styled.span`
+    color: #777777;
+    font-size: 12px;
+    font-weight: bold;
+`;
