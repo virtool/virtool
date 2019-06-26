@@ -9,7 +9,7 @@ describe("<NuVsEntry />", () => {
             index: 4,
             sequence: "test-sequence",
             orfs: [],
-            minE: 3,
+            e: 3,
             toggleIn: jest.fn()
         };
     });

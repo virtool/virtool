@@ -25,9 +25,7 @@ export function* getAnalysis(action) {
 }
 
 export function* analyze(action) {
-    yield apiCall(analysesAPI.analyze, action, ANALYZE, {
-        placeholder: action.placeholder
-    });
+    yield apiCall(analysesAPI.analyze, action, ANALYZE);
 }
 
 export function* blastNuvs(action) {

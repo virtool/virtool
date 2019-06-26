@@ -1,16 +1,33 @@
 import React from "react";
-import CX from "classnames";
+import styled from "styled-components";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
-import { Flex, FlexItem } from "../../../base/index";
+import { SpacedBox } from "../../../base/index";
+import NuVsExpansion from "./Expansion";
+
+const StyledNuVsEntryValue = styled(Col)`
+    small {
+        margin-right: 3px;
+    }
+`;
+
+const NuVsEntryValue = ({ label, value }) => (
+    <StyledNuVsEntryValue xs={4} md={3}>
+        <small className="text-muted text-strong">{label}</small>
+        <strong>{value}</strong>
+    </StyledNuVsEntryValue>
+);
 
 export default class NuVsEntry extends React.Component {
     static propTypes = {
+        analysisId: PropTypes.string,
+        blast: PropTypes.object,
         in: PropTypes.bool,
         index: PropTypes.number,
+        maxSequenceLength: PropTypes.number,
         sequence: PropTypes.string,
         orfs: PropTypes.array,
-        minE: PropTypes.number,
+        e: PropTypes.number,
         toggleIn: PropTypes.func
     };
 
@@ -23,55 +40,35 @@ export default class NuVsEntry extends React.Component {
     };
 
     render() {
-        const className = CX("list-group-item", "spaced", {
-            hoverable: !this.props.in
-        });
-
-        let closeButton;
+        let expansion;
 
         if (this.props.in) {
-            closeButton = (
-                <FlexItem grow={0} shrink={0}>
-                    <button type="button" className="close" onClick={this.handleToggleIn}>
-                        <span>×</span>
-                    </button>
-                </FlexItem>
+            const { analysisId, blast, index, maxSequenceLength, orfs, sequence } = this.props;
+
+            expansion = (
+                <NuVsExpansion
+                    index={index}
+                    analysisId={analysisId}
+                    blast={blast}
+                    maxSequenceLength={maxSequenceLength}
+                    orfs={orfs}
+                    sequence={sequence}
+                />
             );
         }
 
         return (
-            <div className={className} onClick={this.props.in ? null : this.handleToggleIn}>
+            <SpacedBox onClick={this.handleToggleIn}>
                 <Row>
-                    <Col md={3}>
+                    <Col xs={12} md={3}>
                         <strong>Sequence {this.props.index}</strong>
                     </Col>
-                    <Col md={3}>
-                        <Flex alignItems="center">
-                            <small className="text-muted text-strong">LENGTH</small>
-                            <FlexItem pad>
-                                <strong>{this.props.sequence.length}</strong>
-                            </FlexItem>
-                        </Flex>
-                    </Col>
-                    <Col md={3}>
-                        <Flex alignItems="center">
-                            <small className="text-muted text-strong">E-VALUE</small>
-                            <FlexItem pad>
-                                <strong>{this.props.minE}</strong>
-                            </FlexItem>
-                        </Flex>
-                    </Col>
-                    <Col md={3}>
-                        <Flex alignItems="center">
-                            <small className="text-muted text-strong">ORFS</small>
-                            <FlexItem grow={1} pad>
-                                <strong>{this.props.orfs.length}</strong>
-                            </FlexItem>
-                            <FlexItem pad>{closeButton}</FlexItem>
-                        </Flex>
-                    </Col>
+                    <NuVsEntryValue label="LENGTH" value={this.props.sequence.length} />
+                    <NuVsEntryValue label="E-VALUE" value={this.props.e} />
+                    <NuVsEntryValue label="ORFS" value={this.props.orfs.length} />
                 </Row>
-            </div>
+                {expansion}
+            </SpacedBox>
         );
     }
 }
