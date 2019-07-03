@@ -1,17 +1,9 @@
 import React from "react";
-import { capitalize, map } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { InputError } from "../../base";
-import { dataTypes } from "../utils";
 
 export default class ReferenceForm extends React.Component {
     render() {
-        const dataOptions = map(dataTypes, type => (
-            <option key={type} value={type} hidden={!type.length}>
-                {capitalize(type)}
-            </option>
-        ));
-
         let extraComponent;
 
         if (this.props.state.errorFile != null || this.props.state.errorSelect != null) {

@@ -14,7 +14,6 @@ import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { Loader } from "./Loader";
-import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
@@ -30,8 +29,11 @@ import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export * from "./Box";
+export * from "./LoadingPlaceholder";
 export * from "./TabLink";
 export * from "./Tabs";
+export * from "./Toolbar";
+export * from "./ViewHeader";
 
 export {
     Alert,
@@ -51,7 +53,6 @@ export {
     InputSave,
     ListGroupItem,
     Loader,
-    LoadingPlaceholder,
     NoneFound,
     NotFound,
     Panel,

@@ -132,18 +132,12 @@ export default function analysesReducer(state = initialState, action) {
             };
 
         case GET_ANALYSIS.SUCCEEDED: {
-            let data;
-
-            if (action.data.algorithm === "pathoscope_bowtie" && action.data.ready) {
-                data = formatData(action.data);
-            } else {
-                data = action.data;
-            }
+            const { data } = action;
 
             return {
                 ...state,
-                detail: action.data,
-                data
+                detail: data,
+                data: formatData(data)
             };
         }
 

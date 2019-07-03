@@ -22,7 +22,7 @@ export const ReferenceHeader = ({ name, createdAt, user, refId }) => (
     </div>
 );
 
-export const ReferenceMetadata = ({ id, data_type, organism, origin, latest_build, progress }) => {
+export const ReferenceMetadata = ({ id, organism, origin, latest_build, progress }) => {
     let buildInfo;
     let originData;
 

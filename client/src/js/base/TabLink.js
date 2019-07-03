@@ -10,12 +10,12 @@ export const TabLink = styled(NavLink)`
     &.active {
         border-bottom: 1px solid #3c8786;
         box-shadow: inset 0 -1px 0 0 #3c8786;
-        z-index: 1030;
+        z-index: 1020;
     }
 
     &:not(.active):hover {
         border-bottom: 1px solid #898988;
         box-shadow: inset 0 -1px 0 0 #898988;
-        z-index: 1030;
+        z-index: 1020;
     }
 `;

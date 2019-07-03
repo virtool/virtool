@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NuVsItem /> should render collapsed when [in=false] 1`] = `
+<Box__SpacedBox
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      xs={12}
+    >
+      <strong>
+        Sequence 
+        4
+      </strong>
+    </Col>
+    <NuVsEntryValue
+      label="LENGTH"
+      value={13}
+    />
+    <NuVsEntryValue
+      label="E-VALUE"
+      value={3}
+    />
+    <NuVsEntryValue
+      label="ORFS"
+      value={0}
+    />
+  </Row>
+</Box__SpacedBox>
+`;
+
+exports[`<NuVsItem /> should render collapsed when [in=false] 2`] = `
+<Box__SpacedBox
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      xs={12}
+    >
+      <strong>
+        Sequence 
+        4
+      </strong>
+    </Col>
+    <NuVsEntryValue
+      label="LENGTH"
+      value={13}
+    />
+    <NuVsEntryValue
+      label="E-VALUE"
+      value={3}
+    />
+    <NuVsEntryValue
+      label="ORFS"
+      value={0}
+    />
+  </Row>
+  <NuVsExpansion
+    index={4}
+    orfs={Array []}
+    sequence="test-sequence"
+  />
+</Box__SpacedBox>
+`;
+
+exports[`<NuVsItem /> should render expanded when [in=true] 1`] = `
+<Box__SpacedBox
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={3}
+      xs={12}
+    >
+      <strong>
+        Sequence 
+        4
+      </strong>
+    </Col>
+    <NuVsEntryValue
+      label="LENGTH"
+      value={13}
+    />
+    <NuVsEntryValue
+      label="E-VALUE"
+      value={3}
+    />
+    <NuVsEntryValue
+      label="ORFS"
+      value={0}
+    />
+  </Row>
+  <NuVsExpansion
+    index={4}
+    orfs={Array []}
+    sequence="test-sequence"
+  />
+</Box__SpacedBox>
+`;

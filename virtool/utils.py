@@ -13,6 +13,9 @@ import arrow
 
 
 def base_processor(document):
+    if document is None:
+        return None
+
     document = dict(document)
     document["id"] = document.pop("_id")
 

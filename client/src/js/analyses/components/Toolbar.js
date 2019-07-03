@@ -2,12 +2,12 @@ import React from "react";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, Icon } from "../../base";
+import { Button, Icon, Toolbar } from "../../base";
 import { getCanModify } from "../../samples/selectors";
 import { findAnalyses } from "../actions";
 
 export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleId, term }) => (
-    <div className="toolbar">
+    <Toolbar>
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
@@ -28,7 +28,7 @@ export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleI
             onClick={() => onShowCreate(sampleId)}
             disabled={!canModify}
         />
-    </div>
+    </Toolbar>
 );
 
 export const mapStateToProps = state => ({

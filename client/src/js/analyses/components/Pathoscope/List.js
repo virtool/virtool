@@ -1,7 +1,6 @@
 import { filter, flatten, forIn, map, sortBy, split } from "lodash-es";
 import React from "react";
-import { Panel } from "react-bootstrap";
-import FlipMove from "react-flip-move";
+import { ListGroup, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Icon } from "../../../base/index";
 import PathoscopeIsolate from "./Isolate";
@@ -19,20 +18,6 @@ export class PathoscopeList extends React.Component {
                 ref.scrollTo(scrollLeft);
             }
         });
-    };
-
-    handlePosition = node => {
-        const { left, top, right, bottom, height, width } = node.getBoundingClientRect();
-        const scrollCorrection = window.pageYOffset;
-
-        return {
-            left,
-            right,
-            bottom: bottom + scrollCorrection,
-            top: top + scrollCorrection,
-            height,
-            width
-        };
     };
 
     render() {
@@ -84,19 +69,7 @@ export class PathoscopeList extends React.Component {
                 return components;
             });
 
-            return (
-                <div>
-                    <FlipMove
-                        typeName="div"
-                        className="list-group"
-                        enterAnimation="accordionVertical"
-                        leaveAnimation="accordionVertical"
-                        getPosition={this.handlePosition}
-                    >
-                        {flatten(rows)}
-                    </FlipMove>
-                </div>
-            );
+            return <ListGroup>{flatten(rows)}</ListGroup>;
         }
 
         // Show a message if no hits matched the filters.

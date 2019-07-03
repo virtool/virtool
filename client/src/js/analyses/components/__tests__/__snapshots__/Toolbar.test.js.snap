@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <FormGroup
     bsClass="form-group"
   >
@@ -39,13 +37,11 @@ exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
     tip="New Analysis"
     tipPlacement="top"
   />
-</div>
+</Toolbar>
 `;
 
 exports[`<AnalysesToolbar /> should render with default props 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <FormGroup
     bsClass="form-group"
   >
@@ -81,5 +77,5 @@ exports[`<AnalysesToolbar /> should render with default props 1`] = `
     tip="New Analysis"
     tipPlacement="top"
   />
-</div>
+</Toolbar>
 `;
