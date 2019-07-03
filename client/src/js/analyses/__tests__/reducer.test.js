@@ -1,3 +1,5 @@
+jest.mock("../utils");
+
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
@@ -21,6 +23,13 @@ import reducer, {
     setNuvsBLAST,
     toggleExpanded
 } from "../reducer";
+import { formatData } from "../utils";
+
+formatData.mockImplementation(({ algorithm, ready }) => ({
+    algorithm,
+    ready,
+    foo: "bar"
+}));
 
 describe("Analyses Reducer", () => {
     const initialState = reducerInitialState;
@@ -195,12 +204,15 @@ describe("Analyses Reducer", () => {
         });
     });
 
-    it("should handle GET_ANALYSIS_SUCCEEDED for nuvs", () => {
+    it("should handle GET_ANALYSIS_SUCCEEDED for nuvs when ready", () => {
+        const algorithm = "nuvs";
+        const ready = true;
         const state = {};
         const action = {
             type: "GET_ANALYSIS_SUCCEEDED",
-            algorithm: "nuvs",
             data: {
+                algorithm,
+                ready,
                 diagnosis: []
             }
         };
@@ -208,43 +220,81 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual({
             ...state,
             detail: action.data,
-            data: action.data
+            data: {
+                algorithm,
+                ready,
+                foo: "bar"
+            }
         });
     });
 
-    describe("should handle GET_ANALYSIS_SUCCEEDED for pathoscope", () => {
-        it("adds formatted data for ready pathoscope analyses", () => {
-            const state = {};
-            const action = {
-                type: "GET_ANALYSIS_SUCCEEDED",
-                data: {
-                    algorithm: "pathoscope_bowtie",
-                    diagnosis: [],
-                    ready: true
-                }
-            };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                detail: action.data,
-                data: []
-            });
+    it("should handle GET_ANALYSIS_SUCCEEDED for nuvs when not ready", () => {
+        const algorithm = "nuvs";
+        const ready = false;
+        const state = {};
+        const action = {
+            type: "GET_ANALYSIS_SUCCEEDED",
+            data: {
+                algorithm,
+                ready,
+                diagnosis: []
+            }
+        };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            ...state,
+            detail: action.data,
+            data: {
+                algorithm,
+                ready,
+                foo: "bar"
+            }
         });
+    });
 
-        it("otherwise adds unformatted data", () => {
-            const state = {};
-            const action = {
-                type: "GET_ANALYSIS_SUCCEEDED",
-                data: {
-                    algorithm: "pathoscope_bowtie",
-                    diagnosis: [],
-                    ready: false
-                }
-            };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                detail: action.data,
-                data: action.data
-            });
+    it("should handle GET_ANALYSIS_SUCCEEDED for pathoscope when ready", () => {
+        const algorithm = "pathoscope_bowtie";
+        const ready = true;
+        const state = {};
+        const action = {
+            type: "GET_ANALYSIS_SUCCEEDED",
+            data: {
+                algorithm,
+                ready,
+                diagnosis: []
+            }
+        };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            detail: action.data,
+            data: {
+                algorithm,
+                ready,
+                foo: "bar"
+            }
+        });
+    });
+
+    it("should handle GET_ANALYSIS_SUCCEEDED for pathoscope when not ready", () => {
+        const algorithm = "pathoscope_bowtie";
+        const ready = false;
+        const state = {};
+        const action = {
+            type: "GET_ANALYSIS_SUCCEEDED",
+            data: {
+                algorithm,
+                ready,
+                diagnosis: []
+            }
+        };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            detail: action.data,
+            data: {
+                algorithm,
+                ready,
+                foo: "bar"
+            }
         });
     });
 

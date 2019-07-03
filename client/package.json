@@ -27,7 +27,6 @@
     "react-copy-to-clipboard": "^5.0.1",
     "react-dom": "^16.8.4",
     "react-dropzone": "^10.0.5",
-    "react-flip-move": "^3.0.3",
     "react-helmet": "^5.2.0",
     "react-redux": "^5.1.1",
     "react-resize-detector": "^4.0.5",

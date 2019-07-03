@@ -32,6 +32,7 @@ export * from "./Box";
 export * from "./LoadingPlaceholder";
 export * from "./TabLink";
 export * from "./Tabs";
+export * from "./Toolbar";
 export * from "./ViewHeader";
 
 export {

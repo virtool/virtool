@@ -1,5 +1,38 @@
-import { compact, fill, flatMap, fromPairs, map, max, maxBy, round, sortBy, sum, sumBy, unzip } from "lodash-es";
+import {
+    compact,
+    fill,
+    flatMap,
+    fromPairs,
+    map,
+    max,
+    maxBy,
+    min,
+    minBy,
+    round,
+    sortBy,
+    sum,
+    sumBy,
+    unzip
+} from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
+
+const calculateORFMinimumE = hits => {
+    if (hits.length === 0) {
+        return;
+    }
+
+    const minHit = minBy(hits, "full_e");
+    return minHit.full_e;
+};
+
+const calculateSequenceMinimumE = orfs => {
+    if (orfs.length === 0) {
+        return;
+    }
+
+    const minEValues = map(orfs, orf => calculateORFMinimumE(orf.hits));
+    return min(minEValues);
+};
 
 export const fillAlign = ({ align, length }) => {
     const filled = Array(length - 1);
@@ -22,6 +55,32 @@ export const fillAlign = ({ align, length }) => {
 };
 
 export const formatData = detail => {
+    if (detail.algorithm === "pathoscope_bowtie") {
+        return formatPathoscopeData(detail);
+    }
+
+    if (detail.algorithm === "nuvs") {
+        return formatNuVsData(detail);
+    }
+};
+
+export const formatNuVsData = detail => {
+    let results = map(detail.results, result => ({
+        ...result,
+        e: calculateSequenceMinimumE(result.orfs)
+    }));
+
+    results = sortBy(results, "sequence.length").reverse();
+
+    const longestSequence = maxBy(results, result => result.sequence.length);
+
+    return {
+        results,
+        maxSequenceLength: longestSequence.sequence.length
+    };
+};
+
+export const formatPathoscopeData = detail => {
     if (detail.diagnosis.length === 0) {
         return detail.diagnosis;
     }
