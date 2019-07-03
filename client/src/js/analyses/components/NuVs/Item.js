@@ -18,7 +18,7 @@ const NuVsEntryValue = ({ label, value }) => (
     </StyledNuVsEntryValue>
 );
 
-export default class NuVsEntry extends React.Component {
+export default class NuVsItem extends React.Component {
     static propTypes = {
         analysisId: PropTypes.string,
         blast: PropTypes.object,
@@ -35,7 +35,7 @@ export default class NuVsEntry extends React.Component {
         return nextProps.in !== this.props.in;
     }
 
-    handleToggleIn = () => {
+    handleClick = () => {
         this.props.toggleIn(this.props.index);
     };
 
@@ -58,7 +58,7 @@ export default class NuVsEntry extends React.Component {
         }
 
         return (
-            <SpacedBox onClick={this.handleToggleIn}>
+            <SpacedBox onClick={this.handleClick}>
                 <Row>
                     <Col xs={12} md={3}>
                         <strong>Sequence {this.props.index}</strong>

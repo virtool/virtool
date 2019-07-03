@@ -6,7 +6,7 @@ import { DropdownButton, FormControl, FormGroup, InputGroup, ListGroup, MenuItem
 import { LinkContainer } from "react-router-bootstrap";
 
 import { Button, Icon, Toolbar } from "../../../base";
-import NuVsEntry from "./Entry";
+import NuVsItem from "./Item";
 
 const filterData = (data, filter) => {
     if (filter === "hmm") {
@@ -93,7 +93,7 @@ export default class NuVsList extends React.Component {
         const rows = map(data, item => {
             const expanded = includes(this.state.expanded, item.index);
             return (
-                <NuVsEntry
+                <NuVsItem
                     key={`sequence_${item.index}`}
                     {...item}
                     analysisId={this.props.analysisId}
