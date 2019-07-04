@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<IndexEntry /> renders Active index entry with description of changes in multiple OTUs 1`] = `
+exports[`<IndexItem /> should render 1`] = `
 <LinkContainer
   activeClassName="active"
   className="spaced"
   exact={false}
   replace={false}
   strict={false}
-  to="/refs/test-reference/indexes/test-entry"
+  to="/refs/foo/indexes/bar"
 >
   <ListGroupItem
     allowFocus={false}
@@ -43,211 +43,95 @@ exports[`<IndexEntry /> renders Active index entry with description of changes i
         smHidden={true}
         xsHidden={true}
       >
-        <span>
-          3
-           
-           changes made in 
-          5
-           
-          OTUs
-        </span>
+        <IndexItemChangeDescription
+          changeCount={3}
+          modifiedCount={5}
+        />
       </Col>
       <Col
         bsClass="col"
         componentClass="div"
         md={2}
         xs={6}
-      />
+      >
+        <IndexItemIcon
+          id="bar"
+          ready={true}
+        />
+      </Col>
     </Row>
   </ListGroupItem>
 </LinkContainer>
 `;
 
-exports[`<IndexEntry /> renders Building index entry with description of change in one OTU 1`] = `
-<LinkContainer
-  activeClassName="active"
-  className="spaced"
-  exact={false}
-  replace={false}
-  strict={false}
-  to="/refs/test-reference/indexes/test-entry"
->
-  <ListGroupItem
-    allowFocus={false}
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        <strong>
-          Version 
-          0
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        Created 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        <span>
-          3
-           
-           changes made in 
-          5
-           
-          OTUs
-        </span>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={2}
-        xs={6}
-      />
-    </Row>
-  </ListGroupItem>
-</LinkContainer>
+exports[`<IndexItemChangeDescription /> should render 'No Changes' when changeCount is 0 1`] = `"No changes"`;
+
+exports[`<IndexItemChangeDescription /> should render empty when changeCount is null 1`] = `""`;
+
+exports[`<IndexItemChangeDescription /> should render valid description when changeCount is 1 1`] = `
+<span>
+  1
+   change
+   made in
+  3
+   OTU
+  s
+</span>
 `;
 
-exports[`<IndexEntry /> renders older index entry with no changes 1`] = `
-<LinkContainer
-  activeClassName="active"
-  className="spaced"
-  exact={false}
-  replace={false}
-  strict={false}
-  to="/refs/test-reference/indexes/test-entry"
->
-  <ListGroupItem
-    allowFocus={false}
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        <strong>
-          Version 
-          0
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        Created 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        <span>
-          3
-           
-           changes made in 
-          5
-           
-          OTUs
-        </span>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={2}
-        xs={6}
-      />
-    </Row>
-  </ListGroupItem>
-</LinkContainer>
+exports[`<IndexItemChangeDescription /> should render valid description when changeCount is 13 1`] = `
+<span>
+  13
+   change
+  s
+   made in
+  3
+   OTU
+  s
+</span>
 `;
 
-exports[`<IndexEntry /> renders older index entry without change description 1`] = `
-<LinkContainer
-  activeClassName="active"
-  className="spaced"
-  exact={false}
-  replace={false}
-  strict={false}
-  to="/refs/test-reference/indexes/test-entry"
+exports[`<IndexItemChangeDescription /> should render valid description when modifiedCount is 1 1`] = `
+<span>
+  13
+   change
+  s
+   made in
+  1
+   OTU
+</span>
+`;
+
+exports[`<IndexItemIcon /> should render checkmark when active 1`] = `
+<span
+  className="pull-right"
 >
-  <ListGroupItem
-    allowFocus={false}
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        <strong>
-          Version 
-          0
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={3}
-      >
-        Created 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        <span>
-          3
-           
-           changes made in 
-          5
-           
-          OTUs
-        </span>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={2}
-        xs={6}
-      />
-    </Row>
-  </ListGroupItem>
-</LinkContainer>
+  <Icon
+    bsStyle="success"
+    faStyle="fas"
+    fixedWidth={false}
+    name="check"
+    pullRight={false}
+  />
+   
+  <strong>
+    Active
+  </strong>
+</span>
+`;
+
+exports[`<IndexItemIcon /> should render nothing when ready, but not active 1`] = `""`;
+
+exports[`<IndexItemIcon /> should render spinner when not ready 1`] = `
+<div
+  className="pull-right"
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+  <strong>
+     Building
+  </strong>
+</div>
 `;

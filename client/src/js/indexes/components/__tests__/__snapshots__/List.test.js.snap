@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexesList /> should render 1`] = `
+<div>
+  <Connect(RebuildAlert) />
+  <ScrollList
+    documents={
+      Array [
+        Object {
+          "id": "foo",
+        },
+        Object {
+          "id": "bar",
+        },
+      ]
+    }
+    onLoadNextPage={[Function]}
+    renderRow={[Function]}
+  />
+</div>
+`;
+
+exports[`<IndexesList /> should render with [documents=null] 1`] = `<LoadingPlaceholder />`;
+
+exports[`<IndexesList /> should render with empty documents array 1`] = `
+<div>
+  <Connect(RebuildAlert) />
+  <NoneFound
+    noun="indexes"
+  />
+  <ScrollList
+    documents={Array []}
+    onLoadNextPage={[Function]}
+    renderRow={[Function]}
+  />
+</div>
+`;

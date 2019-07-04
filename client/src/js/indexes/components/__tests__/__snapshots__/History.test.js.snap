@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<History /> renders <LoadingPlaceholder /> when unbuilt data is not available 1`] = `
+exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is null 1`] = `
 <Uncontrolled(Panel)
   className="panel-default"
 >
@@ -16,7 +16,7 @@ exports[`<History /> renders <LoadingPlaceholder /> when unbuilt data is not ava
 </Uncontrolled(Panel)>
 `;
 
-exports[`<History /> renders all changes in first page with error styling 1`] = `
+exports[`<RebuildHistory /> should render with error 1`] = `
 <Uncontrolled(Panel)
   className="panel-danger"
 >
@@ -35,38 +35,34 @@ exports[`<History /> renders all changes in first page with error styling 1`] = 
       }
     }
   >
-    <ListGroupItem
-      bsClass="list-group-item"
+    <RebuildHistoryItem
+      description="test-description"
       key="123abc"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={5}
-        >
-          <strong>
-            test-otu
-          </strong>
-        </Col>
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={7}
-        >
-          No Description
-        </Col>
-      </Row>
-    </ListGroupItem>
+      otuName="test-otu"
+    />
+    <RebuildHistoryEllipsis
+      unbuilt={
+        Object {
+          "documents": Array [
+            Object {
+              "description": "test-description",
+              "id": "123abc",
+              "otu": Object {
+                "name": "test-otu",
+              },
+            },
+          ],
+          "page_count": 2,
+          "per_page": 5,
+          "total_count": 10,
+        }
+      }
+    />
   </ListGroup>
 </Uncontrolled(Panel)>
 `;
 
-exports[`<History /> renders first page of change log with surplus of changes noted 1`] = `
+exports[`<RebuildHistory /> should render without error 1`] = `
 <Uncontrolled(Panel)
   className="panel-default"
 >
@@ -85,50 +81,99 @@ exports[`<History /> renders first page of change log with surplus of changes no
       }
     }
   >
-    <ListGroupItem
-      bsClass="list-group-item"
+    <RebuildHistoryItem
+      description="test-description"
       key="123abc"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={5}
-        >
-          <strong>
-            test-otu
-          </strong>
-        </Col>
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={7}
-        >
-          test-description
-        </Col>
-      </Row>
-    </ListGroupItem>
-    <ListGroupItem
-      bsClass="list-group-item"
-      key="last-item"
-      listItem={false}
-    >
-      <div
-        style={
-          Object {
-            "textAlign": "right",
-          }
+      otuName="test-otu"
+    />
+    <RebuildHistoryEllipsis
+      unbuilt={
+        Object {
+          "documents": Array [
+            Object {
+              "description": "test-description",
+              "id": "123abc",
+              "otu": Object {
+                "name": "test-otu",
+              },
+            },
+          ],
+          "page_count": 2,
+          "per_page": 5,
+          "total_count": 10,
         }
-      >
-        + 
-        5
-         more changes
-      </div>
-    </ListGroupItem>
+      }
+    />
   </ListGroup>
 </Uncontrolled(Panel)>
+`;
+
+exports[`<RebuildHistoryEllipsis /> should render when page_count greater than 1 1`] = `
+<History__StyledRebuildHistoryEllipsis
+  key="last-item"
+>
+  + 
+  48
+   more changes
+</History__StyledRebuildHistoryEllipsis>
+`;
+
+exports[`<RebuildHistoryEllipsis /> should render when page_count is 1 1`] = `""`;
+
+exports[`<RebuildHistoryItem /> should render with description 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  listItem={false}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={5}
+    >
+      <strong>
+        Foobar Virus
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={7}
+    >
+      Removed OTU
+    </Col>
+  </Row>
+</ListGroupItem>
+`;
+
+exports[`<RebuildHistoryItem /> should render without description 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  listItem={false}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={5}
+    >
+      <strong>
+        Foobar Virus
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={7}
+    >
+      No Description
+    </Col>
+  </Row>
+</ListGroupItem>
 `;

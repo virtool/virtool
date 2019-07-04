@@ -1,9 +1,9 @@
 import React from "react";
-import { Row, Col, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ScrollList } from "../../base";
+import IndexChange from "./Change";
 
 class IndexChanges extends React.Component {
     componentDidMount() {
@@ -12,34 +12,19 @@ class IndexChanges extends React.Component {
         }
     }
 
-    renderRow = index => (
-        <ListGroupItem key={this.props.history.documents[index].id} className="spaced">
-            <Row>
-                <Col xs={12} md={6}>
-                    <strong>{this.props.history.documents[index].otu.name}</strong>
-                </Col>
-                <Col xs={12} md={6}>
-                    {this.props.history.documents[index].description}
-                </Col>
-            </Row>
-        </ListGroupItem>
-    );
-
     render() {
         if (this.props.history === null || this.props.history.documents === null || this.props.detail === null) {
             return <LoadingPlaceholder />;
         }
 
         return (
-            <div>
-                <ScrollList
-                    documents={this.props.history.documents}
-                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.detail.id, page)}
-                    page={this.props.history.page}
-                    pageCount={this.props.history.page_count}
-                    renderRow={this.renderRow}
-                />
-            </div>
+            <ScrollList
+                documents={this.props.history.documents}
+                onLoadNextPage={page => this.props.onLoadNextPage(this.props.detail.id, page)}
+                page={this.props.history.page}
+                pageCount={this.props.history.page_count}
+                renderRow={index => <IndexChange key={index} index={index} />}
+            />
         );
     }
 }

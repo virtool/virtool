@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Indexes /> should render 1`] = `
+<Switch>
+  <Route
+    component={[Function]}
+    exact={true}
+    path="/refs/:refId/indexes"
+  />
+</Switch>
+`;

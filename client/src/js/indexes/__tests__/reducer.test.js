@@ -1,16 +1,16 @@
 import {
     WS_INSERT_INDEX,
+    WS_INSERT_HISTORY,
     WS_UPDATE_INDEX,
     GET_INDEX,
     GET_UNBUILT,
     GET_INDEX_HISTORY,
-    WS_INSERT_HISTORY,
     FIND_INDEXES
 } from "../../app/actionTypes";
 import reducer, { initialState as reducerInitialState } from "../reducer";
 
 describe("Indexes Reducer", () => {
-    it("should return the initial state on first pass", () => {
+    it("should return the initial state", () => {
         const result = reducer(undefined, {});
         expect(result).toEqual(reducerInitialState);
     });

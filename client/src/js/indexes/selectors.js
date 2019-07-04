@@ -1,9 +1,9 @@
 import { find, get } from "lodash-es";
 import { createSelector } from "reselect";
 
-const indexesSelector = state => state.indexes.documents || [];
+export const getIndexes = state => state.indexes.documents || [];
 
-export const activeIndexIdSelector = createSelector(
-    indexesSelector,
+export const getActiveIndexId = createSelector(
+    getIndexes,
     indexes => get(find(indexes, { ready: true, has_files: true }), "id")
 );
