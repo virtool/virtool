@@ -1,77 +1,143 @@
-import { MemoryRouter } from "react-router";
-import * as refActions from "../../../references/actions";
-import * as actions from "../../actions";
-import IndexDetailContainer, { IndexDetail } from "../Detail";
+import { GET_INDEX, GET_INDEX_HISTORY } from "../../../app/actionTypes";
+import { IndexDetail, IndexDetailBreadCrumb, mapStateToProps, mapDispatchToProps } from "../Detail";
 
-describe("<Detail />", () => {
-    const initialState = {
-        errors: null,
-        indexes: {
-            detail: {
-                id: "test-index",
-                version: 0,
-                created_at: "2018-02-14T17:12:00.000000Z",
-                user: { id: "test-user" },
-                change_count: 3
-            }
-        },
-        references: {
-            detail: {
-                name: "reference"
-            }
-        }
-    };
-    const store = mockStore(initialState);
-    const match = {
-        params: {
-            indexId: "test-index",
-            refId: "test-reference"
-        }
-    };
+describe("<IndexDetailBreadCrumb />", () => {
+    it("should render", () => {
+        const props = {
+            refDetail: {
+                id: "baz",
+                name: "Baz"
+            },
+            version: 2
+        };
+        const wrapper = shallow(<IndexDetailBreadCrumb {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("<IndexDetail />", () => {
     let props;
-    let wrapper;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<IndexDetailContainer store={store} match={match} />).dive();
+    beforeEach(() => {
+        props = {
+            detail: {
+                id: "baz",
+                version: 3,
+                created_at: "2018-02-14T17:12:00.000000Z",
+                user: "bob"
+            },
+            match: {
+                params: {
+                    indexId: "baz",
+                    refId: "foo"
+                }
+            },
+            refDetail: {
+                id: "foo",
+                name: "Foo"
+            },
+            onGetIndex: jest.fn(),
+            onGetChanges: jest.fn()
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<IndexDetail {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <NotFound /> when GET_INDEX_ERROR is set", () => {
-        props = {
+    it("should render <NotFound /> when GET_INDEX_ERROR is set", () => {
+        props.error = { status: 404 };
+        const wrapper = shallow(<IndexDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render <LoadingPlaceholder /> when index or reference detail is null", () => {
+        props.detail = null;
+        props.refDetail = null;
+        const wrapper = shallow(<IndexDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onGetIndex() and getChanges() on mount", () => {
+        shallow(<IndexDetail {...props} />);
+        expect(props.onGetIndex).toHaveBeenLastCalledWith(props.detail.id);
+        expect(props.onGetChanges).toHaveBeenLastCalledWith(props.detail.id, 1);
+    });
+});
+
+describe("mapStateToProps()", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
+            errors: {
+                GET_OTU_ERROR: {
+                    status: 400
+                }
+            },
+            indexes: {
+                detail: {
+                    id: "bar",
+                    version: 2
+                }
+            },
+            references: {
+                detail: {
+                    id: "foo",
+                    name: "Foo"
+                }
+            }
+        };
+    });
+
+    it("should return props from state", () => {
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            error: null,
+            detail: state.indexes.detail,
+            refDetail: state.references.detail
+        });
+    });
+
+    it("should return props from state with error", () => {
+        state.errors.GET_INDEX_ERROR = {
+            status: 404
+        };
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
             error: { status: 404 },
-            onGetIndex: jest.fn(),
-            onGetReference: jest.fn(),
-            onGetChanges: jest.fn()
-        };
-        wrapper = shallow(<IndexDetail {...props} match={match} />);
-        expect(wrapper).toMatchSnapshot();
+            detail: state.indexes.detail,
+            refDetail: state.references.detail
+        });
+    });
+});
+
+describe("mapDispatchToProps()", () => {
+    let dispatch;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
     });
 
-    it("renders <LoadingPlaceholder /> when index or reference detail data is unavailable", () => {
-        props = {
-            detail: null,
-            refDetail: null,
-            onGetIndex: jest.fn(),
-            onGetReference: jest.fn(),
-            onGetChanges: jest.fn()
-        };
-        wrapper = shallow(<IndexDetail {...props} match={match} />);
-        expect(wrapper).toMatchSnapshot();
+    it("should return onGetIndex() in props", () => {
+        const result = mapDispatchToProps(dispatch);
+        const indexId = "foo";
+        result.onGetIndex(indexId);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: GET_INDEX.REQUESTED,
+            indexId
+        });
     });
 
-    it("Component mount dispatches getIndex(), getIndexHistory(), getReference() actions", () => {
-        const spyIndex = sinon.spy(actions, "getIndex");
-
-        expect(spyIndex.called).toBe(false);
-
-        wrapper = mount(
-            <MemoryRouter>
-                <IndexDetailContainer store={store} match={match} />
-            </MemoryRouter>
-        );
-
-        expect(spyIndex.calledWith("test-index")).toBe(true);
-
-        spyIndex.restore();
+    it("should return onGetChanges() in props", () => {
+        const result = mapDispatchToProps(dispatch);
+        const indexId = "foo";
+        result.onGetChanges(indexId, 3);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: GET_INDEX_HISTORY.REQUESTED,
+            indexId,
+            page: 3
+        });
     });
 });

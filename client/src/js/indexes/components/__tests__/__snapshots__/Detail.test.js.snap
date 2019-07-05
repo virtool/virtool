@@ -1,72 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Detail /> renders <LoadingPlaceholder /> when index or reference detail data is unavailable 1`] = `<LoadingPlaceholder />`;
+exports[`<IndexDetail /> should render <LoadingPlaceholder /> when index or reference detail is null 1`] = `<LoadingPlaceholder />`;
 
-exports[`<Detail /> renders <NotFound /> when GET_INDEX_ERROR is set 1`] = `<NotFound />`;
+exports[`<IndexDetail /> should render <NotFound /> when GET_INDEX_ERROR is set 1`] = `<NotFound />`;
 
-exports[`<Detail /> renders correctly 1`] = `
+exports[`<IndexDetail /> should render 1`] = `
 <div>
-  <Breadcrumb
-    bsClass="breadcrumb"
-  >
-    <BreadcrumbItem
-      active={false}
-    >
-      <LinkContainer
-        activeClassName="active"
-        exact={false}
-        replace={false}
-        strict={false}
-        to="/refs/"
-      >
-        <span>
-          References
-        </span>
-      </LinkContainer>
-    </BreadcrumbItem>
-    <BreadcrumbItem
-      active={false}
-    >
-      <LinkContainer
-        activeClassName="active"
-        exact={false}
-        replace={false}
-        strict={false}
-        to="/refs/test-reference"
-      >
-        <span>
-          reference
-        </span>
-      </LinkContainer>
-    </BreadcrumbItem>
-    <BreadcrumbItem
-      active={false}
-    >
-      <LinkContainer
-        activeClassName="active"
-        exact={false}
-        replace={false}
-        strict={false}
-        to="/refs/test-reference/indexes"
-      >
-        <span>
-          Indexes
-        </span>
-      </LinkContainer>
-    </BreadcrumbItem>
-    <BreadcrumbItem
-      active={true}
-    >
-      Index 
-      0
-    </BreadcrumbItem>
-  </Breadcrumb>
+  <IndexDetailBreadCrumb
+    refDetail={
+      Object {
+        "id": "foo",
+        "name": "Foo",
+      }
+    }
+    version={3}
+  />
   <ViewHeader
-    title="Index 0 - Indexes - Virtool"
+    title="Index 3 - Indexes - Virtool"
   >
     <strong>
       Index 
-      0
+      3
     </strong>
     <div
       className="text-muted"
@@ -81,25 +35,22 @@ exports[`<Detail /> renders correctly 1`] = `
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
-      test-user
     </div>
   </ViewHeader>
   <Tabs>
     <TabLink
-      to="/refs/test-reference/indexes/test-index/general"
+      to="/refs/foo/indexes/baz/general"
     >
       General
     </TabLink>
     <TabLink
-      to="/refs/test-reference/indexes/test-index/changes"
+      to="/refs/foo/indexes/baz/changes"
     >
       Changes 
       <Badge
         bsClass="badge"
         pullRight={false}
-      >
-        3
-      </Badge>
+      />
     </TabLink>
   </Tabs>
   <Switch>
@@ -107,7 +58,7 @@ exports[`<Detail /> renders correctly 1`] = `
       exact={true}
       from="/refs/:refId/indexes/:indexId"
       push={false}
-      to="/refs/test-reference/indexes/test-index/general"
+      to="/refs/foo/indexes/baz/general"
     />
     <Route
       component={[Function]}
@@ -119,4 +70,62 @@ exports[`<Detail /> renders correctly 1`] = `
     />
   </Switch>
 </div>
+`;
+
+exports[`<IndexDetailBreadCrumb /> should render 1`] = `
+<Breadcrumb
+  bsClass="breadcrumb"
+>
+  <BreadcrumbItem
+    active={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/refs/"
+    >
+      <span>
+        References
+      </span>
+    </LinkContainer>
+  </BreadcrumbItem>
+  <BreadcrumbItem
+    active={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/refs/baz"
+    >
+      <span>
+        Baz
+      </span>
+    </LinkContainer>
+  </BreadcrumbItem>
+  <BreadcrumbItem
+    active={false}
+  >
+    <LinkContainer
+      activeClassName="active"
+      exact={false}
+      replace={false}
+      strict={false}
+      to="/refs/baz/indexes"
+    >
+      <span>
+        Indexes
+      </span>
+    </LinkContainer>
+  </BreadcrumbItem>
+  <BreadcrumbItem
+    active={true}
+  >
+    Index 
+    2
+  </BreadcrumbItem>
+</Breadcrumb>
 `;

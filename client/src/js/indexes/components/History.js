@@ -1,8 +1,36 @@
 import React from "react";
+import styled from "styled-components";
 import { map, sortBy } from "lodash-es";
 import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 import { LoadingPlaceholder } from "../../base";
+
+const StyledRebuildHistoryEllipsis = styled(ListGroupItem)`
+    text-align: right;
+`;
+
+export const RebuildHistoryEllipsis = ({ unbuilt }) => {
+    if (unbuilt.page_count > 1) {
+        return (
+            <StyledRebuildHistoryEllipsis key="last-item">
+                + {unbuilt.total_count - unbuilt.per_page} more changes
+            </StyledRebuildHistoryEllipsis>
+        );
+    }
+
+    return null;
+};
+
+export const RebuildHistoryItem = ({ description, otuName }) => (
+    <ListGroupItem>
+        <Row>
+            <Col md={5}>
+                <strong>{otuName}</strong>
+            </Col>
+            <Col md={7}>{description || "No Description"}</Col>
+        </Row>
+    </ListGroupItem>
+);
 
 export default function RebuildHistory({ unbuilt, error }) {
     let content;
@@ -10,28 +38,14 @@ export default function RebuildHistory({ unbuilt, error }) {
     if (unbuilt === null) {
         content = <LoadingPlaceholder margin="22px" />;
     } else {
-        const extraChanges =
-            unbuilt.page_count > 1 ? (
-                <ListGroupItem key="last-item">
-                    <div style={{ textAlign: "right" }}>+ {unbuilt.total_count - unbuilt.per_page} more changes</div>
-                </ListGroupItem>
-            ) : null;
-
         const historyComponents = map(sortBy(unbuilt.documents, "otu.name"), change => (
-            <ListGroupItem key={change.id}>
-                <Row>
-                    <Col md={5}>
-                        <strong>{change.otu.name}</strong>
-                    </Col>
-                    <Col md={7}>{change.description || "No Description"}</Col>
-                </Row>
-            </ListGroupItem>
+            <RebuildHistoryItem key={change.id} description={change.description} otuName={change.otu.name} />
         ));
 
         content = (
             <ListGroup style={{ overflowY: "auto", maxHeight: "700px" }}>
                 {historyComponents}
-                {extraChanges}
+                <RebuildHistoryEllipsis unbuilt={unbuilt} />
             </ListGroup>
         );
     }

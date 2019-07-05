@@ -21,8 +21,8 @@ import {
     findIndexes
 } from "../actions";
 
-describe("Indexes Action Creators:", () => {
-    it("wsInsertHistory: returns action with websocket history insert data", () => {
+describe("Index Action Creators", () => {
+    it("wsInsertHistory() should return action to insert history via websocket", () => {
         const data = { foo: "bar" };
         const result = wsInsertHistory(data);
         expect(result).toEqual({
@@ -31,7 +31,7 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("wsInsertIndex: returns action to insert an entry via websocket", () => {
+    it("wsInsertIndex() should return action to insert an index via websocket", () => {
         const data = { foo: "bar" };
         const result = wsInsertIndex(data);
         expect(result).toEqual({
@@ -40,7 +40,7 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("wsUpdateIndex: returns action to update an entry via websocket", () => {
+    it("wsUpdateIndex() should return action to update an index via websocket", () => {
         const data = { foo: "baz" };
         const result = wsUpdateIndex(data);
         expect(result).toEqual({
@@ -49,9 +49,9 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("findIndexes: returns action to get a specific page of indexes", () => {
-        const refId = "123abc";
-        const term = "foo";
+    it("findIndexes() should return action to get a specific page of indexes", () => {
+        const refId = "foo";
+        const term = "bar";
         const page = 3;
         const result = findIndexes(refId, term, page);
         expect(result).toEqual({
@@ -62,13 +62,13 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("listReadyIndexes: returns action to get a list of ready indexes", () => {
+    it("listReadyIndexes() should return action to get a list of all ready indexes", () => {
         const result = listReadyIndexes();
         expect(result).toEqual({ type: LIST_READY_INDEXES.REQUESTED });
     });
 
-    it("getIndex: returns action to get specific index version", () => {
-        const indexId = "abc123";
+    it("getIndex() should return action to get a specific index version", () => {
+        const indexId = "foo";
         const result = getIndex(indexId);
         expect(result).toEqual({
             type: GET_INDEX.REQUESTED,
@@ -76,8 +76,8 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("getUnbuilt: returns simple action", () => {
-        const refId = "123abc";
+    it("getUnbuilt() should return action to get unbuilt changes for a refId", () => {
+        const refId = "foo";
         const result = getUnbuilt(refId);
         expect(result).toEqual({
             type: GET_UNBUILT.REQUESTED,
@@ -85,8 +85,8 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("createIndex: returns simple action", () => {
-        const refId = "123abc";
+    it("createIndex() should return action to create index for a refId", () => {
+        const refId = "foo";
         const result = createIndex(refId);
         expect(result).toEqual({
             type: CREATE_INDEX.REQUESTED,
@@ -94,9 +94,9 @@ describe("Indexes Action Creators:", () => {
         });
     });
 
-    it("getIndexHistory: returns action to retrieve the index changes history", () => {
-        const indexId = "abc123";
-        const page = "1";
+    it("getIndexHistory() should return action to retrieve a page of history for an indexId", () => {
+        const indexId = "foo";
+        const page = 1;
         const result = getIndexHistory(indexId, page);
         expect(result).toEqual({
             type: GET_INDEX_HISTORY.REQUESTED,
