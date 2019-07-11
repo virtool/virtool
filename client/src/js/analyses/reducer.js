@@ -9,11 +9,15 @@ import {
     FIND_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_READS,
-    SET_PATHOSCOPE_FILTER
+    SET_PATHOSCOPE_FILTER,
+    SET_ACTIVE_HIT_ID,
+    TOGGLE_FILTER_ORFS,
+    TOGGLE_FILTER_SEQUENCES,
+    SET_SEARCH_IDS,
+    SET_ANALYSIS_SORT_KEY
 } from "../app/actionTypes";
 import { insert, update, remove, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
@@ -30,7 +34,12 @@ export const initialState = {
     // Pathoscope-specific
     filterOTUs: true,
     filterIsolates: true,
-    showReads: false
+    showReads: false,
+
+    // NuVs specific,
+    filterORFs: true,
+    filterSequences: true,
+    searchIds: null
 };
 
 export const collapse = state =>
@@ -100,17 +109,30 @@ export default function analysesReducer(state = initialState, action) {
         case COLLAPSE_ANALYSIS:
             return { ...state, data: collapse(state) };
 
+        case SET_ACTIVE_HIT_ID:
+            return { ...state, activeId: action.id };
+
+        case SET_ANALYSIS_SORT_KEY:
+            return { ...state, sortKey: action.sortKey };
+
         case SET_PATHOSCOPE_FILTER:
             return setFilter(state, action.key);
+
+        case SET_SEARCH_IDS:
+            return { ...state, searchIds: action.ids };
+
+        case TOGGLE_FILTER_ORFS:
+            return { ...state, filterORFs: !state.filterORFs };
+
+        case TOGGLE_FILTER_SEQUENCES: {
+            return { ...state, filterSequences: !state.filterSequences };
+        }
 
         case TOGGLE_SHOW_PATHOSCOPE_READS:
             return { ...state, showReads: !state.showReads };
 
         case TOGGLE_SORT_PATHOSCOPE_DESCENDING:
             return { ...state, sortDescending: !state.sortDescending };
-
-        case SET_PATHOSCOPE_SORT_KEY:
-            return { ...state, sortKey: action.key };
 
         case TOGGLE_ANALYSIS_EXPANDED:
             return { ...state, data: toggleExpanded(state, action.id) };
@@ -133,11 +155,15 @@ export default function analysesReducer(state = initialState, action) {
 
         case GET_ANALYSIS.SUCCEEDED: {
             const { data } = action;
+            const formatted = formatData(data);
 
             return {
                 ...state,
+                activeId: formatted.results[0].index,
+                data: formatted,
                 detail: data,
-                data: formatData(data)
+                searchIds: null,
+                sortKey: "length"
             };
         }
 
@@ -145,7 +171,8 @@ export default function analysesReducer(state = initialState, action) {
             return {
                 ...state,
                 data: null,
-                detail: null
+                detail: null,
+                searchIds: null
             };
 
         case BLAST_NUVS.REQUESTED:
