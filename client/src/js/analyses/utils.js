@@ -3,18 +3,23 @@ import {
     fill,
     flatMap,
     fromPairs,
+    keys,
     map,
     max,
     maxBy,
     min,
     minBy,
+    reject,
     round,
     sortBy,
     sum,
     sumBy,
+    uniq,
     unzip
 } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
+
+const calculateAnnotatedOrfCount = orfs => reject(orfs, orf => orf.hits.length === 0).length;
 
 const calculateORFMinimumE = hits => {
     if (hits.length === 0) {
@@ -32,6 +37,15 @@ const calculateSequenceMinimumE = orfs => {
 
     const minEValues = map(orfs, orf => calculateORFMinimumE(orf.hits));
     return min(minEValues);
+};
+
+export const extractFamilies = orfs => {
+    const families = uniq(flatMap(orfs, orf => flatMap(orf.hits, hit => keys(hit.families))));
+    return reject(families, f => f === "None");
+};
+
+export const extractNames = orfs => {
+    return uniq(flatMap(orfs, orf => flatMap(orf.hits, hit => hit.names)));
 };
 
 export const fillAlign = ({ align, length }) => {
@@ -65,12 +79,13 @@ export const formatData = detail => {
 };
 
 export const formatNuVsData = detail => {
-    let results = map(detail.results, result => ({
+    const results = map(detail.results, result => ({
         ...result,
-        e: calculateSequenceMinimumE(result.orfs)
+        annotatedOrfCount: calculateAnnotatedOrfCount(result.orfs),
+        e: calculateSequenceMinimumE(result.orfs),
+        families: extractFamilies(result.orfs),
+        names: extractNames(result.orfs)
     }));
-
-    results = sortBy(results, "sequence.length").reverse();
 
     const longestSequence = maxBy(results, result => result.sequence.length);
 
