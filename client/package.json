@@ -13,6 +13,7 @@
     "d3-svg-legend": "^2.25.6",
     "d3-transition": "^1.2.0",
     "date-fns": "^1.29.0",
+    "fuse.js": "^3.4.5",
     "history": "^4.9.0",
     "identicon.js": "^2.3.3",
     "lodash-es": "^4.17.11",
