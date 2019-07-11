@@ -10,10 +10,14 @@ import {
     CLEAR_ANALYSIS,
     COLLAPSE_ANALYSIS,
     SET_PATHOSCOPE_FILTER,
-    SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_READS
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    SET_ACTIVE_HIT_ID,
+    TOGGLE_FILTER_ORFS,
+    TOGGLE_FILTER_SEQUENCES,
+    SET_SEARCH_IDS,
+    SET_ANALYSIS_SORT_KEY
 } from "../app/actionTypes";
 import { simpleActionCreator } from "../utils/utils";
 
@@ -26,7 +30,7 @@ export const wsInsertAnalysis = data => ({
  * Returns an action that should be dispatched when a analysis document is updated via websocket.
  *
  * @func
- * @param update {object} update data passed in the websocket message
+ * @param data {object} update data passed in the websocket message
  * @returns {object}
  */
 export const wsUpdateAnalysis = data => ({
@@ -38,7 +42,7 @@ export const wsUpdateAnalysis = data => ({
  * Returns an action that should be dispatched when a analysis document is removed via websocket.
  *
  * @func
- * @param removed {string} the id for the specific analysis
+ * @param data {string} the id for the specific analysis
  * @returns {object}
  */
 export const wsRemoveAnalysis = data => ({
@@ -53,15 +57,29 @@ export const toggleExpanded = id => ({
     id
 });
 
+export const setActiveHitId = id => ({
+    type: SET_ACTIVE_HIT_ID,
+    id
+});
+
+export const setSearchIds = ids => ({
+    type: SET_SEARCH_IDS,
+    ids
+});
+
+export const setAnalysisSortKey = sortKey => ({
+    type: SET_ANALYSIS_SORT_KEY,
+    sortKey
+});
+
 export const setPathoscopeFilter = key => ({
     type: SET_PATHOSCOPE_FILTER,
     key
 });
 
-export const setSortKey = key => ({
-    type: SET_PATHOSCOPE_SORT_KEY,
-    key
-});
+export const toggleFilterORFs = simpleActionCreator(TOGGLE_FILTER_ORFS);
+
+export const toggleFilterSequences = simpleActionCreator(TOGGLE_FILTER_SEQUENCES);
 
 export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
 
