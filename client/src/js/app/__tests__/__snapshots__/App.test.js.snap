@@ -76,8 +76,11 @@ exports[`<App /> renders correctly 1`] = `
     theme={
       Object {
         "color": Object {
+          "green": "#3c763d",
           "greyDark": "#555",
           "greyLight": "#dddddd",
+          "primary": "#3c8786",
+          "red": "#af3227",
         },
         "fontSize": Object {
           "lg": "18px",
