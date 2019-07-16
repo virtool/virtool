@@ -15,7 +15,7 @@ def configure(verbose=False):
         fmt=log_format
     )
 
-    logger = logging.getLogger("virtool")
+    logger = logging.getLogger()
 
     handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
     handler.setFormatter(logging.Formatter(log_format))

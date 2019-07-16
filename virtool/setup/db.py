@@ -52,6 +52,7 @@ async def check_setup(db_connection_string, db_name):
     try:
         await db.collection_names(include_system_collections=False)
     except OperationFailure as err:
+        logger.warning(f"Database Setup: {str(err)}")
         if any(substr in str(err) for substr in ["Authentication failed", "no users authenticated"]):
             return {
                 "db_connection_string": "",
@@ -60,7 +61,8 @@ async def check_setup(db_connection_string, db_name):
                 "error": "auth_error"
             }
         raise
-    except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError):
+    except (ConnectionFailure, ServerSelectionTimeoutError, TypeError, ValueError) as err:
+        logger.warning(f"Database Setup: {str(err)}")
         return {
             "db_connection_string": "",
             "db_name": "",
