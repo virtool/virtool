@@ -1,7 +1,7 @@
 import PathoscopeViewer from "../Viewer";
 
 describe("<PathoscopeViewer />", () => {
-    it("renders correctly", () => {
+    it("should render", () => {
         const wrapper = shallow(<PathoscopeViewer />);
         expect(wrapper).toMatchSnapshot();
     });

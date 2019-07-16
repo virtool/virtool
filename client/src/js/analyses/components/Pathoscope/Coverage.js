@@ -1,12 +1,11 @@
+import React, { useEffect, useRef } from "react";
+import styled from "styled-components";
 import { axisBottom, axisLeft } from "d3-axis";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
-import PropTypes from "prop-types";
-import React from "react";
-import { createBlob, formatSvg, getPng, getSvgAttr } from "./Download";
 
-const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
+const draw = (element, data, length, meta, yMax, xMin, showYAxis) => {
     let svg = select(element).append("svg");
 
     const margin = {
@@ -83,69 +82,22 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
         .text(`${meta.id} - ${meta.definition}`);
-
-    svg.append("text")
-        .attr("class", "download-overlay")
-        .attr("transform", `translate(${(width - margin.left - margin.right) / 3}, ${height / 2})`)
-        .text("Click to download");
 };
 
-export default class CoverageChart extends React.Component {
-    static propTypes = {
-        id: PropTypes.string,
-        definition: PropTypes.string,
-        yMax: PropTypes.number,
-        data: PropTypes.array,
-        length: PropTypes.number,
-        title: PropTypes.string,
-        showYAxis: PropTypes.bool
-    };
+const StyledCoverageChart = styled.div`
+    display: inline-block;
+    margin-top: 5px;
+`;
 
-    componentDidMount() {
-        window.addEventListener("resize", this.renderChart);
-        this.renderChart();
-    }
+export const CoverageChart = ({ data, definition, id, length, yMax, showYAxis }) => {
+    const chartEl = useRef(null);
 
-    shouldComponentUpdate() {
-        return false;
-    }
+    useEffect(
+        () => draw(chartEl.current, data, length, { id, definition }, yMax, chartEl.current.offsetWidth, showYAxis),
+        [id]
+    );
 
-    componentWillUnmount() {
-        window.removeEventListener("resize", this.renderChart);
-    }
+    return <StyledCoverageChart ref={chartEl} />;
+};
 
-    renderChart = () => {
-        while (this.chartNode.firstChild) {
-            this.chartNode.removeChild(this.chartNode.firstChild);
-        }
-
-        const { id, definition } = this.props;
-
-        createChart(
-            this.chartNode,
-            this.props.data,
-            this.props.length,
-            { id, definition },
-            this.props.yMax,
-            this.chartNode.offsetWidth,
-            this.props.showYAxis
-        );
-    };
-
-    handleClick = () => {
-        const svg = select(this.chartNode).select("svg");
-
-        formatSvg(svg, "hidden");
-
-        const url = createBlob(svg.node());
-        const { width, height, filename } = getSvgAttr(svg);
-
-        getPng({ width, height, url, filename });
-
-        formatSvg(svg, "visible");
-    };
-
-    render() {
-        return <div className="coverage-chart" ref={node => (this.chartNode = node)} onClick={this.handleClick} />;
-    }
-}
+export default CoverageChart;

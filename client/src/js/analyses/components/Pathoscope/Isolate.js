@@ -1,88 +1,69 @@
+import React, { useEffect } from "react";
+import styled from "styled-components";
 import { map } from "lodash-es";
-import PropTypes from "prop-types";
-import React from "react";
-import { Flex, FlexItem } from "../../../base/index";
 import { toScientificNotation } from "../../../utils/utils";
 import Coverage from "./Coverage";
 
-export default class PathoscopeIsolate extends React.Component {
-    static propTypes = {
-        otuId: PropTypes.string,
-        name: PropTypes.string,
-        pi: PropTypes.number,
-        coverage: PropTypes.number,
-        depth: PropTypes.number,
-        maxDepth: PropTypes.number,
-        reads: PropTypes.number,
-        sequences: PropTypes.arrayOf(PropTypes.object),
-        setScroll: PropTypes.func,
-        showReads: PropTypes.bool
-    };
+const PathoscopeChartContainer = styled.div`
+    border-radius: 2px;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    margin-top: 5px;
+    overflow-x: scroll;
+`;
 
-    componentDidMount() {
-        this.chartNode.addEventListener("scroll", this.handleScroll);
+const PathoscopeChartRibbon = styled.div`
+    white-space: nowrap;
+`;
+
+const PathoscopeIsolateHeader = styled.div`
+    align-items: center;
+    display: flex;
+    padding-bottom: 2px;
+    padding-top: 15px;
+    margin-bottom: 4px;
+
+    & > strong {
+        padding-left: 5px;
     }
+`;
 
-    componentWillUnmount() {
-        this.chartNode.removeEventListener("scroll", this.handleScroll);
-    }
+export const PathoscopeIsolateWeight = ({ pi, reads, showReads }) => (
+    <strong className="small text-success">{showReads ? reads : toScientificNotation(pi)}</strong>
+);
 
-    scrollTo = scrollLeft => {
-        this.chartNode.scrollLeft = scrollLeft;
-    };
+export const PathoscopeIsolate = React.forwardRef((props, ref) => {
+    useEffect(() => {
+        ref.current.addEventListener("scroll", props.onScroll);
+        return () => ref.current.removeEventListener("scroll", props.onScroll);
+    });
 
-    handleScroll = e => {
-        this.props.setScroll(this.props.otuId, e.target.scrollLeft);
-    };
+    const { maxDepth, pi, reads, sequences, showReads } = props;
 
-    render() {
-        const chartContainerStyle = {
-            overflowX: "scroll",
-            marginTop: "5px",
-            boxShadow: "inset 0px 0px 3px 1px #dddddd"
-        };
+    const hitComponents = map(sequences, (hit, i) => (
+        <Coverage
+            key={i}
+            data={hit.align}
+            length={hit.length}
+            id={hit.id}
+            definition={hit.definition}
+            yMax={maxDepth}
+            showYAxis={i === 0}
+        />
+    ));
 
-        const chartRibbonStyle = {
-            whiteSpace: "nowrap"
-        };
+    return (
+        <div>
+            <PathoscopeIsolateHeader>
+                {props.name}
+                <PathoscopeIsolateWeight pi={pi} reads={reads} showReads={showReads} />
+                <strong className="small text-danger">{props.depth.toFixed(0)}</strong>
+                <strong className="small text-primary">{toScientificNotation(parseFloat(props.coverage))}</strong>
+            </PathoscopeIsolateHeader>
+            <PathoscopeChartContainer ref={ref}>
+                <PathoscopeChartRibbon>{hitComponents}</PathoscopeChartRibbon>
+            </PathoscopeChartContainer>
+        </div>
+    );
+});
 
-        const hitComponents = map(this.props.sequences, (hit, i) => (
-            <Coverage
-                key={i}
-                data={hit.align}
-                length={hit.length}
-                id={hit.id}
-                definition={hit.definition}
-                yMax={this.props.maxDepth}
-                showYAxis={i === 0}
-                isolateComponent={this}
-            />
-        ));
-
-        const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
-
-        return (
-            <div>
-                <div className="pathoscope-isolate-header">
-                    <Flex>
-                        <FlexItem>{this.props.name}</FlexItem>
-                        <FlexItem pad={5}>
-                            <strong className="small text-success">{piValue}</strong>
-                        </FlexItem>
-                        <FlexItem pad={5}>
-                            <strong className="small text-danger">{this.props.depth.toFixed(1)}</strong>
-                        </FlexItem>
-                        <FlexItem pad={5}>
-                            <strong className="small text-primary">
-                                {toScientificNotation(parseFloat(this.props.coverage))}
-                            </strong>
-                        </FlexItem>
-                    </Flex>
-                </div>
-                <div ref={node => (this.chartNode = node)} style={chartContainerStyle}>
-                    <div style={chartRibbonStyle}>{hitComponents}</div>
-                </div>
-            </div>
-        );
-    }
-}
+export default PathoscopeIsolate;
