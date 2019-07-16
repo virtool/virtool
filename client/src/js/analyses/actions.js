@@ -17,7 +17,8 @@ import {
     TOGGLE_FILTER_ORFS,
     TOGGLE_FILTER_SEQUENCES,
     SET_SEARCH_IDS,
-    SET_ANALYSIS_SORT_KEY
+    SET_ANALYSIS_SORT_KEY,
+    TOGGLE_RESULT_EXPANDED
 } from "../app/actionTypes";
 import { simpleActionCreator } from "../utils/utils";
 
@@ -52,11 +53,6 @@ export const wsRemoveAnalysis = data => ({
 
 export const collapseAnalysis = simpleActionCreator(COLLAPSE_ANALYSIS);
 
-export const toggleExpanded = id => ({
-    type: TOGGLE_ANALYSIS_EXPANDED,
-    id
-});
-
 export const setActiveHitId = id => ({
     type: SET_ACTIVE_HIT_ID,
     id
@@ -82,6 +78,11 @@ export const toggleFilterORFs = simpleActionCreator(TOGGLE_FILTER_ORFS);
 export const toggleFilterSequences = simpleActionCreator(TOGGLE_FILTER_SEQUENCES);
 
 export const togglePathoscopeSortDescending = simpleActionCreator(TOGGLE_SORT_PATHOSCOPE_DESCENDING);
+
+export const toggleResultExpanded = id => ({
+    type: TOGGLE_RESULT_EXPANDED,
+    id
+});
 
 export const toggleShowPathoscopeReads = simpleActionCreator(TOGGLE_SHOW_PATHOSCOPE_READS);
 

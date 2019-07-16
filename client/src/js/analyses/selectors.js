@@ -1,8 +1,14 @@
 import Fuse from "fuse.js";
-import { intersection, map, reject, sortBy, toNumber } from "lodash-es";
+import { find, intersection, map, reject, sortBy, toNumber } from "lodash-es";
 import { createSelector } from "reselect";
 
-export const getResults = state => state.analyses.data.results;
+export const getActiveId = state => state.analyses.activeId;
+
+export const getAnalysisDetailId = state => state.analyses.detail.id;
+
+export const getResults = state => state.analyses.detail.results;
+
+export const getMaxSequenceLength = state => state.analyses.detail.maxSequenceLength;
 
 export const getFuse = createSelector(
     [getResults],
@@ -57,5 +63,20 @@ export const getMatches = createSelector(
         }
 
         return map(matchIds, id => results[id]);
+    }
+);
+
+export const getActiveHit = createSelector(
+    [getMatches, getActiveId],
+    (matches, activeId) => {
+        if (activeId !== null) {
+            const hit = find(matches, { index: activeId });
+
+            if (hit) {
+                return hit;
+            }
+        }
+
+        return matches[0] || null;
     }
 );
