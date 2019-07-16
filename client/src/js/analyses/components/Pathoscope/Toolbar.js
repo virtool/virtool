@@ -6,6 +6,7 @@ import { connect } from "react-redux";
 import { Button, Checkbox, Flex, FlexItem, Icon } from "../../../base";
 import {
     collapseAnalysis,
+    setAnalysisSortKey,
     setPathoscopeFilter,
     setSortKey,
     togglePathoscopeSortDescending,
@@ -141,7 +142,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onSetSortKey: e => {
-        dispatch(setSortKey(e.target.value));
+        dispatch(setAnalysisSortKey(e.target.value));
     },
 
     onToggleShowReads: () => {

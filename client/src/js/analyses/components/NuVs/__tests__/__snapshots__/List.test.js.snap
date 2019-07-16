@@ -1,112 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NuVsList /> renders correctly 1`] = `
+exports[`<NuVsList /> should render 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
+  <List__NuVsListHeader>
+    Showing 
+    4
+     of 
+    10
+  </List__NuVsListHeader>
+  <List__StyledNuVsList
+    height={500}
+    itemCount={4}
+    itemSize={58}
+    width={200}
   >
-    <tbody>
-      <tr>
-        <th
-          className="col-md-3"
-        >
-          Contig Count
-        </th>
-        <td
-          className="col-md-9"
-        >
-          1
-        </td>
-      </tr>
-    </tbody>
-  </Table>
-  <List__NuVsToolbar>
-    <FormGroup
-      bsClass="form-group"
-    >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          onChange={[Function]}
-          placeholder="Name, family"
-        />
-      </InputGroup>
-    </FormGroup>
-    <Button
-      bsStyle="default"
-      disabled={true}
-      icon="compress"
-      onClick={[Function]}
-      pullRight={false}
-      tip="Collapse All"
-      tipPlacement="top"
-    />
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
-      to={
-        Object {
-          "state": Object {
-            "export": true,
-          },
-        }
-      }
-    >
-      <Button
-        bsStyle="default"
-        icon="download"
-        pullRight={false}
-        tip="Export"
-        tipPlacement="top"
-      />
-    </LinkContainer>
-    <FilterDropdown
-      filter="hmm"
-      onFilter={[Function]}
-    />
-  </List__NuVsToolbar>
-  <List__NuVsDisplayCount>
-    Displaying 
-    1
-     sequences
-  </List__NuVsDisplayCount>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <NuVsItem
-      analysisId="test-analysis"
-      in={false}
-      key="sequence_undefined"
-      maxSequenceLength={3}
-      orfs={
-        Array [
-          Object {
-            "hits": Array [],
-          },
-        ]
-      }
-      toggleIn={[Function]}
-    />
-  </ListGroup>
+    <Component />
+  </List__StyledNuVsList>
 </div>
 `;

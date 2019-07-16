@@ -1,116 +1,97 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NuVsItem /> should render collapsed when [in=false] 1`] = `
-<Box__SpacedBox
+exports[`<NuVsItem /> should render when active 1`] = `
+<Item__StyledNuVsItem
   onClick={[Function]}
+  selected={true}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      xs={12}
+  <Item__NuVsItemHeader>
+    <strong>
+      Sequence 
+      4
+    </strong>
+    <Badge
+      bsClass="badge"
+      pullRight={false}
     >
-      <strong>
-        Sequence 
-        4
-      </strong>
-    </Col>
-    <NuVsEntryValue
-      label="LENGTH"
-      value={13}
-    />
-    <NuVsEntryValue
-      label="E-VALUE"
-      value={3}
-    />
-    <NuVsEntryValue
-      label="ORFS"
-      value={0}
-    />
-  </Row>
-</Box__SpacedBox>
+      13
+    </Badge>
+  </Item__NuVsItemHeader>
+  <Item__NuVsItemNumbers>
+    <Item__NuVsORFCount>
+      2
+       ORFs
+    </Item__NuVsORFCount>
+     /
+     
+    <Item__NuVsEValue>
+      E = 
+      0.0012
+    </Item__NuVsEValue>
+  </Item__NuVsItemNumbers>
+</Item__StyledNuVsItem>
 `;
 
-exports[`<NuVsItem /> should render collapsed when [in=false] 2`] = `
-<Box__SpacedBox
+exports[`<NuVsItem /> should render when not active 1`] = `
+<Item__StyledNuVsItem
   onClick={[Function]}
+  selected={false}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      xs={12}
+  <Item__NuVsItemHeader>
+    <strong>
+      Sequence 
+      4
+    </strong>
+    <Badge
+      bsClass="badge"
+      pullRight={false}
     >
-      <strong>
-        Sequence 
-        4
-      </strong>
-    </Col>
-    <NuVsEntryValue
-      label="LENGTH"
-      value={13}
-    />
-    <NuVsEntryValue
-      label="E-VALUE"
-      value={3}
-    />
-    <NuVsEntryValue
-      label="ORFS"
-      value={0}
-    />
-  </Row>
-  <NuVsExpansion
-    index={4}
-    orfs={Array []}
-    sequence="test-sequence"
-  />
-</Box__SpacedBox>
+      13
+    </Badge>
+  </Item__NuVsItemHeader>
+  <Item__NuVsItemNumbers>
+    <Item__NuVsORFCount>
+      2
+       ORFs
+    </Item__NuVsORFCount>
+     /
+     
+    <Item__NuVsEValue>
+      E = 
+      0.0012
+    </Item__NuVsEValue>
+  </Item__NuVsItemNumbers>
+</Item__StyledNuVsItem>
 `;
 
-exports[`<NuVsItem /> should render expanded when [in=true] 1`] = `
-<Box__SpacedBox
+exports[`<NuVsItem /> should render when not active 2`] = `
+<Item__StyledNuVsItem
   onClick={[Function]}
+  selected={false}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={3}
-      xs={12}
+  <Item__NuVsItemHeader>
+    <strong>
+      Sequence 
+      4
+    </strong>
+    <Badge
+      bsClass="badge"
+      pullRight={false}
     >
-      <strong>
-        Sequence 
-        4
-      </strong>
-    </Col>
-    <NuVsEntryValue
-      label="LENGTH"
-      value={13}
-    />
-    <NuVsEntryValue
-      label="E-VALUE"
-      value={3}
-    />
-    <NuVsEntryValue
-      label="ORFS"
-      value={0}
-    />
-  </Row>
-  <NuVsExpansion
-    index={4}
-    orfs={Array []}
-    sequence="test-sequence"
-  />
-</Box__SpacedBox>
+      13
+    </Badge>
+  </Item__NuVsItemHeader>
+  <Item__NuVsItemNumbers>
+    <Item__NuVsORFCount>
+      2
+       ORFs
+    </Item__NuVsORFCount>
+     /
+     
+    <Item__NuVsEValue>
+      E = 
+      0.0012
+    </Item__NuVsEValue>
+  </Item__NuVsItemNumbers>
+</Item__StyledNuVsItem>
 `;

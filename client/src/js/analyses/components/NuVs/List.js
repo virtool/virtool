@@ -1,146 +1,39 @@
 import React from "react";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-import { get, includes, map, reject, xor } from "lodash-es";
-import { DropdownButton, FormControl, FormGroup, InputGroup, ListGroup, MenuItem, Table } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
-
-import { Button, Icon, Toolbar } from "../../../base";
+import { connect } from "react-redux";
+import { FixedSizeList } from "react-window";
+import { getMatches, getResults } from "../../selectors";
 import NuVsItem from "./Item";
 
-const filterData = (data, filter) => {
-    if (filter === "hmm") {
-        return reject(data, { e: undefined });
-    }
-
-    if (filter === "orf") {
-        return reject(data, { "result.orfs.length": 0 });
-    }
-
-    return data;
-};
-
-const filterTitles = {
-    hmm: "Has HMM Hit",
-    orf: "Has ORF",
-    none: "None"
-};
-
-const FilterTitle = ({ filter }) => {
-    const suffix = get(filterTitles, filter, "All");
-    return <span>Filter: {suffix}</span>;
-};
-
-const StyledFilterDropdown = styled(DropdownButton)`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    min-width: 170px;
-
-    ul {
-        min-width: 170px;
-    }
+const NuVsListHeader = styled.div`
+    background-color: #f5f5f5;
+    border: 1px solid ${props => props.theme.color.greyLight};
+    border-bottom: none;
+    box-shadow: 0 5px 5px -3px #d5d5d5;
+    padding: 7px 15px;
+    z-index: 1000;
 `;
 
-const FilterDropdown = ({ filter, onFilter }) => {
-    const title = <FilterTitle filter={filter} />;
+const StyledNuVsList = styled(FixedSizeList)`
+    flex: 0 0 auto;
+`;
+
+export const NuVsList = ({ shown, total }) => {
     return (
-        <StyledFilterDropdown title={title} id="nuvs-visibility-filter" onSelect={onFilter} pullRight>
-            <MenuItem eventKey="hmm">{filterTitles.hmm}</MenuItem>
-            <MenuItem eventKey="orf">{filterTitles.orf}</MenuItem>
-            <MenuItem eventKey="none">{filterTitles.none}</MenuItem>
-        </StyledFilterDropdown>
+        <div>
+            <NuVsListHeader>
+                Showing {shown} of {total}
+            </NuVsListHeader>
+            <StyledNuVsList height={500} width={200} itemCount={shown} itemSize={58}>
+                {NuVsItem}
+            </StyledNuVsList>
+        </div>
     );
 };
 
-const NuVsDisplayCount = styled.div`
-    color: ${props => props.theme.color.greyDark};
-    font-size: ${props => props.theme.fontSize.xs};
-    margin-bottom: 15px;
-`;
+const mapStateToProps = state => ({
+    shown: getMatches(state).length,
+    total: getResults(state).length
+});
 
-const NuVsToolbar = styled(Toolbar)`
-    margin-bottom: 5px;
-`;
-
-export default class NuVsList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            expanded: [],
-            term: "",
-            filter: "hmm"
-        };
-    }
-
-    static propTypes = {
-        analysisId: PropTypes.string,
-        maxSequenceLength: PropTypes.number,
-        data: PropTypes.arrayOf(PropTypes.object)
-    };
-
-    handleFilter = filter => this.setState({ filter });
-
-    toggleIn = sequenceIndex => {
-        this.setState({
-            expanded: xor(this.state.expanded, [sequenceIndex])
-        });
-    };
-
-    render() {
-        const data = filterData(this.props.data, this.state.filter);
-
-        const rows = map(data, item => {
-            const expanded = includes(this.state.expanded, item.index);
-            return (
-                <NuVsItem
-                    key={`sequence_${item.index}`}
-                    {...item}
-                    analysisId={this.props.analysisId}
-                    toggleIn={this.toggleIn}
-                    in={expanded}
-                    maxSequenceLength={this.props.maxSequenceLength}
-                />
-            );
-        });
-
-        return (
-            <div>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className="col-md-3">Contig Count</th>
-                            <td className="col-md-9">{this.props.data.length}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-                <NuVsToolbar>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl
-                                value={this.state.findTerm}
-                                onChange={e => this.setState({ findTerm: e.target.value })}
-                                placeholder="Name, family"
-                            />
-                        </InputGroup>
-                    </FormGroup>
-                    <Button
-                        tip="Collapse All"
-                        icon="compress"
-                        disabled={this.state.expanded.length === 0}
-                        onClick={() => this.setState({ expanded: [] })}
-                    />
-                    <LinkContainer to={{ state: { export: true } }}>
-                        <Button tip="Export" icon="download" />
-                    </LinkContainer>
-                    <FilterDropdown filter={this.state.filter} onFilter={this.handleFilter} />
-                </NuVsToolbar>
-                <NuVsDisplayCount>Displaying {data.length} sequences</NuVsDisplayCount>
-                <ListGroup>{rows}</ListGroup>
-            </div>
-        );
-    }
-}
+export default connect(mapStateToProps)(NuVsList);
