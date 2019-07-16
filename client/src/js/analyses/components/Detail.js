@@ -49,7 +49,7 @@ export const AnalysisDetail = props => {
     } else if (detail.algorithm === "nuvs") {
         content = <NuVsViewer />;
     } else {
-        return <div>"Unusable analysis detail content")</div>;
+        return <div>Unusable analysis detail content</div>;
     }
 
     return (

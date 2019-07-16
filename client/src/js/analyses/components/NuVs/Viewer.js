@@ -1,26 +1,24 @@
 import React from "react";
-import { connect } from "react-redux";
-
+import styled from "styled-components";
+import NuVsDetail from "./Detail";
 import NuVsExport from "./Export";
 import NuVsList from "./List";
+import NuVsToolbar from "./Toolbar";
 
-export const NuVsViewer = ({ id, maxSequenceLength, results }) => {
-    return (
-        <div>
-            <NuVsExport results={results} />
-            <NuVsList data={results} analysisId={id} maxSequenceLength={maxSequenceLength} />
-        </div>
-    );
-};
+const NuVsPanes = styled.div`
+    display: grid;
+    grid-template-columns: 200px 1fr;
+`;
 
-const mapStateToProps = state => {
-    const { maxSequenceLength, results } = state.analyses.data;
+export const NuVsViewer = () => (
+    <div>
+        <NuVsExport />
+        <NuVsToolbar />
+        <NuVsPanes>
+            <NuVsList />
+            <NuVsDetail />
+        </NuVsPanes>
+    </div>
+);
 
-    return {
-        id: state.analyses.detail.id,
-        maxSequenceLength,
-        results
-    };
-};
-
-export default connect(mapStateToProps)(NuVsViewer);
+export default NuVsViewer;

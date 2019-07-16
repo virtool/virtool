@@ -3,7 +3,7 @@
  *
  * @module sagaUtils
  */
-import { includes } from "lodash-es";
+import { get, includes } from "lodash-es";
 import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
@@ -31,11 +31,18 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
             yield all(extraFunctions);
         }
     } catch (error) {
-        if (error.response.statusCode === 401) {
+        const statusCode = get(error, "response.statusCode");
+
+        if (statusCode === 401) {
             window.location = `/login?expired=true&return_to=${window.location.pathname}`;
-        } else {
+            return;
+        }
+
+        if (get(error, "response.body")) {
             yield putGenericError(actionType, error);
         }
+
+        throw error;
     }
 }
 

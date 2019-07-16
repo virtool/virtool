@@ -23,7 +23,7 @@ exports[`<AnalysisDetail /> should render 1`] = `
 
 exports[`<AnalysisDetail /> should render error when detail.algorithm is invalid] 1`] = `
 <div>
-  "Unusable analysis detail content")
+  Unusable analysis detail content
 </div>
 `;
 
@@ -44,7 +44,7 @@ exports[`<AnalysisDetail /> should render expected view when [detail.algorithm='
       />
     </ViewHeader__SubviewHeaderAttribution>
   </ViewHeader__SubviewHeader>
-  <Connect(NuVsViewer) />
+  <NuVsViewer />
 </div>
 `;
 

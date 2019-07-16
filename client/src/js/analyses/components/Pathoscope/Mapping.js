@@ -8,30 +8,34 @@ import { Box, Flex, FlexItem, Icon } from "../../../base";
 import { getColor } from "../../../base/utils";
 import { toThousand } from "../../../utils/utils";
 
-const AnalysisMappingReference = ({ index, reference }) => (
-    <StyledAnalysisMappingReference>
-        <Link to={`/refs/${reference.id}`}>{reference.name}</Link>
-        <Label style={{ marginLeft: "5px" }}>{index.version}</Label>
-    </StyledAnalysisMappingReference>
-);
-
-const AnalysisMappingSubtraction = ({ subtraction }) => (
-    <StyledAnalysisMappingSubtraction to={`/subtractions/${subtraction.id}`}>
-        {subtraction.id}
-    </StyledAnalysisMappingSubtraction>
-);
-
 const StyledAnalysisMappingReference = styled.div`
     align-items: center;
     display: flex;
     flex: 0 0 auto;
     margin-left: 10px;
+
+    .label {
+        margin-left: 5px;
+    }
 `;
+
+export const AnalysisMappingReference = ({ index, reference }) => (
+    <StyledAnalysisMappingReference>
+        <Link to={`/refs/${reference.id}`}>{reference.name}</Link>
+        <Label>{index.version}</Label>
+    </StyledAnalysisMappingReference>
+);
 
 const StyledAnalysisMappingSubtraction = styled(Link)`
     flex: 0 0 auto;
     margin-left: 10px;
 `;
+
+export const AnalysisMappingSubtraction = ({ subtraction }) => (
+    <StyledAnalysisMappingSubtraction to={`/subtractions/${subtraction.id}`}>
+        {subtraction.id}
+    </StyledAnalysisMappingSubtraction>
+);
 
 const AnalysisMappingLegendIcon = styled(Icon)`
     color: ${props => getColor(props.color)};
@@ -50,8 +54,13 @@ const AnalysisMappingLegendCount = styled.div`
 `;
 
 const StyledAnalysisMapping = styled(Box)`
-    flex: 1 0 auto;
     margin-bottom: 30px;
+
+    h3 {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+    }
 `;
 
 export const AnalysisMapping = ({ index, reference, subtraction, toReference, total, toSubtraction = 0 }) => {
@@ -63,20 +72,16 @@ export const AnalysisMapping = ({ index, reference, subtraction, toReference, to
     return (
         <StyledAnalysisMapping>
             <h3>
-                <Flex alignItems="flex-end">
-                    <FlexItem grow={1}>{numbro(sumPercent).format({ output: "percent", mantissa: 2 })} mapped</FlexItem>
-                    <small>
-                        {toThousand(totalMapped)} / {toThousand(total)}
-                    </small>
-                </Flex>
+                {numbro(sumPercent).format({ output: "percent", mantissa: 2 })} mapped
+                <small>
+                    {toThousand(totalMapped)} / {toThousand(total)}
+                </small>
             </h3>
 
-            <div>
-                <ProgressBar>
-                    <ProgressBar now={referencePercent * 100} />
-                    <ProgressBar bsStyle="warning" now={subtractionPercent * 100} />
-                </ProgressBar>
-            </div>
+            <ProgressBar>
+                <ProgressBar now={referencePercent * 100} />
+                <ProgressBar bsStyle="warning" now={subtractionPercent * 100} />
+            </ProgressBar>
 
             <Flex>
                 <FlexItem>

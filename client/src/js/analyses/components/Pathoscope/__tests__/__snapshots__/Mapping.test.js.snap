@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AnalysisMappingReference should render 1`] = `
+<Mapping__StyledAnalysisMappingReference>
+  <Link
+    replace={false}
+    to="/refs/foo"
+  >
+    Foo
+  </Link>
+  <Label
+    bsClass="label"
+    bsStyle="default"
+  >
+    3
+  </Label>
+</Mapping__StyledAnalysisMappingReference>
+`;
+
+exports[`AnalysisMappingSubtraction should render 1`] = `
+<Mapping__StyledAnalysisMappingSubtraction
+  to="/subtractions/Foo Bar"
+>
+  Foo Bar
+</Mapping__StyledAnalysisMappingSubtraction>
+`;

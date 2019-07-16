@@ -3,12 +3,12 @@ import PathoscopeList from "./List";
 import PathoscopeMapping from "./Mapping";
 import PathoscopeToolbar from "./Toolbar";
 
-export default function PathoscopeViewer() {
-    return (
-        <div>
-            <PathoscopeMapping />
-            <PathoscopeToolbar />
-            <PathoscopeList />
-        </div>
-    );
-}
+export const PathoscopeViewer = () => (
+    <div>
+        <PathoscopeMapping />
+        <PathoscopeToolbar />
+        <PathoscopeList />
+    </div>
+);
+
+export default PathoscopeViewer;

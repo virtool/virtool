@@ -5,8 +5,9 @@ import styled from "styled-components";
 import { axisTop } from "d3-axis";
 import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
+import { getMaxSequenceLength } from "../../selectors";
 
-const draw = (element, sequenceLength, maxLength) => {
+const draw = (element, maxLength, sequenceLength) => {
     element.innerHTML = "";
 
     const width = element.offsetWidth;
@@ -40,28 +41,24 @@ const draw = (element, sequenceLength, maxLength) => {
 };
 
 const StyledNuVsSequence = styled.div`
-    margin-top: 10px;
-    margin-bottom: 10px;
-
-    & > div {
-        height: 32px;
-    }
+    height: 32px;
+    margin: 10px 0;
 `;
 
-const NuVsSequence = ({ maxSequenceLength, sequence }) => {
+const NuVsSequence = ({ maxSequenceLength, sequence, width }) => {
     const chartEl = useRef(null);
 
-    useEffect(() => draw(chartEl.current, maxSequenceLength, sequence.length), [sequence]);
+    useEffect(() => draw(chartEl.current, maxSequenceLength, sequence.length), [sequence, width]);
 
     return (
-        <StyledNuVsSequence>
-            <div ref={chartEl} />
-        </StyledNuVsSequence>
+        <div style={{ overflow: "hidden" }}>
+            <StyledNuVsSequence ref={chartEl} />
+        </div>
     );
 };
 
 const mapStateToProps = state => ({
-    maxSequenceLength: state.analyses.data.maxSequenceLength
+    maxSequenceLength: getMaxSequenceLength(state)
 });
 
 export default connect(mapStateToProps)(NuVsSequence);

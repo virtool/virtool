@@ -68,7 +68,7 @@ describe("<Toolbar />", () => {
         });
 
         it("Label choice dropdown menu click dispatches setSortKey() action", () => {
-            spy = sinon.spy(actions, "setSortKey");
+            spy = sinon.spy(actions, "setAnalysisSortKey");
             expect(spy.called).toBe(false);
 
             wrapper.findWhere(node => node.prop("componentClass") === "select").prop("onChange")({

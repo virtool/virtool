@@ -6,23 +6,16 @@ import {
     WS_REMOVE_ANALYSIS,
     BLAST_NUVS,
     CLEAR_ANALYSIS,
-    COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    SET_PATHOSCOPE_SORT_KEY,
     TOGGLE_ANALYSIS_EXPANDED,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING,
     TOGGLE_SHOW_PATHOSCOPE_READS,
-    SET_PATHOSCOPE_FILTER
+    SET_PATHOSCOPE_FILTER,
+    SET_ANALYSIS_SORT_KEY
 } from "../../app/actionTypes";
-import reducer, {
-    initialState as reducerInitialState,
-    collapse,
-    setFilter,
-    setNuvsBLAST,
-    toggleExpanded
-} from "../reducer";
+import reducer, { initialState as reducerInitialState, setFilter, setNuvsBLAST } from "../reducer";
 import { formatData } from "../utils";
 
 formatData.mockImplementation(({ algorithm, ready }) => ({
@@ -34,36 +27,34 @@ formatData.mockImplementation(({ algorithm, ready }) => ({
 describe("Analyses Reducer", () => {
     const initialState = reducerInitialState;
 
-    it("should return the initial state on first pass", () => {
+    it("should return the initial state", () => {
         const result = reducer(undefined, {});
         expect(result).toEqual(initialState);
     });
 
-    it("should return the given state for unhandled action types", () => {
+    it("should return the existing state for unhandled action types", () => {
         const action = { type: "UNHANDLED_ACTION" };
         const result = reducer(initialState, action);
         expect(result).toEqual(initialState);
     });
 
-    describe("should handle WS_INSERT_ANALYSIS", () => {
-        it("it should insert analysis into [documents]", () => {
-            const state = {
-                ...initialState,
-                documents: null,
-                sampleId: "foo"
-            };
-            const action = {
-                type: WS_INSERT_ANALYSIS,
-                data: {
-                    id: "foo",
-                    created_at: "2018-01-01T00:00:00.000000Z"
-                }
-            };
-            const result = reducer(state, action);
-            expect(result).toEqual({
-                ...state,
-                documents: [action.data]
-            });
+    it("should handle WS_INSERT_ANALYSIS", () => {
+        const state = {
+            ...initialState,
+            documents: null,
+            sampleId: "foo"
+        };
+        const action = {
+            type: WS_INSERT_ANALYSIS,
+            data: {
+                id: "foo",
+                created_at: "2018-01-01T00:00:00.000000Z"
+            }
+        };
+        const result = reducer(state, action);
+        expect(result).toEqual({
+            ...state,
+            documents: [action.data]
         });
     });
 
@@ -71,15 +62,14 @@ describe("Analyses Reducer", () => {
         const state = {
             ...initialState,
             sampleId: "baz",
-            documents: [{ id: "123abc", created_at: "2018-01-01T00:00:00.000000Z", foo: "test", sample: { id: "baz" } }]
+            documents: [{ id: "foo", created_at: "2018-01-01T00:00:00.000000Z", sample: { id: "baz" } }]
         };
 
         const action = {
             type: WS_UPDATE_ANALYSIS,
             data: {
-                id: "123abc",
+                id: "foo",
                 created_at: "2018-01-01T00:00:00.000000Z",
-                foo: "bar",
                 sample: {
                     id: "baz"
                 }
@@ -106,16 +96,6 @@ describe("Analyses Reducer", () => {
             ...state,
             documents: []
         });
-    });
-
-    it("should handle COLLAPSE_ANALYSIS", () => {
-        const state = {
-            ...initialState,
-            data: []
-        };
-        const action = { type: COLLAPSE_ANALYSIS };
-        const result = reducer(state, action);
-        expect(result).toEqual(state);
     });
 
     it("should handle SET_PATHOSCOPE_FILTER", () => {
@@ -153,11 +133,11 @@ describe("Analyses Reducer", () => {
         });
     });
 
-    it("should handle SET_PATHOSCOPE_SORT_KEY", () => {
-        const state = initialState;
-        const action = { type: SET_PATHOSCOPE_SORT_KEY, key: "test" };
+    it("should handle SET_ANALYSIS_SORT_KEY", () => {
+        const state = {};
+        const action = { type: SET_ANALYSIS_SORT_KEY, sortKey: "foo" };
         const result = reducer(state, action);
-        expect(result).toEqual({ ...state, sortKey: action.key });
+        expect(result).toEqual({ sortKey: action.sortKey });
     });
 
     it("should handle TOGGLE_ANALYSIS_EXPANDED", () => {
@@ -192,13 +172,12 @@ describe("Analyses Reducer", () => {
     });
 
     it("should handle GET_ANALYSIS_REQUESTED", () => {
-        const state = {};
         const action = {
             type: GET_ANALYSIS.REQUESTED
         };
-        const result = reducer(state, action);
+        const result = reducer({}, action);
         expect(result).toEqual({
-            ...state,
+            activeId: null,
             detail: null,
             data: null
         });
@@ -207,7 +186,14 @@ describe("Analyses Reducer", () => {
     it("should handle GET_ANALYSIS_SUCCEEDED for nuvs when ready", () => {
         const algorithm = "nuvs";
         const ready = true;
-        const state = {};
+        const state = {
+            activeId: null,
+            data: null,
+            detail: null,
+            expanded: [],
+            searchIds: ["bar", "baz"],
+            sortKey: "depth"
+        };
         const action = {
             type: "GET_ANALYSIS_SUCCEEDED",
             data: {
@@ -218,13 +204,16 @@ describe("Analyses Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            ...state,
-            detail: action.data,
-            data: {
+            activeId: null,
+            data: null,
+            detail: {
                 algorithm,
                 ready,
                 foo: "bar"
-            }
+            },
+            expanded: [],
+            searchIds: null,
+            sortKey: "length"
         });
     });
 
@@ -242,13 +231,15 @@ describe("Analyses Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            ...state,
-            detail: action.data,
-            data: {
+            activeId: null,
+            detail: {
                 algorithm,
                 ready,
                 foo: "bar"
-            }
+            },
+            expanded: [],
+            searchIds: null,
+            sortKey: "length"
         });
     });
 
@@ -266,12 +257,15 @@ describe("Analyses Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            detail: action.data,
-            data: {
+            activeId: null,
+            detail: {
                 algorithm,
                 ready,
                 foo: "bar"
-            }
+            },
+            expanded: [],
+            searchIds: null,
+            sortKey: "length"
         });
     });
 
@@ -289,20 +283,23 @@ describe("Analyses Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            detail: action.data,
-            data: {
+            activeId: null,
+            detail: {
                 algorithm,
                 ready,
                 foo: "bar"
-            }
+            },
+            expanded: [],
+            searchIds: null,
+            sortKey: "length"
         });
     });
 
     it("should handle CLEAR_ANALYSIS", () => {
-        const state = { data: [], detail: {} };
+        const state = { data: [], detail: {}, searchIds: ["foo"] };
         const action = { type: CLEAR_ANALYSIS };
         const result = reducer(state, action);
-        expect(result).toEqual({ data: null, detail: null });
+        expect(result).toEqual({ data: null, detail: null, searchIds: null });
     });
 
     it("should handle BLAST_NUVS_REQUESTED", () => {
@@ -353,24 +350,6 @@ describe("Analyses Reducer", () => {
     });
 
     describe("Analyses Reducer Helper Functions", () => {
-        describe("collapse", () => {
-            it("should set all entries 'expanded' to false", () => {
-                const state = {
-                    data: [
-                        { id: "test1", expanded: true },
-                        { id: "test2", expanded: false },
-                        { id: "test3", expanded: true }
-                    ]
-                };
-                const result = collapse(state);
-                expect(result).toEqual([
-                    { id: "test1", expanded: false },
-                    { id: "test2", expanded: false },
-                    { id: "test3", expanded: false }
-                ]);
-            });
-        });
-
         describe("setFilter", () => {
             const state = {
                 filterIsolates: false,
@@ -410,26 +389,6 @@ describe("Analyses Reducer", () => {
                     filterIsolates: false,
                     filterOTUs: false
                 });
-            });
-        });
-
-        describe("toggleExpanded", () => {
-            const state = {
-                data: [
-                    { id: "test1", expanded: true },
-                    { id: "test2", expanded: false },
-                    { id: "test3", expanded: true }
-                ]
-            };
-
-            it("should toggle specific entry's 'expanded' value", () => {
-                const id = "test1";
-                const result = toggleExpanded(state, id);
-                expect(result).toEqual([
-                    { id: "test1", expanded: false },
-                    { id: "test2", expanded: false },
-                    { id: "test3", expanded: true }
-                ]);
             });
         });
 

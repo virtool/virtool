@@ -3,18 +3,23 @@ import {
     fill,
     flatMap,
     fromPairs,
+    keys,
     map,
     max,
     maxBy,
     min,
     minBy,
+    reject,
     round,
     sortBy,
     sum,
     sumBy,
+    uniq,
     unzip
 } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
+
+const calculateAnnotatedOrfCount = orfs => reject(orfs, { "hits.length": 0 }).length;
 
 const calculateORFMinimumE = hits => {
     if (hits.length === 0) {
@@ -32,6 +37,15 @@ const calculateSequenceMinimumE = orfs => {
 
     const minEValues = map(orfs, orf => calculateORFMinimumE(orf.hits));
     return min(minEValues);
+};
+
+export const extractFamilies = orfs => {
+    const families = uniq(flatMap(orfs, orf => flatMap(orf.hits, hit => keys(hit.families))));
+    return reject(families, f => f === "None");
+};
+
+export const extractNames = orfs => {
+    return uniq(flatMap(orfs, orf => flatMap(orf.hits, hit => hit.names)));
 };
 
 export const fillAlign = ({ align, length }) => {
@@ -65,38 +79,46 @@ export const formatData = detail => {
 };
 
 export const formatNuVsData = detail => {
-    let results = map(detail.results, result => ({
+    const results = map(detail.results, result => ({
         ...result,
-        e: calculateSequenceMinimumE(result.orfs)
+        annotatedOrfCount: calculateAnnotatedOrfCount(result.orfs),
+        e: calculateSequenceMinimumE(result.orfs),
+        families: extractFamilies(result.orfs),
+        names: extractNames(result.orfs)
     }));
-
-    results = sortBy(results, "sequence.length").reverse();
 
     const longestSequence = maxBy(results, result => result.sequence.length);
 
+    const { algorithm, created_at, id, ready, user } = detail;
+
     return {
+        algorithm,
+        created_at,
+        id,
+        ready,
         results,
+        user,
         maxSequenceLength: longestSequence.sequence.length
     };
 };
 
 export const formatPathoscopeData = detail => {
     if (detail.diagnosis.length === 0) {
-        return detail.diagnosis;
+        return detail;
     }
 
-    const mappedReadCount = detail.read_count;
+    const { algorithm, created_at, diagnosis, id, index, read_count, ready, reference, subtraction, user } = detail;
 
-    return map(detail.diagnosis, otu => {
+    const results = map(diagnosis, otu => {
+        const isolateNames = [];
+
         // Go through each isolate associated with the OTU, adding properties for weight, read count,
         // median depth, and coverage. These values will be calculated from the sequences owned by each isolate.
         let isolates = map(otu.isolates, isolate => {
             // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
-            let name = formatIsolateName(isolate);
+            const name = formatIsolateName(isolate);
 
-            if (name === "unknown unknown") {
-                name = "Unnamed Isolate";
-            }
+            isolateNames.push(name);
 
             const sequences = sortBy(
                 map(isolate.sequences, sequence => {
@@ -104,7 +126,7 @@ export const formatPathoscopeData = detail => {
 
                     return {
                         ...sequence,
-                        reads: round(sequence.pi * mappedReadCount),
+                        reads: round(sequence.pi * read_count),
                         depth: median(filled),
                         sumDepth: sum(filled),
                         filled
@@ -148,12 +170,26 @@ export const formatPathoscopeData = detail => {
             isolates,
             pi,
             coverage: maxBy(isolates, "coverage").coverage,
+            isolateNames: reject(uniq(isolateNames), "Unnamed Isolate"),
             maxGenomeLength: maxBy(isolates, "length").length,
             maxDepth: maxBy(isolates, "maxDepth").maxDepth,
             depth: median(filled),
-            reads: pi * mappedReadCount
+            reads: pi * read_count
         };
     });
+
+    return {
+        algorithm,
+        created_at,
+        id,
+        index,
+        reference,
+        results,
+        read_count,
+        ready,
+        subtraction,
+        user
+    };
 };
 
 export const median = values => {

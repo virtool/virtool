@@ -1,24 +1,36 @@
-import { compact, map, max, maxBy } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
+import { compact, includes, map, max, maxBy } from "lodash-es";
 import { connect } from "react-redux";
-import { Flex, FlexItem, SpacedBox } from "../../../base/index";
+import { SpacedBox } from "../../../base/index";
 import { toScientificNotation } from "../../../utils/utils";
-import { toggleExpanded } from "../../actions";
+import { toggleResultExpanded } from "../../actions";
 import AnalysisValue from "../Value";
 import { median } from "../../utils";
+import PathoscopeExpansion from "./Expansion";
 import OTUCoverage from "./OTUCoverage";
+
+const calculateIsolateValues = isolates => {
+    const merged = mergeCoverage(isolates);
+    const coverage = compact(merged).length / merged.length;
+    const depth = median(merged);
+
+    return {
+        coverage,
+        depth,
+        merged
+    };
+};
 
 const mergeCoverage = isolates => {
     const longest = maxBy(isolates, isolate => isolate.filled.length);
-
     const coverages = map(isolates, isolate => isolate.filled);
-
     return map(longest.filled, (depth, index) => max(map(coverages, coverage => coverage[index])));
 };
 
 const PathoscopeItemHeader = styled.div`
-    flex: 1 0 auto;
+    display: flex;
+    justify-content: space-between;
 `;
 
 const PathoscopeItemHeaderAbbreviation = styled.div`
@@ -27,49 +39,59 @@ const PathoscopeItemHeaderAbbreviation = styled.div`
     font-weight: bold;
 `;
 
+const PathoscopeItemHeaderValues = styled.div`
+    display: flex;
+    & > *:not(:first-child) {
+        padding-left: 5px;
+    }
+`;
+
 export const PathoscopeItem = props => {
+    const { abbreviation, coverage, depth, merged, name } = props;
+
     const piValue = props.showReads ? Math.round(props.reads) : toScientificNotation(props.pi);
 
     const onExpand = useCallback(() => props.onExpand(props.id), [props.id]);
 
-    const merged = mergeCoverage(props.isolates);
+    let expansion;
 
-    const coverage = compact(merged).length / merged.length;
-
-    const depth = median(merged);
+    if (props.expanded) {
+        expansion = <PathoscopeExpansion isolates={props.isolates} otuPi={props.pi} />;
+    }
 
     return (
         <SpacedBox onClick={onExpand}>
-            <Flex>
-                <PathoscopeItemHeader>
-                    <strong>{props.name}</strong>
-                    <PathoscopeItemHeaderAbbreviation>{props.abbreviation}</PathoscopeItemHeaderAbbreviation>
-                </PathoscopeItemHeader>
-
-                <FlexItem>
+            <PathoscopeItemHeader>
+                <div>
+                    <strong>{name}</strong>
+                    <PathoscopeItemHeaderAbbreviation>{abbreviation}</PathoscopeItemHeaderAbbreviation>
+                </div>
+                <PathoscopeItemHeaderValues>
                     <AnalysisValue color="green" label="Weight" value={piValue} />
-                </FlexItem>
-
-                <FlexItem pad={5}>
-                    <AnalysisValue color="red" label="Median Depth" value={depth.toFixed(1)} />
-                </FlexItem>
-                <FlexItem pad={5}>
+                    <AnalysisValue color="red" label="Median Depth" value={depth.toFixed(0)} />
                     <AnalysisValue color="blue" label="Coverage" value={coverage.toFixed(3)} />
-                </FlexItem>
-            </Flex>
+                </PathoscopeItemHeaderValues>
+            </PathoscopeItemHeader>
             <OTUCoverage merged={merged} />
+            {expansion}
         </SpacedBox>
     );
 };
 
-const mapStateToProps = (state, ownProps) => ({
-    ...state.analyses.data[ownProps.index],
-    showReads: state.analyses.showReads
-});
+const mapStateToProps = (state, ownProps) => {
+    const result = state.analyses.detail.results[ownProps.index];
+
+    return {
+        ...result,
+        ...calculateIsolateValues(result.isolates),
+        expanded: includes(state.analyses.expanded, result.id),
+        showReads: state.analyses.showReads
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onExpand: id => {
-        dispatch(toggleExpanded(id));
+        dispatch(toggleResultExpanded(id));
     }
 });
 
