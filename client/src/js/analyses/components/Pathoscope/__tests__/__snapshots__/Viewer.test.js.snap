@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<PathoscopeViewer /> renders correctly 1`] = `
+exports[`<PathoscopeViewer /> should render 1`] = `
 <div>
   <Connect(AnalysisMapping) />
-  <Connect(Toolbar__StyledPathoscopeToolbar) />
+  <Connect(PathoscopeToolbar) />
   <Connect(PathoscopeList) />
 </div>
 `;

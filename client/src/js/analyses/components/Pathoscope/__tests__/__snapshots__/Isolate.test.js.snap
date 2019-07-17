@@ -1,133 +1,88 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<PathoscopeIsolate /> renders correctly 1`] = `
+exports[`<PathoscopeIsolate /> should render 1`] = `
 <div>
-  <div
-    className="pathoscope-isolate-header"
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="stretch"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <div
-        style={
-          Object {
-            "alignContent": "stretch",
-            "alignItems": "stretch",
-            "display": "flex",
-            "flexFlow": "row nowrap",
-            "justifyContent": "flex-start",
-          }
-        }
-      >
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          shrink={1}
-        >
-          <div
-            style={
-              Object {
-                "alignSelf": null,
-                "flex": "0 1 auto",
-              }
-            }
-          >
-            test-pathoscope
-          </div>
-        </FlexItem>
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={5}
-          shrink={1}
-        >
-          <div
-            style={
-              Object {
-                "alignSelf": null,
-                "flex": "0 1 auto",
-                "marginLeft": "5px",
-              }
-            }
-          >
-            <strong
-              className="small text-success"
-            >
-              1
-            </strong>
-          </div>
-        </FlexItem>
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={5}
-          shrink={1}
-        >
-          <div
-            style={
-              Object {
-                "alignSelf": null,
-                "flex": "0 1 auto",
-                "marginLeft": "5px",
-              }
-            }
-          >
-            <strong
-              className="small text-danger"
-            >
-              2.0
-            </strong>
-          </div>
-        </FlexItem>
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={5}
-          shrink={1}
-        >
-          <div
-            style={
-              Object {
-                "alignSelf": null,
-                "flex": "0 1 auto",
-                "marginLeft": "5px",
-              }
-            }
-          >
-            <strong
-              className="small text-primary"
-            >
-              0.00E0
-            </strong>
-          </div>
-        </FlexItem>
-      </div>
-    </Flex>
-  </div>
-  <div
-    style={
-      Object {
-        "boxShadow": "inset 0px 0px 3px 1px #dddddd",
-        "marginTop": "5px",
-        "overflowX": "scroll",
-      }
-    }
-  >
-    <div
-      style={
-        Object {
-          "whiteSpace": "nowrap",
-        }
-      }
+  <Isolate__PathoscopeIsolateHeader>
+    Isolate A
+    <PathoscopeIsolateWeight
+      reads={102}
+      showReads={false}
     />
-  </div>
+    <strong
+      className="small text-danger"
+    >
+      13
+    </strong>
+    <strong
+      className="small text-primary"
+    >
+      NaN
+    </strong>
+  </Isolate__PathoscopeIsolateHeader>
+  <Isolate__PathoscopeChartContainer>
+    <Isolate__PathoscopeChartRibbon>
+      <CoverageChart
+        data={
+          Array [
+            1,
+            2,
+            3,
+            4,
+            5,
+          ]
+        }
+        definition="Foo Hit"
+        id="foo"
+        key="0"
+        length={5}
+        showYAxis={true}
+        yMax={22}
+      />
+      <CoverageChart
+        data={
+          Array [
+            1,
+            2,
+            3,
+            4,
+            5,
+            4,
+            2,
+            3,
+          ]
+        }
+        definition="Bar Hit"
+        id="bar"
+        key="1"
+        length={8}
+        showYAxis={false}
+        yMax={22}
+      />
+    </Isolate__PathoscopeChartRibbon>
+  </Isolate__PathoscopeChartContainer>
 </div>
+`;
+
+exports[`<PathoscopeIsolateWeight /> should render reads 1`] = `
+<strong
+  className="small text-success"
+>
+  121
+</strong>
+`;
+
+exports[`<PathoscopeIsolateWeight /> should render weight 1`] = `
+<strong
+  className="small text-success"
+>
+  0.321
+</strong>
+`;
+
+exports[`<PathoscopeIsolateWeight /> should render weight in scientific notation 1`] = `
+<strong
+  className="small text-success"
+>
+  3.21E-7
+</strong>
 `;

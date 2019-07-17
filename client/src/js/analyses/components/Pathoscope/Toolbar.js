@@ -1,13 +1,12 @@
-import CX from "classnames";
 import React from "react";
 import styled from "styled-components";
 import { Dropdown, DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, Flex, FlexItem, Icon } from "../../../base";
+import { Button, Checkbox, Flex, FlexItem, Icon, Toolbar } from "../../../base";
 import {
     collapseAnalysis,
+    setAnalysisSortKey,
     setPathoscopeFilter,
-    setSortKey,
     togglePathoscopeSortDescending,
     toggleShowPathoscopeReads
 } from "../../actions";
@@ -18,25 +17,26 @@ const DownloadDropdownTitle = () => (
     </span>
 );
 
-export const PathoscopeToolbar = props => {
-    const {
-        className,
-        filterIsolates,
-        filterOTUs,
-        onCollapse,
-        onFilter,
-        onSetSortKey,
-        onToggleShowReads,
-        onToggleSortDescending,
-        showReads,
-        sortDescending,
-        sortKey
-    } = props;
+const StyledPathoscopeToolbar = styled(Toolbar)`
+    display: flex;
+    margin-bottom: 10px !important;
+`;
 
-    const analysisId = props.detail.id;
-
+export const PathoscopeToolbar = ({
+    analysisId,
+    filterIsolates,
+    filterOTUs,
+    onCollapse,
+    onFilter,
+    onSetSortKey,
+    onToggleShowReads,
+    onToggleSortDescending,
+    showReads,
+    sortDescending,
+    sortKey
+}) => {
     return (
-        <div className={CX("toolbar", className)}>
+        <StyledPathoscopeToolbar>
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Button>
@@ -115,13 +115,38 @@ export const PathoscopeToolbar = props => {
                     <Icon name="file-excel" /> Excel
                 </MenuItem>
             </DropdownButton>
-        </div>
+        </StyledPathoscopeToolbar>
     );
 };
 
-const mapStateToProps = state => ({
-    ...state.analyses
-});
+const mapStateToProps = state => {
+    const {
+        filterIsolates,
+        filterOTUs,
+        onCollapse,
+        onFilter,
+        onSetSortKey,
+        onToggleShowReads,
+        onToggleSortDescending,
+        showReads,
+        sortDescending,
+        sortKey
+    } = state.analyses;
+
+    return {
+        analysisId: state.analyses.detail.id,
+        filterIsolates,
+        filterOTUs,
+        onCollapse,
+        onFilter,
+        onSetSortKey,
+        onToggleShowReads,
+        onToggleSortDescending,
+        showReads,
+        sortDescending,
+        sortKey
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onCollapse: () => {
@@ -141,7 +166,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onSetSortKey: e => {
-        dispatch(setSortKey(e.target.value));
+        dispatch(setAnalysisSortKey(e.target.value));
     },
 
     onToggleShowReads: () => {
@@ -149,11 +174,7 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-const StyledPathoscopeToolbar = styled(PathoscopeToolbar)`
-    margin-bottom: 10px !important;
-`;
-
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(StyledPathoscopeToolbar);
+)(PathoscopeToolbar);

@@ -1,20 +1,12 @@
-import NuVsList from "../List";
+import { NuVsList } from "../List";
 
 describe("<NuVsList />", () => {
-    let props;
-    let wrapper;
-
-    it("renders correctly", () => {
-        props = {
-            analysisId: "test-analysis",
-            maxSequenceLength: 3,
-            data: [
-                {
-                    orfs: [{ hits: [] }]
-                }
-            ]
+    it("should render", () => {
+        const props = {
+            shown: 4,
+            total: 10
         };
-        wrapper = shallow(<NuVsList {...props} />);
+        const wrapper = shallow(<NuVsList {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

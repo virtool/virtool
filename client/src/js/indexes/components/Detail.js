@@ -4,11 +4,31 @@ import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
-import { getReference } from "../../references/actions";
 import { getIndex, getIndexHistory } from "../actions";
 import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound, TabLink, Tabs } from "../../base";
 import IndexChanges from "./Changes";
 import IndexGeneral from "./General";
+
+export const IndexDetailBreadCrumb = ({ refDetail, version }) => (
+    <Breadcrumb>
+        <Breadcrumb.Item>
+            <LinkContainer to="/refs/">
+                <span>References</span>
+            </LinkContainer>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+            <LinkContainer to={`/refs/${refDetail.id}`}>
+                <span>{refDetail.name}</span>
+            </LinkContainer>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+            <LinkContainer to={`/refs/${refDetail.id}/indexes`}>
+                <span>Indexes</span>
+            </LinkContainer>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active>Index {version}</Breadcrumb.Item>
+    </Breadcrumb>
+);
 
 export class IndexDetail extends React.Component {
     componentDidMount() {
@@ -27,29 +47,11 @@ export class IndexDetail extends React.Component {
 
         const indexId = this.props.detail.id;
         const { version, created_at, user } = this.props.detail;
-
-        const refId = this.props.match.params.refId;
+        const refId = this.props.refDetail.id;
 
         return (
             <div>
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <LinkContainer to="/refs/">
-                            <span>References</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <LinkContainer to={`/refs/${refId}`}>
-                            <span>{this.props.refDetail.name}</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <LinkContainer to={`/refs/${refId}/indexes`}>
-                            <span>Indexes</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item active>Index {version}</Breadcrumb.Item>
-                </Breadcrumb>
+                <IndexDetailBreadCrumb refDetail={this.props.refDetail} version={version} />
 
                 <ViewHeader title={`Index ${version} - Indexes - Virtool`}>
                     <strong>Index {version}</strong>
@@ -79,23 +81,19 @@ export class IndexDetail extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     error: get(state, "errors.GET_INDEX_ERROR", null),
     detail: state.indexes.detail,
     refDetail: state.references.detail
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onGetIndex: indexId => {
         dispatch(getIndex(indexId));
     },
 
     onGetChanges: (indexId, page) => {
         dispatch(getIndexHistory(indexId, page));
-    },
-
-    onGetReference: refId => {
-        dispatch(getReference(refId));
     }
 });
 

@@ -7,13 +7,13 @@
 import React from "react";
 import { push } from "connected-react-router";
 import { forEach, map, reduce, replace } from "lodash-es";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 
 import { ButtonGroup, Modal } from "react-bootstrap";
 
 import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { Button } from "../../../base/index";
+import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
 
 const getInitialState = () => ({
@@ -46,14 +46,6 @@ export class NuVsExport extends React.Component {
         super(props);
         this.state = getInitialState();
     }
-
-    static propTypes = {
-        show: PropTypes.bool,
-        sampleName: PropTypes.string,
-        analysisId: PropTypes.string,
-        results: PropTypes.array,
-        onHide: PropTypes.func
-    };
 
     handleModalExited = () => {
         this.setState(getInitialState());
@@ -159,6 +151,7 @@ export class NuVsExport extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    results: getResults(state),
     show: routerLocationHasState(state, "export"),
     sampleName: state.samples.detail.name,
     analysisId: state.analyses.detail.id

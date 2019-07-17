@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Contributor /> should render when count is 1 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  key="bob"
+  listItem={false}
+>
+  bob
+  <Badge
+    bsClass="badge"
+    pullRight={false}
+  >
+    1
+     change
+  </Badge>
+</ListGroupItem>
+`;
+
+exports[`<Contributor /> should render when count is 5 1`] = `
+<ListGroupItem
+  bsClass="list-group-item"
+  key="bob"
+  listItem={false}
+>
+  bob
+  <Badge
+    bsClass="badge"
+    pullRight={false}
+  >
+    5
+     change
+    s
+  </Badge>
+</ListGroupItem>
+`;
+
+exports[`<Contributors /> should render 1`] = `
+<Uncontrolled(Panel)>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    <PanelBadgeHeader
+      count={2}
+      title="Contributors"
+    />
+  </PanelHeading>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <Contributor
+      count={5}
+      id="bob"
+      key="bob"
+    />
+    <Contributor
+      count={12}
+      id="fred"
+      key="fred"
+    />
+  </ListGroup>
+</Uncontrolled(Panel)>
+`;

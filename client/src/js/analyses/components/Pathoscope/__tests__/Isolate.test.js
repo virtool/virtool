@@ -1,84 +1,45 @@
-import PathoscopeIsolate from "../Isolate";
-import Coverage from "../Coverage";
+import { PathoscopeIsolate, PathoscopeIsolateWeight } from "../Isolate";
 
 describe("<PathoscopeIsolate />", () => {
+    it("should render", () => {
+        const props = {
+            depth: 13,
+            maxDepth: 22,
+            name: "Isolate A",
+            sequences: [
+                { align: [1, 2, 3, 4, 5], length: 5, id: "foo", definition: "Foo Hit" },
+                { align: [1, 2, 3, 4, 5, 4, 2, 3], length: 8, id: "bar", definition: "Bar Hit" }
+            ],
+            reads: 102,
+            showReads: false,
+            onScroll: jest.fn()
+        };
+        const wrapper = shallow(<PathoscopeIsolate {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("<PathoscopeIsolateWeight />", () => {
     let props;
-    let wrapper;
-    let spy;
 
     beforeEach(() => {
-        props = {
-            otuId: "test-otu",
-            name: "test-pathoscope",
-            pi: 3,
-            coverage: 0,
-            maxDepth: 5,
-            depth: 2,
-            reads: 1,
-            sequences: [],
-            setScroll: sinon.spy(),
-            showReads: true
-        };
-        wrapper = mount(<PathoscopeIsolate {...props} />);
+        props = { pi: 0.321, reads: 121, showReads: false };
     });
 
-    it("renders correctly", () => {
-        expect(wrapper.children()).toMatchSnapshot();
-
-        props = {
-            ...props,
-            sequences: [
-                {
-                    align: [[0, 0]],
-                    length: 5,
-                    id: "123abc",
-                    definition: "test-definition"
-                }
-            ],
-            showReads: false
-        };
-        wrapper = mount(<PathoscopeIsolate {...props} />);
-        expect(wrapper.find(Coverage).length).toEqual(1);
+    it("should render weight", () => {
+        const wrapper = shallow(<PathoscopeIsolateWeight {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("Component unmount removes scroll event listener from chart element", () => {
-        spy = sinon.spy(
-            wrapper
-                .children()
-                .childAt(1)
-                .instance(),
-            "removeEventListener"
-        );
-
-        wrapper.unmount();
-        expect(spy.calledOnce).toBe(true);
-
-        spy.restore();
+    it("should render weight in scientific notation", () => {
+        props.pi = 0.000000321;
+        const wrapper = shallow(<PathoscopeIsolateWeight {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("scrollTo() sets this chart element scrollLeft property to a specified value", () => {
-        spy = sinon.spy(wrapper.instance(), "scrollTo");
-
-        const newScrollValue = 123;
-        const chartElement = wrapper
-            .children()
-            .childAt(1)
-            .instance();
-
-        expect(chartElement.scrollLeft).toEqual(0);
-
-        wrapper.instance().scrollTo(newScrollValue);
-        expect(chartElement.scrollLeft).toEqual(newScrollValue);
-
-        spy.restore();
-    });
-
-    it("Scroll event calls setScroll callback prop", () => {
-        spy = sinon.spy(wrapper.instance(), "handleScroll");
-
-        wrapper.instance().handleScroll({ target: { scrollLeft: 10 } });
-        expect(props.setScroll.calledWith(props.otuId, 10)).toBe(true);
-
-        spy.restore();
+    it("should render reads", () => {
+        props.showReads = true;
+        const wrapper = shallow(<PathoscopeIsolateWeight {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 });

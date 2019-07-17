@@ -1,74 +1,70 @@
-import React from "react";
+import { filter } from "lodash-es";
+import numbro from "numbro";
+import React, { useCallback } from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
-import PropTypes from "prop-types";
-import { Row, Col } from "react-bootstrap";
-import { SpacedBox } from "../../../base/index";
-import NuVsExpansion from "./Expansion";
+import { Badge } from "react-bootstrap";
+import { setActiveHitId } from "../../actions";
+import { ListGroupItem } from "../../../base";
+import { getActiveHit, getMatches } from "../../selectors";
 
-const StyledNuVsEntryValue = styled(Col)`
-    small {
-        margin-right: 3px;
-    }
+const calculateAnnotatedOrfCount = orfs => filter(orfs, orf => orf.hits.length).length;
+
+const NuVsORFCount = styled.span`
+    color: ${props => props.theme.color.green};
 `;
 
-const NuVsEntryValue = ({ label, value }) => (
-    <StyledNuVsEntryValue xs={4} md={3}>
-        <small className="text-muted text-strong">{label}</small>
-        <strong>{value}</strong>
-    </StyledNuVsEntryValue>
-);
+const NuVsEValue = styled.span`
+    color: ${props => props.theme.color.red};
+`;
 
-export default class NuVsItem extends React.Component {
-    static propTypes = {
-        analysisId: PropTypes.string,
-        blast: PropTypes.object,
-        in: PropTypes.bool,
-        index: PropTypes.number,
-        maxSequenceLength: PropTypes.number,
-        sequence: PropTypes.string,
-        orfs: PropTypes.array,
-        e: PropTypes.number,
-        toggleIn: PropTypes.func
-    };
+const NuVsItemNumbers = styled.div`
+    font-size: ${props => props.theme.fontSize.xs};
+    font-weight: bold;
+    padding-top: 3px;
+`;
 
-    shouldComponentUpdate(nextProps) {
-        return nextProps.in !== this.props.in;
+const NuVsItemHeader = styled.div`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+`;
+
+const StyledNuVsItem = styled(ListGroupItem)`
+    border-bottom: none;
+    ${props => (props.selected ? `box-shadow: inset 3px 0 0 ${props.theme.color.primary};` : "")}
+`;
+
+export const NuVsItem = ({ active, e, orfs, sequence, sequenceIndex, style, onSetActiveId }) => {
+    const handleClick = useCallback(() => onSetActiveId(sequenceIndex), [sequenceIndex]);
+
+    return (
+        <StyledNuVsItem onClick={handleClick} style={style} selected={active}>
+            <NuVsItemHeader>
+                <strong>Sequence {sequenceIndex}</strong>
+                <Badge>{sequence.length}</Badge>
+            </NuVsItemHeader>
+            <NuVsItemNumbers>
+                <NuVsORFCount>{calculateAnnotatedOrfCount(orfs)} ORFs</NuVsORFCount> /{" "}
+                <NuVsEValue>E = {numbro(e).format()}</NuVsEValue>
+            </NuVsItemNumbers>
+        </StyledNuVsItem>
+    );
+};
+
+const mapStateToProps = (state, ownProps) => {
+    const activeId = getActiveHit(state).index;
+    const { e, index, orfs, sequence } = getMatches(state)[ownProps.index];
+    return { e, orfs, sequence, sequenceIndex: index, active: activeId === index };
+};
+
+const mapDispatchToProps = dispatch => ({
+    onSetActiveId: index => {
+        dispatch(setActiveHitId(index));
     }
+});
 
-    handleClick = () => {
-        this.props.toggleIn(this.props.index);
-    };
-
-    render() {
-        let expansion;
-
-        if (this.props.in) {
-            const { analysisId, blast, index, maxSequenceLength, orfs, sequence } = this.props;
-
-            expansion = (
-                <NuVsExpansion
-                    index={index}
-                    analysisId={analysisId}
-                    blast={blast}
-                    maxSequenceLength={maxSequenceLength}
-                    orfs={orfs}
-                    sequence={sequence}
-                />
-            );
-        }
-
-        return (
-            <SpacedBox onClick={this.handleClick}>
-                <Row>
-                    <Col xs={12} md={3}>
-                        <strong>Sequence {this.props.index}</strong>
-                    </Col>
-                    <NuVsEntryValue label="LENGTH" value={this.props.sequence.length} />
-                    <NuVsEntryValue label="E-VALUE" value={this.props.e} />
-                    <NuVsEntryValue label="ORFS" value={this.props.orfs.length} />
-                </Row>
-                {expansion}
-            </SpacedBox>
-        );
-    }
-}
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(NuVsItem);
