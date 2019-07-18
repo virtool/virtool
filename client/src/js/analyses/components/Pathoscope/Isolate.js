@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import styled from "styled-components";
 import { map } from "lodash-es";
 import { toScientificNotation } from "../../../utils/utils";
@@ -31,39 +31,55 @@ export const PathoscopeIsolateWeight = ({ pi, reads, showReads }) => (
     <strong className="small text-success">{showReads ? reads : toScientificNotation(pi)}</strong>
 );
 
-export const PathoscopeIsolate = React.forwardRef((props, ref) => {
-    useEffect(() => {
-        ref.current.addEventListener("scroll", props.onScroll);
-        return () => ref.current.removeEventListener("scroll", props.onScroll);
-    });
+export class PathoscopeIsolate extends React.Component {
+    constructor(props) {
+        super(props);
+        this.containerRef = React.createRef();
+    }
 
-    const { maxDepth, pi, reads, sequences, showReads } = props;
+    componentDidMount() {
+        this.containerRef.current.addEventListener("scroll", this.props.onScroll);
+    }
 
-    const hitComponents = map(sequences, (hit, i) => (
-        <Coverage
-            key={i}
-            data={hit.align}
-            length={hit.length}
-            id={hit.id}
-            definition={hit.definition}
-            yMax={maxDepth}
-            showYAxis={i === 0}
-        />
-    ));
+    componentWillUnmount() {
+        this.containerRef.current.removeEventListener("scroll", this.props.onScroll);
+    }
 
-    return (
-        <div>
-            <PathoscopeIsolateHeader>
-                {props.name}
-                <PathoscopeIsolateWeight pi={pi} reads={reads} showReads={showReads} />
-                <strong className="small text-danger">{props.depth.toFixed(0)}</strong>
-                <strong className="small text-primary">{toScientificNotation(parseFloat(props.coverage))}</strong>
-            </PathoscopeIsolateHeader>
-            <PathoscopeChartContainer ref={ref}>
-                <PathoscopeChartRibbon>{hitComponents}</PathoscopeChartRibbon>
-            </PathoscopeChartContainer>
-        </div>
-    );
-});
+    setScroll = scrollLeft => {
+        this.containerRef.current.scrollLeft = scrollLeft;
+    };
+
+    render() {
+        const props = this.props;
+
+        const { maxDepth, pi, reads, sequences, showReads } = props;
+
+        const hitComponents = map(sequences, (hit, i) => (
+            <Coverage
+                key={i}
+                data={hit.align}
+                length={hit.length}
+                id={hit.id}
+                definition={hit.definition}
+                yMax={maxDepth}
+                showYAxis={i === 0}
+            />
+        ));
+
+        return (
+            <div>
+                <PathoscopeIsolateHeader>
+                    {props.name}
+                    <PathoscopeIsolateWeight pi={pi} reads={reads} showReads={showReads} />
+                    <strong className="small text-danger">{props.depth.toFixed(0)}</strong>
+                    <strong className="small text-primary">{toScientificNotation(parseFloat(props.coverage))}</strong>
+                </PathoscopeIsolateHeader>
+                <PathoscopeChartContainer ref={this.containerRef}>
+                    <PathoscopeChartRibbon>{hitComponents}</PathoscopeChartRibbon>
+                </PathoscopeChartContainer>
+            </div>
+        );
+    }
+}
 
 export default PathoscopeIsolate;
