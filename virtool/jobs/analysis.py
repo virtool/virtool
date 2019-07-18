@@ -194,6 +194,10 @@ class Job(virtool.jobs.job.Job):
 
             self.dispatch("caches", "update", [cache_id])
 
+            self.params["read_paths"] = cached_read_paths
+
+            return
+
         self.params["read_paths"] = paths
 
     def prepare_qc(self):
@@ -215,6 +219,8 @@ class Job(virtool.jobs.job.Job):
 
         cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
 
+        cache_paths = virtool.jobs.utils.join_read_paths(cache_path, self.params["paired"])
+
         fastqc_path = os.path.join(cache_path, "fastqc")
 
         os.makedirs(fastqc_path)
@@ -222,7 +228,7 @@ class Job(virtool.jobs.job.Job):
         virtool.jobs.fastqc.run_fastqc(
             self.run_subprocess,
             self.proc,
-            self.params["read_paths"],
+            cache_paths,
             fastqc_path
         )
 
