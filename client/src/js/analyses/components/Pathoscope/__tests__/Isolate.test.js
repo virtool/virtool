@@ -14,7 +14,7 @@ describe("<PathoscopeIsolate />", () => {
             showReads: false,
             onScroll: jest.fn()
         };
-        const wrapper = shallow(<PathoscopeIsolate {...props} />);
+        const wrapper = mount(<PathoscopeIsolate {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

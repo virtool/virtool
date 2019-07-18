@@ -11,7 +11,7 @@ export class PathoscopeExpansion extends React.Component {
 
     handleScroll = e => {
         forEach(this.hitRefs, ref => {
-            ref.current.scrollLeft = e.target.scrollLeft;
+            ref.current.setScroll(e.target.scrollLeft);
         });
     };
 
