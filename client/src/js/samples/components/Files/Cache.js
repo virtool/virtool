@@ -16,7 +16,9 @@ export const SampleFilesCache = ({ caches }) => {
 
     return (
         <Panel>
-            <Panel.Heading>Cached Trims</Panel.Heading>
+            <Panel.Heading>
+                <strong>Cached Trims</strong>
+            </Panel.Heading>
             <ListGroup>{fileComponents}</ListGroup>
         </Panel>
     );
