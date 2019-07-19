@@ -61,6 +61,7 @@ const createChart = (element, data, width) => {
 
 export default class OTUCoverage extends React.Component {
     static propTypes = {
+        id: PropTypes.string,
         merged: PropTypes.array
     };
 
@@ -69,8 +70,12 @@ export default class OTUCoverage extends React.Component {
         this.renderChart();
     }
 
-    shouldComponentUpdate() {
-        return false;
+    shouldComponentUpdate(nextProps) {
+        return this.props.id !== nextProps.id;
+    }
+
+    componentDidUpdate() {
+        this.renderChart();
     }
 
     componentWillUnmount() {
