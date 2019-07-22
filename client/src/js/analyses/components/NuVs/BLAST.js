@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Moment from "moment";
 import numbro from "numbro";
 import { map } from "lodash-es";
@@ -101,11 +101,13 @@ export const BLASTResults = ({ hits }) => {
     );
 };
 
-export const NuVsBLAST = props => {
-    if (props.blast) {
-        if (props.blast.ready) {
-            if (props.blast.result.hits.length) {
-                return <BLASTResults hits={props.blast.result.hits} />;
+export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
+    const handleBlast = useCallback(() => onBlast(analysisId, sequenceIndex), [analysisId, sequenceIndex]);
+
+    if (blast) {
+        if (blast.ready) {
+            if (blast.result.hits.length) {
+                return <BLASTResults hits={blast.result.hits} />;
             }
 
             return (
@@ -116,13 +118,7 @@ export const NuVsBLAST = props => {
             );
         }
 
-        return (
-            <BLASTInProgress
-                interval={props.blast.interval}
-                lastCheckedAt={props.blast.last_checked_at}
-                rid={props.blast.rid}
-            />
-        );
+        return <BLASTInProgress interval={blast.interval} lastCheckedAt={blast.last_checked_at} rid={blast.rid} />;
     }
 
     return (
@@ -135,11 +131,7 @@ export const NuVsBLAST = props => {
                     This sequence has no BLAST information attached to it.
                 </FlexItem>
                 <FlexItem pad={10}>
-                    <Button
-                        bsSize="small"
-                        icon="cloud"
-                        onClick={() => props.onBlast(props.analysisId, props.sequenceIndex)}
-                    >
+                    <Button bsSize="small" icon="cloud" onClick={handleBlast}>
                         BLAST at NCBI
                     </Button>
                 </FlexItem>
