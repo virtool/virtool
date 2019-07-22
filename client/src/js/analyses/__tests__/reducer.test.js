@@ -179,7 +179,10 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual({
             activeId: null,
             detail: null,
-            data: null
+            data: null,
+            filterIds: null,
+            searchIds: null,
+            sortKey: "length"
         });
     });
 
@@ -212,6 +215,7 @@ describe("Analyses Reducer", () => {
                 foo: "bar"
             },
             expanded: [],
+            filterIds: null,
             searchIds: null,
             sortKey: "length"
         });
@@ -238,6 +242,7 @@ describe("Analyses Reducer", () => {
                 foo: "bar"
             },
             expanded: [],
+            filterIds: null,
             searchIds: null,
             sortKey: "length"
         });
@@ -264,6 +269,7 @@ describe("Analyses Reducer", () => {
                 foo: "bar"
             },
             expanded: [],
+            filterIds: null,
             searchIds: null,
             sortKey: "length"
         });
@@ -290,6 +296,7 @@ describe("Analyses Reducer", () => {
                 foo: "bar"
             },
             expanded: [],
+            filterIds: null,
             searchIds: null,
             sortKey: "length"
         });

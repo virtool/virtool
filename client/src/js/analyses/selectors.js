@@ -1,10 +1,10 @@
 import Fuse from "fuse.js";
-import { find, intersection, map, reject, sortBy, toNumber } from "lodash-es";
+import { get, find, intersection, map, reject, sortBy, toNumber } from "lodash-es";
 import { createSelector } from "reselect";
 
 export const getActiveId = state => state.analyses.activeId;
 
-export const getAnalysisDetailId = state => state.analyses.detail.id;
+export const getAnalysisDetailId = state => get(state, "analyses.detail.id", null);
 
 export const getResults = state => state.analyses.detail.results;
 
