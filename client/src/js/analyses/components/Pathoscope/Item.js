@@ -72,7 +72,7 @@ export const PathoscopeItem = props => {
                     <AnalysisValue color="blue" label="Coverage" value={coverage.toFixed(3)} />
                 </PathoscopeItemHeaderValues>
             </PathoscopeItemHeader>
-            <OTUCoverage merged={merged} />
+            <OTUCoverage id={props.id} merged={merged} />
             {expansion}
         </SpacedBox>
     );
