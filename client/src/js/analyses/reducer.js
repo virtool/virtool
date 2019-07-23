@@ -1,4 +1,4 @@
-import { map, xor } from "lodash-es";
+import { get, map, xor } from "lodash-es";
 import {
     WS_INSERT_ANALYSIS,
     WS_UPDATE_ANALYSIS,
@@ -82,6 +82,23 @@ export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     return state;
 };
 
+export const updateIdLists = (state, action) => {
+    const analysisDetailId = get(state, "detail.id", null);
+
+    if (analysisDetailId === action.data.id) {
+        return state;
+    }
+
+    return {
+        ...state,
+        activeId: null,
+        expanded: [],
+        filterIds: null,
+        searchIds: null,
+        sortKey: "length"
+    };
+};
+
 export default function analysesReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_ANALYSIS:
@@ -134,22 +151,28 @@ export default function analysesReducer(state = initialState, action) {
             return updateDocuments(state, action, "created_at", true);
 
         case GET_ANALYSIS.REQUESTED:
-            return {
-                ...state,
-                activeId: null,
-                data: null,
-                detail: null
-            };
+            if (get(state, "detail.id", null) !== action.analysisId) {
+                return {
+                    ...state,
+                    activeId: null,
+                    data: null,
+                    detail: null,
+                    filterIds: null,
+                    searchIds: null,
+                    sortKey: "length"
+                };
+            }
+
+            return state;
 
         case GET_ANALYSIS.SUCCEEDED: {
-            return {
-                ...state,
-                activeId: null,
-                detail: formatData(action.data),
-                expanded: [],
-                searchIds: null,
-                sortKey: "length"
-            };
+            return updateIdLists(
+                {
+                    ...state,
+                    detail: formatData(action.data)
+                },
+                action
+            );
         }
 
         case CLEAR_ANALYSIS:

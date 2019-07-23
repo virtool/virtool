@@ -1,8 +1,8 @@
-import { filter } from "lodash-es";
-import numbro from "numbro";
 import React, { useCallback } from "react";
-import { connect } from "react-redux";
+import numbro from "numbro";
 import styled from "styled-components";
+import { filter } from "lodash-es";
+import { connect } from "react-redux";
 import { Badge } from "react-bootstrap";
 import { setActiveHitId } from "../../actions";
 import { ListGroupItem } from "../../../base";

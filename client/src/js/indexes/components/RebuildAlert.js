@@ -8,7 +8,15 @@ import { Button, Flex, FlexItem, Icon } from "../../base";
 import RebuildIndex from "./Rebuild";
 
 const RebuildAlert = ({ canBuild, modifiedCount, totalCount }) => {
-    if (totalCount && modifiedCount) {
+    if (totalCount === 0) {
+        return (
+            <Alert bsStyle="warning" icon="exclamation-circle">
+                At least one OTU must be added to the database before an index can be built.
+            </Alert>
+        );
+    }
+
+    if (modifiedCount) {
         const button = canBuild ? (
             <FlexItem pad={20}>
                 <LinkContainer to={{ state: { rebuild: true } }}>
@@ -38,11 +46,8 @@ const RebuildAlert = ({ canBuild, modifiedCount, totalCount }) => {
             </Alert>
         );
     }
-    return (
-        <Alert bsStyle="warning" icon="exclamation-circle">
-            At least one OTU must be added to the database before an index can be built.
-        </Alert>
-    );
+
+    return null;
 };
 
 const mapStateToProps = state => ({
