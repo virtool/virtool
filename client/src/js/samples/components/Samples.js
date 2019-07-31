@@ -1,11 +1,9 @@
 import React from "react";
 import { Switch, Route } from "react-router-dom";
-import { connect } from "react-redux";
 
 import FileManager from "../../files/components/Manager";
 import UniqueNames from "../../administration/components/UniqueNames";
 import SampleRights from "../../administration/components/SampleRights";
-import { LoadingPlaceholder } from "../../base";
 import SampleDetail from "./Detail";
 import SamplesList from "./List";
 
@@ -21,25 +19,15 @@ export const SampleSettings = () => (
     </div>
 );
 
-const Samples = props => {
-    if (props.settings === null) {
-        return <LoadingPlaceholder />;
-    }
+const Samples = () => (
+    <div className="container">
+        <Switch>
+            <Route path="/samples" component={SamplesList} exact />
+            <Route path="/samples/files" component={SampleFileManager} exact />
+            <Route path="/samples/settings" component={SampleSettings} />
+            <Route path="/samples/:sampleId" component={SampleDetail} />
+        </Switch>
+    </div>
+);
 
-    return (
-        <div className="container">
-            <Switch>
-                <Route path="/samples" component={SamplesList} exact />
-                <Route path="/samples/files" component={SampleFileManager} exact />
-                <Route path="/samples/settings" component={SampleSettings} />
-                <Route path="/samples/:sampleId" component={SampleDetail} />
-            </Switch>
-        </div>
-    );
-};
-
-const mapStateToProps = state => ({
-    settings: state.settings.data
-});
-
-export default connect(mapStateToProps)(Samples);
+export default Samples;

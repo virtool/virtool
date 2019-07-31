@@ -18,7 +18,7 @@ export class Analyses extends React.Component {
 
     render() {
         if (this.props.loading) {
-            return <LoadingPlaceholder margin="130px" />;
+            return <LoadingPlaceholder margin="150px" />;
         }
 
         return (

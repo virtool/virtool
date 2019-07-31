@@ -14,7 +14,6 @@ import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { Loader } from "./Loader";
-import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
 import { Panel } from "./Panel";
@@ -30,6 +29,7 @@ import { ViewHeader } from "./ViewHeader";
 
 export * from "./Box";
 export * from "./LoadingPlaceholder";
+export * from "./Logo";
 export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
@@ -65,6 +65,5 @@ export {
     ScrollList,
     Tooltip,
     UploadBar,
-    ViewHeader,
-    VTLogo
+    ViewHeader
 };
