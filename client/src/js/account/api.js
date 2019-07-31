@@ -96,6 +96,9 @@ export const updateAPIKey = ({ keyId, permissions }) =>
  */
 export const removeAPIKey = ({ keyId }) => Request.delete(`/api/account/keys/${keyId}`);
 
+export const login = ({ username, password, remember, key }) =>
+    Request.post("/api/account/login").send({ username, password, remember, key });
+
 /**
  * Logs out the current session.
  *

@@ -77,12 +77,11 @@ async def create(req):
     """
     db = req.app["db"]
     data = await req.json()
-    settings = req.app["settings"]
 
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    if len(data["password"]) < settings["minimum_password_length"]:
+    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
         return bad_request("Password does not meet length requirement")
 
     user_id = data["user_id"]
@@ -92,12 +91,62 @@ async def create(req):
     except virtool.errors.DatabaseError:
         return bad_request("User already exists")
 
+
+
+    return json_response(
+        virtool.utils.base_processor({key: document[key] for key in virtool.db.users.PROJECTION}),
+        headers=headers,
+        status=201
+    )
+
+
+@routes.put("/api/users/first", schema={
+    "user_id": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "password": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    }
+})
+async def create_first(req):
+    """
+    Add a first user to the user database.
+
+    """
+
+    db = req.app["db"]
+    data = await req.json()
+
+    if await db.users.count():
+        return bad_request("A user already exists")
+
+    if data["user_id"] == "virtool":
+        return bad_request("Reserved user name: virtool")
+
+    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
+        return bad_request("Password does not meet length requirement")
+
+    user_id = data["user_id"]
+
+    await virtool.db.users.create(db, user_id, data["password"], force_reset=False)
+
+    document = await virtool.db.users.edit(
+        db,
+        user_id,
+        administrator=True
+    )
+
     headers = {
         "Location": f"/api/users/{user_id}"
     }
 
     return json_response(
-        virtool.utils.base_processor({key: document[key] for key in virtool.db.users.PROJECTION}),
+        virtool.utils.base_processor(document),
         headers=headers,
         status=201
     )

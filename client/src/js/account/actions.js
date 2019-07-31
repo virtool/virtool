@@ -13,6 +13,7 @@ import {
     CREATE_API_KEY,
     UPDATE_API_KEY,
     REMOVE_API_KEY,
+    LOGIN,
     LOGOUT,
     CLEAR_API_KEY
 } from "../app/actionTypes";
@@ -117,6 +118,20 @@ export const updateAPIKey = (keyId, permissions) => ({
 export const removeAPIKey = keyId => ({
     type: REMOVE_API_KEY.REQUESTED,
     keyId
+});
+
+/**
+ * Returns action that can trigger an API call that will login into a new session.
+ *
+ * @func
+ * @returns {object}
+ */
+export const login = (username, password, remember, key) => ({
+    type: LOGIN.REQUESTED,
+    username,
+    password,
+    remember,
+    key
 });
 
 /**

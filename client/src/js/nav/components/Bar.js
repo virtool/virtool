@@ -1,14 +1,22 @@
 import React from "react";
-import { MenuItem, Nav, Navbar, NavDropdown, NavItem } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
+import { MenuItem, Nav, Navbar, NavDropdown, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
-import { withRouter } from "react-router-dom";
 
 import { logout } from "../../account/actions";
 import { AutoProgressBar, Icon, VTLogo } from "../../base";
-import { getSoftwareUpdates } from "../../updates/actions";
 import { isHomeActive } from "../utils";
+import { getSoftwareUpdates } from "../../updates/actions";
 import Update from "./Update";
+
+const BarLogo = styled(VTLogo)`
+    margin: -5px 30px 0;
+
+    svg {
+        margin-left: 3px;
+    }
+`;
 
 class Bar extends React.Component {
     componentDidMount() {
@@ -27,7 +35,7 @@ class Bar extends React.Component {
                 <Navbar fixedTop>
                     <Navbar.Header>
                         <Navbar.Brand>
-                            <VTLogo />
+                            <BarLogo />
                         </Navbar.Brand>
 
                         <Navbar.Toggle />
@@ -118,9 +126,7 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps
-    )(Bar)
-);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Bar);

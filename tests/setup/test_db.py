@@ -22,11 +22,11 @@ async def test_add_first_user(dbi, static_time):
         "permissions": {p: True for p in virtool.users.PERMISSIONS},
         "password": "hashed",
         "primary_group": "",
-        # Should the user be forced to reset their password on their next login?
+        # Should the user be forced to reset their password on their next wall?
         "force_reset": False,
         # A timestamp taken at the last password change.
         "last_password_change": static_time.datetime,
-        # Should all of the user's sessions be invalidated so that they are forced to login next time they
+        # Should all of the user's sessions be invalidated so that they are forced to wall next time they
         # download the client.
         "invalidate_sessions": False
     }

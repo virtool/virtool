@@ -1,7 +1,9 @@
 import virtool.analyses
 import virtool.db.account
+import virtool.db.sessions
 import virtool.db.users
 import virtool.db.utils
+import virtool.http.auth
 import virtool.http.routes
 import virtool.users
 import virtool.utils
@@ -304,7 +306,51 @@ async def remove_all_api_keys(req):
     return no_content()
 
 
-@routes.get("/api/account/logout")
+@routes.post("/api/account/login", public=True)
+async def login(req):
+    db = req.app["db"]
+    data = await req.json()
+    client = req["client"]
+
+    user_id = data.get("username", "")
+    password = data.get("password", "")
+    key = data.get("key", "")
+
+    # When this value is set, the session will last for 1 month instead of the 1 hour default.
+    remember = data.get("remember", False)
+
+    # Check that the hidden verification key matches the one attached to the logging-in session.
+    if not await virtool.db.sessions.check_verification_key(db, client.session_id, key):
+        return bad_request("Invalid login verification key")
+
+    # Re-render the login page with an error message if the username and/or password are invalid.
+    if not await virtool.db.users.validate_credentials(db, user_id, password):
+        return bad_request("Invalid username or password")
+
+    # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
+    # reset code is generated and added to the query string.
+    if await virtool.db.utils.get_one_field(db.users, "force_reset", user_id):
+        return json_response({"reset": True}, status=201)
+
+    old_session_id = req.cookies.get("session_id")
+
+    session, token = await virtool.db.sessions.replace_session(
+        db,
+        old_session_id,
+        virtool.http.auth.get_ip(req),
+        user_id,
+        remember
+    )
+
+    resp = json_response({"reset": False}, status=201)
+
+    resp.set_cookie("session_id", session["_id"])
+    resp.set_cookie("session_token", token)
+
+    return resp
+
+
+@routes.get("/api/account/logout", public=True)
 async def logout(req):
     """
     Invalidates the requesting session, effectively logging out the user.
@@ -312,9 +358,23 @@ async def logout(req):
     """
     db = req.app["db"]
 
-    session_id = req["client"].session_id
+    old_session_id = req.cookies.get("session_id")
 
-    if session_id:
-        await db.sessions.delete_one({"_id": session_id})
+    session, _ = await virtool.db.sessions.replace_session(
+        db,
+        old_session_id,
+        virtool.http.auth.get_ip(req)
+    )
 
-    return no_content()
+    new_session_id = session["_id"]
+
+    verification_key = await virtool.db.sessions.get_verification_key(db, new_session_id)
+
+    resp = json_response({
+        "login_verification_key": verification_key
+    }, status=200)
+
+    resp.set_cookie("session_id", session["_id"])
+    resp.del_cookie("session_token")
+
+    return resp

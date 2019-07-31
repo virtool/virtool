@@ -1,0 +1,145 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Login /> should render 1`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <Input
+        autoComplete={true}
+        autofocus={true}
+        formGroupStyle={Object {}}
+        label="Username"
+        name="username"
+        onChange={[Function]}
+        type="text"
+        value=""
+      />
+      <Input
+        autoComplete={true}
+        formGroupStyle={Object {}}
+        label="Password"
+        name="password"
+        onChange={[Function]}
+        type="password"
+        value=""
+      />
+      <Checkbox
+        checked={false}
+        label="Remember Me"
+        onClick={[Function]}
+        partial={false}
+        pullRight={false}
+      />
+      <Button
+        bsStyle="primary"
+        pullRight={true}
+        tipPlacement="top"
+        type="submit"
+      >
+        Login
+      </Button>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;
+
+exports[`<Login /> should render checked remember checkbox 1`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <Input
+        autoComplete={true}
+        autofocus={true}
+        formGroupStyle={Object {}}
+        label="Username"
+        name="username"
+        onChange={[Function]}
+        type="text"
+        value=""
+      />
+      <Input
+        autoComplete={true}
+        formGroupStyle={Object {}}
+        label="Password"
+        name="password"
+        onChange={[Function]}
+        type="password"
+        value=""
+      />
+      <Checkbox
+        checked={true}
+        label="Remember Me"
+        onClick={[Function]}
+        partial={false}
+        pullRight={false}
+      />
+      <Button
+        bsStyle="primary"
+        pullRight={true}
+        tipPlacement="top"
+        type="submit"
+      >
+        Login
+      </Button>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;
+
+exports[`<Login /> should render filled username and password fields 1`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <Input
+        autoComplete={true}
+        autofocus={true}
+        formGroupStyle={Object {}}
+        label="Username"
+        name="username"
+        onChange={[Function]}
+        type="text"
+        value="bob"
+      />
+      <Input
+        autoComplete={true}
+        formGroupStyle={Object {}}
+        label="Password"
+        name="password"
+        onChange={[Function]}
+        type="password"
+        value="hello world"
+      />
+      <Checkbox
+        checked={false}
+        label="Remember Me"
+        onClick={[Function]}
+        partial={false}
+        pullRight={false}
+      />
+      <Button
+        bsStyle="primary"
+        pullRight={true}
+        tipPlacement="top"
+        type="submit"
+      >
+        Login
+      </Button>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;

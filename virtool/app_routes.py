@@ -24,7 +24,6 @@ import virtool.api.users
 import virtool.api.websocket
 import virtool.http.auth
 import virtool.utils
-import virtool.http.auth
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +46,6 @@ def setup_routes(app):
         app.router.add_get(path, virtool.http.auth.index_handler)
 
     app.router.add_get("/ws", virtool.api.websocket.root)
-    app.router.add_get("/login", virtool.http.auth.login_get_handler)
-    app.router.add_post("/login", virtool.http.auth.login_post_handler)
-    app.router.add_get("/reset", virtool.http.auth.reset_get_handler)
-    app.router.add_post("/reset", virtool.http.auth.reset_post_handler)
 
     app.router.add_routes(virtool.api.account.routes)
     app.router.add_routes(virtool.api.analyses.routes)

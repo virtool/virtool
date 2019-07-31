@@ -9,7 +9,8 @@ import {
     CREATE_API_KEY,
     UPDATE_API_KEY,
     REMOVE_API_KEY,
-    LOGOUT
+    LOGOUT,
+    LOGIN
 } from "../app/actionTypes";
 import * as accountAPI from "./api";
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
@@ -24,6 +25,7 @@ export function* watchAccount() {
     yield takeEvery(CREATE_API_KEY.REQUESTED, createAPIKey);
     yield takeEvery(UPDATE_API_KEY.REQUESTED, updateAPIKey);
     yield takeEvery(REMOVE_API_KEY.REQUESTED, removeAPIKey);
+    yield takeLatest(LOGIN.REQUESTED, login);
     yield takeEvery(LOGOUT.REQUESTED, logout);
 }
 
@@ -67,7 +69,10 @@ export function* removeAPIKey(action) {
     yield put({ type: GET_API_KEYS.REQUESTED });
 }
 
+export function* login(action) {
+    yield apiCall(accountAPI.login, action, LOGIN);
+}
+
 export function* logout() {
-    yield accountAPI.logout();
-    window.location = "/login";
+    yield apiCall(accountAPI.logout, {}, LOGOUT);
 }
