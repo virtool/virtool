@@ -314,14 +314,9 @@ async def login(req):
 
     user_id = data.get("username", "")
     password = data.get("password", "")
-    key = data.get("key", "")
 
     # When this value is set, the session will last for 1 month instead of the 1 hour default.
     remember = data.get("remember", False)
-
-    # Check that the hidden verification key matches the one attached to the logging-in session.
-    if not await virtool.db.sessions.check_verification_key(db, client.session_id, key):
-        return bad_request("Invalid login verification key")
 
     # Re-render the login page with an error message if the username and/or password are invalid.
     if not await virtool.db.users.validate_credentials(db, user_id, password):
@@ -370,9 +365,7 @@ async def logout(req):
 
     verification_key = await virtool.db.sessions.get_verification_key(db, new_session_id)
 
-    resp = json_response({
-        "login_verification_key": verification_key
-    }, status=200)
+    resp = aiohttp.web.Response(status=200)
 
     resp.set_cookie("session_id", session["_id"])
     resp.del_cookie("session_token")

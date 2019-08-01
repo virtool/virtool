@@ -22,14 +22,14 @@ import { LOGIN, LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes
 import rootSaga from "./sagas";
 
 const getInitialState = () => {
-    const { dev, first, initial, key, login } = window.virtool;
+    const { dev, first, initial, login } = window.virtool;
 
     return {
         dev,
         first,
         initial,
         login,
-        loginKey: key,
+        reset: false,
         pending: false
     };
 };
@@ -57,8 +57,7 @@ const appReducer = (state = getInitialState(), action) => {
         case LOGOUT.SUCCEEDED:
             return {
                 ...state,
-                login: true,
-                loginKey: action.data.login_verification_key
+                login: true
             };
     }
 

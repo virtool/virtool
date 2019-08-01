@@ -6,7 +6,6 @@ describe("<Login />", () => {
 
     beforeEach(() => {
         props = {
-            loginKey: "f1o2o3b4a5r6",
             onLogin: jest.fn()
         };
     });
@@ -93,7 +92,7 @@ describe("<Login />", () => {
             preventDefault: jest.fn()
         };
         form.simulate("submit", e);
-        expect(props.onLogin).toHaveBeenCalledWith("bob", "foobar", true, props.loginKey);
+        expect(props.onLogin).toHaveBeenCalledWith("bob", "foobar", true);
         expect(e.preventDefault).toHaveBeenCalled();
     });
 });
@@ -101,14 +100,10 @@ describe("<Login />", () => {
 describe("mapStateToProps()", () => {
     it("should return props given state", () => {
         const state = {
-            app: {
-                loginKey: "foobar"
-            }
+            app: {}
         };
         const result = mapStateToProps(state);
-        expect(result).toEqual({
-            loginKey: "foobar"
-        });
+        expect(result).toEqual({});
     });
 });
 

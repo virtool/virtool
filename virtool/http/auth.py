@@ -1,5 +1,6 @@
 import base64
 import os
+import secrets
 import sys
 import urllib.parse
 from typing import Tuple
@@ -196,11 +197,6 @@ async def index_handler(req: web.Request) -> web.Response:
 
     requires_reset = not requires_login and req["client"].force_reset
 
-    verification_key = None
-
-    if requires_login:
-        verification_key = await virtool.db.sessions.get_verification_key(req.app["db"], req["client"].session_id)
-
     path = os.path.join(req.app["client_path"], "index.html")
 
     html = mako.template.Template(filename=path).render()
@@ -211,7 +207,7 @@ async def index_handler(req: web.Request) -> web.Response:
 
     html = html.replace('"FIRST"', "true" if requires_first_user else "false")
 
-    html = html.replace('"KEY"', f'"{verification_key}"' if verification_key else "null")
+    html = html.replace('"LOGIN"', "true" if requires_login else "false")
 
     html = html.replace("NONCE", req["nonce"])
 
@@ -248,23 +244,11 @@ async def reset_get_handler(req: web.Request) -> web.Response:
 
     static_hash = virtool.utils.get_static_hash(req)
 
-    verification_key = req.get(
-        "verification_key",
-        await virtool.db.sessions.get_verification_key(db, session_id, mode="reset")
-    )
-
     # Get any errors to render on the reset form. These are recorded from a previous failed reset request.
     errors = await virtool.db.utils.get_one_field(db.sessions, "reset_errors", session_id)
 
     # Clear the reset errors for the next reset `POST` request.
     await virtool.db.sessions.set_reset_errors(db, session_id)
-
-    html = virtool.http.auth.get_reset_template().render(
-        errors=errors,
-        hash=static_hash,
-        return_to=return_to,
-        verification_key=verification_key
-    )
 
     return web.Response(body=html, content_type="text/html")
 
@@ -285,12 +269,6 @@ async def reset_post_handler(req: web.Request) -> web.Response:
 
     password = form_data.get("password", "")
     confirm = form_data.get("confirm", "")
-    verification_key = form_data.get("verification", None)
-
-    # Check that the hidden verification key matches the one attached to the logging-in session. Redirect to `return_to`
-    # URL if verification fails (this will end up on login page with correct query parameter.
-    if not await virtool.db.sessions.check_verification_key(db, client.session_id, verification_key, mode="reset"):
-        return web.Response(status=302, headers={"Location": return_to})
 
     user_id = await virtool.db.utils.get_one_field(db.sessions, "reset_user_id", client.session_id)
 

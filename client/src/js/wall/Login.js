@@ -54,7 +54,7 @@ export class Login extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
         const { username, password, remember } = this.state;
-        this.props.onLogin(username, password, remember, this.props.loginKey);
+        this.props.onLogin(username, password, remember);
     };
 
     handleRemember = () => {
@@ -100,8 +100,7 @@ export class Login extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    error: get(state, "errors.LOGIN_ERROR.message"),
-    loginKey: state.app.loginKey
+    error: get(state, "errors.LOGIN_ERROR.message")
 });
 
 export const mapDispatchToProps = dispatch => ({

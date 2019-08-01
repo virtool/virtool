@@ -126,12 +126,11 @@ export const removeAPIKey = keyId => ({
  * @func
  * @returns {object}
  */
-export const login = (username, password, remember, key) => ({
+export const login = (username, password, remember) => ({
     type: LOGIN.REQUESTED,
     username,
     password,
-    remember,
-    key
+    remember
 });
 
 /**
