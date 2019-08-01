@@ -91,7 +91,9 @@ async def create(req):
     except virtool.errors.DatabaseError:
         return bad_request("User already exists")
 
-
+    headers = {
+        "Location": f"/api/users/{user_id}"
+    }
 
     return json_response(
         virtool.utils.base_processor({key: document[key] for key in virtool.db.users.PROJECTION}),
