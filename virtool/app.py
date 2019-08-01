@@ -161,8 +161,11 @@ async def init_settings(app):
 
 
 async def init_sentry(app):
-    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True):
+    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
+        logger.info("Configured Sentry")
         app["sentry"] = virtool.sentry.setup(app["version"])
+
+    logger.info("Skipped configuring Sentry")
 
 
 async def init_dispatcher(app):
