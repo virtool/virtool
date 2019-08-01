@@ -47,6 +47,8 @@ module.exports = {
     ]
   },
 
+  devtool: "source-map",
+
   node: {
     fs: "empty"
   },
