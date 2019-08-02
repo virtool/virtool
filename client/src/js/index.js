@@ -5,7 +5,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./app/App";
 import { createAppStore } from "./app/reducer";
-import WSConnection from "./app/websocket";
 
 export * from "../style/style.less";
 
@@ -21,8 +20,5 @@ if (!window.virtool.dev) {
 const history = createBrowserHistory();
 
 window.store = createAppStore(history);
-window.ws = new WSConnection(window.store);
-window.ws.establishConnection();
-
 
 ReactDOM.render(<App store={window.store} history={history} />, document.getElementById("app-container"));

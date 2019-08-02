@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { get, keys } from "lodash-es";
+import { keys } from "lodash-es";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
@@ -12,6 +12,7 @@ import UploadOverlay from "../files/components/UploadOverlay";
 import { getSettings } from "../administration/actions";
 import { listProcesses } from "../processes/actions";
 import { LoadingPlaceholder } from "../base";
+import WSConnection from "./websocket";
 
 const Administration = lazy(() => import("../administration/components/Settings"));
 const Account = lazy(() => import("../account/components/Account"));
@@ -28,8 +29,16 @@ const Fallback = () => (
     </div>
 );
 
+const setupWebSocket = () => {
+    if (!window.ws) {
+        window.ws = new WSConnection(window.store);
+        window.ws.establishConnection();
+    }
+};
+
 export const Main = ({ ready, onLoad }) => {
     useEffect(() => onLoad(), [ready]);
+    useEffect(() => setupWebSocket(), [ready]);
 
     if (ready) {
         return (
