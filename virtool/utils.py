@@ -1,6 +1,7 @@
 import datetime
 import gzip
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -10,6 +11,8 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 
 import arrow
+
+RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
 
 def base_processor(document):
@@ -143,9 +146,11 @@ def get_static_hash(req):
     try:
         client_path = req.app["client_path"]
 
-        for file_name in os.listdir(client_path):
-            if "style." in file_name:
-                return file_name.split(".")[1]
+        for filename in os.listdir(client_path):
+            match = RE_STATIC_HASH.match(filename)
+
+            if match:
+                return match.group(1)
 
     except (KeyError, FileNotFoundError):
         pass
