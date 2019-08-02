@@ -22,7 +22,7 @@ import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSE
 import rootSaga from "./sagas";
 
 const getInitialState = () => {
-    const { dev, first, initial, login } = window.virtool;
+    const { dev, first, login } = window.virtool;
 
     return {
         dev,
