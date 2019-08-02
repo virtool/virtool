@@ -12,7 +12,8 @@ import {
     GET_USER,
     CREATE_USER,
     EDIT_USER,
-    REMOVE_USER
+    REMOVE_USER,
+    CREATE_FIRST_USER
 } from "../app/actionTypes";
 
 export const wsInsertUser = data => ({
@@ -57,6 +58,12 @@ export const getUser = userId => ({
 export const createUser = data => ({
     type: CREATE_USER.REQUESTED,
     ...data
+});
+
+export const createFirstUser = (userId, password) => ({
+    type: CREATE_FIRST_USER.REQUESTED,
+    userId,
+    password
 });
 
 /**

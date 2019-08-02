@@ -1,8 +1,10 @@
 import virtool.db.hmm
+import virtool.db.sessions
 import virtool.db.users
 import virtool.db.utils
 import virtool.errors
 import virtool.groups
+import virtool.http.auth
 import virtool.http.routes
 import virtool.users
 import virtool.utils
@@ -102,7 +104,7 @@ async def create(req):
     )
 
 
-@routes.put("/api/users/first", schema={
+@routes.put("/api/users/first", public=True, schema={
     "user_id": {
         "type": "string",
         "coerce": virtool.validators.strip,
@@ -120,12 +122,11 @@ async def create_first(req):
     Add a first user to the user database.
 
     """
-
     db = req.app["db"]
     data = await req.json()
 
     if await db.users.count():
-        return bad_request("A user already exists")
+        return conflict("Virtool already has at least one user")
 
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
@@ -135,7 +136,12 @@ async def create_first(req):
 
     user_id = data["user_id"]
 
-    await virtool.db.users.create(db, user_id, data["password"], force_reset=False)
+    await virtool.db.users.create(
+        db,
+        user_id,
+        data["password"],
+        force_reset=False
+    )
 
     document = await virtool.db.users.edit(
         db,
@@ -147,11 +153,24 @@ async def create_first(req):
         "Location": f"/api/users/{user_id}"
     }
 
-    return json_response(
-        virtool.utils.base_processor(document),
+    session, token = await virtool.db.sessions.create_session(
+        db,
+        virtool.http.auth.get_ip(req),
+        user_id
+    )
+
+    req["client"].authorize(session, is_api=False)
+
+    resp = json_response(
+        virtool.utils.base_processor({key: document[key] for key in virtool.db.users.PROJECTION}),
         headers=headers,
         status=201
     )
+
+    resp.set_cookie("session_id", session["_id"])
+    resp.set_cookie("session_token", token)
+
+    return resp
 
 
 @routes.patch("/api/users/{user_id}", admin=True, schema={

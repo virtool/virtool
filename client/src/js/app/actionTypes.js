@@ -218,6 +218,7 @@ export const WS_REMOVE_USER = "WS_REMOVE_USER";
 export const FIND_USERS = createRequestActionType("FIND_USERS");
 export const GET_USER = createRequestActionType("GET_USER");
 export const CREATE_USER = createRequestActionType("CREATE_USER");
+export const CREATE_FIRST_USER = createRequestActionType("CREATE_FIRST_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
 export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 

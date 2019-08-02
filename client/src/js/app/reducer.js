@@ -18,7 +18,7 @@ import samplesReducer from "../samples/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import updatesReducer from "../updates/reducer";
 import usersReducer from "../users/reducer";
-import { LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import rootSaga from "./sagas";
 
 const getInitialState = () => {
@@ -27,7 +27,6 @@ const getInitialState = () => {
     return {
         dev,
         first,
-        initial,
         login,
         reset: false,
         pending: false
@@ -86,6 +85,13 @@ const appReducer = (state = getInitialState(), action) => {
                 reset: true,
                 resetCode: action.data.reset_code,
                 resetError: action.data.error
+            };
+
+        case CREATE_FIRST_USER.SUCCEEDED:
+            return {
+                ...state,
+                login: false,
+                first: false
             };
     }
 

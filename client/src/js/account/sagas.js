@@ -80,6 +80,5 @@ export function* logout() {
 }
 
 export function* resetPassword(action) {
-    console.log(action);
     yield apiCall(accountAPI.resetPassword, action, RESET_PASSWORD);
 }

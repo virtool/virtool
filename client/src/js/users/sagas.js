@@ -1,7 +1,7 @@
 import { push } from "connected-react-router";
 
 import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
-import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER } from "../app/actionTypes";
+import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER, CREATE_FIRST_USER } from "../app/actionTypes";
 import * as usersAPI from "./api";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
@@ -22,6 +22,10 @@ function* createUser(action) {
     yield setPending(apiCall(usersAPI.create, action, CREATE_USER, {}, extraFunc));
 }
 
+function* createFirstUser(action) {
+    yield apiCall(usersAPI.createFirst, action, CREATE_FIRST_USER);
+}
+
 function* editUser(action) {
     yield setPending(apiCall(usersAPI.edit, action, EDIT_USER));
 }
@@ -39,4 +43,5 @@ export function* watchUsers() {
     yield throttle(200, CREATE_USER.REQUESTED, createUser);
     yield takeEvery(EDIT_USER.REQUESTED, editUser);
     yield takeEvery(REMOVE_USER.REQUESTED, removeUser);
+    yield takeLatest(CREATE_FIRST_USER.REQUESTED, createFirstUser);
 }
