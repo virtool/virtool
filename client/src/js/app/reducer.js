@@ -18,7 +18,7 @@ import samplesReducer from "../samples/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import updatesReducer from "../updates/reducer";
 import usersReducer from "../users/reducer";
-import { LOGIN, LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import { LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import rootSaga from "./sagas";
 
 const getInitialState = () => {
@@ -43,9 +43,19 @@ const appReducer = (state = getInitialState(), action) => {
             return { ...state, pending: false };
 
         case LOGIN.SUCCEEDED:
+            if (action.data.reset) {
+                return {
+                    ...state,
+                    login: false,
+                    reset: true,
+                    resetCode: action.data.reset_code
+                };
+            }
+
             return {
                 ...state,
-                login: false
+                login: false,
+                reset: false
             };
 
         case LOGIN.FAILED:
@@ -58,6 +68,24 @@ const appReducer = (state = getInitialState(), action) => {
             return {
                 ...state,
                 login: true
+            };
+
+        case RESET_PASSWORD.SUCCEEDED:
+            return {
+                ...state,
+                login: false,
+                reset: false,
+                resetCode: null,
+                resetError: null
+            };
+
+        case RESET_PASSWORD.FAILED:
+            return {
+                ...state,
+                login: false,
+                reset: true,
+                resetCode: action.data.reset_code,
+                resetError: action.data.error
             };
     }
 

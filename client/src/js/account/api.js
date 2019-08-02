@@ -106,3 +106,6 @@ export const login = ({ username, password, remember }) =>
  * @returns {promise}
  */
 export const logout = () => Request.get("/api/account/logout");
+
+export const resetPassword = ({ password, resetCode }) =>
+    Request.post("/api/account/reset").send({ password, reset_code: resetCode });

@@ -3,13 +3,14 @@ import React, { Suspense } from "react";
 import { connect, Provider } from "react-redux";
 import { ThemeProvider } from "styled-components";
 import { WallContainer } from "../wall/Container";
-import { theme } from "./theme";
+import Reset from "../wall/Reset";
 import Main from "./Main";
+import { theme } from "./theme";
 
 const LazyFirstUser = React.lazy(() => import("../wall/FirstUser"));
 const LazyLogin = React.lazy(() => import("../wall/Login"));
 
-export const App = ({ first, login }) => {
+export const App = ({ first, login, reset }) => {
     if (first) {
         return (
             <Suspense fallback={<WallContainer />}>
@@ -26,15 +27,20 @@ export const App = ({ first, login }) => {
         );
     }
 
+    if (reset) {
+        return <Reset />;
+    }
+
     return <Main />;
 };
 
 export const mapStateToProps = state => {
-    const { first, login } = state.app;
+    const { first, login, reset } = state.app;
 
     return {
         first,
-        login
+        login,
+        reset
     };
 };
 

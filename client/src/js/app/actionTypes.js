@@ -39,6 +39,7 @@ export const REMOVE_API_KEY = createRequestActionType("REMOVE_API_KEY");
 export const CLEAR_API_KEY = "CLEAR_API_KEY";
 export const LOGIN = createRequestActionType("LOGIN");
 export const LOGOUT = createRequestActionType("LOGOUT");
+export const RESET_PASSWORD = createRequestActionType("RESET_PASSWORD");
 
 // Administration Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");

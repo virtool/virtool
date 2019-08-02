@@ -15,7 +15,8 @@ import {
     REMOVE_API_KEY,
     LOGIN,
     LOGOUT,
-    CLEAR_API_KEY
+    CLEAR_API_KEY,
+    RESET_PASSWORD
 } from "../app/actionTypes";
 
 /**
@@ -140,3 +141,16 @@ export const login = (username, password, remember) => ({
  * @returns {object}
  */
 export const logout = simpleActionCreator(LOGOUT.REQUESTED);
+
+/**
+ * Returns action that can trigger an API call that will reset the password for the user associated with the  current
+ * session.
+ *
+ * @func
+ * @returns {object}
+ */
+export const resetPassword = (password, resetCode) => ({
+    type: RESET_PASSWORD.REQUESTED,
+    password,
+    resetCode
+});

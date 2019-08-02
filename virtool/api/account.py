@@ -1,3 +1,5 @@
+import aiohttp.web
+
 import virtool.analyses
 import virtool.db.account
 import virtool.db.sessions
@@ -322,16 +324,19 @@ async def login(req):
     if not await virtool.db.users.validate_credentials(db, user_id, password):
         return bad_request("Invalid username or password")
 
+    session_id = req.cookies.get("session_id")
+
     # If the user's password needs to be reset, redirect to the reset page without authorizing the session. A one-time
     # reset code is generated and added to the query string.
     if await virtool.db.utils.get_one_field(db.users, "force_reset", user_id):
-        return json_response({"reset": True}, status=201)
-
-    old_session_id = req.cookies.get("session_id")
+        return json_response({
+            "reset": True,
+            "reset_code": await virtool.db.sessions.create_reset_code(db, session_id, user_id, remember)
+        }, status=200)
 
     session, token = await virtool.db.sessions.replace_session(
         db,
-        old_session_id,
+        session_id,
         virtool.http.auth.get_ip(req),
         user_id,
         remember
@@ -339,8 +344,8 @@ async def login(req):
 
     resp = json_response({"reset": False}, status=201)
 
-    resp.set_cookie("session_id", session["_id"])
-    resp.set_cookie("session_token", token)
+    resp.set_cookie("session_id", session["_id"], httponly=True)
+    resp.set_cookie("session_token", token, httponly=True)
 
     return resp
 
@@ -363,11 +368,71 @@ async def logout(req):
 
     new_session_id = session["_id"]
 
-    verification_key = await virtool.db.sessions.get_verification_key(db, new_session_id)
-
     resp = aiohttp.web.Response(status=200)
 
     resp.set_cookie("session_id", session["_id"])
     resp.del_cookie("session_token")
 
+    return resp
+
+
+@routes.post("/api/account/reset", public=True)
+async def reset(req):
+    """
+    Handles `POST` requests for resetting the password for a session user.
+
+    :param req: the request to handle
+    :return: a response
+
+    """
+    db = req.app["db"]
+    data = await req.json()
+    session_id = req["client"].session_id
+
+    password = data.get("password", "")
+    reset_code = data.get("reset_code")
+
+    session = await db.sessions.find_one(session_id)
+
+    error = None
+
+    if not session.get("reset_code") or not session.get("reset_user_id") or reset_code != session.get("reset_code"):
+        error = "Invalid reset code"
+
+    minimum_password_length = req.app["settings"]["minimum_password_length"]
+
+    if len(password) < minimum_password_length:
+        error = f"Password must contain at least {minimum_password_length} characters"
+
+    user_id = session["reset_user_id"]
+
+    if error:
+        return json_response({
+            "error": error,
+            "reset_code": await virtool.db.sessions.create_reset_code(db, session_id, user_id=user_id)
+        }, status=400)
+
+    # Update the user password and disable the `force_reset`.
+    await virtool.db.users.edit(db, user_id, force_reset=False, password=password)
+
+    new_session, token = await virtool.db.sessions.replace_session(
+        db,
+        session_id,
+        virtool.http.auth.get_ip(req),
+        user_id,
+        remember=session.get("reset_remember", False)
+    )
+
+    req["client"].authorize(new_session, is_api=False)
+
+    resp = json_response({
+        "login": False,
+        "reset": False
+    }, status=200)
+
+    resp.set_cookie("session_id", new_session["_id"], httponly=True)
+    resp.set_cookie("session_token", token, httponly=True)
+
+    # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
+    # successful login requests.
     return resp

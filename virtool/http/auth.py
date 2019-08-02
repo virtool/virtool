@@ -1,8 +1,6 @@
 import base64
 import os
-import secrets
 import sys
-import urllib.parse
 from typing import Tuple
 
 import mako.template
@@ -43,11 +41,10 @@ class Client:
 
     def authorize(self, document, is_api):
         try:
-            user_id = document["user"]["id"]
-
+            self.session_id = document["_id"]
             self.administrator = document["administrator"]
             self.authorized = True
-            self.user_id = user_id
+            self.user_id = document["user"]["id"]
             self.groups = document["groups"]
             self.permissions = document["permissions"]
             self.is_api = is_api
@@ -166,9 +163,12 @@ async def middleware(req, handler):
 
     resp = await handler(req)
 
+    if req.path != "/api/account/reset":
+        await virtool.db.sessions.clear_reset_code(db, session["_id"])
+
     resp.set_cookie("session_id", req["client"].session_id, httponly=True)
 
-    if not req["client"].user_id:
+    if req.path == "/api/":
         resp.del_cookie("session_token")
 
     return resp
@@ -195,8 +195,6 @@ async def index_handler(req: web.Request) -> web.Response:
 
     requires_login = not req["client"].user_id
 
-    requires_reset = not requires_login and req["client"].force_reset
-
     path = os.path.join(req.app["client_path"], "index.html")
 
     html = mako.template.Template(filename=path).render()
@@ -212,90 +210,3 @@ async def index_handler(req: web.Request) -> web.Response:
     html = html.replace("NONCE", req["nonce"])
 
     return web.Response(body=html, content_type="text/html")
-
-
-async def reset_get_handler(req: web.Request) -> web.Response:
-    """
-    Handle a request to `GET` the application password reset page.
-
-    Returns a response with a rendered password reset page. When the user successfully logs in in and a reset is
-    necessary, a one-time reset code is generated. The user is redirected to a URL containing the reset code. This
-    handler validates the reset code query parameter (`code`) and expires it. Invalid reset codes will prevent password
-    reset.
-
-    A hidden verification key field is returned in the rendered template. This key can is only sent to the client once
-    and can only be used to verify a single post request. If the reset request fails with `4**`, a new verification key
-    is created and the template is re-rendered and returned.
-
-    :param req: the request to handle
-    :return: a response
-
-    """
-    db = req.app["db"]
-
-    session_id = req["client"].session_id
-
-    reset_code = req.query.get("code", None)
-
-    return_to = get_return_to_from_query(req)
-
-    if reset_code is None or not await virtool.db.sessions.check_reset_code(db, session_id, reset_code):
-        return web.Response(status=302, headers={"Location": f"/login?return_to={return_to}"})
-
-    static_hash = virtool.utils.get_static_hash(req)
-
-    # Get any errors to render on the reset form. These are recorded from a previous failed reset request.
-    errors = await virtool.db.utils.get_one_field(db.sessions, "reset_errors", session_id)
-
-    # Clear the reset errors for the next reset `POST` request.
-    await virtool.db.sessions.set_reset_errors(db, session_id)
-
-    return web.Response(body=html, content_type="text/html")
-
-
-async def reset_post_handler(req: web.Request) -> web.Response:
-    """
-    Handles `POST` requests for resetting the password for a session user.
-
-    :param req: the request to handle
-    :return: a response
-
-    """
-    db = req.app["db"]
-
-    client = req["client"]
-
-    form_data = await req.post()
-
-    password = form_data.get("password", "")
-    confirm = form_data.get("confirm", "")
-
-    user_id = await virtool.db.utils.get_one_field(db.sessions, "reset_user_id", client.session_id)
-
-    if not user_id:
-        return web.Response(status=302, headers={"Location": return_to})
-
-    errors = list()
-
-    # Re-render the reset page with an error message if the new password is invalid.
-    if password != confirm:
-        errors.append("Passwords do not match")
-
-    minimum_password_length = req.app["settings"]["minimum_password_length"]
-
-    if len(password) < minimum_password_length:
-        errors.append(f"Password must contain at least {minimum_password_length} characters")
-
-    if errors:
-        reset_code = await virtool.db.sessions.set_reset_errors(db, client.session_id, errors)
-        return web.Response(status=302, headers={"Location": f"/reset?return_to={return_to}&code={reset_code}"})
-
-    # Unset all reset page errors.
-    await virtool.db.sessions.set_reset_errors(db, client.session_id)
-
-    # Update the user password and disable the `force_reset`.
-    await virtool.db.users.edit(db, user_id, force_reset=False, password=password)
-
-    # Authenticate and return a redirect response to the `return_to` path. This is identical to the process used for
-    # successful login requests.
-    return await auth_response(req, return_to, user_id, False)

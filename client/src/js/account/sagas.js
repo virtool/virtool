@@ -10,7 +10,8 @@ import {
     UPDATE_API_KEY,
     REMOVE_API_KEY,
     LOGOUT,
-    LOGIN
+    LOGIN,
+    RESET_PASSWORD
 } from "../app/actionTypes";
 import * as accountAPI from "./api";
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
@@ -27,6 +28,7 @@ export function* watchAccount() {
     yield takeEvery(REMOVE_API_KEY.REQUESTED, removeAPIKey);
     yield takeLatest(LOGIN.REQUESTED, login);
     yield takeEvery(LOGOUT.REQUESTED, logout);
+    yield takeLatest(RESET_PASSWORD.REQUESTED, resetPassword);
 }
 
 export function* getAccount() {
@@ -75,4 +77,9 @@ export function* login(action) {
 
 export function* logout() {
     yield apiCall(accountAPI.logout, {}, LOGOUT);
+}
+
+export function* resetPassword(action) {
+    console.log(action);
+    yield apiCall(accountAPI.resetPassword, action, RESET_PASSWORD);
 }
