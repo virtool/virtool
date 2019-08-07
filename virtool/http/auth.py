@@ -213,7 +213,7 @@ async def index_handler(req: web.Request) -> web.Response:
 
     html = html.replace('"KEY"', f'"{verification_key}"' if verification_key else "null")
 
-    html = html.replace('"LOGIN"', "true" if requires_login else "false")
+    html = html.replace("NONCE", req["nonce"])
 
     return web.Response(body=html, content_type="text/html")
 

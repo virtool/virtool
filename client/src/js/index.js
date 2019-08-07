@@ -1,3 +1,4 @@
+import "./nonce";
 import * as Sentry from "@sentry/browser";
 import { createBrowserHistory } from "history";
 import React from "react";

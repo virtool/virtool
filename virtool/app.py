@@ -15,6 +15,7 @@ from motor import motor_asyncio
 
 import virtool.db.settings
 import virtool.http.auth
+import virtool.http.csp
 import virtool.app_routes
 import virtool.config
 import virtool.db.hmm
@@ -26,6 +27,7 @@ import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
 import virtool.files
+import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
@@ -369,6 +371,7 @@ def create_app(force_settings=None):
 
     """
     middlewares = [
+        virtool.http.csp.middleware,
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
@@ -395,6 +398,8 @@ def create_app(force_settings=None):
         app["setup"] = dict()
 
     aiojobs.aiohttp.setup(app)
+
+    app.on_response_prepare.append(virtool.http.csp.on_prepare)
 
     app.on_startup.extend([
         init_version,
