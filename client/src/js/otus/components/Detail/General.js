@@ -12,11 +12,10 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
-import { IDRow } from "../../../base";
 
 import Issues from "./Issues";
 
-const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
+const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) => (
     <div>
         {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
@@ -34,7 +33,6 @@ const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
                     <th>Version</th>
                     <td>{version}</td>
                 </tr>
-                <IDRow id={id} />
             </tbody>
         </Table>
     </div>

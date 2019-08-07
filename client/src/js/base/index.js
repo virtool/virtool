@@ -8,7 +8,6 @@ import { Flex, FlexItem } from "./Flex";
 import { Help } from "./Help";
 import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
-import { IDRow } from "./IDRow";
 import { Input } from "./Input";
 import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
@@ -47,7 +46,6 @@ export {
     Help,
     Icon,
     Identicon,
-    IDRow,
     Input,
     InputError,
     InputSave,

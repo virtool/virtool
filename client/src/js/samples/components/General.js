@@ -4,7 +4,6 @@ import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { IDRow } from "../../base";
 import EditSample from "./Edit";
 
 const cellNames = ["host", "isolate", "locale"];
@@ -19,8 +18,6 @@ const SampleDetailGeneral = props => (
                         <td className="col-xs-8">{props[field]}</td>
                     </tr>
                 ))}
-
-                <IDRow id={props.id} />
             </tbody>
         </table>
 
