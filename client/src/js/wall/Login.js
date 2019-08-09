@@ -107,8 +107,8 @@ export const mapDispatchToProps = dispatch => ({
     onChange: () => {
         dispatch(clearError("LOGIN_ERROR"));
     },
-    onLogin: (username, password, remember, key) => {
-        dispatch(login(username, password, remember, key));
+    onLogin: (username, password, remember) => {
+        dispatch(login(username, password, remember));
     }
 });
 

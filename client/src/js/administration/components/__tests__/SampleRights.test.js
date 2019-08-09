@@ -1,5 +1,4 @@
 import { UPDATE_SETTINGS } from "../../../app/actionTypes";
-import { InputError } from "../../../base/index";
 import { SampleRights, mapStateToProps, mapDispatchToProps } from "../SampleRights";
 
 describe("<SampleRights />", () => {

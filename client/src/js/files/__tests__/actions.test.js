@@ -7,15 +7,7 @@ import {
     UPLOAD,
     UPLOAD_PROGRESS
 } from "../../app/actionTypes";
-import {
-    wsInsertFile,
-    wsUpdateFile,
-    wsRemoveFile,
-    findFiles,
-    upload,
-    removeFile,
-    uploadProgress
-} from "../actions";
+import { wsInsertFile, wsUpdateFile, wsRemoveFile, findFiles, upload, removeFile, uploadProgress } from "../actions";
 
 describe("Files Action Creators", () => {
     it("wsInsertFile: returns action with websocket file insert data", () => {

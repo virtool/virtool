@@ -35,13 +35,3 @@ describe("<ReferenceItemBuild />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 });
-
-describe("mapStateToProps()", () => {
-    let state;
-
-    beforeEach(() => {
-        state = {
-
-        }
-    })
-})

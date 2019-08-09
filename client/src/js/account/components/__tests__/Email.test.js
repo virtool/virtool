@@ -1,6 +1,3 @@
-import * as actions from "../../actions";
-import * as errorActions from "../../../errors/actions";
-import { InputError } from "../../../base/index";
 import { Email } from "../Email";
 
 describe("<Email />", () => {

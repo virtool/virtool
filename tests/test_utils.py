@@ -5,7 +5,6 @@ import sys
 
 import arrow
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 import virtool.utils
 

@@ -54,8 +54,7 @@ def generate_csp_style_src(nonce):
 async def middleware(req: aiohttp.web.Request, handler):
     # Allow the nonce to be accessed from request handlers and signals. The index handler will add the nonce to the
     # index.html template.
-    req["nonce"] = nonce = secrets.token_hex(20)
-
+    req["nonce"] = secrets.token_hex(20)
     return await handler(req)
 
 

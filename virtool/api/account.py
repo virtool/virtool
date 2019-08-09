@@ -312,7 +312,6 @@ async def remove_all_api_keys(req):
 async def login(req):
     db = req.app["db"]
     data = await req.json()
-    client = req["client"]
 
     user_id = data.get("username", "")
     password = data.get("password", "")
@@ -365,8 +364,6 @@ async def logout(req):
         old_session_id,
         virtool.http.auth.get_ip(req)
     )
-
-    new_session_id = session["_id"]
 
     resp = aiohttp.web.Response(status=200)
 

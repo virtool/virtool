@@ -5,7 +5,6 @@ Functions and job classes for sample analysis.
 import json
 import os
 import shlex
-import shutil
 
 import pymongo
 import pymongo.errors
