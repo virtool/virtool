@@ -32,7 +32,7 @@ export class PathoscopeList extends React.Component {
                 data.reverse();
             }
 
-            const itemComponents = map(data, (item, index) => <PathoscopeItem key={item.id} index={index} />);
+            const itemComponents = map(data, item => <PathoscopeItem key={item.id} id={item.id} />);
 
             return <div>{itemComponents}</div>;
         }

@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import { SpacedBox } from "../../../base/index";
 import { toScientificNotation } from "../../../utils/utils";
 import { toggleResultExpanded } from "../../actions";
+import { getPathoscopeItem } from "../../selectors";
 import AnalysisValue from "../Value";
 import { median } from "../../utils";
 import PathoscopeExpansion from "./Expansion";
@@ -79,7 +80,7 @@ export const PathoscopeItem = props => {
 };
 
 const mapStateToProps = (state, ownProps) => {
-    const result = state.analyses.detail.results[ownProps.index];
+    const result = getPathoscopeItem(state, ownProps.id);
 
     return {
         ...result,

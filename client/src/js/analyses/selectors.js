@@ -1,6 +1,7 @@
 import Fuse from "fuse.js";
 import { get, find, intersection, map, reject, sortBy, toNumber } from "lodash-es";
 import { createSelector } from "reselect";
+import createCachedSelector from "re-reselect";
 
 export const getActiveId = state => state.analyses.activeId;
 
@@ -79,4 +80,10 @@ export const getActiveHit = createSelector(
 
         return matches[0] || null;
     }
+);
+
+const getItemId = (state, itemId) => itemId;
+
+export const getPathoscopeItem = createCachedSelector([getResults, getItemId], (results, id) => find(results, { id }))(
+    (state, itemId) => itemId
 );
