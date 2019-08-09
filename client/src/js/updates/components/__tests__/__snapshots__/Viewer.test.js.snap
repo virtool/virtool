@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SoftwareUpdateViewer /> renders <LoadingPlaceholder /> when releases data not available 1`] = `<LoadingPlaceholder />`;
+exports[`<SoftwareUpdateViewer /> should render placeholder when [releases=null] 1`] = `<LoadingPlaceholder />`;
 
-exports[`<SoftwareUpdateViewer /> renders correctly when releases data available 1`] = `
+exports[`<SoftwareUpdateViewer /> should render when releases available 1`] = `
 <div
   className="settings-container"
 >

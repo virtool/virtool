@@ -63,11 +63,7 @@ exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
       />
     </InputGroup>
   </FormGroup>
-  <LinkContainer
-    activeClassName="active"
-    exact={false}
-    replace={false}
-    strict={false}
+  <withRouter(LinkContainer)
     to={
       Object {
         "state": Object {
@@ -83,6 +79,6 @@ exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
       tip="Create"
       tipPlacement="top"
     />
-  </LinkContainer>
+  </withRouter(LinkContainer)>
 </div>
 `;

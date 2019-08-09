@@ -29,3 +29,17 @@ export const getProgress = createSelector(
         return 0;
     }
 );
+
+export const getReferenceItemProcessId = (state, index) =>
+    get(state, ["references", "documents", index, "process", "id"]);
+
+export const getReferenceItemProgress = createSelector(
+    [getReferenceItemProcessId, getProcesses],
+    (id, processes) => {
+        if (processes.length && id) {
+            return find(processes, { id }).progress * 100;
+        }
+
+        return 100;
+    }
+);

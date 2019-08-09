@@ -7,11 +7,7 @@ exports[`<NotificationIcon /> should render full component when [visible=true] 1
   active={false}
   disabled={false}
 >
-  <LinkContainer
-    activeClassName="active"
-    exact={false}
-    replace={false}
-    strict={false}
+  <withRouter(LinkContainer)
     to="/administration/updates"
   >
     <Icon
@@ -23,6 +19,6 @@ exports[`<NotificationIcon /> should render full component when [visible=true] 1
       tip="Software Update"
       tipPlacement="left"
     />
-  </LinkContainer>
+  </withRouter(LinkContainer)>
 </NavItem>
 `;

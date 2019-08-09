@@ -35,14 +35,17 @@ exports[`<Login /> should render 1`] = `
         partial={false}
         pullRight={false}
       />
-      <Button
-        bsStyle="primary"
-        pullRight={true}
-        tipPlacement="top"
-        type="submit"
-      >
-        Login
-      </Button>
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
     </form>
   </Login__LoginModal>
 </Container__WallContainer>
@@ -83,14 +86,17 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
         partial={false}
         pullRight={false}
       />
-      <Button
-        bsStyle="primary"
-        pullRight={true}
-        tipPlacement="top"
-        type="submit"
-      >
-        Login
-      </Button>
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
     </form>
   </Login__LoginModal>
 </Container__WallContainer>
@@ -131,14 +137,17 @@ exports[`<Login /> should render filled username and password fields 1`] = `
         partial={false}
         pullRight={false}
       />
-      <Button
-        bsStyle="primary"
-        pullRight={true}
-        tipPlacement="top"
-        type="submit"
-      >
-        Login
-      </Button>
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
     </form>
   </Login__LoginModal>
 </Container__WallContainer>

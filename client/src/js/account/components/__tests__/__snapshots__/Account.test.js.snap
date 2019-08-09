@@ -27,15 +27,30 @@ exports[`<Account /> should render 1`] = `
     <Redirect
       exact={true}
       from="/account"
-      push={false}
       to="/account/profile"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(AccountProfile)",
+          "type": [Function],
+        }
+      }
       path="/account/profile"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(APIKeys)",
+          "type": [Function],
+        }
+      }
       path="/account/api"
     />
   </Switch>

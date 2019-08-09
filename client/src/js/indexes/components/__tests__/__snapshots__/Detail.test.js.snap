@@ -57,7 +57,6 @@ exports[`<IndexDetail /> should render 1`] = `
     <Redirect
       exact={true}
       from="/refs/:refId/indexes/:indexId"
-      push={false}
       to="/refs/foo/indexes/baz/general"
     />
     <Route
@@ -65,7 +64,15 @@ exports[`<IndexDetail /> should render 1`] = `
       path="/refs/:refId/indexes/:indexId/general"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(IndexChanges)",
+          "type": [Function],
+        }
+      }
       path="/refs/:refId/indexes/:indexId/changes"
     />
   </Switch>
@@ -79,47 +86,35 @@ exports[`<IndexDetailBreadCrumb /> should render 1`] = `
   <BreadcrumbItem
     active={false}
   >
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+    <withRouter(LinkContainer)
       to="/refs/"
     >
       <span>
         References
       </span>
-    </LinkContainer>
+    </withRouter(LinkContainer)>
   </BreadcrumbItem>
   <BreadcrumbItem
     active={false}
   >
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+    <withRouter(LinkContainer)
       to="/refs/baz"
     >
       <span>
         Baz
       </span>
-    </LinkContainer>
+    </withRouter(LinkContainer)>
   </BreadcrumbItem>
   <BreadcrumbItem
     active={false}
   >
-    <LinkContainer
-      activeClassName="active"
-      exact={false}
-      replace={false}
-      strict={false}
+    <withRouter(LinkContainer)
       to="/refs/baz/indexes"
     >
       <span>
         Indexes
       </span>
-    </LinkContainer>
+    </withRouter(LinkContainer)>
   </BreadcrumbItem>
   <BreadcrumbItem
     active={true}

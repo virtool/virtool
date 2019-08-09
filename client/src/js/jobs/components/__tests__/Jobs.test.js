@@ -1,21 +1,13 @@
-import Jobs from "../Jobs";
+import { Jobs } from "../Jobs";
 
 describe("<Jobs />", () => {
-    let initialState;
-    let store;
-    let wrapper;
-
-    it("renders correctly", () => {
-        initialState = { settings: { data: {} } };
-        store = mockStore(initialState);
-        wrapper = shallow(<Jobs store={store} />).dive();
+    it("should render placeholder when loading", () => {
+        const wrapper = shallow(<Jobs loading={true} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <LoadingPlaceholder /> if settings data is unavailable", () => {
-        initialState = { settings: { data: null } };
-        store = mockStore(initialState);
-        wrapper = shallow(<Jobs store={store} />).dive();
+    it("should render when loaded", () => {
+        const wrapper = shallow(<Jobs loading={false} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

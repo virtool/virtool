@@ -1,41 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateSubtraction /> renders <SubtractionFileItem /> subcomponent 1`] = `
-<ListGroupItem
-  active={true}
-  allowFocus={false}
-  onClick={[Function]}
->
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={7}
-    >
-      <strong>
-        test
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={5}
-    >
-      Uploaded 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-       by 
-      test-user
-    </Col>
-  </Row>
-</ListGroupItem>
-`;
-
-exports[`<CreateSubtraction /> renders correctly 1`] = `
+exports[`<CreateSubtraction /> should render 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -141,7 +106,6 @@ exports[`<CreateSubtraction /> renders correctly 1`] = `
           />
            No files found. 
           <Link
-            replace={false}
             to="/subtraction/files"
           >
             Upload some
@@ -177,4 +141,74 @@ exports[`<CreateSubtraction /> renders correctly 1`] = `
     </ModalFooter>
   </form>
 </Modal>
+`;
+
+exports[`<SubtractionFileItem /> should render when [active=false] 1`] = `
+<ListGroupItem
+  active={false}
+  allowFocus={false}
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={7}
+    >
+      <strong>
+        test
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={5}
+    >
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      test-user
+    </Col>
+  </Row>
+</ListGroupItem>
+`;
+
+exports[`<SubtractionFileItem /> should render when [active=true] 1`] = `
+<ListGroupItem
+  active={true}
+  allowFocus={false}
+  onClick={[Function]}
+>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={7}
+    >
+      <strong>
+        test
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={5}
+    >
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      test-user
+    </Col>
+  </Row>
+</ListGroupItem>
 `;

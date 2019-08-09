@@ -71,7 +71,7 @@ class OTUDetail extends React.Component {
             modifyOTUComponents = (
                 <div>
                     <EditOTU otuId={id} name={name} abbreviation={abbreviation} />
-                    <RemoveOTU otuId={id} otuName={name} history={this.props.history} />
+                    <RemoveOTU id={id} name={name} history={this.props.history} />
                 </div>
             );
         }

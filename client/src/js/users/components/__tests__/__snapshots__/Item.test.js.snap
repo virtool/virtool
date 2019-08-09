@@ -1,11 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
-<LinkContainer
-  activeClassName="active"
-  exact={false}
-  replace={false}
-  strict={false}
+<withRouter(LinkContainer)
   style={
     Object {
       "paddingLeft": "10px",
@@ -55,15 +51,11 @@ exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
       </FlexItem>
     </Flex>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;
 
 exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
-<LinkContainer
-  activeClassName="active"
-  exact={false}
-  replace={false}
-  strict={false}
+<withRouter(LinkContainer)
   style={
     Object {
       "paddingLeft": "10px",
@@ -105,5 +97,5 @@ exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
       />
     </Flex>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;

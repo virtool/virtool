@@ -12,9 +12,8 @@ describe("<ReferenceForm />", () => {
             errorDataType: ""
         }
     };
-    let wrapper;
 
-    it("renders correctly without errors", () => {
+    it("should render without errors", () => {
         props = {
             state: {
                 ...props.state,
@@ -22,11 +21,11 @@ describe("<ReferenceForm />", () => {
                 errorSelect: null
             }
         };
-        wrapper = shallow(<ReferenceForm {...props} />);
+        const wrapper = shallow(<ReferenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly with errors", () => {
+    it("should render with errors", () => {
         props = {
             state: {
                 ...props.state,
@@ -34,7 +33,7 @@ describe("<ReferenceForm />", () => {
                 errorSelect: "Error Select"
             }
         };
-        wrapper = shallow(<ReferenceForm {...props} />);
+        const wrapper = shallow(<ReferenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

@@ -1,31 +1,29 @@
-import React from "react";
+import { get } from "lodash-es";
+import React, { useCallback } from "react";
 import { connect } from "react-redux";
-import { removeIsolate, hideOTUModal } from "../../actions";
 import { RemoveModal } from "../../../base";
+import { hideOTUModal, removeIsolate } from "../../actions";
 
-export class RemoveIsolate extends React.Component {
-    handleConfirm = () => {
-        this.props.onConfirm(this.props.otuId, this.props.isolateId, this.props.nextIsolateId);
+export const RemoveIsolate = ({ id, name, nextId, otuId, show, onConfirm, onHide }) => {
+    const handleConfirm = useCallback(() => {
+        onConfirm(otuId, id, nextId);
+    }, [otuId, id]);
+
+    return <RemoveModal name={name} noun="Isolate" onConfirm={handleConfirm} onHide={onHide} show={show} />;
+};
+
+export const mapStateToProps = state => {
+    const { id, name } = state.otus.activeIsolate;
+    return {
+        id,
+        name,
+        nextId: get(state, ["otus", "detail", "isolates", 0, "id"], null),
+        otuId: state.otus.detail.id,
+        show: state.otus.removeIsolate
     };
+};
 
-    render() {
-        return (
-            <RemoveModal
-                name={this.props.isolateName}
-                noun="Isolate"
-                onConfirm={this.handleConfirm}
-                onHide={this.props.onHide}
-                show={this.props.show}
-            />
-        );
-    }
-}
-
-const mapStateToProps = state => ({
-    show: state.otus.removeIsolate
-});
-
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(hideOTUModal());
     },

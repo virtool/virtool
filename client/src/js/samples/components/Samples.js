@@ -19,7 +19,7 @@ export const SampleSettings = () => (
     </div>
 );
 
-const Samples = () => (
+export const Samples = () => (
     <div className="container">
         <Switch>
             <Route path="/samples" component={SamplesList} exact />

@@ -1,77 +1,17 @@
-import * as actions from "../../../actions";
-import NuVsBLASTContainer, { BLASTInProgress, BLASTResults, NuVsBLAST } from "../BLAST";
+import { BLASTInProgress, BLASTResults, NuVsBLAST } from "../BLAST";
 
-describe("<NuVsBLAST />", () => {
-    let props;
-    let wrapper;
-
-    it("renders correctly", () => {
-        props = {
-            blast: {
-                ready: true,
-                result: {
-                    hits: [
-                        {
-                            name: "test",
-                            accession: "NC123",
-                            evalue: 3,
-                            score: 1,
-                            identity: 2,
-                            align_len: 4
-                        }
-                    ]
-                }
-            },
-            analysisId: "123abc"
-        };
-        wrapper = shallow(<NuVsBLAST {...props} />);
+describe("<BLASTInProgress />", () => {
+    it.each(["ABC123", null])("should render when [rid=%p]", rid => {
+        const wrapper = shallow(
+            <BLASTInProgress interval={5} lastCheckedAt={"2018-02-14T17:12:00.000000Z"} rid={rid} />
+        );
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders correctly with no BLAST hits", () => {
-        props = {
-            analysisId: "123abc",
-            blast: { ready: true, result: { hits: [] } }
-        };
-        wrapper = shallow(<NuVsBLAST {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders correctly with in progress BLAST", () => {
-        props = {
-            analysisId: "123abc",
-            blast: {
-                ready: false,
-                interval: 5,
-                last_checked_at: "2018-02-14T17:12:00.000000Z",
-                rid: "ABC123"
-            }
-        };
-        wrapper = shallow(<NuVsBLAST {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders alert when no blast data available", () => {
-        props = { analysisId: "123abc", blast: null };
-        wrapper = shallow(<NuVsBLAST {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders <BLASTInProgress /> subcomponent", () => {
-        props = {
-            interval: 5,
-            lastCheckedAt: "2018-02-14T17:12:00.000000Z",
-            rid: "ABC123"
-        };
-        wrapper = shallow(<BLASTInProgress {...props} />);
-        expect(wrapper).toMatchSnapshot();
-
-        wrapper.setProps({ rid: null });
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders <BLASTResults /> component", () => {
-        props = {
+describe("<BLASTResults />", () => {
+    it("should render", () => {
+        const props = {
             hits: [
                 {
                     name: "test",
@@ -83,22 +23,69 @@ describe("<NuVsBLAST />", () => {
                 }
             ]
         };
-        wrapper = shallow(<BLASTResults {...props} />);
+        const wrapper = shallow(<BLASTResults {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("<NuVsBLAST />", () => {
+    let props;
+
+    beforeEach(() => {
+        props = {
+            blast: {
+                ready: true,
+                result: {
+                    hits: [
+                        {
+                            name: "bar",
+                            accession: "BAR123",
+                            evalue: 3,
+                            score: 1,
+                            identity: 2,
+                            align_len: 4
+                        }
+                    ]
+                }
+            },
+            analysisId: "foo",
+            sequenceIndex: 5,
+            onBlast: jest.fn()
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<NuVsBLAST {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("Clicking BLAST button dispatches blastNuvs() action", () => {
-        const spy = sinon.spy(actions, "blastNuvs");
-        expect(spy.called).toBe(false);
+    it("should render with no BLAST hits", () => {
+        props.blast.result.hits = [];
+        const wrapper = shallow(<NuVsBLAST {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        const initialState = { analyses: { detail: { id: "123abc" } } };
-        const store = mockStore(initialState);
-        props = { blast: null, sequenceIndex: 0 };
+    it("should render with an in-progress BLAST", () => {
+        props.blast = {
+            ready: false,
+            interval: 5,
+            last_checked_at: "2018-02-14T17:12:00.000000Z",
+            rid: "ABC123"
+        };
+        const wrapper = shallow(<NuVsBLAST {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        wrapper = shallow(<NuVsBLASTContainer store={store} {...props} />).dive();
-        wrapper.find({ icon: "cloud" }).prop("onClick")();
-        expect(spy.calledWith("123abc", 0)).toBe(true);
+    it("should render alert when no blast data available", () => {
+        props.blast = null;
+        const wrapper = shallow(<NuVsBLAST {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        spy.restore();
+    it("should call blastNuvs() when BLAST button clicked", () => {
+        props.blast = null;
+        const wrapper = shallow(<NuVsBLAST {...props} />);
+        wrapper.find("Button").simulate("click");
+        expect(props.onBlast).toHaveBeenCalledWith(props.analysisId, props.sequenceIndex);
     });
 });

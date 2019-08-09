@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUGeneral /> renders correctly with issues 1`] = `
+exports[`<OTUGeneral /> should render with issues 1`] = `
 <div>
   <OTUIssues
     isolates={
       Array [
         Object {
-          "id": "456def",
+          "id": "baz",
         },
       ]
     }
@@ -39,7 +39,7 @@ exports[`<OTUGeneral /> renders correctly with issues 1`] = `
         <td
           className="col-xs-8"
         >
-          test-virus
+          Foo Bar
         </td>
       </tr>
       <tr>
@@ -47,7 +47,7 @@ exports[`<OTUGeneral /> renders correctly with issues 1`] = `
           Abbreviation
         </th>
         <td>
-          TV
+          FB
         </td>
       </tr>
       <tr>
@@ -58,15 +58,12 @@ exports[`<OTUGeneral /> renders correctly with issues 1`] = `
           3
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
     </tbody>
   </Table>
 </div>
 `;
 
-exports[`<OTUGeneral /> renders correctly without issues 1`] = `
+exports[`<OTUGeneral /> should render without issues 1`] = `
 <div>
   <Table
     bordered={true}
@@ -86,7 +83,7 @@ exports[`<OTUGeneral /> renders correctly without issues 1`] = `
         <td
           className="col-xs-8"
         >
-          test-virus
+          Foo Bar
         </td>
       </tr>
       <tr>
@@ -94,7 +91,7 @@ exports[`<OTUGeneral /> renders correctly without issues 1`] = `
           Abbreviation
         </th>
         <td>
-          TV
+          FB
         </td>
       </tr>
       <tr>
@@ -105,9 +102,6 @@ exports[`<OTUGeneral /> renders correctly without issues 1`] = `
           3
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
     </tbody>
   </Table>
 </div>

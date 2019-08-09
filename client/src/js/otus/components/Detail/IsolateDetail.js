@@ -94,12 +94,7 @@ export class IsolateDetail extends React.Component {
                     sourceName={isolate.source_name}
                 />
 
-                <RemoveIsolate
-                    otuId={this.props.otuId}
-                    isolateId={isolate.id}
-                    isolateName={isolate.name}
-                    nextIsolateId={this.props.isolates.length ? this.props.isolates[0].id : null}
-                />
+                <RemoveIsolate />
 
                 <Panel>
                     <Panel.Body>

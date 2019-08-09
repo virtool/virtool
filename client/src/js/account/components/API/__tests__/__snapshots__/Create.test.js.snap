@@ -1,78 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateAPIKey /> should render correctly 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onExited={[Function]}
-  onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
-  show={true}
->
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Create API Key
-  </ModalHeader>
-  <Connect(CreateAPIKeyInfo) />
-  <form
-    onSubmit={[Function]}
-  >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
-      <InputError
-        error=""
-        label="Name"
-        onChange={[Function]}
-        value=""
-      />
-      <label>
-        Permissions
-      </label>
-      <Connect(APIPermissions)
-        keyPermissions={
-          Object {
-            "bar": false,
-            "foo": false,
-          }
-        }
-        onChange={[Function]}
-      />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
-      <SaveButton />
-    </ModalFooter>
-  </form>
-</Modal>
-`;
-
-exports[`<CreateAPIKey /> should render correctly when [props.newKey] and [state.copied] set 1`] = `
+exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] set 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -208,7 +136,79 @@ exports[`<CreateAPIKey /> should render correctly when [props.newKey] and [state
 </Modal>
 `;
 
-exports[`<CreateAPIKey /> should render correctly when [state.newKey] set 1`] = `
+exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+    onHide={[MockFunction]}
+  >
+    Create API Key
+  </ModalHeader>
+  <Connect(CreateAPIKeyInfo) />
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <InputError
+        error=""
+        label="Name"
+        onChange={[Function]}
+        value=""
+      />
+      <label>
+        Permissions
+      </label>
+      <Connect(APIPermissions)
+        keyPermissions={
+          Object {
+            "bar": false,
+            "foo": false,
+          }
+        }
+        onChange={[Function]}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <SaveButton />
+    </ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
 <Modal
   animation={true}
   autoFocus={true}

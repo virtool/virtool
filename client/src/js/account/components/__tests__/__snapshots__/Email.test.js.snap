@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Email /> renders correctly 1`] = `
+exports[`<Email /> should render with error in props 1`] = `
 <Row
   bsClass="row"
   componentClass="div"
@@ -32,7 +32,199 @@ exports[`<Email /> renders correctly 1`] = `
             label="Email address"
             onBlur={[Function]}
             onChange={[Function]}
-            value="test@virtool.ca"
+            value="foo@example.com"
+          />
+          <div
+            style={
+              Object {
+                "marginTop": "20px",
+              }
+            }
+          >
+            <Row
+              bsClass="row"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                md={12}
+                xs={24}
+              >
+                <SaveButton
+                  pullRight={true}
+                />
+              </Col>
+            </Row>
+          </div>
+        </form>
+      </PanelBody>
+    </Uncontrolled(Panel)>
+  </Col>
+</Row>
+`;
+
+exports[`<Email /> should render with error in state 1`] = `
+<Row
+  bsClass="row"
+  componentClass="div"
+>
+  <Col
+    bsClass="col"
+    componentClass="div"
+    lg={6}
+    md={8}
+  >
+    <Uncontrolled(Panel)
+      bsStyle="danger"
+    >
+      <PanelHeading
+        bsClass="panel"
+        componentClass="div"
+      >
+        Email
+      </PanelHeading>
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <form
+          onSubmit={[Function]}
+        >
+          <InputError
+            error="Foo error"
+            label="Email address"
+            onBlur={[Function]}
+            onChange={[Function]}
+            value="foo@example.com"
+          />
+          <div
+            style={
+              Object {
+                "marginTop": "20px",
+              }
+            }
+          >
+            <Row
+              bsClass="row"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                md={12}
+                xs={24}
+              >
+                <SaveButton
+                  pullRight={true}
+                />
+              </Col>
+            </Row>
+          </div>
+        </form>
+      </PanelBody>
+    </Uncontrolled(Panel)>
+  </Col>
+</Row>
+`;
+
+exports[`<Email /> should render with initial email 1`] = `
+<Row
+  bsClass="row"
+  componentClass="div"
+>
+  <Col
+    bsClass="col"
+    componentClass="div"
+    lg={6}
+    md={8}
+  >
+    <Uncontrolled(Panel)
+      bsStyle="default"
+    >
+      <PanelHeading
+        bsClass="panel"
+        componentClass="div"
+      >
+        Email
+      </PanelHeading>
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <form
+          onSubmit={[Function]}
+        >
+          <InputError
+            error=""
+            label="Email address"
+            onBlur={[Function]}
+            onChange={[Function]}
+            value="foo@example.com"
+          />
+          <div
+            style={
+              Object {
+                "marginTop": "20px",
+              }
+            }
+          >
+            <Row
+              bsClass="row"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                md={12}
+                xs={24}
+              >
+                <SaveButton
+                  pullRight={true}
+                />
+              </Col>
+            </Row>
+          </div>
+        </form>
+      </PanelBody>
+    </Uncontrolled(Panel)>
+  </Col>
+</Row>
+`;
+
+exports[`<Email /> should render without initial email 1`] = `
+<Row
+  bsClass="row"
+  componentClass="div"
+>
+  <Col
+    bsClass="col"
+    componentClass="div"
+    lg={6}
+    md={8}
+  >
+    <Uncontrolled(Panel)
+      bsStyle="default"
+    >
+      <PanelHeading
+        bsClass="panel"
+        componentClass="div"
+      >
+        Email
+      </PanelHeading>
+      <PanelBody
+        bsClass="panel"
+        collapsible={false}
+      >
+        <form
+          onSubmit={[Function]}
+        >
+          <InputError
+            error=""
+            label="Email address"
+            onBlur={[Function]}
+            onChange={[Function]}
+            value=""
           />
           <div
             style={

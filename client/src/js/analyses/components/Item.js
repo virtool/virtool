@@ -48,7 +48,7 @@ export const AnalysisItem = props => {
                 </Col>
                 <Col xs={2}>{reference}</Col>
                 <Col xsHidden sm={2} md={2}>
-                    <RightIcon {...props} />
+                    <RightIcon canModify={props.canModify} ready={props.ready} onRemove={props.onRemove} />
                 </Col>
             </Row>
         </div>
@@ -61,12 +61,12 @@ export const AnalysisItem = props => {
     return <LinkContainer to={`/samples/${props.sampleId}/analyses/${props.id}`}>{content}</LinkContainer>;
 };
 
-const mapStateToProps = state => ({
-    sampleId: get(state.samples.detail, "id"),
+export const mapStateToProps = state => ({
+    sampleId: state.samples.detail.id,
     canModify: getCanModify(state)
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+export const mapDispatchToProps = (dispatch, ownProps) => ({
     onRemove: () => {
         dispatch(removeAnalysis(ownProps.id));
     }

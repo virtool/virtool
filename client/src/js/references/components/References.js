@@ -1,6 +1,7 @@
 import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
+import { mapSettingsStateToProps } from "../../administration/mappers";
 import { LoadingPlaceholder } from "../../base";
 import SourceTypes from "./SourceTypes";
 import ReferenceList from "./List";
@@ -15,8 +16,8 @@ export const ReferenceSettings = () => (
     </div>
 );
 
-const References = props => {
-    if (props.settings === null) {
+export const References = ({ loading }) => {
+    if (loading) {
         return <LoadingPlaceholder />;
     }
 
@@ -32,8 +33,4 @@ const References = props => {
     );
 };
 
-const mapStateToProps = state => ({
-    settings: state.settings.data
-});
-
-export default connect(mapStateToProps)(References);
+export default connect(mapSettingsStateToProps)(References);

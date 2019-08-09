@@ -116,8 +116,7 @@ describe("mapDispatchToProps()", () => {
             type: LOGIN.REQUESTED,
             username: "bob",
             password: "foobar",
-            remember: false,
-            key: "baz"
+            remember: false
         });
     });
 });

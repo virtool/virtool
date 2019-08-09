@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true] 1`] = `
+exports[`<AccountProfile /> should render when administrator 1`] = `
 <div>
   <Flex
     alignContent="stretch"
@@ -33,7 +33,7 @@ exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true
     >
       <h5>
         <strong>
-          testid
+          foo
            
           <Icon
             bsStyle="primary"
@@ -45,30 +45,17 @@ exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true
         </strong>
       </h5>
       <div>
-        <Label
-          bsClass="label"
+        <Profile__AccountProfileLabel
           bsStyle="primary"
-          key="virtool-admin"
-          style={
-            Object {
-              "marginRight": "3px",
-            }
-          }
+          key="administrator"
         >
           Administrator
-        </Label>
-        <Label
-          bsClass="label"
-          bsStyle="default"
+        </Profile__AccountProfileLabel>
+        <Profile__AccountProfileLabel
           key="test"
-          style={
-            Object {
-              "marginRight": "3px",
-            }
-          }
         >
-          Test
-        </Label>
+          test
+        </Profile__AccountProfileLabel>
       </div>
     </FlexItem>
   </Flex>
@@ -77,7 +64,7 @@ exports[`<AccountProfile /> renders correctly with admin icon when [isAdmin=true
 </div>
 `;
 
-exports[`<AccountProfile /> renders correctly without icon otherwise 1`] = `
+exports[`<AccountProfile /> should render when not administrator 1`] = `
 <div>
   <Flex
     alignContent="stretch"
@@ -110,23 +97,16 @@ exports[`<AccountProfile /> renders correctly without icon otherwise 1`] = `
     >
       <h5>
         <strong>
-          testid
+          foo
            
         </strong>
       </h5>
       <div>
-        <Label
-          bsClass="label"
-          bsStyle="default"
+        <Profile__AccountProfileLabel
           key="test"
-          style={
-            Object {
-              "marginRight": "3px",
-            }
-          }
         >
-          Test
-        </Label>
+          test
+        </Profile__AccountProfileLabel>
       </div>
     </FlexItem>
   </Flex>

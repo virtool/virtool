@@ -1,49 +1,70 @@
+jest.mock("../../../utils/utils");
+
 import { push } from "connected-react-router";
-import * as actions from "../../actions";
-import RemoveSubtractionContainer, { RemoveSubtraction } from "../Remove";
+import { REMOVE_SUBTRACTION } from "../../../app/actionTypes";
+import { RemoveSubtraction, mapStateToProps, mapDispatchToProps } from "../Remove";
+import { routerLocationHasState } from "../../../utils/utils";
 
 describe("<RemoveSubtraction />", () => {
     let props;
-    let wrapper;
 
-    it("renders correctly", () => {
+    beforeEach(() => {
         props = {
-            router: { location: { state: { removeSubtraction: true } } },
-            id: "123abc",
+            show: true,
+            id: "foo",
             onHide: jest.fn(),
             onConfirm: jest.fn()
         };
-        wrapper = shallow(<RemoveSubtraction {...props} />);
+    });
+
+    it.each([true, false])("should render when [show=%p]", show => {
+        props.show = show;
+        const wrapper = shallow(<RemoveSubtraction {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("Dispatch Functions", () => {
-        const initialState = {
-            router: { location: { state: { removeSubtraction: true } } }
-        };
-        const store = mockStore(initialState);
-        let spy;
+    it("should call onConfirm() when onConfirm() on <RemoveModal /> is called", () => {
+        const wrapper = shallow(<RemoveSubtraction {...props} />);
+        wrapper.props().onConfirm();
+        expect(props.onConfirm).toHaveBeenCalledWith("foo");
+    });
 
-        afterEach(() => {
-            spy.restore();
+    it("should call onHide() when onHide() on <RemoveModal /> is called", () => {
+        const wrapper = shallow(<RemoveSubtraction {...props} />);
+        wrapper.props().onHide();
+        expect(props.onHide).toHaveBeenCalled();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it.each([true, false])("should return props when routerLocationHasState() returns %p", show => {
+        routerLocationHasState.mockReturnValue(show);
+        const props = mapStateToProps({});
+        expect(props).toEqual({
+            show
         });
+    });
+});
 
-        it("Closing modal dispatches location state change", () => {
-            spy = sinon.spy(actions, "removeSubtraction");
-            expect(spy.called).toBe(false);
+describe("mapDispatchToProps", () => {
+    let dispatch;
+    let props;
 
-            wrapper = shallow(<RemoveSubtractionContainer store={store} id="123abc" />).dive();
-            wrapper.find({ id: "123abc" }).prop("onConfirm")();
-            expect(spy.calledWith("123abc")).toBe(true);
-        });
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
 
-        it("Clicking delete button dispatches removeSubtraction() action", () => {
-            spy = sinon.spy(store, "dispatch");
-            expect(spy.called).toBe(false);
+    it("should return onHide() in props", () => {
+        props.onHide();
+        expect(dispatch).toHaveBeenCalledWith(push({ state: { removeSubtraction: false } }));
+    });
 
-            wrapper = shallow(<RemoveSubtractionContainer store={store} id="123abc" />).dive();
-            wrapper.find({ id: "123abc" }).prop("onHide")();
-            expect(spy.calledWith(push({ state: { removeSubtraction: false } }))).toBe(true);
+    it("should return onConfirm() in props", () => {
+        props.onConfirm("foo");
+        expect(dispatch).toHaveBeenCalledWith({
+            type: REMOVE_SUBTRACTION.REQUESTED,
+            subtractionId: "foo"
         });
     });
 });

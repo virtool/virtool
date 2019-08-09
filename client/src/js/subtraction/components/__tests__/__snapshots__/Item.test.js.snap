@@ -1,14 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
-<LinkContainer
-  activeClassName="active"
+exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
+<withRouter(LinkContainer)
   className="spaced"
-  exact={false}
-  key="123abc"
-  replace={false}
-  strict={false}
-  to="/subtraction/123abc"
+  key="Foo Bar"
+  to="/subtraction/Foo Bar"
 >
   <ListGroupItem
     allowFocus={false}
@@ -24,7 +20,7 @@ exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
         xs={8}
       >
         <strong>
-          123abc
+          Foo Bar
         </strong>
       </Col>
       <Col
@@ -41,9 +37,8 @@ exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
           justifyContent="flex-start"
           wrap="nowrap"
         >
-          <Loader
-            color="#3c8786"
-            size="14px"
+          <SubtractionItemIcon
+            ready={false}
           />
           <FlexItem
             alignSelf={null}
@@ -60,18 +55,14 @@ exports[`<SubtractionItem /> renders correctly when entry is not ready 1`] = `
       </Col>
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;
 
-exports[`<SubtractionItem /> renders correctly when entry is ready 1`] = `
-<LinkContainer
-  activeClassName="active"
+exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
+<withRouter(LinkContainer)
   className="spaced"
-  exact={false}
-  key="123abc"
-  replace={false}
-  strict={false}
-  to="/subtraction/123abc"
+  key="Foo Bar"
+  to="/subtraction/Foo Bar"
 >
   <ListGroupItem
     allowFocus={false}
@@ -87,7 +78,7 @@ exports[`<SubtractionItem /> renders correctly when entry is ready 1`] = `
         xs={8}
       >
         <strong>
-          123abc
+          Foo Bar
         </strong>
       </Col>
       <Col
@@ -104,12 +95,8 @@ exports[`<SubtractionItem /> renders correctly when entry is ready 1`] = `
           justifyContent="flex-start"
           wrap="nowrap"
         >
-          <Icon
-            bsStyle="success"
-            faStyle="fas"
-            fixedWidth={false}
-            name="check"
-            pullRight={false}
+          <SubtractionItemIcon
+            ready={true}
           />
           <FlexItem
             alignSelf={null}
@@ -126,5 +113,22 @@ exports[`<SubtractionItem /> renders correctly when entry is ready 1`] = `
       </Col>
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
+`;
+
+exports[`<SubtractionItemIcon /> should render when [ready=false] 1`] = `
+<Loader
+  color="#3c8786"
+  size="14px"
+/>
+`;
+
+exports[`<SubtractionItemIcon /> should render when [ready=true] 1`] = `
+<Icon
+  bsStyle="success"
+  faStyle="fas"
+  fixedWidth={false}
+  name="check"
+  pullRight={false}
+/>
 `;
