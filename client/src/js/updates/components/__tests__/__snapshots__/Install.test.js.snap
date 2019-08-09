@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SoftwareInstall /> renders correctly 1`] = `
+exports[`<SoftwareInstall /> should render 1`] = `
 <Modal
   animation={true}
   autoFocus={true}

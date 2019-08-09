@@ -12,7 +12,6 @@ import virtool.settings
 import virtool.setup.db
 import virtool.setup.paths
 import virtool.setup.proxy
-import virtool.users
 import virtool.utils
 from virtool.api.utils import json_response
 
@@ -105,46 +104,6 @@ async def post_db(req):
     return await get_db(req)
 
 
-async def get_user(req):
-    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_user.html"))
-
-    data = {
-        **req.app["setup"]["user"]
-    }
-
-    data["password"] = data.pop("placeholder")
-
-    html = template.render(
-        hash=virtool.utils.get_static_hash(req),
-        **data
-    )
-
-    return web.Response(body=html, content_type="text/html")
-
-
-async def post_user(req):
-    data = await req.post()
-
-    if data["password"] != req.app["setup"]["user"]["placeholder"]:
-        v = Validator({
-            "id": {"type": "string", "required": True},
-            "password": {"type": "string", "required": True}
-        }, allow_unknown=False)
-
-        v.validate(dict(data))
-
-        data = v.document
-
-        req.app["setup"]["user"].update({
-            "id": data["id"],
-            "password": virtool.users.hash_password(data["password"]),
-            "placeholder": "".join(["*"] * len(data["password"])),
-            "ready": True
-        })
-
-    return await get_user(req)
-
-
 async def get_path(req):
     mode = "data" if req.path == "/setup/data" else "watch"
 
@@ -208,7 +167,6 @@ async def get_finish(req):
         hash=virtool.utils.get_static_hash(req),
         config_path=config_path,
         proxy=proxy,
-        user_id=setup["user"]["id"],
         db_name=db_name,
         data_path=data_path,
         watch_path=watch_path
@@ -231,11 +189,6 @@ async def get_save(req):
     )
 
     db = client[setup["db"]["db_name"]]
-
-    user_id = setup["user"]["id"]
-    password = setup["user"]["password"]
-
-    await virtool.setup.db.add_first_user(db, user_id, password)
 
     data_path = setup["data"]["path"]
 

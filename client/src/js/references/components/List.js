@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
 import { Panel, Button } from "react-bootstrap";
 import { remoteReference, findReferences } from "../actions";
@@ -6,15 +7,34 @@ import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../bas
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { getHasOfficial, getTerm } from "../selectors";
 import AddReference from "./Add";
-import ReferenceItem from "./Item";
+import ReferenceItem from "./Item/Item";
 import ReferenceToolbar from "./Toolbar";
+
+const ReferenceListContainer = styled.div`
+    display: grid;
+    grid-auto-rows: 1fr;
+    grid-gap: 0 15px;
+    grid-template-columns: 1fr;
+
+    @media (min-width: 764px) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (min-width: 992px) {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    @media (min-width: 1420px) {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+`;
 
 class ReferenceList extends React.Component {
     componentDidMount() {
         this.props.onLoadNextPage(this.props.term, 1);
     }
 
-    renderRow = index => <ReferenceItem key={this.props.documents[index].id} {...this.props.documents[index]} />;
+    renderRow = index => <ReferenceItem key={this.props.documents[index].id} index={index} />;
 
     render() {
         if (this.props.documents === null) {
@@ -60,10 +80,10 @@ class ReferenceList extends React.Component {
 
                 <ReferenceToolbar />
 
-                <div className="card-container">
+                <ReferenceListContainer>
                     {referenceComponents}
                     {installOfficialComponent}
-                </div>
+                </ReferenceListContainer>
 
                 {noRefs}
 

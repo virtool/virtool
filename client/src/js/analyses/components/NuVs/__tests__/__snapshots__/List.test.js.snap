@@ -14,7 +14,7 @@ exports[`<NuVsList /> should render 1`] = `
     itemSize={58}
     width={200}
   >
-    <Component />
+    MockNuVsItem
   </List__StyledNuVsList>
 </div>
 `;

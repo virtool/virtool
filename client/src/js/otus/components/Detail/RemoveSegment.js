@@ -1,38 +1,26 @@
-import React from "react";
+import React, { useCallback } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { reject } from "lodash-es";
 import { RemoveModal } from "../../../base";
 
-class RemoveSegment extends React.Component {
-    handleSubmit = () => {
-        let newArray = this.props.schema.slice();
-        newArray = reject(newArray, ["name", this.props.curSeg.name]);
-        this.props.onSubmit(newArray);
-    };
+export const RemoveSegment = ({ activeName, schema, show, onHide, onSubmit }) => {
+    const handleSubmit = useCallback(() => {
+        onSubmit(reject(schema, { name: activeName }));
+    }, [activeName]);
 
-    render() {
-        return (
-            <RemoveModal
-                name={this.props.curSeg.name}
-                noun="Segment"
-                onConfirm={this.handleSubmit}
-                onHide={this.props.onHide}
-                show={this.props.show}
-            />
-        );
-    }
-}
+    return <RemoveModal name={activeName} noun="Segment" onConfirm={handleSubmit} onHide={onHide} show={show} />;
+};
 
 RemoveSegment.propTypes = {
+    activeName: PropTypes.string.isRequired,
     schema: PropTypes.arrayOf(PropTypes.object),
     show: PropTypes.bool.isRequired,
     onHide: PropTypes.func,
-    onSubmit: PropTypes.func,
-    curSeg: PropTypes.object.isRequired
+    onSubmit: PropTypes.func
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     schema: state.otus.detail.schema
 });
 

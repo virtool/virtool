@@ -1,8 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<References /> renders <LoadingPlaceholder /> when no settings data available 1`] = `<LoadingPlaceholder />`;
-
-exports[`<References /> renders <ReferenceSettings /> correctly 1`] = `
+exports[`<ReferenceSettings /> should render 1`] = `
 <div
   className="settings-container"
 >
@@ -19,29 +17,14 @@ exports[`<References /> renders <ReferenceSettings /> correctly 1`] = `
 </div>
 `;
 
-exports[`<References /> renders correctly with settings data 1`] = `
-<div
-  className="container"
->
-  <Switch>
-    <Route
-      component={[Function]}
-      exact={true}
-      path="/refs"
-    />
-    <Redirect
-      from="/refs/settings/*"
-      push={false}
-      to="/refs/settings"
-    />
-    <Route
-      component={[Function]}
-      path="/refs/settings"
-    />
-    <Route
-      component={[Function]}
-      path="/refs/:refId"
-    />
-  </Switch>
-</div>
+exports[`<References /> should render when [loading=false] 1`] = `
+<References
+  loading={false}
+/>
+`;
+
+exports[`<References /> should render when [loading=true] 1`] = `
+<References
+  loading={true}
+/>
 `;

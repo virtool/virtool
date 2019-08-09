@@ -1,28 +1,39 @@
 import React from "react";
 import numbro from "numbro";
-import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { IDRow } from "../../base";
 import EditSample from "./Edit";
 
-const cellNames = ["host", "isolate", "locale"];
-
-const SampleDetailGeneral = props => (
+export const SampleDetailGeneral = ({
+    count,
+    encoding,
+    gc,
+    host,
+    isolate,
+    lengthRange,
+    locale,
+    paired,
+    subtractionId,
+    srna
+}) => (
     <div>
-        <table className="table table-bordered">
+        <Table bordered>
             <tbody>
-                {map(cellNames, field => (
-                    <tr key={field}>
-                        <th className="col-xs-4 text-capitalize">{field}</th>
-                        <td className="col-xs-8">{props[field]}</td>
-                    </tr>
-                ))}
-
-                <IDRow id={props.id} />
+                <tr>
+                    <th className="col-xs-4">Host</th>
+                    <td className="col-xs-8">{host}</td>
+                </tr>
+                <tr>
+                    <th>Isolate</th>
+                    <td>{isolate}</td>
+                </tr>
+                <tr>
+                    <th>Locale</th>
+                    <td>{locale}</td>
+                </tr>
             </tbody>
-        </table>
+        </Table>
 
         <Panel>
             <Panel.Heading>Library</Panel.Heading>
@@ -30,27 +41,27 @@ const SampleDetailGeneral = props => (
                 <tbody>
                     <tr>
                         <th className="col-xs-4">Encoding</th>
-                        <td className="col-xs-8">{props.encoding}</td>
+                        <td className="col-xs-8">{encoding}</td>
                     </tr>
                     <tr>
                         <th>Read Count</th>
-                        <td>{props.count}</td>
+                        <td>{count}</td>
                     </tr>
                     <tr>
                         <th>Read Size</th>
-                        <td>{props.srna ? "sRNA" : "Normal"}</td>
+                        <td>{srna ? "sRNA" : "Normal"}</td>
                     </tr>
                     <tr>
                         <th>Length Range</th>
-                        <td>{props.lengthRange}</td>
+                        <td>{lengthRange}</td>
                     </tr>
                     <tr>
                         <th>GC Content</th>
-                        <td>{props.gc}</td>
+                        <td>{gc}</td>
                     </tr>
                     <tr>
                         <th>Paired</th>
-                        <td>{props.paired ? "Yes" : "No"}</td>
+                        <td>{paired ? "Yes" : "No"}</td>
                     </tr>
                 </tbody>
             </Table>
@@ -63,7 +74,7 @@ const SampleDetailGeneral = props => (
                     <tr>
                         <th className="col-xs-4">Host</th>
                         <td className="col-xs-8">
-                            <Link to={`/subtraction/${props.subtraction.id}`}>{props.subtraction.id}</Link>
+                            <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
                         </td>
                     </tr>
                 </tbody>
@@ -74,16 +85,21 @@ const SampleDetailGeneral = props => (
     </div>
 );
 
-const mapStateToProps = state => {
-    const detail = state.samples.detail;
+export const mapStateToProps = state => {
+    const { host, isolate, locale, paired, quality, srna, subtraction } = state.samples.detail;
+    const { count, encoding, gc, length } = quality;
 
     return {
-        ...detail,
-        gc: numbro(detail.quality.gc / 100).format("0.0 %"),
-        count: numbro(detail.quality.count).format("0.0 a"),
-        encoding: detail.quality.encoding,
-        lengthRange: detail.quality.length.join(" - "),
-        userId: detail.user.id
+        encoding,
+        host,
+        isolate,
+        locale,
+        paired,
+        srna,
+        gc: numbro(gc / 100).format("0.0 %"),
+        count: numbro(count).format("0.0 a"),
+        lengthRange: length.join(" - "),
+        subtractionId: subtraction.id
     };
 };
 

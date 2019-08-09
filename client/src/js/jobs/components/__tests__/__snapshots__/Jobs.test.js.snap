@@ -1,23 +1,47 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Jobs /> renders <LoadingPlaceholder /> if settings data is unavailable 1`] = `<LoadingPlaceholder />`;
+exports[`<Jobs /> should render placeholder when loading 1`] = `<LoadingPlaceholder />`;
 
-exports[`<Jobs /> renders correctly 1`] = `
+exports[`<Jobs /> should render when loaded 1`] = `
 <div
   className="container"
 >
   <Switch>
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(JobsList)",
+          "type": [Function],
+        }
+      }
       exact={true}
       path="/jobs"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(JobsResources)",
+          "type": [Function],
+        }
+      }
       path="/jobs/resources"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(JobDetail)",
+          "type": [Function],
+        }
+      }
       path="/jobs/:jobId"
     />
   </Switch>

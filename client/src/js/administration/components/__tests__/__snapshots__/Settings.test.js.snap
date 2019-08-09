@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Settings /> should render 1`] = `
+exports[`<Settings /> should render when [props.loading=false] 1`] = `
 <div
   className="container-noside"
 >
@@ -34,7 +34,6 @@ exports[`<Settings /> should render 1`] = `
     <Redirect
       exact={true}
       from="/administration"
-      push={false}
       to="/administration/settings"
     />
     <Route
@@ -42,23 +41,47 @@ exports[`<Settings /> should render 1`] = `
       path="/administration/settings"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(ManageUsers)",
+          "type": [Function],
+        }
+      }
       exact={true}
       path="/administration/users"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(SoftwareUpdateViewer)",
+          "type": [Function],
+        }
+      }
       path="/administration/updates"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(UserItem)",
+          "type": [Function],
+        }
+      }
       path="/administration/users/:userId"
     />
   </Switch>
 </div>
 `;
 
-exports[`<Settings /> should render placeholder when loading 1`] = `
+exports[`<Settings /> should render when [props.loading=true] 1`] = `
 <div
   className="container-noside"
 >

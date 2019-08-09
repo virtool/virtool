@@ -1,57 +1,78 @@
-import * as actions from "../../../administration/actions";
-import SoftwareChannels, { ChannelButton } from "../Channels";
+import { UPDATE_SETTINGS } from "../../../app/actionTypes";
+import { SoftwareChannels, ChannelButton, mapStateToProps, mapDispatchToProps } from "../Channels";
 
-describe("<SoftwareChannels />", () => {
-    const initialState = {
-        settings: { data: { software_channel: "beta" } }
-    };
-    const store = mockStore(initialState);
+describe("<ChannelButton />", () => {
     let props;
-    let wrapper;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<SoftwareChannels store={store} />).dive();
+    beforeEach(() => {
+        props = {
+            channel: "stable",
+            checked: true,
+            onClick: jest.fn()
+        };
+    });
+
+    it.each(["stable", "beta"])("should render when [channel=%p]", channel => {
+        props.channel = channel;
+        const wrapper = shallow(<ChannelButton {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("<ChannelButton /> subcomponent", () => {
-        beforeEach(() => {
-            props = {
-                channel: "stable",
-                checked: true,
-                onClick: sinon.spy()
-            };
-        });
+    it("should call onClick when radio button is clicked", () => {
+        const wrapper = shallow(<ChannelButton {...props} />);
+        expect(props.onClick).not.toHaveBeenCalled();
+        wrapper.prop("onClick")();
+        expect(props.onClick).toHaveBeenCalledWith(props.channel);
+    });
+});
 
-        it("renders correctly", () => {
-            wrapper = shallow(<ChannelButton {...props} />);
-            expect(wrapper).toMatchSnapshot();
+describe("<SoftwareChannels />", () => {
+    let props;
 
-            wrapper.setProps({ channel: "testing" });
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("calls onClick callback when radio button is clicked", () => {
-            expect(props.onClick.called).toBe(false);
-
-            wrapper = shallow(<ChannelButton {...props} />);
-            wrapper.prop("onClick")();
-
-            expect(props.onClick.calledWith(props.channel)).toBe(true);
-        });
+    beforeEach(() => {
+        props = {
+            channel: "stable",
+            onSetSoftwareChannel: jest.fn()
+        };
     });
 
-    it("Clicking on a ChannelButton dispatches updateSetting() action", () => {
-        const spy = sinon.spy(actions, "updateSetting");
-        expect(spy.called).toBe(false);
+    it.each(["stable", "beta", "alpha"])("should render when [channel=%p]", channel => {
+        props.channel = channel;
+        const wrapper = shallow(<SoftwareChannels {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        wrapper = mount(<SoftwareChannels store={store} />);
+    it("should call onSetSoftwareChannel() when radio button is clicked", () => {
+        const wrapper = shallow(<SoftwareChannels {...props} />);
         wrapper
-            .find(ChannelButton)
-            .at(0)
-            .prop("onClick")("stable");
-        expect(spy.calledWith("software_channel", "stable")).toBe(true);
+            .find("ChannelButton")
+            .at(1)
+            .props()
+            .onClick("beta");
+        expect(props.onSetSoftwareChannel).toHaveBeenCalledWith("beta");
+    });
+});
 
-        spy.restore();
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            settings: { data: { software_channel: "beta" } }
+        };
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            channel: "beta"
+        });
+    });
+});
+
+describe("mapDispatchToProps()", () => {
+    it("should return onSetSoftwareChannel() in props", () => {
+        const dispatch = jest.fn();
+        const props = mapDispatchToProps(dispatch);
+        props.onSetSoftwareChannel("beta");
+        expect(dispatch).toHaveBeenCalledWith({
+            type: UPDATE_SETTINGS.REQUESTED,
+            update: { software_channel: "beta" }
+        });
     });
 });

@@ -18,20 +18,81 @@ import samplesReducer from "../samples/reducer";
 import subtractionReducer from "../subtraction/reducer";
 import updatesReducer from "../updates/reducer";
 import usersReducer from "../users/reducer";
-import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import rootSaga from "./sagas";
 
-const appInitialState = {
-    pending: false
+const getInitialState = () => {
+    const { dev, first, login } = window.virtool;
+
+    return {
+        dev,
+        first,
+        login,
+        reset: false,
+        pending: false
+    };
 };
 
-const appReducer = (state = appInitialState, action) => {
+const appReducer = (state = getInitialState(), action) => {
     switch (action.type) {
         case SET_APP_PENDING:
             return { ...state, pending: true };
 
         case UNSET_APP_PENDING:
             return { ...state, pending: false };
+
+        case LOGIN.SUCCEEDED:
+            if (action.data.reset) {
+                return {
+                    ...state,
+                    login: false,
+                    reset: true,
+                    resetCode: action.data.reset_code
+                };
+            }
+
+            return {
+                ...state,
+                login: false,
+                reset: false
+            };
+
+        case LOGIN.FAILED:
+            return {
+                ...state,
+                login: true
+            };
+
+        case LOGOUT.SUCCEEDED:
+            return {
+                ...state,
+                login: true
+            };
+
+        case RESET_PASSWORD.SUCCEEDED:
+            return {
+                ...state,
+                login: false,
+                reset: false,
+                resetCode: null,
+                resetError: null
+            };
+
+        case RESET_PASSWORD.FAILED:
+            return {
+                ...state,
+                login: false,
+                reset: true,
+                resetCode: action.data.reset_code,
+                resetError: action.data.error
+            };
+
+        case CREATE_FIRST_USER.SUCCEEDED:
+            return {
+                ...state,
+                login: false,
+                first: false
+            };
     }
 
     return state;

@@ -1,43 +1,62 @@
-import { Provider } from "react-redux";
-import * as actions from "../../actions";
-import SoftwareUpdateViewer from "../Viewer";
+import { GET_SOFTWARE_UPDATES } from "../../../app/actionTypes";
+import { SoftwareUpdateViewer, mapStateToProps, mapDispatchToProps } from "../Viewer";
 
 describe("<SoftwareUpdateViewer />", () => {
-    let initialState;
-    let store;
-    let wrapper;
+    let props;
 
-    it("renders correctly when releases data available", () => {
-        initialState = {
-            settings: { data: { software_channel: "stable" } },
-            updates: { releases: [] }
+    beforeEach(() => {
+        props = {
+            channel: "stable",
+            releases: [{ id: "foo" }, { id: "bar" }],
+            onGet: jest.fn()
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<SoftwareUpdateViewer store={store} />).dive();
+    });
+
+    it("should render when releases available", () => {
+        const wrapper = shallow(<SoftwareUpdateViewer {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders <LoadingPlaceholder /> when releases data not available", () => {
-        initialState = {
-            settings: { data: { software_channel: "stable" } },
-            updates: { releases: null }
-        };
-        store = mockStore(initialState);
-        wrapper = shallow(<SoftwareUpdateViewer store={store} />).dive();
+    it("should render placeholder when [releases=null]", () => {
+        props.releases = null;
+        const wrapper = shallow(<SoftwareUpdateViewer {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("Dispatches getSoftwareUpdates() action on component mount", () => {
-        const spy = sinon.spy(actions, "getSoftwareUpdates");
-        expect(spy.called).toBe(false);
+    it("should call onGet() when component mounts", () => {
+        shallow(<SoftwareUpdateViewer {...props} />);
+        expect(props.onGet).toHaveBeenCalled();
+    });
+});
 
-        wrapper = mount(
-            <Provider store={store}>
-                <SoftwareUpdateViewer />
-            </Provider>
-        );
-        expect(spy.calledOnce).toBe(true);
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const releases = [{ id: "foo" }, { id: "bar" }];
+        const state = {
+            settings: {
+                data: {
+                    software_channel: "stable"
+                }
+            },
+            updates: {
+                releases
+            }
+        };
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            channel: "stable",
+            releases
+        });
+    });
+});
 
-        spy.restore();
+describe("mapDispatchToProps()", () => {
+    it("should return onGet() in props", () => {
+        const dispatch = jest.fn();
+        const props = mapDispatchToProps(dispatch);
+        props.onGet();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: GET_SOFTWARE_UPDATES.REQUESTED
+        });
     });
 });

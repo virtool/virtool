@@ -1,8 +1,10 @@
 import virtool.db.hmm
+import virtool.db.sessions
 import virtool.db.users
 import virtool.db.utils
 import virtool.errors
 import virtool.groups
+import virtool.http.auth
 import virtool.http.routes
 import virtool.users
 import virtool.utils
@@ -77,12 +79,11 @@ async def create(req):
     """
     db = req.app["db"]
     data = await req.json()
-    settings = req.app["settings"]
 
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    if len(data["password"]) < settings["minimum_password_length"]:
+    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
         return bad_request("Password does not meet length requirement")
 
     user_id = data["user_id"]
@@ -101,6 +102,75 @@ async def create(req):
         headers=headers,
         status=201
     )
+
+
+@routes.put("/api/users/first", public=True, schema={
+    "user_id": {
+        "type": "string",
+        "coerce": virtool.validators.strip,
+        "empty": False,
+        "required": True
+    },
+    "password": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    }
+})
+async def create_first(req):
+    """
+    Add a first user to the user database.
+
+    """
+    db = req.app["db"]
+    data = await req.json()
+
+    if await db.users.count():
+        return conflict("Virtool already has at least one user")
+
+    if data["user_id"] == "virtool":
+        return bad_request("Reserved user name: virtool")
+
+    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
+        return bad_request("Password does not meet length requirement")
+
+    user_id = data["user_id"]
+
+    await virtool.db.users.create(
+        db,
+        user_id,
+        data["password"],
+        force_reset=False
+    )
+
+    document = await virtool.db.users.edit(
+        db,
+        user_id,
+        administrator=True
+    )
+
+    headers = {
+        "Location": f"/api/users/{user_id}"
+    }
+
+    session, token = await virtool.db.sessions.create_session(
+        db,
+        virtool.http.auth.get_ip(req),
+        user_id
+    )
+
+    req["client"].authorize(session, is_api=False)
+
+    resp = json_response(
+        virtool.utils.base_processor({key: document[key] for key in virtool.db.users.PROJECTION}),
+        headers=headers,
+        status=201
+    )
+
+    resp.set_cookie("session_id", session["_id"])
+    resp.set_cookie("session_token", token)
+
+    return resp
 
 
 @routes.patch("/api/users/{user_id}", admin=True, schema={

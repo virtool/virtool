@@ -1,11 +1,8 @@
 import { SoftwareInstall } from "../Install";
 
 describe("<SoftwareInstall />", () => {
-    let props;
-    let wrapper;
-
-    it("renders correctly", () => {
-        props = {
+    it("should render", () => {
+        const props = {
             show: true,
             process: ["one", "two", "three"],
             releases: [{ name: "test", size: 1024 }],
@@ -13,7 +10,7 @@ describe("<SoftwareInstall />", () => {
             onInstall: jest.fn(),
             onHide: jest.fn()
         };
-        wrapper = shallow(<SoftwareInstall {...props} />);
+        const wrapper = shallow(<SoftwareInstall {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

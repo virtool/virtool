@@ -1,8 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveSegment /> renders correctly 1`] = `
+exports[`<RemoveSegment /> should render when [show=false] 1`] = `
 <RemoveModal
-  name="test"
+  name="bar"
+  noun="Segment"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+  show={false}
+/>
+`;
+
+exports[`<RemoveSegment /> should render when [show=true] 1`] = `
+<RemoveModal
+  name="bar"
   noun="Segment"
   onConfirm={[Function]}
   onHide={[MockFunction]}

@@ -96,6 +96,9 @@ export const updateAPIKey = ({ keyId, permissions }) =>
  */
 export const removeAPIKey = ({ keyId }) => Request.delete(`/api/account/keys/${keyId}`);
 
+export const login = ({ username, password, remember }) =>
+    Request.post("/api/account/login").send({ username, password, remember });
+
 /**
  * Logs out the current session.
  *
@@ -103,3 +106,6 @@ export const removeAPIKey = ({ keyId }) => Request.delete(`/api/account/keys/${k
  * @returns {promise}
  */
 export const logout = () => Request.get("/api/account/logout");
+
+export const resetPassword = ({ password, resetCode }) =>
+    Request.post("/api/account/reset").send({ password, reset_code: resetCode });

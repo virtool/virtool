@@ -4,34 +4,6 @@ import virtool.setup.db
 import virtool.users
 
 
-async def test_add_first_user(dbi, static_time):
-    await virtool.setup.db.add_first_user(dbi, "bob", "hashed")\
-
-    assert await dbi.users.find_one() == {
-        "_id": "bob",
-        # A list of group _ids the user is associated with.
-        "administrator": True,
-        "groups": list(),
-        "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
-        "settings": {
-            "skip_quick_analyze_dialog": True,
-            "show_ids": False,
-            "show_versions": False,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
-        },
-        "permissions": {p: True for p in virtool.users.PERMISSIONS},
-        "password": "hashed",
-        "primary_group": "",
-        # Should the user be forced to reset their password on their next login?
-        "force_reset": False,
-        # A timestamp taken at the last password change.
-        "last_password_change": static_time.datetime,
-        # Should all of the user's sessions be invalidated so that they are forced to login next time they
-        # download the client.
-        "invalidate_sessions": False
-    }
-
-
 @pytest.mark.parametrize("error", [None, "name_error", "connection_error"])
 async def test_check_setup(error, test_db_connection_string, test_db_name):
     """

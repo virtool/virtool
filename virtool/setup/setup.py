@@ -4,7 +4,6 @@ import virtool.config
 import virtool.settings
 import virtool.setup.db
 import virtool.setup.handlers
-import virtool.users
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -20,13 +19,6 @@ def get_defaults() -> dict:
         "db": {
             "db_connection_string": "",
             "db_name": "",
-            "ready": False,
-            "error": None
-        },
-        "user": {
-            "id": "",
-            "password": "",
-            "placeholder": "",
             "ready": False,
             "error": None
         },
@@ -50,8 +42,6 @@ def setup_routes(app):
     app.router.add_post(r"/setup/proxy", virtool.setup.handlers.post_proxy)
     app.router.add_get(r"/setup/db", virtool.setup.handlers.get_db)
     app.router.add_post(r"/setup/db", virtool.setup.handlers.post_db)
-    app.router.add_get(r"/setup/user", virtool.setup.handlers.get_user)
-    app.router.add_post(r"/setup/user", virtool.setup.handlers.post_user)
     app.router.add_get(r"/setup/data", virtool.setup.handlers.get_path)
     app.router.add_post(r"/setup/data", virtool.setup.handlers.post_path)
     app.router.add_get(r"/setup/watch", virtool.setup.handlers.get_path)

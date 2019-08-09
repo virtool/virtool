@@ -15,13 +15,6 @@ def setup_defaults():
             "ready": False,
             "error": None
         },
-        "user": {
-            "id": "",
-            "password": "",
-            "placeholder": "",
-            "ready": False,
-            "error": None
-        },
         "data": {
             "path": "",
             "ready": False,

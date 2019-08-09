@@ -1,89 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Releases /> renders correctly when there are multiple releases 1`] = `
+exports[`<Releases /> should render when there are no releases (up-to-date) 1`] = `
 <Uncontrolled(Panel)>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-    style={
-      Object {
-        "padding": "10px 15px",
-      }
-    }
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={1}
-        shrink={0}
-      >
-        <strong
-          className="text-warning"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="arrow-alt-circle-up"
-            pullRight={false}
-          />
-           Update
-          s
-           Available
-        </strong>
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={15}
-        shrink={0}
-      >
-        <Button
-          bsStyle="primary"
-          icon="download"
-          onClick={[Function]}
-          pullRight={false}
-          tipPlacement="top"
-        >
-          Install
-        </Button>
-      </FlexItem>
-    </Flex>
-  </PanelBody>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <Release
-      key="test-b"
-      name="test-b"
-    />
-    <Release
-      key="test-c"
-      name="test-c"
-    />
-  </ListGroup>
-  <Connect(SoftwareInstall) />
-</Uncontrolled(Panel)>
-`;
-
-exports[`<Releases /> renders correctly when there are no releases 1`] = `
-<Uncontrolled(Panel)>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-    style={
-      Object {
-        "padding": "10px 15px",
-      }
-    }
-  >
+  <Releases__StyledReleasesPanelBody>
     <Icon
       bsStyle="success"
       faStyle="fas"
@@ -96,6 +15,27 @@ exports[`<Releases /> renders correctly when there are no releases 1`] = `
     >
        Software is up-to-date
     </strong>
-  </PanelBody>
+  </Releases__StyledReleasesPanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<Releases /> should render when there are releases 1`] = `
+<Uncontrolled(Panel)>
+  <Releases__StyledReleasesPanelBody>
+    <ReleasesList
+      onShowInstall={[MockFunction]}
+      releases={
+        Array [
+          Object {
+            "name": "foo",
+          },
+          Object {
+            "name": "b",
+          },
+        ]
+      }
+    />
+    <Connect(SoftwareInstall) />
+  </Releases__StyledReleasesPanelBody>
 </Uncontrolled(Panel)>
 `;

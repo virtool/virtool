@@ -6,7 +6,7 @@
 import { get, includes } from "lodash-es";
 import { push } from "connected-react-router";
 import { matchPath } from "react-router-dom";
-import { SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
+import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 import { put, all } from "redux-saga/effects";
 
@@ -34,12 +34,15 @@ export function* apiCall(apiMethod, action, actionType, extra = {}, extraFunctio
         const statusCode = get(error, "response.statusCode");
 
         if (statusCode === 401) {
-            window.location = `/login?expired=true&return_to=${window.location.pathname}`;
+            yield put({
+                type: LOGOUT.SUCCEEDED
+            });
             return;
         }
 
         if (get(error, "response.body")) {
             yield putGenericError(actionType, error);
+            return;
         }
 
         throw error;

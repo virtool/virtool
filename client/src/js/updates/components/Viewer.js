@@ -6,7 +6,7 @@ import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
 
-class SoftwareUpdateViewer extends React.Component {
+export class SoftwareUpdateViewer extends React.Component {
     componentDidMount() {
         this.props.onGet();
     }
@@ -36,12 +36,12 @@ class SoftwareUpdateViewer extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     channel: state.settings.data.software_channel,
     releases: state.updates.releases
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onGet: () => {
         dispatch(getSoftwareUpdates());
     }

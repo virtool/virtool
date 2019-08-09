@@ -37,11 +37,7 @@ exports[`<ManageUsers /> renders correctly 1`] = `
             />
           </InputGroup>
         </FormGroup>
-        <LinkContainer
-          activeClassName="active"
-          exact={false}
-          replace={false}
-          strict={false}
+        <withRouter(LinkContainer)
           to={
             Object {
               "state": Object {
@@ -57,12 +53,8 @@ exports[`<ManageUsers /> renders correctly 1`] = `
             tip="Manage Groups"
             tipPlacement="top"
           />
-        </LinkContainer>
-        <LinkContainer
-          activeClassName="active"
-          exact={false}
-          replace={false}
-          strict={false}
+        </withRouter(LinkContainer)>
+        <withRouter(LinkContainer)
           to={
             Object {
               "state": Object {
@@ -78,7 +70,7 @@ exports[`<ManageUsers /> renders correctly 1`] = `
             tip="Create User"
             tipPlacement="top"
           />
-        </LinkContainer>
+        </withRouter(LinkContainer)>
       </div>
     </Col>
     <Col

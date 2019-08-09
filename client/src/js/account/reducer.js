@@ -10,7 +10,8 @@ import {
     CHANGE_ACCOUNT_PASSWORD,
     GET_API_KEYS,
     CREATE_API_KEY,
-    CLEAR_API_KEY
+    CLEAR_API_KEY,
+    LOGOUT
 } from "../app/actionTypes";
 
 /**
@@ -58,6 +59,9 @@ export default function accountReducer(state = initialState, action) {
 
         case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
             return { ...state, settings: action.data };
+
+        case LOGOUT.SUCCEEDED:
+            return { ...initialState };
 
         default:
             return state;

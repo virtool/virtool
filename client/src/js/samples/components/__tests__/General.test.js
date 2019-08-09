@@ -1,57 +1,75 @@
-import SampleDetailGeneral from "../General";
+import { SampleDetailGeneral, mapStateToProps } from "../General";
 
 describe("<SampleDetailGeneral />", () => {
-    let initialState = {
-        samples: {
-            detail: {
-                id: "123abc",
-                name: "test-name",
-                host: "test-host",
-                isolate: "test-isolate",
-                locale: "test-locale",
-                quality: {
-                    gc: 50,
-                    count: 100,
-                    encoding: "test",
-                    length: [0, 50, 100]
-                },
-                user: { id: "test-user" },
-                subtraction: { id: "test-subtraction" }
-            }
-        }
-    };
-    let store;
-    let wrapper;
+    let props;
 
-    it("renders correctly with sRNA reads and paired read files", () => {
-        initialState = {
-            samples: {
-                detail: {
-                    ...initialState.samples.detail,
-                    srna: true,
-                    paired: true,
-                    files: ["hello", "world"]
-                }
-            }
+    beforeEach(() => {
+        props = {
+            count: 235,
+            encoding: "Sanger / Illumina 2.1",
+            gc: "42.3%",
+            host: "Malus domestica",
+            isolate: "Isolate Foo",
+            lengthRange: "41 - 76",
+            locale: "Bar",
+            paired: false,
+            subtractionId: "Arabidopsis thaliana",
+            srna: false
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<SampleDetailGeneral store={store} />).dive();
+    });
+
+    it.each([true, false])("should render with [srna=%p]", srna => {
+        props.srna = srna;
+        const wrapper = shallow(<SampleDetailGeneral {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly with normal reads and single read file", () => {
-        initialState = {
+    it.each([true, false])("should render with [paired=%p]", paired => {
+        props.paired = paired;
+        const wrapper = shallow(<SampleDetailGeneral {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
             samples: {
                 detail: {
-                    ...initialState.samples.detail,
-                    srna: false,
+                    id: "foo",
+                    name: "Foo",
+                    host: "Malus domestica",
+                    isolate: "Isolate Foo",
+                    locale: "Bar",
                     paired: false,
-                    files: ["foobar"]
+                    quality: {
+                        gc: 31.2452,
+                        count: 13198329,
+                        encoding: "Foo 1.2",
+                        length: [50, 100]
+                    },
+                    srna: false,
+                    subtraction: { id: "baz" }
                 }
             }
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<SampleDetailGeneral store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should return props", () => {
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            encoding: "Foo 1.2",
+            host: "Malus domestica",
+            isolate: "Isolate Foo",
+            locale: "Bar",
+            paired: false,
+            srna: false,
+            gc: "31.2 %",
+            count: "13.2 m",
+            lengthRange: "50 - 100",
+            subtractionId: "baz"
+        });
     });
 });

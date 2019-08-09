@@ -1,51 +1,98 @@
-import { Modal } from "react-bootstrap";
-import { Button } from "../../../../base/index";
-import * as actions from "../../../actions";
-import RemoveOTU from "../RemoveOTU";
+import { HIDE_OTU_MODAL, REMOVE_OTU } from "../../../../app/actionTypes";
+import { RemoveOTU, mapStateToProps, mapDispatchToProps } from "../RemoveOTU";
 
 describe("<RemoveOTU />", () => {
-    const initialState = {
-        otus: { remove: true },
-        references: { detail: { id: "123abc" } }
-    };
-    const store = mockStore(initialState);
-    const props = {
-        history: {},
-        otuId: "456def",
-        otuName: "test-otu"
-    };
-    let wrapper;
+    let props;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<RemoveOTU store={store} {...props} />).dive();
+    beforeEach(() => {
+        props = {
+            history: {},
+            id: "foo",
+            name: "Foo",
+            refId: "baz",
+            show: true,
+            onConfirm: jest.fn(),
+            onHide: jest.fn()
+        };
+    });
+
+    it("should render when [show=true]", () => {
+        const wrapper = shallow(<RemoveOTU {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("dispatch functions", () => {
-        let spy;
+    it("should render when [show=false]", () => {
+        const wrapper = shallow(<RemoveOTU {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        afterEach(() => {
-            spy.restore();
+    it("should call onConfirm() when onConfirm() called on <RemoveModal />", () => {
+        const wrapper = shallow(<RemoveOTU {...props} />);
+        wrapper.props().onConfirm();
+        expect(props.onConfirm).toHaveBeenCalledWith("baz", "foo", props.history);
+    });
+
+    it("should call onHide() when onHide() called on <RemoveModal />", () => {
+        const wrapper = shallow(<RemoveOTU {...props} />);
+        wrapper.props().onHide();
+        expect(props.onHide).toHaveBeenCalled();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    let state;
+
+    beforeEach(() => {
+        state = {
+            otus: {
+                remove: false
+            },
+            references: {
+                detail: {
+                    id: "foo"
+                }
+            }
+        };
+    });
+
+    it.each([true, false])("should return props when [state.otus.remove=%p]", show => {
+        state.otus.remove = show;
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            show,
+            refId: "foo"
         });
+    });
+});
 
-        it("Closing modal dispatches hideOTUModal() action", () => {
-            spy = sinon.spy(actions, "hideOTUModal");
-            expect(spy.called).toBe(false);
+describe("mapDispatchToProps()", () => {
+    let dispatch;
+    let props;
 
-            wrapper = mount(<RemoveOTU store={store} {...props} />);
-            wrapper.find(Modal).prop("onHide")();
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
 
-            expect(spy.calledOnce).toBe(true);
+    it("should return onConfirm() in props", () => {
+        const refId = "foo";
+        const otuId = "baz";
+        const history = {
+            id: "bar"
+        };
+        props.onConfirm(refId, otuId, history);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: REMOVE_OTU.REQUESTED,
+            history,
+            otuId,
+            refId
         });
+    });
 
-        it("Clicking Confirm button dispatches removeOTU() action", () => {
-            spy = sinon.spy(actions, "removeOTU");
-            expect(spy.called).toBe(false);
-
-            wrapper = mount(<RemoveOTU store={store} {...props} />);
-            wrapper.find(Button).prop("onClick")();
-
-            expect(spy.calledWith("123abc", "456def", {})).toBe(true);
+    it("should return onHide() in props", () => {
+        props.onHide();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: HIDE_OTU_MODAL
         });
     });
 });

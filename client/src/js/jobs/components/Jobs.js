@@ -1,13 +1,14 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
+import { mapSettingsStateToProps } from "../../administration/mappers";
 import { LoadingPlaceholder } from "../../base";
 import JobsList from "./List";
 import JobDetail from "./Detail";
 import JobsResources from "./Resources";
 
-const Jobs = props => {
-    if (props.settings === null) {
+export const Jobs = ({ loading }) => {
+    if (loading) {
         return <LoadingPlaceholder />;
     }
 
@@ -22,11 +23,4 @@ const Jobs = props => {
     );
 };
 
-const mapStateToProps = state => ({
-    settings: state.settings.data
-});
-
-export default connect(
-    mapStateToProps,
-    null
-)(Jobs);
+export default connect(mapSettingsStateToProps)(Jobs);

@@ -18,20 +18,18 @@ const StyledNuVsList = styled(FixedSizeList)`
     flex: 0 0 auto;
 `;
 
-export const NuVsList = ({ shown, total }) => {
-    return (
-        <div>
-            <NuVsListHeader>
-                Showing {shown} of {total}
-            </NuVsListHeader>
-            <StyledNuVsList height={500} width={200} itemCount={shown} itemSize={58}>
-                {NuVsItem}
-            </StyledNuVsList>
-        </div>
-    );
-};
+export const NuVsList = ({ shown, total }) => (
+    <div>
+        <NuVsListHeader>
+            Showing {shown} of {total}
+        </NuVsListHeader>
+        <StyledNuVsList height={500} width={200} itemCount={shown} itemSize={58}>
+            {NuVsItem}
+        </StyledNuVsList>
+    </div>
+);
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     shown: getMatches(state).length,
     total: getResults(state).length
 });

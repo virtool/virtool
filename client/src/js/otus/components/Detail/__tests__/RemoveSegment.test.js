@@ -1,34 +1,49 @@
-import { Button } from "../../../../base/index";
-import RemoveSegment from "../RemoveSegment";
+import { RemoveSegment, mapStateToProps } from "../RemoveSegment";
 
 describe("<RemoveSegment />", () => {
-    const initialState = {
-        otus: {
-            detail: {
-                schema: [{ name: "hello" }, { name: "world" }, { name: "test" }]
-            }
-        }
-    };
-    const store = mockStore(initialState);
     const props = {
+        activeName: "bar",
         show: true,
         onHide: jest.fn(),
-        onSubmit: sinon.spy(),
-        curSeg: { name: "test" }
+        onSubmit: jest.fn(),
+        schema: [{ name: "foo" }, { name: "bar" }, { name: "baz" }]
     };
-    let wrapper;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<RemoveSegment store={store} {...props} />).dive();
+    it("should render when [show=true]", () => {
+        const wrapper = shallow(<RemoveSegment {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("Clicking Confirm button calls onSubmit callback prop", () => {
-        expect(props.onSubmit.called).toBe(false);
+    it("should render when [show=false]", () => {
+        props.show = false;
+        const wrapper = shallow(<RemoveSegment {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        wrapper = mount(<RemoveSegment store={store} {...props} />);
-        wrapper.find(Button).prop("onClick")();
+    it("should call onSubmit() when onConfirm() called on <RemoveModal />", () => {
+        const wrapper = shallow(<RemoveSegment {...props} />);
+        wrapper.props().onConfirm();
+        expect(props.onSubmit).toHaveBeenCalledWith([{ name: "foo" }, { name: "baz" }]);
+    });
 
-        expect(props.onSubmit.calledWith([{ name: "hello" }, { name: "world" }])).toBe(true);
+    it("should call onHide() when onHide() called on <RemoveModal />", () => {
+        const wrapper = shallow(<RemoveSegment {...props} />);
+        wrapper.props().onHide();
+        expect(props.onHide).toHaveBeenCalled();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it("should return props given state", () => {
+        const schema = [{ name: "Foo" }, { name: "Bar" }];
+        const state = {
+            otus: {
+                detail: {
+                    schema
+                }
+            }
+        };
+        const result = mapStateToProps(state);
+        expect(result).toEqual({ schema });
     });
 });

@@ -1,14 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
-<LinkContainer
-  activeClassName="active"
+exports[`<OTUItem /> should render when [verified=false] 1`] = `
+<withRouter(LinkContainer)
   className="spaced"
-  exact={false}
-  key="test-1"
-  replace={false}
-  strict={false}
-  to="/refs/123abc/otus/test-1"
+  key="foo"
+  to="/refs/baz/otus/foo"
 >
   <ListGroupItem
     allowFocus={false}
@@ -26,7 +22,7 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
         xs={11}
       >
         <strong>
-          test-otu-1
+          Foo
         </strong>
         <small
           className="hidden-md hidden-lg text-muted"
@@ -36,7 +32,7 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
             }
           }
         >
-          TO1
+          FB
         </small>
       </Col>
       <Col
@@ -46,7 +42,7 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
         smHidden={true}
         xsHidden={true}
       >
-        TO1
+        FB
       </Col>
       <Col
         bsClass="col"
@@ -65,18 +61,14 @@ exports[`<OTUItem /> renders correctly when [verified=false] 1`] = `
       </Col>
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;
 
-exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
-<LinkContainer
-  activeClassName="active"
+exports[`<OTUItem /> should render when [verified=true] 1`] = `
+<withRouter(LinkContainer)
   className="spaced"
-  exact={false}
-  key="test-2"
-  replace={false}
-  strict={false}
-  to="/refs/123abc/otus/test-2"
+  key="foo"
+  to="/refs/baz/otus/foo"
 >
   <ListGroupItem
     allowFocus={false}
@@ -94,7 +86,7 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
         xs={11}
       >
         <strong>
-          test-otu-2
+          Foo
         </strong>
         <small
           className="hidden-md hidden-lg text-muted"
@@ -104,7 +96,7 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
             }
           }
         >
-          TO2
+          FB
         </small>
       </Col>
       <Col
@@ -114,7 +106,7 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
         smHidden={true}
         xsHidden={true}
       >
-        TO2
+        FB
       </Col>
       <Col
         bsClass="col"
@@ -125,5 +117,5 @@ exports[`<OTUItem /> renders correctly when [verified=true] 1`] = `
       />
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;

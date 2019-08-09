@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceForm /> renders correctly with errors 1`] = `
+exports[`<ReferenceForm /> should render with errors 1`] = `
 <div>
   <Row
     bsClass="row"
@@ -81,7 +81,7 @@ exports[`<ReferenceForm /> renders correctly with errors 1`] = `
 </div>
 `;
 
-exports[`<ReferenceForm /> renders correctly without errors 1`] = `
+exports[`<ReferenceForm /> should render without errors 1`] = `
 <div>
   <Row
     bsClass="row"

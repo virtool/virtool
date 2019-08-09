@@ -11,6 +11,12 @@ export const create = ({ userId, password, forceReset }) =>
         force_reset: forceReset
     });
 
+export const createFirst = ({ userId, password }) =>
+    Request.put("/api/users/first").send({
+        user_id: userId,
+        password
+    });
+
 export const edit = ({ userId, update }) => Request.patch(`/api/users/${userId}`).send(update);
 
 export const remove = ({ userId }) => Request.delete(`/api/users/${userId}`);

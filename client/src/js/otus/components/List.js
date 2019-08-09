@@ -16,7 +16,7 @@ class OTUsList extends React.Component {
         this.props.onLoadNextPage(this.props.refId, this.props.term, this.props.verified, 1);
     }
 
-    renderRow = index => <OTUItem key={index} refId={this.props.refId} index={index} />;
+    renderRow = index => <OTUItem key={index} index={index} />;
 
     render() {
         const { canBuild } = this.props;

@@ -1,11 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveIsolate /> renders correctly 1`] = `
+exports[`<RemoveIsolate /> should render with [show=false] 1`] = `
 <RemoveModal
-  name="test-isolate"
+  name="Foo"
   noun="Isolate"
   onConfirm={[Function]}
-  onHide={[Function]}
+  onHide={[MockFunction]}
+  show={false}
+/>
+`;
+
+exports[`<RemoveIsolate /> should render with [show=true] 1`] = `
+<RemoveModal
+  name="Foo"
+  noun="Isolate"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
   show={true}
 />
 `;

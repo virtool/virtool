@@ -1,11 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveSubtraction /> renders correctly 1`] = `
+exports[`<RemoveSubtraction /> should render when [show=false] 1`] = `
 <RemoveModal
-  id="123abc"
-  name="123abc"
+  id="foo"
+  name="foo"
   noun="Subtraction"
   onConfirm={[Function]}
   onHide={[MockFunction]}
+  show={false}
+/>
+`;
+
+exports[`<RemoveSubtraction /> should render when [show=true] 1`] = `
+<RemoveModal
+  id="foo"
+  name="foo"
+  noun="Subtraction"
+  onConfirm={[Function]}
+  onHide={[MockFunction]}
+  show={true}
 />
 `;

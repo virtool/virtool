@@ -107,11 +107,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
       sm={4}
       xs={6}
     >
-      <LinkContainer
-        activeClassName="active"
-        exact={false}
-        replace={false}
-        strict={false}
+      <withRouter(LinkContainer)
         to="/samples/456def"
       >
         <Button
@@ -122,7 +118,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
         >
           test-sample
         </Button>
-      </LinkContainer>
+      </withRouter(LinkContainer)>
     </Col>
   </Row>
   <Connect(EditSubtraction)

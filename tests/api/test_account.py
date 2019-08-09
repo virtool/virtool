@@ -435,7 +435,7 @@ async def test_logout(spawn_client):
 
     # Logout
     resp = await client.get("/api/account/logout")
-    assert resp.status == 204
+    assert resp.status == 200
 
     # Make sure that the session is no longer authorized
     resp = await client.get("/api/account")

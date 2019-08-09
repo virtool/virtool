@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceItemHeader /> should render 1`] = `
+<PanelHeading
+  bsClass="panel"
+  componentClass="div"
+>
+  <Header__ReferenceItemHeaderTitle>
+    <Header__ReferenceItemHeaderLink
+      to="/refs/foo"
+    >
+      Foo
+    </Header__ReferenceItemHeaderLink>
+    <Link
+      to={
+        Object {
+          "state": Object {
+            "cloneReference": true,
+            "id": "foo",
+            "newReference": true,
+          },
+        }
+      }
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="clone"
+        pullRight={false}
+        tip="Clone"
+      />
+    </Link>
+  </Header__ReferenceItemHeaderTitle>
+  <small>
+    Created 
+    <RelativeTime
+      time="2018-01-01T00:00:00.000000Z"
+    />
+     by 
+    bob
+  </small>
+</PanelHeading>
+`;

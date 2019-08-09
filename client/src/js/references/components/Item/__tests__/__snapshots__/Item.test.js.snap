@@ -1,0 +1,196 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Item /> should render when [organism='virus'] and [progress=32] 1`] = `
+<Item__StyledReferenceItem>
+  <div>
+    <ReferenceItemHeader
+      createdAt="2018-01-01T00:00:00.000000Z"
+      id="foo"
+      name="Foo"
+      userId="bob"
+    />
+    <Table
+      bordered={false}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th>
+            Organism
+          </th>
+          <td
+            className="text-capitalize"
+          >
+            virus
+          </td>
+        </tr>
+        <ReferenceItemOrigin
+          clonedFrom={
+            Object {
+              "id": "clonedFrom",
+            }
+          }
+          importedFrom={
+            Object {
+              "id": "importedFrom",
+            }
+          }
+          remotesFrom={
+            Object {
+              "id": "remotesFrom",
+            }
+          }
+        />
+        <ReferenceItemBuild
+          id="foo"
+          latestBuild={
+            Object {
+              "id": "bar",
+            }
+          }
+          progress={32}
+        />
+      </tbody>
+    </Table>
+  </div>
+  <ProgressBar
+    affixed={true}
+    bsStyle="warning"
+    now={32}
+  />
+</Item__StyledReferenceItem>
+`;
+
+exports[`<Item /> should render when [organism=null] 1`] = `
+<Item__StyledReferenceItem>
+  <div>
+    <ReferenceItemHeader
+      createdAt="2018-01-01T00:00:00.000000Z"
+      id="foo"
+      name="Foo"
+      userId="bob"
+    />
+    <Table
+      bordered={false}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th>
+            Organism
+          </th>
+          <td
+            className="text-capitalize"
+          >
+            unknown
+          </td>
+        </tr>
+        <ReferenceItemOrigin
+          clonedFrom={
+            Object {
+              "id": "clonedFrom",
+            }
+          }
+          importedFrom={
+            Object {
+              "id": "importedFrom",
+            }
+          }
+          remotesFrom={
+            Object {
+              "id": "remotesFrom",
+            }
+          }
+        />
+        <ReferenceItemBuild
+          id="foo"
+          latestBuild={
+            Object {
+              "id": "bar",
+            }
+          }
+          progress={32}
+        />
+      </tbody>
+    </Table>
+  </div>
+  <ProgressBar
+    affixed={true}
+    bsStyle="warning"
+    now={32}
+  />
+</Item__StyledReferenceItem>
+`;
+
+exports[`<Item /> should render when [progress=100] 1`] = `
+<Item__StyledReferenceItem>
+  <div>
+    <ReferenceItemHeader
+      createdAt="2018-01-01T00:00:00.000000Z"
+      id="foo"
+      name="Foo"
+      userId="bob"
+    />
+    <Table
+      bordered={false}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th>
+            Organism
+          </th>
+          <td
+            className="text-capitalize"
+          >
+            virus
+          </td>
+        </tr>
+        <ReferenceItemOrigin
+          clonedFrom={
+            Object {
+              "id": "clonedFrom",
+            }
+          }
+          importedFrom={
+            Object {
+              "id": "importedFrom",
+            }
+          }
+          remotesFrom={
+            Object {
+              "id": "remotesFrom",
+            }
+          }
+        />
+        <ReferenceItemBuild
+          id="foo"
+          latestBuild={
+            Object {
+              "id": "bar",
+            }
+          }
+          progress={100}
+        />
+      </tbody>
+    </Table>
+  </div>
+  <ProgressBar
+    affixed={true}
+    bsStyle="success"
+    now={100}
+  />
+</Item__StyledReferenceItem>
+`;

@@ -47,11 +47,8 @@ exports[`<OTUToolbar /> renders correctly 1`] = `
       pullRight={false}
     />
   </Button>
-  <LinkContainer
-    activeClassName="active"
-    exact={false}
+  <withRouter(LinkContainer)
     replace={true}
-    strict={false}
     to={
       Object {
         "state": Object {
@@ -73,6 +70,6 @@ exports[`<OTUToolbar /> renders correctly 1`] = `
         pullRight={false}
       />
     </Button>
-  </LinkContainer>
+  </withRouter(LinkContainer)>
 </div>
 `;

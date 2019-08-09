@@ -1,56 +1,43 @@
 import React from "react";
-import { map } from "lodash-es";
-import { ListGroup, Panel } from "react-bootstrap";
+import styled from "styled-components";
+import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
-
-import { Button, Flex, FlexItem, Icon } from "../../base";
+import { Icon } from "../../base";
 import Install from "./Install";
-import Release from "./Release";
+import ReleasesList from "./List";
+
+const StyledReleasesPanelBody = styled(Panel.Body)`
+    padding: 10px 15px;
+`;
 
 export const Releases = ({ onShowInstall, releases }) => {
     if (releases.length) {
-        const releaseComponents = map(releases, release => <Release key={release.name} {...release} />);
-
         return (
             <Panel>
-                <Panel.Body style={{ padding: "10px 15px" }}>
-                    <Flex alignItems="center">
-                        <FlexItem grow={1} shrink={0}>
-                            <strong className="text-warning">
-                                <Icon name="arrow-alt-circle-up" /> Update
-                                {releases.length === 1 ? "" : "s"} Available
-                            </strong>
-                        </FlexItem>
-                        <FlexItem grow={0} shrink={0} pad={15}>
-                            <Button icon="download" bsStyle="primary" onClick={onShowInstall}>
-                                Install
-                            </Button>
-                        </FlexItem>
-                    </Flex>
-                </Panel.Body>
-                <ListGroup>{releaseComponents}</ListGroup>
-
-                <Install />
+                <StyledReleasesPanelBody>
+                    <ReleasesList releases={releases} onShowInstall={onShowInstall} />
+                    <Install />
+                </StyledReleasesPanelBody>
             </Panel>
         );
     }
 
     return (
         <Panel>
-            <Panel.Body style={{ padding: "10px 15px" }}>
+            <StyledReleasesPanelBody>
                 <Icon bsStyle="success" name="check" />
                 <strong className="text-success"> Software is up-to-date</strong>
-            </Panel.Body>
+            </StyledReleasesPanelBody>
         </Panel>
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     releases: state.updates.releases
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onShowInstall: () => {
         dispatch(push({ state: { install: true } }));
     }

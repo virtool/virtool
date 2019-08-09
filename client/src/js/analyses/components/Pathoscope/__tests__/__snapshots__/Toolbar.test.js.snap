@@ -1,240 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Toolbar /> renders correctly 1`] = `
-<Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[Function]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-up"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value=""
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[Function]}
+exports[` 1`] = `
+<span>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="file-download"
     pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
   />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="job-clear-dropdown"
-    onSelect={[Function]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
-  >
-    <Button
-      active={false}
-      bsStyle="default"
-      onClick={[Function]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-              partial={false}
-              pullRight={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
-  <DropdownButton
-    id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
-    title={<DownloadDropdownTitle />}
-  >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
-      href="/download/analyses/foobar.csv"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-csv"
-        pullRight={false}
-      />
-       CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
-      href="/download/analyses/foobar.xlsx"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-excel"
-        pullRight={false}
-      />
-       Excel
-    </MenuItem>
-  </DropdownButton>
-</Toolbar__StyledPathoscopeToolbar>
+   Export
+</span>
 `;
 
-exports[`<Toolbar /> renders correctly 2`] = `
+exports[`<Toolbar /> should render 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
   <FormGroup
     bsClass="form-group"
@@ -247,7 +25,7 @@ exports[`<Toolbar /> renders correctly 2`] = `
       >
         <Button
           bsStyle="default"
-          onClick={[Function]}
+          onClick={[MockFunction]}
           pullRight={false}
           tip="Sort List"
           tipPlacement="top"
@@ -265,7 +43,7 @@ exports[`<Toolbar /> renders correctly 2`] = `
         bsClass="form-control"
         componentClass="select"
         onChange={[Function]}
-        value=""
+        value="coverage"
       >
         <option
           className="text-primary"
@@ -293,7 +71,7 @@ exports[`<Toolbar /> renders correctly 2`] = `
     className="hidden-xs"
     disabled={false}
     icon="compress"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Collapse"
     tipPlacement="top"
@@ -304,7 +82,7 @@ exports[`<Toolbar /> renders correctly 2`] = `
     bsStyle="default"
     className="hidden-xs"
     icon="chart-pie"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Weight Format"
     tipPlacement="top"
@@ -312,8 +90,710 @@ exports[`<Toolbar /> renders correctly 2`] = `
   />
   <Uncontrolled(Dropdown)
     className="split-dropdown"
-    id="job-clear-dropdown"
-    onSelect={[Function]}
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="coverage"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={false}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="coverage"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={false}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=false] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="coverage"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
     pullRight={true}
     style={
       Object {
@@ -324,7 +804,7 @@ exports[`<Toolbar /> renders correctly 2`] = `
     <Button
       active={false}
       bsStyle="default"
-      onClick={[Function]}
+      onClick={[MockFunction]}
       pullRight={false}
       tip="Filter Results"
       tipPlacement="top"
@@ -432,14 +912,14 @@ exports[`<Toolbar /> renders correctly 2`] = `
         "zIndex": 1,
       }
     }
-    title={<DownloadDropdownTitle />}
+    title={<PathoscopeDownloadDropdownTitle />}
   >
     <MenuItem
       bsClass="dropdown"
       disabled={false}
       divider={false}
       header={false}
-      href="/download/analyses/foobar.csv"
+      href="/download/analyses/foo.csv"
     >
       <Icon
         faStyle="fas"
@@ -454,7 +934,709 @@ exports[`<Toolbar /> renders correctly 2`] = `
       disabled={false}
       divider={false}
       header={false}
-      href="/download/analyses/foobar.xlsx"
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [showReads=true] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="coverage"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={false}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="coverage"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={false}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </MenuItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="weight"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    bsStyle="default"
+    className="hidden-xs"
+    disabled={false}
+    icon="compress"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Collapse"
+    tipPlacement="top"
+    title="Collapse"
+  />
+  <Button
+    active={true}
+    bsStyle="default"
+    className="hidden-xs"
+    icon="chart-pie"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Weight Format"
+    tipPlacement="top"
+    title="Weight Format"
+  />
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="pathoscope-filter-dropdown"
+    onSelect={[MockFunction]}
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+  >
+    <Button
+      active={true}
+      bsStyle="default"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tip="Filter Results"
+      tipPlacement="top"
+      title="Filter"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="filter"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="OTUs"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            OTUs
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="isolates"
+        header={false}
+      >
+        <Flex
+          alignContent="stretch"
+          alignItems="stretch"
+          direction="row"
+          justifyContent="flex-start"
+          wrap="nowrap"
+        >
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            shrink={1}
+          >
+            <Checkbox
+              checked={true}
+              partial={false}
+              pullRight={false}
+            />
+          </FlexItem>
+          <FlexItem
+            alignSelf={null}
+            basis="auto"
+            grow={0}
+            pad={5}
+            shrink={1}
+          >
+            Isolates
+          </FlexItem>
+        </Flex>
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+  <DropdownButton
+    id="download-dropdown"
+    pullRight={true}
+    style={
+      Object {
+        "zIndex": 1,
+      }
+    }
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      header={false}
+      href="/download/analyses/foo.xlsx"
     >
       <Icon
         faStyle="fas"

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<HMMSettings /> renders 1`] = `
+exports[`<HMMSettings /> should render 1`] = `
 <div>
   <ViewHeader
     title="Settings - HMMs"
