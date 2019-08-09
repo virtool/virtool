@@ -1,6 +1,6 @@
 var path = require("path");
 var CleanWebpackPlugin = require("clean-webpack-plugin");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var MiniCssExtractPlugin = require("mini-css-extract-plugin");
 var HTMLPlugin = require("html-webpack-plugin");
 var TerserWebpackPlugin = require("terser-webpack-plugin");
 var webpack = require("webpack");
@@ -26,18 +26,18 @@ module.exports = {
 
       {
         test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          fallback: "style-loader",
-          use: "css-loader"
-        })
+        use: MiniCssExtractPlugin.loader
       },
 
       {
         test: /\.less$/,
-        use: ExtractTextPlugin.extract({
-          fallback: "style-loader",
-          use: [{ loader: "css-loader" }, { loader: "less-loader" }]
-        })
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
+          "css-loader",
+          "less-loader"
+        ]
       },
 
       {
@@ -56,9 +56,11 @@ module.exports = {
   mode: "production",
 
   optimization: {
-    minimizer: [new TerserWebpackPlugin({
-      sourceMap: true
-    })],
+    minimizer: [
+      new TerserWebpackPlugin({
+        sourceMap: true
+      })
+    ],
     splitChunks: {
       chunks: "all"
     }
@@ -76,7 +78,10 @@ module.exports = {
       "process.env.NODE_ENV": JSON.stringify("production")
     }),
 
-    new ExtractTextPlugin("style.[hash:8].css"),
+    new MiniCssExtractPlugin({
+      filename: "[name].[hash].css",
+      chunkFilename: "[id].[hash].css"
+    }),
 
     new HTMLPlugin({
       filename: "index.html",
