@@ -1,8 +1,6 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.db.references
-
 
 async def test_get_release(mocker, spawn_client, id_exists, resp_is):
     client = await spawn_client(authorize=True)

@@ -1,8 +1,4 @@
 import logging
-import mako.template
-import os
-import secrets
-from aiohttp import web
 
 import virtool.api.account
 import virtool.api.analyses

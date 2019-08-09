@@ -201,6 +201,7 @@ async def test_callable_filter(create_test_connection):
     m_2.send_stub.assert_not_called()
 
 
+async def test_non_callable_filter():
     """
     Test that that passing a non-callable ``conn_filter`` keyword argument raises a specific ``TypeError``.
 

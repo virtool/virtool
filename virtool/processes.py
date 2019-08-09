@@ -33,7 +33,7 @@ class Process:
     async def run(self):
         await self.init_db()
 
-        for i, func in enumerate(self.steps):
+        for func in self.steps:
             if self.errored:
                 break
 

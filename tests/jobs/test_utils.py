@@ -9,8 +9,6 @@ def test_copy_or_compress(gzipped, proc, mocker):
     path = "/mnt/baz/test.file"
     target = "/mnt/bar/foo.file"
 
-    m_is_gzipped = mocker.patch("virtool.utils.is_gzipped", return_value=gzipped)
-
     m_copyfile = mocker.patch("shutil.copyfile")
 
     m_compress_file = mocker.patch("virtool.utils.compress_file", return_value=gzipped)

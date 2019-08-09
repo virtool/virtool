@@ -1,8 +1,8 @@
 import asyncio
-import signal
 import concurrent.futures
 import logging
 import os
+import signal
 import subprocess
 import sys
 
@@ -13,20 +13,19 @@ import pymongo.errors
 from aiohttp import client, web
 from motor import motor_asyncio
 
-import virtool.db.settings
-import virtool.http.auth
-import virtool.http.csp
 import virtool.app_routes
 import virtool.config
 import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
+import virtool.db.settings
 import virtool.db.software
 import virtool.db.status
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
 import virtool.files
+import virtool.http.auth
 import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy

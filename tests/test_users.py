@@ -1,5 +1,4 @@
 import pytest
-import hashlib
 
 import virtool.db.users
 import virtool.users
