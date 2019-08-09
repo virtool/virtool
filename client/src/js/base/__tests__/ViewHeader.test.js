@@ -1,4 +1,3 @@
-import { Badge } from "react-bootstrap";
 import { ViewHeader } from "../ViewHeader";
 
 describe("<ViewHeader />", () => {

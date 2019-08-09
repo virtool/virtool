@@ -1,6 +1,5 @@
 import React from "react";
 import CX from "classnames";
-import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";

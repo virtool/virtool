@@ -1,4 +1,4 @@
-import { References, ReferenceSettings, mapStateToProps } from "../References";
+import { References, ReferenceSettings } from "../References";
 
 describe("<ReferenceSettings />", () => {
     it("should render", () => {
