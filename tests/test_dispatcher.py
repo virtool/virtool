@@ -325,7 +325,7 @@ async def test_writer_not_callable():
     Test that a writer can properly modify and write a message to the passed connection.
 
     """
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError) as excinfo:
         await Dispatcher().dispatch("otus", "update", {"test": True}, writer="writer")
 
-    assert "writer must be callable" in str(err)
+    assert "writer must be callable" in str(excinfo.value)

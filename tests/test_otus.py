@@ -137,10 +137,10 @@ class TestGetDefaultIsolate:
         """
         test_otu["isolates"][0]["default"] = False
 
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             virtool.otus.extract_default_isolate(test_otu)
 
-        assert "No default isolate found" in str(err)
+        assert "No default isolate found" in str(excinfo.value)
 
     def test_multiple_defaults(self, test_otu, test_isolate):
         """
@@ -151,10 +151,10 @@ class TestGetDefaultIsolate:
 
         test_otu["isolates"].append(extra_isolate)
 
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             virtool.otus.extract_default_isolate(test_otu)
 
-        assert "More than one" in str(err)
+        assert "More than one" in str(excinfo.value)
 
 
 def test_merge_otu(test_otu, test_sequence, test_merged_otu):
@@ -216,34 +216,34 @@ class TestExtractSequenceIds:
     def test_missing_isolates(self, test_merged_otu):
         del test_merged_otu["isolates"]
 
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError) as excinfo:
             virtool.otus.extract_sequence_ids(test_merged_otu)
 
-        assert "'isolates'" in str(err)
+        assert "'isolates'" in str(excinfo.value)
 
     def test_empty_isolates(self, test_merged_otu):
         test_merged_otu["isolates"] = list()
 
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             virtool.otus.extract_sequence_ids(test_merged_otu)
 
-        assert "Empty isolates list" in str(err)
+        assert "Empty isolates list" in str(excinfo.value)
 
     def test_missing_sequences(self, test_merged_otu):
         del test_merged_otu["isolates"][0]["sequences"]
 
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError) as excinfo:
             virtool.otus.extract_sequence_ids(test_merged_otu)
 
-        assert "missing sequences field" in str(err)
+        assert "missing sequences field" in str(excinfo.value)
 
     def test_empty_sequences(self, test_merged_otu):
         test_merged_otu["isolates"][0]["sequences"] = list()
 
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             virtool.otus.extract_sequence_ids(test_merged_otu)
 
-        assert "Empty sequences list" in str(err)
+        assert "Empty sequences list" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("source_type, source_name", [

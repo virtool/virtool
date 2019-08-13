@@ -10,10 +10,6 @@ async def test_format_analysis(algorithm, mocker):
     Test that the correct formatting function is called based on the algorithm field. Test that an exception is raised
     if the algorithm field cannot be processed.
 
-    :param mocker:
-    :param algorithm:
-    :return:
-
     """
     m_format_nuvs = make_mocked_coro({
         "is_nuvs": True,
@@ -36,10 +32,10 @@ async def test_format_analysis(algorithm, mocker):
     coroutine = virtool.db.analyses.format_analysis("db", "settings", document)
 
     if algorithm is None or algorithm == "foobar":
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             await coroutine
 
-        assert "Could not determine analysis algorithm" in str(err)
+        assert "Could not determine analysis algorithm" in str(excinfo.value)
 
         return
 
