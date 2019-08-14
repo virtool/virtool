@@ -208,8 +208,6 @@ async def init_db(app):
             app["dispatcher"].dispatch
         )
 
-        await app["db"].connect()
-
 
 async def init_check_db(app):
     if app["setup"] is not None:

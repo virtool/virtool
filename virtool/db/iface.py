@@ -1,5 +1,8 @@
+import motor.motor_asyncio
 import pymongo
 import pymongo.errors
+import pymongo.results
+from typing import Union
 
 import virtool.db.analyses
 import virtool.db.caches
@@ -18,32 +21,25 @@ import virtool.db.utils
 import virtool.errors
 import virtool.utils
 
-COLLECTION_NAMES = [
-    "analyses",
-    "caches",
-    "files",
-    "groups",
-    "history",
-    "hmm",
-    "indexes",
-    "jobs",
-    "keys",
-    "kinds",
-    "otus",
-    "processes",
-    "refs",
-    "samples",
-    "sequences",
-    "sessions",
-    "status",
-    "subtraction",
-    "users"
-]
-
 
 class Collection:
+    """
+    A wrapper for a Motor collection.
 
-    def __init__(self, name, collection, dispatch, processor, projection, silent=False):
+    Wraps collection methods that modify the database and automatically dispatches websocket messages to inform clients
+    of the changes.
+
+    """
+
+    def __init__(
+            self,
+            name: str,
+            collection: motor.motor_asyncio.AsyncIOMotorCollection,
+            dispatch: callable,
+            processor: callable,
+            projection: Union[None, list, dict],
+            silent: bool = False
+    ):
         self.name = name
         self._collection = collection
         self.dispatch = dispatch
@@ -51,6 +47,8 @@ class Collection:
         self.projection = projection
         self.silent = silent
 
+        # No dispatches are necessary for these collection methods and they can be directly referenced instead of
+        # wrapped.
         self.aggregate = self._collection.aggregate
         self.count = self._collection.count
         self.create_index = self._collection.create_index
@@ -63,7 +61,47 @@ class Collection:
         self.insert_many = self._collection.insert_many
         self.rename = self._collection.rename
 
-    async def delete_many(self, query, silent=False):
+    def apply_projection(self, document: dict) -> dict:
+        """
+        Apply the collection projection to the given document and return a new `dict`. If the collection `projection`
+        attribute is not defined, the document will be returned unaltered.
+
+        :param document: the document to apply the projection to
+        :return: the projected document
+
+        """
+        if self.projection:
+            return virtool.db.utils.apply_projection(document, self.projection)
+
+        return document
+
+    async def dispatch_conditionally(self, document: dict, operation: str, silent: bool):
+        """
+        Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`. Applies the collection
+        projection and processor.
+
+        :param document: the document to dispatch
+        :param operation: the operation to label the dispatch with (insert, update, delete)
+        :param silent: don't perform the dispatch
+
+        """
+        if not silent and not self.silent:
+            projected = self.apply_projection(document)
+            await self.dispatch(
+                self.name,
+                operation,
+                self.processor(projected)
+            )
+
+    async def delete_many(self, query: dict, silent: bool = False) -> pymongo.results.DeleteResult:
+        """
+        Delete many documents based on the passed `query`.
+
+        :param query: a MongoDB query
+        :param silent: don't dispatch websocket messages for this operation
+        :return: the delete result
+
+        """
         id_list = await self.distinct("_id", query)
 
         delete_result = await self._collection.delete_many(query)
@@ -73,7 +111,15 @@ class Collection:
 
         return delete_result
 
-    async def delete_one(self, query, silent=False):
+    async def delete_one(self, query: dict, silent: bool = False):
+        """
+        Delete a single document based on the passed `query`.
+
+        :param query: a MongoDB query
+        :param silent: don't dispatch websocket messages for this operation
+        :return: the delete result
+
+        """
         document = await self._collection.find_one(query, ["_id"])
 
         delete_result = await self._collection.delete_one(query)
@@ -84,7 +130,25 @@ class Collection:
 
         return delete_result
 
-    async def find_one_and_update(self, query, update, projection=None, silent=False, upsert=False):
+    async def find_one_and_update(
+            self,
+            query: dict,
+            update: dict,
+            projection: Union[None, dict, list] = None,
+            silent: bool = False,
+            upsert: bool = False
+    ):
+        """
+        Update a document and return the updated result.
+
+        :param query: a MongoDB query used to select the documents to update
+        :param update: a MongoDB update
+        :param projection: a projection to apply to the returned document instead of the default
+        :param silent: don't dispatch websocket messages for this operation
+        :param upsert: insert a new document if the query doesn't match an existing document
+        :return: the updated document
+
+        """
         document = await self._collection.find_one_and_update(
             query,
             update,
@@ -95,12 +159,7 @@ class Collection:
         if document is None:
             return None
 
-        if not silent and not self.silent:
-            if self.projection:
-                projected = virtool.db.utils.apply_projection(document, self.projection)
-                await self.dispatch(self.name, "update", self.processor(projected))
-            else:
-                await self.dispatch(self.name, "update", self.processor(document))
+        await self.dispatch_conditionally(document, "update", silent)
 
         if projection:
             return virtool.db.utils.apply_projection(document, projection)
@@ -108,6 +167,13 @@ class Collection:
         return document
 
     async def insert_one(self, document, silent=False):
+        """
+
+
+        :param document:
+        :param silent:
+        :return:
+        """
         generate_id = "_id" not in document
 
         if generate_id:
@@ -115,14 +181,7 @@ class Collection:
 
         try:
             await self._collection.insert_one(document)
-
-            if not silent and not self.silent:
-                if self.projection:
-                    projected = virtool.db.utils.apply_projection(document, self.projection)
-                    await self.dispatch(self.name, "insert", self.processor(projected))
-                else:
-                    await self.dispatch(self.name, "insert", self.processor(document))
-
+            await self.dispatch_conditionally(document, "insert", silent)
             return document
         except pymongo.errors.DuplicateKeyError:
             if generate_id:
@@ -174,37 +233,37 @@ class Collection:
 class DB:
 
     def __init__(self, client, dispatch):
+        self.motor_client = client
         self.dispatch = dispatch
 
-        for collection_name in COLLECTION_NAMES:
-            setattr(self, collection_name, None)
+        self.analyses = self.bind_collection("analyses", projection=virtool.db.analyses.PROJECTION)
+        self.caches = self.bind_collection("caches", projection=virtool.db.caches.PROJECTION)
+        self.files = self.bind_collection("files", projection=virtool.db.files.PROJECTION)
+        self.groups = self.bind_collection("groups")
+        self.history = self.bind_collection("history", projection=virtool.db.history.PROJECTION)
+        self.hmm = self.bind_collection("hmm", projection=virtool.db.hmm.PROJECTION)
+        self.indexes = self.bind_collection("indexes", projection=virtool.db.indexes.PROJECTION)
+        self.jobs = self.bind_collection(
+            "jobs",
+            projection=virtool.db.jobs.PROJECTION,
+            processor=virtool.db.jobs.processor
+        )
+        self.keys = self.bind_collection("keys", silent=True)
+        self.kinds = self.bind_collection("kinds", silent=True)
+        self.otus = self.bind_collection("otus", projection=virtool.db.otus.PROJECTION)
+        self.processes = self.bind_collection("processes")
+        self.references = self.bind_collection("references", projection=virtool.db.references.PROJECTION)
+        self.samples = self.bind_collection("samples", projection=virtool.db.samples.LIST_PROJECTION)
+        self.settings = self.bind_collection("settings", projection=virtool.db.settings.PROJECTION,
+                                             processor=lambda d: d)
+        self.sequences = self.bind_collection("sequences")
+        self.sessions = self.bind_collection("sessions", silent=True)
+        self.status = self.bind_collection("status")
+        self.subtraction = self.bind_collection("subtraction", projection=virtool.db.subtractions.PROJECTION)
+        self.users = self.bind_collection("users", projection=virtool.db.users.PROJECTION)
 
-        self.motor_client = client
-
-    async def connect(self):
-        await self.bind_collection("analyses", projection=virtool.db.analyses.PROJECTION)
-        await self.bind_collection("caches", projection=virtool.db.caches.PROJECTION)
-        await self.bind_collection("files", projection=virtool.db.files.PROJECTION)
-        await self.bind_collection("groups")
-        await self.bind_collection("history", projection=virtool.db.history.LIST_PROJECTION)
-        await self.bind_collection("hmm", projection=virtool.db.hmm.PROJECTION)
-        await self.bind_collection("indexes", projection=virtool.db.indexes.PROJECTION)
-        await self.bind_collection("jobs", projection=virtool.db.jobs.PROJECTION, processor=virtool.db.jobs.processor)
-        await self.bind_collection("keys", silent=True)
-        await self.bind_collection("kinds", silent=True)
-        await self.bind_collection("otus", projection=virtool.db.otus.PROJECTION)
-        await self.bind_collection("processes")
-        await self.bind_collection("references", projection=virtool.db.references.PROJECTION)
-        await self.bind_collection("samples", projection=virtool.db.samples.LIST_PROJECTION)
-        await self.bind_collection("settings", projection=virtool.db.settings.PROJECTION, processor=lambda d: d)
-        await self.bind_collection("sequences")
-        await self.bind_collection("sessions", silent=True)
-        await self.bind_collection("status")
-        await self.bind_collection("subtraction", projection=virtool.db.subtractions.PROJECTION)
-        await self.bind_collection("users", projection=virtool.db.users.PROJECTION)
-
-    async def bind_collection(self, name, processor=None, projection=None, silent=False):
-        collection = Collection(
+    def bind_collection(self, name, processor=None, projection=None, silent=False):
+        return Collection(
             name,
             self.motor_client[name],
             self.dispatch,
@@ -212,8 +271,6 @@ class DB:
             projection,
             silent
         )
-
-        setattr(self, name, collection)
 
     async def collection_names(self):
         return await self.motor_client.collection_names()

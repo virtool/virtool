@@ -39,10 +39,8 @@ def dbs(test_db_connection_string, test_db_name, request):
 
 
 @pytest.fixture
-def dbi(test_motor, loop):
-    i = virtool.db.iface.DB(test_motor, make_mocked_coro())
-    loop.run_until_complete(i.connect())
-    return i
+def dbi(test_motor):
+    return virtool.db.iface.DB(test_motor, make_mocked_coro())
 
 
 @pytest.fixture(params=[True, False])
