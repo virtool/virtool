@@ -136,6 +136,5 @@ async def get_resources(req):
 
     """
     resources = virtool.resources.get()
-    req.app["resources"] = resources
-
+    req.app["resources"].update(resources)
     return json_response(resources)
