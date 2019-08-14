@@ -12,6 +12,10 @@ routes = virtool.http.routes.Routes()
 
 @routes.get("/api/caches/{cache_id}")
 async def get(req):
+    """
+    Return the complete representation for the cache with the given `cache_id`.
+
+    """
     db = req.app["db"]
     cache_id = req.match_info["cache_id"]
 

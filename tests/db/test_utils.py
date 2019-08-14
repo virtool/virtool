@@ -48,7 +48,7 @@ class TestApplyProjection:
         Test that a `TypeError` is raised when the projection parameter is not a `dict` or `list`.
 
         """
-        with pytest.raises(TypeError) as err:
+        with pytest.raises(TypeError) as excinfo:
             virtool.db.utils.apply_projection({}, "_id")
 
-        assert "Invalid type for projection: <class 'str'>" in str(err)
+        assert "Invalid type for projection: <class 'str'>" in str(excinfo.value)

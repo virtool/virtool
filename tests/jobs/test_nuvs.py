@@ -68,10 +68,10 @@ def test_make_analysis_dir(exists, mock_job):
         os.makedirs(mock_job.params["analysis_path"])
 
     if exists:
-        with pytest.raises(FileExistsError) as err:
+        with pytest.raises(FileExistsError) as excinfo:
             mock_job.make_analysis_dir()
 
-        assert "[Errno 17] File exists" in str(err)
+        assert "[Errno 17] File exists" in str(excinfo.value)
 
         return
 

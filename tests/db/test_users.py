@@ -28,10 +28,10 @@ async def test_compose_groups_update(groups, dbi, kings, all_permissions, no_per
     coroutine = virtool.db.users.compose_groups_update(dbi, groups)
 
     if groups == ["kings", "peasants"]:
-        with pytest.raises(virtool.errors.DatabaseError) as err:
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
             await coroutine
 
-        assert "Non-existent groups: peasants" in str(err)
+        assert "Non-existent groups: peasants" in str(excinfo.value)
         return
 
     update = await coroutine
@@ -70,18 +70,18 @@ async def test_compose_primary_group_update(primary_group, dbi, bob, kings, peas
     coroutine = virtool.db.users.compose_primary_group_update(dbi, "bob", primary_group)
 
     if primary_group == "lords" or primary_group == "kings":
-        with pytest.raises(virtool.errors.DatabaseError) as err:
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
             await coroutine
 
         if primary_group == "lords":
-            assert "Non-existent group: lords" in str(err)
+            assert "Non-existent group: lords" in str(excinfo.value)
             return
 
         if primary_group == "kings":
-            assert "User is not member of group" in str(err)
+            assert "User is not member of group" in str(excinfo.value)
             return
 
-        raise err
+        raise excinfo
 
     update = await coroutine
 
@@ -113,10 +113,10 @@ async def test_create(exists, force_reset, mocker, dbi, bob):
 
     # Ensure an exception is raised if the user_id is already in use.
     if exists:
-        with pytest.raises(virtool.errors.DatabaseError) as err:
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
             await coroutine
 
-        assert "User already exists" in str(err)
+        assert "User already exists" in str(excinfo.value)
 
     # Ensure the new user document is created and returned if the user_id is valid.
     else:
@@ -196,10 +196,10 @@ async def test_edit(exists, administrator, mocker, dbi, all_permissions, bob, st
     )
 
     if not exists:
-        with pytest.raises(virtool.errors.DatabaseError) as err:
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
             await coroutine
 
-        assert "virtool.errors.DatabaseError: User does not exist" in str(err)
+        assert "User does not exist" == str(excinfo.value)
 
         return
 

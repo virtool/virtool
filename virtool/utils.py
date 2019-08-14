@@ -1,3 +1,4 @@
+import datetime
 import gzip
 import os
 import re
@@ -8,13 +9,22 @@ import tarfile
 import tempfile
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
+from typing import Union
 
 import arrow
 
 RE_STATIC_HASH = re.compile("^main.([a-z0-9]+).css$")
 
 
-def base_processor(document):
+def base_processor(document: Union[dict, None]) -> Union[dict, None]:
+    """
+    Converts a document `dict` returned from MongoDB into a `dict` that can be passed into a JSON response. Removes the
+    '_id' key and reassigns it to `id`.
+
+    :param document: the document to process
+    :return: processed document
+
+    """
     if document is None:
         return None
 
@@ -24,24 +34,27 @@ def base_processor(document):
     return document
 
 
-async def get_client_path():
-    for client_path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
-        if os.path.exists(os.path.join(client_path, "index.html")):
-            return client_path
+async def get_client_path() -> str:
+    """
+    Return the Virtool client path. The path is different between production and development instances of Virtool.
+
+    :return: str
+    """
+    for path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
+        if os.path.exists(os.path.join(path, "index.html")):
+            return path
 
 
-def rm(path, recursive=False):
+def rm(path: str, recursive=False) -> bool:
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.
 
     :param path: the path to remove.
-    :type path: str
 
     :param recursive: the operation should recursively descend into dirs.
     :type recursive: bool
 
-    :return: a Tornado future.
-    :rtype: :class:`tornado.concurrent.Future`
+    :return: a `bool` indicating if the operation was successful.
 
     """
     try:
@@ -55,7 +68,14 @@ def rm(path, recursive=False):
         raise
 
 
-def file_stats(path):
+def file_stats(path: str) -> dict:
+    """
+    Return the size and last modification date for the file at `path`.
+
+    :param path: the file path
+    :return: the file size and modification datetime
+
+    """
     stats = os.stat(path)
 
     # Append file entry to reply list
@@ -65,13 +85,12 @@ def file_stats(path):
     }
 
 
-def timestamp():
+def timestamp() -> datetime.datetime:
     """
     Returns a datetime object representing the current UTC time. The last 3 digits of the microsecond frame are set
     to zero.
 
     :return: a UTC timestamp
-    :rtype: datetime.datetime
 
     """
     # Get tz-aware datetime object.
