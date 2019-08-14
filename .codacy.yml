@@ -1,0 +1,10 @@
+---
+engines:
+  duplication:
+    exclude_paths:
+      - tests/**
+      - client/src/**/*.test.js
+  coverage:
+    exclude_paths:
+      - tests/**
+      - client/src/**/*.test.js
