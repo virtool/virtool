@@ -182,15 +182,6 @@ async def index_handler(req: web.Request) -> web.Response:
     :return: the response
 
     """
-    if req.app["client_path"] is None:
-        try:
-            client_path = await virtool.utils.get_client_path()
-        except FileNotFoundError:
-            return await client_path_error()
-
-        req.app["client_path"] = client_path
-        req.app.router.add_static("/static", client_path)
-
     requires_first_user = not await req.app["db"].users.count()
 
     requires_login = not req["client"].user_id
