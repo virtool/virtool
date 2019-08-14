@@ -122,7 +122,7 @@ async def remove(req):
     try:
         # Calculate the log path and remove the log file. If it exists, return True.
         path = os.path.join(req.app["settings"]["data_path"], "logs", "jobs", job_id + ".log")
-        await virtool.utils.rm(path)
+        await req.app["run_in_thread"](virtool.utils.rm, path)
     except OSError:
         pass
 
