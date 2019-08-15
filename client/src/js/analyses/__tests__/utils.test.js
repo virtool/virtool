@@ -92,4 +92,3 @@ describe("mergeCoverage()", () => {
         expect(merged).toEqual([7, 5, 5, 6, 6, 7, 9, 5, 6, 2, 2, 3, 2, 1, 1, 3, 2, 3, 5]);
     });
 });
-
