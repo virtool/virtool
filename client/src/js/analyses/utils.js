@@ -192,8 +192,14 @@ export const formatPathoscopeData = detail => {
     };
 };
 
+/**
+ * Calculate the median of an Array of numbers.
+ *
+ * @param values - an array of numbers
+ * @returns {number|*} - the median
+ */
 export const median = values => {
-    const sorted = values.slice().sort();
+    const sorted = values.slice().sort((a, b) => a - b);
 
     const midIndex = (sorted.length - 1) / 2;
 
