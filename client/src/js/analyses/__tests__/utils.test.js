@@ -22,17 +22,16 @@ describe("formatSequence()", () => {
             align,
             foo: "bar",
             length: 11,
-            pi: 0.412
+            pi: 0.4
         };
-        const result = formatSequence(sequence, 23);
+        const result = formatSequence(sequence, 3000);
         expect(result).toEqual({
             align,
-            depth: 3,
             filled: [0, 0, 0, 0, 0, 3, 3, 3, 5, 5, 5],
             foo: "bar",
             length: 11,
-            pi: 0.412,
-            reads: 9
+            pi: 0.4,
+            reads: 1200
         });
     });
 });

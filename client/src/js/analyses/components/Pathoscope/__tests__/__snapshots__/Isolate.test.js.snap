@@ -10,19 +10,20 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
   sequences={
     Array [
       Object {
-        "align": Array [
+        "definition": "Foo Hit",
+        "filled": Array [
           1,
           2,
           3,
           4,
           5,
         ],
-        "definition": "Foo Hit",
         "id": "foo",
         "length": 5,
       },
       Object {
-        "align": Array [
+        "definition": "Bar Hit",
+        "filled": Array [
           1,
           2,
           3,
@@ -32,7 +33,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
           2,
           3,
         ],
-        "definition": "Bar Hit",
         "id": "bar",
         "length": 8,
       },
@@ -136,10 +136,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                     <g
                       transform="translate(45,10)"
                     >
-                      <path
-                        class="depth-area"
-                        d="MNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNZ"
-                      />
                       <g
                         class="x axis"
                         fill="none"
@@ -610,10 +606,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                     <g
                       transform="translate(15,10)"
                     >
-                      <path
-                        class="depth-area"
-                        d="MNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNZ"
-                      />
                       <g
                         class="x axis"
                         fill="none"
@@ -855,15 +847,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                 className="Isolate__PathoscopeChartRibbon-sc-2hw4nu-1 iwWEsl"
               >
                 <CoverageChart
-                  data={
-                    Array [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5,
-                    ]
-                  }
                   definition="Foo Hit"
                   id="foo"
                   key="0"
@@ -907,10 +890,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                               <g
                                 transform="translate(45,10)"
                               >
-                                <path
-                                  class="depth-area"
-                                  d="MNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNZ"
-                                />
                                 <g
                                   class="x axis"
                                   fill="none"
@@ -1381,18 +1360,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                   </Coverage__StyledCoverageChart>
                 </CoverageChart>
                 <CoverageChart
-                  data={
-                    Array [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5,
-                      4,
-                      2,
-                      3,
-                    ]
-                  }
                   definition="Bar Hit"
                   id="bar"
                   key="1"
@@ -1436,10 +1403,6 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                               <g
                                 transform="translate(15,10)"
                               >
-                                <path
-                                  class="depth-area"
-                                  d="MNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,140LNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNLNaN,NaNZ"
-                                />
                                 <g
                                   class="x axis"
                                   fill="none"

@@ -58,7 +58,7 @@ export class PathoscopeIsolate extends React.Component {
             <Coverage
                 key={i}
                 data={hit.align}
-                length={hit.length}
+                length={hit.filled.length}
                 id={hit.id}
                 definition={hit.definition}
                 yMax={maxDepth}

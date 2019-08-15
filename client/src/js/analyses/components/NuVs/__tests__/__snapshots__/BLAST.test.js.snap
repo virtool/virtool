@@ -66,7 +66,7 @@ exports[`<BLASTInProgress /> should render when [rid="ABC123"] 1`] = `
             time="2018-02-14T17:12:00.000000Z"
           />
           . Checking again in 
-          a year ago
+          2 years ago
           .
         </small>
       </FlexItem>

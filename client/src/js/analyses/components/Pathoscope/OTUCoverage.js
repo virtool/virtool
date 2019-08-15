@@ -62,7 +62,7 @@ const createChart = (element, data, width) => {
 export default class OTUCoverage extends React.Component {
     static propTypes = {
         id: PropTypes.string,
-        merged: PropTypes.array
+        filled: PropTypes.array
     };
 
     componentDidMount() {
@@ -87,7 +87,7 @@ export default class OTUCoverage extends React.Component {
             this.chartNode.removeChild(this.chartNode.firstChild);
         }
 
-        createChart(this.chartNode, this.props.merged, this.chartNode.scrollWidth);
+        createChart(this.chartNode, this.props.filled, this.chartNode.scrollWidth);
     };
 
     render() {
