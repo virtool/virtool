@@ -1,33 +1,14 @@
+import { includes } from "lodash-es";
 import React, { useCallback } from "react";
-import styled from "styled-components";
-import { compact, includes, map, max, maxBy } from "lodash-es";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { SpacedBox } from "../../../base/index";
 import { toScientificNotation } from "../../../utils/utils";
 import { toggleResultExpanded } from "../../actions";
 import { getPathoscopeItem } from "../../selectors";
 import AnalysisValue from "../Value";
-import { median } from "../../utils";
 import PathoscopeExpansion from "./Expansion";
 import OTUCoverage from "./OTUCoverage";
-
-const calculateIsolateValues = isolates => {
-    const merged = mergeCoverage(isolates);
-    const coverage = compact(merged).length / merged.length;
-    const depth = median(merged);
-
-    return {
-        coverage,
-        depth,
-        merged
-    };
-};
-
-const mergeCoverage = isolates => {
-    const longest = maxBy(isolates, isolate => isolate.filled.length);
-    const coverages = map(isolates, isolate => isolate.filled);
-    return map(longest.filled, (depth, index) => max(map(coverages, coverage => coverage[index])));
-};
 
 const PathoscopeItemHeader = styled.div`
     display: flex;
@@ -48,7 +29,7 @@ const PathoscopeItemHeaderValues = styled.div`
 `;
 
 export const PathoscopeItem = props => {
-    const { abbreviation, coverage, depth, merged, name } = props;
+    const { abbreviation, coverage, depth, filled, name } = props;
 
     const piValue = props.showReads ? Math.round(props.reads) : toScientificNotation(props.pi);
 
@@ -73,7 +54,7 @@ export const PathoscopeItem = props => {
                     <AnalysisValue color="blue" label="Coverage" value={coverage.toFixed(3)} />
                 </PathoscopeItemHeaderValues>
             </PathoscopeItemHeader>
-            <OTUCoverage id={props.id} merged={merged} />
+            <OTUCoverage id={props.id} filled={filled} />
             {expansion}
         </SpacedBox>
     );
@@ -81,10 +62,8 @@ export const PathoscopeItem = props => {
 
 const mapStateToProps = (state, ownProps) => {
     const result = getPathoscopeItem(state, ownProps.id);
-
     return {
         ...result,
-        ...calculateIsolateValues(result.isolates),
         expanded: includes(state.analyses.expanded, result.id),
         showReads: state.analyses.showReads
     };
