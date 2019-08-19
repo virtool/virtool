@@ -1,22 +1,9 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports OTUGeneral
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
-import { IDRow } from "../../../base";
-
 import Issues from "./Issues";
 
-const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
+export const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) => (
     <div>
         {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
@@ -34,17 +21,20 @@ const OTUGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
                     <th>Version</th>
                     <td>{version}</td>
                 </tr>
-                <IDRow id={id} />
             </tbody>
         </Table>
     </div>
 );
 
-const mapStateToProps = state => ({
-    ...state.otus.detail
-});
+export const mapStateToProps = state => {
+    const { abbreviation, issues, isolates, name, version } = state.otus.detail;
+    return {
+        abbreviation,
+        issues,
+        isolates,
+        name,
+        version
+    };
+};
 
-export default connect(
-    mapStateToProps,
-    null
-)(OTUGeneral);
+export default connect(mapStateToProps)(OTUGeneral);

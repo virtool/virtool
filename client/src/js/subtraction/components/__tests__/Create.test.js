@@ -1,11 +1,21 @@
 import { CreateSubtraction, SubtractionFileItem } from "../Create";
 
-describe("<CreateSubtraction />", () => {
-    let props;
-    let wrapper;
+describe("<SubtractionFileItem />", () => {
+    it.each([true, false])("should render when [active=%p]", active => {
+        const props = {
+            active,
+            name: "test",
+            uploaded_at: "2018-02-14T17:12:00.000000Z",
+            user: { id: "test-user" }
+        };
+        const wrapper = shallow(<SubtractionFileItem {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-    it("renders correctly", () => {
-        props = {
+describe("<CreateSubtraction />", () => {
+    it("should render", () => {
+        const props = {
             show: true,
             files: [{ id: "test" }],
             error: "",
@@ -14,18 +24,7 @@ describe("<CreateSubtraction />", () => {
             onHide: jest.fn(),
             onClearError: jest.fn()
         };
-        wrapper = shallow(<CreateSubtraction {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders <SubtractionFileItem /> subcomponent", () => {
-        props = {
-            active: true,
-            name: "test",
-            uploaded_at: "2018-02-14T17:12:00.000000Z",
-            user: { id: "test-user" }
-        };
-        wrapper = shallow(<SubtractionFileItem {...props} />);
+        const wrapper = shallow(<CreateSubtraction {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

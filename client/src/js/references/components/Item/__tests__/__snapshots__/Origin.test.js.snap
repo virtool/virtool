@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceItemOrigin /> should render for cloned references 1`] = `
+<tr>
+  <th>
+    Cloned From
+  </th>
+  <td>
+    <Link
+      to="/refs/foo"
+    >
+      Foo
+    </Link>
+  </td>
+</tr>
+`;
+
+exports[`<ReferenceItemOrigin /> should render for imported references 1`] = `
+<tr>
+  <td>
+    Imported From
+  </td>
+  <td>
+    Bar
+  </td>
+</tr>
+`;
+
+exports[`<ReferenceItemOrigin /> should render for remoted references 1`] = `
+<tr>
+  <th>
+    Remotes from
+  </th>
+  <td>
+    <ExternalLink
+      href="https://www.github.com/undefined"
+    />
+  </td>
+</tr>
+`;

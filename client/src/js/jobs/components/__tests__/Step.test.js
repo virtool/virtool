@@ -1,12 +1,12 @@
 jest.mock("../../utils");
 
 import { getStepDescription } from "../../utils";
-import JobStep, { JobStepDescription, JobStepIcon } from "../Step";
+import { JobStepDescription, JobStepIcon } from "../Step";
 
 describe("<JobStepDescription />", () => {
     let props;
 
-    getStepDescription.mockImplementation((stage, state, task) => ({
+    getStepDescription.mockImplementation(() => ({
         title: "Foo",
         description: "Bar"
     }));
@@ -73,5 +73,3 @@ describe("<JobStepIcon />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 });
-
-describe;

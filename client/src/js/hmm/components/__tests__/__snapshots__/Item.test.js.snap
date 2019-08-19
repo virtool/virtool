@@ -1,11 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMItem /> should render 1`] = `
-<LinkContainer
-  activeClassName="active"
-  exact={false}
-  replace={false}
-  strict={false}
+<withRouter(LinkContainer)
   to="/hmm/tester"
 >
   <ListGroupItem
@@ -79,5 +75,5 @@ exports[`<HMMItem /> should render 1`] = `
       </Col>
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;

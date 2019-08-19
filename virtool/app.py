@@ -1,8 +1,8 @@
 import asyncio
-import signal
 import concurrent.futures
 import logging
 import os
+import signal
 import subprocess
 import sys
 
@@ -13,19 +13,20 @@ import pymongo.errors
 from aiohttp import client, web
 from motor import motor_asyncio
 
-import virtool.db.settings
-import virtool.http.auth
 import virtool.app_routes
 import virtool.config
 import virtool.db.hmm
 import virtool.db.iface
 import virtool.db.references
+import virtool.db.settings
 import virtool.db.software
 import virtool.db.status
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
 import virtool.files
+import virtool.http.auth
+import virtool.http.csp
 import virtool.http.errors
 import virtool.http.proxy
 import virtool.http.query
@@ -153,14 +154,17 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    if app["setup"] is None and app["force_settings"] is None:
+    if app["setup"] is None:
         from_db = await virtool.db.settings.get(app["db"])
         app["settings"].update(from_db)
 
 
 async def init_sentry(app):
-    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True):
+    if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
+        logger.info("Configured Sentry")
         app["sentry"] = virtool.sentry.setup(app["version"])
+
+    logger.info("Skipped configuring Sentry")
 
 
 async def init_dispatcher(app):
@@ -203,8 +207,6 @@ async def init_db(app):
             db_client[settings["db_name"]],
             app["dispatcher"].dispatch
         )
-
-        await app["db"].connect()
 
 
 async def init_check_db(app):
@@ -252,6 +254,17 @@ async def init_client_path(app):
             sys.exit(1)
 
         app.router.add_static("/static", app["client_path"])
+
+
+async def init_events(app):
+    events = create_events()
+
+    loop = asyncio.get_event_loop()
+
+    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
+    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
+
+    app["events"] = events
 
 
 async def init_job_manager(app):
@@ -363,21 +376,28 @@ async def on_shutdown(app):
     await scheduler.close()
 
 
-def create_app(force_settings=None):
+def temp_init_thing(do_setup, config):
+    async def func(app):
+        app["settings"] = config
+        app["setup"] = None
+
+        if do_setup:
+            app["setup"] = dict()
+
+    return func
+
+
+def create_app(config):
     """
     Creates the Virtool application.
 
     """
     middlewares = [
+        virtool.http.csp.middleware,
         virtool.http.errors.middleware,
         virtool.http.proxy.middleware,
         virtool.http.query.middleware
     ]
-
-    if force_settings:
-        config = force_settings
-    else:
-        config = virtool.config.resolve()
 
     do_setup = virtool.config.should_do_setup(config)
 
@@ -387,16 +407,13 @@ def create_app(force_settings=None):
 
     app = web.Application(middlewares=middlewares)
 
-    app["force_settings"] = force_settings
-    app["settings"] = config
-    app["setup"] = None
-
-    if do_setup:
-        app["setup"] = dict()
-
     aiojobs.aiohttp.setup(app)
 
+    app.on_response_prepare.append(virtool.http.csp.on_prepare)
+
     app.on_startup.extend([
+        temp_init_thing(do_setup, config),
+        init_events,
         init_version,
         init_client_path,
         init_setup,
@@ -488,6 +505,8 @@ async def create_app_runner(app: web.Application, host: str, port: int) -> web.A
     :return: a custom :class:`~aiohttp.web.AppRunner`
 
     """
+    print("APP", app)
+
     runner = web.AppRunner(app)
 
     await runner.setup()
@@ -504,21 +523,14 @@ async def create_app_runner(app: web.Application, host: str, port: int) -> web.A
 async def run():
     virtool.logs.configure(True)
 
-    app = create_app()
+    config = virtool.config.resolve()
 
-    events = create_events()
+    app = create_app(config)
 
-    loop = asyncio.get_event_loop()
-
-    loop.add_signal_handler(signal.SIGINT, events["shutdown"].set)
-    loop.add_signal_handler(signal.SIGTERM, events["shutdown"].set)
-
-    app["events"] = events
-
-    runner = await create_app_runner(app, app["settings"]["host"], app["settings"]["port"])
+    runner = await create_app_runner(app, config["host"], config["port"])
 
     _, pending = await asyncio.wait(
-        [wait_for_restart(runner, events), wait_for_shutdown(runner, events)],
+        [wait_for_restart(runner, app["events"]), wait_for_shutdown(runner, app["events"])],
         return_when=asyncio.FIRST_COMPLETED
     )
 

@@ -53,7 +53,6 @@ exports[`<UserItem /> renders correctly 1`] = `
         shrink={1}
       >
         <Link
-          replace={false}
           to="/administration/users"
         >
           Back To List

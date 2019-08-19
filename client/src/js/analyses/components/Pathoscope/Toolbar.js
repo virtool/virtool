@@ -11,7 +11,7 @@ import {
     toggleShowPathoscopeReads
 } from "../../actions";
 
-const DownloadDropdownTitle = () => (
+export const PathoscopeDownloadDropdownTitle = () => (
     <span>
         <Icon name="file-download" /> Export
     </span>
@@ -26,14 +26,14 @@ export const PathoscopeToolbar = ({
     analysisId,
     filterIsolates,
     filterOTUs,
+    showReads,
+    sortDescending,
+    sortKey,
     onCollapse,
     onFilter,
     onSetSortKey,
     onToggleShowReads,
-    onToggleSortDescending,
-    showReads,
-    sortDescending,
-    sortKey
+    onToggleSortDescending
 }) => {
     return (
         <StyledPathoscopeToolbar>
@@ -44,7 +44,7 @@ export const PathoscopeToolbar = ({
                             <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
                         </Button>
                     </InputGroup.Button>
-                    <FormControl componentClass="select" value={sortKey} onChange={onSetSortKey}>
+                    <FormControl componentClass="select" value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
                         <option className="text-primary" value="coverage">
                             Coverage
                         </option>
@@ -77,7 +77,7 @@ export const PathoscopeToolbar = ({
             />
 
             <Dropdown
-                id="job-clear-dropdown"
+                id="pathoscope-filter-dropdown"
                 onSelect={onFilter}
                 className="split-dropdown"
                 pullRight
@@ -107,7 +107,12 @@ export const PathoscopeToolbar = ({
                 </Dropdown.Menu>
             </Dropdown>
 
-            <DropdownButton id="download-dropdown" title={<DownloadDropdownTitle />} pullRight style={{ zIndex: 1 }}>
+            <DropdownButton
+                id="download-dropdown"
+                title={<PathoscopeDownloadDropdownTitle />}
+                pullRight
+                style={{ zIndex: 1 }}
+            >
                 <MenuItem href={`/download/analyses/${analysisId}.csv`}>
                     <Icon name="file-csv" /> CSV
                 </MenuItem>
@@ -119,36 +124,19 @@ export const PathoscopeToolbar = ({
     );
 };
 
-const mapStateToProps = state => {
-    const {
-        filterIsolates,
-        filterOTUs,
-        onCollapse,
-        onFilter,
-        onSetSortKey,
-        onToggleShowReads,
-        onToggleSortDescending,
-        showReads,
-        sortDescending,
-        sortKey
-    } = state.analyses;
-
+export const mapStateToProps = state => {
+    const { filterIsolates, filterOTUs, showReads, sortDescending, sortKey } = state.analyses;
     return {
         analysisId: state.analyses.detail.id,
         filterIsolates,
         filterOTUs,
-        onCollapse,
-        onFilter,
-        onSetSortKey,
-        onToggleShowReads,
-        onToggleSortDescending,
         showReads,
         sortDescending,
         sortKey
     };
 };
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCollapse: () => {
         dispatch(collapseAnalysis());
     },
@@ -161,12 +149,12 @@ const mapDispatchToProps = dispatch => ({
         dispatch(setPathoscopeFilter(key));
     },
 
-    onToggleSortDescending: () => {
-        dispatch(togglePathoscopeSortDescending());
+    onSetSortKey: key => {
+        dispatch(setAnalysisSortKey(key));
     },
 
-    onSetSortKey: e => {
-        dispatch(setAnalysisSortKey(e.target.value));
+    onToggleSortDescending: () => {
+        dispatch(togglePathoscopeSortDescending());
     },
 
     onToggleShowReads: () => {

@@ -15,7 +15,7 @@ snapshots['test_get_db[uvloop-True-True-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -35,11 +35,11 @@ snapshots['test_get_db[uvloop-True-True-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -68,7 +68,7 @@ snapshots['test_get_db[uvloop-True-True-None] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -92,7 +92,7 @@ snapshots['test_get_db[uvloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -112,11 +112,11 @@ snapshots['test_get_db[uvloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -149,7 +149,7 @@ snapshots['test_get_db[uvloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -173,7 +173,7 @@ snapshots['test_get_db[uvloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -193,11 +193,11 @@ snapshots['test_get_db[uvloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -230,7 +230,7 @@ snapshots['test_get_db[uvloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -254,7 +254,7 @@ snapshots['test_get_db[uvloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -274,11 +274,11 @@ snapshots['test_get_db[uvloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -312,7 +312,7 @@ snapshots['test_get_db[uvloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -336,7 +336,7 @@ snapshots['test_get_db[uvloop-True-False-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -356,11 +356,11 @@ snapshots['test_get_db[uvloop-True-False-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -414,7 +414,7 @@ snapshots['test_get_db[uvloop-True-False-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -434,11 +434,11 @@ snapshots['test_get_db[uvloop-True-False-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -496,7 +496,7 @@ snapshots['test_get_db[uvloop-True-False-connection_error] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -516,11 +516,11 @@ snapshots['test_get_db[uvloop-True-False-connection_error] 1'] = '''<!DOCTYPE ht
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -578,7 +578,7 @@ snapshots['test_get_db[uvloop-True-False-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -598,11 +598,11 @@ snapshots['test_get_db[uvloop-True-False-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -661,7 +661,7 @@ snapshots['test_get_db[uvloop-False-True-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -681,11 +681,11 @@ snapshots['test_get_db[uvloop-False-True-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -739,7 +739,7 @@ snapshots['test_get_db[uvloop-False-True-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -759,11 +759,11 @@ snapshots['test_get_db[uvloop-False-True-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -817,7 +817,7 @@ snapshots['test_get_db[uvloop-False-True-connection_error] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -837,11 +837,11 @@ snapshots['test_get_db[uvloop-False-True-connection_error] 1'] = '''<!DOCTYPE ht
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -895,7 +895,7 @@ snapshots['test_get_db[uvloop-False-True-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -915,11 +915,11 @@ snapshots['test_get_db[uvloop-False-True-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -973,7 +973,7 @@ snapshots['test_get_db[uvloop-False-False-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -993,11 +993,11 @@ snapshots['test_get_db[uvloop-False-False-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -1051,7 +1051,7 @@ snapshots['test_get_db[uvloop-False-False-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1071,11 +1071,11 @@ snapshots['test_get_db[uvloop-False-False-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -1129,7 +1129,7 @@ snapshots['test_get_db[uvloop-False-False-connection_error] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1149,11 +1149,11 @@ snapshots['test_get_db[uvloop-False-False-connection_error] 1'] = '''<!DOCTYPE h
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -1207,7 +1207,7 @@ snapshots['test_get_db[uvloop-False-False-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1227,11 +1227,11 @@ snapshots['test_get_db[uvloop-False-False-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -1285,7 +1285,7 @@ snapshots['test_get_paths[uvloop-True-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1305,11 +1305,11 @@ snapshots['test_get_paths[uvloop-True-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1351,7 +1351,7 @@ snapshots['test_get_paths[uvloop-True-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1371,11 +1371,11 @@ snapshots['test_get_paths[uvloop-True-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -1418,7 +1418,7 @@ snapshots['test_get_paths[uvloop-True-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1438,11 +1438,11 @@ snapshots['test_get_paths[uvloop-True-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1480,7 +1480,7 @@ snapshots['test_get_paths[uvloop-True-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1500,11 +1500,11 @@ snapshots['test_get_paths[uvloop-True-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -1543,7 +1543,7 @@ snapshots['test_get_paths[uvloop-False-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1563,11 +1563,11 @@ snapshots['test_get_paths[uvloop-False-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1605,7 +1605,7 @@ snapshots['test_get_paths[uvloop-False-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1625,11 +1625,11 @@ snapshots['test_get_paths[uvloop-False-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -1668,7 +1668,7 @@ snapshots['test_get_paths[uvloop-False-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1688,11 +1688,11 @@ snapshots['test_get_paths[uvloop-False-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1730,7 +1730,7 @@ snapshots['test_get_paths[uvloop-False-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1750,11 +1750,11 @@ snapshots['test_get_paths[uvloop-False-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -1793,7 +1793,7 @@ snapshots['test_get_paths[uvloop-foo-True-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1813,11 +1813,11 @@ snapshots['test_get_paths[uvloop-foo-True-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1859,7 +1859,7 @@ snapshots['test_get_paths[uvloop-foo-True-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1879,11 +1879,11 @@ snapshots['test_get_paths[uvloop-foo-True-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -1926,7 +1926,7 @@ snapshots['test_get_paths[uvloop-foo-True-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -1946,11 +1946,11 @@ snapshots['test_get_paths[uvloop-foo-True-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -1988,7 +1988,7 @@ snapshots['test_get_paths[uvloop-foo-True-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2008,11 +2008,11 @@ snapshots['test_get_paths[uvloop-foo-True-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2051,7 +2051,7 @@ snapshots['test_get_paths[uvloop-foo-False-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2071,11 +2071,11 @@ snapshots['test_get_paths[uvloop-foo-False-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2113,7 +2113,7 @@ snapshots['test_get_paths[uvloop-foo-False-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2133,11 +2133,11 @@ snapshots['test_get_paths[uvloop-foo-False-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2176,7 +2176,7 @@ snapshots['test_get_paths[uvloop-foo-False-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2196,11 +2196,11 @@ snapshots['test_get_paths[uvloop-foo-False-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2238,7 +2238,7 @@ snapshots['test_get_paths[uvloop-foo-False-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2258,11 +2258,11 @@ snapshots['test_get_paths[uvloop-foo-False-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2301,7 +2301,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-data] 1'] = '''<!DOCTYPE htm
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2321,11 +2321,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-data] 1'] = '''<!DOCTYPE htm
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2367,7 +2367,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-watch] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2387,11 +2387,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-watch] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2434,7 +2434,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-data] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2454,11 +2454,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-data] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2496,7 +2496,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-watch] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2516,11 +2516,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-watch] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2559,7 +2559,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-data] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2579,11 +2579,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-data] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2621,7 +2621,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-watch] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2641,11 +2641,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-watch] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2684,7 +2684,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-data] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2704,11 +2704,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-data] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -2746,7 +2746,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-watch] 1'] = '''<!DOCTYPE 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2766,11 +2766,11 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-watch] 1'] = '''<!DOCTYPE 
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -2809,7 +2809,7 @@ snapshots['test_get_db[pyloop-True-True-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2829,11 +2829,11 @@ snapshots['test_get_db[pyloop-True-True-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -2862,7 +2862,7 @@ snapshots['test_get_db[pyloop-True-True-None] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -2886,7 +2886,7 @@ snapshots['test_get_db[pyloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2906,11 +2906,11 @@ snapshots['test_get_db[pyloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -2943,7 +2943,7 @@ snapshots['test_get_db[pyloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -2967,7 +2967,7 @@ snapshots['test_get_db[pyloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -2987,11 +2987,11 @@ snapshots['test_get_db[pyloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3024,7 +3024,7 @@ snapshots['test_get_db[pyloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -3048,7 +3048,7 @@ snapshots['test_get_db[pyloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3068,11 +3068,11 @@ snapshots['test_get_db[pyloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3106,7 +3106,7 @@ snapshots['test_get_db[pyloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
                         <div class="setup-footer">
                             <div class="row">
                                 <div class="col-xs-12">
-                                    <a href="/setup/user" class="btn btn-primary pull-right">
+                                    <a href="/setup/data" class="btn btn-primary pull-right">
                                         <i class="fas fa-arrow-circle-right"></i> Next
                                     </a>
                                 </div>
@@ -3130,7 +3130,7 @@ snapshots['test_get_db[pyloop-True-False-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3150,11 +3150,11 @@ snapshots['test_get_db[pyloop-True-False-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3208,7 +3208,7 @@ snapshots['test_get_db[pyloop-True-False-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3228,11 +3228,11 @@ snapshots['test_get_db[pyloop-True-False-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3290,7 +3290,7 @@ snapshots['test_get_db[pyloop-True-False-connection_error] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3310,11 +3310,11 @@ snapshots['test_get_db[pyloop-True-False-connection_error] 1'] = '''<!DOCTYPE ht
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3372,7 +3372,7 @@ snapshots['test_get_db[pyloop-True-False-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3392,11 +3392,11 @@ snapshots['test_get_db[pyloop-True-False-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3455,7 +3455,7 @@ snapshots['test_get_db[pyloop-False-True-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3475,11 +3475,11 @@ snapshots['test_get_db[pyloop-False-True-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3533,7 +3533,7 @@ snapshots['test_get_db[pyloop-False-True-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3553,11 +3553,11 @@ snapshots['test_get_db[pyloop-False-True-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3611,7 +3611,7 @@ snapshots['test_get_db[pyloop-False-True-connection_error] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3631,11 +3631,11 @@ snapshots['test_get_db[pyloop-False-True-connection_error] 1'] = '''<!DOCTYPE ht
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3689,7 +3689,7 @@ snapshots['test_get_db[pyloop-False-True-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3709,11 +3709,11 @@ snapshots['test_get_db[pyloop-False-True-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3767,7 +3767,7 @@ snapshots['test_get_db[pyloop-False-False-None] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3787,11 +3787,11 @@ snapshots['test_get_db[pyloop-False-False-None] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3845,7 +3845,7 @@ snapshots['test_get_db[pyloop-False-False-auth_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3865,11 +3865,11 @@ snapshots['test_get_db[pyloop-False-False-auth_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -3923,7 +3923,7 @@ snapshots['test_get_db[pyloop-False-False-connection_error] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -3943,11 +3943,11 @@ snapshots['test_get_db[pyloop-False-False-connection_error] 1'] = '''<!DOCTYPE h
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -4001,7 +4001,7 @@ snapshots['test_get_db[pyloop-False-False-name_error] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4021,11 +4021,11 @@ snapshots['test_get_db[pyloop-False-False-name_error] 1'] = '''<!DOCTYPE html>
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
                 <div class="list-group">
                     <div class="list-group-item spaced clearfix">
-                        <h4 class="setup-header" style="margin-bottom: 7px;">
+                        <h4 class="setup-header">
                             Database
                         </h4>
 
-                        <p class="text-muted" style="margin-bottom: 20px;">
+                        <p class="setup-subheader text-muted">
                             Connect to MongoDB using connection string and database name.
                         </p>
 
@@ -4079,7 +4079,7 @@ snapshots['test_get_paths[pyloop-True-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4099,11 +4099,11 @@ snapshots['test_get_paths[pyloop-True-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4145,7 +4145,7 @@ snapshots['test_get_paths[pyloop-True-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4165,11 +4165,11 @@ snapshots['test_get_paths[pyloop-True-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4212,7 +4212,7 @@ snapshots['test_get_paths[pyloop-True-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4232,11 +4232,11 @@ snapshots['test_get_paths[pyloop-True-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4274,7 +4274,7 @@ snapshots['test_get_paths[pyloop-True-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4294,11 +4294,11 @@ snapshots['test_get_paths[pyloop-True-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4337,7 +4337,7 @@ snapshots['test_get_paths[pyloop-False-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4357,11 +4357,11 @@ snapshots['test_get_paths[pyloop-False-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4399,7 +4399,7 @@ snapshots['test_get_paths[pyloop-False-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4419,11 +4419,11 @@ snapshots['test_get_paths[pyloop-False-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4462,7 +4462,7 @@ snapshots['test_get_paths[pyloop-False-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4482,11 +4482,11 @@ snapshots['test_get_paths[pyloop-False-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4524,7 +4524,7 @@ snapshots['test_get_paths[pyloop-False-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4544,11 +4544,11 @@ snapshots['test_get_paths[pyloop-False-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4587,7 +4587,7 @@ snapshots['test_get_paths[pyloop-foo-True-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4607,11 +4607,11 @@ snapshots['test_get_paths[pyloop-foo-True-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4653,7 +4653,7 @@ snapshots['test_get_paths[pyloop-foo-True-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4673,11 +4673,11 @@ snapshots['test_get_paths[pyloop-foo-True-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4720,7 +4720,7 @@ snapshots['test_get_paths[pyloop-foo-True-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4740,11 +4740,11 @@ snapshots['test_get_paths[pyloop-foo-True-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4782,7 +4782,7 @@ snapshots['test_get_paths[pyloop-foo-True-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4802,11 +4802,11 @@ snapshots['test_get_paths[pyloop-foo-True-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4845,7 +4845,7 @@ snapshots['test_get_paths[pyloop-foo-False-True-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4865,11 +4865,11 @@ snapshots['test_get_paths[pyloop-foo-False-True-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -4907,7 +4907,7 @@ snapshots['test_get_paths[pyloop-foo-False-True-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4927,11 +4927,11 @@ snapshots['test_get_paths[pyloop-foo-False-True-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -4970,7 +4970,7 @@ snapshots['test_get_paths[pyloop-foo-False-False-data] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -4990,11 +4990,11 @@ snapshots['test_get_paths[pyloop-foo-False-False-data] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -5032,7 +5032,7 @@ snapshots['test_get_paths[pyloop-foo-False-False-watch] 1'] = '''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5052,11 +5052,11 @@ snapshots['test_get_paths[pyloop-foo-False-False-watch] 1'] = '''<!DOCTYPE html>
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -5095,7 +5095,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-True-data] 1'] = '''<!DOCTYPE htm
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5115,11 +5115,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-True-data] 1'] = '''<!DOCTYPE htm
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -5161,7 +5161,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-True-watch] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5181,11 +5181,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-True-watch] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -5228,7 +5228,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-False-data] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5248,11 +5248,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-False-data] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -5290,7 +5290,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-False-watch] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5310,11 +5310,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-True-False-watch] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -5353,7 +5353,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-True-data] 1'] = '''<!DOCTYPE ht
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5373,11 +5373,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-True-data] 1'] = '''<!DOCTYPE ht
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -5415,7 +5415,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-True-watch] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5435,11 +5435,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-True-watch] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>
@@ -5478,7 +5478,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-False-data] 1'] = '''<!DOCTYPE h
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5498,11 +5498,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-False-data] 1'] = '''<!DOCTYPE h
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         data Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool will store application data (<em>eg</em>. sample files) at this location.
                     </p>
 
@@ -5540,7 +5540,7 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-False-watch] 1'] = '''<!DOCTYPE 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style..css">
+    <link rel="stylesheet" href="/static/main..css">
 
     <style>
         .setup-header {
@@ -5560,11 +5560,11 @@ snapshots['test_get_paths[pyloop-/foo/bar-False-False-watch] 1'] = '''<!DOCTYPE 
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
-                    <h4 class="setup-header text-capitalize" style="margin-bottom: 7px;">
+                    <h4 class="setup-header text-capitalize">
                         watch Location
                     </h4>
 
-                    <p class="text-muted" style="margin-bottom: 20px;">
+                    <p class="text-muted setup-subheader">
                             Virtool automatically retrieve read files from this location and make them available for
                             sample creation in the application.
                     </p>

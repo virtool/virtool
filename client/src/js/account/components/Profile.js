@@ -1,5 +1,6 @@
 import React from "react";
-import { capitalize, map } from "lodash-es";
+import styled from "styled-components";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Label } from "react-bootstrap";
 
@@ -7,33 +8,38 @@ import { Flex, FlexItem, Identicon, Icon } from "../../base";
 import ChangePassword from "./Password";
 import Email from "./Email";
 
-export const AccountProfile = ({ id, groups, hash, isAdmin }) => {
-    const groupLabels = map(groups, groupId => (
-        <Label key={groupId} style={{ marginRight: "3px" }}>
-            {capitalize(groupId)}
-        </Label>
-    ));
+const AccountProfileLabel = styled(Label)`
+    margin-right: 3px;
+    text-transform: capitalize;
+`;
 
-    const adminLabel = (
-        <Label key="virtool-admin" bsStyle="primary" style={{ marginRight: "3px" }}>
-            Administrator
-        </Label>
-    );
+export const AccountProfile = ({ id, groups, identicon, administrator }) => {
+    const groupLabels = map(groups, groupId => <AccountProfileLabel key={groupId}>{groupId}</AccountProfileLabel>);
+
+    let adminLabel;
+
+    if (administrator) {
+        adminLabel = (
+            <AccountProfileLabel key="administrator" bsStyle="primary">
+                Administrator
+            </AccountProfileLabel>
+        );
+    }
 
     return (
         <div>
             <Flex alignItems="stretch" style={{ marginBottom: "15px" }}>
                 <FlexItem>
-                    <Identicon hash={hash} />
+                    <Identicon hash={identicon} />
                 </FlexItem>
                 <FlexItem pad={10}>
                     <h5>
                         <strong>
-                            {id} {isAdmin ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                            {id} {administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
                         </strong>
                     </h5>
                     <div>
-                        {isAdmin ? adminLabel : null}
+                        {adminLabel}
                         {groupLabels}
                     </div>
                 </FlexItem>
@@ -45,11 +51,11 @@ export const AccountProfile = ({ id, groups, hash, isAdmin }) => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     id: state.account.id,
-    hash: state.account.identicon,
+    identicon: state.account.identicon,
     groups: state.account.groups,
-    isAdmin: state.account.administrator
+    administrator: state.account.administrator
 });
 
 export default connect(mapStateToProps)(AccountProfile);

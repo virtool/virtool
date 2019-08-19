@@ -1,219 +1,228 @@
-import * as actions from "../../actions";
-import * as errorActions from "../../../errors/actions";
-import { InputError } from "../../../base/index";
-import PasswordContainer, { ChangePassword as Password } from "../Password";
+import { CHANGE_ACCOUNT_PASSWORD, CLEAR_ERROR } from "../../../app/actionTypes";
+import { ChangePassword, mapStateToProps, mapDispatchToProps } from "../Password";
 
-describe("<Password />", () => {
+describe("<ChangePassword />", () => {
     let props;
-    let wrapper;
 
-    it("renders correctly", () => {
-        const initialState = {
-            account: { last_password_change: "2018-02-14T12:00:00.000000Z" },
-            settings: {
-                data: {
-                    minimum_password_length: 8
-                }
-            },
-            error: null
-        };
-        const store = mockStore(initialState);
-        wrapper = shallow(<PasswordContainer store={store} />).dive();
-
-        expect(wrapper).toMatchSnapshot();
-
+    beforeEach(() => {
         props = {
-            lastPasswordChange: "2016-02-14T12:00:00.000000Z",
-            settings: {
-                minimum_password_length: 8
-            },
-            error: {
-                status: 422,
-                message: "existing error"
+            error: null,
+            lastPasswordChange: "2018-02-14T12:00:00.000000Z",
+            minimumLength: 8,
+            ready: true,
+            onChangePassword: jest.fn(),
+            onClearError: jest.fn()
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<ChangePassword {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render with error", () => {
+        props.error = {
+            status: 400,
+            message: "existing error"
+        };
+        const wrapper = shallow(<ChangePassword {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render placeholder when [props.ready=false]", () => {
+        props.ready = false;
+        const wrapper = shallow(<ChangePassword {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onClearError() input changes and there is a pre-existing error", () => {
+        props.error = {
+            status: 422,
+            message: "existing error"
+        };
+        const wrapper = shallow(<ChangePassword {...props} />);
+        const e = {
+            target: {
+                name: "newPassword",
+                value: "foobar"
             }
         };
-        wrapper.setProps(props);
-
-        expect(wrapper).toMatchSnapshot();
+        wrapper
+            .find("InputError")
+            .at(1)
+            .simulate("change", e);
+        expect(props.onClearError).toHaveBeenCalled();
     });
 
-    describe("handleChange", () => {
-        it("calls clear error dispatch action if props.error is set", () => {
-            const spyClearError = sinon.spy(errorActions, "clearError");
+    describe("handleSubmit()", () => {
+        let expectedState;
 
-            const initialState = {
-                account: {
-                    lastPasswordChange: "2018-02-14T12:00:00.000000Z"
-                },
-                settings: {
-                    minimum_password_length: 8
-                },
-                error: null
-            };
-            const store = mockStore(initialState);
-            const container = shallow(<PasswordContainer store={store} />);
-            wrapper = container.dive();
-            const spyChange = sinon.spy(wrapper.instance(), "handleChange");
-            wrapper.instance().forceUpdate();
-            wrapper.setState({ errorOldPassword: "test error" });
-
-            expect(spyChange.called).toBe(false);
-            expect(spyClearError.called).toBe(false);
-
-            // If no error in store, clearError not called
-            props = {
-                lastPasswordChange: "2016-02-14T12:00:00.000000Z",
-                settings: {
-                    minimum_password_length: 8
-                },
-                error: null
-            };
-            wrapper.setProps(props);
-
-            const mockEvent = {
-                target: {
-                    name: "oldPassword"
-                }
-            };
-            wrapper
-                .find(InputError)
-                .at(0)
-                .simulate("change", mockEvent);
-
-            expect(spyChange.calledOnce).toBe(true);
-            expect(spyClearError.called).toBe(false);
-
-            // If error exists in store, clearError is dispatched
-            props = {
-                lastPasswordChange: "2016-02-14T12:00:00.000000Z",
-                settings: {
-                    minimum_password_length: 8
-                },
-                error: {
-                    status: 400,
-                    message: "existing error"
-                }
-            };
-            wrapper.setProps(props);
-
-            wrapper
-                .find(InputError)
-                .at(0)
-                .simulate("change", mockEvent);
-
-            expect(spyChange.calledTwice).toBe(true);
-            expect(spyClearError.calledOnceWith("CHANGE_ACCOUNT_PASSWORD_ERROR")).toBe(true);
-
-            spyClearError.restore();
-            spyChange.restore();
-        });
-    });
-
-    describe("onSubmit", () => {
-        let spySubmit;
-        let mockEvent;
-        let expected;
-
-        beforeAll(() => {
-            props = {
-                lastPasswordChange: "2016-02-14T12:00:00.000000Z",
-                settings: {
-                    minimum_password_length: 8
-                },
-                error: null
-            };
-            wrapper = mount(<Password {...props} />);
-            spySubmit = sinon.spy(wrapper.instance(), "onSubmit");
-            wrapper.instance().forceUpdate();
-
-            wrapper.setState({
+        beforeEach(() => {
+            expectedState = {
                 oldPassword: "",
-                newPassword: "short",
-                confirmPassword: "mismatch"
+                newPassword: "foobar123",
+                confirmPassword: "foobar123",
+                error: null,
+                errorConfirmPassword: "",
+                errorNewPassword: "Passwords must contain at least 8 characters",
+                errorOldPassword: "Please provide your old password"
+            };
+        });
+
+        it("should call onSubmit when input values are valid", () => {
+            const wrapper = shallow(<ChangePassword {...props} />);
+            wrapper.setState({
+                oldPassword: "hello1world2",
+                newPassword: "foobar123",
+                confirmPassword: "foobar123"
             });
-            expect(spySubmit.called).toBe(false);
-
-            mockEvent = {
+            const e = {
                 preventDefault: jest.fn()
             };
-            wrapper.find("form").simulate("submit", mockEvent);
+            wrapper.find("form").simulate("submit", e);
+            expect(e.preventDefault).toHaveBeenCalled();
+            expect(wrapper.state()).toEqual({
+                ...expectedState,
+                errorNewPassword: "",
+                errorOldPassword: "",
+                oldPassword: "hello1world2"
+            });
+            expect(props.onChangePassword).toHaveBeenCalledWith("hello1world2", "foobar123");
         });
 
-        afterAll(() => {
-            spySubmit.restore();
-        });
-
-        it("sets state.errorOldPassword if old password field is empty", () => {
-            expected = "Please provide your old password";
-
-            expect(spySubmit.calledOnce).toBe(true);
-            expect(wrapper.state("errorOldPassword")).toEqual(expected);
-        });
-
-        it("sets state.errorNewPassword if new password is too short", () => {
-            expected = `Passwords must contain at least ${props.settings.minimum_password_length} characters`;
-
-            expect(spySubmit.calledOnce).toBe(true);
-            expect(wrapper.state("errorNewPassword")).toEqual(expected);
-        });
-
-        it("sets confirm password error if confirm does not match new password", () => {
-            expected = "New passwords do not match";
-
-            expect(spySubmit.calledOnce).toBe(true);
-            expect(wrapper.state("errorConfirmPassword")).toEqual(expected);
-        });
-
-        it("sets state.errorOldPassword if old password is too short", () => {
-            spySubmit.resetHistory();
-            wrapper.setState({ oldPassword: "2short" });
-            mockEvent = {
+        it("should set error if old password field is empty", () => {
+            const wrapper = shallow(<ChangePassword {...props} />);
+            wrapper.setState({
+                newPassword: "foobar123",
+                confirmPassword: "foobar123"
+            });
+            const e = {
                 preventDefault: jest.fn()
             };
-            wrapper.find("form").simulate("submit", mockEvent);
-            expected = `Passwords must contain at least ${props.settings.minimum_password_length} characters`;
-
-            expect(spySubmit.calledOnce).toBe(true);
-            expect(wrapper.state("errorOldPassword")).toEqual(expected);
+            wrapper.find("form").simulate("submit", e);
+            expect(e.preventDefault).toHaveBeenCalled();
+            expect(wrapper.state()).toEqual({
+                ...expectedState,
+                errorNewPassword: ""
+            });
         });
 
-        it("if there are no errors set, call change password dispatch action", () => {
-            const spyChangePassword = sinon.spy(actions, "changePassword");
-
-            const initialState = {
-                account: { last_password_change: "2018-02-14T12:00:00.000000Z" },
-                settings: {
-                    data: {
-                        minimum_password_length: 8
-                    }
-                },
-                error: null
-            };
-            const store = mockStore(initialState);
-            const container = shallow(<PasswordContainer store={store} />);
-            wrapper = container.dive();
-            const spy = sinon.spy(wrapper.instance(), "onSubmit");
-            wrapper.instance().forceUpdate();
-
-            const newState = {
-                oldPassword: "theoldtestpassword",
-                newPassword: "testtesttest",
-                confirmPassword: "testtesttest"
-            };
-            wrapper.setState(newState);
-
-            expect(spy.called).toBe(false);
-
-            mockEvent = {
+        it("should set error if new passwords don't match", () => {
+            const wrapper = shallow(<ChangePassword {...props} />);
+            wrapper.setState({
+                oldPassword: "hello1world2",
+                newPassword: "foobar124",
+                confirmPassword: "foobar123"
+            });
+            const e = {
                 preventDefault: jest.fn()
             };
-            wrapper.find("form").simulate("submit", mockEvent);
+            wrapper.find("form").simulate("submit", e);
+            expect(e.preventDefault).toHaveBeenCalled();
+            expect(wrapper.state()).toEqual({
+                ...expectedState,
+                newPassword: "foobar124",
+                oldPassword: "hello1world2",
+                errorConfirmPassword: "New passwords do not match",
+                errorNewPassword: "",
+                errorOldPassword: ""
+            });
+        });
 
-            expect(spy.calledOnce).toBe(true);
-            expect(spyChangePassword.calledOnceWith(newState.oldPassword, newState.newPassword)).toBe(true);
+        it("should set error if new passwords are too short", () => {
+            const wrapper = shallow(<ChangePassword {...props} />);
+            wrapper.setState({
+                oldPassword: "hello1world2",
+                newPassword: "foobar",
+                confirmPassword: "foobar"
+            });
+            const e = {
+                preventDefault: jest.fn()
+            };
+            wrapper.find("form").simulate("submit", e);
+            expect(e.preventDefault).toHaveBeenCalled();
+            expect(wrapper.state()).toEqual({
+                ...expectedState,
+                newPassword: "foobar",
+                confirmPassword: "foobar",
+                oldPassword: "hello1world2",
+                errorConfirmPassword: "",
+                errorNewPassword: "Passwords must contain at least 8 characters",
+                errorOldPassword: ""
+            });
+        });
+    });
+});
 
-            spy.restore();
-            spyChangePassword.restore();
+describe("mapStateToProps()", () => {
+    const expected = {
+        lastPasswordChange: "2018-02-14T12:00:00.000000Z",
+        minimumLength: 12,
+        error: "Passwords do not match",
+        ready: true
+    };
+
+    let state;
+
+    beforeEach(() => {
+        state = {
+            account: {
+                last_password_change: "2018-02-14T12:00:00.000000Z"
+            },
+            settings: {
+                data: {
+                    minimum_password_length: 12
+                }
+            },
+            errors: {
+                CHANGE_ACCOUNT_PASSWORD_ERROR: "Passwords do not match"
+            }
+        };
+    });
+
+    it("should return props with error", () => {
+        const props = mapStateToProps(state);
+        expect(props).toEqual({ ...expected });
+    });
+
+    it("should return props with no error", () => {
+        state.errors = {};
+        const props = mapStateToProps(state);
+        expect(props).toEqual({ ...expected, error: "" });
+    });
+
+    it("should return props when settings unavailable", () => {
+        state.settings.data = null;
+        const props = mapStateToProps(state);
+        expect(props).toEqual({ ...expected, ready: false, minimumLength: undefined });
+    });
+});
+
+describe("mapDispatchToProps()", () => {
+    let dispatch;
+    let props;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
+
+    it("should return onChangePassword() in props", () => {
+        const oldPassword = "foo";
+        const newPassword = "bar";
+        props.onChangePassword(oldPassword, newPassword);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
+            oldPassword,
+            newPassword
+        });
+    });
+
+    it("should return onClearError() in props", () => {
+        props.onClearError();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: CLEAR_ERROR,
+            error: "CHANGE_ACCOUNT_PASSWORD_ERROR"
         });
     });
 });

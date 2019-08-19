@@ -149,10 +149,6 @@ def test_schema():
     }
 
 
-def test_check_limits(mocker):
-    m_get_resources = mocker.patch("virtool.resources.get", return_value={"proc": 24, "mem": 48})
-
-
 def test_get_defaults(mocker):
     mocker.patch("virtool.config.SCHEMA", {
         "foo": {
@@ -274,7 +270,7 @@ def test_remove_defaults(mocker):
         "mem": 48
     }
 
-    m_get_defaults = mocker.patch("virtool.config.get_defaults", return_value=defaults)
+    mocker.patch("virtool.config.get_defaults", return_value=defaults)
 
     config = {
         "proc": 24,

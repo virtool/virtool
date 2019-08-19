@@ -1,15 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AnalysisItem /> renders base component correctly 1`] = `
-<LinkContainer
-  activeClassName="active"
-  exact={false}
-  replace={false}
-  strict={false}
-  to="/samples/undefined/analyses/test_analysis"
+exports[`<AnalysisItem /> should render 1`] = `
+<withRouter(LinkContainer)
+  to="/samples/bar/analyses/baz"
 >
   <div
-    className="list-group-item spaced hoverable"
+    className="list-group-item spaced"
     style={
       Object {
         "color": "#555",
@@ -28,7 +24,7 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         xs={4}
       >
         <strong>
-          Test Algorithm
+          NuVs
         </strong>
       </Col>
       <Col
@@ -42,7 +38,7 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         <RelativeTime
           time="2018-02-14T17:12:00.000000Z"
         />
-         by test-user
+         by bob
       </Col>
       <Col
         bsClass="col"
@@ -50,7 +46,7 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         xs={2}
       >
         <span>
-          123abc
+          Foo
           <Label
             bsClass="label"
             bsStyle="default"
@@ -60,7 +56,7 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
               }
             }
           >
-            123
+            3
           </Label>
         </span>
       </Col>
@@ -72,34 +68,17 @@ exports[`<AnalysisItem /> renders base component correctly 1`] = `
         xsHidden={true}
       >
         <RightIcon
-          algorithm="test_algorithm"
-          created_at="2018-02-14T17:12:00.000000Z"
-          id="test_analysis"
-          index={
-            Object {
-              "version": 123,
-            }
-          }
-          placeholder={false}
-          ready={true}
-          reference={
-            Object {
-              "name": "123abc",
-            }
-          }
-          user={
-            Object {
-              "id": "test-user",
-            }
-          }
+          canModify={true}
+          onRemove={[MockFunction]}
+          ready={false}
         />
       </Col>
     </Row>
   </div>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;
 
-exports[`<AnalysisItem /> renders correctly 1`] = `
+exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
 <div
   className="list-group-item spaced"
   style={
@@ -120,7 +99,7 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
       xs={4}
     >
       <strong>
-        Test Algorithm
+        NuVs
       </strong>
     </Col>
     <Col
@@ -148,46 +127,118 @@ exports[`<AnalysisItem /> renders correctly 1`] = `
       xsHidden={true}
     >
       <RightIcon
-        algorithm="test_algorithm"
         canModify={true}
-        created_at="2018-02-14T17:12:00.000000Z"
-        id="test_analysis"
-        onRemove={[Function]}
-        placeholder={true}
+        onRemove={[MockFunction]}
         ready={false}
-        store={
-          Object {
-            "clearActions": [Function],
-            "dispatch": [Function],
-            "getActions": [Function],
-            "getState": [Function],
-            "replaceReducer": [Function],
-            "subscribe": [Function],
-          }
-        }
-        storeSubscription={
-          Subscription {
-            "listeners": Object {
-              "clear": [Function],
-              "get": [Function],
-              "notify": [Function],
-              "subscribe": [Function],
-            },
-            "onStateChange": [Function],
-            "parentSub": undefined,
-            "store": Object {
-              "clearActions": [Function],
-              "dispatch": [Function],
-              "getActions": [Function],
-              "getState": [Function],
-              "replaceReducer": [Function],
-              "subscribe": [Function],
-            },
-            "unsubscribe": [Function],
-          }
-        }
       />
     </Col>
   </Row>
 </div>
 `;
+
+exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
+<withRouter(LinkContainer)
+  to="/samples/bar/analyses/baz"
+>
+  <div
+    className="list-group-item spaced"
+    style={
+      Object {
+        "color": "#555",
+      }
+    }
+  >
+    <Row
+      bsClass="row"
+      componentClass="div"
+    >
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        sm={4}
+        xs={4}
+      >
+        <strong>
+          NuVs
+        </strong>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={4}
+        sm={4}
+        xs={5}
+      >
+        Started 
+        <RelativeTime
+          time="2018-02-14T17:12:00.000000Z"
+        />
+         by bob
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        xs={2}
+      >
+        <span>
+          Foo
+          <Label
+            bsClass="label"
+            bsStyle="default"
+            style={
+              Object {
+                "marginLeft": "5px",
+              }
+            }
+          >
+            3
+          </Label>
+        </span>
+      </Col>
+      <Col
+        bsClass="col"
+        componentClass="div"
+        md={2}
+        sm={2}
+        xsHidden={true}
+      >
+        <RightIcon
+          canModify={true}
+          onRemove={[MockFunction]}
+          ready={false}
+        />
+      </Col>
+    </Row>
+  </div>
+</withRouter(LinkContainer)>
+`;
+
+exports[`<RightIcon /> should render loader when [ready=false] 1`] = `
+<div
+  className="pull-right"
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+</div>
+`;
+
+exports[`<RightIcon /> should render remove icon when [ready=true] and [canModify=true] 1`] = `
+<Icon
+  bsStyle="danger"
+  faStyle="fas"
+  fixedWidth={false}
+  name="trash"
+  onClick={[MockFunction]}
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "17px",
+    }
+  }
+/>
+`;
+
+exports[`<RightIcon /> should return null when [ready=true] and [canModify=false] 1`] = `""`;

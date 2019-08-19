@@ -157,10 +157,10 @@ class Schema extends React.Component {
                     curSeg={this.state.selected}
                 />
                 <RemoveSegment
+                    activeName={this.state.selected.name}
                     show={this.state.showRemove}
                     onHide={this.handleClose}
                     onSubmit={this.handleSubmit}
-                    curSeg={this.state.selected}
                 />
             </div>
         );

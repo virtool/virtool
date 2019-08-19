@@ -1,9 +1,8 @@
 import HMM from "../HMM";
 
 describe("<HMM />", () => {
-    it("renders correctly", () => {
+    it("should render", () => {
         const wrapper = shallow(<HMM />);
-
         expect(wrapper).toMatchSnapshot();
     });
 });

@@ -3,7 +3,15 @@
 exports[`<Indexes /> should render 1`] = `
 <Switch>
   <Route
-    component={[Function]}
+    component={
+      Object {
+        "$$typeof": Symbol(react.memo),
+        "WrappedComponent": [Function],
+        "compare": null,
+        "displayName": "Connect(IndexesList)",
+        "type": [Function],
+      }
+    }
     exact={true}
     path="/refs/:refId/indexes"
   />

@@ -1,51 +1,62 @@
-import OTUGeneral from "../General";
+import { OTUGeneral, mapStateToProps } from "../General";
 
 describe("<OTUGeneral />", () => {
-    let initialState = {
-        otus: {
-            detail: {
-                abbreviation: "TV",
-                id: "123abc",
-                name: "test-virus",
-                version: 3
-            }
-        }
-    };
-    let store;
-    let wrapper;
+    let props;
 
-    it("renders correctly with issues", () => {
-        initialState = {
-            otus: {
-                detail: {
-                    ...initialState.otus.detail,
-                    issues: {
-                        empty_otu: false,
-                        empty_isolate: ["456def"],
-                        empty_sequence: false,
-                        isolate_inconsistency: false
-                    },
-                    isolates: [{ id: "456def" }]
-                }
-            }
+    beforeEach(() => {
+        props = {
+            abbreviation: "FB",
+            issues: {
+                empty_otu: false,
+                empty_isolate: ["456def"],
+                empty_sequence: false,
+                isolate_inconsistency: false
+            },
+            isolates: [{ id: "baz" }],
+            name: "Foo Bar",
+            version: 3
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<OTUGeneral store={store} />).dive();
+    });
+
+    it("should render with issues", () => {
+        const wrapper = shallow(<OTUGeneral {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly without issues", () => {
-        initialState = {
+    it("should render without issues", () => {
+        props.issues = null;
+        const wrapper = shallow(<OTUGeneral {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const issues = {
+            empty_otu: false,
+            empty_isolate: ["456def"],
+            empty_sequence: false,
+            isolate_inconsistency: false
+        };
+        const isolates = [{ id: "baz" }];
+        const state = {
             otus: {
                 detail: {
-                    ...initialState.otus.detail,
-                    issues: null,
-                    isolates: []
+                    abbreviation: "FB",
+                    issues,
+                    isolates,
+                    name: "Foo Bar",
+                    version: 3
                 }
             }
         };
-        store = mockStore(initialState);
-        wrapper = shallow(<OTUGeneral store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            abbreviation: "FB",
+            issues,
+            isolates,
+            name: "Foo Bar",
+            version: 3
+        });
     });
 });

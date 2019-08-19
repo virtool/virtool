@@ -5,32 +5,15 @@ import { removeSubtraction } from "../actions";
 import { RemoveModal } from "../../base";
 import { routerLocationHasState } from "../../utils/utils";
 
-export class RemoveSubtraction extends React.Component {
-    handleConfirm = () => {
-        this.props.onConfirm(this.props.id);
-    };
+export const RemoveSubtraction = ({ id, show, onConfirm, onHide }) => (
+    <RemoveModal id={id} name={id} noun="Subtraction" show={show} onHide={onHide} onConfirm={() => onConfirm(id)} />
+);
 
-    render() {
-        const { id, onHide, show } = this.props;
-
-        return (
-            <RemoveModal
-                id={id}
-                name={id}
-                noun="Subtraction"
-                show={show}
-                onHide={onHide}
-                onConfirm={this.handleConfirm}
-            />
-        );
-    }
-}
-
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     show: routerLocationHasState(state, "removeSubtraction", true)
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(push({ state: { removeSubtraction: false } }));
     },

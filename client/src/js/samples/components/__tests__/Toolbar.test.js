@@ -1,4 +1,3 @@
-import { MemoryRouter } from "react-router-dom";
 import { SampleSearchToolbar } from "../Toolbar";
 
 describe("<SampleSearchToolbar />", () => {

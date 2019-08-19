@@ -6,20 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/style.${hash}.css">
+    <link rel="stylesheet" href="/static/main.${hash}.css">
     <title>Setup - Virtool</title>
 </head>
 
 <body>
 
-<style>
-    small {
-        display: block;
-        font-family: mono;
-    }
-</style>
-
-<div class="container-noside">
+<div class="container-noside setup-finish">
     <div class="row">
         <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-4 col-lg-offset-4">
             <div class="list-group">
@@ -32,8 +25,8 @@
                     </p>
 
                     <div class="list-group">
-                        <div class="list-group-item" style="display: flex; align-items: center;">
-                            <div  style="padding-right: 20px;">
+                        <div class="list-group-item setup-flex-center">
+                            <div class="setup-summary-icon">
                                 <i class="fas fa-file-alt fa-fw"></i>
                             </div>
                             <div>
@@ -42,8 +35,8 @@
                             </div>
                         </div>
                         %if proxy:
-                            <div class="list-group-item" style="display: flex; align-items: center;">
-                                <div  style="padding-right: 20px;">
+                            <div class="list-group-item setup-flex-center">
+                                <div class="setup-summary-icon">
                                     <i class="fas fa-network-wired fa-fw"></i>
                                 </div>
                                 <div>
@@ -52,8 +45,8 @@
                                 </div>
                             </div>
                         %endif
-                        <div class="list-group-item" style="display: flex; align-items: center;">
-                            <div  style="padding-right: 20px;">
+                        <div class="list-group-item setup-flex-center">
+                            <div class="setup-summary-icon">
                                 <i class="fas fa-folder fa-fw"></i>
                             </div>
                             <div>
@@ -61,8 +54,8 @@
                                 <small class="text-info">${data_path}</small>
                             </div>
                         </div>
-                        <div class="list-group-item" style="display: flex; align-items: center;">
-                            <div  style="padding-right: 20px;">
+                        <div class="list-group-item setup-flex-center">
+                            <div class="setup-summary-icon">
                                 <i class="fas fa-folder fa-fw"></i>
                             </div>
                             <div>
@@ -71,8 +64,8 @@
 
                             </div>
                         </div>
-                        <div class="list-group-item" style="display: flex; align-items: center;">
-                            <div  style="padding-right: 20px;">
+                        <div class="list-group-item setup-flex-center">
+                            <div class="setup-summary-icon">
                                 <i class="fas fa-database fa-fw"></i>
                             </div>
                             <div>
@@ -80,34 +73,15 @@
                                 <small class="text-info">${db_name}</small>
                             </div>
                         </div>
-                        <div class="list-group-item" style="display: flex; align-items: center;">
-                            <div  style="padding-right: 20px;">
-                                <i class="fas fa-user fa-fw"></i>
-                            </div>
-                            <div>
-                                An administrative user will be created with the username:
-                                <small class="text-info">${user_id}</small>
-                            </div>
-                        </div>
                     </div>
 
-                    <div style="margin-top: 30px;">
-                        <button class="btn btn-primary pull-right" onClick="saveAndReload()">
-                            <i class="fas fa-redo-alt"></i> Save and Restart
-                        </button>
-                    </div>
+                    <a href="/setup/save"  class="btn btn-primary pull-right setup-save-button">
+                        <i class="fas fa-redo-alt"></i> Save and Restart
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script>
-    function saveAndReload () {
-        fetch("/setup/save");
-            setTimeout(function () {
-                window.location.replace("/");
-            }, 1600);
-        }
-</script>
 </body>
 </html>

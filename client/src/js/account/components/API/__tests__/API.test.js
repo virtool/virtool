@@ -1,32 +1,29 @@
-import APIContainer from "../API";
+import { APIKeys } from "../API";
 
 describe("<API />", () => {
-    let initialState;
-    let store;
-    let wrapper;
+    let props;
 
-    const testRenderedOutput = initialState => {
-        store = mockStore(initialState);
-        wrapper = shallow(<APIContainer store={store} />).dive();
-        expect(wrapper).toMatchSnapshot();
-    };
-
-    it("renders correctly with existing API keys", () => {
-        initialState = {
-            account: {
-                apiKeys: [{ id: "test1" }, { id: "test2" }]
-            }
+    beforeEach(() => {
+        props = {
+            apiKeys: [{ id: "foo" }, { id: "bar" }],
+            onGet: jest.fn()
         };
-        testRenderedOutput(initialState);
     });
 
-    it("renders correctly without API keys", () => {
-        initialState = { account: { apiKeys: null } };
-        testRenderedOutput(initialState);
+    it("should render two API keys", () => {
+        const wrapper = shallow(<APIKeys {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly with 0 API keys", () => {
-        initialState = { account: { apiKeys: [] } };
-        testRenderedOutput(initialState);
+    it("should render when loading API keys", () => {
+        props.apiKeys = null;
+        const wrapper = shallow(<APIKeys {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render with 0 API keys", () => {
+        props.apiKeys = [];
+        const wrapper = shallow(<APIKeys {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 });

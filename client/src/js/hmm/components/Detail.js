@@ -3,7 +3,7 @@ import React from "react";
 import { Badge, Col, Label, Panel, Row, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { IDRow, LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
+import { LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
 
@@ -56,8 +56,6 @@ class HMMDetail extends React.Component {
                             <th className="col-md-3">Cluster</th>
                             <td className="col-md-9">{this.props.detail.cluster}</td>
                         </tr>
-
-                        <IDRow id={this.props.detail.id} />
 
                         <tr>
                             <th>Best Definitions</th>

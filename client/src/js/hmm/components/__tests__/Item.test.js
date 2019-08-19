@@ -1,6 +1,3 @@
-import { Col, Row, Label } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
-import { ListGroupItem } from "../../../base/index";
 import Item from "../Item";
 
 describe("<HMMItem />", () => {

@@ -1,49 +1,108 @@
-import * as actions from "../../../actions";
-import RemoveIsolate from "../RemoveIsolate";
+import { HIDE_OTU_MODAL, REMOVE_ISOLATE } from "../../../../app/actionTypes";
+import { RemoveIsolate, mapStateToProps, mapDispatchToProps } from "../RemoveIsolate";
 
 describe("<RemoveIsolate />", () => {
-    const initialState = { otus: { removeIsolate: true } };
-    const store = mockStore(initialState);
-    const props = {
-        otuId: "test-otu",
-        isolateId: "123abc",
-        nextIsolateId: "test-next-isolate",
-        isolateName: "test-isolate"
-    };
-    let wrapper;
+    let props;
 
-    it("renders correctly", () => {
-        wrapper = shallow(<RemoveIsolate store={store} {...props} />).dive();
+    beforeEach(() => {
+        props = {
+            id: "foo",
+            name: "Foo",
+            nextId: "bar",
+            otuId: "baz",
+            show: true,
+            onConfirm: jest.fn(),
+            onHide: jest.fn()
+        };
+    });
+
+    it("should render with [show=true]", () => {
+        const wrapper = shallow(<RemoveIsolate {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("dispatch functions", () => {
-        let spy;
+    it("should render with [show=false]", () => {
+        props.show = false;
+        const wrapper = shallow(<RemoveIsolate {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        beforeEach(() => {
-            wrapper = shallow(<RemoveIsolate store={store} {...props} />).dive();
+    it("should call onConfirm() when onConfirm() on <RemoveModal /> is called", () => {
+        const wrapper = shallow(<RemoveIsolate {...props} />);
+        wrapper.props().onConfirm();
+        expect(props.onConfirm).toHaveBeenCalledWith(props.otuId, props.id, props.nextId);
+    });
+
+    it("should call onHide() when onHide() on <RemoveModal /> is called", () => {
+        const wrapper = shallow(<RemoveIsolate {...props} />);
+        wrapper.props().onHide();
+        expect(props.onHide).toHaveBeenCalled();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    let state;
+    let expected;
+
+    beforeEach(() => {
+        state = {
+            otus: {
+                activeIsolate: {
+                    id: "foo",
+                    name: "Foo"
+                },
+                detail: {
+                    id: "baz",
+                    isolates: [{ id: "bar" }]
+                },
+                removeIsolate: false
+            }
+        };
+        expected = {
+            id: "foo",
+            name: "Foo",
+            nextId: "bar",
+            otuId: "baz",
+            show: false
+        };
+    });
+
+    it.each([true, false])("should return props when [state.otus.removeIsolate=%p]", show => {
+        state.otus.removeIsolate = show;
+        const result = mapStateToProps(state);
+        expect(result).toEqual({ ...expected, show });
+    });
+
+    it("should return props when no isolates available", () => {
+        state.otus.detail.isolates = [];
+        const result = mapStateToProps(state);
+        expect(result).toEqual({ ...expected, nextId: null });
+    });
+});
+
+describe("mapDispatchToProps", () => {
+    let dispatch;
+    let props;
+
+    beforeEach(() => {
+        dispatch = jest.fn();
+        props = mapDispatchToProps(dispatch);
+    });
+
+    it("should return onHide() in props", () => {
+        props.onHide();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: HIDE_OTU_MODAL
         });
+    });
 
-        afterEach(() => {
-            spy.restore();
-        });
-
-        it("Closing modal dispatches hideOTUmodal() action", () => {
-            spy = sinon.spy(actions, "hideOTUModal");
-            expect(spy.called).toBe(false);
-
-            wrapper.prop("onHide")();
-
-            expect(spy.calledOnce).toBe(true);
-        });
-
-        it("Clicking Confirm dispatches removeIsolate() action", () => {
-            spy = sinon.spy(actions, "removeIsolate");
-            expect(spy.called).toBe(false);
-
-            wrapper.prop("onConfirm")();
-
-            expect(spy.calledWith(props.otuId, props.isolateId, props.nextIsolateId)).toBe(true);
+    it("should return onConfirm() in props", () => {
+        props.onConfirm("foo", "bar", "baz");
+        expect(dispatch).toHaveBeenCalledWith({
+            type: REMOVE_ISOLATE.REQUESTED,
+            otuId: "foo",
+            isolateId: "bar",
+            nextIsolateId: "baz"
         });
     });
 });

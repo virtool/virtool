@@ -1,54 +1,57 @@
 import { push } from "connected-react-router";
-import Releases from "../Releases";
+import { Releases, mapDispatchToProps, mapStateToProps } from "../Releases";
 
 describe("<Releases />", () => {
-    let initialState;
-    let store;
-    let wrapper;
+    let props;
 
-    it("renders correctly when there are no releases", () => {
-        initialState = {
-            updates: {
-                releases: []
-            }
+    beforeEach(() => {
+        props = {
+            releases: [{ name: "foo" }, { name: "b" }],
+            onShowInstall: jest.fn()
         };
-        store = mockStore(initialState);
+    });
 
-        wrapper = shallow(<Releases store={store} />).dive();
+    it("should render when there are releases", () => {
+        const wrapper = shallow(<Releases {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly when there are multiple releases", () => {
-        initialState = {
-            updates: {
-                releases: [{ name: "test-b" }, { name: "test-c" }]
-            }
-        };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<Releases store={store} />).dive();
+    it("should render when there are no releases (up-to-date)", () => {
+        props.releases = [];
+        const wrapper = shallow(<Releases {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("clicking Install button dispatches router location state change", () => {
-        initialState = {
-            updates: {
-                releases: [{ name: "test-a" }]
-            }
-        };
-        store = mockStore(initialState);
-
-        const spy = sinon.spy(store, "dispatch");
-        expect(spy.called).toBe(false);
-
-        wrapper = shallow(<Releases store={store} />);
+    it("should call onShowInstall when onShowInstall called on <ReleasesList />", () => {
+        const wrapper = shallow(<Releases {...props} />);
         wrapper
-            .dive()
-            .find({ icon: "download" })
-            .prop("onClick")();
+            .find("ReleasesList")
+            .props()
+            .onShowInstall();
+        expect(props.onShowInstall).toHaveBeenCalled();
+    });
+});
 
-        expect(spy.calledWith(push({ state: { install: true } }))).toBe(true);
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const releases = [{ name: "foo" }, { name: "b" }];
+        const state = {
+            updates: {
+                releases
+            }
+        };
+        const props = mapStateToProps(state);
+        expect(props).toEqual({
+            releases
+        });
+    });
+});
 
-        spy.restore();
+describe("mapDispatchToProps()", () => {
+    it("should return onShowInstall() in props", () => {
+        const dispatch = jest.fn();
+        const props = mapDispatchToProps(dispatch);
+        props.onShowInstall();
+        expect(dispatch).toHaveBeenCalledWith(push({ state: { install: true } }));
     });
 });

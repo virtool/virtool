@@ -2,7 +2,6 @@ import { filesSelector } from "../selectors";
 
 describe("Test Files Selectors", () => {
     let state;
-    let expected;
 
     beforeEach(() => {
         state = {

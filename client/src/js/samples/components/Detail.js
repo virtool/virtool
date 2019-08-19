@@ -39,7 +39,7 @@ class SampleDetail extends React.Component {
         }
 
         if (this.props.detail === null) {
-            return <LoadingPlaceholder margin="130px" />;
+            return <LoadingPlaceholder />;
         }
 
         if (this.props.detail.imported === "ip") {

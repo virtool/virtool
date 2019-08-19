@@ -1,4 +1,3 @@
-import { get } from "lodash-es";
 import { AnalysisDetail, mapStateToProps } from "../Detail";
 
 describe("<AnalysisDetail />", () => {

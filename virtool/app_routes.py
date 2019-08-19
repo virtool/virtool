@@ -24,7 +24,6 @@ import virtool.api.users
 import virtool.api.websocket
 import virtool.http.auth
 import virtool.utils
-import virtool.http.auth
 
 logger = logging.getLogger(__name__)
 
@@ -41,35 +40,36 @@ INDEX_PATHS = [
     r"/subtraction{suffix:.*}"
 ]
 
+ROUTES = (
+    virtool.api.account.routes,
+    virtool.api.analyses.routes,
+    virtool.api.caches.routes,
+    virtool.api.downloads.routes,
+    virtool.api.files.routes,
+    virtool.api.genbank.routes,
+    virtool.api.groups.routes,
+    virtool.api.history.routes,
+    virtool.api.hmm.routes,
+    virtool.api.indexes.routes,
+    virtool.api.jobs.routes,
+    virtool.api.otus.routes,
+    virtool.api.processes.routes,
+    virtool.api.references.routes,
+    virtool.api.root.routes,
+    virtool.api.samples.routes,
+    virtool.api.settings.routes,
+    virtool.api.software.routes,
+    virtool.api.subtractions.routes,
+    virtool.api.uploads.routes,
+    virtool.api.users.routes
+)
+
 
 def setup_routes(app):
     for path in INDEX_PATHS:
         app.router.add_get(path, virtool.http.auth.index_handler)
 
     app.router.add_get("/ws", virtool.api.websocket.root)
-    app.router.add_get("/login", virtool.http.auth.login_get_handler)
-    app.router.add_post("/login", virtool.http.auth.login_post_handler)
-    app.router.add_get("/reset", virtool.http.auth.reset_get_handler)
-    app.router.add_post("/reset", virtool.http.auth.reset_post_handler)
 
-    app.router.add_routes(virtool.api.account.routes)
-    app.router.add_routes(virtool.api.analyses.routes)
-    app.router.add_routes(virtool.api.caches.routes)
-    app.router.add_routes(virtool.api.downloads.routes)
-    app.router.add_routes(virtool.api.files.routes)
-    app.router.add_routes(virtool.api.genbank.routes)
-    app.router.add_routes(virtool.api.groups.routes)
-    app.router.add_routes(virtool.api.history.routes)
-    app.router.add_routes(virtool.api.hmm.routes)
-    app.router.add_routes(virtool.api.indexes.routes)
-    app.router.add_routes(virtool.api.jobs.routes)
-    app.router.add_routes(virtool.api.otus.routes)
-    app.router.add_routes(virtool.api.processes.routes)
-    app.router.add_routes(virtool.api.references.routes)
-    app.router.add_routes(virtool.api.root.routes)
-    app.router.add_routes(virtool.api.samples.routes)
-    app.router.add_routes(virtool.api.settings.routes)
-    app.router.add_routes(virtool.api.software.routes)
-    app.router.add_routes(virtool.api.subtractions.routes)
-    app.router.add_routes(virtool.api.uploads.routes)
-    app.router.add_routes(virtool.api.users.routes)
+    for routes in ROUTES:
+        app.router.add_routes(routes)

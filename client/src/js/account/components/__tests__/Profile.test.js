@@ -1,42 +1,51 @@
-import { Icon } from "../../../base/index";
-import AccountGeneral from "../Profile";
+import { AccountProfile, mapStateToProps } from "../Profile";
 
 describe("<AccountProfile />", () => {
-    describe("renders correctly", () => {
-        let initialState;
-        let store;
-        let wrapper;
+    let props;
 
-        it("with admin icon when [isAdmin=true]", () => {
-            initialState = {
-                account: {
-                    id: "testid",
-                    identicon: "randomhashof15c",
-                    groups: ["test"],
-                    administrator: true
-                }
-            };
-            store = mockStore(initialState);
-            wrapper = shallow(<AccountGeneral store={store} />).dive();
+    beforeEach(() => {
+        props = {
+            id: "foo",
+            identicon: "randomhashof15c",
+            groups: ["test"],
+            administrator: false
+        };
+    });
 
-            expect(wrapper.find(Icon).length).toBe(1);
-            expect(wrapper).toMatchSnapshot();
-        });
+    it("should render when administrator", () => {
+        props.administrator = true;
+        const wrapper = shallow(<AccountProfile {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        it("without icon otherwise", () => {
-            initialState = {
-                account: {
-                    id: "testid",
-                    identicon: "randomhashof15c",
-                    groups: ["test"],
-                    administrator: false
-                }
-            };
-            store = mockStore(initialState);
-            wrapper = shallow(<AccountGeneral store={store} />).dive();
+    it("should render when not administrator", () => {
+        const wrapper = shallow(<AccountProfile {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-            expect(wrapper.find(Icon).length).toBe(0);
-            expect(wrapper).toMatchSnapshot();
-        });
+describe("mapStateToProps()", () => {
+    const state = {
+        account: {
+            id: "foo",
+            identicon: "randomhashof15c",
+            groups: ["test"],
+            administrator: true
+        }
+    };
+    const expected = {
+        id: "foo",
+        identicon: "randomhashof15c",
+        groups: ["test"],
+        administrator: true
+    };
+    it("should return props when administrator", () => {
+        const props = mapStateToProps(state);
+        expect(props).toEqual(expected);
+    });
+    it("should return props when not administrator", () => {
+        state.account.administrator = false;
+        const props = mapStateToProps(state);
+        expect(props).toEqual({ ...expected, administrator: false });
     });
 });

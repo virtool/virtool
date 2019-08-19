@@ -1,12 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<IndexItem /> should render 1`] = `
-<LinkContainer
-  activeClassName="active"
+<withRouter(LinkContainer)
   className="spaced"
-  exact={false}
-  replace={false}
-  strict={false}
   to="/refs/foo/indexes/bar"
 >
   <ListGroupItem
@@ -61,7 +57,7 @@ exports[`<IndexItem /> should render 1`] = `
       </Col>
     </Row>
   </ListGroupItem>
-</LinkContainer>
+</withRouter(LinkContainer)>
 `;
 
 exports[`<IndexItemChangeDescription /> should render 'No Changes' when changeCount is 0 1`] = `"No changes"`;

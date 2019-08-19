@@ -52,18 +52,18 @@ describe("<CreateAPIKey />", () => {
         };
     });
 
-    it("should render correctly", () => {
+    it("should render when [state.newKey] is empty", () => {
         const wrapper = shallow(<CreateAPIKey {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render correctly when [state.newKey] set", () => {
+    it("should render when [state.newKey] set", () => {
         props.newKey = "123abc";
         const wrapper = shallow(<CreateAPIKey {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render correctly when [props.newKey] and [state.copied] set", () => {
+    it("should render when [props.newKey] and [state.copied] set", () => {
         props.newKey = "123abc";
         const wrapper = shallow(<CreateAPIKey {...props} />);
         wrapper.setState({ copied: true });

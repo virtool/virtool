@@ -6,12 +6,13 @@ import Updates from "../../updates/components/Viewer";
 
 import User from "../../users/components/User";
 import Users from "../../users/components/Users";
+import { mapSettingsStateToProps } from "../mappers";
 import { ServerSettings } from "./Server";
 
-export const Settings = ({ settings }) => {
+export const Settings = ({ loading }) => {
     let content;
 
-    if (settings === null) {
+    if (loading) {
         content = <LoadingPlaceholder />;
     } else {
         content = (
@@ -42,8 +43,4 @@ export const Settings = ({ settings }) => {
     );
 };
 
-const mapStateToProps = state => ({
-    settings: state.settings.data
-});
-
-export default connect(mapStateToProps)(Settings);
+export default connect(mapSettingsStateToProps)(Settings);

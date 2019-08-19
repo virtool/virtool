@@ -3,14 +3,14 @@ import { capitalize, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Label, Panel, Table } from "react-bootstrap";
 
-import { Icon, IDRow } from "../../../base";
+import { Icon } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
 import IsolateSequences from "./Sequences";
 import RemoveIsolate from "./RemoveIsolate";
 
-const IsolateTable = ({ id, isDefault, sourceName, sourceType }) => (
+const IsolateTable = ({ isDefault, sourceName, sourceType }) => (
     <Table bordered>
         <tbody>
             <tr>
@@ -27,7 +27,6 @@ const IsolateTable = ({ id, isDefault, sourceName, sourceType }) => (
                     <Label bsStyle={isDefault ? "success" : "default"}>{isDefault ? "Yes" : "No"}</Label>
                 </td>
             </tr>
-            <IDRow id={id} />
         </tbody>
     </Table>
 );
@@ -95,12 +94,7 @@ export class IsolateDetail extends React.Component {
                     sourceName={isolate.source_name}
                 />
 
-                <RemoveIsolate
-                    otuId={this.props.otuId}
-                    isolateId={isolate.id}
-                    isolateName={isolate.name}
-                    nextIsolateId={this.props.isolates.length ? this.props.isolates[0].id : null}
-                />
+                <RemoveIsolate />
 
                 <Panel>
                     <Panel.Body>
@@ -126,7 +120,6 @@ export class IsolateDetail extends React.Component {
                         </h5>
 
                         <IsolateTable
-                            id={isolate.id}
                             isDefault={isolate.default}
                             sourceName={isolate.source_name}
                             sourceType={isolate.source_type}

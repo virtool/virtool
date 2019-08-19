@@ -201,6 +201,7 @@ async def test_callable_filter(create_test_connection):
     m_2.send_stub.assert_not_called()
 
 
+async def test_non_callable_filter():
     """
     Test that that passing a non-callable ``conn_filter`` keyword argument raises a specific ``TypeError``.
 
@@ -324,7 +325,7 @@ async def test_writer_not_callable():
     Test that a writer can properly modify and write a message to the passed connection.
 
     """
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError) as excinfo:
         await Dispatcher().dispatch("otus", "update", {"test": True}, writer="writer")
 
-    assert "writer must be callable" in str(err)
+    assert "writer must be callable" in str(excinfo.value)

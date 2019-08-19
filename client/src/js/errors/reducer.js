@@ -33,7 +33,8 @@ import {
     GET_RESOURCES,
     UPDATE_SETTINGS,
     FIND_USERS,
-    GET_USER
+    GET_USER,
+    LOGIN
 } from "../app/actionTypes";
 
 /**
@@ -122,6 +123,7 @@ export default function errorsReducer(state = null, action) {
             case UPDATE_SETTINGS.FAILED:
             case FIND_USERS.FAILED:
             case GET_USER.FAILED:
+            case LOGIN.FAILED:
                 return { ...state, [errorName]: errorPayload };
 
             default:

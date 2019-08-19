@@ -1,31 +1,40 @@
-import SubtractionItem from "../Item";
+import { SubtractionItem, SubtractionItemIcon, mapStateToProps } from "../Item";
 
-describe("<SubtractionItem />", () => {
-    let initialState;
-    let store;
-    let wrapper;
-
-    it("renders correctly when entry is ready", () => {
-        initialState = {
-            subtraction: {
-                documents: [{ id: "123abc", ready: true }]
-            }
-        };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<SubtractionItem store={store} index={0} />).dive();
+describe("<SubtractionItemIcon />", () => {
+    it.each([true, false])("should render when [ready=%p]", ready => {
+        const wrapper = shallow(<SubtractionItemIcon ready={ready} />);
         expect(wrapper).toMatchSnapshot();
     });
+});
 
-    it("renders correctly when entry is not ready", () => {
-        initialState = {
+describe("<SubtractionItem />", () => {
+    let props;
+
+    beforeEach(() => {
+        props = {
+            id: "Foo Bar",
+            ready: true
+        };
+    });
+
+    it.each([true, false])("should render when [ready=%p]", ready => {
+        props.ready = ready;
+        const wrapper = shallow(<SubtractionItem {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
             subtraction: {
-                documents: [{ id: "123abc", ready: false }]
+                documents: [{ id: "foo", ready: true }, { id: "bar", ready: true }, { id: "baz", ready: true }]
             }
         };
-        store = mockStore(initialState);
-
-        wrapper = shallow(<SubtractionItem store={store} index={0} />).dive();
-        expect(wrapper).toMatchSnapshot();
+        const props = mapStateToProps(state, { index: 1 });
+        expect(props).toEqual({
+            id: "bar",
+            ready: true
+        });
     });
 });

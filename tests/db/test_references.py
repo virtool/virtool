@@ -52,14 +52,14 @@ async def test_add_group_or_user(error, field, rights, dbi, static_time):
     task = virtool.db.references.add_group_or_user(dbi, ref_id, field + "s", payload)
 
     if error == "duplicate" or error == "missing_member":
-        with pytest.raises(virtool.errors.DatabaseError) as err:
+        with pytest.raises(virtool.errors.DatabaseError) as excinfo:
             await task
 
         if error == "duplicate":
-            assert field + " already exists" in str(err)
+            assert field + " already exists" in str(excinfo.value)
 
         else:
-            assert field + " does not exist" in str(err)
+            assert field + " does not exist" in str(excinfo.value)
 
     elif error == "missing":
         assert await task is None

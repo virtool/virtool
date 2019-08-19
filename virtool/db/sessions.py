@@ -1,18 +1,11 @@
 import arrow
 import hashlib
 import secrets
+from typing import Tuple, Union
 
+import virtool.db.iface
 import virtool.db.utils
 import virtool.utils
-
-
-async def create_session_id(db):
-    session_id = secrets.token_hex(32)
-
-    if await db.sessions.count({"_id": session_id}):
-        return await create_session_id(db)
-
-    return session_id
 
 
 async def create_session(db, ip, user_id=None, remember=False):
@@ -61,7 +54,37 @@ async def create_session(db, ip, user_id=None, remember=False):
     return session, token
 
 
-async def get_session(db, session_id, session_token):
+async def create_session_id(db: virtool.db.iface.DB) -> str:
+    """
+    Create a new unique session id.
+
+    :param db: the application database client
+    :return: a session id
+
+    """
+    session_id = secrets.token_hex(32)
+
+    if await db.sessions.count({"_id": session_id}):
+        return await create_session_id(db)
+
+    return session_id
+
+
+async def get_session(db: virtool.db.iface.DB, session_id: str, session_token: str) -> Union[None, dict]:
+    """
+    Get a session by its id and token.
+
+    If the passed `session_token` is `None`, an unauthenticated session document matching the `session_id` will be
+    returned. If the matching session is authenticated and token is passed, `None` will be returned.
+
+    Will return `None` if the session doesn't exist or the session id and token do not go together.
+
+    :param db: the application database client
+    :param session_id: the session id
+    :param session_token: the token for the session
+    :return: a session document
+
+    """
     document = await db.sessions.find_one({
         "_id": session_id
     })
@@ -83,41 +106,25 @@ async def get_session(db, session_id, session_token):
         return document
 
 
-async def get_verification_key(db, session_id, mode="login"):
-    verification_key = secrets.token_hex(20)
+async def create_reset_code(db, session_id, user_id, remember=False):
+    """
+    Create a secret code that is used to verify a password reset request. Properties:
 
-    await db.sessions.update_one({"_id": session_id}, {
-        "$set": {
-            f"{mode}_verification_key": verification_key
-        }
-    })
+    - the reset request must pass a reset code that is associated with the session linked to the request
+    - the reset code is dropped from the session for any non-reset request sent after the code was generated
 
-    return verification_key
+    :param db:
+    :param session_id:
+    :param user_id:
+    :return:
 
-
-async def check_verification_key(db, session_id, verification_key, mode="login"):
-    db_verification_key = await virtool.db.utils.get_one_field(
-        db.sessions,
-        f"{mode}_verification_key",
-        session_id
-    )
-
-    if db_verification_key and db_verification_key == verification_key:
-        await db.sessions.update_one({"_id": session_id}, {
-            "$unset": {
-                f"{mode}_verification_key": ""
-            }
-        })
-
-        return True
-
-
-async def get_reset_code(db, session_id, user_id):
-    reset_code = secrets.token_hex(20)
+    """
+    reset_code = secrets.token_hex(32)
 
     await db.sessions.update_one({"_id": session_id}, {
         "$set": {
             "reset_code": reset_code,
+            "reset_remember": remember,
             "reset_user_id": user_id
         }
     })
@@ -128,34 +135,50 @@ async def get_reset_code(db, session_id, user_id):
 async def check_reset_code(db, session_id, reset_code):
     session = await db.sessions.find_one(session_id, ["reset_code", "reset_user_id"])
 
-    db_reset_code = session.get("reset_code", None)
-
-    if db_reset_code and db_reset_code == reset_code:
-        await db.sessions.update_one({"_id": session_id}, {
-            "$unset": {
-                "reset_code": ""
-            }
-        })
-
-        return True
-
-    return False
-
-
-async def set_reset_errors(db, session_id, errors=None):
-    reset_code = secrets.token_hex(20)
-
     await db.sessions.update_one({"_id": session_id}, {
-        "$set": {
-            "reset_code": reset_code,
-            "reset_errors": errors or list()
+        "$unset": {
+            "reset_code": "",
+            "reset_remember": "",
+            "reset_user_id": ""
         }
     })
 
-    return reset_code
+    db_reset_code = session.get("reset_code")
+
+    return db_reset_code and db_reset_code == reset_code
 
 
-async def replace_session(db, session_id, ip, user_id=None, remember=False):
+async def clear_reset_code(db: virtool.db.iface.DB, session_id: str):
+    """
+    Clear the reset information attached to the session associated with the passed `session_id`.
+
+    :param db: the application database client
+    :param session_id: the session id
+
+    """
+    await db.sessions.update_one({"_id": session_id}, {
+        "$unset": {
+            "reset_code": "",
+            "reset_remember": "",
+            "reset_user_id": ""
+        }
+    })
+
+
+async def replace_session(db: virtool.db.iface.DB, session_id: str, ip: str, user_id=None, remember=False) -> Tuple[dict, str]:
+    """
+    Replace the session associated with `session_id` with a new one. Return the new session document.
+
+    Supplying a `user_id` indicates the session is authenticated. Setting `remember` will make the session last for 30
+    days instead of the default 30 minutes.
+
+    :param db: the application database client
+    :param session_id: the id of the session to replace
+    :param ip:
+    :param user_id:
+    :param remember:
+    :return: new session document and token
+    """
     await db.sessions.delete_one({"_id": session_id})
     return await create_session(db, ip, user_id, remember=remember)
 

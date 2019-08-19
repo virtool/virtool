@@ -65,11 +65,7 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
       />
     </div>
   </div>
-  <LinkContainer
-    activeClassName="active"
-    exact={false}
-    replace={false}
-    strict={false}
+  <withRouter(LinkContainer)
     to={
       Object {
         "state": Object {
@@ -86,7 +82,7 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
       tip="Create"
       tipPlacement="top"
     />
-  </LinkContainer>
+  </withRouter(LinkContainer)>
 </div>
 `;
 
@@ -121,11 +117,7 @@ exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
       />
     </div>
   </div>
-  <LinkContainer
-    activeClassName="active"
-    exact={false}
-    replace={false}
-    strict={false}
+  <withRouter(LinkContainer)
     to={
       Object {
         "state": Object {
@@ -142,6 +134,6 @@ exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
       tip="Create"
       tipPlacement="top"
     />
-  </LinkContainer>
+  </withRouter(LinkContainer)>
 </div>
 `;

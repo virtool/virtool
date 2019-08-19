@@ -3,7 +3,6 @@
 exports[`AnalysisMappingReference should render 1`] = `
 <Mapping__StyledAnalysisMappingReference>
   <Link
-    replace={false}
     to="/refs/foo"
   >
     Foo

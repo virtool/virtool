@@ -37,7 +37,9 @@ export const CREATE_API_KEY = createRequestActionType("CREATE_API_KEY");
 export const UPDATE_API_KEY = createRequestActionType("UPDATE_API_KEY");
 export const REMOVE_API_KEY = createRequestActionType("REMOVE_API_KEY");
 export const CLEAR_API_KEY = "CLEAR_API_KEY";
+export const LOGIN = createRequestActionType("LOGIN");
 export const LOGOUT = createRequestActionType("LOGOUT");
+export const RESET_PASSWORD = createRequestActionType("RESET_PASSWORD");
 
 // Administration Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
@@ -216,6 +218,7 @@ export const WS_REMOVE_USER = "WS_REMOVE_USER";
 export const FIND_USERS = createRequestActionType("FIND_USERS");
 export const GET_USER = createRequestActionType("GET_USER");
 export const CREATE_USER = createRequestActionType("CREATE_USER");
+export const CREATE_FIRST_USER = createRequestActionType("CREATE_FIRST_USER");
 export const EDIT_USER = createRequestActionType("EDIT_USER");
 export const REMOVE_USER = createRequestActionType("REMOVE_USER");
 

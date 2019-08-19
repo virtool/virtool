@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "styled-components";
 
 const path = `
     M 235.00977 45.240234 L 224.64258 66.671875 L 186.9375 70.472656 L 175.11914 51.697266 L 148.99219 58.945312 
@@ -20,24 +21,27 @@ const path = `
     L 235.3457 218.0918 L 235.3457 190.00781 z 
 `;
 
-export const VTLogo = () => (
-    <div className="vtlogo">
-        <svg id="svg2" viewBox="0 0 448 512" height="30" version="1.1">
+const StyledVTLogo = styled.div`
+    color: #edf7f6;
+    max-width: 30px;
+    margin: 8px 8px 0 0;
+
+    path {
+        fill: currentColor;
+        fill-opacity: 1;
+        stroke: none;
+        stroke-width: 1;
+        stroke-miterlimit: 4;
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+    }
+`;
+
+export const VTLogo = ({ className, height = 30 }) => (
+    <StyledVTLogo className={className}>
+        <svg id="svg2" viewBox="0 0 512 512" height={height}>
             <defs id="defs125" />
-            <path
-                id="path4138-2"
-                d={path}
-                style={{
-                    fill: "#edf7f6",
-                    fillOpacity: "1",
-                    stroke: "none",
-                    strokeWidth: "1",
-                    strokeMiterlimit: "4",
-                    strokeDasharray: "none",
-                    strokeDashoffset: "0",
-                    strokeOpacity: "1"
-                }}
-            />
+            <path id="path4138-2" d={path} style={{}} />
         </svg>
-    </div>
+    </StyledVTLogo>
 );

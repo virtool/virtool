@@ -5,7 +5,7 @@ import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
 import { clearError } from "../../errors/actions";
-import { SaveButton, InputError, RelativeTime } from "../../base";
+import { SaveButton, InputError, RelativeTime, LoadingPlaceholder } from "../../base";
 import { getTargetChange } from "../../utils/utils";
 
 const getInitialState = props => ({
@@ -18,23 +18,24 @@ const getInitialState = props => ({
     error: props.error
 });
 
+const deriveState = (props, state) => {
+    const message = get(props, "error.message");
+
+    if (message) {
+        return {
+            ...state,
+            errorOldPassword: message,
+            error: props.error
+        };
+    }
+
+    return state;
+};
+
 export class ChangePassword extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.error && nextProps.error) {
-            if (nextProps.error.status === 400) {
-                return {
-                    errorOldPassword: nextProps.error.message,
-                    error: nextProps.error
-                };
-            }
-        }
-
-        return null;
     }
 
     componentDidUpdate(prevProps) {
@@ -50,7 +51,7 @@ export class ChangePassword extends React.Component {
         this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
-            this.props.onClearError("CHANGE_ACCOUNT_PASSWORD_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -58,24 +59,17 @@ export class ChangePassword extends React.Component {
         e.preventDefault();
 
         let hasError = false;
-        const minLength = this.props.settings.minimum_password_length;
+        const minimumLength = this.props.minimumLength;
 
         if (!this.state.oldPassword.length) {
             hasError = true;
             this.setState({ errorOldPassword: "Please provide your old password" });
         }
 
-        if (0 < this.state.oldPassword.length && this.state.oldPassword.length < minLength) {
+        if (this.state.newPassword.length < minimumLength) {
             hasError = true;
             this.setState({
-                errorOldPassword: `Passwords must contain at least ${minLength} characters`
-            });
-        }
-
-        if (this.state.newPassword.length < minLength) {
-            hasError = true;
-            this.setState({
-                errorNewPassword: `Passwords must contain at least ${minLength} characters`
+                errorNewPassword: `Passwords must contain at least ${minimumLength} characters`
             });
         }
 
@@ -90,11 +84,20 @@ export class ChangePassword extends React.Component {
     };
 
     render() {
-        if (!this.props.settings) {
-            return <div />;
+        if (!this.props.ready) {
+            return <LoadingPlaceholder />;
         }
 
-        const hasError = this.state.errorOldPassword || this.state.errorNewPassword || this.state.ConfirmPassword;
+        const {
+            oldPassword,
+            newPassword,
+            confirmPassword,
+            errorOldPassword,
+            errorNewPassword,
+            errorConfirmPassword
+        } = deriveState(this.props, this.state);
+
+        const hasError = errorOldPassword || errorNewPassword || errorConfirmPassword;
 
         return (
             <Row>
@@ -107,25 +110,25 @@ export class ChangePassword extends React.Component {
                                     label="Old Password"
                                     type="password"
                                     name="oldPassword"
-                                    value={this.state.oldPassword}
+                                    value={oldPassword}
                                     onChange={this.handleChange}
-                                    error={this.state.errorOldPassword}
+                                    error={errorOldPassword}
                                 />
                                 <InputError
                                     label="New password"
                                     type="password"
                                     name="newPassword"
-                                    value={this.state.newPassword}
+                                    value={newPassword}
                                     onChange={this.handleChange}
-                                    error={this.state.errorNewPassword}
+                                    error={errorNewPassword}
                                 />
                                 <InputError
                                     label="Confirm New Password"
                                     type="password"
                                     name="confirmPassword"
-                                    value={this.state.confirmPassword}
+                                    value={confirmPassword}
                                     onChange={this.handleChange}
-                                    error={this.state.errorConfirmPassword}
+                                    error={errorConfirmPassword}
                                 />
 
                                 <div style={{ marginTop: "20px" }}>
@@ -147,19 +150,20 @@ export class ChangePassword extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     lastPasswordChange: state.account.last_password_change,
-    settings: state.settings.data,
+    minimumLength: get(state, "settings.data.minimum_password_length"),
+    ready: !!state.settings.data,
     error: get(state, "errors.CHANGE_ACCOUNT_PASSWORD_ERROR", "")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onChangePassword: (oldPassword, newPassword) => {
         dispatch(changePassword(oldPassword, newPassword));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CHANGE_ACCOUNT_PASSWORD_ERROR"));
     }
 });
 

@@ -99,10 +99,10 @@ def test_read_fasta(illegal, tmpdir):
     tmpfile.write(content)
 
     if illegal:
-        with pytest.raises(IOError) as err:
+        with pytest.raises(IOError) as excinfo:
             virtool.bio.read_fasta(str(tmpfile))
 
-        assert "Illegal FASTA line: ATTAGATAC" in str(err)
+        assert "Illegal FASTA line: ATTAGATAC" in str(excinfo.value)
 
     else:
         assert virtool.bio.read_fasta(str(tmpfile)) == [

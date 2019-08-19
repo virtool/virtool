@@ -1,48 +1,53 @@
-import OTUItem from "../Item";
+import { OTUItem, mapStateToProps } from "../Item";
 
 describe("<OTUItem />", () => {
-    let initialState;
-    let store;
     let props;
-    let wrapper;
 
-    it("renders correctly when [verified=false]", () => {
-        initialState = {
-            otus: {
-                documents: [
-                    {
-                        id: "test-1",
-                        verified: false,
-                        name: "test-otu-1",
-                        abbreviation: "TO1"
-                    }
-                ]
-            }
+    beforeEach(() => {
+        props = {
+            abbreviation: "FB",
+            id: "foo",
+            name: "Foo",
+            verified: true,
+            refId: "baz"
         };
-        store = mockStore(initialState);
+    });
 
-        props = { index: 0, refId: "123abc" };
-        wrapper = shallow(<OTUItem store={store} {...props} />).dive();
+    it("should render when [verified=true]", () => {
+        const wrapper = shallow(<OTUItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders correctly when [verified=true]", () => {
-        initialState = {
+    it("should render when [verified=false]", () => {
+        props.verified = false;
+        const wrapper = shallow(<OTUItem {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps()", () => {
+    it("should return props given state", () => {
+        const state = {
             otus: {
                 documents: [
-                    {
-                        id: "test-2",
-                        verified: true,
-                        name: "test-otu-2",
-                        abbreviation: "TO2"
-                    }
+                    { id: "foo", name: "Foo", abbreviation: "FO", verified: true },
+                    { id: "bar", name: "Bar", abbreviation: "BR", verified: true },
+                    { id: "baz", name: "Baz", abbreviation: "BZ", verified: true }
                 ]
+            },
+            references: {
+                detail: {
+                    id: "ref"
+                }
             }
         };
-        store = mockStore(initialState);
-
-        props = { index: 0, refId: "123abc" };
-        wrapper = shallow(<OTUItem store={store} {...props} />).dive();
-        expect(wrapper).toMatchSnapshot();
+        const result = mapStateToProps(state, { index: 1 });
+        expect(result).toEqual({
+            id: "bar",
+            name: "Bar",
+            abbreviation: "BR",
+            verified: true,
+            refId: "ref"
+        });
     });
 });

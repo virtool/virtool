@@ -1,12 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<HMM /> renders correctly 1`] = `
+exports[`<HMM /> should render 1`] = `
 <div
   className="container"
 >
   <Switch>
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(HMMList)",
+          "type": [Function],
+        }
+      }
       exact={true}
       path="/hmm"
     />
@@ -15,7 +23,15 @@ exports[`<HMM /> renders correctly 1`] = `
       path="/hmm/settings"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(HMMDetail)",
+          "type": [Function],
+        }
+      }
       path="/hmm/:hmmId"
     />
   </Switch>

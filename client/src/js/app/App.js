@@ -1,69 +1,57 @@
-import React from "react";
-import { keys } from "lodash-es";
-import { Helmet } from "react-helmet";
-import { ThemeProvider } from "styled-components";
-import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "connected-react-router";
-import { Switch, Route, withRouter, Redirect } from "react-router-dom";
-
-import NavBar from "../nav/components/Bar";
-import Sidebar from "../nav/components/Sidebar";
-import Welcome from "../home/components/Welcome";
-import Jobs from "../jobs/components/Jobs";
-import Samples from "../samples/components/Samples";
-import References from "../references/components/References";
-import HMM from "../hmm/components/HMM";
-import Subtraction from "../subtraction/components/Subtraction";
-import Administration from "../administration/components/Settings";
-import Account from "../account/components/Account";
-import UploadOverlay from "../files/components/UploadOverlay";
-import { LoadingPlaceholder } from "../base";
+import React, { Suspense } from "react";
+import { connect, Provider } from "react-redux";
+import { ThemeProvider } from "styled-components";
+import { WallContainer } from "../wall/Container";
+import Reset from "../wall/Reset";
+import Main from "./Main";
 import { theme } from "./theme";
 
-export const Inner = props => {
-    if (props.ready) {
+const LazyFirstUser = React.lazy(() => import("../wall/FirstUser"));
+const LazyLogin = React.lazy(() => import("../wall/Login"));
+
+export const App = ({ first, login, reset }) => {
+    if (first) {
         return (
-            <div>
-                <Helmet titleTemplate="%s - Virtool" defaultTitle="Virtool" />
-
-                <NavBar />
-
-                <Switch>
-                    <Redirect from="/" to="/home" exact />
-                    <Route path="/home" component={Welcome} />
-                    <Route path="/jobs" component={Jobs} />
-                    <Route path="/samples" component={Samples} />
-                    <Route path="/refs" component={References} />
-                    <Route path="/hmm" component={HMM} />
-                    <Route path="/subtraction" component={Subtraction} />
-                    <Route path="/administration" component={Administration} />
-                    <Route path="/account" component={Account} />
-                </Switch>
-
-                <Sidebar />
-
-                <UploadOverlay />
-            </div>
+            <Suspense fallback={<WallContainer />}>
+                <LazyFirstUser />
+            </Suspense>
         );
     }
 
-    return <LoadingPlaceholder margin="290px" />;
+    if (login) {
+        return (
+            <Suspense fallback={<WallContainer />}>
+                <LazyLogin />
+            </Suspense>
+        );
+    }
+
+    if (reset) {
+        return <Reset />;
+    }
+
+    return <Main />;
 };
 
-const mapStateToProps = state => ({
-    ready: state.account.ready && Boolean(keys(state.settings).length)
-});
+export const mapStateToProps = state => {
+    const { first, login, reset } = state.app;
 
-export const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
+    return {
+        first,
+        login,
+        reset
+    };
+};
 
-const App = ({ store, history }) => (
-    <Provider store={store}>
-        <ThemeProvider theme={theme}>
+const ConnectedApp = connect(mapStateToProps)(App);
+
+export default ({ store, history }) => (
+    <ThemeProvider theme={theme}>
+        <Provider store={store}>
             <ConnectedRouter history={history}>
-                <InnerContainer />
+                <ConnectedApp />
             </ConnectedRouter>
-        </ThemeProvider>
-    </Provider>
+        </Provider>
+    </ThemeProvider>
 );
-
-export default App;

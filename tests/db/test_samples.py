@@ -246,10 +246,10 @@ class TestRemoveSamples:
             "data_path"
         }
 
-        with pytest.raises(TypeError) as err:
+        with pytest.raises(TypeError) as excinfo:
             await virtool.db.samples.remove_samples(dbi, settings, "foobar")
 
-        assert "id_list must be a list" in str(err)
+        assert "id_list must be a list" in str(excinfo.value)
 
     async def test_file_not_found(self, tmpdir, dbi):
         """

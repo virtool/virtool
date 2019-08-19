@@ -1,18 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Subtraction /> renders a FileManager component with [filetype='subtraction'] 1`] = `
-<Connect(FileManager)
-  fileType="subtraction"
-/>
-`;
-
-exports[`<Subtraction /> renders correctly 1`] = `
+exports[`<Subtraction /> should render 1`] = `
 <div
   className="container"
 >
   <Switch>
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(SubtractionList)",
+          "type": [Function],
+        }
+      }
       exact={true}
       path="/subtraction"
     />
@@ -21,9 +23,23 @@ exports[`<Subtraction /> renders correctly 1`] = `
       path="/subtraction/files"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(SubtractionDetail)",
+          "type": [Function],
+        }
+      }
       path="/subtraction/:subtractionId"
     />
   </Switch>
 </div>
+`;
+
+exports[`<SubtractionFileManager /> should render 1`] = `
+<Connect(FileManager)
+  fileType="subtraction"
+/>
 `;

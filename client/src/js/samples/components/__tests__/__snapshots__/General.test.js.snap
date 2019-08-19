@@ -1,58 +1,46 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SampleDetailGeneral /> renders correctly with normal reads and single read file 1`] = `
+exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <div>
-  <table
-    className="table table-bordered"
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
   >
     <tbody>
-      <tr
-        key="host"
-      >
+      <tr>
         <th
-          className="col-xs-4 text-capitalize"
+          className="col-xs-4"
         >
-          host
+          Host
         </th>
         <td
           className="col-xs-8"
         >
-          test-host
+          Malus domestica
         </td>
       </tr>
-      <tr
-        key="isolate"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          isolate
+      <tr>
+        <th>
+          Isolate
         </th>
-        <td
-          className="col-xs-8"
-        >
-          test-isolate
+        <td>
+          Isolate Foo
         </td>
       </tr>
-      <tr
-        key="locale"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          locale
+      <tr>
+        <th>
+          Locale
         </th>
-        <td
-          className="col-xs-8"
-        >
-          test-locale
+        <td>
+          Bar
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
     </tbody>
-  </table>
+  </Table>
   <Uncontrolled(Panel)>
     <PanelHeading
       bsClass="panel"
@@ -78,7 +66,7 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
           <td
             className="col-xs-8"
           >
-            test
+            Sanger / Illumina 2.1
           </td>
         </tr>
         <tr>
@@ -86,7 +74,7 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
             Read Count
           </th>
           <td>
-            100.0
+            235
           </td>
         </tr>
         <tr>
@@ -102,7 +90,7 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
             Length Range
           </th>
           <td>
-            0 - 50 - 100
+            41 - 76
           </td>
         </tr>
         <tr>
@@ -110,7 +98,7 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
             GC Content
           </th>
           <td>
-            50.0 %
+            42.3%
           </td>
         </tr>
         <tr>
@@ -150,10 +138,9 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
             className="col-xs-8"
           >
             <Link
-              replace={false}
-              to="/subtraction/test-subtraction"
+              to="/subtraction/Arabidopsis thaliana"
             >
-              test-subtraction
+              Arabidopsis thaliana
             </Link>
           </td>
         </tr>
@@ -164,59 +151,47 @@ exports[`<SampleDetailGeneral /> renders correctly with normal reads and single 
 </div>
 `;
 
-exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired read files 1`] = `
+exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 <div>
-  <table
-    className="table table-bordered"
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
   >
     <tbody>
-      <tr
-        key="host"
-      >
+      <tr>
         <th
-          className="col-xs-4 text-capitalize"
+          className="col-xs-4"
         >
-          host
+          Host
         </th>
         <td
           className="col-xs-8"
         >
-          test-host
+          Malus domestica
         </td>
       </tr>
-      <tr
-        key="isolate"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          isolate
+      <tr>
+        <th>
+          Isolate
         </th>
-        <td
-          className="col-xs-8"
-        >
-          test-isolate
+        <td>
+          Isolate Foo
         </td>
       </tr>
-      <tr
-        key="locale"
-      >
-        <th
-          className="col-xs-4 text-capitalize"
-        >
-          locale
+      <tr>
+        <th>
+          Locale
         </th>
-        <td
-          className="col-xs-8"
-        >
-          test-locale
+        <td>
+          Bar
         </td>
       </tr>
-      <Connect(IDRowComponent)
-        id="123abc"
-      />
     </tbody>
-  </table>
+  </Table>
   <Uncontrolled(Panel)>
     <PanelHeading
       bsClass="panel"
@@ -242,7 +217,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
           <td
             className="col-xs-8"
           >
-            test
+            Sanger / Illumina 2.1
           </td>
         </tr>
         <tr>
@@ -250,7 +225,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
             Read Count
           </th>
           <td>
-            100.0
+            235
           </td>
         </tr>
         <tr>
@@ -258,7 +233,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
             Read Size
           </th>
           <td>
-            sRNA
+            Normal
           </td>
         </tr>
         <tr>
@@ -266,7 +241,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
             Length Range
           </th>
           <td>
-            0 - 50 - 100
+            41 - 76
           </td>
         </tr>
         <tr>
@@ -274,7 +249,7 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
             GC Content
           </th>
           <td>
-            50.0 %
+            42.3%
           </td>
         </tr>
         <tr>
@@ -314,10 +289,311 @@ exports[`<SampleDetailGeneral /> renders correctly with sRNA reads and paired re
             className="col-xs-8"
           >
             <Link
-              replace={false}
-              to="/subtraction/test-subtraction"
+              to="/subtraction/Arabidopsis thaliana"
             >
-              test-subtraction
+              Arabidopsis thaliana
+            </Link>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Uncontrolled(Panel)>
+  <Connect(EditSample) />
+</div>
+`;
+
+exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-xs-4"
+        >
+          Host
+        </th>
+        <td
+          className="col-xs-8"
+        >
+          Malus domestica
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Isolate
+        </th>
+        <td>
+          Isolate Foo
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Locale
+        </th>
+        <td>
+          Bar
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      Library
+    </PanelHeading>
+    <Table
+      bordered={true}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th
+            className="col-xs-4"
+          >
+            Encoding
+          </th>
+          <td
+            className="col-xs-8"
+          >
+            Sanger / Illumina 2.1
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Count
+          </th>
+          <td>
+            235
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Size
+          </th>
+          <td>
+            Normal
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Length Range
+          </th>
+          <td>
+            41 - 76
+          </td>
+        </tr>
+        <tr>
+          <th>
+            GC Content
+          </th>
+          <td>
+            42.3%
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Paired
+          </th>
+          <td>
+            No
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Uncontrolled(Panel)>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      Subtraction
+    </PanelHeading>
+    <Table
+      bordered={true}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th
+            className="col-xs-4"
+          >
+            Host
+          </th>
+          <td
+            className="col-xs-8"
+          >
+            <Link
+              to="/subtraction/Arabidopsis thaliana"
+            >
+              Arabidopsis thaliana
+            </Link>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Uncontrolled(Panel)>
+  <Connect(EditSample) />
+</div>
+`;
+
+exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
+<div>
+  <Table
+    bordered={true}
+    bsClass="table"
+    condensed={false}
+    hover={false}
+    responsive={false}
+    striped={false}
+  >
+    <tbody>
+      <tr>
+        <th
+          className="col-xs-4"
+        >
+          Host
+        </th>
+        <td
+          className="col-xs-8"
+        >
+          Malus domestica
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Isolate
+        </th>
+        <td>
+          Isolate Foo
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Locale
+        </th>
+        <td>
+          Bar
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      Library
+    </PanelHeading>
+    <Table
+      bordered={true}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th
+            className="col-xs-4"
+          >
+            Encoding
+          </th>
+          <td
+            className="col-xs-8"
+          >
+            Sanger / Illumina 2.1
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Count
+          </th>
+          <td>
+            235
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Read Size
+          </th>
+          <td>
+            sRNA
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Length Range
+          </th>
+          <td>
+            41 - 76
+          </td>
+        </tr>
+        <tr>
+          <th>
+            GC Content
+          </th>
+          <td>
+            42.3%
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Paired
+          </th>
+          <td>
+            No
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Uncontrolled(Panel)>
+  <Uncontrolled(Panel)>
+    <PanelHeading
+      bsClass="panel"
+      componentClass="div"
+    >
+      Subtraction
+    </PanelHeading>
+    <Table
+      bordered={true}
+      bsClass="table"
+      condensed={false}
+      hover={false}
+      responsive={false}
+      striped={false}
+    >
+      <tbody>
+        <tr>
+          <th
+            className="col-xs-4"
+          >
+            Host
+          </th>
+          <td
+            className="col-xs-8"
+          >
+            <Link
+              to="/subtraction/Arabidopsis thaliana"
+            >
+              Arabidopsis thaliana
             </Link>
           </td>
         </tr>

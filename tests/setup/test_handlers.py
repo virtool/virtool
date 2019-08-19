@@ -59,32 +59,3 @@ async def test_get_paths(path, populated, ready, value, snapshot, spawn_client):
     assert resp.status == 200
 
     snapshot.assert_match(await resp.text())
-
-
-async def test_post_user(mocker, spawn_client, setup_defaults):
-    client = await spawn_client(setup=True)
-
-    update = {
-        "id": "baz",
-        "password": "foobar",
-        "password_confirm": "foobar"
-    }
-
-    mocker.patch("virtool.users.hash_password", return_value="hashed")
-
-    assert client.app["setup"] == setup_defaults
-
-    resp = await client.post_form("/setup/user", update)
-
-    assert client.app["setup"] == {
-        **setup_defaults,
-        "user": {
-            "id": "baz",
-            "password": "hashed",
-            "placeholder": "******",
-            "error": None,
-            "ready": True
-        }
-    }
-
-    assert resp.status == 200

@@ -8,13 +8,11 @@ import { Flex, FlexItem } from "./Flex";
 import { Help } from "./Help";
 import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
-import { IDRow } from "./IDRow";
 import { Input } from "./Input";
 import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { Loader } from "./Loader";
-import { VTLogo } from "./Logo";
 import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
 import { Panel } from "./Panel";
@@ -29,7 +27,9 @@ import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export * from "./Box";
+export * from "./ExternalLink";
 export * from "./LoadingPlaceholder";
+export * from "./Logo";
 export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
@@ -47,7 +47,6 @@ export {
     Help,
     Icon,
     Identicon,
-    IDRow,
     Input,
     InputError,
     InputSave,
@@ -65,6 +64,5 @@ export {
     ScrollList,
     Tooltip,
     UploadBar,
-    ViewHeader,
-    VTLogo
+    ViewHeader
 };

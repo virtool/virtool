@@ -1,6 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SoftwareChannels /> <ChannelButton /> subcomponent renders correctly 1`] = `
+exports[`<ChannelButton /> should render when [channel="beta"] 1`] = `
+<Radio
+  checked={true}
+  label="Beta"
+  onClick={[Function]}
+/>
+`;
+
+exports[`<ChannelButton /> should render when [channel="stable"] 1`] = `
 <Radio
   checked={true}
   label="Stable (recommended)"
@@ -8,15 +16,7 @@ exports[`<SoftwareChannels /> <ChannelButton /> subcomponent renders correctly 1
 />
 `;
 
-exports[`<SoftwareChannels /> <ChannelButton /> subcomponent renders correctly 2`] = `
-<Radio
-  checked={true}
-  label="Testing"
-  onClick={[Function]}
-/>
-`;
-
-exports[`<SoftwareChannels /> renders correctly 1`] = `
+exports[`<SoftwareChannels /> should render when [channel="alpha"] 1`] = `
 <Uncontrolled(Panel)>
   <PanelBody
     bsClass="panel"
@@ -29,19 +29,81 @@ exports[`<SoftwareChannels /> renders correctly 1`] = `
       channel="stable"
       checked={false}
       key="stable"
-      onClick={[Function]}
+      onClick={[MockFunction]}
+    />
+    <ChannelButton
+      channel="beta"
+      checked={false}
+      key="beta"
+      onClick={[MockFunction]}
+    />
+    <ChannelButton
+      channel="alpha"
+      checked={true}
+      key="alpha"
+      onClick={[MockFunction]}
+    />
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<SoftwareChannels /> should render when [channel="beta"] 1`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <label>
+      Software Channel
+    </label>
+    <ChannelButton
+      channel="stable"
+      checked={false}
+      key="stable"
+      onClick={[MockFunction]}
     />
     <ChannelButton
       channel="beta"
       checked={true}
       key="beta"
-      onClick={[Function]}
+      onClick={[MockFunction]}
     />
     <ChannelButton
       channel="alpha"
       checked={false}
       key="alpha"
-      onClick={[Function]}
+      onClick={[MockFunction]}
+    />
+  </PanelBody>
+</Uncontrolled(Panel)>
+`;
+
+exports[`<SoftwareChannels /> should render when [channel="stable"] 1`] = `
+<Uncontrolled(Panel)>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <label>
+      Software Channel
+    </label>
+    <ChannelButton
+      channel="stable"
+      checked={true}
+      key="stable"
+      onClick={[MockFunction]}
+    />
+    <ChannelButton
+      channel="beta"
+      checked={false}
+      key="beta"
+      onClick={[MockFunction]}
+    />
+    <ChannelButton
+      channel="alpha"
+      checked={false}
+      key="alpha"
+      onClick={[MockFunction]}
     />
   </PanelBody>
 </Uncontrolled(Panel)>

@@ -3,12 +3,28 @@
 exports[`<OTUs /> should render 1`] = `
 <Switch>
   <Route
-    component={[Function]}
+    component={
+      Object {
+        "$$typeof": Symbol(react.memo),
+        "WrappedComponent": [Function],
+        "compare": null,
+        "displayName": "Connect(OTUsList)",
+        "type": [Function],
+      }
+    }
     exact={true}
     path="/refs/:refId/otus"
   />
   <Route
-    component={[Function]}
+    component={
+      Object {
+        "$$typeof": Symbol(react.memo),
+        "WrappedComponent": [Function],
+        "compare": null,
+        "displayName": "Connect(OTUDetail)",
+        "type": [Function],
+      }
+    }
     path="/refs/:refId/otus/:otuId"
   />
 </Switch>

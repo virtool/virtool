@@ -29,10 +29,10 @@ def test_format_fasta_entry():
 ])
 def test_format_fasta_filename(parts, filename):
     if not parts or len(parts) > 3:
-        with pytest.raises(ValueError) as err:
+        with pytest.raises(ValueError) as excinfo:
             virtool.db.downloads.format_fasta_filename(*parts)
 
-        assert "Too many filename parts" if parts else "At least one filename part required" in str(err)
+        assert "Too many filename parts" if parts else "At least one filename part required" in str(excinfo.value)
 
     else:
         assert virtool.db.downloads.format_fasta_filename(*parts) == filename
