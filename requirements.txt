@@ -5,7 +5,7 @@ aionotify==0.2.0
 aioredis==1.2.0
 apipkg==1.5
 appdirs==1.4.3
-arrow==0.14.5
+arrow==0.14.2
 async-timeout==3.0.0
 atomicwrites==1.2.0
 attrs==18.1.0
