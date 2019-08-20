@@ -66,6 +66,15 @@ def check_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed)
 
 
+def generate_base_permissions() -> dict:
+    """
+    Return a `dict` keyed with all Virtool permissions where all the values are `False`.
+
+    :return: all-false permissions
+    """
+    return {p: False for p in PERMISSIONS}
+
+
 def hash_api_key(key: str) -> str:
     """
     Hash an API key using SHA256.

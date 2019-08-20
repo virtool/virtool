@@ -82,7 +82,7 @@ async def create_api_key(db: virtool.db.iface.DB, name: str, permissions: dict, 
     user = await db.users.find_one(user_id, ["administrator", "groups", "permissions"])
 
     key_permissions = {
-        **{p: False for p in virtool.users.PERMISSIONS},
+        **virtool.users.generate_base_permissions(),
         **permissions
     }
 

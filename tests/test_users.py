@@ -66,4 +66,5 @@ def test_check_password(password, hashed, result):
     assert virtool.users.check_password(password, hashed) is result
 
 
-
+def test_generate_base_permissions():
+    assert virtool.users.generate_base_permissions() == {p: False for p in virtool.users.PERMISSIONS}

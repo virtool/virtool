@@ -9,7 +9,7 @@ def merge_group_permissions(groups):
     :return: a dict keyed by permission names with boolean values indicating the state of the permission
 
     """
-    permission_dict = {permission_name: False for permission_name in virtool.users.PERMISSIONS}
+    permission_dict = virtool.users.generate_base_permissions()
 
     for permission_name in virtool.users.PERMISSIONS:
         for group in groups:
