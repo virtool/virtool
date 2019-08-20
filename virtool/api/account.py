@@ -12,39 +12,27 @@ import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, json_response, no_content, not_found
 
+#: A MongoDB projection to use when returning API key documents to clients. The key should never be sent to client after
+#: its creation.
 API_KEY_PROJECTION = {
     "_id": False,
     "user": False
 }
 
-SETTINGS_SCHEMA = {
-    "show_ids": {
-        "type": "boolean",
-        "required": False
-    },
-    "skip_quick_analyze_dialog": {
-        "type": "boolean",
-        "required": False
-    },
-    "quick_analyze_algorithm": {
-        "type": "string",
-        "allowed": virtool.analyses.ALGORITHM_NAMES,
-        "required": False
-    }
-}
-
+#: A :class:`aiohttp.web.RouteTableDef` for account API routes.
 routes = virtool.http.routes.Routes()
 
 
 @routes.get("/api/account")
 async def get(req):
     """
-    Get complete user document
+    Get complete user document.
 
     """
-    user_id = req["client"].user_id
-
-    document = await req.app["db"].users.find_one(user_id, virtool.db.users.ACCOUNT_PROJECTION)
+    document = await req.app["db"].users.find_one(
+        req["client"].user_id,
+        virtool.db.users.ACCOUNT_PROJECTION
+    )
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -70,28 +58,26 @@ async def edit(req):
 
     """
     db = req.app["db"]
-    data = await req.json()
+    data = req["data"]
     user_id = req["client"].user_id
 
-    password = data.get("password", None)
-
-    if password is not None and len(password) < req.app["settings"]["minimum_password_length"]:
-        raise bad_request("Password does not meet minimum length requirement")
+    password = data.get("password")
+    old_password = data.get("old_password")
 
     update = dict()
 
-    if password:
-        try:
-            update = await virtool.db.account.compose_password_update(
-                db,
-                user_id,
-                data["old_password"],
-                password
-            )
-        except ValueError as err:
-            if "Invalid credentials" in str(err):
-                return bad_request("Invalid credentials")
-            raise
+    if password is not None:
+        if len(password) < req.app["settings"]["minimum_password_length"]:
+            return bad_request("Password does not meet minimum length requirement")
+
+        if not await virtool.db.users.validate_credentials(db, user_id, old_password or ""):
+            return bad_request("Invalid credentials")
+
+        update = virtool.db.account.compose_password_update(
+            user_id,
+            data["old_password"],
+            password
+        )
 
     if "email" in data:
         update["email"] = data["email"]
@@ -109,14 +95,30 @@ async def get_settings(req):
     Get account settings
 
     """
-    user_id = req["client"].user_id
+    account_settings = await virtool.db.utils.get_one_field(
+        req.app["db"].users,
+        "settings",
+        req["client"].user_id
+    )
 
-    document = await req.app["db"].users.find_one(user_id)
-
-    return json_response(document["settings"])
+    return json_response(account_settings)
 
 
-@routes.patch("/api/account/settings", schema=SETTINGS_SCHEMA)
+@routes.patch("/api/account/settings", schema={
+    "show_ids": {
+        "type": "boolean",
+        "required": False
+    },
+    "skip_quick_analyze_dialog": {
+        "type": "boolean",
+        "required": False
+    },
+    "quick_analyze_algorithm": {
+        "type": "string",
+        "allowed": virtool.analyses.ALGORITHM_NAMES,
+        "required": False
+    }
+})
 async def update_settings(req):
     """
     Update account settings.
@@ -127,10 +129,10 @@ async def update_settings(req):
 
     user_id = req["client"].user_id
 
-    document = await db.users.find_one(user_id, ["settings"])
+    settings_from_db = await virtool.db.utils.get_one_field(db.users, "settings", user_id)
 
     settings = {
-        **document["settings"],
+        **settings_from_db,
         **data
     }
 
@@ -156,7 +158,7 @@ async def get_api_keys(req):
 async def get_api_key(req):
     db = req.app["db"]
     user_id = req["client"].user_id
-    key_id = req.match_info.get("key_id")
+    key_id = req.match_info["key_id"]
 
     document = await db.keys.find_one({"id": key_id, "user.id": user_id}, API_KEY_PROJECTION)
 
@@ -173,10 +175,6 @@ async def get_api_key(req):
         "empty": False,
         "required": True
     },
-    "administrator": {
-        "type": "boolean",
-        "default": False
-    },
     "permissions": {
         "type": "dict",
         "default": {},
@@ -185,7 +183,8 @@ async def get_api_key(req):
 })
 async def create_api_key(req):
     """
-    Create a new API key.
+    Create a new API key. The new key value is returned in the response. This is the only response from the server that
+    will ever include the key.
 
     """
     db = req.app["db"]
@@ -193,39 +192,12 @@ async def create_api_key(req):
 
     user_id = req["client"].user_id
 
-    name = data["name"]
-
-    user = await db.users.find_one(user_id, ["administrator", "permissions"])
-
-    permissions = {
-        **{p: False for p in virtool.users.PERMISSIONS},
-        **data["permissions"]
-    }
-
-    if not user["administrator"]:
-        permissions = virtool.users.limit_permissions(permissions, user["permissions"])
-
-    raw, hashed = virtool.db.account.get_api_key()
-
-    document = {
-        "_id": hashed,
-        "id": await virtool.db.account.get_alternate_id(db, name),
-        "name": name,
-        "administrator": user["administrator"] and data["administrator"],
-        "groups": req["client"].groups,
-        "permissions": permissions,
-        "created_at": virtool.utils.timestamp(),
-        "user": {
-            "id": user_id
-        }
-    }
-
-    await db.keys.insert_one(document)
-
-    del document["_id"]
-    del document["user"]
-
-    document["key"] = raw
+    document = await virtool.db.account.create_api_key(
+        db,
+        data["name"],
+        data["permissions"],
+        user_id
+    )
 
     headers = {
         "Location": f"/api/account/keys/{document['id']}"
@@ -235,15 +207,17 @@ async def create_api_key(req):
 
 
 @routes.patch("/api/account/keys/{key_id}", schema={
-    "administrator": {
-        "type": "boolean"
-    },
     "permissions": {
         "type": "dict",
-        "validator": virtool.validators.is_permission_dict
+        "validator": virtool.validators.is_permission_dict,
+        "required": True
     }
 })
 async def update_api_key(req):
+    """
+    Change the permissions for an existing API key.
+
+    """
     db = req.app["db"]
     data = req["data"]
 
@@ -254,32 +228,25 @@ async def update_api_key(req):
 
     user_id = req["client"].user_id
 
-    update = dict()
-
     user = await db.users.find_one(user_id, ["administrator", "permissions"])
 
-    administrator = data.get("administrator", None)
+    # The permissions currently assigned to the API key.
+    permissions = await virtool.db.utils.get_one_field(
+        db.keys,
+        "permissions",
+        {"id": key_id, "user.id": user_id}
+    )
 
-    if administrator is not None:
-        update["administrator"] = administrator and user["administrator"]
+    permissions.update(data["permissions"])
 
-    permissions = data.get("permissions", None)
-
-    if permissions:
-        # The permissions currently assigned to the API key.
-        key_permissions = await virtool.db.utils.get_one_field(
-            db.keys,
-            "permissions",
-            {"id": key_id, "user.id": user_id}
-        )
-
-        key_permissions.update(permissions)
-
-        update["permissions"] = virtool.users.limit_permissions(key_permissions, user["permissions"])
+    if not user["administrator"]:
+        permissions = virtool.users.limit_permissions(permissions, user["permissions"])
 
     document = await db.keys.find_one_and_update({"id": key_id}, {
-        "$set": update
-    }, projection={"_id": False, "user": False})
+        "$set": {
+            "permissions": permissions
+        }
+    }, projection=API_KEY_PROJECTION)
 
     return json_response(document)
 
@@ -287,11 +254,13 @@ async def update_api_key(req):
 @routes.delete("/api/account/keys/{key_id}")
 async def remove_api_key(req):
     db = req.app["db"]
-
     user_id = req["client"].user_id
-    key_id = req.match_info.get("key_id")
+    key_id = req.match_info["key_id"]
 
-    delete_result = await db.keys.delete_one({"id": key_id, "user.id": user_id})
+    delete_result = await db.keys.delete_one({
+        "id": key_id,
+        "user.id": user_id
+    })
 
     if delete_result.deleted_count == 0:
         return not_found()
@@ -301,23 +270,43 @@ async def remove_api_key(req):
 
 @routes.delete("/api/account/keys")
 async def remove_all_api_keys(req):
-    db = req.app["db"]
+    """
+    Remove all API keys for the session account.
 
-    await db.keys.delete_many({"user.id": req["client"].user_id})
-
+    """
+    await req.app["db"].keys.delete_many({"user.id": req["client"].user_id})
     return no_content()
 
 
-@routes.post("/api/account/login", public=True)
+@routes.post("/api/account/login", public=True, schema={
+    "username": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    },
+    "password": {
+        "type": "string",
+        "empty": False,
+        "required": True
+    },
+    "remember": {
+        "type": "boolean",
+        "default": False
+    }
+})
 async def login(req):
-    db = req.app["db"]
-    data = await req.json()
+    """
+    Create a new session for the user with `username`.
 
-    user_id = data.get("username", "")
-    password = data.get("password", "")
+    """
+    db = req.app["db"]
+    data = req["data"]
+
+    user_id = data["username"]
+    password = data["password"]
 
     # When this value is set, the session will last for 1 month instead of the 1 hour default.
-    remember = data.get("remember", False)
+    remember = data["remember"]
 
     # Re-render the login page with an error message if the username and/or password are invalid.
     if not await virtool.db.users.validate_credentials(db, user_id, password):
@@ -356,7 +345,6 @@ async def logout(req):
 
     """
     db = req.app["db"]
-
     old_session_id = req.cookies.get("session_id")
 
     session, _ = await virtool.db.sessions.replace_session(
@@ -373,7 +361,16 @@ async def logout(req):
     return resp
 
 
-@routes.post("/api/account/reset", public=True)
+@routes.post("/api/account/reset", public=True, schema={
+    "password": {
+        "type": "string",
+        "required": True
+    },
+    "reset_code": {
+        "type": "string",
+        "required": True
+    }
+})
 async def reset(req):
     """
     Handles `POST` requests for resetting the password for a session user.
@@ -383,11 +380,10 @@ async def reset(req):
 
     """
     db = req.app["db"]
-    data = await req.json()
     session_id = req["client"].session_id
 
-    password = data.get("password", "")
-    reset_code = data.get("reset_code")
+    password = req["data"]["password"]
+    reset_code = req["data"]["reset_code"]
 
     session = await db.sessions.find_one(session_id)
 
