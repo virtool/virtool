@@ -1,6 +1,7 @@
 import aiohttp.web
 
 import virtool.analyses
+import virtool.checks
 import virtool.db.account
 import virtool.db.sessions
 import virtool.db.users
@@ -67,8 +68,10 @@ async def edit(req):
     update = dict()
 
     if password is not None:
-        if len(password) < req.app["settings"]["minimum_password_length"]:
-            return bad_request("Password does not meet minimum length requirement")
+        error = await virtool.checks.check_password_length(req)
+
+        if error:
+            return bad_request(error)
 
         if not await virtool.db.users.validate_credentials(db, user_id, old_password or ""):
             return bad_request("Invalid credentials")
@@ -387,15 +390,10 @@ async def reset(req):
 
     session = await db.sessions.find_one(session_id)
 
-    error = None
+    error = await virtool.checks.check_password_length(req)
 
     if not session.get("reset_code") or not session.get("reset_user_id") or reset_code != session.get("reset_code"):
         error = "Invalid reset code"
-
-    minimum_password_length = req.app["settings"]["minimum_password_length"]
-
-    if len(password) < minimum_password_length:
-        error = f"Password must contain at least {minimum_password_length} characters"
 
     user_id = session["reset_user_id"]
 
