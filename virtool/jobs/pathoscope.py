@@ -9,15 +9,15 @@ import shlex
 import pymongo
 import pymongo.errors
 
-import virtool.db.caches
+import virtool.caches.db
 import virtool.db.sync
 import virtool.jobs.analysis
 import virtool.jobs.job
 import virtool.jobs.utils
-import virtool.otus
+import virtool.otus.utils
 import virtool.pathoscope
-import virtool.samples
-import virtool.db.samples
+import virtool.samples.utils
+import virtool.samples.db
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
 

@@ -111,7 +111,7 @@ def test_merged_otu():
 
 @pytest.fixture
 def test_add_history(mocker):
-    return mocker.patch("virtool.db.history.add", make_mocked_coro())
+    return mocker.patch("virtool.history.db.add", make_mocked_coro())
 
 
 @pytest.fixture(scope="function")

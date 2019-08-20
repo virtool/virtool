@@ -6,7 +6,7 @@ import aiohttp.web
 
 import virtool.app
 import virtool.dispatcher
-import virtool.settings
+import virtool.settings.schema
 import virtool.jobs.manager
 
 

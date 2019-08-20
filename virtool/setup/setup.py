@@ -1,7 +1,7 @@
 import logging
 
 import virtool.config
-import virtool.settings
+import virtool.settings.schema
 import virtool.setup.db
 import virtool.setup.handlers
 import virtool.utils

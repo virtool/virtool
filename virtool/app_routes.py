@@ -1,27 +1,27 @@
 import logging
 
-import virtool.api.account
-import virtool.api.analyses
-import virtool.api.caches
-import virtool.api.downloads
-import virtool.api.files
-import virtool.api.genbank
-import virtool.api.groups
-import virtool.api.history
-import virtool.api.hmm
-import virtool.api.indexes
-import virtool.api.jobs
-import virtool.api.otus
-import virtool.api.processes
-import virtool.api.references
-import virtool.api.root
-import virtool.api.samples
-import virtool.api.settings
-import virtool.api.software
-import virtool.api.subtractions
-import virtool.api.uploads
-import virtool.api.users
-import virtool.api.websocket
+import virtool.account.api
+import virtool.analyses.api
+import virtool.caches.api
+import virtool.downloads.api
+import virtool.files.api
+import virtool.genbank.api
+import virtool.groups.api
+import virtool.history.api
+import virtool.hmm.api
+import virtool.indexes.api
+import virtool.jobs.api
+import virtool.otus.api
+import virtool.processes.api
+import virtool.references.api
+import virtool.http.root
+import virtool.samples.api
+import virtool.settings.api
+import virtool.software.api
+import virtool.subtractions.api
+import virtool.uploads.api
+import virtool.users.api
+import virtool.http.ws
 import virtool.http.auth
 import virtool.utils
 
@@ -41,27 +41,27 @@ INDEX_PATHS = [
 ]
 
 ROUTES = (
-    virtool.api.account.routes,
-    virtool.api.analyses.routes,
-    virtool.api.caches.routes,
-    virtool.api.downloads.routes,
-    virtool.api.files.routes,
-    virtool.api.genbank.routes,
-    virtool.api.groups.routes,
-    virtool.api.history.routes,
-    virtool.api.hmm.routes,
-    virtool.api.indexes.routes,
-    virtool.api.jobs.routes,
-    virtool.api.otus.routes,
-    virtool.api.processes.routes,
-    virtool.api.references.routes,
-    virtool.api.root.routes,
-    virtool.api.samples.routes,
-    virtool.api.settings.routes,
-    virtool.api.software.routes,
-    virtool.api.subtractions.routes,
-    virtool.api.uploads.routes,
-    virtool.api.users.routes
+    virtool.account.api.routes,
+    virtool.analyses.api.routes,
+    virtool.caches.api.routes,
+    virtool.downloads.api.routes,
+    virtool.files.api.routes,
+    virtool.genbank.api.routes,
+    virtool.groups.api.routes,
+    virtool.history.api.routes,
+    virtool.hmm.api.routes,
+    virtool.indexes.api.routes,
+    virtool.jobs.api.routes,
+    virtool.otus.api.routes,
+    virtool.processes.api.routes,
+    virtool.references.api.routes,
+    virtool.http.root.routes,
+    virtool.samples.api.routes,
+    virtool.settings.api.routes,
+    virtool.software.api.routes,
+    virtool.subtractions.api.routes,
+    virtool.uploads.api.routes,
+    virtool.users.api.routes
 )
 
 
@@ -69,7 +69,7 @@ def setup_routes(app):
     for path in INDEX_PATHS:
         app.router.add_get(path, virtool.http.auth.index_handler)
 
-    app.router.add_get("/ws", virtool.api.websocket.root)
+    app.router.add_get("/ws", virtool.http.ws.root)
 
     for routes in ROUTES:
         app.router.add_routes(routes)

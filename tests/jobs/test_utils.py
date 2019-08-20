@@ -83,7 +83,7 @@ def test_find_cache(exists, returned_hash, mocker, dbs):
             }
         })
 
-    m_calculate_cache_hash = mocker.patch("virtool.db.caches.calculate_cache_hash", return_value=returned_hash)
+    m_calculate_cache_hash = mocker.patch("virtool.caches.db.calculate_cache_hash", return_value=returned_hash)
 
     result = virtool.jobs.utils.find_cache(dbs, "foo", "skewer-0.2.2", parameters)
 

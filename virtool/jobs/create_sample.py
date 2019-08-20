@@ -1,12 +1,12 @@
 import os
 import shutil
 
-import virtool.db.files
-import virtool.db.samples
+import virtool.files.db
+import virtool.samples.db
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
-import virtool.samples
+import virtool.samples.utils
 import virtool.utils
 
 

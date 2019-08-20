@@ -2,10 +2,10 @@ import os
 
 import pymongo
 
-import virtool.db.subtractions
+import virtool.subtractions.db
 import virtool.jobs.job
 import virtool.jobs.utils
-import virtool.subtractions
+import virtool.subtractions.utils
 import virtool.utils
 
 
@@ -84,14 +84,14 @@ class Job(virtool.jobs.job.Job):
         length distribution, and sequence count.
 
         """
-        gc, count = virtool.subtractions.calculate_fasta_gc(self.params["fasta_path"])
+        gc, count = virtool.subtractions.utils.calculate_fasta_gc(self.params["fasta_path"])
 
         self.db.subtraction.find_one_and_update({"_id": self.params["subtraction_id"]}, {
             "$set": {
                 "gc": gc,
                 "count": count
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.db.subtractions.PROJECTION)
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.subtractions.db.PROJECTION)
 
         self.dispatch("subtraction", "update", [self.params["subtraction_id"]])
 

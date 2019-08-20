@@ -1,12 +1,12 @@
 import os
 
-import virtool.db.caches
-import virtool.db.files
-import virtool.db.samples
+import virtool.caches.db
+import virtool.files.db
+import virtool.samples.db
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
-import virtool.samples
+import virtool.samples.utils
 import virtool.utils
 
 
@@ -110,10 +110,10 @@ class Job(virtool.jobs.job.Job):
         """
         sample_id = self.params["sample_id"]
 
-        self.intermediate["cache_id"] = virtool.db.caches.create(
+        self.intermediate["cache_id"] = virtool.caches.db.create(
             self.db,
             sample_id,
-            virtool.samples.LEGACY_TRIM_PARAMETERS,
+            virtool.samples.utils.LEGACY_TRIM_PARAMETERS,
             self.params["paired"],
             legacy=True
         )
