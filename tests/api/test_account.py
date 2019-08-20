@@ -191,7 +191,7 @@ class TestCreateAPIKey:
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
         """
-        mocker.patch("virtool.db.account.get_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.db.account.generate_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -222,7 +222,6 @@ class TestCreateAPIKey:
             "_id": "hashed_key",
             "id": "foobar_0",
             "name": "Foobar",
-            "administrator": False,
             "created_at": static_time.datetime,
             "user": {
                 "id": "test"
@@ -248,7 +247,7 @@ class TestCreateAPIKey:
         Test that uniqueness is ensured on the ``id`` field.
 
         """
-        mocker.patch("virtool.db.account.get_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.db.account.generate_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -270,7 +269,6 @@ class TestCreateAPIKey:
             "_id": "hashed_key",
             "id": "foobar_1",
             "name": "Foobar",
-            "administrator": False,
             "created_at": static_time.datetime,
             "user": {
                 "id": "test"
@@ -294,28 +292,23 @@ class TestCreateAPIKey:
 
 class TestUpdateAPIKey:
 
-    @pytest.mark.parametrize("req_admin", [True, False])
     @pytest.mark.parametrize("has_admin", [True, False])
     @pytest.mark.parametrize("has_perm", [True, False])
-    async def test(self, req_admin, has_admin, has_perm, spawn_client, static_time):
+    async def test(self, has_admin, has_perm, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
-        user_update = {
-            "administrator": has_admin
-        }
-
-        if has_perm:
-            user_update["permissions.create_sample"] = True
-
         await client.db.users.update_one({"_id": "test"}, {
-            "$set": user_update
+            "$set": {
+                "administrator": has_admin,
+                "permissions.create_sample": True,
+                "permissions.modify_subtraction": has_perm
+            }
         })
 
         expected = {
             "_id": "foobar",
             "id": "foobar_0",
             "name": "Foobar",
-            "administrator": False,
             "created_at": static_time.datetime,
             "user": {
                 "id": "test"
@@ -327,18 +320,18 @@ class TestUpdateAPIKey:
         await client.db.keys.insert_one(expected)
 
         resp = await client.patch("/api/account/keys/foobar_0", {
-            "administrator": req_admin,
             "permissions": {
-                "create_sample": True
+                "create_sample": True,
+                "modify_subtraction": True
             }
         })
 
         assert resp.status == 200
 
-        expected["administrator"] = has_admin and req_admin
-
-        if has_perm:
-            expected["permissions"]["create_sample"] = True
+        expected["permissions"].update({
+            "create_sample": True,
+            "modify_subtraction": has_admin or has_perm
+        })
 
         assert await client.db.keys.find_one() == expected
 
@@ -352,7 +345,11 @@ class TestUpdateAPIKey:
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True)
 
-        resp = await client.patch("/api/account/keys/foobar_0", {})
+        resp = await client.patch("/api/account/keys/foobar_0", {
+            "permissions": {
+                "create_sample": True
+            }
+        })
 
         assert await resp_is.not_found(resp)
 

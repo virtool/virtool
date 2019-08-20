@@ -6,7 +6,6 @@ import os
 import aiohttp
 import semver
 
-import virtool.db
 import virtool.db.processes
 import virtool.db.utils
 import virtool.http.proxy

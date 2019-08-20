@@ -1,3 +1,4 @@
+import virtool.checks
 import virtool.db.hmm
 import virtool.db.sessions
 import virtool.db.users
@@ -83,13 +84,20 @@ async def create(req):
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
-        return bad_request("Password does not meet length requirement")
+    error = await virtool.checks.check_password_length(req)
+
+    if error:
+        return bad_request(error)
 
     user_id = data["user_id"]
 
     try:
-        document = await virtool.db.users.create(db, user_id, data["password"], data["force_reset"])
+        document = await virtool.db.users.create(
+            db,
+            user_id,
+            data["password"],
+            data["force_reset"]
+        )
     except virtool.errors.DatabaseError:
         return bad_request("User already exists")
 
@@ -131,8 +139,10 @@ async def create_first(req):
     if data["user_id"] == "virtool":
         return bad_request("Reserved user name: virtool")
 
-    if len(data["password"]) < req.app["settings"]["minimum_password_length"]:
-        return bad_request("Password does not meet length requirement")
+    error = await virtool.checks.check_password_length(req)
+
+    if error:
+        return bad_request(error)
 
     user_id = data["user_id"]
 
@@ -195,8 +205,11 @@ async def edit(req):
     data = await req.json()
     settings = req.app["settings"]
 
-    if "password" in data and len(data["password"]) < settings["minimum_password_length"]:
-        return bad_request("Password does not meet length requirement")
+    if "password" in data:
+        error = await virtool.checks.check_password_length(req)
+
+        if error:
+            return bad_request(error)
 
     groups = await db.groups.distinct("_id")
 

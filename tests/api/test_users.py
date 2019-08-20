@@ -154,7 +154,7 @@ async def test_create(error, spawn_client, create_user, resp_is, static_time):
         return
 
     if error == "400_password":
-        assert await resp_is.bad_request(resp, "Password does not meet length requirement")
+        assert await resp_is.bad_request(resp, "Password does not meet minimum length requirement (8)")
         return
 
     assert resp.status == 201

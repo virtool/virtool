@@ -195,7 +195,7 @@ async def create(db, user_id, password, force_reset=True):
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
         "identicon": virtool.users.calculate_identicon(user_id),
-        "permissions": {permission: False for permission in virtool.users.PERMISSIONS},
+        "permissions": virtool.users.generate_base_permissions(),
         "password": virtool.users.hash_password(password),
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?

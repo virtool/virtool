@@ -18,9 +18,8 @@ def orf_containing():
 
 
 @pytest.fixture
-def mock_blast_server(monkeypatch, loop, test_server):
+def mock_blast_server(monkeypatch, loop, aiohttp_server):
     async def get_handler(req):
-
         params = dict(req.query)
 
         format_object = params.get("FORMAT_OBJECT", None)
@@ -75,7 +74,7 @@ def mock_blast_server(monkeypatch, loop, test_server):
     app.router.add_get("/blast", get_handler)
     app.router.add_post("/blast", post_handler)
 
-    server = loop.run_until_complete(test_server(app))
+    server = loop.run_until_complete(aiohttp_server(app))
 
     monkeypatch.setattr("virtool.bio.BLAST_URL", "http://{}:{}/blast".format(server.host, server.port))
 
