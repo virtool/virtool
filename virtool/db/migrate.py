@@ -25,20 +25,20 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
-async def organize(app):
+async def migrate(app):
     db = app["db"]
     server_version = app["version"]
 
-    await organize_analyses(app)
-    await organize_files(db)
-    await organize_groups(db)
-    await organize_sessions(db)
-    await organize_status(db, server_version)
-    await organize_subtraction(db)
-    await organize_samples(app)
+    await migrate_analyses(app)
+    await migrate_files(db)
+    await migrate_groups(db)
+    await migrate_sessions(db)
+    await migrate_status(db, server_version)
+    await migrate_subtraction(db)
+    await migrate_samples(app)
 
 
-async def organize_analyses(app):
+async def migrate_analyses(app):
     """
     Remove orphaned analysis directories.
 
@@ -52,7 +52,7 @@ async def organize_analyses(app):
     await virtool.analyses.db.remove_orphaned_directories(app)
 
 
-async def organize_files(db):
+async def migrate_files(db):
     """
     Make all files unreserved. This is only called when the server first starts.
 
@@ -67,7 +67,7 @@ async def organize_files(db):
     }, silent=True)
 
 
-async def organize_groups(db):
+async def migrate_groups(db):
     """
     Ensure that the permissions object for each group matches the permissions defined in `virtool.users.PERMISSIONS`.
 
@@ -90,14 +90,14 @@ async def organize_groups(db):
         }, silent=True)
 
 
-async def organize_jobs(app):
+async def migrate_jobs(app):
     logger.info(" • jobs")
     motor_client = app["db"].motor_client
 
     await virtool.jobs.db.delete_zombies(motor_client)
 
 
-async def organize_samples(app):
+async def migrate_samples(app):
     motor_client = app["db"].motor_client
 
     for sample_id in await motor_client.samples.distinct("_id"):
@@ -160,14 +160,14 @@ async def organize_samples(app):
     })
 
 
-async def organize_sessions(db):
+async def migrate_sessions(db):
     logger.info(" • sessions")
 
     await db.sessions.delete_many({"created_at": {"$exists": False}})
     await db.sessions.create_index("expiresAt", expireAfterSeconds=0)
 
 
-async def organize_status(db, server_version):
+async def migrate_status(db, server_version):
     logger.info(" • status")
 
     await db.status.delete_many({
@@ -211,6 +211,6 @@ async def organize_status(db, server_version):
             })
 
 
-async def organize_subtraction(db):
+async def migrate_subtraction(db):
     logger.info(" • subtraction")
     await delete_unready(db.subtraction)
