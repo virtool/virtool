@@ -2,9 +2,9 @@ import os
 import shutil
 from typing import Union
 
-import virtool.db.caches
-import virtool.db.samples
-import virtool.samples
+import virtool.caches.db
+import virtool.samples.db
+import virtool.samples.utils
 import virtool.utils
 
 
@@ -100,7 +100,7 @@ def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict
     document = db.caches.find_one({
         "sample.id": sample_id,
         "program": program,
-        "hash": virtool.db.caches.calculate_cache_hash(parameters)
+        "hash": virtool.caches.db.calculate_cache_hash(parameters)
     })
 
     if document:

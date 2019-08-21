@@ -4,9 +4,9 @@ import motor.motor_asyncio
 from pymongo.errors import ConnectionFailure, OperationFailure, ServerSelectionTimeoutError
 
 import virtool.config
-import virtool.settings
+import virtool.settings.schema
 
-import virtool.users
+import virtool.users.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def get_db(db_connection_string, db_name):
 
 
 async def populate_settings(db):
-    defaults = virtool.settings.get_defaults()
+    defaults = virtool.settings.schema.get_defaults()
 
     await db.settings.insert_one({
         "_id": "settings",

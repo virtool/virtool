@@ -4,16 +4,16 @@ import re
 
 import pymongo.errors
 
-import virtool.db.analyses
-import virtool.db.history
-import virtool.db.jobs
-import virtool.db.otus
-import virtool.db.references
-import virtool.db.samples
+import virtool.analyses.db
+import virtool.history.db
+import virtool.jobs.db
+import virtool.otus.db
+import virtool.references.db
+import virtool.samples.db
 import virtool.db.utils
-import virtool.otus
-import virtool.references
-import virtool.users
+import virtool.otus.utils
+import virtool.references.utils
+import virtool.users.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ async def organize_analyses(app):
     motor_client = app["db"].motor_client
 
     await delete_unready(motor_client.analyses)
-    await virtool.db.analyses.remove_orphaned_directories(app)
+    await virtool.analyses.db.remove_orphaned_directories(app)
 
 
 async def organize_files(db):
@@ -85,7 +85,7 @@ async def organize_groups(db):
     async for group in db.groups.find():
         await db.groups.update_one({"_id": group["_id"]}, {
             "$set": {
-                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
+                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.utils.PERMISSIONS}
             }
         }, silent=True)
 
@@ -94,14 +94,14 @@ async def organize_jobs(app):
     logger.info(" • jobs")
     motor_client = app["db"].motor_client
 
-    await virtool.db.jobs.delete_zombies(motor_client)
+    await virtool.jobs.db.delete_zombies(motor_client)
 
 
 async def organize_samples(app):
     motor_client = app["db"].motor_client
 
     for sample_id in await motor_client.samples.distinct("_id"):
-        await virtool.db.samples.recalculate_algorithm_tags(motor_client, sample_id)
+        await virtool.samples.db.recalculate_algorithm_tags(motor_client, sample_id)
 
     samples_path = os.path.join(app["settings"]["data_path"], "samples")
 

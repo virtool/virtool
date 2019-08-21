@@ -2,7 +2,7 @@ import json
 import pytest
 
 import virtool.app
-import virtool.users
+import virtool.users.utils
 
 
 def get_settings(no_job_manager, setup):

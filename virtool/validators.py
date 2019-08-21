@@ -1,4 +1,4 @@
-import virtool.users
+import virtool.users.utils
 
 
 def strip(value: str) -> str:
@@ -13,7 +13,7 @@ def strip(value: str) -> str:
 
 
 def is_permission_dict(field, value, error):
-    if any(key not in virtool.users.PERMISSIONS for key in value):
+    if any(key not in virtool.users.utils.PERMISSIONS for key in value):
         error(field, "keys must be valid permissions")
 
 

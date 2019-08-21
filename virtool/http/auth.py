@@ -7,13 +7,13 @@ import mako.template
 from aiohttp import web
 
 import virtool.app_routes
-import virtool.db.sessions
-import virtool.db.users
+import virtool.users.sessions
+import virtool.users.db
 import virtool.db.utils
 import virtool.errors
-import virtool.users
+import virtool.users.utils
 import virtool.utils
-from virtool.api.utils import bad_request
+from virtool.api import bad_request
 
 AUTHORIZATION_PROJECTION = [
     "user",
@@ -123,7 +123,7 @@ async def authorize_with_api_key(req, handler):
         return bad_request("Malformed Authorization header")
 
     document = await db.keys.find_one({
-        "_id": virtool.users.hash_api_key(key),
+        "_id": virtool.users.utils.hash_api_key(key),
         "user.id": user_id
     }, AUTHORIZATION_PROJECTION)
 
@@ -153,10 +153,10 @@ async def middleware(req, handler):
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
 
-    session = await virtool.db.sessions.get_session(db, session_id, session_token)
+    session = await virtool.users.sessions.get_session(db, session_id, session_token)
 
     if session is None:
-        session, _ = await virtool.db.sessions.create_session(db, ip)
+        session, _ = await virtool.users.sessions.create_session(db, ip)
 
     req["client"].authorize(session, is_api=False)
     req["client"].session_id = session["_id"]
@@ -164,7 +164,7 @@ async def middleware(req, handler):
     resp = await handler(req)
 
     if req.path != "/api/account/reset":
-        await virtool.db.sessions.clear_reset_code(db, session["_id"])
+        await virtool.users.sessions.clear_reset_code(db, session["_id"])
 
     resp.set_cookie("session_id", req["client"].session_id, httponly=True)
 

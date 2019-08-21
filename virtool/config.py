@@ -9,10 +9,10 @@ import urllib.parse
 import cerberus
 import pymongo
 
-import virtool.db.settings
+import virtool.settings.db
 import virtool.db.utils
 import virtool.resources
-import virtool.settings
+import virtool.settings.schema
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -251,7 +251,7 @@ def get_from_args():
         action="store_true",
         default=False,
         dest="no_client",
-        help="run without servering client files"
+        help="run without serving client files"
     )
 
     parser.add_argument(
@@ -384,7 +384,7 @@ def migrate():
     db = pymongo.MongoClient(config["db_connection_string"])[config["db_name"]]
 
     # Move settings that should be in database to database.
-    v = cerberus.Validator(virtool.settings.SCHEMA, purge_unknown=True)
+    v = cerberus.Validator(virtool.settings.schema.SCHEMA, purge_unknown=True)
     v.validate(config)
 
     db.settings.update_one({"_id": "settings"}, {

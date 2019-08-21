@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.setup.db
-import virtool.users
+import virtool.users.utils
 
 
 @pytest.mark.parametrize("error", [None, "name_error", "connection_error"])

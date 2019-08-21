@@ -1,6 +1,6 @@
 import os
 
-import virtool.subtractions
+import virtool.subtractions.utils
 
 
 async def test_calculate_gc(tmpdir):
@@ -19,7 +19,7 @@ async def test_calculate_gc(tmpdir):
         for line in lines:
             handle.write(line)
 
-    assert virtool.subtractions.calculate_fasta_gc(path) == ({
+    assert virtool.subtractions.utils.calculate_fasta_gc(path) == ({
         "a": 0.149,
         "t": 0.345,
         "g": 0.253,
