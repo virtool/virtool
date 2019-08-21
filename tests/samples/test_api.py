@@ -256,7 +256,7 @@ class TestCreate:
 
         m_reserve = mocker.patch("virtool.files.db.reserve", make_mocked_coro())
 
-        mocker.patch.dict(client.app, {"jobs": mocker.Mock()})
+        client.app["jobs"] = mocker.Mock()
 
         m_enqueue = mocker.patch.object(client.app["jobs"], "enqueue", make_mocked_coro())
 
@@ -728,7 +728,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
             "all_write": True
         })
 
-    m_new = mocker.patch("virtool.db.analyses.new", new=make_mocked_coro(test_analysis))
+    m_new = mocker.patch("virtool.analyses.db.new", new=make_mocked_coro(test_analysis))
 
     resp = await client.post("/api/samples/test/analyses", data={
         "algorithm": "pathoscope_bowtie",
