@@ -1,13 +1,16 @@
+import json
 import os
 import shutil
 
-import virtool.db
+import pymongo.errors
+
 import virtool.caches.db
-import virtool.samples.db
+import virtool.db
 import virtool.db.sync
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
+import virtool.samples.db
 import virtool.samples.utils
 import virtool.utils
 
@@ -394,3 +397,25 @@ def join_legacy_read_path(sample_path: str, suffix: int) -> str:
 
     """
     return os.path.join(sample_path, f"reads_{suffix}.fastq")
+
+
+def set_analysis_results(db, analysis_id, analysis_path, results):
+    try:
+        db.analyses.update_one({"_id": analysis_id}, {
+            "$set": {
+                "results": results,
+                "ready": True
+            }
+        })
+    except pymongo.errors.DocumentTooLarge:
+        with open(os.path.join(analysis_path, "results.json"), "w") as f:
+            json_string = json.dumps(results)
+            f.write(json_string)
+
+        db.analyses.update_one({"_id": analysis_id}, {
+            "$set": {
+                "results": "file",
+                "ready": True
+            }
+        })
+

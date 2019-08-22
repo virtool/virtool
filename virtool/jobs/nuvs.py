@@ -3,14 +3,10 @@ Job class and functions for NuVs.
 
 """
 import collections
-import json
 import os
 import shlex
 import shutil
 import tempfile
-
-import pymongo
-import pymongo.errors
 
 import virtool.bio
 import virtool.db.sync
@@ -298,24 +294,12 @@ class Job(virtool.jobs.analysis.Job):
         analysis_id = self.params["analysis_id"]
         sample_id = self.params["sample_id"]
 
-        try:
-            self.db.analyses.update_one({"_id": analysis_id}, {
-                "$set": {
-                    "results": self.results,
-                    "ready": True
-                }
-            })
-        except pymongo.errors.DocumentTooLarge:
-            with open(os.path.join(self.params["analysis_path"], "nuvs.json"), "w") as f:
-                json_string = json.dumps(self.results)
-                f.write(json_string)
-
-            self.db.analyses.update_one({"_id": analysis_id}, {
-                "$set": {
-                    "results": "file",
-                    "ready": True
-                }
-            })
+        virtool.jobs.analysis.set_analysis_results(
+            self.db,
+            analysis_id,
+            self.params["analysis_path"],
+            self.results
+        )
 
         virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
 

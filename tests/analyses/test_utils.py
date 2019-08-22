@@ -28,8 +28,5 @@ def test_get_json_path(name):
     and `analysis_id` arguments.
 
     """
-    func = virtool.analyses.utils.join_nuvs_json_path if name == "nuvs" else virtool.analyses.utils.join_pathoscope_json_path
-
-    path = func("data_foo", "analysis_bar", "sample_foo")
-
-    assert path == "data_foo/samples/sample_foo/analysis/analysis_bar/{}.json".format(name)
+    path = virtool.analyses.utils.join_analysis_json_path("/data", "bar", "foo")
+    assert path == "/data/samples/foo/analysis/bar/results.json"

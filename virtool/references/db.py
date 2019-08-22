@@ -217,7 +217,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
     async def remove_unreferenced_otus(self):
         ref_id = self.context["ref_id"]
 
-        referenced_otu_ids = await self.db.analyses.distinct("diagnosis.otu.id", {"reference.id": ref_id})
+        referenced_otu_ids = await self.db.analyses.distinct("results.otu.id", {"reference.id": ref_id})
 
         unreferenced_otu_ids = await self.db.otus.distinct("_id", {
             "reference.id": ref_id,

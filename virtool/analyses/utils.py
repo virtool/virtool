@@ -62,14 +62,13 @@ def find_nuvs_sequence_by_index(document: dict, sequence_index: int) -> Union[No
     return sequences[0]
 
 
-def join_analysis_path(data_path, analysis_id, sample_id, algorithm):
+def join_analysis_path(data_path, analysis_id, sample_id):
     """
     Returns the path to an analysis JSON output file.
 
     :param data_path: the application data path
     :param analysis_id: the id of the NuVs analysis
     :param sample_id: the id of the parent sample
-    :param algorithm: the algorithm used to generate the analysis file
     :return: an analysis JSON path
 
     """
@@ -78,31 +77,12 @@ def join_analysis_path(data_path, analysis_id, sample_id, algorithm):
         "samples",
         sample_id,
         "analysis",
-        analysis_id,
-        f"{algorithm}.json"
+        analysis_id
     )
 
 
-def join_nuvs_json_path(data_path: str, analysis_id: str, sample_id: str):
-    """
-    Returns the path to a NuVs json output file.
-
-    :param data_path: the application data path
-    :param analysis_id: the id of the NuVs analysis
-    :param sample_id: the id of the parent sample
-    :return: a NuVs json path
-
-    """
-    return join_analysis_path(data_path, analysis_id, sample_id, "nuvs")
-
-
-def join_pathoscope_json_path(data_path, analysis_id, sample_id):
-    """
-    Returns the path
-
-    :param data_path:
-    :param analysis_id:
-    :param sample_id:
-    :return:
-    """
-    return join_analysis_path(data_path, analysis_id, sample_id, "pathoscope")
+def join_analysis_json_path(data_path, analysis_id, sample_id):
+    return os.path.join(
+        join_analysis_path(data_path, analysis_id, sample_id),
+        "results.json"
+    )
