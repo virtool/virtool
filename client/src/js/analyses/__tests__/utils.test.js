@@ -37,10 +37,10 @@ describe("formatSequence()", () => {
 });
 
 describe("formatPathoscopeData()", () => {
-    it("should return plain detail when [diagnosis.length=0]", () => {
+    it("should return plain detail when [results.length=0]", () => {
         const detail = {
             foo: "bar",
-            diagnosis: []
+            results: []
         };
         const result = formatPathoscopeData(detail);
         expect(result).toEqual(detail);

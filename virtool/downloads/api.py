@@ -8,6 +8,7 @@ import json
 
 from aiohttp import web
 
+import virtool.analyses.format
 import virtool.bio
 import virtool.analyses.db
 import virtool.downloads.db
@@ -34,7 +35,7 @@ async def download_analysis(req):
     document = await db.analyses.find_one(analysis_id)
 
     if extension == "xlsx":
-        formatted = await virtool.analyses.db.format_analysis_to_excel(db, settings, document)
+        formatted = await virtool.analyses.format.format_analysis_to_excel(db, settings, document)
 
         headers = {
             "Content-Disposition": f"attachment; filename={analysis_id}.xlsx",
@@ -43,7 +44,7 @@ async def download_analysis(req):
 
         return web.Response(body=formatted, headers=headers)
 
-    formatted = await virtool.analyses.db.format_analysis_to_csv(db, settings, document)
+    formatted = await virtool.analyses.format.format_analysis_to_csv(db, settings, document)
 
     headers = {
         "Content-Disposition": f"attachment; filename={analysis_id}.csv",

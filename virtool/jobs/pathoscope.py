@@ -2,12 +2,8 @@
 Functions and job classes for sample analysis.
 
 """
-import json
 import os
 import shlex
-
-import pymongo
-import pymongo.errors
 
 import virtool.caches.db
 import virtool.db.sync
@@ -16,8 +12,8 @@ import virtool.jobs.job
 import virtool.jobs.utils
 import virtool.otus.utils
 import virtool.pathoscope
-import virtool.samples.utils
 import virtool.samples.db
+import virtool.samples.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
 
@@ -294,7 +290,7 @@ class Job(virtool.jobs.analysis.Job):
         self.results.update({
             "ready": True,
             "read_count": read_count,
-            "diagnosis": list()
+            "results": list()
         })
 
         for ref_id, hit in report.items():
@@ -322,7 +318,7 @@ class Job(virtool.jobs.analysis.Job):
             # Calculate depth and attach to hit.
             hit["depth"] = round(sum(hit_coverage) / len(hit_coverage))
 
-            self.results["diagnosis"].append(hit)
+            self.results["results"].append(hit)
 
     def import_results(self):
         """
@@ -336,21 +332,21 @@ class Job(virtool.jobs.analysis.Job):
         analysis_id = self.params["analysis_id"]
         sample_id = self.params["sample_id"]
 
-        try:
-            self.db.analyses.update_one({"_id": analysis_id}, {
-                "$set": self.results
-            })
-        except pymongo.errors.DocumentTooLarge:
-            with open(os.path.join(self.params["analysis_path"], "pathoscope.json"), "w") as f:
-                json_string = json.dumps(self.results)
-                f.write(json_string)
+        # Pop the main results from `self.results`, leaving small data (eg. read_count) that will easily fit in the DB
+        # document.
+        results = self.results.pop("results")
 
-            self.db.analyses.update_one({"_id": analysis_id}, {
-                "$set": {
-                    "diagnosis": "file",
-                    "ready": True
-                }
-            })
+        # Update the database document with the small data.
+        self.db.analyses.update_one({"_id": analysis_id}, {
+            "$set": self.results
+        })
+
+        virtool.jobs.analysis.set_analysis_results(
+            self.db,
+            analysis_id,
+            self.params["analysis_path"],
+            results
+        )
 
         virtool.db.sync.recalculate_algorithm_tags(self.db, sample_id)
 

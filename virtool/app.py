@@ -28,7 +28,7 @@ import virtool.http.proxy
 import virtool.http.query
 import virtool.jobs.manager
 import virtool.logs
-import virtool.organize
+import virtool.db.migrate
 import virtool.references.db
 import virtool.resources
 import virtool.sentry
@@ -220,7 +220,7 @@ async def init_check_db(app):
     db = app["db"]
 
     logger.info("Checking database...")
-    await virtool.organize.organize(app)
+    await virtool.db.migrate.migrate(app)
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")

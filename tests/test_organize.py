@@ -2,7 +2,7 @@ import pymongo
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.organize
+import virtool.db.migrate
 
 
 async def test_delete_unready(dbi):
@@ -17,7 +17,7 @@ async def test_delete_unready(dbi):
         }
     ])
 
-    await virtool.organize.delete_unready(dbi.analyses)
+    await virtool.db.migrate.delete_unready(dbi.analyses)
 
     assert await dbi.analyses.find().to_list(None) == [
         {
@@ -27,7 +27,7 @@ async def test_delete_unready(dbi):
     ]
 
 
-async def test_organize_files(dbi):
+async def test_migrate_files(dbi):
     documents = [
         {"_id": 1},
         {"_id": 2},
@@ -37,13 +37,13 @@ async def test_organize_files(dbi):
 
     await dbi.files.insert_many(documents)
 
-    await virtool.organize.organize_files(dbi)
+    await virtool.db.migrate.migrate_files(dbi)
 
     async for document in dbi.files.find():
         assert document["reserved"] is False
 
 
-async def test_organize_groups(dbi):
+async def test_migrate_groups(dbi):
 
     await dbi.groups.insert_many([
         {
@@ -56,7 +56,7 @@ async def test_organize_groups(dbi):
         }
     ])
 
-    await virtool.organize.organize_groups(dbi)
+    await virtool.db.migrate.migrate_groups(dbi)
 
     documents = await dbi.groups.find().to_list(None)
 
@@ -78,7 +78,7 @@ async def test_organize_groups(dbi):
 @pytest.mark.parametrize("has_software", [True, False])
 @pytest.mark.parametrize("has_software_update", [True, False])
 @pytest.mark.parametrize("has_version", [True, False])
-async def test_organize_status(has_software, has_software_update, has_version, dbi):
+async def test_migrate_status(has_software, has_software_update, has_version, dbi):
     if has_software:
         await dbi.status.insert_one({
             "_id": "software",
@@ -91,7 +91,7 @@ async def test_organize_status(has_software, has_software_update, has_version, d
     if has_version:
         await dbi.status.insert_one({"_id": "version"})
 
-    await virtool.organize.organize_status(dbi, "v3.0.0")
+    await virtool.db.migrate.migrate_status(dbi, "v3.0.0")
 
     expected_software = {
         "_id": "software",
@@ -118,11 +118,11 @@ async def test_organize_status(has_software, has_software_update, has_version, d
     ]
 
 
-async def test_organize_subtraction(mocker):
-    m_delete_unready = mocker.patch("virtool.organize.delete_unready", new=make_mocked_coro())
+async def test_migrate_subtraction(mocker):
+    m_delete_unready = mocker.patch("virtool.db.migrate.delete_unready", new=make_mocked_coro())
 
     m_db = mocker.Mock()
 
-    await virtool.organize.organize_subtraction(m_db)
+    await virtool.db.migrate.migrate_subtraction(m_db)
 
     assert m_delete_unready.call_args[0][0] == m_db.subtraction

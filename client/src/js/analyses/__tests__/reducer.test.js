@@ -202,7 +202,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -230,7 +230,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -257,7 +257,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -284,7 +284,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);

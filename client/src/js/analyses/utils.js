@@ -118,13 +118,13 @@ export const formatSequence = (sequence, readCount) => {
 };
 
 export const formatPathoscopeData = detail => {
-    if (detail.diagnosis.length === 0) {
+    if (detail.results.length === 0) {
         return detail;
     }
 
-    const { algorithm, created_at, diagnosis, id, index, read_count, ready, reference, subtraction, user } = detail;
+    const { algorithm, created_at, results, id, index, read_count, ready, reference, subtraction, user } = detail;
 
-    const results = map(diagnosis, otu => {
+    const formatted = map(results, otu => {
         const isolateNames = [];
 
         // Go through each isolate associated with the OTU, adding properties for weight, read count,
@@ -181,7 +181,7 @@ export const formatPathoscopeData = detail => {
         id,
         index,
         reference,
-        results,
+        results: formatted,
         read_count,
         ready,
         subtraction,
