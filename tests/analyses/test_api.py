@@ -37,7 +37,7 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
         await client.db.analyses.insert_one(document)
 
     m_format_analysis = mocker.patch(
-        "virtool.analyses.db.format_analysis",
+        "virtool.analyses.format.format_analysis",
         make_mocked_coro({
             "_id": "foo",
             "formatted": True

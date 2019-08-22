@@ -2,6 +2,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.analyses.db
+import virtool.analyses.format
 
 
 @pytest.mark.parametrize("algorithm", [None, "foobar", "nuvs", "pathoscope"])
@@ -21,15 +22,15 @@ async def test_format_analysis(algorithm, mocker):
         "is_pathoscope": True
     })
 
-    mocker.patch("virtool.analyses.db.format_nuvs", new=m_format_nuvs)
-    mocker.patch("virtool.analyses.db.format_pathoscope", new=m_format_pathoscope)
+    mocker.patch("virtool.analyses.format.format_nuvs", new=m_format_nuvs)
+    mocker.patch("virtool.analyses.format.format_pathoscope", new=m_format_pathoscope)
 
     document = dict()
 
     if algorithm:
         document["algorithm"] = algorithm
 
-    coroutine = virtool.analyses.db.format_analysis("db", "settings", document)
+    coroutine = virtool.analyses.format.format_analysis("db", "settings", document)
 
     if algorithm is None or algorithm == "foobar":
         with pytest.raises(ValueError) as excinfo:

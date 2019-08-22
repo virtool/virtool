@@ -5,6 +5,7 @@ Provides request handlers for managing and viewing analyses.
 import os
 import aiojobs.aiohttp
 
+import virtool.analyses.format
 import virtool.analyses.utils
 import virtool.bio
 import virtool.analyses.db
@@ -44,7 +45,7 @@ async def get(req):
         return insufficient_rights()
 
     if document["ready"]:
-        document = await virtool.analyses.db.format_analysis(db, req.app["settings"], document)
+        document = await virtool.analyses.format.format_analysis(db, req.app["settings"], document)
 
     document["subtraction"] = {
         "id": sample["subtraction"]["id"]
