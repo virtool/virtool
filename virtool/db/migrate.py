@@ -5,6 +5,7 @@ import re
 import pymongo.errors
 
 import virtool.analyses.db
+import virtool.analyses.migrate
 import virtool.history.db
 import virtool.jobs.db
 import virtool.otus.db
@@ -29,27 +30,14 @@ async def migrate(app):
     db = app["db"]
     server_version = app["version"]
 
-    await migrate_analyses(app)
+    logger.info(" • analyses")
+    await virtool.analyses.migrate.migrate_analyses(db, app["settings"])
     await migrate_files(db)
     await migrate_groups(db)
     await migrate_sessions(db)
-    await migrate_status(db, server_version)
+    await migrate_status(db, app["version"])
     await migrate_subtraction(db)
     await migrate_samples(app)
-
-
-async def migrate_analyses(app):
-    """
-    Remove orphaned analysis directories.
-
-    :param app:
-    """
-    logger.info(" • analyses")
-
-    motor_client = app["db"].motor_client
-
-    await delete_unready(motor_client.analyses)
-    await virtool.analyses.db.remove_orphaned_directories(app)
 
 
 async def migrate_files(db):
