@@ -131,7 +131,7 @@ async def test_remove(exists, mocker, tmpdir, dbi):
     f = tmpdir.join("foo-test.fq")
     f.write("hello world")
 
-    m_join_file_path = mocker.patch("virtool.files.utils.join_file_path", return_value=str(f))
+    mocker.patch("virtool.files.utils.join_file_path", return_value=str(f))
     m_run_in_thread = make_mocked_coro()
 
     if not exists:
