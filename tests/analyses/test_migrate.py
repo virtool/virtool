@@ -164,10 +164,10 @@ async def test_rename_analysis_json_files(tmpdir):
         assert os.listdir(os.path.join(analysis_path, "bar")) == ["results.json"]
 
         # Path were pathoscope.json was renamed and one was untouched.
-        assert os.listdir(os.path.join(analysis_path, "baz")) == ["results.json", "ignore.json"]
+        assert set(os.listdir(os.path.join(analysis_path, "baz"))) == {"results.json", "ignore.json"}
 
         # Path were nuvs.json was renamed and one was untouched.
-        assert os.listdir(os.path.join(analysis_path, "bam")) == ["results.json", "ignore.json"]
+        assert set(os.listdir(os.path.join(analysis_path, "bam"))) == {"results.json", "ignore.json"}
 
         # Paths were all were ignored.
         assert os.listdir(os.path.join(analysis_path, "bat")) == ["ignore.json"]
