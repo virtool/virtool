@@ -8,7 +8,7 @@ from typing import Awaitable
 
 import aiohttp
 
-import virtool.analyses
+import virtool.analyses.utils
 import virtool.errors
 import virtool.http.proxy
 import virtool.utils

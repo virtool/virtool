@@ -15,16 +15,12 @@ from motor import motor_asyncio
 
 import virtool.app_routes
 import virtool.config
-import virtool.db.hmm
-import virtool.db.iface
-import virtool.db.references
-import virtool.db.settings
-import virtool.db.software
-import virtool.db.status
+import virtool.db.core
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
-import virtool.files
+import virtool.files.manager
+import virtool.hmm.db
 import virtool.http.auth
 import virtool.http.csp
 import virtool.http.errors
@@ -32,11 +28,14 @@ import virtool.http.proxy
 import virtool.http.query
 import virtool.jobs.manager
 import virtool.logs
-import virtool.organize
+import virtool.db.migrate
+import virtool.references.db
 import virtool.resources
 import virtool.sentry
-import virtool.settings
+import virtool.settings.db
+import virtool.settings.schema
 import virtool.setup.setup
+import virtool.software.db
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -75,9 +74,9 @@ async def init_refresh(app: web.Application):
 
     scheduler = aiojobs.aiohttp.get_scheduler_from_app(app)
 
-    await scheduler.spawn(virtool.db.references.refresh_remotes(app))
-    await scheduler.spawn(virtool.db.hmm.refresh(app))
-    await scheduler.spawn(virtool.db.software.refresh(app))
+    await scheduler.spawn(virtool.references.db.refresh_remotes(app))
+    await scheduler.spawn(virtool.hmm.db.refresh(app))
+    await scheduler.spawn(virtool.software.db.refresh(app))
 
 
 async def init_version(app: web.Application):
@@ -155,7 +154,7 @@ async def init_settings(app):
 
     """
     if app["setup"] is None:
-        from_db = await virtool.db.settings.get(app["db"])
+        from_db = await virtool.settings.db.get(app["db"])
         app["settings"].update(from_db)
 
 
@@ -203,7 +202,7 @@ async def init_db(app):
             logger.critical("Could not connect to MongoDB server")
             sys.exit(1)
 
-        app["db"] = virtool.db.iface.DB(
+        app["db"] = virtool.db.core.DB(
             db_client[settings["db_name"]],
             app["dispatcher"].dispatch
         )
@@ -221,7 +220,7 @@ async def init_check_db(app):
     db = app["db"]
 
     logger.info("Checking database...")
-    await virtool.organize.organize(app)
+    await virtool.db.migrate.migrate(app)
 
     logger.info("Creating database indexes...")
     await db.analyses.create_index("sample.id")
@@ -320,7 +319,7 @@ async def init_file_manager(app):
         logger.fatal(f"Watch path does not exist: '{watch_path}'")
         sys.exit(1)
 
-    app["file_manager"] = virtool.files.Manager(
+    app["file_manager"] = virtool.files.manager.Manager(
         app["executor"],
         app["db"],
         files_path,

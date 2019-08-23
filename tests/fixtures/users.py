@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.users import PERMISSIONS
+from virtool.users.utils import PERMISSIONS
 
 
 @pytest.fixture

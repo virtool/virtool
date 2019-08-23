@@ -2,11 +2,11 @@ import asyncio
 import logging
 import multiprocessing
 
-import virtool.db.iface
-import virtool.db.indexes
-import virtool.db.jobs
-import virtool.db.otus
-import virtool.db.samples
+import virtool.db.core
+import virtool.indexes.db
+import virtool.jobs.db
+import virtool.otus.db
+import virtool.samples.db
 import virtool.db.utils
 import virtool.dispatcher
 import virtool.errors
@@ -148,7 +148,7 @@ class IntegratedManager:
             if job["process"] and job["process"].is_alive():
                 job["process"].terminate()
             else:
-                await virtool.db.jobs.cancel(self.dbi, job_id)
+                await virtool.jobs.db.cancel(self.dbi, job_id)
                 del self._jobs[job_id]
 
 

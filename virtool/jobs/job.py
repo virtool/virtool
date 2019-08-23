@@ -15,7 +15,7 @@ from typing import Optional
 
 import pymongo
 
-import virtool.db.jobs
+import virtool.jobs.db
 import virtool.utils
 
 

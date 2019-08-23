@@ -8,12 +8,12 @@ from cerberus import Validator
 from mako.template import Template
 
 import virtool.config
-import virtool.settings
+import virtool.settings.schema
 import virtool.setup.db
 import virtool.setup.paths
 import virtool.setup.proxy
 import virtool.utils
-from virtool.api.utils import json_response
+from virtool.api import json_response
 
 logger = logging.getLogger(__name__)
 

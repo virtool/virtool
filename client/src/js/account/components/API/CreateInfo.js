@@ -26,7 +26,7 @@ export const CreateAPIKeyInfo = ({ administrator }) => {
                         <strong>You are an administrator and can create API keys with any permissions you want.</strong>
                     </p>
                     <p>
-                        If you lose you administrator role, this API key will revert to your new limited set of
+                        If you lose your administrator role, this API key will revert to your new limited set of
                         permissions.
                     </p>
                 </div>

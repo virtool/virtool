@@ -1,14 +1,17 @@
+import json
 import os
 import shutil
 
+import pymongo.errors
+
+import virtool.caches.db
 import virtool.db
-import virtool.db.caches
-import virtool.db.samples
 import virtool.db.sync
 import virtool.jobs.fastqc
 import virtool.jobs.job
 import virtool.jobs.utils
-import virtool.samples
+import virtool.samples.db
+import virtool.samples.utils
 import virtool.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
@@ -137,7 +140,7 @@ class Job(virtool.jobs.job.Job):
                 return
 
         if paths is None:
-            cache_id = virtool.db.caches.create(
+            cache_id = virtool.caches.db.create(
                 self.db,
                 sample_id,
                 parameters,
@@ -322,7 +325,7 @@ def get_trimming_parameters(paired: bool, srna: bool):
     :param srna:
     :return:
     """
-    parameters = dict(virtool.samples.TRIM_PARAMETERS)
+    parameters = dict(virtool.samples.utils.TRIM_PARAMETERS)
 
     if srna:
         parameters.update({
@@ -345,7 +348,7 @@ def join_legacy_read_paths(settings: dict, sample):
     :return: a list of sample read paths
 
     """
-    sample_path = virtool.db.samples.get_sample_path(settings, sample["_id"])
+    sample_path = virtool.samples.db.get_sample_path(settings, sample["_id"])
 
     if not all(f["raw"] for f in sample["files"]):
         if sample["paired"]:
@@ -394,3 +397,25 @@ def join_legacy_read_path(sample_path: str, suffix: int) -> str:
 
     """
     return os.path.join(sample_path, f"reads_{suffix}.fastq")
+
+
+def set_analysis_results(db, analysis_id, analysis_path, results):
+    try:
+        db.analyses.update_one({"_id": analysis_id}, {
+            "$set": {
+                "results": results,
+                "ready": True
+            }
+        })
+    except pymongo.errors.DocumentTooLarge:
+        with open(os.path.join(analysis_path, "results.json"), "w") as f:
+            json_string = json.dumps(results)
+            f.write(json_string)
+
+        db.analyses.update_one({"_id": analysis_id}, {
+            "$set": {
+                "results": "file",
+                "ready": True
+            }
+        })
+

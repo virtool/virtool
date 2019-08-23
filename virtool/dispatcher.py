@@ -2,22 +2,21 @@ import logging
 from copy import deepcopy
 from typing import Union
 
-import virtool.api.utils
-import virtool.db.analyses
-import virtool.db.files
-import virtool.db.groups
-import virtool.db.history
-import virtool.db.hmm
-import virtool.db.indexes
-import virtool.db.jobs
-import virtool.db.otus
-import virtool.db.processes
-import virtool.db.references
-import virtool.db.samples
-import virtool.db.software
-import virtool.db.status
-import virtool.db.subtractions
-import virtool.db.users
+import virtool.analyses.db
+import virtool.api
+import virtool.files.db
+import virtool.groups.db
+import virtool.history.db
+import virtool.hmm.db
+import virtool.indexes.db
+import virtool.jobs.db
+import virtool.otus.db
+import virtool.processes.db
+import virtool.references.db
+import virtool.samples.db
+import virtool.software.db
+import virtool.subtractions.db
+import virtool.users.db
 import virtool.utils
 
 #: Allowed interfaces. Calls to :meth:`.Dispatcher.dispatch` will be validated against these interfaces.
@@ -60,7 +59,7 @@ class Connection:
         self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=virtool.api.utils.dumps)
+        await self._ws.send_json(message, dumps=virtool.api.dumps)
 
     async def close(self):
         await self._ws.close()
@@ -93,7 +92,7 @@ def get_processor(interface: str):
     :return:
     """
     if interface == "jobs":
-        return virtool.db.jobs.processor
+        return virtool.jobs.db.processor
 
     return virtool.utils.base_processor
 
@@ -108,17 +107,17 @@ def get_projection(interface: str) -> Union[dict, list]:
 
     """
     return {
-        "analyses": virtool.db.analyses.PROJECTION,
-        "files": virtool.db.files.PROJECTION,
-        "history": virtool.db.history.PROJECTION,
-        "hmm": virtool.db.hmm.PROJECTION,
-        "indexes": virtool.db.indexes.PROJECTION,
-        "jobs": virtool.db.jobs.PROJECTION,
-        "otus": virtool.db.otus.PROJECTION,
-        "references": virtool.db.references.PROJECTION,
-        "samples": virtool.db.samples.PROJECTION,
-        "subtractions": virtool.db.subtractions.PROJECTION,
-        "users": virtool.db.users.PROJECTION
+        "analyses": virtool.analyses.db.PROJECTION,
+        "files": virtool.files.db.PROJECTION,
+        "history": virtool.history.db.PROJECTION,
+        "hmm": virtool.hmm.db.PROJECTION,
+        "indexes": virtool.indexes.db.PROJECTION,
+        "jobs": virtool.jobs.db.PROJECTION,
+        "otus": virtool.otus.db.PROJECTION,
+        "references": virtool.references.db.PROJECTION,
+        "samples": virtool.samples.db.PROJECTION,
+        "subtractions": virtool.subtractions.db.PROJECTION,
+        "users": virtool.users.db.PROJECTION
     }.get(interface, None)
 
 

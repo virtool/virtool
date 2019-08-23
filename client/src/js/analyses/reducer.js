@@ -86,7 +86,10 @@ export const updateIdLists = (state, action) => {
     const analysisDetailId = get(state, "detail.id", null);
 
     if (analysisDetailId === action.data.id) {
-        return state;
+        return {
+            ...state,
+            detail: formatData(action.data)
+        };
     }
 
     return {
@@ -95,7 +98,8 @@ export const updateIdLists = (state, action) => {
         expanded: [],
         filterIds: null,
         searchIds: null,
-        sortKey: "length"
+        detail: formatData(action.data),
+        sortKey: action.data.algorithm === "nuvs" ? "length" : "coverage"
     };
 };
 
@@ -155,7 +159,6 @@ export default function analysesReducer(state = initialState, action) {
                 return {
                     ...state,
                     activeId: null,
-                    data: null,
                     detail: null,
                     filterIds: null,
                     searchIds: null,
@@ -166,19 +169,12 @@ export default function analysesReducer(state = initialState, action) {
             return state;
 
         case GET_ANALYSIS.SUCCEEDED: {
-            return updateIdLists(
-                {
-                    ...state,
-                    detail: formatData(action.data)
-                },
-                action
-            );
+            return updateIdLists(state, action);
         }
 
         case CLEAR_ANALYSIS:
             return {
                 ...state,
-                data: null,
                 detail: null,
                 searchIds: null
             };

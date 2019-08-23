@@ -1,13 +1,13 @@
 import os
 
-import virtool.db.history
-import virtool.db.indexes
-import virtool.db.otus
+import virtool.history.db
+import virtool.indexes.db
+import virtool.otus.db
 import virtool.db.sync
 import virtool.errors
-import virtool.history
+import virtool.history.utils
 import virtool.jobs.job
-import virtool.otus
+import virtool.otus.utils
 import virtool.utils
 
 
@@ -77,7 +77,7 @@ class Job(virtool.jobs.job.Job):
                     sequence_otu_map[sequence["_id"]] = patch_id
 
             # Extract the list of sequences from the joined patched patch.
-            sequences = virtool.otus.extract_default_sequences(joined)
+            sequences = virtool.otus.utils.extract_default_sequences(joined)
 
             defaults = list()
 

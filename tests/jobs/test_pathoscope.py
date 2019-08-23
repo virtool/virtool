@@ -10,7 +10,7 @@ TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 PATHOSCOPE_PATH = os.path.join(TEST_FILES_PATH, "pathoscope")
 
 BEST_HIT_PATH = os.path.join(PATHOSCOPE_PATH, "best_hit")
-DIAGNOSIS_PATH = os.path.join(PATHOSCOPE_PATH, "diagnosis.json")
+RESULTS_PATH = os.path.join(PATHOSCOPE_PATH, "results.json")
 EM_PATH = os.path.join(PATHOSCOPE_PATH, "em")
 ISOLATES_VTA_PATH = os.path.join(PATHOSCOPE_PATH, "to_isolates.vta")
 MATRIX_PATH = os.path.join(PATHOSCOPE_PATH, "ps_matrix")
@@ -377,14 +377,14 @@ def test_pathoscope(dbs, mock_job):
     with open(os.path.join(mock_job.params["analysis_path"], "report.tsv"), "r") as f:
         assert updated_tsv == sorted([line.rstrip() for line in f])
 
-    with open(DIAGNOSIS_PATH, "r") as handle:
+    with open(RESULTS_PATH, "r") as handle:
         expected = sorted(json.load(handle), key=lambda h: h["id"])
         results = mock_job.results
 
         assert results["read_count"] == 20276
         assert results["ready"] is True
 
-        assert expected == sorted(results["diagnosis"], key=lambda h: h["id"])
+        assert expected == sorted(results["results"], key=lambda h: h["id"])
 
 
 def test_import_results(dbs, mock_job):
@@ -411,7 +411,7 @@ def test_import_results(dbs, mock_job):
     })
 
     mock_job.results = {
-        "diagnosis": "diagnosis will be here",
+        "results": "results will be here",
         "read_count": 1337,
         "ready": True
     }
@@ -422,7 +422,7 @@ def test_import_results(dbs, mock_job):
         "_id": "baz",
         "ready": True,
         "algorithm": "pathoscope_bowtie",
-        "diagnosis": "diagnosis will be here",
+        "results": "results will be here",
         "read_count": 1337,
         "sample": {
             "id": "foobar"

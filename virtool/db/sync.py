@@ -8,8 +8,8 @@ from copy import deepcopy
 import dictdiffer
 import pymongo
 
-import virtool.otus
-import virtool.samples
+import virtool.otus.utils
+import virtool.samples.utils
 
 
 def get_active_index_ids(db, ref_id):
@@ -112,7 +112,7 @@ def join_otu(db, query, document=None):
     sequences = list(db.sequences.find({"otu_id": document["_id"]}))
 
     # Merge the sequence entries into the otu entry.
-    return virtool.otus.merge_otu(document, sequences)
+    return virtool.otus.utils.merge_otu(document, sequences)
 
 
 def patch_otu_to_version(db, otu_id, version):
@@ -180,7 +180,7 @@ def recalculate_algorithm_tags(db, sample_id):
     """
     analyses = db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"])
 
-    update = virtool.samples.calculate_algorithm_tags(analyses)
+    update = virtool.samples.utils.calculate_algorithm_tags(analyses)
 
     db.samples.update_one({"_id": sample_id}, {
         "$set": update

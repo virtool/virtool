@@ -141,10 +141,10 @@ describe("Analyses Reducer", () => {
     });
 
     it("should handle TOGGLE_ANALYSIS_EXPANDED", () => {
-        const state = { ...initialState, data: [] };
+        const state = { ...initialState };
         const action = { type: TOGGLE_ANALYSIS_EXPANDED, id: "test" };
         const result = reducer(state, action);
-        expect(result).toEqual({ ...state, data: [] });
+        expect(result).toEqual({ ...state });
     });
 
     it("should handle LIST_READY_INDEXES_SUCCEEDED", () => {
@@ -179,7 +179,6 @@ describe("Analyses Reducer", () => {
         expect(result).toEqual({
             activeId: null,
             detail: null,
-            data: null,
             filterIds: null,
             searchIds: null,
             sortKey: "length"
@@ -202,7 +201,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -230,7 +229,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -257,7 +256,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -271,7 +270,7 @@ describe("Analyses Reducer", () => {
             expanded: [],
             filterIds: null,
             searchIds: null,
-            sortKey: "length"
+            sortKey: "coverage"
         });
     });
 
@@ -284,7 +283,7 @@ describe("Analyses Reducer", () => {
             data: {
                 algorithm,
                 ready,
-                diagnosis: []
+                results: []
             }
         };
         const result = reducer(state, action);
@@ -298,15 +297,15 @@ describe("Analyses Reducer", () => {
             expanded: [],
             filterIds: null,
             searchIds: null,
-            sortKey: "length"
+            sortKey: "coverage"
         });
     });
 
     it("should handle CLEAR_ANALYSIS", () => {
-        const state = { data: [], detail: {}, searchIds: ["foo"] };
+        const state = { detail: {}, searchIds: ["foo"] };
         const action = { type: CLEAR_ANALYSIS };
         const result = reducer(state, action);
-        expect(result).toEqual({ data: null, detail: null, searchIds: null });
+        expect(result).toEqual({ detail: null, searchIds: null });
     });
 
     it("should handle BLAST_NUVS_REQUESTED", () => {
