@@ -1,9 +1,9 @@
-import asyncio
 import logging
-import os
+from typing import Union
 
 import arrow
 
+import virtool.db.core
 import virtool.db.utils
 import virtool.utils
 
@@ -21,12 +21,38 @@ PROJECTION = [
 ]
 
 
-async def create(db, filename, file_type, reserved=False, user_id=None):
-    file_id = None
+async def generate_file_id(db, filename: str) -> str:
+    """
+    Generate a unique id for a new file. File ids comprise a unique prefix joined to the filename by a dash
+    (eg. abc123-reads.fq.gz).
 
-    while file_id is None or file_id in await db.files.distinct("_id"):
-        prefix = await virtool.db.utils.get_new_id(db.files)
-        file_id = f"{prefix}-{filename}"
+    :param db: the application database object
+    :param filename: the filename to generate an id with
+    :return: the file id
+
+    """
+    prefix = await virtool.db.utils.get_new_id(db.files)
+    file_id = f"{prefix}-{filename}"
+
+    if await db.files.count({"_id": file_id}):
+        return await generate_file_id(db, filename)
+
+    return file_id
+
+
+async def create(db, filename: str, file_type: str, reserved: bool = False, user_id: Union[None, str] = None):
+    """
+    Create a new file document.
+
+    :param db: the application database object
+    :param filename: the name of the file
+    :param file_type: the type if file (eg. reads)
+    :param reserved: should the file immediately be reserved (used for updating legacy samples)
+    :param user_id: the id of the uploading user
+    :return: the file document
+
+    """
+    file_id = await generate_file_id(db, filename)
 
     uploaded_at = virtool.utils.timestamp()
 
@@ -62,27 +88,16 @@ async def create(db, filename, file_type, reserved=False, user_id=None):
     return virtool.utils.base_processor(document)
 
 
-async def reserve(db, file_ids):
+async def reserve(db, file_ids: list):
+    """
+    Reserve the files identified in `file_ids` by setting the `reserved` field to `True`.
+
+    :param db: the application database object
+    :param file_ids: a list of file_ids to reserve
+
+    """
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserved": True
         }
     })
-
-
-async def release_reservations(db, file_ids):
-    await db.files.update_many({"_id": {"$in": file_ids}}, {
-        "$set": {
-            "reserved": False
-        }
-    })
-
-
-async def remove(loop, db, settings, file_id):
-    await db.files.delete_one({"_id": file_id})
-
-    file_path = os.path.join(settings["data_path"], "files", file_id)
-
-    loop = asyncio.get_event_loop()
-
-    await loop.run_in_executor(None, virtool.utils.rm, file_path)
