@@ -1,12 +1,12 @@
 import React from "react";
 import Request from "superagent";
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
-import { Label, Modal, ProgressBar } from "react-bootstrap";
+import { Modal, ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 
 import { installSoftwareUpdates } from "../actions";
-import { Button, Loader } from "../../base";
+import { Button, Label, Loader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 import { ReleaseMarkdown } from "./Release";
 

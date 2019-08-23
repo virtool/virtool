@@ -10,11 +10,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, ListGroup, Label } from "react-bootstrap";
+import { Row, Col, ListGroup } from "react-bootstrap";
 import { checkRefRight } from "../../../utils/utils";
 
 import { getOTUHistory, revert } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, LoadingPlaceholder } from "../../../base";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, Label, LoadingPlaceholder } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {

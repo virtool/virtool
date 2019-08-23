@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Col, Row, Label } from "react-bootstrap";
-import { Icon, ListGroupItem } from "../../../base";
+import { Col, Row } from "react-bootstrap";
+import { Icon, Label, ListGroupItem } from "../../../base";
 
 export default class Segment extends React.Component {
     handleRemove = () => {

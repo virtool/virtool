@@ -1,9 +1,9 @@
 import { get, map } from "lodash-es";
 import React from "react";
-import { Badge, Col, Label, Panel, Row, Table } from "react-bootstrap";
+import { Badge, Col, Panel, Row, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
+import { Label, LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
 

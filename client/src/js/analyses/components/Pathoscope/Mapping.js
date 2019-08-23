@@ -1,10 +1,10 @@
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
-import { Label, ProgressBar } from "react-bootstrap";
+import { ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Box, Flex, FlexItem, Icon } from "../../../base";
+import { Box, Flex, FlexItem, Icon, Label } from "../../../base";
 import { getColor } from "../../../base/utils";
 import { toThousand } from "../../../utils/utils";
 
