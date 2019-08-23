@@ -5,6 +5,7 @@ import arrow
 
 import virtool.db.core
 import virtool.db.utils
+import virtool.files.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,29 @@ async def create(db, filename: str, file_type: str, reserved: bool = False, user
     document = {key: document[key] for key in [key for key in PROJECTION if key != "size"]}
 
     return virtool.utils.base_processor(document)
+
+
+async def remove(db, settings: dict, run_in_thread: callable, file_id: str):
+    """
+    Remove the file with `file_id` from the database and disk. Return the deleted file count.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :param run_in_thread: the application thread running function
+    :param file_id: the file id to remove
+    :return: the number of deleted files
+
+    """
+    delete_result = await db.files.delete_one({"_id": file_id})
+
+    path = virtool.files.utils.join_file_path(settings, file_id)
+
+    try:
+        await run_in_thread(virtool.utils.rm, path)
+    except FileNotFoundError:
+        pass
+
+    return delete_result.deleted_count
 
 
 async def reserve(db, file_ids: list):

@@ -3,6 +3,7 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.files.db
+import virtool.utils
 
 
 @pytest.fixture
@@ -123,6 +124,31 @@ class TestCreate:
 
         assert document == expected.returned
         assert await dbi.files.find_one() == expected.inserted
+
+
+@pytest.mark.parametrize("exists", [True, False])
+async def test_remove(exists, mocker, tmpdir, dbi):
+    f = tmpdir.join("foo-test.fq")
+    f.write("hello world")
+
+    m_join_file_path = mocker.patch("virtool.files.utils.join_file_path", return_value=str(f))
+    m_run_in_thread = make_mocked_coro()
+
+    if not exists:
+        m_run_in_thread.side_effect = FileNotFoundError
+
+    settings = {
+        "data_path": "/virtool"
+    }
+
+    await virtool.files.db.remove(
+        dbi,
+        settings,
+        m_run_in_thread,
+        "foo-test.fq"
+    )
+
+    m_run_in_thread.assert_called_with(virtool.utils.rm, str(f))
 
 
 async def test_reserve(dbi):
