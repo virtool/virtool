@@ -1,79 +1,40 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NotFound /> renders correctly 1`] = `
-<Jumbotron
-  bsClass="jumbotron"
-  className="not-found"
-  componentClass="div"
->
-  <h1
-    style={
-      Object {
-        "margin": "0 0 10px 0",
-      }
-    }
+exports[`<NotFound /> should render default 1`] = `
+<NotFound__StyledNotFound>
+  <Label
+    bsStyle="danger"
   >
-    <span
-      className="label label-danger"
-      style={
-        Object {
-          "padding": "10px 25px",
-        }
-      }
-    >
-      404
-    </span>
-    <small
-      style={
-        Object {
-          "color": "black",
-          "paddingLeft": "15px",
-        }
-      }
-    >
-      <strong>
-        Not found
-      </strong>
-    </small>
-  </h1>
-</Jumbotron>
+    404
+  </Label>
+  <strong>
+    Not found
+  </strong>
+</NotFound__StyledNotFound>
 `;
 
-exports[`<NotFound /> renders optional alternate message and status 1`] = `
-<Jumbotron
-  bsClass="jumbotron"
-  className="not-found"
-  componentClass="div"
->
-  <h1
-    style={
-      Object {
-        "margin": "0 0 10px 0",
-      }
-    }
+exports[`<NotFound /> should render with message 1`] = `
+<NotFound__StyledNotFound>
+  <Label
+    bsStyle="danger"
   >
-    <span
-      className="label label-danger"
-      style={
-        Object {
-          "padding": "10px 25px",
-        }
-      }
-    >
-      409
-    </span>
-    <small
-      style={
-        Object {
-          "color": "black",
-          "paddingLeft": "15px",
-        }
-      }
-    >
-      <strong>
-        Test
-      </strong>
-    </small>
-  </h1>
-</Jumbotron>
+    404
+  </Label>
+  <strong>
+    Resource missing
+  </strong>
+</NotFound__StyledNotFound>
+`;
+
+exports[`<NotFound /> should render with status 1`] = `
+<NotFound__StyledNotFound>
+  <Label
+    bsStyle="danger"
+  >
+    409
+  </Label>
+  <strong>
+    Not found
+  </strong>
+</NotFound__StyledNotFound>
 `;

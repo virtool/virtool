@@ -3,26 +3,18 @@ import { NotFound } from "../NotFound";
 describe("<NotFound />", () => {
     let wrapper;
 
-    it("renders correctly", () => {
+    it("should render default", () => {
         wrapper = shallow(<NotFound />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders optional alternate message and status", () => {
-        wrapper = shallow(<NotFound status={409} message="Test" />);
+    it("should render with status", () => {
+        const wrapper = shallow(<NotFound status={409} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        expect(
-            wrapper
-                .find("span")
-                .children()
-                .text()
-        ).toEqual("409");
-        expect(
-            wrapper
-                .find("strong")
-                .children()
-                .text()
-        ).toEqual("Test");
+    it("should render with message", () => {
+        wrapper = shallow(<NotFound message="Resource missing" />);
         expect(wrapper).toMatchSnapshot();
     });
 });
