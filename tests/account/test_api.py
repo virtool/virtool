@@ -191,7 +191,7 @@ class TestCreateAPIKey:
         Test that creation of an API key functions properly. Check that different permission inputs work.
 
         """
-        mocker.patch("virtool.account.db.generate_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.account.utils.generate_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 
@@ -247,7 +247,7 @@ class TestCreateAPIKey:
         Test that uniqueness is ensured on the ``id`` field.
 
         """
-        mocker.patch("virtool.account.db.generate_api_key", return_value=("raw_key", "hashed_key"))
+        mocker.patch("virtool.account.utils.generate_api_key", return_value=("raw_key", "hashed_key"))
 
         client = await spawn_client(authorize=True)
 

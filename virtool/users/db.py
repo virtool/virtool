@@ -17,18 +17,6 @@ PROJECTION = [
     "primary_group"
 ]
 
-ACCOUNT_PROJECTION = [
-    "_id",
-    "administrator",
-    "email",
-    "groups",
-    "identicon",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-    "settings"
-]
-
 
 async def attach_identicons(db, users: Union[dict, list]):
     """
