@@ -48,8 +48,6 @@ exports[`<AnalysisItem /> should render 1`] = `
         <span>
           Foo
           <Label
-            bsClass="label"
-            bsStyle="default"
             style={
               Object {
                 "marginLeft": "5px",
@@ -184,8 +182,6 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
         <span>
           Foo
           <Label
-            bsClass="label"
-            bsStyle="default"
             style={
               Object {
                 "marginLeft": "5px",

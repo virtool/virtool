@@ -33,10 +33,7 @@ exports[`<SoftwareInstall /> should render 1`] = `
     onHide={[MockFunction]}
   >
     Software Update 
-    <Label
-      bsClass="label"
-      bsStyle="default"
-    >
+    <Label>
       test
     </Label>
   </ModalHeader>
