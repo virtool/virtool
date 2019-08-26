@@ -68,7 +68,7 @@ async def load_results(settings: dict, document: dict) -> dict:
             data = json.loads(await f.read())
             return {
                 **document,
-                "results":data
+                "results": data
             }
 
     return document

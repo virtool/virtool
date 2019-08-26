@@ -15,6 +15,13 @@ class RespIs:
         }
 
     @staticmethod
+    async def not_permitted(resp, message="Not permitted"):
+        return resp.status == 403 and await resp.json() == {
+            "id": "not_permitted",
+            "message": message
+        }
+
+    @staticmethod
     async def no_content(resp):
         """
         Check whether a response object is a valid Virtool ``no_content``.

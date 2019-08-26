@@ -32,7 +32,7 @@ async def get(req):
     """
     document = await req.app["db"].users.find_one(
         req["client"].user_id,
-        virtool.users.db.ACCOUNT_PROJECTION
+        virtool.account.db.PROJECTION
     )
 
     return json_response(virtool.utils.base_processor(document))
@@ -87,7 +87,7 @@ async def edit(req):
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": update
-    }, projection=virtool.users.db.ACCOUNT_PROJECTION)
+    }, projection=virtool.account.db.PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
 
