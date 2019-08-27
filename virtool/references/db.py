@@ -653,12 +653,8 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
         "remotes_from"
     ])
 
-    release = document.get("release", None)
-
-    try:
-        etag = release["etag"]
-    except (KeyError, TypeError):
-        etag = None
+    release = document.get("release")
+    etag = virtool.github.get_etag(release)
 
     # Variables that will be used when trying to fetch release from GitHub.
     errors = list()

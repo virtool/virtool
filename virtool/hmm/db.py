@@ -155,10 +155,11 @@ async def fetch_and_update_release(app, ignore_errors=False):
 
     release = document.get("release", None)
 
-    installed = document.get("installed", None)
+    # The ETag for the latest stored release.
+    etag = virtool.github.get_etag(release)
 
-    try:
-        etag = release["etag"]
+    # The currently installed release.
+    installed = document.get("installed")
     except (KeyError, TypeError):
         etag = None
 
