@@ -1,0 +1,8 @@
+python_setup:
+  version: 3.7
+
+index:
+  exclude:
+    - docs
+    - templates
+    - tests/test_files
