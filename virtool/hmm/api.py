@@ -50,7 +50,6 @@ async def find(req):
 async def get_status(req):
     db = req.app["db"]
     status = await virtool.hmm.db.get_status(db)
-
     return json_response(status)
 
 
@@ -58,7 +57,6 @@ async def get_status(req):
 async def get_release(req):
     try:
         release = await virtool.hmm.db.fetch_and_update_release(req.app)
-
     except virtool.errors.GitHubError as err:
         if "404" in str(err):
             return bad_gateway("GitHub repository does not exist")
@@ -159,7 +157,7 @@ async def purge(req):
     """
     db = req.app["db"]
 
-    await virtool.hmm.db.purge(db)
+    await virtool.hmm.db.purge(db, req.app["settings"])
 
     hmm_path = os.path.join(req.app["settings"]["data_path"], "hmm/profiles.hmm")
 

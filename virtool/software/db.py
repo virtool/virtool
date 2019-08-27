@@ -4,7 +4,6 @@ import logging
 import os
 
 import aiohttp
-import semver
 
 import virtool.processes.db
 import virtool.db.utils
@@ -12,8 +11,8 @@ import virtool.http.proxy
 import virtool.http.utils
 import virtool.processes.process
 import virtool.software.utils
+import virtool.software.utils
 import virtool.utils
-from virtool.utils import base_processor
 
 logger = logging.getLogger(__name__)
 
@@ -62,25 +61,8 @@ async def fetch_and_update_releases(app, ignore_errors=False):
 
         return await virtool.db.utils.get_one_field(db.status, "releases", "software")
 
-    data = data["virtool"]
-
-    channel = settings["software_channel"]
-
-    # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
-    # will be empty. This is interpreted by the web client as an error.
-    if channel == "stable":
-        data = [r for r in data if "alpha" not in r["name"] and "beta" not in r["name"]]
-
-    elif channel == "beta":
-        data = [r for r in data if "alpha" not in r["name"]]
-
-    releases = list()
-
-    for release in data:
-        if semver.compare(release["name"].replace("v", ""), version.replace("v", "")) < 1:
-            break
-
-        releases.append(release)
+    releases = virtool.software.utils.filter_releases_by_channel(data["virtool"], settings["software_channel"])
+    releases = virtool.software.utils.filter_releases_by_newer(releases, version)
 
     await db.status.update_one({"_id": "software"}, {
         "$set": {
@@ -255,4 +237,4 @@ async def update_status_process(db, _id, progress, step=None, error=None):
         "$set": set_dict
     })
 
-    return base_processor(document)
+    return virtool.utils.base_processor(document)

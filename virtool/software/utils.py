@@ -2,6 +2,9 @@ import logging
 import os
 import shutil
 import sys
+from typing import List
+
+import semver
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +55,48 @@ def copy_software_files(src, dest):
 
         if os.path.isdir(src_path):
             shutil.copytree(src_path, dest_path)
+
+
+def filter_releases_by_channel(releases: List[dict], channel: str):
+    """
+    Filter releases by channel (stable, beta, or alpha).
+
+    :param releases: a list of releases
+    :param channel: a software channel (
+    :return: a filtered list of releases
+
+    """
+    if channel not in ["stable", "beta", "alpha"]:
+        raise ValueError("Channel must be one of 'stable', 'beta', 'alpha'")
+
+    if channel == "stable":
+        return [r for r in releases if "alpha" not in r["name"] and "beta" not in r["name"]]
+
+    elif channel == "beta":
+        return [r for r in releases if "alpha" not in r["name"]]
+
+    return list(releases)
+
+
+def filter_releases_by_newer(releases: List[dict], version: str) -> List[dict]:
+    """
+    Returns a list containing only releases with versions later than the passed `version`.
+
+    The passed `releases` are assumed to be sorted by descending version.
+
+    :param releases: a list of releases
+    :param version: the version the returned releases must be later than
+    :return: filtered releases
+
+    """
+    stripped = version.replace("v", "")
+
+    newer = list()
+
+    for release in releases:
+        if semver.compare(release["name"].replace("v", ""), stripped.replace("v", "")) < 1:
+            return newer
+
+        newer.append(release)
+
+    return newer

@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 import virtool.errors
 import virtool.http.proxy
@@ -41,6 +42,20 @@ def format_release(release):
         "published_at": release["published_at"],
         "content_type": asset["content_type"]
     }
+
+
+def get_etag(release: Union[None, dict]) -> Union[None, str]:
+    """
+    Get the ETag from a release dict. Return `None` when the key is missing or the input is not a `dict`.
+
+    :param release: a release
+    :return: an ETag or `None`
+
+    """
+    try:
+        return release["etag"]
+    except (KeyError, TypeError):
+        return None
 
 
 async def get_release(settings, session, slug, etag=None, release_id="latest"):
