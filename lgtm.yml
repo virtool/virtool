@@ -1,8 +1,22 @@
-python_setup:
-  version: 3.7
+path_classifiers:
+  test:
+    - tests
+    - "client/**/test.*.js"
 
-index:
-  exclude:
-    - docs
-    - templates
-    - tests/test_files
+extraction:
+  python:
+    python_setup:
+      version: 3.7
+    index:
+      exclude:
+        - client
+        - docs
+        - templates
+        - tests/test_files
+  javascript:
+    index:
+      exclude:
+        - docs
+        - templates
+        - tests
+        - virtool
