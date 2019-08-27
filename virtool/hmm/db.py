@@ -116,56 +116,36 @@ async def get_hmms_referenced_in_db(db) -> set:
     return {a["_id"] async for a in cursor}
 
 
-async def delete_unreferenced_hmms(db, settings):
-    """
-    Deletes all HMM documents that are not used in analyses.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    """
-    in_db = await get_hmms_referenced_in_db(db)
-    in_files = await get_hmms_referenced_in_files(db, settings)
-
-    referenced_ids = list(in_db.union(in_files))
-
-    delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
-
-    logger.debug(f"Deleted {delete_result.deleted_count} unreferenced HMMs")
-
-    return delete_result
-
-
-async def fetch_and_update_release(app, ignore_errors=False):
+async def fetch_and_update_release(app: aiohttp.web.Application, ignore_errors: bool = False) -> dict:
     """
     Return the HMM install status document or create one if none exists.
 
     :param app: the app object
-    :type app: :class:`aiohttp.web.Application`
-
     :param ignore_errors: ignore possible errors when making GitHub request
-    :type ignore_errors: bool
+    :return: the release
 
     """
     db = app["db"]
     settings = app["settings"]
     session = app["client"]
 
-    document = await db.status.find_one("hmm", ["release", "installed"])
+    document = await db.status.find_one("hmm", ["installed", "release", "updates"])
 
-    release = document.get("release", None)
+    # The latest release stored in the HMM status document.
+    release = document.get("release")
 
     # The ETag for the latest stored release.
     etag = virtool.github.get_etag(release)
 
     # The currently installed release.
     installed = document.get("installed")
-    except (KeyError, TypeError):
-        etag = None
 
-    errors = list()
+    if installed is True:
+        installed = document["updates"][0]
 
     try:
+        # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
+        # has not changed and `None` is returned from `get_release()`.
         updated = await virtool.github.get_release(
             settings,
             session,
@@ -173,31 +153,32 @@ async def fetch_and_update_release(app, ignore_errors=False):
             etag
         )
 
-        # The release dict will only be replaced if there is a 200 response from GitHub. A 304 indicates the release
-        # has not changed and `None` is returned from `get_release()`.
+        # Release is replace with updated release if an update was found on GitHub.
         if updated:
-            release = virtool.github.format_release(updated)
-
-            release["newer"] = bool(
-                release is None or installed is None or (
-                        installed and
-                        semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
-                )
+            release = virtool.hmm.utils.format_hmm_release(
+                updated,
+                release,
+                installed
             )
 
+        # Update the last retrieval timestamp whether or not an update was found on GitHub.
         release["retrieved_at"] = virtool.utils.timestamp()
 
-        # The `errors` list is emptied and the
+        # Set and empty error list since the update check was successful.
         await db.status.update_one({"_id": "hmm"}, {
             "$set": {
-                "errors": errors,
+                "errors": [],
+                "installed": installed,
                 "release": release
             }
         }, upsert=True)
 
+        logger.debug("Fetched and updated HMM release")
+
         return release
 
     except (aiohttp.client_exceptions.ClientConnectorError, virtool.errors.GitHubError) as err:
+        errors = list()
 
         if "ClientConnectorError" in str(err):
             errors = ["Could not reach GitHub"]
@@ -210,7 +191,8 @@ async def fetch_and_update_release(app, ignore_errors=False):
 
         await db.status.update_one({"_id": "hmm"}, {
             "$set": {
-                "errors": errors
+                "errors": errors,
+                "installed": installed
             }
         })
 
