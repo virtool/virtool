@@ -73,10 +73,11 @@ class AddSequence extends React.Component {
         this.setState({ autofillPending: true }, () => {
             getGenbank(this.state.id).then(
                 resp => {
-                    const { definition, host, sequence } = resp.body;
+                    const { accession, definition, host, sequence } = resp.body;
 
                     this.setState({
                         autofillPending: false,
+                        id: accession,
                         definition,
                         host,
                         sequence,
