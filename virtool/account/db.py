@@ -1,10 +1,20 @@
-import uuid
-from typing import Tuple
-
+import virtool.account.utils
 import virtool.db.core
 import virtool.users.db
 import virtool.users.utils
 import virtool.utils
+
+PROJECTION = [
+    "_id",
+    "administrator",
+    "email",
+    "groups",
+    "identicon",
+    "last_password_change",
+    "permissions",
+    "primary_group",
+    "settings"
+]
 
 
 def compose_password_update(user_id: str, old_password: str, password: str) -> dict:
@@ -51,18 +61,6 @@ async def get_alternate_id(db: virtool.db.core.DB, name: str) -> str:
         suffix += 1
 
 
-def generate_api_key() -> Tuple[str, str]:
-    """
-    Generate an API key using UUID. Returns a `tuple` containing the raw API key to be returned once to the user and the
-    SHA-256 hash of the API key to be stored in the database.
-
-    :return: a new API key
-
-    """
-    raw = uuid.uuid4().hex
-    return raw, virtool.users.utils.hash_api_key(raw)
-
-
 async def create_api_key(db: virtool.db.core.DB, name: str, permissions: dict, user_id: str):
     """
     Create a new API key for the account with the given `user_id`.
@@ -89,7 +87,7 @@ async def create_api_key(db: virtool.db.core.DB, name: str, permissions: dict, u
     if not user["administrator"]:
         key_permissions = virtool.users.utils.limit_permissions(key_permissions, user["permissions"])
 
-    raw, hashed = virtool.account.db.generate_api_key()
+    raw, hashed = virtool.account.utils.generate_api_key()
 
     document = {
         "_id": hashed,

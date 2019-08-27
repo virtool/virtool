@@ -28,6 +28,7 @@ import { ViewHeader } from "./ViewHeader";
 
 export * from "./Box";
 export * from "./ExternalLink";
+export * from "./Label";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
 export * from "./TabLink";

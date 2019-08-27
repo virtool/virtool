@@ -1,0 +1,20 @@
+path_classifiers:
+  test:
+    - tests
+    - "client/**/test.*.js"
+
+extraction:
+  python:
+    index:
+      exclude:
+        - client
+        - docs
+        - templates
+        - tests/test_files
+  javascript:
+    index:
+      exclude:
+        - docs
+        - templates
+        - tests
+        - virtool

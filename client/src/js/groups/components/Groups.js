@@ -1,9 +1,9 @@
 import { push } from "connected-react-router";
 import { filter, find, get, includes, map, sortBy, transform } from "lodash-es";
 import React from "react";
-import { Col, InputGroup, Label, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { Col, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { AutoProgressBar, Button, Icon, InputError, Label, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 

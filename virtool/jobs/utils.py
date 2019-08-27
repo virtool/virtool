@@ -6,6 +6,7 @@ import virtool.caches.db
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.utils
+import virtool.samples.utils
 
 
 def copy_files_to_sample(paths, sample_path, proc):
@@ -13,7 +14,7 @@ def copy_files_to_sample(paths, sample_path, proc):
 
     for index, path in enumerate(paths):
         suffix = index + 1
-        target = join_read_path(sample_path, suffix)
+        target = virtool.samples.utils.join_read_path(sample_path, suffix)
 
         virtool.jobs.utils.copy_or_compress(path, target, proc)
 
@@ -107,35 +108,6 @@ def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict
         return virtool.utils.base_processor(document)
 
 
-def join_read_path(base_path: str, suffix: int) -> str:
-    """
-    Return a standard read path given a base path (eg. /mnt/data/samples) and a read suffix.
-
-    :param base_path: a base path where the read file is located
-    :param suffix: the suffix number for the read file
-    :return: a read path
-
-    """
-    return os.path.join(base_path, f"reads_{suffix}.fq.gz")
-
-
-def join_read_paths(base_path: str, paired: bool) -> list:
-    """
-    Return a list of standard read paths given a base path and flag indicating whether the reads are `paired`.
-
-    The list will contain two paths if the data is paired, and one if it is not.
-
-    :param base_path: a base path where the read files are located
-    :param paired: a boolean flag indicating whether the data is paired
-    :return: a list of read paths
-
-    """
-    if paired:
-        return [join_read_path(base_path, suffix) for suffix in (1, 2)]
-
-    return [join_read_path(base_path, 1)]
-
-
 def join_cache_path(settings: dict, cache_id: str):
     """
     Create a cache path string given the application settings and cache id.
@@ -164,4 +136,4 @@ def join_cache_read_paths(settings: dict, cache: dict) -> Union[list, None]:
 
     cache_path = join_cache_path(settings, cache["id"])
 
-    return join_read_paths(cache_path, cache["paired"])
+    return virtool.samples.utils.join_read_paths(cache_path, cache["paired"])

@@ -7,10 +7,7 @@ exports[`AnalysisMappingReference should render 1`] = `
   >
     Foo
   </Link>
-  <Label
-    bsClass="label"
-    bsStyle="default"
-  >
+  <Label>
     3
   </Label>
 </Mapping__StyledAnalysisMappingReference>

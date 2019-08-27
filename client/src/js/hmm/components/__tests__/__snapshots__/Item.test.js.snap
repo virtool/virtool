@@ -39,10 +39,7 @@ exports[`<HMMItem /> should render 1`] = `
           <span
             key="0"
           >
-            <Label
-              bsClass="label"
-              bsStyle="default"
-            >
+            <Label>
               Family1
             </Label>
              
@@ -50,10 +47,7 @@ exports[`<HMMItem /> should render 1`] = `
           <span
             key="1"
           >
-            <Label
-              bsClass="label"
-              bsStyle="default"
-            >
+            <Label>
               Family2
             </Label>
              
@@ -61,10 +55,7 @@ exports[`<HMMItem /> should render 1`] = `
           <span
             key="2"
           >
-            <Label
-              bsClass="label"
-              bsStyle="default"
-            >
+            <Label>
               Family3
             </Label>
              

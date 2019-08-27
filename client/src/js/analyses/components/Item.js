@@ -2,10 +2,10 @@ import React from "react";
 import CX from "classnames";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Label } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 
 import { getTaskDisplayName } from "../../utils/utils";
-import { Icon, Loader, RelativeTime } from "../../base";
+import { Icon, Label, Loader, RelativeTime } from "../../base";
 import { removeAnalysis } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 

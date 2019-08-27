@@ -15,6 +15,13 @@ class RespIs:
         }
 
     @staticmethod
+    async def not_permitted(resp, message="Not permitted"):
+        return resp.status == 403 and await resp.json() == {
+            "id": "not_permitted",
+            "message": message
+        }
+
+    @staticmethod
     async def no_content(resp):
         """
         Check whether a response object is a valid Virtool ``no_content``.
@@ -77,6 +84,17 @@ class RespIs:
             "id": "invalid_query",
             "message": "Invalid query",
             "errors": errors
+        }
+
+    @staticmethod
+    async def bad_gateway(resp, message="Bad gateway"):
+        """
+        Check whether a response object is a valid Virtool ``bad gateway``.
+
+        """
+        return resp.status == 502 and await resp.json() == {
+            "id": "bad_gateway",
+            "message": message
         }
 
 

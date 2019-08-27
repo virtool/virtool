@@ -50,13 +50,14 @@ async def find(req):
 async def remove(req):
     file_id = req.match_info["file_id"]
 
-    file_path = os.path.join(req.app["settings"]["data_path"], "files", file_id)
+    deleted_count = await virtool.files.db.remove(
+        req.app["db"],
+        req.app["settings"],
+        req.app["run_in_thread"],
+        file_id
+    )
 
-    delete_result = await req.app["db"].files.delete_one({"_id": file_id})
-
-    virtool.utils.rm(file_path)
-
-    if delete_result.deleted_count == 0:
+    if deleted_count == 0:
         return not_found()
 
     return json_response({

@@ -2,9 +2,8 @@ import React from "react";
 import styled from "styled-components";
 import { map } from "lodash-es";
 import { connect } from "react-redux";
-import { Label } from "react-bootstrap";
 
-import { Flex, FlexItem, Identicon, Icon } from "../../base";
+import { Flex, FlexItem, Identicon, Icon, Label } from "../../base";
 import ChangePassword from "./Password";
 import Email from "./Email";
 

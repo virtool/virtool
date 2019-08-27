@@ -2,9 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
-import { Col, Label, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 
-import { ListGroupItem } from "../../base";
+import { Label, ListGroupItem } from "../../base";
 
 export default function HMMItem({ cluster, families, id, names }) {
     const filteredFamilies = reject(keys(families), family => family === "None");

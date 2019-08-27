@@ -77,7 +77,7 @@ class Job(virtool.jobs.job.Job):
 
         os.mkdir(fastq_path)
 
-        paths = virtool.jobs.utils.join_read_paths(
+        paths = virtool.samples.utils.join_read_paths(
             self.params["sample_path"],
             self.params["paired"]
         )
@@ -247,7 +247,7 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("samples", "update", [sample_id])
 
         # Remove sample files.
-        paths = virtool.jobs.utils.join_read_paths(self.params["sample_path"], paired=True)
+        paths = virtool.samples.utils.join_read_paths(self.params["sample_path"], paired=True)
 
         for path in paths:
             try:
