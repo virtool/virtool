@@ -504,8 +504,6 @@ async def create_app_runner(app: web.Application, host: str, port: int) -> web.A
     :return: a custom :class:`~aiohttp.web.AppRunner`
 
     """
-    print("APP", app)
-
     runner = web.AppRunner(app)
 
     await runner.setup()

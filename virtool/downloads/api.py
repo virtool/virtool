@@ -11,6 +11,7 @@ from aiohttp import web
 import virtool.analyses.format
 import virtool.bio
 import virtool.analyses.db
+import virtool.db.utils
 import virtool.downloads.db
 import virtool.history.db
 import virtool.otus.db
@@ -19,6 +20,7 @@ import virtool.errors
 import virtool.http.routes
 import virtool.otus.utils
 import virtool.utils
+import virtool.samples.utils
 from virtool.api import CustomEncoder, not_found
 
 routes = virtool.http.routes.Routes()
@@ -54,50 +56,25 @@ async def download_analysis(req):
     return web.Response(text=formatted, headers=headers)
 
 
-@routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq")
-async def download_uncompressed_sample_reads(req):
-    db = req.app["db"]
-    data_path = req.app["settings"]["data_path"]
-
-    sample_id = req.match_info["sample_id"]
-
-    document = await db.samples.find_one(sample_id, ["paired", "files"])
-
-    if document is None or not document.get("files", False):
-        return not_found()
-
-    suffix = req.match_info["suffix"]
-
-    path = os.path.join(data_path, "samples", sample_id, f"reads_{suffix}.fastq")
-
-    if not os.path.isfile(path):
-        return not_found()
-
-    file_stats = virtool.utils.file_stats(path)
-
-    headers = {
-        "Content-Length": file_stats["size"],
-        "Content-Type": "text"
-    }
-
-    return web.FileResponse(path, chunk_size=1024*1024, headers=headers)
-
-
-@routes.get("/download/samples/{sample_id}/{prefix}_{suffix}.fq.gz")
+@routes.get(r"/download/samples/{sample_id}/{prefix}_{suffix}.{extension:(fq|fastq|fq\.gz|fastq\.gz)}")
 async def download_sample_reads(req):
     db = req.app["db"]
-    data_path = req.app["settings"]["data_path"]
 
     sample_id = req.match_info["sample_id"]
+    extension = req.match_info["extension"]
 
-    document = await db.samples.find_one(sample_id, ["paired", "files"])
+    files = await virtool.db.utils.get_one_field(db.samples, "files", sample_id)
 
-    if document is None or not document.get("files", False):
+    if not files:
         return not_found()
 
     suffix = req.match_info["suffix"]
+    sample_path = virtool.samples.utils.join_sample_path(req.app["settings"], sample_id)
 
-    path = os.path.join(data_path, "samples", sample_id, f"reads_{suffix}.fq.gz")
+    if extension == "fastq" or extension == "fq":
+        path = virtool.samples.utils.join_legacy_read_path(sample_path, suffix)
+    else:
+        path = virtool.samples.utils.join_read_path(sample_path, suffix)
 
     if not os.path.isfile(path):
         return not_found()

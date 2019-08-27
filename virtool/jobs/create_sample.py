@@ -86,7 +86,7 @@ class Job(virtool.jobs.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        read_paths = virtool.jobs.utils.join_read_paths(self.params["sample_path"], self.params["paired"])
+        read_paths = virtool.samples.utils.join_read_paths(self.params["sample_path"], self.params["paired"])
 
         virtool.jobs.fastqc.run_fastqc(
             self.run_subprocess,
