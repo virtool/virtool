@@ -520,9 +520,9 @@ async def create_app_runner(app: web.Application, host: str, port: int) -> web.A
 
 
 async def run():
-    virtool.logs.configure(True)
-
     config = virtool.config.resolve()
+
+    virtool.logs.configure(config["dev"])
 
     app = create_app(config)
 
