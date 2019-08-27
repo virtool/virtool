@@ -1,17 +1,17 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
 import { find, map } from "lodash-es";
-import { Alert } from "react-bootstrap";
+import { WarningAlert } from "../../../base";
 import { formatIsolateName } from "../../../utils/utils";
+
+const StyledOTUIssues = styled(WarningAlert)`
+    display: block;
+
+    h5 {
+        font-weight: bold;
+    }
+`;
 
 const OTUIssues = props => {
     const errors = [];
@@ -70,15 +70,10 @@ const OTUIssues = props => {
     }
 
     return (
-        <Alert bsStyle="danger" className="clearfix">
-            <h5>
-                <strong>
-                    There are some issues that must be resolved before this OTU can be included in the next index build
-                </strong>
-            </h5>
-
+        <StyledOTUIssues>
+            <h5>There are some issues that must be resolved before this OTU can be included in the next index build</h5>
             <ul>{errors}</ul>
-        </Alert>
+        </StyledOTUIssues>
     );
 };
 

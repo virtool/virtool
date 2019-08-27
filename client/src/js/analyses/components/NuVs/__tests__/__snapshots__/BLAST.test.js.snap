@@ -204,58 +204,26 @@ exports[`<NuVsBLAST /> should render 1`] = `
 `;
 
 exports[`<NuVsBLAST /> should render alert when no blast data available 1`] = `
-<Alert
-  bsStyle="warning"
+<Alert__InfoAlert
+  level={true}
 >
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    direction="row"
-    justifyContent="flex-start"
-    wrap="nowrap"
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+    pullRight={false}
+  />
+  <span>
+    This sequence has no BLAST information attached to it.
+  </span>
+  <BLAST__BLASTButton
+    bsSize="small"
+    icon="cloud"
+    onClick={[Function]}
   >
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="info-circle"
-        pullRight={false}
-      />
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      pad={5}
-      shrink={1}
-    >
-      This sequence has no BLAST information attached to it.
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      <Button
-        bsSize="small"
-        bsStyle="default"
-        icon="cloud"
-        onClick={[Function]}
-        pullRight={false}
-        tipPlacement="top"
-      >
-        BLAST at NCBI
-      </Button>
-    </FlexItem>
-  </Flex>
-</Alert>
+    BLAST at NCBI
+  </BLAST__BLASTButton>
+</Alert__InfoAlert>
 `;
 
 exports[`<NuVsBLAST /> should render with an in-progress BLAST 1`] = `

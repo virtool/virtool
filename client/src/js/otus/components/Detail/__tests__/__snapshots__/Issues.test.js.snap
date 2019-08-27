@@ -1,16 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUIssues /> renders correctly with issues 1`] = `
-<Alert
-  bsClass="alert"
-  bsStyle="danger"
-  className="clearfix"
-  closeLabel="Close alert"
->
+<Issues__StyledOTUIssues>
   <h5>
-    <strong>
-      There are some issues that must be resolved before this OTU can be included in the next index build
-    </strong>
+    There are some issues that must be resolved before this OTU can be included in the next index build
   </h5>
   <ul>
     <li
@@ -60,21 +53,14 @@ exports[`<OTUIssues /> renders correctly with issues 1`] = `
       </ul>
     </li>
   </ul>
-</Alert>
+</Issues__StyledOTUIssues>
 `;
 
 exports[`<OTUIssues /> renders correctly without issues 1`] = `
-<Alert
-  bsClass="alert"
-  bsStyle="danger"
-  className="clearfix"
-  closeLabel="Close alert"
->
+<Issues__StyledOTUIssues>
   <h5>
-    <strong>
-      There are some issues that must be resolved before this OTU can be included in the next index build
-    </strong>
+    There are some issues that must be resolved before this OTU can be included in the next index build
   </h5>
   <ul />
-</Alert>
+</Issues__StyledOTUIssues>
 `;

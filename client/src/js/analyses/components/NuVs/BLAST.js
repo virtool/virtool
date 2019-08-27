@@ -1,16 +1,21 @@
-import React, { useCallback } from "react";
+import { map } from "lodash-es";
 import Moment from "moment";
 import numbro from "numbro";
-import { map } from "lodash-es";
-import { Table, Panel } from "react-bootstrap";
+import React, { useCallback } from "react";
+import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
+import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, RelativeTime } from "../../../base/index";
 
 import { blastNuvs } from "../../actions";
-import { Alert, Button, Flex, FlexItem, Icon, Loader, RelativeTime } from "../../../base/index";
 
 const ridRoot =
     "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
+
+export const BLASTButton = styled(Button)`
+    margin-left: auto;
+`;
 
 export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
     let timing;
@@ -122,21 +127,13 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
     }
 
     return (
-        <Alert bsStyle="warning">
-            <Flex alignItems="center">
-                <FlexItem>
-                    <Icon name="info-circle" />
-                </FlexItem>
-                <FlexItem grow={1} pad={5}>
-                    This sequence has no BLAST information attached to it.
-                </FlexItem>
-                <FlexItem pad={10}>
-                    <Button bsSize="small" icon="cloud" onClick={handleBlast}>
-                        BLAST at NCBI
-                    </Button>
-                </FlexItem>
-            </Flex>
-        </Alert>
+        <InfoAlert level>
+            <Icon name="info-circle" />
+            <span>This sequence has no BLAST information attached to it.</span>
+            <BLASTButton bsSize="small" icon="cloud" onClick={handleBlast}>
+                BLAST at NCBI
+            </BLASTButton>
+        </InfoAlert>
     );
 };
 

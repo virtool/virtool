@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { Alert, Icon } from "../../../base";
+import { Icon, InfoAlert } from "../../../base";
 
-const StyledCreateAPIKeyInfo = styled(Alert)`
+const StyledCreateAPIKeyInfo = styled(InfoAlert)`
     display: flex;
     margin-bottom: 5px;
 

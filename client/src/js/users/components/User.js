@@ -9,18 +9,27 @@
  * @exports Users
  */
 
-import React from "react";
-import { capitalize, map, get } from "lodash-es";
-import { connect } from "react-redux";
 import { push } from "connected-react-router";
+import { capitalize, get, map } from "lodash-es";
+import React from "react";
+import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-
-import { getUser, editUser, removeUser } from "../actions";
-import { Flex, FlexItem, Identicon, InputError, Icon, LoadingPlaceholder, RemoveBanner, Alert } from "../../base";
+import {
+    Flex,
+    FlexItem,
+    Icon,
+    Identicon,
+    InputError,
+    LoadingPlaceholder,
+    RemoveBanner,
+    WarningAlert
+} from "../../base";
 import { listGroups } from "../../groups/actions";
+
+import { editUser, getUser, removeUser } from "../actions";
+import UserGroups from "./Groups";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
-import UserGroups from "./Groups";
 
 export class UserItem extends React.Component {
     componentDidMount() {
@@ -47,10 +56,13 @@ export class UserItem extends React.Component {
     render() {
         if (this.props.error.length) {
             return (
-                <Alert bsStyle="warning" icon="warning">
-                    <strong>You do not have permission to manage users.</strong>
-                    <span> Contact an administrator.</span>
-                </Alert>
+                <WarningAlert level>
+                    <Icon name="exclamation-circle" />
+                    <span>
+                        <strong>You do not have permission to manage users.</strong>
+                        <span> Contact an administrator.</span>
+                    </span>
+                </WarningAlert>
             );
         }
 

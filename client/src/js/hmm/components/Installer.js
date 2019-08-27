@@ -4,7 +4,7 @@ import { Col, Panel, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { installHMMs } from "../actions";
-import { Button, Flex, FlexItem, Alert } from "../../base";
+import { Icon, WarningAlert, Button, Flex, FlexItem } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 
 class HMMInstall extends React.Component {
@@ -53,10 +53,13 @@ class HMMInstall extends React.Component {
                 Install Official
             </Button>
         ) : (
-            <Alert bsStyle="warning" icon="exclamation-circle">
-                <strong>You do not have permission to install HMMs.</strong>
-                <span> Contact an administrator.</span>
-            </Alert>
+            <WarningAlert level>
+                <Icon name="exclamation-circle" />
+                <span>
+                    <strong>You do not have permission to install HMMs.</strong>
+                    <span> Contact an administrator.</span>
+                </span>
+            </WarningAlert>
         );
 
         return (
