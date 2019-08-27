@@ -13,6 +13,7 @@ import virtool.jobs.utils
 import virtool.samples.db
 import virtool.samples.utils
 import virtool.utils
+import virtool.samples.utils
 
 TRIMMING_PROGRAM = "skewer-0.2.2"
 
@@ -132,7 +133,7 @@ class Job(virtool.jobs.job.Job):
 
         if paths is None:
             sample = self.db.samples.find_one(sample_id)
-            paths = join_legacy_read_paths(self.settings, sample)
+            paths = virtool.samples.utils.join_legacy_read_paths(self.settings, sample)
 
             if paths:
                 self.intermediate["qc"] = sample["quality"]
@@ -157,7 +158,7 @@ class Job(virtool.jobs.job.Job):
             os.makedirs(cache_path)
 
             # Paths for the trimmed read file(s).
-            paths = virtool.jobs.utils.join_read_paths(
+            paths = virtool.samples.utils.join_read_paths(
                 self.params["sample_path"],
                 self.params["paired"]
             )
@@ -175,7 +176,7 @@ class Job(virtool.jobs.job.Job):
 
             move_trimming_results(cache_path, paired)
 
-            cached_read_paths = virtool.jobs.utils.join_read_paths(cache_path, paired)
+            cached_read_paths = virtool.samples.utils.join_read_paths(cache_path, paired)
 
             cache_files = list()
 
@@ -222,7 +223,7 @@ class Job(virtool.jobs.job.Job):
 
         cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
 
-        cache_paths = virtool.jobs.utils.join_read_paths(cache_path, self.params["paired"])
+        cache_paths = virtool.samples.utils.join_read_paths(cache_path, self.params["paired"])
 
         fastqc_path = os.path.join(cache_path, "fastqc")
 
@@ -339,27 +340,6 @@ def get_trimming_parameters(paired: bool, srna: bool):
     return parameters
 
 
-def join_legacy_read_paths(settings: dict, sample):
-    """
-    Create a list of paths for the read files associated with the `sample`.
-
-    :param settings: the application settings
-    :param sample: the sample document
-    :return: a list of sample read paths
-
-    """
-    sample_path = virtool.samples.db.get_sample_path(settings, sample["_id"])
-
-    if not all(f["raw"] for f in sample["files"]):
-        if sample["paired"]:
-            return [
-                join_legacy_read_path(sample_path, 1),
-                join_legacy_read_path(sample_path, 2)
-            ]
-
-        return [join_legacy_read_path(sample_path, 1)]
-
-
 def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths):
     command = [
         "skewer",
@@ -387,18 +367,6 @@ def compose_trimming_command(cache_path: str, parameters: dict, proc, read_paths
     return command
 
 
-def join_legacy_read_path(sample_path: str, suffix: int) -> str:
-    """
-    Create a path string for a sample read file using the old file name convention (eg. reads_1.fastq).
-
-    :param sample_path: the path to the sample directory
-    :param suffix: the read file suffix
-    :return: the read path
-
-    """
-    return os.path.join(sample_path, f"reads_{suffix}.fastq")
-
-
 def set_analysis_results(db, analysis_id, analysis_path, results):
     try:
         db.analyses.update_one({"_id": analysis_id}, {
@@ -418,4 +386,3 @@ def set_analysis_results(db, analysis_id, analysis_path, results):
                 "ready": True
             }
         })
-
