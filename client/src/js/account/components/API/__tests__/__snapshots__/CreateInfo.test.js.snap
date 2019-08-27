@@ -1,0 +1,24 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateAPIKeyInfo /> should render when administrator 1`] = `
+<CreateInfo__StyledCreateAPIKeyInfo>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="user-shield"
+    pullRight={false}
+  />
+  <div>
+    <p>
+      <strong>
+        You are an administrator and can create API keys with any permissions you want.
+      </strong>
+    </p>
+    <p>
+      If you lose your administrator role, this API key will revert to your new limited set of permissions.
+    </p>
+  </div>
+</CreateInfo__StyledCreateAPIKeyInfo>
+`;
+
+exports[`<CreateAPIKeyInfo /> should return null when not administrator 1`] = `""`;

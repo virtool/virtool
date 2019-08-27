@@ -37,7 +37,7 @@ export const CreateAPIKeyInfo = ({ administrator }) => {
     return null;
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     administrator: state.account.administrator
 });
 
