@@ -1,3 +1,5 @@
+import aiofiles
+import aiohttp.web
 import asyncio
 import json
 import logging
@@ -8,16 +10,21 @@ import aiofiles
 import aiohttp.client_exceptions
 import semver
 
+import virtool.analyses.utils
+
+import virtool.db.core
 import virtool.db.utils
 import virtool.errors
 import virtool.github
-import virtool.hmm
+import virtool.hmm.utils
 import virtool.http.utils
 import virtool.processes.db
 import virtool.processes.process
 import virtool.utils
 
 logger = logging.getLogger(__name__)
+
+HMM_REFRESH_INTERVAL = 600
 
 PROJECTION = [
     "_id",
@@ -28,12 +35,67 @@ PROJECTION = [
 ]
 
 
-async def delete_unreferenced_hmms(db):
+async def delete_unreferenced_hmms(db, settings):
     """
     Deletes all HMM documents that are not used in analyses.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    """
+    in_db = await get_hmms_referenced_in_db(db)
+    in_files = await get_hmms_referenced_in_files(db, settings)
+
+    referenced_ids = list(in_db.union(in_files))
+
+    delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+
+    logger.debug(f"Deleted {delete_result.deleted_count} unreferenced HMMs")
+
+    return delete_result
+
+
+async def get_hmms_referenced_in_files(db, settings: dict) -> set:
+    """
+    Parse all NuVs JSON results files and return a set of found HMM profile ids. Used for removing unreferenced HMMs
+    when purging the collection.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :return: HMM ids referenced in NuVs result files
+
+    """
+    paths = list()
+
+    async for document in db.analyses.find({"algorithm": "nuvs", "results": "file"}, ["_id", "sample"]):
+        path = virtool.analyses.utils.join_analysis_json_path(
+            settings["data_path"],
+            document["_id"],
+            document["sample"]["id"]
+        )
+
+        paths.append(path)
+
+    hmm_ids = set()
+
+    for path in paths:
+        async with aiofiles.open(path, "r") as f:
+            data = json.loads(await f.read())
+
+        for sequence in data:
+            for orf in sequence["orfs"]:
+                for hit in orf["hits"]:
+                    hmm_ids.add(hit["hit"])
+
+    return hmm_ids
+
+
+async def get_hmms_referenced_in_db(db) -> set:
+    """
+    Returns a set of all HMM ids referenced in NuVs analysis documents
+
+    :param db: the application database object
+    :return: set of all HMM ids referenced in analysis documents
 
     """
     cursor = db.analyses.aggregate([
@@ -51,11 +113,27 @@ async def delete_unreferenced_hmms(db):
         }}
     ])
 
-    referenced_ids = list(set([a["_id"] async for a in cursor]))
+    return {a["_id"] async for a in cursor}
+
+
+async def delete_unreferenced_hmms(db, settings):
+    """
+    Deletes all HMM documents that are not used in analyses.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    """
+    in_db = await get_hmms_referenced_in_db(db)
+    in_files = await get_hmms_referenced_in_files(db, settings)
+
+    referenced_ids = list(in_db.union(in_files))
 
     delete_result = await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
 
     logger.debug(f"Deleted {delete_result.deleted_count} unreferenced HMMs")
+
+    return delete_result
 
 
 async def fetch_and_update_release(app, ignore_errors=False):
@@ -138,16 +216,21 @@ async def fetch_and_update_release(app, ignore_errors=False):
         return release
 
 
-async def get_status(db):
-    status = await db.status.find_one("hmm")
+async def get_status(db) -> dict:
+    """
+    Get the HMM status document. Remove the updates field and derive a new field: `updating`.
 
-    status = virtool.utils.base_processor(status)
+    :param db: the application database object
+    :return: the HMM status
+
+    """
+    status = await db.status.find_one("hmm")
 
     status["updating"] = len(status["updates"]) > 1 and status["updates"][-1]["ready"]
 
     del status["updates"]
 
-    return status
+    return virtool.utils.base_processor(status)
 
 
 async def install(app, process_id, release, user_id):
@@ -249,7 +332,7 @@ async def install(app, process_id, release, user_id):
         async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
             annotations = json.loads(await f.read())
 
-        await purge(db)
+        await purge(db, app["settings"])
 
         progress_tracker = virtool.processes.process.ProgressTracker(
             db,
@@ -288,8 +371,17 @@ async def install(app, process_id, release, user_id):
         logger.debug("Finished HMM install process")
 
 
-async def purge(db):
-    await delete_unreferenced_hmms(db)
+async def purge(db, settings: dict):
+    """
+    Delete HMMs that are not used in analyses. Set `hidden` flag on used HMM documents.
+
+    Hidden HMM documents will not be returned in HMM API requests. They are retained only to populate NuVs results.
+
+    :param db: the application database object
+    :param settings: the application settings
+
+    """
+    await delete_unreferenced_hmms(db, settings)
 
     await db.hmm.update_many({}, {
         "$set": {
@@ -304,7 +396,7 @@ async def refresh(app):
 
         while True:
             await fetch_and_update_release(app)
-            await asyncio.sleep(600)
+            await asyncio.sleep(HMM_REFRESH_INTERVAL)
     except asyncio.CancelledError:
         pass
 
