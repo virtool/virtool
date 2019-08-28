@@ -2,10 +2,10 @@ import { map } from "lodash-es";
 import Moment from "moment";
 import numbro from "numbro";
 import React, { useCallback } from "react";
-import { Panel, Table } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, RelativeTime } from "../../../base/index";
+import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, RelativeTime, Table } from "../../../base";
 
 import { blastNuvs } from "../../actions";
 
@@ -89,7 +89,7 @@ export const BLASTResults = ({ hits }) => {
         <Panel>
             <Panel.Heading>NCBI BLAST</Panel.Heading>
             <Panel.Body>
-                <Table condensed>
+                <Table>
                     <thead>
                         <tr>
                             <th>Accession</th>

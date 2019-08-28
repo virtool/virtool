@@ -1,9 +1,9 @@
 import React from "react";
 import { capitalize, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Panel, Table } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 
-import { Icon, Label } from "../../../base";
+import { Icon, Label, Table } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";

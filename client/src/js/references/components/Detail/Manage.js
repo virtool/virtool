@@ -1,9 +1,9 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
-import { ListGroup, Panel, Table } from "react-bootstrap";
+import { ListGroup, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Badge, ListGroupItem, NoneFound, RelativeTime } from "../../../base";
+import { Badge, ListGroupItem, NoneFound, RelativeTime, Table } from "../../../base";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoteReference from "./Remote";
 
@@ -71,11 +71,11 @@ const ReferenceManage = ({ detail }) => {
 
     return (
         <div>
-            <Table bordered>
+            <Table>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Description</th>
-                        <td className="col-xs-8">{description}</td>
+                        <th>Description</th>
+                        <td>{description}</td>
                     </tr>
                     <tr>
                         <th>Organism</th>

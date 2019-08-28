@@ -127,14 +127,7 @@ exports[`<BLASTResults /> should render 1`] = `
     bsClass="panel"
     collapsible={false}
   >
-    <Table
-      bordered={false}
-      bsClass="table"
-      condensed={true}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <thead>
         <tr>
           <th>

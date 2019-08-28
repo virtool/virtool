@@ -1,8 +1,13 @@
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
-import { Table, Label, Collapse } from "react-bootstrap";
-import { Badge, Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
+import { Label, Collapse } from "react-bootstrap";
+import { Badge, Icon, Flex, FlexItem, ListGroupItem, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
+
+const SequenceTable = styled(Table)`
+    margin-top: 10px;
+`;
 
 class Sequence extends React.Component {
     constructor(props) {
@@ -117,7 +122,7 @@ class Sequence extends React.Component {
 
                 <Collapse in={this.state.in}>
                     <div>
-                        <Table style={{ marginTop: "10px" }} bordered>
+                        <SequenceTable>
                             <tbody>
                                 <tr>
                                     <th>Accession</th>
@@ -149,7 +154,7 @@ class Sequence extends React.Component {
                                     </td>
                                 </tr>
                             </tbody>
-                        </Table>
+                        </SequenceTable>
                     </div>
                 </Collapse>
             </ListGroupItem>

@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Table } from "react-bootstrap";
+import { Table } from "../../../base";
 import Issues from "./Issues";
 
 export const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) => (

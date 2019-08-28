@@ -9,14 +9,7 @@ exports[`<Item /> should render when [organism='virus'] and [progress=32] 1`] = 
       name="Foo"
       userId="bob"
     />
-    <Table
-      bordered={false}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Item__ReferenceItemTable>
       <tbody>
         <tr>
           <th>
@@ -55,7 +48,7 @@ exports[`<Item /> should render when [organism='virus'] and [progress=32] 1`] = 
           progress={32}
         />
       </tbody>
-    </Table>
+    </Item__ReferenceItemTable>
   </div>
   <ProgressBar
     affixed={true}
@@ -74,14 +67,7 @@ exports[`<Item /> should render when [organism=null] 1`] = `
       name="Foo"
       userId="bob"
     />
-    <Table
-      bordered={false}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Item__ReferenceItemTable>
       <tbody>
         <tr>
           <th>
@@ -120,7 +106,7 @@ exports[`<Item /> should render when [organism=null] 1`] = `
           progress={32}
         />
       </tbody>
-    </Table>
+    </Item__ReferenceItemTable>
   </div>
   <ProgressBar
     affixed={true}
@@ -139,14 +125,7 @@ exports[`<Item /> should render when [progress=100] 1`] = `
       name="Foo"
       userId="bob"
     />
-    <Table
-      bordered={false}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Item__ReferenceItemTable>
       <tbody>
         <tr>
           <th>
@@ -185,7 +164,7 @@ exports[`<Item /> should render when [progress=100] 1`] = `
           progress={100}
         />
       </tbody>
-    </Table>
+    </Item__ReferenceItemTable>
   </div>
   <ProgressBar
     affixed={true}
