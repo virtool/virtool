@@ -1,34 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RemoveBanner /> renders correctly 1`] = `
-<Alert
-  bsStyle="danger"
->
-  <div
-    style={
-      Object {
-        "textAlign": "right",
-      }
-    }
+<RemoveBanner__StyledRemoveBanner>
+  <span>
+    test
+  </span>
+  <Button
+    bsStyle="danger"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tipPlacement="top"
   >
-    <span
-      style={
-        Object {
-          "float": "left",
-          "marginTop": "7px",
-        }
-      }
-    >
-      test
-    </span>
-    <Button
-      bsStyle="danger"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tipPlacement="top"
-    >
-      Delete
-    </Button>
-  </div>
-</Alert>
+    Delete
+  </Button>
+</RemoveBanner__StyledRemoveBanner>
 `;

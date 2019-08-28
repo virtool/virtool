@@ -1,5 +1,6 @@
 import React from "react";
-import { Alert, Panel } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
+import { Alert } from "./Alert";
 
 const PanelAlert = ({ children }) => <Alert>{children}</Alert>;
 

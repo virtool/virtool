@@ -1,4 +1,3 @@
-import { Alert } from "./Alert";
 import { AlgorithmSelect } from "./AlgorithmSelect";
 import { AutoProgressBar, ProgressBar } from "./ProgressBar";
 import { bsStyles } from "./utils";
@@ -26,6 +25,7 @@ import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
+export * from "./Alert";
 export * from "./Box";
 export * from "./ExternalLink";
 export * from "./Label";
@@ -37,7 +37,6 @@ export * from "./Toolbar";
 export * from "./ViewHeader";
 
 export {
-    Alert,
     AlgorithmSelect,
     AutoProgressBar,
     bsStyles,

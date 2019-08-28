@@ -1,9 +1,9 @@
 import React from "react";
-import { Alert, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 import { find } from "lodash-es";
-import { SaveButton, UploadBar, ProgressBar } from "../../base";
+import { Alert, ProgressBar, SaveButton, UploadBar } from "../../base";
 import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
@@ -105,7 +105,7 @@ class ImportReference extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
-                    <Alert bsStyle="info">
+                    <Alert>
                         <strong>
                             Create a reference from a file previously exported from another Virtool reference.
                         </strong>

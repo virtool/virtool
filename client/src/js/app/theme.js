@@ -5,7 +5,10 @@ export const theme = {
         greyDark: "#555",
         primary: "#3c8786",
         red: "#af3227",
-        white: "#fff"
+        white: "#fff",
+        purpleLight: "#E9D8FD",
+        purple: "#4C51BF",
+        purpleDark: "#6B46C1"
     },
     fontSize: {
         xs: "12px",

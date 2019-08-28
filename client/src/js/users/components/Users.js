@@ -9,18 +9,18 @@
  * @exports Users
  */
 
+import { get } from "lodash-es";
 import React from "react";
+import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
-import { get } from "lodash-es";
-import { findUsers } from "../actions";
+import { Button, Icon, LoadingPlaceholder, WarningAlert } from "../../base";
 import { clearError } from "../../errors/actions";
-import { Button, Icon, LoadingPlaceholder, Alert } from "../../base";
-import Groups from "../../groups/components/Groups";
 import { listGroups } from "../../groups/actions";
-import UsersList from "./List";
+import Groups from "../../groups/components/Groups";
+import { findUsers } from "../actions";
 import CreateUser from "./Create";
+import UsersList from "./List";
 
 export class ManageUsers extends React.Component {
     constructor(props) {
@@ -53,10 +53,13 @@ export class ManageUsers extends React.Component {
     render() {
         if (this.state.error.length) {
             return (
-                <Alert bsStyle="warning" icon="warning">
-                    <strong>You do not have permission to manage users.</strong>
-                    <span> Contact an administrator.</span>
-                </Alert>
+                <WarningAlert>
+                    <Icon name="exclamation-circle" />
+                    <span>
+                        <strong>You do not have permission to manage users.</strong>
+                        <span> Contact an administrator.</span>
+                    </span>
+                </WarningAlert>
             );
         }
 

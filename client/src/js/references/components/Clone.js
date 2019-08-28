@@ -1,11 +1,11 @@
-import React from "react";
-import { Alert, Modal, ListGroup, Col, Badge } from "react-bootstrap";
-import { connect } from "react-redux";
 import { find, map } from "lodash-es";
-import { SaveButton, ListGroupItem, NoneFound, RelativeTime } from "../../base";
-import { cloneReference } from "../actions";
+import React from "react";
+import { Badge, Col, ListGroup, Modal } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Alert, ListGroupItem, NoneFound, RelativeTime, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
+import { cloneReference } from "../actions";
 import ReferenceForm from "./Form";
 
 const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {
@@ -136,7 +136,7 @@ class CloneReference extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
-                    <Alert bsStyle="info">
+                    <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
                     <ReferenceSelect
