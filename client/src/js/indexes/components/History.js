@@ -1,9 +1,8 @@
-import React from "react";
-import styled from "styled-components";
 import { map, sortBy } from "lodash-es";
-import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
-
-import { LoadingPlaceholder } from "../../base";
+import React from "react";
+import { Col, ListGroup, ListGroupItem, Row } from "react-bootstrap";
+import styled from "styled-components";
+import { LoadingPlaceholder, Panel } from "../../base";
 
 const StyledRebuildHistoryEllipsis = styled(ListGroupItem)`
     text-align: right;

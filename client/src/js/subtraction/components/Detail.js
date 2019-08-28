@@ -7,7 +7,18 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Col, Row } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Badge, Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, Table, ViewHeader, NotFound } from "../../base";
+import {
+    Badge,
+    Button,
+    Flex,
+    FlexItem,
+    Icon,
+    LoadingPlaceholder,
+    NoneFound,
+    Table,
+    ViewHeader,
+    NotFound
+} from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";

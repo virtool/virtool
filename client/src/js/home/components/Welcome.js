@@ -1,8 +1,7 @@
-import React from "react";
 import { get } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
-import { Panel } from "react-bootstrap";
-import { Icon } from "../../base";
+import { Icon, Panel } from "../../base";
 
 const Welcome = props => {
     let version;

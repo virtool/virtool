@@ -12,9 +12,9 @@
 import CX from "classnames";
 import { find, get } from "lodash-es";
 import React from "react";
-import { ButtonToolbar, Col, Panel, Row } from "react-bootstrap";
+import { ButtonToolbar, Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, DangerAlert, InputError, RelativeTime, SaveButton } from "../../base";
+import { Button, Checkbox, DangerAlert, InputError, Panel, RelativeTime, SaveButton } from "../../base";
 import { editUser } from "../actions";
 
 const getInitialState = ({ lastPasswordChange }) => ({

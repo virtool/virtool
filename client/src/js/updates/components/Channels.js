@@ -1,9 +1,8 @@
 import { capitalize, map } from "lodash-es";
 import React from "react";
-import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { updateSetting } from "../../administration/actions";
-import { Radio } from "../../base";
+import { Panel, Radio } from "../../base";
 
 export const ChannelButton = ({ channel, checked, onClick }) => (
     <Radio

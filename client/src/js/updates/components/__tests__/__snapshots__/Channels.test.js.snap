@@ -17,7 +17,7 @@ exports[`<ChannelButton /> should render when [channel="stable"] 1`] = `
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="alpha"] 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <PanelBody
     bsClass="panel"
     collapsible={false}
@@ -44,11 +44,11 @@ exports[`<SoftwareChannels /> should render when [channel="alpha"] 1`] = `
       onClick={[MockFunction]}
     />
   </PanelBody>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="beta"] 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <PanelBody
     bsClass="panel"
     collapsible={false}
@@ -75,11 +75,11 @@ exports[`<SoftwareChannels /> should render when [channel="beta"] 1`] = `
       onClick={[MockFunction]}
     />
   </PanelBody>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="stable"] 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <PanelBody
     bsClass="panel"
     collapsible={false}
@@ -106,5 +106,5 @@ exports[`<SoftwareChannels /> should render when [channel="stable"] 1`] = `
       onClick={[MockFunction]}
     />
   </PanelBody>
-</Uncontrolled(Panel)>
+</Panel>
 `;

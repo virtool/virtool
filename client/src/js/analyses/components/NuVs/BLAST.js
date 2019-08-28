@@ -2,10 +2,9 @@ import { map } from "lodash-es";
 import Moment from "moment";
 import numbro from "numbro";
 import React, { useCallback } from "react";
-import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, RelativeTime, Table } from "../../../base";
+import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, Panel, RelativeTime, Table } from "../../../base";
 
 import { blastNuvs } from "../../actions";
 

@@ -26,7 +26,7 @@ exports[`<Contributor /> should render when count is 5 1`] = `
 `;
 
 exports[`<Contributors /> should render 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <PanelHeading
     bsClass="panel"
     componentClass="div"
@@ -50,5 +50,5 @@ exports[`<Contributors /> should render 1`] = `
       key="fred"
     />
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;

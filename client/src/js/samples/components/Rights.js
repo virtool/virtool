@@ -1,9 +1,8 @@
 import { capitalize, includes, map } from "lodash-es";
 import React from "react";
-import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Input, LoadingPlaceholder } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Input, LoadingPlaceholder, Panel } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
 import { getCanModifyRights } from "../selectors";

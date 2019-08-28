@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is null 1`] = `
-<Uncontrolled(Panel)
+<Panel
   className="panel-default"
 >
   <PanelHeading
@@ -13,11 +13,11 @@ exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is
   <LoadingPlaceholder
     margin="22px"
   />
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<RebuildHistory /> should render with error 1`] = `
-<Uncontrolled(Panel)
+<Panel
   className="panel-danger"
 >
   <PanelHeading
@@ -59,11 +59,11 @@ exports[`<RebuildHistory /> should render with error 1`] = `
       }
     />
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<RebuildHistory /> should render without error 1`] = `
-<Uncontrolled(Panel)
+<Panel
   className="panel-default"
 >
   <PanelHeading
@@ -105,7 +105,7 @@ exports[`<RebuildHistory /> should render without error 1`] = `
       }
     />
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<RebuildHistoryEllipsis /> should render when page_count greater than 1 1`] = `

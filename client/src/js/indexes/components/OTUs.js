@@ -1,10 +1,10 @@
-import React from "react";
-import styled from "styled-components";
 import { map } from "lodash-es";
-import { ListGroup, ListGroupItem, Panel } from "react-bootstrap";
+import React from "react";
+import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Badge } from "../../base";
+import styled from "styled-components";
+import { Badge, Panel } from "../../base";
 import { PanelBadgeHeader } from "./General";
 
 const StyledIndexOTU = styled(ListGroupItem)`

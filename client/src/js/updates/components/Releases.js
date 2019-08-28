@@ -1,9 +1,8 @@
-import React from "react";
-import styled from "styled-components";
-import { Panel } from "react-bootstrap";
-import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { Icon } from "../../base";
+import React from "react";
+import { connect } from "react-redux";
+import styled from "styled-components";
+import { Icon, Panel } from "../../base";
 import Install from "./Install";
 import ReleasesList from "./List";
 

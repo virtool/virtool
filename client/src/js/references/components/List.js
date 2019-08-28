@@ -1,10 +1,10 @@
 import React from "react";
-import styled from "styled-components";
+import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Panel, Button } from "react-bootstrap";
-import { remoteReference, findReferences } from "../actions";
-import { ViewHeader, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
+import styled from "styled-components";
+import { LoadingPlaceholder, NoneFound, Panel, ScrollList, ViewHeader } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
+import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item/Item";
