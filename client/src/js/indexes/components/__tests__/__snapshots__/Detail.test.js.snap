@@ -47,10 +47,7 @@ exports[`<IndexDetail /> should render 1`] = `
       to="/refs/foo/indexes/baz/changes"
     >
       Changes 
-      <Badge
-        bsClass="badge"
-        pullRight={false}
-      />
+      <Badge />
     </TabLink>
   </Tabs>
   <Switch>

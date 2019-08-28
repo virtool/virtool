@@ -1,16 +1,7 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import PropTypes from "prop-types";
-import { Badge, Table, Label, Collapse } from "react-bootstrap";
-import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
+import { Table, Label, Collapse } from "react-bootstrap";
+import { Badge, Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 
 class Sequence extends React.Component {

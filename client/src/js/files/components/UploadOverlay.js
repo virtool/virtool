@@ -1,9 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import { map, reject, sortBy } from "lodash-es";
-import { Badge } from "react-bootstrap";
 import { connect } from "react-redux";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
+import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
 import { UploadItem } from "./UploadItem";
 
 const StyledUploadOverlay = styled.div`

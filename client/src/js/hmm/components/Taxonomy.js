@@ -1,15 +1,21 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
-import { Badge, ListGroup } from "react-bootstrap";
-import { ListGroupItem } from "../../base";
+import styled from "styled-components";
+import { ListGroup } from "react-bootstrap";
+import { Badge, ListGroupItem } from "../../base";
+
+const HMMTaxonomyItem = styled(ListGroupItem)`
+    display: flex;
+    justify-content: space-between;
+`;
 
 export const HMMTaxonomy = ({ counts }) => {
     const sorted = sortBy(map(counts, (count, name) => ({ name, count })), "name");
 
     const components = map(sorted, ({ name, count }) => (
-        <ListGroupItem key={name}>
+        <HMMTaxonomyItem key={name}>
             {name} <Badge>{count}</Badge>
-        </ListGroupItem>
+        </HMMTaxonomyItem>
     ));
 
     return <ListGroup style={{ maxHeight: 210, overflowY: "auto" }}>{components}</ListGroup>;

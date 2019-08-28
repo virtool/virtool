@@ -1,17 +1,24 @@
 import React from "react";
+import styled from "styled-components";
 import { map } from "lodash-es";
-import { Badge, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
+import { ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
+import { Badge } from "../../base";
 import { PanelBadgeHeader } from "./General";
 
+const StyledIndexOTU = styled(ListGroupItem)`
+    display: flex;
+    justify-content: space-between;
+`;
+
 export const IndexOTU = ({ refId, changeCount, id, name }) => (
-    <ListGroupItem>
+    <StyledIndexOTU>
         <Link to={`/refs/${refId}/otus/${id}`}>{name}</Link>
         <Badge>
             {changeCount} {`change${changeCount > 1 ? "s" : ""}`}
         </Badge>
-    </ListGroupItem>
+    </StyledIndexOTU>
 );
 
 export const IndexOTUs = ({ otus, refId }) => {

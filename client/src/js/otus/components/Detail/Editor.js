@@ -1,23 +1,12 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * exports Isolates
- */
-
-import React from "react";
 import { get, map } from "lodash-es";
+import React from "react";
+import { Col, ListGroup, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
-import { Badge, Row, Col, ListGroup } from "react-bootstrap";
+import { Badge, FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 import IsolateDetail from "./IsolateDetail";
 
 export class IsolateButton extends React.Component {

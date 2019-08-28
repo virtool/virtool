@@ -10,57 +10,41 @@ exports[`<HMMTaxonomy /> should render 1`] = `
     }
   }
 >
-  <ListGroupItem
-    allowFocus={false}
+  <Taxonomy__HMMTaxonomyItem
     key="Begomovirus"
   >
     Begomovirus
      
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       191
     </Badge>
-  </ListGroupItem>
-  <ListGroupItem
-    allowFocus={false}
+  </Taxonomy__HMMTaxonomyItem>
+  <Taxonomy__HMMTaxonomyItem
     key="Curtovirus"
   >
     Curtovirus
      
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       3
     </Badge>
-  </ListGroupItem>
-  <ListGroupItem
-    allowFocus={false}
+  </Taxonomy__HMMTaxonomyItem>
+  <Taxonomy__HMMTaxonomyItem
     key="None"
   >
     None
      
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       1
     </Badge>
-  </ListGroupItem>
-  <ListGroupItem
-    allowFocus={false}
+  </Taxonomy__HMMTaxonomyItem>
+  <Taxonomy__HMMTaxonomyItem
     key="Topocuvirus"
   >
     Topocuvirus
      
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       1
     </Badge>
-  </ListGroupItem>
+  </Taxonomy__HMMTaxonomyItem>
 </ListGroup>
 `;

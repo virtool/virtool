@@ -8,12 +8,9 @@ exports[`<SequenceField /> renders correctly 1`] = `
     <div>
        
       Sequence 
-      <Badge
-        bsClass="badge"
-        pullRight={false}
-      >
+      <ForwardRef(Badge)>
         4
-      </Badge>
+      </ForwardRef(Badge)>
     </div>
   }
   name="sequence"

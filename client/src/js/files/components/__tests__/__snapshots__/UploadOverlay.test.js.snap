@@ -10,10 +10,7 @@ exports[`<UploadOverlay /> should render 1`] = `
         Uploads
       </strong>
        
-      <Badge
-        bsClass="badge"
-        pullRight={false}
-      >
+      <Badge>
         3
       </Badge>
     </Box__BoxGroupHeader>
