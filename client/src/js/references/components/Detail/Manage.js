@@ -1,9 +1,9 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
-import { Badge, ListGroup, Panel, Table } from "react-bootstrap";
+import { ListGroup, Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { ListGroupItem, NoneFound, RelativeTime } from "../../../base";
+import { Badge, ListGroupItem, NoneFound, RelativeTime } from "../../../base";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import RemoteReference from "./Remote";
 

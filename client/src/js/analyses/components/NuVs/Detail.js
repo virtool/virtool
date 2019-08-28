@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import Measure from "react-measure";
-import { Badge } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { filter, map, sortBy } from "lodash-es";
-import { Box } from "../../../base";
+import { Badge, Box } from "../../../base";
 import { getActiveHit, getMaxSequenceLength } from "../../selectors";
 
 import NuVsBLAST from "./BLAST";
@@ -60,7 +59,7 @@ const NuVsDetailTitle = styled.div`
         font-weight: bold;
     }
 
-    .badge {
+    ${Badge} {
         font-size: 12px;
         padding: 3px 7px;
     }

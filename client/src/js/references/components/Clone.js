@@ -1,8 +1,8 @@
 import { find, map } from "lodash-es";
 import React from "react";
-import { Badge, Col, ListGroup, Modal } from "react-bootstrap";
+import { Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Alert, ListGroupItem, NoneFound, RelativeTime, SaveButton } from "../../base";
+import { Alert, Badge, ListGroupItem, NoneFound, RelativeTime, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";

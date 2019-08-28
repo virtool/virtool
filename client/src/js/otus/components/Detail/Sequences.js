@@ -1,11 +1,11 @@
+import { differenceWith, filter, find, get, indexOf, isEqual, map, sortBy } from "lodash-es";
 import React from "react";
-import { get, find, map, filter, differenceWith, isEqual, sortBy, indexOf } from "lodash-es";
+import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Badge, ListGroup } from "react-bootstrap";
 
-import { Flex, Icon, NoneFound } from "../../../base";
-import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
+import { Badge, Flex, Icon, NoneFound } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
+import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import AddSequence from "./AddSequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";

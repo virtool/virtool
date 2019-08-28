@@ -1,10 +1,9 @@
 import { isUndefined } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { Badge } from "react-bootstrap";
 import Helmet from "react-helmet";
 import styled from "styled-components";
-import { Flex, FlexItem } from "./index";
+import { Badge, Flex, FlexItem } from "./index";
 
 /**
  * A reusable header shown at the top of views that browse through paged items. For example, the OTU browser

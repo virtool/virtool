@@ -1,11 +1,10 @@
-import React, { useCallback } from "react";
-import numbro from "numbro";
-import styled from "styled-components";
 import { filter } from "lodash-es";
+import numbro from "numbro";
+import React, { useCallback } from "react";
 import { connect } from "react-redux";
-import { Badge } from "react-bootstrap";
+import styled from "styled-components";
+import { Badge, ListGroupItem } from "../../../base";
 import { setActiveHitId } from "../../actions";
-import { ListGroupItem } from "../../../base";
 import { getActiveHit, getMatches } from "../../selectors";
 
 const calculateAnnotatedOrfCount = orfs => filter(orfs, orf => orf.hits.length).length;
