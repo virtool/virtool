@@ -40,24 +40,6 @@ def touch(path):
         f.write("hello world")
 
 
-@pytest.mark.parametrize("filename,expected", [
-    ("test.fq.gz", True),
-    ("test.fastq.gz", True),
-    ("test.fq", True),
-    ("test.fastq", True),
-    ("test.fa.gz", False),
-    ("test.zip", False),
-    ("test.fa", False),
-    ("test.gz", False)
-])
-def test_has_read_extension(filename,expected):
-    """
-    Test that read extensions can be detected reliably.
-
-    """
-    assert virtool.files.manager.has_read_extension(filename) == expected
-
-
 @pytest.mark.parametrize("called", [True, False])
 async def test_detect_watch(called, patched_test_manager_instance):
     """
@@ -115,7 +97,7 @@ async def test_handle_watch(has_ext, mocker, dbi, test_manager_instance):
 
     m_create = mocker.patch("virtool.files.db.create", make_mocked_coro({"id": "foobar-test.fq"}))
 
-    m_has_ready_extension = mocker.patch("virtool.files.manager.has_read_extension", return_value=has_ext)
+    m_has_read_extension = mocker.patch("virtool.files.utils.has_read_extension", return_value=has_ext)
 
     m_remove = mocker.patch("os.remove")
 
@@ -125,7 +107,7 @@ async def test_handle_watch(has_ext, mocker, dbi, test_manager_instance):
 
     await test_manager_instance.handle_watch(filename)
 
-    m_has_ready_extension.assert_called_with(filename)
+    m_has_read_extension.assert_called_with(filename)
 
     if has_ext:
         m_create.assert_called_with(
