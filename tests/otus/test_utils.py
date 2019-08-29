@@ -3,7 +3,7 @@ import pytest
 import virtool.otus.utils
 
 
-class TestValidateKind:
+class TestVerify:
 
     def test_pass(self, test_merged_otu):
         """
@@ -91,71 +91,6 @@ class TestValidateKind:
         }
 
 
-class TestGetDefaultIsolate:
-
-    def test(self, test_otu, test_isolate):
-        """
-        Test that the function can find the default isolate.
-
-        """
-        default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
-
-        test_otu["isolates"] = [
-            dict(test_isolate, isolate_id="foobar1", default=False),
-            dict(test_isolate, isolate_id="foobar2", default=False),
-            default_isolate,
-            dict(test_isolate, isolate_id="foobar4", default=False)
-        ]
-
-        assert virtool.otus.utils.extract_default_isolate(test_otu) == default_isolate
-
-    def test_processor(self, test_otu, test_isolate):
-        """
-        Test that the ``processor`` argument works.
-
-        """
-
-        default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
-
-        expected = dict(default_isolate, processed=True)
-
-        test_otu["isolates"] = [
-            dict(test_isolate, isolate_id="foobar1", default=False),
-            default_isolate
-        ]
-
-        def test_processor(isolate):
-            return dict(isolate, processed=True)
-
-        assert virtool.otus.utils.extract_default_isolate(test_otu, test_processor) == expected
-
-    def test_no_default(self, test_otu):
-        """
-        Test that a ``ValueError`` is raised when the otu contains not default isolates.
-
-        """
-        test_otu["isolates"][0]["default"] = False
-
-        with pytest.raises(ValueError) as excinfo:
-            virtool.otus.utils.extract_default_isolate(test_otu)
-
-        assert "No default isolate found" in str(excinfo.value)
-
-    def test_multiple_defaults(self, test_otu, test_isolate):
-        """
-        Test that a ``ValueError`` is raised when the otu contains more than one default isolate.
-
-        """
-        extra_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
-
-        test_otu["isolates"].append(extra_isolate)
-
-        with pytest.raises(ValueError) as excinfo:
-            virtool.otus.utils.extract_default_isolate(test_otu)
-
-        assert "More than one" in str(excinfo.value)
-
-
 def test_merge_otu(test_otu, test_sequence, test_merged_otu):
     merged = virtool.otus.utils.merge_otu(test_otu, [test_sequence])
     assert merged == test_merged_otu
@@ -166,29 +101,6 @@ def test_split(test_otu, test_sequence, test_merged_otu):
 
     assert otu == test_otu
     assert sequences == [test_sequence]
-
-
-class TestExtractIsolateIds:
-
-    @pytest.mark.parametrize("multiple", [True, False])
-    def test_extract_isolate_ids(self, multiple, test_otu):
-        if multiple:
-            test_otu["isolates"].append({
-                "id": "foobar"
-            })
-
-        expected = ["cab8b360"]
-
-        if multiple:
-            expected.append("foobar")
-
-        assert virtool.otus.utils.extract_isolate_ids(test_otu) == expected
-
-    def test_missing(self, test_otu):
-        del test_otu["isolates"]
-
-        with pytest.raises(KeyError):
-            virtool.otus.utils.extract_isolate_ids(test_otu)
 
 
 class TestFindIsolate:
