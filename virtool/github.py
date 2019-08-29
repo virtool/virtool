@@ -9,13 +9,20 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.github.com/repos"
 
+EXCLUDED_UPDATE_FIELDS = (
+    "content_type",
+    "download_url",
+    "etag",
+    "retrieved_at"
+)
+
 HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
 
 def create_update_subdocument(release, ready, user_id, created_at=None):
-    update = {k: release[k] for k in release if k not in ["download_url", "etag", "content_type", "retrieved_at"]}
+    update = {k: release[k] for k in release if k not in EXCLUDED_UPDATE_FIELDS}
 
     return {
         **update,
@@ -27,7 +34,14 @@ def create_update_subdocument(release, ready, user_id, created_at=None):
     }
 
 
-def format_release(release):
+def format_release(release: dict) -> dict:
+    """
+    Format a raw release record from GitHub into a release usable by Virtool.
+
+    :param release: the GitHub release record
+    :return: a release for use within Virtool
+
+    """
     asset = release["assets"][0]
 
     return {
