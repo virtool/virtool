@@ -8,15 +8,8 @@ import sys
 import aionotify
 
 import virtool.files.db
+import virtool.files.utils
 import virtool.utils
-
-#: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
-FILE_EXTENSION_FILTER = (
-    ".fq.gz",
-    ".fastq.gz",
-    ".fq",
-    ".fastq"
-)
 
 FILES_FLAGS = (
         aionotify.Flags.CLOSE_WRITE |
@@ -52,19 +45,6 @@ def format_path(path):
     return os.path.join(sys.path[0], path)
 
 
-def get_event_type(event):
-    flags = aionotify.Flags.parse(event.flags)
-
-    if aionotify.Flags.CREATE in flags or aionotify.Flags.MOVED_TO in flags:
-        return "create"
-
-    if aionotify.Flags.DELETE in flags or aionotify.Flags.MOVED_FROM in flags:
-        return "delete"
-
-    if aionotify.Flags.CLOSE_WRITE in flags:
-        return "close"
-
-
 def handle_watch_error(err: Exception):
     """
     Handle exceptions raised during inotify watch setup.
@@ -84,10 +64,6 @@ def handle_watch_error(err: Exception):
         sys.exit(1)
 
     raise
-
-
-def has_read_extension(filename):
-    return any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
 
 
 class Manager:
@@ -163,7 +139,7 @@ class Manager:
                     await self.handle_watch(filename)
 
                 else:
-                    event_type = get_event_type(event)
+                    event_type = virtool.files.utils.get_event_type(event)
 
                     if event_type == "delete":
                         await self.handle_delete(filename)
@@ -189,7 +165,7 @@ class Manager:
         """
         path = os.path.join(self.watch_path, filename)
 
-        is_read_file = has_read_extension(filename)
+        is_read_file = virtool.files.utils.has_read_extension(filename)
 
         if is_read_file:
             document = await virtool.files.db.create(self.db, filename, "reads")
