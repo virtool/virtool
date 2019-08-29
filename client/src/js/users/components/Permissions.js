@@ -9,11 +9,11 @@
  * @exports GroupsPermissions
  */
 
-import React from "react";
-import PropTypes from "prop-types";
 import { transform } from "lodash-es";
-import { Col, Panel, Row } from "react-bootstrap";
-import { ListGroupItem, Icon } from "../../base";
+import PropTypes from "prop-types";
+import React from "react";
+import { Col, Row } from "react-bootstrap";
+import { Icon, ListGroupItem, Panel } from "../../base";
 
 const UserPermissions = ({ permissions }) => {
     const permissionComponents = transform(

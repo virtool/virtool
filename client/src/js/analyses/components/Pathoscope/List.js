@@ -1,8 +1,7 @@
 import { filter, forIn, map, sortBy, split } from "lodash-es";
 import React from "react";
-import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Icon } from "../../../base/index";
+import { Icon, Panel } from "../../../base/index";
 import { getResults } from "../../selectors";
 import PathoscopeItem from "./Item";
 

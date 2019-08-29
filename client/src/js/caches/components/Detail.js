@@ -1,20 +1,21 @@
-import React, { useEffect } from "react";
-import styled from "styled-components";
 import { map } from "lodash-es";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { Panel, Table } from "react-bootstrap";
+import styled from "styled-components";
 import {
+    Panel,
     LoadingPlaceholder,
+    RelativeTime,
     SubviewHeader,
-    SubviewHeaderTitle,
     SubviewHeaderAttribution,
-    RelativeTime
+    SubviewHeaderTitle,
+    Table
 } from "../../base";
 import { getCache } from "../actions";
 import CacheQuality from "./Quality";
 
 const CacheGeneral = ({ hash, program }) => (
-    <Table bordered>
+    <Table>
         <tbody>
             <tr>
                 <th>Hash</th>
@@ -43,7 +44,7 @@ const CacheParameters = ({ parameters }) => {
     return (
         <Panel>
             <Panel.Heading>Trim Parameters</Panel.Heading>
-            <Table bordered>
+            <Table>
                 <tbody>{rowComponents}</tbody>
             </Table>
         </Panel>

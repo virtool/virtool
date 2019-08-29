@@ -1,11 +1,11 @@
-import React from "react";
 import { find, get, replace } from "lodash-es";
-import { Col, Panel, ProgressBar, Row } from "react-bootstrap";
+import React from "react";
+import { Col, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import { Button, Flex, FlexItem, Icon, Panel, WarningAlert } from "../../base";
+import { checkAdminOrPermission } from "../../utils/utils";
 
 import { installHMMs } from "../actions";
-import { Icon, WarningAlert, Button, Flex, FlexItem } from "../../base";
-import { checkAdminOrPermission } from "../../utils/utils";
 
 class HMMInstall extends React.Component {
     handleInstall = () => {

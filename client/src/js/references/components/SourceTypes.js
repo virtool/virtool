@@ -1,10 +1,10 @@
+import { get, includes, map, toLower, without } from "lodash-es";
 import React from "react";
-import { includes, map, toLower, without, get } from "lodash-es";
+import { Button, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Panel, FormGroup, InputGroup, FormControl, ListGroup, ListGroupItem } from "react-bootstrap";
-import { Icon, Checkbox } from "../../base/index";
-import { editReference } from "../actions";
 import { updateSetting } from "../../administration/actions";
+import { Checkbox, Icon, Panel } from "../../base/index";
+import { editReference } from "../actions";
 
 const getInitialState = () => ({
     value: "",

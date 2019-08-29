@@ -23,11 +23,6 @@ exports[`<OTUGeneral /> should render with issues 1`] = `
   />
   <Table
     bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
   >
     <tbody>
       <tr>
@@ -67,11 +62,6 @@ exports[`<OTUGeneral /> should render without issues 1`] = `
 <div>
   <Table
     bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
   >
     <tbody>
       <tr>

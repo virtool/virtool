@@ -53,7 +53,7 @@ exports[`<AnalysisDetail /> should render loading when [detail=null] 1`] = `<Loa
 exports[`<AnalysisDetail /> should render message when error is not null 1`] = `<NotFound />`;
 
 exports[`<AnalysisDetail /> should render pending when [detail.ready=false] 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <PanelBody
     bsClass="panel"
     collapsible={false}
@@ -63,5 +63,5 @@ exports[`<AnalysisDetail /> should render pending when [detail.ready=false] 1`] 
       message="Analysis in progress"
     />
   </PanelBody>
-</Uncontrolled(Panel)>
+</Panel>
 `;

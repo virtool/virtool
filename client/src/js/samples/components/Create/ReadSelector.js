@@ -8,13 +8,12 @@
  *
  * @exports ReadSelector
  */
-import React from "react";
 import { filter, includes, indexOf, intersection, map, sortBy, toLower, without } from "lodash-es";
 import PropTypes from "prop-types";
-import { Panel, FormGroup, InputGroup } from "react-bootstrap";
+import React from "react";
+import { FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
-
-import { Icon, Input, Button, ListGroupItem } from "../../../base";
+import { Button, Icon, Input, ListGroupItem, Panel } from "../../../base";
 import ReadItem from "./ReadItem";
 
 export default class ReadSelector extends React.PureComponent {

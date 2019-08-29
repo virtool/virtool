@@ -1,12 +1,11 @@
-import React from "react";
 import { get } from "lodash-es";
+import React from "react";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Col, Panel, Row } from "react-bootstrap";
-
-import { changePassword } from "../actions";
+import { InputError, LoadingPlaceholder, Panel, RelativeTime, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
-import { SaveButton, InputError, RelativeTime, LoadingPlaceholder } from "../../base";
 import { getTargetChange } from "../../utils/utils";
+import { changePassword } from "../actions";
 
 const getInitialState = props => ({
     oldPassword: "",

@@ -32,6 +32,7 @@ export * from "./ExternalLink";
 export * from "./Label";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
+export * from "./Table";
 export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";

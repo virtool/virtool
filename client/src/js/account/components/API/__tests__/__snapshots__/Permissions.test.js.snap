@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Permissions /> should render correctly 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <ListGroup
     bsClass="list-group"
   >
@@ -66,11 +66,11 @@ exports[`<Permissions /> should render correctly 1`] = `
       />
     </ListGroupItem>
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<Permissions /> should render no permission disabled when [props.administrator=true] 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <ListGroup
     bsClass="list-group"
   >
@@ -135,5 +135,5 @@ exports[`<Permissions /> should render no permission disabled when [props.admini
       />
     </ListGroupItem>
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;

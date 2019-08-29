@@ -1,11 +1,10 @@
-import React from "react";
 import { get } from "lodash-es";
+import React from "react";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Col, Panel, Row } from "react-bootstrap";
-
-import { updateAccount } from "../actions";
+import { InputError, Panel, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
-import { SaveButton, InputError } from "../../base";
+import { updateAccount } from "../actions";
 
 const getInitialState = email => ({
     email: email || "",

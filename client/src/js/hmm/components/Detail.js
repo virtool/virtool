@@ -1,11 +1,51 @@
 import { get, map } from "lodash-es";
 import React from "react";
-import { Col, Panel, Row, Table } from "react-bootstrap";
+import styled from "styled-components";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { Badge, Label, LoadingPlaceholder, NotFound, ViewHeader } from "../../base";
+import { Badge, Label, LoadingPlaceholder, NotFound, Panel, Table, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
+
+const ClusterTable = styled(Table)`
+    border: none;
+    display: flex;
+    flex-flow: column;
+    height: 330px !important;
+    margin: 0;
+    width: 100%;
+
+    thead {
+        flex: 0 0 auto;
+        width: calc(100% - 0.9em);
+
+        th {
+            border-bottom: none;
+        }
+    }
+
+    tbody {
+        flex: 1 1 auto;
+        display: block;
+        overflow-y: auto;
+        border-top: 1px solid #dddddd;
+
+        tr {
+            width: 100%;
+        }
+
+        tr:first-child td {
+            border-top: none;
+        }
+    }
+
+    thead,
+    tbody tr {
+        display: table;
+        table-layout: fixed;
+    }
+`;
 
 class HMMDetail extends React.Component {
     componentDidMount() {
@@ -50,11 +90,11 @@ class HMMDetail extends React.Component {
                     <strong>{this.props.detail.names[0]}</strong>
                 </ViewHeader>
 
-                <Table bordered>
+                <Table>
                     <tbody>
                         <tr>
-                            <th className="col-md-3">Cluster</th>
-                            <td className="col-md-9">{this.props.detail.cluster}</td>
+                            <th>Cluster</th>
+                            <td>{this.props.detail.cluster}</td>
                         </tr>
 
                         <tr>
@@ -84,7 +124,7 @@ class HMMDetail extends React.Component {
                 </h5>
 
                 <Panel>
-                    <Table className="cluster-table">
+                    <ClusterTable>
                         <thead>
                             <tr>
                                 <th>Accession</th>
@@ -93,7 +133,7 @@ class HMMDetail extends React.Component {
                             </tr>
                         </thead>
                         <tbody>{clusterMembers}</tbody>
-                    </Table>
+                    </ClusterTable>
                 </Panel>
 
                 <Row>

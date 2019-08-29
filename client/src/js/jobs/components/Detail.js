@@ -1,14 +1,13 @@
+import { push } from "connected-react-router";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { push } from "connected-react-router";
-import { Table } from "react-bootstrap";
-import { get } from "lodash-es";
-import { getJob, removeJob } from "../actions";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, RelativeTime, Table, ViewHeader } from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, RelativeTime } from "../../base";
-import TaskArgs from "./TaskArgs";
+import { getJob, removeJob } from "../actions";
 import JobError from "./Error";
 import JobSteps from "./Steps";
+import TaskArgs from "./TaskArgs";
 
 class JobDetail extends React.Component {
     componentDidMount() {
@@ -66,11 +65,11 @@ class JobDetail extends React.Component {
                     </div>
                 </ViewHeader>
 
-                <Table bordered>
+                <Table>
                     <tbody>
                         <tr>
-                            <th className="col-xs-4">Cores / Memory</th>
-                            <td className="col-xs-8">
+                            <th>Cores / Memory</th>
+                            <td>
                                 {detail.proc} CPUs / {detail.mem} GB
                             </td>
                         </tr>

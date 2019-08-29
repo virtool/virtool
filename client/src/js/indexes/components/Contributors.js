@@ -1,9 +1,9 @@
 import { map } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { ListGroup, ListGroupItem, Panel } from "react-bootstrap";
+import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Badge } from "../../base";
+import styled from "styled-components";
+import { Badge, Panel } from "../../base";
 import { PanelBadgeHeader } from "./General";
 
 const StyledContributor = styled(ListGroupItem)`

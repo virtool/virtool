@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Panel } from "react-bootstrap";
 import { Quality } from "../../quality/components/Quality";
+import { Panel } from "../../base";
 
 export const CacheQuality = props => (
     <Panel>

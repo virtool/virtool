@@ -17,9 +17,9 @@ exports[`<ReferenceItemOrigin /> should render for cloned references 1`] = `
 
 exports[`<ReferenceItemOrigin /> should render for imported references 1`] = `
 <tr>
-  <td>
+  <th>
     Imported From
-  </td>
+  </th>
   <td>
     Bar
   </td>
