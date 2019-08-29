@@ -1,7 +1,7 @@
 import Moment from "moment";
 import React from "react";
 import styled from "styled-components";
-import { Box, ExternalLink, Flex, FlexItem, Icon, Loader, RelativeTime } from "../../../base";
+import { Box, ExternalLink, Icon, Loader, RelativeTime } from "../../../base";
 
 const ridRoot =
     "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
