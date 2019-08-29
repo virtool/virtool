@@ -29,7 +29,7 @@ def test_get_mem(mocker):
         total = 33627533312
         available = 22398033920
 
-    m_virtual_memory = mocker.patch("psutil.virtual_memory", return_value=ReturnValue)
+    mocker.patch("psutil.virtual_memory", return_value=ReturnValue)
 
     result = virtool.resources.get_mem()
 
@@ -49,8 +49,8 @@ def test_get(mocker, proc_values):
         "available": 22398033920
     }
 
-    m_get_proc = mocker.patch("virtool.resources.get_proc", return_value=proc_values)
-    m_get_mem = mocker.patch("virtool.resources.get_mem", return_value=mem_values)
+    mocker.patch("virtool.resources.get_proc", return_value=proc_values)
+    mocker.patch("virtool.resources.get_mem", return_value=mem_values)
 
     result = virtool.resources.get()
 
