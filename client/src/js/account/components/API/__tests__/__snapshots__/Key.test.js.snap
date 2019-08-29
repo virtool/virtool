@@ -238,10 +238,7 @@ exports[`<APIKey /> should render when expanded 1`] = `
         componentClass="div"
         xs={12}
       >
-        <ButtonToolbar
-          bsClass="btn-toolbar"
-          className="pull-right"
-        >
+        <ButtonToolbar>
           <Button
             bsStyle="danger"
             icon="trash"

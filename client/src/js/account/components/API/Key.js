@@ -2,9 +2,9 @@ import React from "react";
 import Moment from "moment";
 import { connect } from "react-redux";
 import { isEqual, reduce } from "lodash-es";
-import { ButtonToolbar, Col, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 
-import { Button, ListGroupItem, RelativeTime } from "../../../base/index";
+import { Button, ButtonToolbar, ListGroupItem, RelativeTime } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
 
@@ -60,7 +60,7 @@ export class APIKey extends React.Component {
                     </Row>
                     <Row>
                         <Col xs={12}>
-                            <ButtonToolbar className="pull-right">
+                            <ButtonToolbar>
                                 <Button
                                     bsStyle="danger"
                                     icon="trash"
