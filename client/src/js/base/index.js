@@ -30,6 +30,7 @@ export * from "./Badge";
 export * from "./Box";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
+export * from "./Code";
 export * from "./ExternalLink";
 export * from "./Label";
 export * from "./LoadingPlaceholder";

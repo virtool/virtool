@@ -6,8 +6,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { Well } from "react-bootstrap";
-import { Table } from "../../../base";
+import { Code, Table } from "../../../base";
 
 export default function NuVsExportPreview({ mode }) {
     let previewHeader = ">sequence_1|17SP002|RNA Polymerase";
@@ -40,7 +39,7 @@ export default function NuVsExportPreview({ mode }) {
     return (
         <div>
             <label>Preview</label>
-            <Well className="text-muted">
+            <Code>
                 <p style={{ wordWrap: "break-word", marginBottom: 0 }}>
                     <code>{previewHeader}</code>
                 </p>
@@ -50,7 +49,7 @@ export default function NuVsExportPreview({ mode }) {
                         &hellip;
                     </code>
                 </p>
-            </Well>
+            </Code>
 
             <label>Header Fields</label>
             <Table>
