@@ -46,14 +46,11 @@ exports[`<AnalysisItem /> should render 1`] = `
         xs={2}
       >
         <span>
-          Foo
-          <Label
-            style={
-              Object {
-                "marginLeft": "5px",
-              }
-            }
-          >
+          <span>
+            Foo
+             
+          </span>
+          <Label>
             3
           </Label>
         </span>
@@ -180,14 +177,11 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
         xs={2}
       >
         <span>
-          Foo
-          <Label
-            style={
-              Object {
-                "marginLeft": "5px",
-              }
-            }
-          >
+          <span>
+            Foo
+             
+          </span>
+          <Label>
             3
           </Label>
         </span>
