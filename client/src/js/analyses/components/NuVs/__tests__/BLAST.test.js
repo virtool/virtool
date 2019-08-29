@@ -1,4 +1,5 @@
-import { BLASTButton, BLASTInProgress, BLASTResults, NuVsBLAST } from "../BLAST";
+import { BLASTButton, BLASTResults, NuVsBLAST } from "../BLAST";
+import { BLASTInProgress } from "../BLASTInProgress";
 
 describe("<BLASTInProgress />", () => {
     it.each(["ABC123", null])("should render when [rid=%p]", rid => {
