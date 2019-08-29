@@ -9,10 +9,10 @@ import { push } from "connected-react-router";
 import { forEach, map, reduce, replace } from "lodash-es";
 import { connect } from "react-redux";
 
-import { ButtonGroup, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 
 import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
-import { Button } from "../../../base/index";
+import { Button, ButtonGroup } from "../../../base/index";
 import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
 
@@ -116,25 +116,21 @@ export class NuVsExport extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <ButtonGroup style={{ marginBottom: "15px" }} justified>
-                            <ButtonGroup>
-                                <Button
-                                    type="button"
-                                    active={this.state.mode === "contigs"}
-                                    onClick={() => this.setMode("contigs")}
-                                >
-                                    Contigs
-                                </Button>
-                            </ButtonGroup>
-                            <ButtonGroup>
-                                <Button
-                                    type="button"
-                                    active={this.state.mode === "orfs"}
-                                    onClick={() => this.setMode("orfs")}
-                                >
-                                    ORFs
-                                </Button>
-                            </ButtonGroup>
+                        <ButtonGroup>
+                            <Button
+                                type="button"
+                                active={this.state.mode === "contigs"}
+                                onClick={() => this.setMode("contigs")}
+                            >
+                                Contigs
+                            </Button>
+                            <Button
+                                type="button"
+                                active={this.state.mode === "orfs"}
+                                onClick={() => this.setMode("orfs")}
+                            >
+                                ORFs
+                            </Button>
                         </ButtonGroup>
 
                         <NuVsExportPreview mode={this.state.mode} />

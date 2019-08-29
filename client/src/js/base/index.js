@@ -28,6 +28,7 @@ import { ViewHeader } from "./ViewHeader";
 export * from "./Alert";
 export * from "./Badge";
 export * from "./Box";
+export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
 export * from "./ExternalLink";
 export * from "./Label";
