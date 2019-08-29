@@ -2,11 +2,11 @@ import CX from "classnames";
 import { push } from "connected-react-router";
 import { mapValues } from "lodash-es";
 import React from "react";
-import { Col, Modal, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
 
-import { Button, Flex, FlexItem, Icon, Input, InputError, SaveButton } from "../../../base";
+import { Button, Flex, FlexItem, Icon, Input, InputError, Modal, SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 import CreateAPIKeyInfo from "./CreateInfo";

@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Table } from "./Table";
 
 export const Box = styled.div`
     border: 1px ${props => props.theme.color.greyLight} solid;
@@ -11,6 +12,18 @@ export const Box = styled.div`
 
 export const BoxGroup = styled(Box)`
     padding: 0;
+
+    ${Table} {
+        border: none;
+        border-top: 1px solid #dddddd;
+        margin: 0;
+
+        td,
+        th {
+            min-width: 0;
+            padding: 8px 15px;
+        }
+    }
 `;
 
 export const BoxGroupSection = styled.div`

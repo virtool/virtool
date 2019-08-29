@@ -1,182 +1,107 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<BLASTInProgress /> should render when [rid="ABC123"] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        shrink={1}
-      >
-        <Loader
-          color="#000"
-          size={16}
-        />
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={5}
-        shrink={1}
-      >
-        <span>
-          BLAST in progress 
-           with RID 
-        </span>
-        <a
-          href="https://blast.ncbi.nlm.nih.gov/Blast.cgi?    CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=ABC123"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          ABC123
-           
-          <sup>
-            <Icon
-              faStyle="fas"
-              fixedWidth={false}
-              name="new-tab"
-              pullRight={false}
-            />
-          </sup>
-        </a>
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={1}
-        shrink={1}
-      >
-        <small
-          className="pull-right"
-        >
-          Last checked 
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-          . Checking again in 
-          2 years ago
-          .
-        </small>
-      </FlexItem>
-    </Flex>
-  </PanelBody>
-</Panel>
+<BLASTInProgress__StyledBLASTInProgress>
+  <Loader
+    color="#000"
+    size={16}
+  />
+  <div>
+    <div>
+      <span>
+        BLAST in progress
+      </span>
+      <RIDLink
+        rid="ABC123"
+      />
+    </div>
+    <RIDTiming
+      interval={5}
+      lastCheckedAt="2018-02-14T17:12:00.000000Z"
+    />
+  </div>
+</BLASTInProgress__StyledBLASTInProgress>
 `;
 
 exports[`<BLASTInProgress /> should render when [rid=null] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        shrink={1}
-      >
-        <Loader
-          color="#000"
-          size={16}
-        />
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={5}
-        shrink={1}
-      >
-        <span>
-          BLAST in progress 
-        </span>
-      </FlexItem>
-    </Flex>
-  </PanelBody>
-</Panel>
+<BLASTInProgress__StyledBLASTInProgress>
+  <Loader
+    color="#000"
+    size={16}
+  />
+  <div>
+    <div>
+      <span>
+        BLAST in progress
+      </span>
+      <RIDLink
+        rid={null}
+      />
+    </div>
+    <RIDTiming
+      interval={5}
+      lastCheckedAt="2018-02-14T17:12:00.000000Z"
+    />
+  </div>
+</BLASTInProgress__StyledBLASTInProgress>
 `;
 
 exports[`<BLASTResults /> should render 1`] = `
-<Panel>
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
-    NCBI BLAST
-  </PanelHeading>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <Table>
-      <thead>
-        <tr>
-          <th>
-            Accession
-          </th>
-          <th>
-            Name
-          </th>
-          <th>
-            E-value
-          </th>
-          <th>
-            Score
-          </th>
-          <th>
-            Identity
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          key="0"
-        >
-          <td>
-            <a
-              href="https://www.ncbi.nlm.nih.gov/nuccore/NC123"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              NC123
-            </a>
-          </td>
-          <td>
-            test
-          </td>
-          <td>
-            3
-          </td>
-          <td>
-            1
-          </td>
-          <td>
-            0.50
-          </td>
-        </tr>
-      </tbody>
-    </Table>
-  </PanelBody>
-</Panel>
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      NCBI BLAST
+    </h2>
+  </Box__BoxGroupHeader>
+  <Table>
+    <thead>
+      <tr>
+        <th>
+          Accession
+        </th>
+        <th>
+          Name
+        </th>
+        <th>
+          E-value
+        </th>
+        <th>
+          Score
+        </th>
+        <th>
+          Identity
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        key="0"
+      >
+        <td>
+          <a
+            href="https://www.ncbi.nlm.nih.gov/nuccore/NC123"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            NC123
+          </a>
+        </td>
+        <td>
+          test
+        </td>
+        <td>
+          3
+        </td>
+        <td>
+          1
+        </td>
+        <td>
+          0.50
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+</Box__BoxGroup>
 `;
 
 exports[`<NuVsBLAST /> should render 1`] = `
@@ -228,18 +153,12 @@ exports[`<NuVsBLAST /> should render with an in-progress BLAST 1`] = `
 `;
 
 exports[`<NuVsBLAST /> should render with no BLAST hits 1`] = `
-<Panel>
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+<Box>
+  <Box__BoxTitle>
     NCBI BLAST
-  </PanelHeading>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
+  </Box__BoxTitle>
+  <p>
     No BLAST hits found.
-  </PanelBody>
-</Panel>
+  </p>
+</Box>
 `;

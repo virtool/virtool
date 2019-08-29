@@ -1,69 +1,16 @@
 import { map } from "lodash-es";
-import Moment from "moment";
 import numbro from "numbro";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, Flex, FlexItem, Icon, InfoAlert, Loader, Panel, RelativeTime, Table } from "../../../base";
+import { Box, BoxGroup, BoxGroupHeader, BoxTitle, Button, Icon, InfoAlert, Table } from "../../../base";
 
 import { blastNuvs } from "../../actions";
-
-const ridRoot =
-    "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
-    CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
+import { BLASTInProgress } from "./BLASTInProgress";
 
 export const BLASTButton = styled(Button)`
     margin-left: auto;
 `;
-
-export const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
-    let timing;
-    let ridText;
-    let ridLink;
-
-    if (rid) {
-        const relativeLast = <RelativeTime time={lastCheckedAt} />;
-        const relativeNext = Moment(lastCheckedAt)
-            .add(interval, "seconds")
-            .fromNow();
-
-        ridText = " with RID ";
-
-        ridLink = (
-            <a target="_blank" href={ridRoot + rid} rel="noopener noreferrer">
-                {rid}{" "}
-                <sup>
-                    <Icon name="new-tab" />
-                </sup>
-            </a>
-        );
-
-        timing = (
-            <FlexItem grow={1}>
-                <small className="pull-right">
-                    Last checked {relativeLast}. Checking again in {relativeNext}.
-                </small>
-            </FlexItem>
-        );
-    }
-
-    return (
-        <Panel>
-            <Panel.Body>
-                <Flex alignItems="center">
-                    <FlexItem>
-                        <Loader size={16} color="#000" />
-                    </FlexItem>
-                    <FlexItem pad={5}>
-                        <span>BLAST in progress {ridText}</span>
-                        {ridLink}
-                    </FlexItem>
-                    {timing}
-                </Flex>
-            </Panel.Body>
-        </Panel>
-    );
-};
 
 export const BLASTResults = ({ hits }) => {
     const components = map(hits, (hit, index) => (
@@ -85,23 +32,23 @@ export const BLASTResults = ({ hits }) => {
     ));
 
     return (
-        <Panel>
-            <Panel.Heading>NCBI BLAST</Panel.Heading>
-            <Panel.Body>
-                <Table>
-                    <thead>
-                        <tr>
-                            <th>Accession</th>
-                            <th>Name</th>
-                            <th>E-value</th>
-                            <th>Score</th>
-                            <th>Identity</th>
-                        </tr>
-                    </thead>
-                    <tbody>{components}</tbody>
-                </Table>
-            </Panel.Body>
-        </Panel>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>NCBI BLAST</h2>
+            </BoxGroupHeader>
+            <Table>
+                <thead>
+                    <tr>
+                        <th>Accession</th>
+                        <th>Name</th>
+                        <th>E-value</th>
+                        <th>Score</th>
+                        <th>Identity</th>
+                    </tr>
+                </thead>
+                <tbody>{components}</tbody>
+            </Table>
+        </BoxGroup>
     );
 };
 
@@ -115,10 +62,10 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
             }
 
             return (
-                <Panel>
-                    <Panel.Heading>NCBI BLAST</Panel.Heading>
-                    <Panel.Body>No BLAST hits found.</Panel.Body>
-                </Panel>
+                <Box>
+                    <BoxTitle>NCBI BLAST</BoxTitle>
+                    <p>No BLAST hits found.</p>
+                </Box>
             );
         }
 
