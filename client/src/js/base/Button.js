@@ -43,7 +43,7 @@ export class Button extends React.Component {
     };
 
     render() {
-        const className = CX("btn", `btn-${this.props.bsStyle}`, this.props.className, {
+        const className = CX("btn", `btn-${this.props.bsStyle}`, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
             active: this.props.active,
