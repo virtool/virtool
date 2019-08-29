@@ -3,12 +3,12 @@
  *
  * @module sagaUtils
  */
-import { get, includes } from "lodash-es";
 import { push } from "connected-react-router";
+import { get, includes } from "lodash-es";
 import { matchPath } from "react-router-dom";
+import { all, put } from "redux-saga/effects";
 import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
-import { put, all } from "redux-saga/effects";
 
 /**
  * Executes an API call by calling ``apiMethod`` with ``action``.

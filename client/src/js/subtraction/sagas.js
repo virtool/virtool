@@ -1,15 +1,14 @@
 import { push } from "connected-react-router";
-
-import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
+import { call, put, takeLatest, throttle } from "redux-saga/effects";
 import {
-    GET_SUBTRACTION,
     CREATE_SUBTRACTION,
-    UPDATE_SUBTRACTION,
+    FIND_SUBTRACTIONS,
+    GET_SUBTRACTION,
     REMOVE_SUBTRACTION,
-    FIND_SUBTRACTIONS
+    UPDATE_SUBTRACTION
 } from "../app/actionTypes";
+import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
 import * as subtractionAPI from "./api";
-import { put, takeLatest, throttle, call } from "redux-saga/effects";
 
 export function* findSubtractions(action) {
     yield apiCall(subtractionAPI.find, action, FIND_SUBTRACTIONS);

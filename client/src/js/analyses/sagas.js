@@ -1,3 +1,4 @@
+import { select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import {
     ANALYZE,
     BLAST_NUVS,
@@ -7,10 +8,8 @@ import {
     WS_UPDATE_ANALYSIS
 } from "../app/actionTypes";
 import { apiCall, pushFindTerm } from "../utils/sagas";
-
 import * as analysesAPI from "./api";
 import { getAnalysisDetailId } from "./selectors";
-import { takeEvery, takeLatest, throttle, select } from "redux-saga/effects";
 
 export function* watchAnalyses() {
     yield takeLatest(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);

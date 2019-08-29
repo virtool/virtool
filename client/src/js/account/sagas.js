@@ -1,20 +1,20 @@
-import { setPending, apiCall } from "../utils/sagas";
-import {
-    GET_ACCOUNT,
-    UPDATE_ACCOUNT,
-    GET_ACCOUNT_SETTINGS,
-    UPDATE_ACCOUNT_SETTINGS,
-    CHANGE_ACCOUNT_PASSWORD,
-    GET_API_KEYS,
-    CREATE_API_KEY,
-    UPDATE_API_KEY,
-    REMOVE_API_KEY,
-    LOGOUT,
-    LOGIN,
-    RESET_PASSWORD
-} from "../app/actionTypes";
-import * as accountAPI from "./api";
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
+import {
+    CHANGE_ACCOUNT_PASSWORD,
+    CREATE_API_KEY,
+    GET_ACCOUNT,
+    GET_ACCOUNT_SETTINGS,
+    GET_API_KEYS,
+    LOGIN,
+    LOGOUT,
+    REMOVE_API_KEY,
+    RESET_PASSWORD,
+    UPDATE_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS,
+    UPDATE_API_KEY
+} from "../app/actionTypes";
+import { apiCall, setPending } from "../utils/sagas";
+import * as accountAPI from "./api";
 
 export function* watchAccount() {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);

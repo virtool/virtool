@@ -1,8 +1,8 @@
 import { push } from "connected-react-router";
+import { put, takeLatest, throttle } from "redux-saga/effects";
+import { FIND_HMMS, GET_HMM, INSTALL_HMMS, PURGE_HMMS } from "../app/actionTypes";
 import { apiCall, pushFindTerm } from "../utils/sagas";
-import { INSTALL_HMMS, GET_HMM, PURGE_HMMS, FIND_HMMS } from "../app/actionTypes";
 import * as hmmsAPI from "./api";
-import { takeLatest, throttle, put } from "redux-saga/effects";
 
 export function* watchHmms() {
     yield throttle(300, FIND_HMMS.REQUESTED, findHmms);

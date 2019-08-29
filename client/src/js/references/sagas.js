@@ -1,26 +1,25 @@
 import { push } from "connected-react-router";
-
-import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
+import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import {
-    CREATE_REFERENCE,
-    GET_REFERENCE,
-    FIND_REFERENCES,
-    REMOVE_REFERENCE,
-    EDIT_REFERENCE,
-    IMPORT_REFERENCE,
-    CLONE_REFERENCE,
-    REMOTE_REFERENCE,
-    ADD_REFERENCE_USER,
-    EDIT_REFERENCE_USER,
-    REMOVE_REFERENCE_USER,
     ADD_REFERENCE_GROUP,
-    EDIT_REFERENCE_GROUP,
-    REMOVE_REFERENCE_GROUP,
+    ADD_REFERENCE_USER,
     CHECK_REMOTE_UPDATES,
+    CLONE_REFERENCE,
+    CREATE_REFERENCE,
+    EDIT_REFERENCE,
+    EDIT_REFERENCE_GROUP,
+    EDIT_REFERENCE_USER,
+    FIND_REFERENCES,
+    GET_REFERENCE,
+    IMPORT_REFERENCE,
+    REMOTE_REFERENCE,
+    REMOVE_REFERENCE,
+    REMOVE_REFERENCE_GROUP,
+    REMOVE_REFERENCE_USER,
     UPDATE_REMOTE_REFERENCE
 } from "../app/actionTypes";
+import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import * as referenceAPI from "./api";
-import { takeLatest, throttle, put, takeEvery } from "redux-saga/effects";
 
 export function* findReferences(action) {
     yield apiCall(referenceAPI.find, action, FIND_REFERENCES);

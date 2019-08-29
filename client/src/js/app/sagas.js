@@ -1,10 +1,5 @@
-/**
- * Exports the rootSaga which ties together all of the sagas in the application.
- *
- * @module sagas
- */
-
 import { push } from "connected-react-router";
+import { all, put, select, takeLatest } from "redux-saga/effects";
 import { watchAccount } from "../account/sagas";
 import { watchSettings } from "../administration/sagas";
 import { watchAnalyses } from "../analyses/sagas";
@@ -22,7 +17,6 @@ import { watchSubtraction } from "../subtraction/sagas";
 import { watchUpdates } from "../updates/sagas";
 import { watchUsers } from "../users/sagas";
 import { PUSH_STATE } from "./actionTypes";
-import { all, put, select, takeLatest } from "redux-saga/effects";
 
 const getLocation = state => state.router.location;
 
