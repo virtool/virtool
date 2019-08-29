@@ -1,33 +1,25 @@
-import { capitalize, get } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
-import { Icon, Label, Panel, Table } from "../../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Icon, SuccessLabel } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import IsolateSequences from "./Sequences";
 
-const IsolateTable = ({ isDefault, sourceName, sourceType }) => (
-    <Table bordered>
-        <tbody>
-            <tr>
-                <th className="col-md-3">Source Type</th>
-                <td className="col-md-9">{capitalize(sourceType)}</td>
-            </tr>
-            <tr>
-                <th>Source Name</th>
-                <td>{sourceName}</td>
-            </tr>
-            <tr>
-                <th>Default</th>
-                <td>
-                    <Label bsStyle={isDefault ? "success" : "default"}>{isDefault ? "Yes" : "No"}</Label>
-                </td>
-            </tr>
-        </tbody>
-    </Table>
-);
+const IsolateDetailHeader = styled(BoxGroupHeader)`
+    align-items: center;
+    display: flex;
+    font-size: 16px;
+    flex-direction: row;
+    justify-content: space-between;
+
+    div:first-child {
+        font-weight: bold;
+    }
+`;
 
 export class IsolateDetail extends React.Component {
     handleDownload = () => {
@@ -41,11 +33,11 @@ export class IsolateDetail extends React.Component {
     render() {
         const isolate = this.props.activeIsolate;
 
-        const defaultIsolateLabel = (
-            <Label bsStyle="success" style={{ visibility: isolate.default ? "visible" : "hidden" }}>
+        const defaultIsolateLabel = isolate.default ? (
+            <SuccessLabel bsStyle="success">
                 <Icon name="star" /> Default Isolate
-            </Label>
-        );
+            </SuccessLabel>
+        ) : null;
 
         let modifyIcons;
 
@@ -94,17 +86,10 @@ export class IsolateDetail extends React.Component {
 
                 <RemoveIsolate />
 
-                <Panel>
-                    <Panel.Body>
-                        <h5
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                marginBottom: "15px"
-                            }}
-                        >
-                            <strong style={{ flex: "1 0 auto" }}>{isolate.name}</strong>
-
+                <BoxGroup>
+                    <IsolateDetailHeader>
+                        <div>{isolate.name}</div>
+                        <div>
                             {defaultIsolateLabel}
                             {modifyIcons}
 
@@ -115,17 +100,25 @@ export class IsolateDetail extends React.Component {
                                 style={{ paddingLeft: "3px" }}
                                 onClick={this.handleDownload}
                             />
-                        </h5>
+                        </div>
+                    </IsolateDetailHeader>
+                    <BoxGroupSection>
+                        <span>
+                            <strong>Source Name: </strong>
+                            <span>{isolate.source_name}</span>
+                        </span>
 
-                        <IsolateTable
-                            isDefault={isolate.default}
-                            sourceName={isolate.source_name}
-                            sourceType={isolate.source_type}
-                        />
+                        <span> / </span>
 
+                        <span>
+                            <strong>Source Type: </strong>
+                            <span>{isolate.source_type}</span>
+                        </span>
+                    </BoxGroupSection>
+                    <BoxGroupSection>
                         <IsolateSequences canModify={this.props.canModify} />
-                    </Panel.Body>
-                </Panel>
+                    </BoxGroupSection>
+                </BoxGroup>
             </div>
         );
     }

@@ -1,8 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
-import { Label, Collapse } from "react-bootstrap";
-import { Badge, Icon, Flex, FlexItem, ListGroupItem, Table } from "../../../base";
+import { Collapse } from "react-bootstrap";
+import { Badge, Icon, Flex, FlexItem, Label, ListGroupItem, Table, InfoLabel } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 
 const SequenceTable = styled(Table)`
@@ -91,13 +91,7 @@ class Sequence extends React.Component {
         let segment;
 
         if (!this.state.in && this.props.segment) {
-            segment = (
-                <FlexItem>
-                    <Label bsStyle="info" className="text-mono">
-                        {this.props.segment}
-                    </Label>
-                </FlexItem>
-            );
+            segment = <InfoLabel className="text-mono">{this.props.segment}</InfoLabel>;
         }
 
         return (
@@ -134,11 +128,7 @@ class Sequence extends React.Component {
                                 </tr>
                                 <tr>
                                     <th>Segment</th>
-                                    <td>
-                                        <Label bsStyle="info" className="text-mono">
-                                            {this.props.segment}
-                                        </Label>
-                                    </td>
+                                    <td>{segment}</td>
                                 </tr>
                                 <tr>
                                     <th>Host</th>

@@ -100,14 +100,10 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -222,14 +218,10 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
     <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -344,14 +336,10 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
     <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -466,14 +454,10 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
     <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >

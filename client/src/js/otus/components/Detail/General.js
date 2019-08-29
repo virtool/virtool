@@ -4,14 +4,14 @@ import { Table } from "../../../base";
 import Issues from "./Issues";
 
 export const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) => (
-    <div>
+    <React.Fragment>
         {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
         <Table bordered>
             <tbody>
                 <tr>
-                    <th className="col-xs-4">Name</th>
-                    <td className="col-xs-8">{name}</td>
+                    <th>Name</th>
+                    <td>{name}</td>
                 </tr>
                 <tr>
                     <th>Abbreviation</th>
@@ -23,7 +23,7 @@ export const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) =>
                 </tr>
             </tbody>
         </Table>
-    </div>
+    </React.Fragment>
 );
 
 export const mapStateToProps = state => {

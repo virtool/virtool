@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUGeneral /> should render with issues 1`] = `
-<div>
+<Fragment>
   <OTUIssues
     isolates={
       Array [
@@ -26,14 +26,10 @@ exports[`<OTUGeneral /> should render with issues 1`] = `
   >
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Name
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Foo Bar
         </td>
       </tr>
@@ -55,24 +51,20 @@ exports[`<OTUGeneral /> should render with issues 1`] = `
       </tr>
     </tbody>
   </Table>
-</div>
+</Fragment>
 `;
 
 exports[`<OTUGeneral /> should render without issues 1`] = `
-<div>
+<Fragment>
   <Table
     bordered={true}
   >
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Name
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Foo Bar
         </td>
       </tr>
@@ -94,5 +86,5 @@ exports[`<OTUGeneral /> should render without issues 1`] = `
       </tr>
     </tbody>
   </Table>
-</div>
+</Fragment>
 `;

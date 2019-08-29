@@ -78,10 +78,9 @@ class HMMDetail extends React.Component {
         ));
 
         const names = map(this.props.detail.names, (name, index) => (
-            <span key={index}>
-                <Label>{name}</Label>
-                &nbsp;
-            </span>
+            <Label key={index} spaced>
+                {name}
+            </Label>
         ));
 
         return (

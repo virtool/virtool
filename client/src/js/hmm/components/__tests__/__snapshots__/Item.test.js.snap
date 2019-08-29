@@ -36,30 +36,24 @@ exports[`<HMMItem /> should render 1`] = `
         <div
           className="pull-right"
         >
-          <span
+          <Label
             key="0"
+            spaced={true}
           >
-            <Label>
-              Family1
-            </Label>
-             
-          </span>
-          <span
+            Family1
+          </Label>
+          <Label
             key="1"
+            spaced={true}
           >
-            <Label>
-              Family2
-            </Label>
-             
-          </span>
-          <span
+            Family2
+          </Label>
+          <Label
             key="2"
+            spaced={true}
           >
-            <Label>
-              Family3
-            </Label>
-             
-          </span>
+            Family3
+          </Label>
            
           ...
         </div>

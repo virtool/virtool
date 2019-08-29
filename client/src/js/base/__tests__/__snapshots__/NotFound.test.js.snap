@@ -2,11 +2,9 @@
 
 exports[`<NotFound /> should render default 1`] = `
 <NotFound__StyledNotFound>
-  <Label
-    bsStyle="danger"
-  >
+  <Label__DangerLabel>
     404
-  </Label>
+  </Label__DangerLabel>
   <strong>
     Not found
   </strong>
@@ -15,11 +13,9 @@ exports[`<NotFound /> should render default 1`] = `
 
 exports[`<NotFound /> should render with message 1`] = `
 <NotFound__StyledNotFound>
-  <Label
-    bsStyle="danger"
-  >
+  <Label__DangerLabel>
     404
-  </Label>
+  </Label__DangerLabel>
   <strong>
     Resource missing
   </strong>
@@ -28,11 +24,9 @@ exports[`<NotFound /> should render with message 1`] = `
 
 exports[`<NotFound /> should render with status 1`] = `
 <NotFound__StyledNotFound>
-  <Label
-    bsStyle="danger"
-  >
+  <Label__DangerLabel>
     409
-  </Label>
+  </Label__DangerLabel>
   <strong>
     Not found
   </strong>
