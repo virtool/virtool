@@ -89,7 +89,7 @@ class Groups extends React.Component {
 
         if (members && members.length) {
             memberComponents = map(members, member => (
-                <Label key={member.id} style={{ marginRight: "5px" }}>
+                <Label key={member.id} spaced>
                     {member.id}
                 </Label>
             ));

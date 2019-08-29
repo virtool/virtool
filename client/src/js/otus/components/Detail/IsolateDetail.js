@@ -1,33 +1,12 @@
-import { capitalize, get } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, Label, Panel, Table } from "../../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Icon, SuccessLabel } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import IsolateSequences from "./Sequences";
-
-const IsolateTable = ({ isDefault, sourceName, sourceType }) => (
-    <Table bordered>
-        <tbody>
-            <tr>
-                <th className="col-md-3">Source Type</th>
-                <td className="col-md-9">{capitalize(sourceType)}</td>
-            </tr>
-            <tr>
-                <th>Source Name</th>
-                <td>{sourceName}</td>
-            </tr>
-            <tr>
-                <th>Default</th>
-                <td>
-                    <Label bsStyle={isDefault ? "success" : "default"}>{isDefault ? "Yes" : "No"}</Label>
-                </td>
-            </tr>
-        </tbody>
-    </Table>
-);
 
 export class IsolateDetail extends React.Component {
     handleDownload = () => {

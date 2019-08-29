@@ -1,36 +1,53 @@
-import React from "react";
-import CX from "classnames";
-import { find, includes } from "lodash-es";
 import { push } from "connected-react-router";
-import { LinkContainer } from "react-router-bootstrap";
+import { find, includes } from "lodash-es";
+import React from "react";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Row, Col } from "react-bootstrap";
-import { Icon, Flex, FlexItem, ListGroupItem, RelativeTime, Checkbox, Loader } from "../../base";
+import { LinkContainer } from "react-router-bootstrap";
+import styled from "styled-components";
+import { Checkbox, Flex, FlexItem, Icon, ListGroupItem, Loader, RelativeTime } from "../../base";
 import { selectSample } from "../actions";
 
+const SampleEntryLabelIcon = styled.span`
+    margin-right: 3px;
+    width: 12px;
+`;
+
+const StyledSampleEntryLabel = styled.div`
+    align-items: center;
+    background-color: ${props => (props.ready ? "#07689d" : "#ffffff")};
+    border: 1px solid ${props => (props.ready ? "#07689d" : "#dddddd")};
+    border-radius: 2px;
+    color: ${props => (props.ready ? "#ffffff" : "#333333")};
+    display: flex;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 4px;
+`;
+
 export const SampleEntryLabel = ({ icon, label, ready }) => (
-    <Flex>
-        <FlexItem className={CX("sample-label", { "bg-primary": ready })}>
-            <Flex alignItems="center">
-                <span style={{ width: "12px" }}>
-                    {ready === "ip" ? (
-                        <Loader size="10px" color="white" verticalAlign="middle" />
-                    ) : (
-                        <Icon name={icon} style={{ lineHeight: "inherit" }} fixedWidth />
-                    )}
-                </span>
-                <span className="sample-label-text">{label}</span>
-            </Flex>
-        </FlexItem>
-    </Flex>
+    <StyledSampleEntryLabel ready={ready}>
+        <SampleEntryLabelIcon>
+            {ready === "ip" ? (
+                <Loader size="10px" color="white" verticalAlign="middle" />
+            ) : (
+                <Icon name={icon} style={{ lineHeight: "inherit" }} fixedWidth />
+            )}
+        </SampleEntryLabelIcon>
+        <span className="sample-label-text">{label}</span>
+    </StyledSampleEntryLabel>
 );
 
+const StyledSampleEntryLabels = styled.div`
+    align-items: center;
+    display: flex;
+`;
+
 export const SampleEntryLabels = ({ nuvs, pathoscope }) => (
-    <Flex style={{ height: "20px" }}>
+    <StyledSampleEntryLabels>
         <SampleEntryLabel icon="chart-area" label="Pathoscope" ready={pathoscope} />
-        &nbsp;
         <SampleEntryLabel icon="chart-area" label="NuVs" ready={nuvs} />
-    </Flex>
+    </StyledSampleEntryLabels>
 );
 
 class SampleEntry extends React.Component {

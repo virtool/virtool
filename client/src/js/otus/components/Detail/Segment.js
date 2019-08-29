@@ -1,7 +1,15 @@
-import React from "react";
 import PropTypes from "prop-types";
+import React from "react";
 import { Col, Row } from "react-bootstrap";
-import { Icon, Label, ListGroupItem } from "../../../base";
+import { Icon, InfoLabel, Label, SpacedBox } from "../../../base";
+
+const RequiredLabel = ({ required }) => {
+    if (required) {
+        return <InfoLabel>Required</InfoLabel>;
+    }
+
+    return <Label>Optional</Label>;
+};
 
 export default class Segment extends React.Component {
     handleRemove = () => {
@@ -43,22 +51,18 @@ export default class Segment extends React.Component {
         }
 
         return (
-            <div>
-                <ListGroupItem className="spaced">
-                    <Row>
-                        <Col md={5}>
-                            <strong>{seg.name}</strong>
-                        </Col>
-                        <Col md={4}>{seg.molecule}</Col>
-                        <Col md={2}>
-                            <Label bsStyle={seg.required ? "info" : "warning"}>
-                                {seg.required ? "required" : "not required"}
-                            </Label>
-                        </Col>
-                        <Col md={1}>{modifyIcons}</Col>
-                    </Row>
-                </ListGroupItem>
-            </div>
+            <SpacedBox>
+                <Row>
+                    <Col md={5}>
+                        <strong>{seg.name}</strong>
+                    </Col>
+                    <Col md={4}>{seg.molecule}</Col>
+                    <Col md={2}>
+                        <RequiredLabel required={seg.required} />
+                    </Col>
+                    <Col md={1}>{modifyIcons}</Col>
+                </Row>
+            </SpacedBox>
         );
     }
 }

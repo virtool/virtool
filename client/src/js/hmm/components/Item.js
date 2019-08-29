@@ -10,9 +10,9 @@ export default function HMMItem({ cluster, families, id, names }) {
     const filteredFamilies = reject(keys(families), family => family === "None");
 
     const labelComponents = map(filteredFamilies.slice(0, 3), (family, i) => (
-        <span key={i}>
-            <Label>{family}</Label>{" "}
-        </span>
+        <Label key={i} spaced>
+            {family}
+        </Label>
     ));
 
     return (
