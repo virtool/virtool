@@ -1,7 +1,7 @@
-import { apiCall } from "../utils/sagas";
-import { LIST_PROCESSES, GET_PROCESS } from "../app/actionTypes";
-import * as processesAPI from "./api";
 import { takeLatest } from "redux-saga/effects";
+import { GET_PROCESS, LIST_PROCESSES } from "../app/actionTypes";
+import { apiCall } from "../utils/sagas";
+import * as processesAPI from "./api";
 
 export function* listProcesses(action) {
     yield apiCall(processesAPI.list, action, LIST_PROCESSES);

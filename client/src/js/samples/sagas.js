@@ -1,5 +1,6 @@
 import { push } from "connected-react-router";
 import { includes } from "lodash-es";
+import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
@@ -12,14 +13,12 @@ import {
     UPLOAD_SAMPLE_FILE,
     WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
-
 import * as filesAPI from "../files/api";
 import { createUploadChannel, watchUploadChannel } from "../files/sagas";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import * as samplesAPI from "./api";
 import { getSampleDetailId } from "./selectors";
 import { createFindURL } from "./utils";
-import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 export function* watchSamples() {
     yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);

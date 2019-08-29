@@ -1,23 +1,23 @@
-import { get } from "lodash-es";
 import { push } from "connected-react-router";
-import { apiCall, setPending } from "../utils/sagas";
+import { get } from "lodash-es";
+import { all, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 import {
+    CREATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
-    GET_UNBUILT,
-    CREATE_INDEX,
     GET_INDEX_HISTORY,
+    GET_REFERENCE,
+    GET_UNBUILT,
     LIST_READY_INDEXES,
-    WS_INSERT_INDEX,
-    WS_UPDATE_INDEX,
-    WS_REMOVE_INDEX,
     REFRESH_OTUS,
-    GET_REFERENCE
+    WS_INSERT_INDEX,
+    WS_REMOVE_INDEX,
+    WS_UPDATE_INDEX
 } from "../app/actionTypes";
 import * as otusAPI from "../otus/api";
 import * as refsAPI from "../references/api";
+import { apiCall, setPending } from "../utils/sagas";
 import * as indexesAPI from "./api";
-import { all, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 export function* watchIndexes() {
     yield takeLatest(WS_INSERT_INDEX, wsChangeIndexes);

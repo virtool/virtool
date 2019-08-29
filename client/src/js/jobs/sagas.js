@@ -1,3 +1,4 @@
+import { select, takeEvery, takeLatest } from "redux-saga/effects";
 import {
     CANCEL_JOB,
     CLEAR_JOBS,
@@ -11,7 +12,6 @@ import {
 import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import * as jobsAPI from "./api";
 import { getJobDetailId, getLinkedJobs } from "./selectors";
-import { select, takeEvery, takeLatest } from "redux-saga/effects";
 
 export function* watchJobs() {
     yield takeLatest(FIND_JOBS.REQUESTED, findJobs);

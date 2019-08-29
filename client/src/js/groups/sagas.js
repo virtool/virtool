@@ -1,7 +1,7 @@
-import { apiCall, setPending } from "../utils/sagas";
-import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../app/actionTypes";
-import * as groupsAPI from "./api";
 import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { CREATE_GROUP, LIST_GROUPS, REMOVE_GROUP, SET_GROUP_PERMISSION } from "../app/actionTypes";
+import { apiCall, setPending } from "../utils/sagas";
+import * as groupsAPI from "./api";
 
 export function* watchGroups() {
     yield takeLatest(LIST_GROUPS.REQUESTED, listGroups);

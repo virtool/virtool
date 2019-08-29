@@ -1,24 +1,23 @@
 import { push } from "connected-react-router";
-
-import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import {
+    ADD_ISOLATE,
+    ADD_SEQUENCE,
+    CREATE_OTU,
+    EDIT_ISOLATE,
+    EDIT_OTU,
+    EDIT_SEQUENCE,
     FIND_OTUS,
     GET_OTU,
     GET_OTU_HISTORY,
-    CREATE_OTU,
-    EDIT_OTU,
-    REMOVE_OTU,
-    ADD_ISOLATE,
-    EDIT_ISOLATE,
-    SET_ISOLATE_AS_DEFAULT,
     REMOVE_ISOLATE,
-    ADD_SEQUENCE,
-    EDIT_SEQUENCE,
+    REMOVE_OTU,
     REMOVE_SEQUENCE,
-    REVERT
+    REVERT,
+    SET_ISOLATE_AS_DEFAULT
 } from "../app/actionTypes";
+import { apiCall, pushFindTerm, putGenericError, setPending } from "../utils/sagas";
 import * as otusAPI from "./api";
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 const getCurrentOTUsPath = state => `/refs/${state.references.detail.id}/otus`;
 

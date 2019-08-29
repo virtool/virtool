@@ -1,9 +1,8 @@
 import { push } from "connected-react-router";
-
+import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { CREATE_FIRST_USER, CREATE_USER, EDIT_USER, FIND_USERS, GET_USER, REMOVE_USER } from "../app/actionTypes";
 import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
-import { FIND_USERS, GET_USER, CREATE_USER, EDIT_USER, REMOVE_USER, CREATE_FIRST_USER } from "../app/actionTypes";
 import * as usersAPI from "./api";
-import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
 function* findUsers(action) {
     yield apiCall(usersAPI.find, action, FIND_USERS);
