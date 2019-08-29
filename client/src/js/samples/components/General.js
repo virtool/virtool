@@ -72,8 +72,8 @@ export const SampleDetailGeneral = ({
             <Table>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Host</th>
-                        <td className="col-xs-8">
+                        <th>Host</th>
+                        <td>
                             <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
                         </td>
                     </tr>
