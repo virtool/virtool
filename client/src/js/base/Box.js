@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 import { Table } from "./Table";
 
 export const Box = styled.div`
@@ -34,6 +35,9 @@ export const BoxGroupSection = styled.div`
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
     padding: 10px 15px;
 
+    ${props => (props.active ? "background-color: #07689d;" : "")}
+    ${props => (props.active ? "color: #ffffff;" : "")}
+
     &[disabled] {
         background-color: #edf2f7;
         cursor: not-allowed;
@@ -41,7 +45,7 @@ export const BoxGroupSection = styled.div`
     }
 
     &:hover {
-        ${props => (props.onClick ? "background-color: #f7fafc;" : "")}
+        ${props => (props.onClick && !props.active ? "background-color: #f7fafc;" : "")}
     }
 
     &:not(:last-child) {
@@ -84,4 +88,20 @@ export const BoxTitle = styled.h1`
 export const SpacedBox = styled(Box)`
     box-shadow: 1px 1px 2px 0 #d5d5d5;
     margin-bottom: 10px;
+
+export const LinkBox = styled(Link)`
+    border: 1px ${props => props.theme.color.greyLight} solid;
+    border-radius: 2px;
+    box-shadow: 1px 1px 2px 0 #d5d5d5;
+    box-sizing: border-box;
+    color: #333333 !important;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    text-decoration: none !important;
+
+    &:hover {
+        background-color: #f7fafc;
+    }
 `;
