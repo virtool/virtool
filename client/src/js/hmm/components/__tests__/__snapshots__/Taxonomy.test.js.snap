@@ -1,15 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMTaxonomy /> should render 1`] = `
-<ListGroup
-  bsClass="list-group"
-  style={
-    Object {
-      "maxHeight": 210,
-      "overflowY": "auto",
-    }
-  }
->
+<Taxonomy__StyledHMMTaxonomy>
   <Taxonomy__HMMTaxonomyItem
     key="Begomovirus"
   >
@@ -46,5 +38,5 @@ exports[`<HMMTaxonomy /> should render 1`] = `
       1
     </Badge>
   </Taxonomy__HMMTaxonomyItem>
-</ListGroup>
+</Taxonomy__StyledHMMTaxonomy>
 `;

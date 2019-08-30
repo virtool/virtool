@@ -1,64 +1,59 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMItem /> should render 1`] = `
-<withRouter(LinkContainer)
+<Box__LinkBox
   to="/hmm/tester"
 >
-  <ListGroupItem
-    allowFocus={false}
-    className="spaced"
+  <Row
+    bsClass="row"
+    componentClass="div"
   >
-    <Row
-      bsClass="row"
+    <Col
+      bsClass="col"
       componentClass="div"
+      xs={2}
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={2}
+      <strong>
+        5
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={5}
+    >
+      string1
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      xs={5}
+    >
+      <div
+        className="pull-right"
       >
-        <strong>
-          5
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={5}
-      >
-        string1
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={5}
-      >
-        <div
-          className="pull-right"
+        <Label
+          key="0"
+          spaced={true}
         >
-          <Label
-            key="0"
-            spaced={true}
-          >
-            Family1
-          </Label>
-          <Label
-            key="1"
-            spaced={true}
-          >
-            Family2
-          </Label>
-          <Label
-            key="2"
-            spaced={true}
-          >
-            Family3
-          </Label>
-           
-          ...
-        </div>
-      </Col>
-    </Row>
-  </ListGroupItem>
-</withRouter(LinkContainer)>
+          Family1
+        </Label>
+        <Label
+          key="1"
+          spaced={true}
+        >
+          Family2
+        </Label>
+        <Label
+          key="2"
+          spaced={true}
+        >
+          Family3
+        </Label>
+         
+        ...
+      </div>
+    </Col>
+  </Row>
+</Box__LinkBox>
 `;
