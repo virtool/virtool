@@ -1,5 +1,5 @@
-import { ListGroupItem } from "../../../../base/index";
 import { APIPermissions } from "../Permissions";
+import { BoxGroupSection } from "../../../../base";
 
 describe("<Permissions />", () => {
     let props;
@@ -37,7 +37,7 @@ describe("<Permissions />", () => {
     it("should call onChange when permission clicked", () => {
         const wrapper = shallow(<APIPermissions {...props} />);
         wrapper
-            .find(ListGroupItem)
+            .find(BoxGroupSection)
             .at(1)
             .simulate("click");
         expect(props.onChange).toHaveBeenCalled();
