@@ -1,7 +1,5 @@
 import os
 
-import virtool.samples
-
 PATHOSCOPE_TASK_NAMES = [
     "pathoscope_bowtie",
     "pathoscope_barracuda"

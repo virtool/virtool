@@ -6,7 +6,6 @@ import aiojobs.aiohttp
 import virtool.db.utils
 import virtool.errors
 import virtool.github
-import virtool.hmm
 import virtool.hmm.db
 import virtool.http.routes
 import virtool.processes.db
