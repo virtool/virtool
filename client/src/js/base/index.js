@@ -25,6 +25,7 @@ import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export * from "./Alert";
+export * from "./Attribution";
 export * from "./Badge";
 export * from "./Box";
 export * from "./Button";
