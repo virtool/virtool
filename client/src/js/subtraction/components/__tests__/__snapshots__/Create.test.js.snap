@@ -6,7 +6,6 @@ exports[`<CreateSubtraction /> should render 1`] = `
   autoFocus={true}
   backdrop={true}
   bsClass="modal"
-  bsSize="large"
   dialogComponentClass={[Function]}
   enforceFocus={true}
   keyboard={true}
@@ -90,14 +89,8 @@ exports[`<CreateSubtraction /> should render 1`] = `
           Files
         </strong>
       </h5>
-      <ListGroup
-        bsClass="list-group"
-        className="panel-list-custom"
-      >
-        <ListGroupItem
-          allowFocus={false}
-          className="text-center"
-        >
+      <Box__BoxGroup>
+        <NoneFoundSection>
           <Icon
             faStyle="fas"
             fixedWidth={false}
@@ -111,8 +104,8 @@ exports[`<CreateSubtraction /> should render 1`] = `
             Upload some
           </Link>
           .
-        </ListGroupItem>
-      </ListGroup>
+        </NoneFoundSection>
+      </Box__BoxGroup>
       <div
         className="input-form-error-none"
         style={
@@ -144,71 +137,43 @@ exports[`<CreateSubtraction /> should render 1`] = `
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=false] 1`] = `
-<ListGroupItem
+<Box__BoxGroupSection
   active={false}
-  allowFocus={false}
   onClick={[Function]}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={7}
-    >
-      <strong>
-        test
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={5}
-    >
+  <Create__SubtractionFileItemTop>
+    <strong>
+      test
+    </strong>
+    <span>
       Uploaded 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
       test-user
-    </Col>
-  </Row>
-</ListGroupItem>
+    </span>
+  </Create__SubtractionFileItemTop>
+</Box__BoxGroupSection>
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=true] 1`] = `
-<ListGroupItem
+<Box__BoxGroupSection
   active={true}
-  allowFocus={false}
   onClick={[Function]}
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={7}
-    >
-      <strong>
-        test
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={5}
-    >
+  <Create__SubtractionFileItemTop>
+    <strong>
+      test
+    </strong>
+    <span>
       Uploaded 
       <RelativeTime
         time="2018-02-14T17:12:00.000000Z"
       />
        by 
       test-user
-    </Col>
-  </Row>
-</ListGroupItem>
+    </span>
+  </Create__SubtractionFileItemTop>
+</Box__BoxGroupSection>
 `;
