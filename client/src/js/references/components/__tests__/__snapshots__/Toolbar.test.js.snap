@@ -65,7 +65,8 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
       />
     </div>
   </div>
-  <withRouter(LinkContainer)
+  <LinkButton
+    tip="Create"
     to={
       Object {
         "state": Object {
@@ -75,14 +76,13 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
       }
     }
   >
-    <Button
-      bsStyle="primary"
-      icon="plus-square fa-fw"
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="plus-square fa-fw"
       pullRight={false}
-      tip="Create"
-      tipPlacement="top"
     />
-  </withRouter(LinkContainer)>
+  </LinkButton>
 </div>
 `;
 
@@ -117,7 +117,8 @@ exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
       />
     </div>
   </div>
-  <withRouter(LinkContainer)
+  <LinkButton
+    tip="Create"
     to={
       Object {
         "state": Object {
@@ -127,13 +128,12 @@ exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
       }
     }
   >
-    <Button
-      bsStyle="primary"
-      icon="plus-square fa-fw"
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="plus-square fa-fw"
       pullRight={false}
-      tip="Create"
-      tipPlacement="top"
     />
-  </withRouter(LinkContainer)>
+  </LinkButton>
 </div>
 `;
