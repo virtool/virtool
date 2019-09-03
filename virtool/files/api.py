@@ -2,7 +2,6 @@
 Provides request handlers for managing and viewing files.
 
 """
-import os
 import pymongo
 
 import virtool.files.db

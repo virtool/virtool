@@ -1,5 +1,3 @@
-import aiofiles
-import aiohttp.web
 import asyncio
 import json
 import logging
@@ -8,10 +6,9 @@ import shutil
 
 import aiofiles
 import aiohttp.client_exceptions
-import semver
+import aiohttp.web
 
 import virtool.analyses.utils
-
 import virtool.db.core
 import virtool.db.utils
 import virtool.errors
