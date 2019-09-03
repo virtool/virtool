@@ -1,7 +1,6 @@
 import { AlgorithmSelect } from "./AlgorithmSelect";
 import { AutoProgressBar, ProgressBar } from "./ProgressBar";
 import { bsStyles } from "./utils";
-import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Flex, FlexItem } from "./Flex";
 import { Help } from "./Help";
@@ -28,6 +27,7 @@ import { ViewHeader } from "./ViewHeader";
 export * from "./Alert";
 export * from "./Badge";
 export * from "./Box";
+export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
 export * from "./Code";
@@ -46,7 +46,6 @@ export {
     AlgorithmSelect,
     AutoProgressBar,
     bsStyles,
-    Button,
     Checkbox,
     Flex,
     FlexItem,
