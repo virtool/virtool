@@ -2,7 +2,7 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Panel, Table } from "../../base";
+import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import EditSample from "./Edit";
 
 export const SampleDetailGeneral = ({
@@ -35,8 +35,11 @@ export const SampleDetailGeneral = ({
             </tbody>
         </Table>
 
-        <Panel>
-            <Panel.Heading>Library</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Library</h2>
+                <p>Information about the sequencing reads in this sample.</p>
+            </BoxGroupHeader>
             <Table>
                 <tbody>
                     <tr>
@@ -65,10 +68,13 @@ export const SampleDetailGeneral = ({
                     </tr>
                 </tbody>
             </Table>
-        </Panel>
+        </BoxGroup>
 
-        <Panel>
-            <Panel.Heading>Subtraction</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Subtraction</h2>
+                <p>This host genome is used for excluding reads from analysis.</p>
+            </BoxGroupHeader>
             <Table>
                 <tbody>
                     <tr>
@@ -79,7 +85,7 @@ export const SampleDetailGeneral = ({
                     </tr>
                 </tbody>
             </Table>
-        </Panel>
+        </BoxGroup>
 
         <EditSample />
     </div>
