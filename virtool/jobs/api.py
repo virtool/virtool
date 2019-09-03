@@ -34,7 +34,6 @@ async def find(req):
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])
-    data["documents"] = await virtool.users.db.attach_identicons_to_documents(db, data["documents"])
 
     return json_response(data)
 
