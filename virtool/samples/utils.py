@@ -92,7 +92,7 @@ def join_legacy_read_paths(settings: dict, sample):
     :return: a list of sample read paths
 
     """
-    sample_path = virtool.samples.db.get_sample_path(settings, sample["_id"])
+    sample_path = join_sample_path(settings, sample["_id"])
 
     if not all(f["raw"] for f in sample["files"]):
         if sample["paired"]:
