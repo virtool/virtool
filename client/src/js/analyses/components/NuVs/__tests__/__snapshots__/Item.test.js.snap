@@ -10,10 +10,7 @@ exports[`<NuVsItem /> should render when active 1`] = `
       Sequence 
       4
     </strong>
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       13
     </Badge>
   </Item__NuVsItemHeader>
@@ -42,10 +39,7 @@ exports[`<NuVsItem /> should render when not active 1`] = `
       Sequence 
       4
     </strong>
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       13
     </Badge>
   </Item__NuVsItemHeader>
@@ -74,10 +68,7 @@ exports[`<NuVsItem /> should render when not active 2`] = `
       Sequence 
       4
     </strong>
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       13
     </Badge>
   </Item__NuVsItemHeader>

@@ -37,7 +37,7 @@ exports[`<SourceTypeItem /> renders when [disabled=true] 1`] = `
 `;
 
 exports[`<SourceTypes /> renders when global 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <ListGroup
     bsClass="list-group"
   >
@@ -129,11 +129,11 @@ exports[`<SourceTypes /> renders when global 1`] = `
       </div>
     </ListGroupItem>
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<SourceTypes /> renders when not global and not remote 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <ListGroup
     bsClass="list-group"
   >
@@ -232,11 +232,11 @@ exports[`<SourceTypes /> renders when not global and not remote 1`] = `
       </div>
     </ListGroupItem>
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;
 
 exports[`<SourceTypes /> renders when not global and remote 1`] = `
-<Uncontrolled(Panel)>
+<Panel>
   <ListGroup
     bsClass="list-group"
   >
@@ -328,5 +328,5 @@ exports[`<SourceTypes /> renders when not global and remote 1`] = `
       </div>
     </ListGroupItem>
   </ListGroup>
-</Uncontrolled(Panel)>
+</Panel>
 `;

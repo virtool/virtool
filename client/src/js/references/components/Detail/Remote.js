@@ -1,7 +1,7 @@
 import React from "react";
-import { ListGroup, Panel, ProgressBar, Row } from "react-bootstrap";
+import { ListGroup, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Flex, FlexItem, Icon, ListGroupItem, RelativeTime, Button, Loader } from "../../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, Loader, Panel, RelativeTime } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import { getProgress } from "../../selectors";

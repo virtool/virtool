@@ -1,17 +1,13 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
-import { Badge, Table, Label, Collapse } from "react-bootstrap";
-import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
+import { Collapse } from "react-bootstrap";
+import { Badge, Icon, Flex, FlexItem, Label, ListGroupItem, Table, InfoLabel } from "../../../base";
 import { followDownload } from "../../../utils/utils";
+
+const SequenceTable = styled(Table)`
+    margin-top: 10px;
+`;
 
 class Sequence extends React.Component {
     constructor(props) {
@@ -95,13 +91,7 @@ class Sequence extends React.Component {
         let segment;
 
         if (!this.state.in && this.props.segment) {
-            segment = (
-                <FlexItem>
-                    <Label bsStyle="info" className="text-mono">
-                        {this.props.segment}
-                    </Label>
-                </FlexItem>
-            );
+            segment = <InfoLabel className="text-mono">{this.props.segment}</InfoLabel>;
         }
 
         return (
@@ -126,7 +116,7 @@ class Sequence extends React.Component {
 
                 <Collapse in={this.state.in}>
                     <div>
-                        <Table style={{ marginTop: "10px" }} bordered>
+                        <SequenceTable>
                             <tbody>
                                 <tr>
                                     <th>Accession</th>
@@ -138,11 +128,7 @@ class Sequence extends React.Component {
                                 </tr>
                                 <tr>
                                     <th>Segment</th>
-                                    <td>
-                                        <Label bsStyle="info" className="text-mono">
-                                            {this.props.segment}
-                                        </Label>
-                                    </td>
+                                    <td>{segment}</td>
                                 </tr>
                                 <tr>
                                     <th>Host</th>
@@ -158,7 +144,7 @@ class Sequence extends React.Component {
                                     </td>
                                 </tr>
                             </tbody>
-                        </Table>
+                        </SequenceTable>
                     </div>
                 </Collapse>
             </ListGroupItem>

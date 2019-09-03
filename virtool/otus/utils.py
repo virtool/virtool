@@ -1,9 +1,6 @@
-"""
-Functions for working with otu documents.
-
-"""
 import logging
 from copy import deepcopy
+from typing import List, Union
 
 import virtool.errors
 import virtool.history.utils
@@ -41,62 +38,17 @@ def evaluate_changes(data, document):
     return name, abbreviation, schema
 
 
-def extract_default_isolate(otu, isolate_processor=None):
-    """
-    Returns the default isolate dict for the given otu document.
-
-    :param otu: a otu document.
-    :type otu: dict
-
-    :param isolate_processor: a function to process the default isolate into a desired format.
-    :type: func
-
-    :return: the default isolate dict.
-    :rtype: dict
-
-    """
-    # Get the otu isolates with the default flag set to True. This list should only contain one item.
-    default_isolates = [isolate for isolate in otu["isolates"] if isolate["default"] is True]
-
-    if len(default_isolates) > 1:
-        raise ValueError("More than one default isolate found")
-
-    if len(default_isolates) == 0:
-        raise ValueError("No default isolate found")
-
-    default_isolate = default_isolates[0]
-
-    if isolate_processor:
-        default_isolate = isolate_processor(default_isolate)
-
-    return default_isolate
-
-
-def extract_default_sequences(joined):
+def extract_default_sequences(joined: dict) -> List[dict]:
     """
     Return a list of sequences from the default isolate of the passed joined otu document.
 
     :param joined: the joined otu document.
-    :type joined: dict
-
     :return: a list of sequences associated with the default isolate.
-    :rtype: list
 
     """
     for isolate in joined["isolates"]:
         if isolate["default"]:
             return isolate["sequences"]
-
-
-def extract_isolate_ids(otu):
-    """
-    Get the isolate ids from a otu document.
-
-    :param otu: a otu document.
-    :return: a list of isolate ids.
-
-    """
-    return [isolate["id"] for isolate in otu["isolates"]]
 
 
 def extract_sequence_ids(otu):
@@ -129,39 +81,28 @@ def extract_sequence_ids(otu):
     return sequence_ids
 
 
-def find_isolate(isolates, isolate_id):
+def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
     """
     Return the isolate identified by ``isolate_id`` from a list of isolates.
 
     :param isolates: a list of isolate dicts
-    :type isolates: list
-
     :param isolate_id: the isolate_id of the isolate to return
-    :type isolate_id: str
-
     :return: an isolate
-    :rtype: dict
 
     """
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
-def format_otu(joined, issues=False, most_recent_change=None):
+def format_otu(joined: Union[dict, None], issues: Union[dict, None, bool] = False,
+               most_recent_change: Union[dict, None] = None) -> dict:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
 
     :param joined:
-    :type joined: Union[dict, NoneType]
-
     :param issues: an object describing issues in the otu
-    :type issues: Union[dict, NoneType, bool]
-
     :param most_recent_change: a change document for the most recent change made to OTU
-    :type most_recent_change: dict
-
     :return: a joined and formatted otu
-    :rtype: dict
 
     """
     formatted = virtool.utils.base_processor(joined)
@@ -294,8 +235,8 @@ def verify(joined):
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
     # error if the otu is not also emtpy (empty_otu error).
     errors["isolate_inconsistency"] = (
-        len(set(isolate_sequence_counts)) != 1 and not
-        (errors["empty_otu"] or errors["empty_isolate"])
+            len(set(isolate_sequence_counts)) != 1 and not
+    (errors["empty_otu"] or errors["empty_isolate"])
     )
 
     # If there is an error in the otu, return the errors object. Otherwise return False.

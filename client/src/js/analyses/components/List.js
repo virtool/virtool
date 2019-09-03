@@ -1,16 +1,16 @@
 import React from "react";
 import { get, map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { Alert, ListGroup } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { ListGroup } from "react-bootstrap";
 import { routerLocationHasState } from "../../utils/utils";
 
 import { findAnalyses } from "../actions";
 import { getCanModify } from "../../samples/selectors";
-import { Icon, NoneFound, Flex, FlexItem } from "../../base/index";
+import { NoneFound } from "../../base/index";
 import CreateAnalysis from "./Create";
 import AnalysisItem from "./Item";
 import AnalysesToolbar from "./Toolbar";
+import AnalysisHMMAlert from "./HMMAlert";
 
 export class AnalysesList extends React.Component {
     constructor(props) {
@@ -37,29 +37,10 @@ export class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
-        let hmmAlert;
-
-        if (!this.props.hmmsInstalled) {
-            hmmAlert = (
-                <Alert bsStyle="warning">
-                    <Flex alignItems="center">
-                        <Icon name="info-circle" />
-                        <FlexItem pad={5}>
-                            <span>HMM data is not installed. </span>
-                            <Link to="/hmm">Install HMMs</Link>
-                            <span> to run NuV analyses.</span>
-                        </FlexItem>
-                    </Flex>
-                </Alert>
-            );
-        }
-
         return (
             <div>
-                {hmmAlert}
-
+                <AnalysisHMMAlert />
                 <AnalysesToolbar />
-
                 <ListGroup>{listContent}</ListGroup>
 
                 <CreateAnalysis

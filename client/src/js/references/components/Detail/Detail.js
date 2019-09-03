@@ -1,10 +1,11 @@
 import { push } from "connected-react-router";
 import { get } from "lodash-es";
 import React from "react";
-import { Badge, Dropdown, MenuItem } from "react-bootstrap";
+import { Dropdown, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
 import {
+    Badge,
     Flex,
     FlexItem,
     Icon,

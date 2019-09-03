@@ -10,8 +10,7 @@
  */
 
 import React from "react";
-import { Badge } from "react-bootstrap";
-import { InputError } from "../../../base";
+import { Badge, InputError } from "../../../base";
 
 /**
  * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.

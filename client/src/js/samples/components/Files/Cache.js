@@ -1,8 +1,8 @@
 import { map } from "lodash-es";
 import React from "react";
-import { ListGroup, Panel } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { NoneFound } from "../../../base";
+import { NoneFound, Panel } from "../../../base";
 import SampleCacheItem from "./CacheItem";
 
 export const SampleFilesCache = ({ caches }) => {

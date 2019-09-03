@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, ButtonToolbar, Modal } from "react-bootstrap";
+import { ButtonToolbar, Modal } from "react-bootstrap";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Button } from "../../base";
+import { Alert, Button } from "../../base";
 import { getTargetChange } from "../../utils/utils";
 import ReferenceForm from "./Form";
 
@@ -51,7 +51,7 @@ export class CreateReference extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
-                    <Alert bsStyle="info">
+                    <Alert>
                         <strong>Create an empty reference.</strong>
                     </Alert>
                     <ReferenceForm state={this.state} onChange={this.handleChange} />

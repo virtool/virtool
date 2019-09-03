@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Badge } from "react-bootstrap";
+import { Badge } from "../../base";
 import Contributors from "./Contributors";
 import IndexOTUs from "./OTUs";
 
@@ -15,15 +15,17 @@ const StyledPanelBadgeHeader = styled.div`
 
 export const PanelBadgeHeader = ({ title, count }) => (
     <StyledPanelBadgeHeader>
-        <span>{title}</span>
-        <Badge>{count}</Badge>
+        <span>
+            <span>{title} </span>
+            <Badge>{count}</Badge>
+        </span>
     </StyledPanelBadgeHeader>
 );
 
 export const IndexGeneral = () => (
     <div>
-        <IndexOTUs />
         <Contributors />
+        <IndexOTUs />
     </div>
 );
 

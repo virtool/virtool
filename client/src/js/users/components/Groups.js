@@ -1,10 +1,10 @@
-import React from "react";
 import { includes, map, xor } from "lodash-es";
+import React from "react";
+import { Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Row, Panel } from "react-bootstrap";
-import { LoadingPlaceholder, NoneFound } from "../../base";
-import { editUser } from "../actions";
+import { LoadingPlaceholder, NoneFound, Panel } from "../../base";
 import { listGroups } from "../../groups/actions";
+import { editUser } from "../actions";
 import { UserGroup } from "./Group";
 
 export class UserGroups extends React.Component {

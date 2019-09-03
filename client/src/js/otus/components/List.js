@@ -1,9 +1,8 @@
 import { push } from "connected-react-router";
 import React from "react";
-import { Alert } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
+import { Icon, LoadingPlaceholder, NoneFound, ScrollList, WarningAlert } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 import { getTerm } from "../selectors";
@@ -19,8 +18,6 @@ class OTUsList extends React.Component {
     renderRow = index => <OTUItem key={index} index={index} />;
 
     render() {
-        const { canBuild } = this.props;
-
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
@@ -33,18 +30,16 @@ class OTUsList extends React.Component {
 
         let alert;
 
-        if (this.props.unbuiltChangeCount && canBuild) {
+        if (this.props.showAlert) {
             alert = (
-                <Alert bsStyle="warning">
-                    <Flex alignItems="center">
-                        <Icon name="info-circle" />
-                        <FlexItem pad={5}>
-                            <span>There are unbuilt changes. </span>
-                            <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>
-                            <span> to use the changes in future analyses.</span>
-                        </FlexItem>
-                    </Flex>
-                </Alert>
+                <WarningAlert level>
+                    <Icon name="info-circle" />
+                    <span>
+                        <span>There are unbuilt changes. </span>
+                        <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>
+                        <span> to use the changes in future analyses.</span>
+                    </span>
+                </WarningAlert>
             );
         }
 
@@ -75,10 +70,9 @@ class OTUsList extends React.Component {
 const mapStateToProps = state => ({
     ...state.otus,
     term: getTerm(state),
-    unbuiltChangeCount: state.references.detail.unbuilt_change_count,
     refId: state.references.detail.id,
-    verified: state.otus.verified,
-    canBuild: checkRefRight(state, "build")
+    showAlert: state.references.detail.unbuilt_change_count && checkRefRight(state, "build"),
+    verified: state.otus.verified
 });
 
 const mapDispatchToProps = dispatch => ({

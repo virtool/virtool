@@ -2,24 +2,13 @@
 
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Host
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Malus domestica
         </td>
       </tr>
@@ -41,31 +30,20 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Uncontrolled(Panel)>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Library
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Encoding
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             Sanger / Illumina 2.1
           </td>
         </tr>
@@ -111,32 +89,21 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
+  </Panel>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Subtraction
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -146,31 +113,20 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
+  </Panel>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Host
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Malus domestica
         </td>
       </tr>
@@ -192,31 +148,20 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Uncontrolled(Panel)>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Library
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Encoding
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             Sanger / Illumina 2.1
           </td>
         </tr>
@@ -262,32 +207,21 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
+  </Panel>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Subtraction
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -297,31 +231,20 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
+  </Panel>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Host
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Malus domestica
         </td>
       </tr>
@@ -343,31 +266,20 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Uncontrolled(Panel)>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Library
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Encoding
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             Sanger / Illumina 2.1
           </td>
         </tr>
@@ -413,32 +325,21 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
+  </Panel>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Subtraction
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -448,31 +349,20 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
+  </Panel>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
 <div>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <tbody>
       <tr>
-        <th
-          className="col-xs-4"
-        >
+        <th>
           Host
         </th>
-        <td
-          className="col-xs-8"
-        >
+        <td>
           Malus domestica
         </td>
       </tr>
@@ -494,31 +384,20 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Uncontrolled(Panel)>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Library
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Encoding
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             Sanger / Illumina 2.1
           </td>
         </tr>
@@ -564,32 +443,21 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
-  <Uncontrolled(Panel)>
+  </Panel>
+  <Panel>
     <PanelHeading
       bsClass="panel"
       componentClass="div"
     >
       Subtraction
     </PanelHeading>
-    <Table
-      bordered={true}
-      bsClass="table"
-      condensed={false}
-      hover={false}
-      responsive={false}
-      striped={false}
-    >
+    <Table>
       <tbody>
         <tr>
-          <th
-            className="col-xs-4"
-          >
+          <th>
             Host
           </th>
-          <td
-            className="col-xs-8"
-          >
+          <td>
             <Link
               to="/subtraction/Arabidopsis thaliana"
             >
@@ -599,7 +467,7 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Uncontrolled(Panel)>
+  </Panel>
   <Connect(EditSample) />
 </div>
 `;

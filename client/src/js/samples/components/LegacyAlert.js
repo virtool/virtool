@@ -2,9 +2,9 @@ import { connect } from "react-redux";
 import { get, last } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { Alert, ProgressBar } from "react-bootstrap";
+import { ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Box, BoxTitle } from "../../base";
+import { Box, BoxTitle, WarningAlert } from "../../base";
 import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`
@@ -48,7 +48,7 @@ export const SampleFilesJobMessage = ({ job }) => {
 };
 
 export const SampleFilesLegacyAlert = () => (
-    <Alert bsStyle="warning">
+    <WarningAlert block>
         <p className="text-strong">
             Virtool now retains raw data for newly created samples instead of trimming during sample creation.
         </p>
@@ -66,7 +66,7 @@ export const SampleFilesLegacyAlert = () => (
                 More information
             </a>
         </p>
-    </Alert>
+    </WarningAlert>
 );
 
 export const SampleFilesMessage = ({ job, showJob, showLegacy }) => {

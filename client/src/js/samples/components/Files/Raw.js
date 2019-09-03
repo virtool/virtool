@@ -1,11 +1,11 @@
 import { map, snakeCase } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { ListGroup, Panel } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
+import { Icon, Panel } from "../../../base";
 import { replaceLegacyFiles } from "../../actions";
 import { getIsReadyToReplace } from "../../selectors";
-import { Icon } from "../../../base";
 import SampleRawItem from "./RawItem";
 
 const SampleFilesRawHeader = styled(Panel.Heading)`

@@ -14,7 +14,7 @@ const StyledAnalysisMappingReference = styled.div`
     flex: 0 0 auto;
     margin-left: 10px;
 
-    .label {
+    ${Label} {
         margin-left: 5px;
     }
 `;

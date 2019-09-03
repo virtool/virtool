@@ -44,14 +44,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
       </FlexItem>
     </Flex>
   </ViewHeader>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <tbody>
       <tr>
         <th>
@@ -86,10 +79,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
       Linked Samples
     </strong>
      
-    <Badge
-      bsClass="badge"
-      pullRight={false}
-    >
+    <Badge>
       1
     </Badge>
   </h4>

@@ -1,9 +1,19 @@
 import React from "react";
 import { connect } from "react-redux";
 import { map, forEach, some, xorBy } from "lodash-es";
-import { Badge, Modal, ListGroup, Col } from "react-bootstrap";
+import { Modal, ListGroup, Col } from "react-bootstrap";
 import { pushState } from "../../app/actions";
-import { AlgorithmSelect, Button, Label, ListGroupItem, NoneFound, Checkbox, FlexItem, Flex } from "../../base/index";
+import {
+    AlgorithmSelect,
+    Badge,
+    Button,
+    Label,
+    ListGroupItem,
+    NoneFound,
+    Checkbox,
+    FlexItem,
+    Flex
+} from "../../base/index";
 import { getSelectedDocuments } from "../../samples/selectors";
 import { analyze } from "../actions";
 

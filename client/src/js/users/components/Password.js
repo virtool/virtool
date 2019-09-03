@@ -9,13 +9,13 @@
  * @exports AdminChangePassword
  */
 
-import React from "react";
 import CX from "classnames";
-import { connect } from "react-redux";
-import { ButtonToolbar, Col, Panel, Row } from "react-bootstrap";
 import { find, get } from "lodash-es";
+import React from "react";
+import { ButtonToolbar, Col, Row } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Button, Checkbox, DangerAlert, InputError, Panel, RelativeTime, SaveButton } from "../../base";
 import { editUser } from "../actions";
-import { Alert, Button, SaveButton, Checkbox, InputError, RelativeTime } from "../../base";
 
 const getInitialState = ({ lastPasswordChange }) => ({
     password: "",
@@ -163,7 +163,7 @@ export class Password extends React.Component {
                         </Row>
                     </form>
 
-                    {error ? <Alert bsStyle="danger">{error}</Alert> : null}
+                    {error ? <DangerAlert>{error}</DangerAlert> : null}
                 </Panel.Body>
             </Panel>
         );

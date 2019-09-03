@@ -1,14 +1,18 @@
 import React from "react";
-import { Alert } from "./Alert";
+import styled from "styled-components";
+import { DangerAlert } from "./Alert";
 import { Button } from "./Button";
 
+const StyledRemoveBanner = styled(DangerAlert)`
+    align-items: center;
+    justify-content: space-between;
+`;
+
 export const RemoveBanner = ({ message, buttonText, onClick }) => (
-    <Alert bsStyle="danger">
-        <div style={{ textAlign: "right" }}>
-            <span style={{ float: "left", marginTop: "7px" }}>{message}</span>
-            <Button bsStyle="danger" onClick={onClick}>
-                {buttonText}
-            </Button>
-        </div>
-    </Alert>
+    <StyledRemoveBanner>
+        <span>{message}</span>
+        <Button bsStyle="danger" onClick={onClick}>
+            {buttonText}
+        </Button>
+    </StyledRemoveBanner>
 );

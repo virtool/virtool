@@ -2,21 +2,21 @@
 
 exports[`<IndexGeneral /> should render 1`] = `
 <div>
-  <Connect(IndexOTUs) />
   <Connect(Contributors) />
+  <Connect(IndexOTUs) />
 </div>
 `;
 
 exports[`<PanelBadgeHeader /> should render with title 'Foo' and count of 23 1`] = `
 <General__StyledPanelBadgeHeader>
   <span>
-    Foo
+    <span>
+      Foo
+       
+    </span>
+    <Badge>
+      23
+    </Badge>
   </span>
-  <Badge
-    bsClass="badge"
-    pullRight={false}
-  >
-    23
-  </Badge>
 </General__StyledPanelBadgeHeader>
 `;

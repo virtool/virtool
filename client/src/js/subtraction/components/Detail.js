@@ -4,10 +4,21 @@ import { map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Col, Row, Table } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader, NotFound } from "../../base";
+import {
+    Badge,
+    Button,
+    Flex,
+    FlexItem,
+    Icon,
+    LoadingPlaceholder,
+    NoneFound,
+    Table,
+    ViewHeader,
+    NotFound
+} from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
@@ -94,7 +105,7 @@ export class SubtractionDetail extends React.Component {
                         </Flex>
                     </ViewHeader>
 
-                    <Table bordered>
+                    <Table>
                         <tbody>
                             <tr>
                                 <th>Nickname</th>

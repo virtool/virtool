@@ -2,6 +2,7 @@
 
 exports[`<AnalysesList /> renders 1`] = `
 <div>
+  <Connect(AnalysisHMMAlert) />
   <Connect(AnalysesToolbar) />
   <ListGroup
     bsClass="list-group"

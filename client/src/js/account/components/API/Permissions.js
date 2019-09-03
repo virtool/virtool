@@ -1,10 +1,9 @@
-import React from "react";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
 import { map, sortBy } from "lodash-es";
-import { ListGroup, Panel } from "react-bootstrap";
-
-import { ListGroupItem, Checkbox } from "../../../base/index";
+import PropTypes from "prop-types";
+import React from "react";
+import { ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Checkbox, ListGroupItem, Panel } from "../../../base";
 
 export const APIPermissions = ({ administrator, style, userPermissions, keyPermissions, onChange }) => {
     const permissions = map(keyPermissions, (value, key) => ({

@@ -1,14 +1,14 @@
 import { get } from "lodash-es";
 import React, { useEffect } from "react";
-import { Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 import {
-    SubviewHeader,
-    SubviewHeaderTitle,
-    SubviewHeaderAttribution,
     LoadingPlaceholder,
     NotFound,
-    RelativeTime
+    Panel,
+    RelativeTime,
+    SubviewHeader,
+    SubviewHeaderAttribution,
+    SubviewHeaderTitle
 } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";

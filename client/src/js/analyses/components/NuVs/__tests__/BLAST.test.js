@@ -1,4 +1,5 @@
-import { BLASTInProgress, BLASTResults, NuVsBLAST } from "../BLAST";
+import { BLASTButton, BLASTResults, NuVsBLAST } from "../BLAST";
+import { BLASTInProgress } from "../BLASTInProgress";
 
 describe("<BLASTInProgress />", () => {
     it.each(["ABC123", null])("should render when [rid=%p]", rid => {
@@ -85,7 +86,7 @@ describe("<NuVsBLAST />", () => {
     it("should call blastNuvs() when BLAST button clicked", () => {
         props.blast = null;
         const wrapper = shallow(<NuVsBLAST {...props} />);
-        wrapper.find("Button").simulate("click");
+        wrapper.find(BLASTButton).simulate("click");
         expect(props.onBlast).toHaveBeenCalledWith(props.analysisId, props.sequenceIndex);
     });
 });

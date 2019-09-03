@@ -1,8 +1,8 @@
-import React from "react";
 import numbro from "numbro";
-import { Panel, Table } from "react-bootstrap";
+import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
+import { Panel, Table } from "../../base";
 import EditSample from "./Edit";
 
 export const SampleDetailGeneral = ({
@@ -18,11 +18,11 @@ export const SampleDetailGeneral = ({
     srna
 }) => (
     <div>
-        <Table bordered>
+        <Table>
             <tbody>
                 <tr>
-                    <th className="col-xs-4">Host</th>
-                    <td className="col-xs-8">{host}</td>
+                    <th>Host</th>
+                    <td>{host}</td>
                 </tr>
                 <tr>
                     <th>Isolate</th>
@@ -37,11 +37,11 @@ export const SampleDetailGeneral = ({
 
         <Panel>
             <Panel.Heading>Library</Panel.Heading>
-            <Table bordered>
+            <Table>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Encoding</th>
-                        <td className="col-xs-8">{encoding}</td>
+                        <th>Encoding</th>
+                        <td>{encoding}</td>
                     </tr>
                     <tr>
                         <th>Read Count</th>
@@ -69,11 +69,11 @@ export const SampleDetailGeneral = ({
 
         <Panel>
             <Panel.Heading>Subtraction</Panel.Heading>
-            <Table bordered>
+            <Table>
                 <tbody>
                     <tr>
-                        <th className="col-xs-4">Host</th>
-                        <td className="col-xs-8">
+                        <th>Host</th>
+                        <td>
                             <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
                         </td>
                     </tr>

@@ -1,11 +1,11 @@
-import React from "react";
-import { connect } from "react-redux";
-import { Switch, Redirect, Route } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
+import React from "react";
+import { Breadcrumb } from "react-bootstrap";
+import { connect } from "react-redux";
+import { LinkContainer } from "react-router-bootstrap";
+import { Redirect, Route, Switch } from "react-router-dom";
+import { Badge, LoadingPlaceholder, NotFound, RelativeTime, TabLink, Tabs, ViewHeader } from "../../base";
 import { getIndex, getIndexHistory } from "../actions";
-import { LoadingPlaceholder, ViewHeader, RelativeTime, NotFound, TabLink, Tabs } from "../../base";
 import IndexChanges from "./Changes";
 import IndexGeneral from "./General";
 

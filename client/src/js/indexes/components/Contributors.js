@@ -1,16 +1,23 @@
 import { map } from "lodash-es";
 import React from "react";
-import { Badge, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
+import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
+import { Badge, Panel } from "../../base";
 import { PanelBadgeHeader } from "./General";
 
+const StyledContributor = styled(ListGroupItem)`
+    display: flex;
+    justify-content: space-between;
+`;
+
 export const Contributor = ({ id, count }) => (
-    <ListGroupItem key={id}>
+    <StyledContributor key={id}>
         {id}
         <Badge>
             {count} change{count === 1 ? "" : "s"}
         </Badge>
-    </ListGroupItem>
+    </StyledContributor>
 );
 
 export const Contributors = ({ contributors }) => {

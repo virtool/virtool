@@ -30,8 +30,8 @@ export const AnalysisItem = props => {
 
     const reference = props.placeholder ? null : (
         <span>
-            {props.reference.name}
-            <Label style={{ marginLeft: "5px" }}>{props.index.version}</Label>
+            <span>{props.reference.name} </span>
+            <Label>{props.index.version}</Label>
         </span>
     );
 

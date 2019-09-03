@@ -37,14 +37,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
   <label>
     Header Fields
   </label>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <thead>
       <tr>
         <th>
@@ -128,14 +121,7 @@ exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
   <label>
     Header Fields
   </label>
-  <Table
-    bordered={true}
-    bsClass="table"
-    condensed={false}
-    hover={false}
-    responsive={false}
-    striped={false}
-  >
+  <Table>
     <thead>
       <tr>
         <th>

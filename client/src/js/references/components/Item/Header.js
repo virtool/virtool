@@ -1,9 +1,8 @@
-import React from "react";
 import PropTypes from "prop-types";
-import styled from "styled-components";
-import { Panel } from "react-bootstrap";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Icon, RelativeTime } from "../../../base";
+import styled from "styled-components";
+import { Icon, Panel, RelativeTime } from "../../../base";
 
 const ReferenceItemHeaderLink = styled(Link)`
     font-weight: bold;

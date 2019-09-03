@@ -6,7 +6,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { Table, Well } from "react-bootstrap";
+import { Well } from "react-bootstrap";
+import { Table } from "../../../base";
 
 export default function NuVsExportPreview({ mode }) {
     let previewHeader = ">sequence_1|17SP002|RNA Polymerase";
@@ -52,7 +53,7 @@ export default function NuVsExportPreview({ mode }) {
             </Well>
 
             <label>Header Fields</label>
-            <Table bordered>
+            <Table>
                 <thead>
                     <tr>
                         <th>Name</th>

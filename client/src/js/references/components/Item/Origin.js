@@ -18,7 +18,7 @@ export const ReferenceItemOrigin = ({ clonedFrom, importedFrom, remotesFrom }) =
     if (importedFrom) {
         return (
             <tr>
-                <td>Imported From</td>
+                <th>Imported From</th>
                 <td>{importedFrom.name}</td>
             </tr>
         );

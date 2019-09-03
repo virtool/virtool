@@ -1,9 +1,9 @@
 import { push } from "connected-react-router";
 import { filter, find, get, includes, map, sortBy, transform } from "lodash-es";
 import React from "react";
-import { Col, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { Col, InputGroup, ListGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { AutoProgressBar, Button, Icon, InputError, Label, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { AutoProgressBar, Button, Icon, InputError, Label, ListGroupItem, LoadingPlaceholder, Panel } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
@@ -89,7 +89,7 @@ class Groups extends React.Component {
 
         if (members && members.length) {
             memberComponents = map(members, member => (
-                <Label key={member.id} style={{ marginRight: "5px" }}>
+                <Label key={member.id} spaced>
                     {member.id}
                 </Label>
             ));

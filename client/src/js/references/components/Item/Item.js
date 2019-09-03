@@ -1,12 +1,24 @@
 import React from "react";
 import styled from "styled-components";
-import { Panel, Table } from "react-bootstrap";
 import { connect } from "react-redux";
-import { ProgressBar } from "../../../base";
+import { Panel, ProgressBar, Table } from "../../../base";
 import { getReferenceItemProgress } from "../../selectors";
 import { ReferenceItemHeader } from "./Header";
 import { ReferenceItemOrigin } from "./Origin";
 import { ReferenceItemBuild } from "./Build";
+
+const ReferenceItemTable = styled(Table)`
+    tr {
+        td,
+        th {
+            min-width: 70px;
+        }
+
+        &:first-child {
+            border-top: 1px solid #dddddd;
+        }
+    }
+`;
 
 const StyledReferenceItem = styled(Panel)`
     box-shadow: 1px 1px 2px 0 #d5d5d5;
@@ -45,7 +57,7 @@ export const ReferenceItem = ({
         <StyledReferenceItem>
             <div>
                 <ReferenceItemHeader id={id} createdAt={createdAt} name={name} userId={userId} />
-                <Table>
+                <ReferenceItemTable>
                     <tbody>
                         <tr>
                             <th>Organism</th>
@@ -58,7 +70,7 @@ export const ReferenceItem = ({
                         />
                         <ReferenceItemBuild id={id} latestBuild={latestBuild} progress={progress} />
                     </tbody>
-                </Table>
+                </ReferenceItemTable>
             </div>
             <ProgressBar bsStyle={progress === 100 ? "success" : "warning"} now={progress} affixed />
         </StyledReferenceItem>

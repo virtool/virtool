@@ -1,17 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMPurge /> should not render purge button when [canPurge=false] 1`] = `
-<Alert
-  bsStyle="warning"
-  icon="exclamation-circle"
+<Alert__WarningAlert
+  level={true}
 >
-  <strong>
-    You do not have permission to modify HMMs.
-  </strong>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="exclamation-circle"
+    pullRight={false}
+  />
   <span>
-     Contact an administrator.
+    <strong>
+      You do not have permission to modify HMMs.
+    </strong>
+    <span>
+       Contact an administrator.
+    </span>
   </span>
-</Alert>
+</Alert__WarningAlert>
 `;
 
 exports[`<HMMPurge /> should render purge button when [canPurge=true] 1`] = `

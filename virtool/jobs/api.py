@@ -1,9 +1,9 @@
 import os
 
-import virtool.jobs.db
 import virtool.http.routes
-import virtool.jobs
+import virtool.jobs.db
 import virtool.resources
+import virtool.users.db
 import virtool.utils
 from virtool.api import compose_regex_query, conflict, json_response, no_content, not_found, paginate
 
@@ -34,6 +34,7 @@ async def find(req):
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])
+    data["documents"] = await virtool.users.db.attach_identicons_to_documents(db, data["documents"])
 
     return json_response(data)
 

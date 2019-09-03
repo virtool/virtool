@@ -11,7 +11,7 @@ exports[`<Email /> should render with error in props 1`] = `
     lg={6}
     md={8}
   >
-    <Uncontrolled(Panel)
+    <Panel
       bsStyle="default"
     >
       <PanelHeading
@@ -59,7 +59,7 @@ exports[`<Email /> should render with error in props 1`] = `
           </div>
         </form>
       </PanelBody>
-    </Uncontrolled(Panel)>
+    </Panel>
   </Col>
 </Row>
 `;
@@ -75,7 +75,7 @@ exports[`<Email /> should render with error in state 1`] = `
     lg={6}
     md={8}
   >
-    <Uncontrolled(Panel)
+    <Panel
       bsStyle="danger"
     >
       <PanelHeading
@@ -123,7 +123,7 @@ exports[`<Email /> should render with error in state 1`] = `
           </div>
         </form>
       </PanelBody>
-    </Uncontrolled(Panel)>
+    </Panel>
   </Col>
 </Row>
 `;
@@ -139,7 +139,7 @@ exports[`<Email /> should render with initial email 1`] = `
     lg={6}
     md={8}
   >
-    <Uncontrolled(Panel)
+    <Panel
       bsStyle="default"
     >
       <PanelHeading
@@ -187,7 +187,7 @@ exports[`<Email /> should render with initial email 1`] = `
           </div>
         </form>
       </PanelBody>
-    </Uncontrolled(Panel)>
+    </Panel>
   </Col>
 </Row>
 `;
@@ -203,7 +203,7 @@ exports[`<Email /> should render without initial email 1`] = `
     lg={6}
     md={8}
   >
-    <Uncontrolled(Panel)
+    <Panel
       bsStyle="default"
     >
       <PanelHeading
@@ -251,7 +251,7 @@ exports[`<Email /> should render without initial email 1`] = `
           </div>
         </form>
       </PanelBody>
-    </Uncontrolled(Panel)>
+    </Panel>
   </Col>
 </Row>
 `;
