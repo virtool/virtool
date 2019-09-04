@@ -1,11 +1,10 @@
 import { map, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Checkbox, ListGroupItem, Panel } from "../../../base";
+import { BoxGroup, BoxGroupSection, Checkbox } from "../../../base";
 
-export const APIPermissions = ({ administrator, style, userPermissions, keyPermissions, onChange }) => {
+export const APIPermissions = ({ administrator, className, userPermissions, keyPermissions, onChange }) => {
     const permissions = map(keyPermissions, (value, key) => ({
         name: key,
         allowed: value
@@ -15,22 +14,18 @@ export const APIPermissions = ({ administrator, style, userPermissions, keyPermi
         const disabled = !administrator && !userPermissions[permission.name];
 
         return (
-            <ListGroupItem
+            <BoxGroupSection
                 key={permission.name}
                 onClick={disabled ? null : () => onChange(permission.name, !permission.allowed)}
                 disabled={disabled}
             >
                 <code>{permission.name}</code>
                 <Checkbox checked={permission.allowed} pullRight />
-            </ListGroupItem>
+            </BoxGroupSection>
         );
     });
 
-    return (
-        <Panel style={style}>
-            <ListGroup>{rowComponents}</ListGroup>
-        </Panel>
-    );
+    return <BoxGroup className={className}>{rowComponents}</BoxGroup>;
 };
 
 APIPermissions.propTypes = {
@@ -38,7 +33,7 @@ APIPermissions.propTypes = {
     userPermissions: PropTypes.object.isRequired,
     keyPermissions: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
-    style: PropTypes.object
+    className: PropTypes.string
 };
 
 const mapStateToProps = state => ({

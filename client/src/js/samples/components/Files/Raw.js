@@ -1,14 +1,13 @@
 import { map, snakeCase } from "lodash-es";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Icon, Panel } from "../../../base";
+import { BoxGroup, BoxGroupHeader, Icon } from "../../../base";
 import { replaceLegacyFiles } from "../../actions";
 import { getIsReadyToReplace } from "../../selectors";
 import SampleRawItem from "./RawItem";
 
-const SampleFilesRawHeader = styled(Panel.Heading)`
+const SampleFilesRawTitle = styled.h2`
     display: flex;
     justify-content: space-between;
 
@@ -33,13 +32,16 @@ export const SampleFilesRaw = ({ id, files, isReadyToReplace, prefix, onReplace 
     }
 
     return (
-        <Panel>
-            <SampleFilesRawHeader>
-                <strong>Raw Data</strong>
-                {replaceLink}
-            </SampleFilesRawHeader>
-            <ListGroup>{fileComponents}</ListGroup>
-        </Panel>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <SampleFilesRawTitle>
+                    Raw Data
+                    {replaceLink}
+                </SampleFilesRawTitle>
+                <p>The input sequencing data used to create this sample.</p>
+            </BoxGroupHeader>
+            {fileComponents}
+        </BoxGroup>
     );
 };
 

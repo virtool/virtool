@@ -18,6 +18,10 @@ const StyledJobStepTimestamp = styled.div`
     }
 `;
 
+const JobStepLoader = styled(Loader)`
+    padding: 0 1.5px;
+`;
+
 const JobStepTimestamp = ({ timestamp }) => (
     <StyledJobStepTimestamp>
         <Icon name="clock" />
@@ -54,7 +58,7 @@ export const JobStepIcon = ({ complete, state }) => {
     }
 
     if (state === "running") {
-        return <Loader size="12px" color="#07689d" style={{ padding: "0 1.5px" }} />;
+        return <JobStepLoader size="12px" color="#07689d" />;
     }
 
     if (state === "complete") {

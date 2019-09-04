@@ -5,7 +5,7 @@ import { findJobs } from "../actions";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { getTerm } from "../selectors";
 import JobsToolbar from "./Toolbar";
-import Job from "./Entry";
+import Job from "./Item";
 
 export class JobsList extends React.Component {
     componentDidMount() {

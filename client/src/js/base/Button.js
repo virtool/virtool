@@ -1,17 +1,42 @@
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
 import CX from "classnames";
+import { NavLink } from "react-router-dom";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { Icon } from "./Icon";
 import { bsStyles } from "./utils";
 
-/**
- * A extension of the <Button /> component from react-bootstrap. Adds the features:
- *  - blur on click
- *  - optional tooltip
- *
- * @class
- */
+const StyledLinkButton = styled(NavLink)`
+    align-items: center;
+    background-color: #07689d;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    text-align: center;
+    white-space: nowrap;
+    user-select: none;
+    text-decoration: none !important;
+
+    &:hover {
+        background-color: #05486c;
+        border-color: #03314a;
+        color: #ffffff;
+    }
+
+    &:focus {
+        color: #ffffff;
+    }
+`;
+
+export const LinkButton = ({ children, className, to }) => (
+    <StyledLinkButton className={className} to={to} activeClassName="active">
+        {children}
+    </StyledLinkButton>
+);
+
 export class Button extends React.Component {
     static propTypes = {
         bsStyle: PropTypes.oneOf(bsStyles),
@@ -43,7 +68,7 @@ export class Button extends React.Component {
     };
 
     render() {
-        const className = CX("btn", `btn-${this.props.bsStyle}`, this.props.className, {
+        const className = CX("btn", `btn-${this.props.bsStyle}`, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
             active: this.props.active,

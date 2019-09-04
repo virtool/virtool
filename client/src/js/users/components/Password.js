@@ -12,9 +12,9 @@
 import CX from "classnames";
 import { find, get } from "lodash-es";
 import React from "react";
-import { ButtonToolbar, Col, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, DangerAlert, InputError, Panel, RelativeTime, SaveButton } from "../../base";
+import { Button, ButtonToolbar, Checkbox, DangerAlert, InputError, Panel, RelativeTime, SaveButton } from "../../base";
 import { editUser } from "../actions";
 
 const getInitialState = ({ lastPasswordChange }) => ({
@@ -148,7 +148,7 @@ export class Password extends React.Component {
                             </Col>
 
                             <Col xs={12} md={6}>
-                                <ButtonToolbar className="pull-right">
+                                <ButtonToolbar>
                                     <Button type="button" onClick={this.handleClear}>
                                         Clear
                                     </Button>

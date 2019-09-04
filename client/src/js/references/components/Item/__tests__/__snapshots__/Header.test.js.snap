@@ -1,11 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceItemHeader /> should render 1`] = `
-<PanelHeading
-  bsClass="panel"
-  componentClass="div"
->
-  <Header__ReferenceItemHeaderTitle>
+<Box__BoxGroupHeader>
+  <h2>
     <Header__ReferenceItemHeaderLink
       to="/refs/foo"
     >
@@ -30,14 +27,14 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
         tip="Clone"
       />
     </Link>
-  </Header__ReferenceItemHeaderTitle>
-  <small>
+  </h2>
+  <p>
     Created 
     <RelativeTime
       time="2018-01-01T00:00:00.000000Z"
     />
      by 
     bob
-  </small>
-</PanelHeading>
+  </p>
+</Box__BoxGroupHeader>
 `;

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { find, includes } from "lodash-es";
 import { useDropzone } from "react-dropzone";
 
-import { Flex, FlexItem, Icon, ProgressBar } from "../../../base";
+import { BoxGroupSection, Flex, FlexItem, Icon, ProgressBar } from "../../../base";
 import { byteSize, createRandomString } from "../../../utils/utils";
 import { uploadSampleFile } from "../../actions";
 
@@ -55,12 +55,8 @@ const SampleRawItem = props => {
 
     const { getRootProps } = useDropzone({ onDrop: files => onDrop(sampleId, suffix, files[0]) });
 
-    const rootProps = getRootProps({
-        className: "list-group-item"
-    });
-
     return (
-        <div {...rootProps}>
+        <BoxGroupSection {...getRootProps()}>
             <SampleRawItemProgress upload={upload} />
             <Flex alignItems="flex-start" justifyContent="space-between">
                 <FlexItem>
@@ -89,7 +85,7 @@ const SampleRawItem = props => {
                     </div>
                 </FlexItem>
             </Flex>
-        </div>
+        </BoxGroupSection>
     );
 };
 

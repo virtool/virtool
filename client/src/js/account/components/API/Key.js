@@ -1,10 +1,11 @@
-import React from "react";
-import Moment from "moment";
-import { connect } from "react-redux";
 import { isEqual, reduce } from "lodash-es";
-import { ButtonToolbar, Col, Row } from "react-bootstrap";
+import Moment from "moment";
+import React from "react";
+import styled from "styled-components";
+import { Col, Row } from "react-bootstrap";
+import { connect } from "react-redux";
 
-import { Button, ListGroupItem, RelativeTime } from "../../../base/index";
+import { Button, ButtonToolbar, RelativeTime, SpacedBox } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
 
@@ -13,6 +14,10 @@ export const getInitialState = ({ apiKey }) => ({
     changed: false,
     permissions: apiKey.permissions
 });
+
+const KeyAPIPermissions = styled(APIPermissions)`
+    margin-top: 15px;
+`;
 
 export class APIKey extends React.Component {
     constructor(props) {
@@ -50,8 +55,7 @@ export class APIKey extends React.Component {
                 <div>
                     <Row>
                         <Col xs={12}>
-                            <APIPermissions
-                                style={{ marginTop: "15px" }}
+                            <KeyAPIPermissions
                                 userPermissions={this.props.permissions}
                                 keyPermissions={this.state.permissions}
                                 onChange={this.onPermissionChange}
@@ -60,7 +64,7 @@ export class APIKey extends React.Component {
                     </Row>
                     <Row>
                         <Col xs={12}>
-                            <ButtonToolbar className="pull-right">
+                            <ButtonToolbar>
                                 <Button
                                     bsStyle="danger"
                                     icon="trash"
@@ -92,7 +96,7 @@ export class APIKey extends React.Component {
         const permissionCount = reduce(this.props.apiKey.permissions, (result, value) => result + (value ? 1 : 0), 0);
 
         return (
-            <ListGroupItem key={this.props.apiKey.id} className="spaced" onClick={this.state.in ? null : this.toggleIn}>
+            <SpacedBox key={this.props.apiKey.id} onClick={this.state.in ? null : this.toggleIn}>
                 <Row>
                     <Col xs={4}>
                         <strong>{this.props.apiKey.name}</strong>
@@ -115,7 +119,7 @@ export class APIKey extends React.Component {
                 </Row>
 
                 {lower}
-            </ListGroupItem>
+            </SpacedBox>
         );
     }
 }

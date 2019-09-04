@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { Panel, ProgressBar, Table } from "../../../base";
+import { BoxGroup, ProgressBar, Table } from "../../../base";
 import { getReferenceItemProgress } from "../../selectors";
 import { ReferenceItemHeader } from "./Header";
 import { ReferenceItemOrigin } from "./Origin";
@@ -20,7 +20,7 @@ const ReferenceItemTable = styled(Table)`
     }
 `;
 
-const StyledReferenceItem = styled(Panel)`
+const StyledReferenceItem = styled(BoxGroup)`
     box-shadow: 1px 1px 2px 0 #d5d5d5;
     display: flex;
     flex-direction: column;
@@ -55,23 +55,21 @@ export const ReferenceItem = ({
 }) => {
     return (
         <StyledReferenceItem>
-            <div>
-                <ReferenceItemHeader id={id} createdAt={createdAt} name={name} userId={userId} />
-                <ReferenceItemTable>
-                    <tbody>
-                        <tr>
-                            <th>Organism</th>
-                            <td className="text-capitalize">{organism || "unknown"}</td>
-                        </tr>
-                        <ReferenceItemOrigin
-                            clonedFrom={clonedFrom}
-                            importedFrom={importedFrom}
-                            remotesFrom={remotesFrom}
-                        />
-                        <ReferenceItemBuild id={id} latestBuild={latestBuild} progress={progress} />
-                    </tbody>
-                </ReferenceItemTable>
-            </div>
+            <ReferenceItemHeader id={id} createdAt={createdAt} name={name} userId={userId} />
+            <ReferenceItemTable>
+                <tbody>
+                    <tr>
+                        <th>Organism</th>
+                        <td className="text-capitalize">{organism || "unknown"}</td>
+                    </tr>
+                    <ReferenceItemOrigin
+                        clonedFrom={clonedFrom}
+                        importedFrom={importedFrom}
+                        remotesFrom={remotesFrom}
+                    />
+                    <ReferenceItemBuild id={id} latestBuild={latestBuild} progress={progress} />
+                </tbody>
+            </ReferenceItemTable>
             <ProgressBar bsStyle={progress === 100 ? "success" : "warning"} now={progress} affixed />
         </StyledReferenceItem>
     );

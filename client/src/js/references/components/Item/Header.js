@@ -2,30 +2,24 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Icon, Panel, RelativeTime } from "../../../base";
+import { BoxGroupHeader, Icon, RelativeTime } from "../../../base";
 
 const ReferenceItemHeaderLink = styled(Link)`
     font-weight: bold;
 `;
 
-const ReferenceItemHeaderTitle = styled.div`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-`;
-
 export const ReferenceItemHeader = ({ createdAt, id, name, userId }) => (
-    <Panel.Heading>
-        <ReferenceItemHeaderTitle>
+    <BoxGroupHeader>
+        <h2>
             <ReferenceItemHeaderLink to={`/refs/${id}`}>{name}</ReferenceItemHeaderLink>
             <Link to={{ state: { newReference: true, cloneReference: true, id } }}>
                 <Icon name="clone" tip="Clone" />
             </Link>
-        </ReferenceItemHeaderTitle>
-        <small>
+        </h2>
+        <p>
             Created <RelativeTime time={createdAt} /> by {userId}
-        </small>
-    </Panel.Heading>
+        </p>
+    </BoxGroupHeader>
 );
 
 ReferenceItemHeader.propTypes = {

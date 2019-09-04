@@ -2,54 +2,52 @@
 
 exports[`<Item /> should render when [organism='virus'] and [progress=32] 1`] = `
 <Item__StyledReferenceItem>
-  <div>
-    <ReferenceItemHeader
-      createdAt="2018-01-01T00:00:00.000000Z"
-      id="foo"
-      name="Foo"
-      userId="bob"
-    />
-    <Item__ReferenceItemTable>
-      <tbody>
-        <tr>
-          <th>
-            Organism
-          </th>
-          <td
-            className="text-capitalize"
-          >
-            virus
-          </td>
-        </tr>
-        <ReferenceItemOrigin
-          clonedFrom={
-            Object {
-              "id": "clonedFrom",
-            }
+  <ReferenceItemHeader
+    createdAt="2018-01-01T00:00:00.000000Z"
+    id="foo"
+    name="Foo"
+    userId="bob"
+  />
+  <Item__ReferenceItemTable>
+    <tbody>
+      <tr>
+        <th>
+          Organism
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          virus
+        </td>
+      </tr>
+      <ReferenceItemOrigin
+        clonedFrom={
+          Object {
+            "id": "clonedFrom",
           }
-          importedFrom={
-            Object {
-              "id": "importedFrom",
-            }
+        }
+        importedFrom={
+          Object {
+            "id": "importedFrom",
           }
-          remotesFrom={
-            Object {
-              "id": "remotesFrom",
-            }
+        }
+        remotesFrom={
+          Object {
+            "id": "remotesFrom",
           }
-        />
-        <ReferenceItemBuild
-          id="foo"
-          latestBuild={
-            Object {
-              "id": "bar",
-            }
+        }
+      />
+      <ReferenceItemBuild
+        id="foo"
+        latestBuild={
+          Object {
+            "id": "bar",
           }
-          progress={32}
-        />
-      </tbody>
-    </Item__ReferenceItemTable>
-  </div>
+        }
+        progress={32}
+      />
+    </tbody>
+  </Item__ReferenceItemTable>
   <ProgressBar
     affixed={true}
     bsStyle="warning"
@@ -60,54 +58,52 @@ exports[`<Item /> should render when [organism='virus'] and [progress=32] 1`] = 
 
 exports[`<Item /> should render when [organism=null] 1`] = `
 <Item__StyledReferenceItem>
-  <div>
-    <ReferenceItemHeader
-      createdAt="2018-01-01T00:00:00.000000Z"
-      id="foo"
-      name="Foo"
-      userId="bob"
-    />
-    <Item__ReferenceItemTable>
-      <tbody>
-        <tr>
-          <th>
-            Organism
-          </th>
-          <td
-            className="text-capitalize"
-          >
-            unknown
-          </td>
-        </tr>
-        <ReferenceItemOrigin
-          clonedFrom={
-            Object {
-              "id": "clonedFrom",
-            }
+  <ReferenceItemHeader
+    createdAt="2018-01-01T00:00:00.000000Z"
+    id="foo"
+    name="Foo"
+    userId="bob"
+  />
+  <Item__ReferenceItemTable>
+    <tbody>
+      <tr>
+        <th>
+          Organism
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          unknown
+        </td>
+      </tr>
+      <ReferenceItemOrigin
+        clonedFrom={
+          Object {
+            "id": "clonedFrom",
           }
-          importedFrom={
-            Object {
-              "id": "importedFrom",
-            }
+        }
+        importedFrom={
+          Object {
+            "id": "importedFrom",
           }
-          remotesFrom={
-            Object {
-              "id": "remotesFrom",
-            }
+        }
+        remotesFrom={
+          Object {
+            "id": "remotesFrom",
           }
-        />
-        <ReferenceItemBuild
-          id="foo"
-          latestBuild={
-            Object {
-              "id": "bar",
-            }
+        }
+      />
+      <ReferenceItemBuild
+        id="foo"
+        latestBuild={
+          Object {
+            "id": "bar",
           }
-          progress={32}
-        />
-      </tbody>
-    </Item__ReferenceItemTable>
-  </div>
+        }
+        progress={32}
+      />
+    </tbody>
+  </Item__ReferenceItemTable>
   <ProgressBar
     affixed={true}
     bsStyle="warning"
@@ -118,54 +114,52 @@ exports[`<Item /> should render when [organism=null] 1`] = `
 
 exports[`<Item /> should render when [progress=100] 1`] = `
 <Item__StyledReferenceItem>
-  <div>
-    <ReferenceItemHeader
-      createdAt="2018-01-01T00:00:00.000000Z"
-      id="foo"
-      name="Foo"
-      userId="bob"
-    />
-    <Item__ReferenceItemTable>
-      <tbody>
-        <tr>
-          <th>
-            Organism
-          </th>
-          <td
-            className="text-capitalize"
-          >
-            virus
-          </td>
-        </tr>
-        <ReferenceItemOrigin
-          clonedFrom={
-            Object {
-              "id": "clonedFrom",
-            }
+  <ReferenceItemHeader
+    createdAt="2018-01-01T00:00:00.000000Z"
+    id="foo"
+    name="Foo"
+    userId="bob"
+  />
+  <Item__ReferenceItemTable>
+    <tbody>
+      <tr>
+        <th>
+          Organism
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          virus
+        </td>
+      </tr>
+      <ReferenceItemOrigin
+        clonedFrom={
+          Object {
+            "id": "clonedFrom",
           }
-          importedFrom={
-            Object {
-              "id": "importedFrom",
-            }
+        }
+        importedFrom={
+          Object {
+            "id": "importedFrom",
           }
-          remotesFrom={
-            Object {
-              "id": "remotesFrom",
-            }
+        }
+        remotesFrom={
+          Object {
+            "id": "remotesFrom",
           }
-        />
-        <ReferenceItemBuild
-          id="foo"
-          latestBuild={
-            Object {
-              "id": "bar",
-            }
+        }
+      />
+      <ReferenceItemBuild
+        id="foo"
+        latestBuild={
+          Object {
+            "id": "bar",
           }
-          progress={100}
-        />
-      </tbody>
-    </Item__ReferenceItemTable>
-  </div>
+        }
+        progress={100}
+      />
+    </tbody>
+  </Item__ReferenceItemTable>
   <ProgressBar
     affixed={true}
     bsStyle="success"

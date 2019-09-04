@@ -1,9 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
-import { ButtonToolbar, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import { Alert, Button } from "../../base";
+import { Alert, Button, ButtonToolbar } from "../../base";
 import { getTargetChange } from "../../utils/utils";
 import ReferenceForm from "./Form";
 
@@ -58,7 +58,7 @@ export class CreateReference extends React.Component {
                 </Modal.Body>
 
                 <Modal.Footer>
-                    <ButtonToolbar className="pull-right">
+                    <ButtonToolbar>
                         <Button type="submit" icon="save" bsStyle="primary">
                             Save
                         </Button>

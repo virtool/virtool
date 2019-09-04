@@ -1,25 +1,12 @@
-import React from "react";
-import numbro from "numbro";
-import { map, get } from "lodash-es";
-import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { LinkContainer } from "react-router-bootstrap";
-import { Col, Row } from "react-bootstrap";
+import { get } from "lodash-es";
+import numbro from "numbro";
+import React from "react";
+import { connect } from "react-redux";
+import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import { checkAdminOrPermission } from "../../utils/utils";
 
 import { getSubtraction } from "../actions";
-import {
-    Badge,
-    Button,
-    Flex,
-    FlexItem,
-    Icon,
-    LoadingPlaceholder,
-    NoneFound,
-    Table,
-    ViewHeader,
-    NotFound
-} from "../../base";
-import { checkAdminOrPermission } from "../../utils/utils";
 import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
@@ -53,90 +40,75 @@ export class SubtractionDetail extends React.Component {
 
         const data = this.props.detail;
 
-        if (data.ready) {
-            let linkedSamples;
-            let removeIcon;
+        if (!data.ready) {
+            return <LoadingPlaceholder message="Subtraction is still being imported" />;
+        }
 
-            if (data.linked_samples.length) {
-                const linkedSampleComponents = map(data.linked_samples, sample => (
-                    <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
-                        <LinkContainer to={`/samples/${sample.id}`}>
-                            <Button block>{sample.name}</Button>
-                        </LinkContainer>
-                    </Col>
-                ));
+        let removeIcon;
 
-                linkedSamples = <Row>{linkedSampleComponents}</Row>;
-
-                removeIcon = <div />;
-            } else {
-                linkedSamples = <NoneFound noun="linked samples" />;
-
-                removeIcon = (
-                    <Icon
-                        name="trash"
-                        bsStyle="danger"
-                        onClick={this.props.onShowRemove}
-                        style={{ paddingLeft: "5px" }}
-                        pullRight
-                    />
-                );
-            }
-
-            const editIcon = (
-                <Icon name="pencil-alt" bsStyle="warning" onClick={() => this.setState({ showEdit: true })} pullRight />
-            );
-
-            return (
-                <div>
-                    <ViewHeader title={`${data.id} - Subtraction`}>
-                        <Flex alignItems="flex-end">
-                            <FlexItem grow={0} shrink={0}>
-                                <strong>{data.id}</strong>
-                            </FlexItem>
-                            <FlexItem grow={1} shrink={0}>
-                                {this.props.canModify ? (
-                                    <React.Fragment>
-                                        <small>{removeIcon}</small>
-                                        <small>{editIcon}</small>
-                                    </React.Fragment>
-                                ) : null}
-                            </FlexItem>
-                        </Flex>
-                    </ViewHeader>
-
-                    <Table>
-                        <tbody>
-                            <tr>
-                                <th>Nickname</th>
-                                <td>{this.props.detail.nickname}</td>
-                            </tr>
-
-                            <tr>
-                                <th>File</th>
-                                <td>{data.file.id}</td>
-                            </tr>
-
-                            <tr>
-                                <th>GC Estimate</th>
-                                <td>{calculateGC(data.gc)}</td>
-                            </tr>
-                        </tbody>
-                    </Table>
-
-                    <h4 className="section-header">
-                        <strong>Linked Samples</strong> <Badge>{data.linked_samples.length}</Badge>
-                    </h4>
-
-                    {linkedSamples}
-
-                    <EditSubtraction show={this.state.showEdit} entry={this.props.detail} exited={this.handleExit} />
-                    <RemoveSubtraction id={data.id} />
-                </div>
+        if (!data.linked_samples.length) {
+            removeIcon = (
+                <Icon
+                    name="trash"
+                    bsStyle="danger"
+                    onClick={this.props.onShowRemove}
+                    style={{ paddingLeft: "5px" }}
+                    pullRight
+                />
             );
         }
 
-        return <LoadingPlaceholder message="Subtraction is still being imported" />;
+        const editIcon = (
+            <Icon name="pencil-alt" bsStyle="warning" onClick={() => this.setState({ showEdit: true })} pullRight />
+        );
+
+        return (
+            <div>
+                <ViewHeader title={`${data.id} - Subtraction`}>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={0} shrink={0}>
+                            <strong>{data.id}</strong>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0}>
+                            {this.props.canModify ? (
+                                <React.Fragment>
+                                    <small>{removeIcon}</small>
+                                    <small>{editIcon}</small>
+                                </React.Fragment>
+                            ) : null}
+                        </FlexItem>
+                    </Flex>
+                </ViewHeader>
+
+                <Table>
+                    <tbody>
+                        <tr>
+                            <th>Nickname</th>
+                            <td>{this.props.detail.nickname}</td>
+                        </tr>
+                        <tr>
+                            <th>File</th>
+                            <td>{data.file.id}</td>
+                        </tr>
+                        <tr>
+                            <th>Sequence Count</th>
+                            <td>{data.count}</td>
+                        </tr>
+                        <tr>
+                            <th>GC Estimate</th>
+                            <td>{calculateGC(data.gc)}</td>
+                        </tr>
+                        <tr>
+                            <th>Linked Samples</th>
+                            <td>{data.linked_samples.length}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+
+                <EditSubtraction show={this.state.showEdit} entry={this.props.detail} exited={this.handleExit} />
+                <RemoveSubtraction id={data.id} />
+            </div>
+        );
     }
 }
 
