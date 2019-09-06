@@ -3,6 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Icon, LoadingPlaceholder, NoneFound, ScrollList, WarningAlert } from "../../base";
+import RebuildAlert from "../../indexes/components/RebuildAlert";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 import { getTerm } from "../selectors";
@@ -28,27 +29,10 @@ class OTUsList extends React.Component {
             noOTUs = <NoneFound noun="otus" />;
         }
 
-        let alert;
-
-        if (this.props.showAlert) {
-            alert = (
-                <WarningAlert level>
-                    <Icon name="info-circle" />
-                    <span>
-                        <span>There are unbuilt changes. </span>
-                        <Link to={`/refs/${this.props.refId}/indexes`}>Rebuild the index</Link>
-                        <span> to use the changes in future analyses.</span>
-                    </span>
-                </WarningAlert>
-            );
-        }
-
         return (
             <div>
-                {alert}
-
+                <RebuildAlert />
                 <OTUToolbar />
-
                 <CreateOTU {...this.props} />
 
                 {noOTUs}
@@ -71,7 +55,6 @@ const mapStateToProps = state => ({
     ...state.otus,
     term: getTerm(state),
     refId: state.references.detail.id,
-    showAlert: state.references.detail.unbuilt_change_count && checkRefRight(state, "build"),
     verified: state.otus.verified
 });
 
