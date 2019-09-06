@@ -8,12 +8,12 @@ def format_hmm_release(updated, release, installed):
     if updated is None:
         return None
 
-    formatted = virtool.github.format_release(release)
+    formatted = virtool.github.format_release(updated)
 
     formatted["newer"] = bool(
         release is None or installed is None or (
                 installed and
-                semver.compare(release["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
+                semver.compare(formatted["name"].lstrip("v"), installed["name"].lstrip("v")) == 1
         )
     )
 
