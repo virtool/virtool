@@ -4,7 +4,6 @@ import { Table } from "./Table";
 
 export const Box = styled.div`
     border: 1px ${props => props.theme.color.greyLight} solid;
-    border-radius: 0;
     box-sizing: border-box;
     margin-bottom: 15px;
     padding: 10px 15px;
@@ -18,7 +17,7 @@ export const Box = styled.div`
 export const BoxGroup = styled(Box)`
     padding: 0;
 
-    ${Table} {
+    & > ${Table} {
         border: none;
         border-top: 1px solid #dddddd;
         margin: 0;
@@ -92,7 +91,6 @@ export const SpacedBox = styled(Box)`
 
 export const LinkBox = styled(Link)`
     border: 1px ${props => props.theme.color.greyLight} solid;
-    border-radius: 2px;
     box-shadow: 1px 1px 2px 0 #d5d5d5;
     box-sizing: border-box;
     color: #333333 !important;
