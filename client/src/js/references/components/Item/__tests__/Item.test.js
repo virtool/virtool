@@ -3,7 +3,7 @@ import { getReferenceItemProgress } from "../../../selectors";
 
 jest.mock("../../../selectors");
 
-describe("<Item />", () => {
+describe("<ReferenceItem />", () => {
     let props;
 
     beforeEach(() => {

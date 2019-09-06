@@ -1,33 +1,13 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
-import styled from "styled-components";
-import { LoadingPlaceholder, NoneFound, Panel, ScrollList, ViewHeader } from "../../base";
+import { LoadingPlaceholder, Panel, ScrollList, ViewHeader } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item/Item";
 import ReferenceToolbar from "./Toolbar";
-
-const ReferenceListContainer = styled.div`
-    display: grid;
-    grid-auto-rows: 1fr;
-    grid-gap: 0 15px;
-    grid-template-columns: 1fr;
-
-    @media (min-width: 764px) {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    @media (min-width: 992px) {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
-
-    @media (min-width: 1420px) {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-`;
 
 class ReferenceList extends React.Component {
     componentDidMount() {
@@ -40,9 +20,6 @@ class ReferenceList extends React.Component {
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
-
-        let referenceComponents = null;
-        let noRefs;
 
         let installOfficialComponent;
 
@@ -59,8 +36,12 @@ class ReferenceList extends React.Component {
             );
         }
 
-        if (this.props.documents.length) {
-            referenceComponents = (
+        return (
+            <div>
+                <ViewHeader title="References" totalCount={this.props.total_count} />
+
+                <ReferenceToolbar />
+
                 <ScrollList
                     documents={this.props.documents}
                     onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
@@ -69,23 +50,8 @@ class ReferenceList extends React.Component {
                     renderRow={this.renderRow}
                     noContainer
                 />
-            );
-        } else if (!installOfficialComponent) {
-            noRefs = <NoneFound noun="References" />;
-        }
 
-        return (
-            <div>
-                <ViewHeader title="References" totalCount={this.props.total_count} />
-
-                <ReferenceToolbar />
-
-                <ReferenceListContainer>
-                    {referenceComponents}
-                    {installOfficialComponent}
-                </ReferenceListContainer>
-
-                {noRefs}
+                {installOfficialComponent}
 
                 <AddReference />
             </div>
