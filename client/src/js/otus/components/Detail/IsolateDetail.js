@@ -102,22 +102,7 @@ export class IsolateDetail extends React.Component {
                             />
                         </div>
                     </IsolateDetailHeader>
-                    <BoxGroupSection>
-                        <span>
-                            <strong>Source Name: </strong>
-                            <span>{isolate.source_name}</span>
-                        </span>
-
-                        <span> / </span>
-
-                        <span>
-                            <strong>Source Type: </strong>
-                            <span>{isolate.source_type}</span>
-                        </span>
-                    </BoxGroupSection>
-                    <BoxGroupSection>
-                        <IsolateSequences canModify={this.props.canModify} />
-                    </BoxGroupSection>
+                    <IsolateSequences canModify={this.props.canModify} />
                 </BoxGroup>
             </div>
         );

@@ -3,7 +3,7 @@ import React from "react";
 import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { Badge, Flex, Icon, NoneFound } from "../../../base";
+import { Badge, BoxGroupSection, Flex, NoneFound } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import AddSequence from "./AddSequence";
@@ -71,25 +71,22 @@ class IsolateSequences extends React.Component {
         }
 
         return (
-            <div>
-                <Flex alignItems="center" style={{ marginBottom: "10px" }}>
-                    <strong style={{ flex: "0 1 auto" }}>Sequences</strong>
-                    <span style={{ flex: "1 0 auto", marginLeft: "5px" }}>
-                        <Badge>{this.props.sequences.length}</Badge>
-                    </span>
-                    {this.props.canModify ? (
-                        <Icon
-                            name="plus-square"
-                            bsStyle="primary"
-                            tip="Add Sequence"
-                            tipPlacement="left"
-                            onClick={this.props.showAddSequence}
-                            pullRight
-                        />
-                    ) : null}
-                </Flex>
+            <React.Fragment>
+                <BoxGroupSection>
+                    <Flex alignItems="center">
+                        <strong style={{ flex: "0 1 auto" }}>Sequences</strong>
+                        <span style={{ flex: "1 0 auto", marginLeft: "5px" }}>
+                            <Badge>{this.props.sequences.length}</Badge>
+                        </span>
+                        {this.props.canModify ? (
+                            <a href="#" onClick={this.props.showAddSequence}>
+                                Add Sequence
+                            </a>
+                        ) : null}
+                    </Flex>
+                </BoxGroupSection>
 
-                <ListGroup>{sequenceComponents}</ListGroup>
+                <React.Fragment>{sequenceComponents}</React.Fragment>
 
                 <AddSequence schema={this.state.schema} />
 
@@ -106,7 +103,7 @@ class IsolateSequences extends React.Component {
                     isolateName={this.props.isolateName}
                     schema={this.state.schema}
                 />
-            </div>
+            </React.Fragment>
         );
     }
 }
