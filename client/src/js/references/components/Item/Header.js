@@ -50,7 +50,10 @@ export const ReferenceItemHeader = ({ createdAt, dataType, id, name, organism, o
 
 ReferenceItemHeader.propTypes = {
     createdAt: PropTypes.string.isRequired,
+    dataType: PropTypes.string,
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
+    organism: PropTypes.number,
+    otuCount: PropTypes.number,
     userId: PropTypes.string.isRequired
 };
