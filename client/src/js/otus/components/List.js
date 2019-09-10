@@ -1,10 +1,8 @@
 import { push } from "connected-react-router";
 import React from "react";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
-import { Icon, LoadingPlaceholder, NoneFound, ScrollList, WarningAlert } from "../../base";
+import { LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import RebuildAlert from "../../indexes/components/RebuildAlert";
-import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 import { getTerm } from "../selectors";
 import CreateOTU from "./Create";

@@ -1,6 +1,5 @@
 import { differenceWith, filter, find, get, indexOf, isEqual, map, sortBy } from "lodash-es";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { Badge, BoxGroupSection, Flex, NoneFound } from "../../../base";

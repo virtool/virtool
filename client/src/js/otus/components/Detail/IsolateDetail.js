@@ -1,8 +1,8 @@
 import { get } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Icon, SuccessLabel } from "../../../base";
+import styled from "styled-components";
+import { BoxGroup, BoxGroupHeader, Icon, SuccessLabel } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";

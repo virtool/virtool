@@ -1,8 +1,8 @@
-import React from "react";
-import styled from "styled-components";
 import PropTypes from "prop-types";
+import React from "react";
 import { Collapse } from "react-bootstrap";
-import { Badge, BoxGroupSection, Icon, Flex, FlexItem, Label, Table, InfoLabel } from "../../../base";
+import styled from "styled-components";
+import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 
 const SequenceHeader = styled.div`
@@ -73,7 +73,6 @@ class Sequence extends React.Component {
 
     render() {
         const accession = this.props.accession;
-        const id = this.props.id;
 
         let buttons;
 
