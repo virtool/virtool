@@ -3,119 +3,91 @@ import { Icon } from "../../../base/index";
 import { mapDispatchToProps, SourceTypes, SourceTypeItem } from "../SourceTypes";
 
 describe("<SourceTypes />", () => {
-    describe("renders", () => {
-        let props;
+    let props;
 
-        beforeEach(() => {
-            props = {
-                global: true,
-                restrictSourceTypes: true,
-                refId: "foo",
-                sourceTypes: ["isolate", "serotype"],
-                remote: false
-            };
-        });
-
-        it("when global", () => {
-            const wrapper = shallow(<SourceTypes {...props} />);
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("when not global and remote", () => {
-            props.global = false;
-            props.remote = true;
-            const wrapper = shallow(<SourceTypes {...props} />);
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("when not global and not remote", () => {
-            props.global = false;
-            props.isRemote = false;
-            const wrapper = shallow(<SourceTypes {...props} />);
-            expect(wrapper).toMatchSnapshot();
-        });
+    beforeEach(() => {
+        props = {
+            global: true,
+            refId: "foo",
+            remote: false,
+            restrictSourceTypes: true,
+            sourceTypes: ["isolate", "serotype"],
+            onUpdate: jest.fn(),
+            onToggle: jest.fn()
+        };
     });
 
-    describe("has onUpdate()", () => {
-        let props;
-
-        beforeEach(() => {
-            props = {
-                global: true,
-                restrictSourceTypes: true,
-                refId: "foo",
-                sourceTypes: ["isolate", "serotype"],
-                remote: false,
-                onUpdate: jest.fn(),
-                onToggle: jest.fn()
-            };
-        });
-
-        it("called when remove() is called", () => {
-            const wrapper = mount(<SourceTypes {...props} />);
-            wrapper.instance().handleRemove("serotype");
-            expect(props.onUpdate).toHaveBeenCalledWith(["isolate"], true, "foo");
-        });
-
-        it("called when handleSubmit() is called successfully", () => {
-            const wrapper = mount(<SourceTypes {...props} />);
-            wrapper.setState({ value: "" });
-
-            const mockEvent = { preventDefault: jest.fn() };
-
-            wrapper.instance().handleSubmit(mockEvent);
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-
-            wrapper.setState({ value: "Genotype" });
-            wrapper.instance().handleSubmit(mockEvent);
-            expect(props.onUpdate).toHaveBeenCalledWith(["isolate", "serotype", "genotype"], true, "foo");
-            expect(wrapper.state()).toEqual({ value: "", error: null });
-        });
-
-        it("not called when submitted source type already exists", () => {
-            const wrapper = mount(<SourceTypes {...props} />);
-            const mockEvent = { preventDefault: jest.fn() };
-            wrapper.setState({ value: "Isolate" });
-            wrapper.instance().handleSubmit(mockEvent);
-            expect(wrapper.state("error")).toEqual("Source type already exists.");
-        });
-
-        it("not called when submitted source type contains space", () => {
-            const wrapper = mount(<SourceTypes {...props} />);
-            const mockEvent = { preventDefault: jest.fn() };
-            wrapper.setState({ value: "With Spaces" });
-            wrapper.instance().handleSubmit(mockEvent);
-            expect(wrapper.state("error")).toEqual("Source types may not contain spaces.");
-        });
+    it("should render when global", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    describe("has onToggle() called", () => {
-        let props;
+    it("should render when remote", () => {
+        props.global = false;
+        props.remote = true;
+        const wrapper = shallow(<SourceTypes {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        beforeEach(() => {
-            props = {
-                global: true,
-                restrictSourceTypes: true,
-                refId: "foo",
-                sourceTypes: ["isolate", "serotype"],
-                remote: false,
-                onUpdate: jest.fn(),
-                onToggle: jest.fn()
-            };
-        });
+    it("should render when neither", () => {
+        props.global = false;
+        props.isRemote = false;
+        const wrapper = shallow(<SourceTypes {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        it("when handleEnable() is called and [restrictSourceTypes=true]", () => {
-            const wrapper = mount(<SourceTypes {...props} />);
-            wrapper.instance().handleEnable();
-            expect(props.onToggle).toHaveBeenCalledWith("foo", false);
-        });
+    it("should call onUpdate() when onRemove() called", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+        wrapper.instance().handleRemove("serotype");
+        expect(props.onUpdate).toHaveBeenCalledWith(["isolate"], true, "foo");
+    });
 
-        it("when handleEnable() is called and [restrictSourceTypes=false]", () => {
-            props.restrictSourceTypes = false;
-            const wrapper = mount(<SourceTypes {...props} />);
-            wrapper.instance().handleEnable();
-            expect(props.onToggle).toHaveBeenCalledWith("foo", true);
-        });
+    it("should call onUpdate() when handleSubmit() is called successfully", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+
+        const mockEvent = { preventDefault: jest.fn() };
+
+        // Won't be called be value is empty.
+        wrapper.setState({ value: "" });
+        wrapper.instance().handleSubmit(mockEvent);
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(props.onUpdate).not.toHaveBeenCalled();
+
+        wrapper.setState({ value: "Genotype" });
+        wrapper.instance().handleSubmit(mockEvent);
+        expect(props.onUpdate).toHaveBeenCalledWith(["isolate", "serotype", "genotype"], true, "foo");
+        expect(wrapper.state()).toEqual({ value: "", error: null });
+    });
+
+    it("should not call onUpdate() when submitted source type already exists", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+        const mockEvent = { preventDefault: jest.fn() };
+        wrapper.setState({ value: "Isolate" });
+        wrapper.instance().handleSubmit(mockEvent);
+        expect(props.onUpdate).not.toHaveBeenCalled();
+        expect(wrapper.state("error")).toEqual("Source type already exists.");
+    });
+
+    it("should not call onUpdate() when submitted source type contains space", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+        const mockEvent = { preventDefault: jest.fn() };
+        wrapper.setState({ value: "With Spaces" });
+        wrapper.instance().handleSubmit(mockEvent);
+        expect(props.onUpdate).not.toHaveBeenCalled();
+        expect(wrapper.state("error")).toEqual("Source types may not contain spaces.");
+    });
+
+    it("should call onToggle() when handleEnable() is called and [restrictSourceTypes=true]", () => {
+        const wrapper = shallow(<SourceTypes {...props} />);
+        wrapper.instance().handleEnable();
+        expect(props.onToggle).toHaveBeenCalledWith("foo", false);
+    });
+
+    it("should call onToggle() handleEnable() is called and [restrictSourceTypes=false]", () => {
+        props.restrictSourceTypes = false;
+        const wrapper = shallow(<SourceTypes {...props} />);
+        wrapper.instance().handleEnable();
+        expect(props.onToggle).toHaveBeenCalledWith("foo", true);
     });
 });
 
@@ -130,18 +102,18 @@ describe("<SourceTypeItem />", () => {
         };
     });
 
-    it("renders when [disabled=false]", () => {
+    it("should render when [disabled=false]", () => {
         const wrapper = shallow(<SourceTypeItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders when [disabled=true]", () => {
+    it("should render when [disabled=true]", () => {
         props.disabled = true;
         const wrapper = shallow(<SourceTypeItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("calls onRemove when remove icon is clicked", () => {
+    it("should call onRemove() when remove icon is clicked", () => {
         const wrapper = shallow(<SourceTypeItem {...props} />);
         expect(wrapper.find(Icon).length).toEqual(1);
 
@@ -159,7 +131,7 @@ describe("mapDispatchToProps", () => {
         props = mapDispatchToProps(dispatch);
     });
 
-    it("dispatches UPDATE_SETTINGS for onUpdate() when global", () => {
+    it("should return onUpdate() in props when global", () => {
         props.onUpdate(["genotype"], true, "foo");
         expect(dispatch).toHaveBeenCalledWith({
             type: UPDATE_SETTINGS.REQUESTED,
@@ -169,7 +141,7 @@ describe("mapDispatchToProps", () => {
         });
     });
 
-    it("dispatches EDIT_REFERENCE for onUpdate() when not global", () => {
+    it("should return onUpdate() in props when not global", () => {
         props.onUpdate(["genotype"], false, "foo");
         expect(dispatch).toHaveBeenCalledWith({
             type: EDIT_REFERENCE.REQUESTED,
@@ -180,7 +152,7 @@ describe("mapDispatchToProps", () => {
         });
     });
 
-    it("dispatches EDIT_REFERENCE for onToggle('foo', false)", () => {
+    it("should return onToggle() in props that can be called with false", () => {
         props.onToggle("foo", false);
         expect(dispatch).toHaveBeenCalledWith({
             type: EDIT_REFERENCE.REQUESTED,
@@ -191,7 +163,7 @@ describe("mapDispatchToProps", () => {
         });
     });
 
-    it("dispatches EDIT_REFERENCE for onToggle('foo', true)", () => {
+    it("should return onToggle() in props that can be called with true", () => {
         props.onToggle("foo", true);
         expect(dispatch).toHaveBeenCalledWith({
             type: EDIT_REFERENCE.REQUESTED,

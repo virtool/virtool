@@ -1,10 +1,9 @@
 import React from "react";
 import { connect } from "react-redux";
-
-import { checkRefRight } from "../../utils/utils";
 import { LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import { findIndexes } from "../actions";
 import IndexItem from "./Item";
+import RebuildIndex from "./Rebuild";
 import RebuildAlert from "./RebuildAlert";
 
 export class IndexesList extends React.Component {
@@ -28,6 +27,8 @@ export class IndexesList extends React.Component {
         return (
             <div>
                 <RebuildAlert />
+                <RebuildIndex />
+
                 {noIndexes}
 
                 <ScrollList
@@ -44,7 +45,6 @@ export class IndexesList extends React.Component {
 
 const mapStateToProps = state => ({
     ...state.indexes,
-    canBuild: checkRefRight(state, "build"),
     refId: state.references.detail.id
 });
 

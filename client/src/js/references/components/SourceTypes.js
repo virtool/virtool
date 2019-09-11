@@ -1,9 +1,10 @@
 import { get, includes, map, toLower, without } from "lodash-es";
 import React from "react";
-import { Button, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem } from "react-bootstrap";
+import styled from "styled-components";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { updateSetting } from "../../administration/actions";
-import { Checkbox, Icon, Panel } from "../../base/index";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Checkbox, Icon } from "../../base";
 import { editReference } from "../actions";
 
 const getInitialState = () => ({
@@ -11,27 +12,29 @@ const getInitialState = () => ({
     error: null
 });
 
-const GlobalDescription = () => (
-    <ListGroupItem>
-        Configure a list of default source types. New references will automatically take these values as their allowed
-        source types.
-    </ListGroupItem>
-);
+const globalDescription = `
+    Configure a list of default source types. New references will automatically take these values as their allowed
+    source types.
+`;
 
-const LocalDescription = () => (
-    <ListGroupItem>
-        Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
-        source type from this list. If this feature is disabled, users will be able to enter any string as a source
-        type.
-    </ListGroupItem>
-);
+const localDescription = `
+    Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
+    source type from this list. If this feature is disabled, users will be able to enter any string as a source
+    type.
+`;
 
 export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
-    <ListGroupItem disabled={disabled}>
+    <BoxGroupSection disabled={disabled}>
         <span className="text-capitalize">{sourceType}</span>
         {disabled ? null : <Icon name="trash" bsStyle="danger" onClick={() => onRemove(sourceType)} pullRight />}
-    </ListGroupItem>
+    </BoxGroupSection>
 );
+
+const SourceTypesForm = styled(BoxGroupSection)`
+    .form-group {
+        margin: 0;
+    }
+`;
 
 export class SourceTypes extends React.Component {
     constructor(props) {
@@ -109,40 +112,36 @@ export class SourceTypes extends React.Component {
         const title = `${this.props.global ? "Default" : ""} Source Types`;
 
         return (
-            <Panel>
-                <ListGroup>
-                    <ListGroupItem>
-                        <strong>{title}</strong>
+            <BoxGroup>
+                <BoxGroupHeader>
+                    <h2>
+                        <span>{title}</span>
                         {checkbox}
-                    </ListGroupItem>
-
-                    {this.props.global ? <GlobalDescription /> : <LocalDescription />}
-
-                    <ListGroupItem>
-                        <div className="clearfix">
-                            <form onSubmit={this.handleSubmit}>
-                                <FormGroup>
-                                    <InputGroup>
-                                        <FormControl
-                                            type="text"
-                                            disabled={disabled}
-                                            onChange={this.handleChange}
-                                            value={this.state.value}
-                                        />
-                                        <InputGroup.Button>
-                                            <Button type="submit" bsStyle="primary" disabled={disabled}>
-                                                <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                    {errorMessage}
-                                </FormGroup>
-                            </form>
-                            <ListGroup>{listComponents}</ListGroup>
-                        </div>
-                    </ListGroupItem>
-                </ListGroup>
-            </Panel>
+                    </h2>
+                    <p>{this.props.global ? globalDescription : localDescription}</p>
+                </BoxGroupHeader>
+                <SourceTypesForm>
+                    <form onSubmit={this.handleSubmit}>
+                        <FormGroup>
+                            <InputGroup>
+                                <FormControl
+                                    type="text"
+                                    disabled={disabled}
+                                    onChange={this.handleChange}
+                                    value={this.state.value}
+                                />
+                                <InputGroup.Button>
+                                    <Button type="submit" bsStyle="primary" disabled={disabled}>
+                                        <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {errorMessage}
+                        </FormGroup>
+                    </form>
+                </SourceTypesForm>
+                <React.Fragment>{listComponents}</React.Fragment>
+            </BoxGroup>
         );
     }
 }

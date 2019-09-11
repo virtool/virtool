@@ -3,6 +3,7 @@
 exports[`<IndexesList /> should render 1`] = `
 <div>
   <Connect(RebuildAlert) />
+  <Connect(RebuildIndex) />
   <ScrollList
     documents={
       Array [
@@ -25,6 +26,7 @@ exports[`<IndexesList /> should render with [documents=null] 1`] = `<LoadingPlac
 exports[`<IndexesList /> should render with empty documents array 1`] = `
 <div>
   <Connect(RebuildAlert) />
+  <Connect(RebuildIndex) />
   <NoneFound
     noun="indexes"
   />

@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceItemHeader /> should render 1`] = `
-<Box__BoxGroupHeader>
+<Header__StyledReferenceItemHeader>
   <h2>
     <Header__ReferenceItemHeaderLink
       to="/refs/foo"
@@ -29,12 +29,24 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
     </Link>
   </h2>
   <p>
-    Created 
-    <RelativeTime
+    <span>
+      <strong
+        className="text-capitalize"
+      >
+        unknown
+         
+        genome
+        s
+      </strong>
+      <span>
+         organized into 
+         OTUs
+      </span>
+    </span>
+    <Attribution
       time="2018-01-01T00:00:00.000000Z"
+      user="bob"
     />
-     by 
-    bob
   </p>
-</Box__BoxGroupHeader>
+</Header__StyledReferenceItemHeader>
 `;
