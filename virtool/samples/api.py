@@ -132,14 +132,16 @@ async def get(req):
 
     document["caches"] = caches
 
-    for index, file in enumerate(document["files"]):
-        snake_case = document["name"].replace(" ", "_")
+    if document["imported"] is True:
+        # Only update file fields if sample creation is complete.
+        for index, file in enumerate(document["files"]):
+            snake_case = document["name"].replace(" ", "_")
 
-        file.update({
-            "name": file["name"].replace("reads_", f"{snake_case}_"),
-            "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
-            "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
-        })
+            file.update({
+                "name": file["name"].replace("reads_", f"{snake_case}_"),
+                "download_url": file["download_url"].replace("reads_", f"{snake_case}_"),
+                "replace_url": f"/upload/samples/{sample_id}/files/{index + 1}"
+            })
 
     return json_response(virtool.utils.base_processor(document))
 
