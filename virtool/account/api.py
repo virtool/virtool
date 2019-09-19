@@ -30,11 +30,7 @@ async def get(req):
     Get complete user document.
 
     """
-    document = await req.app["db"].users.find_one(
-        req["client"].user_id,
-        virtool.account.db.PROJECTION
-    )
-
+    document = await virtool.account.db.get_document(req.app["db"], req["client"].user_id)
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -85,9 +81,12 @@ async def edit(req):
     if "email" in data:
         update["email"] = data["email"]
 
-    document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": update
-    }, projection=virtool.account.db.PROJECTION)
+    if update:
+        document = await db.users.find_one_and_update({"_id": user_id}, {
+            "$set": update
+        }, projection=virtool.account.db.PROJECTION)
+    else:
+        document = await virtool.account.db.get_document(db, user_id)
 
     return json_response(virtool.utils.base_processor(document))
 

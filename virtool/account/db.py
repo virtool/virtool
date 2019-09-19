@@ -38,6 +38,13 @@ def compose_password_update(user_id: str, old_password: str, password: str) -> d
     }
 
 
+async def get_document(db, user_id):
+    return await db.users.find_one(
+        user_id,
+        PROJECTION
+    )
+
+
 async def get_alternate_id(db: virtool.db.core.DB, name: str) -> str:
     """
     Get an alternate id for an API key whose provided `name` is not unique. Appends an integer suffix to the end of the
