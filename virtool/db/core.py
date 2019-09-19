@@ -271,6 +271,3 @@ class DB:
             projection,
             silent
         )
-
-    async def collection_names(self):
-        return await self.motor_client.collection_names()
