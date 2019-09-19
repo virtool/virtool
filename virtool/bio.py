@@ -364,6 +364,33 @@ async def check_rid(settings, rid):
             return "Status=WAITING" not in await resp.text()
 
 
+def format_blast_hit(hit: dict) -> dict:
+    """
+    Format a BLAST hit from NCBI into a format more usable by Virtool.
+
+    :param hit: the BLAST hit
+    :return: the formatted hit
+
+    """
+    cleaned = {key: hit["description"][0].get(key, "") for key in ["accession", "taxid", "title"]}
+
+    hsps = {key: hit["hsps"][0][key] for key in [
+        "identity",
+        "evalue",
+        "align_len",
+        "score",
+        "bit_score",
+        "gaps"
+    ]}
+
+    return {
+        **cleaned,
+        **hsps,
+        "name": hit["description"][0].get("sciname", "No name"),
+        "len": hit["len"]
+    }
+
+
 async def get_ncbi_blast_result(settings, rid):
     params = {
         "CMD": "Get",
@@ -405,27 +432,7 @@ def parse_blast_content(content, rid):
         output["masking"] = None
 
     output["stat"] = result["stat"]
-
-    output["hits"] = list()
-
-    for hit in result["hits"]:
-        cleaned = {key: hit["description"][0].get(key, "") for key in ["taxid", "title", "accession"]}
-
-        cleaned["len"] = hit["len"]
-        cleaned["name"] = hit["description"][0]["sciname"]
-
-        hsps = {key: hit["hsps"][0][key] for key in [
-            "identity",
-            "evalue",
-            "align_len",
-            "score",
-            "bit_score",
-            "gaps"
-        ]}
-
-        cleaned.update(hsps)
-
-        output["hits"].append(cleaned)
+    output["hits"] = [format_blast_hit(h) for h in result["hits"]]
 
     return output
 

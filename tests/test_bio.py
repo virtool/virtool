@@ -178,6 +178,53 @@ def test_find_orfs(orf_containing):
         assert pickle.load(f) == result
 
 
+@pytest.mark.parametrize("missing", ["accession", "taxid", "title", None])
+@pytest.mark.parametrize("sciname", ["Vitis", None])
+def test_format_blast_hit(missing, sciname):
+    hit = {
+        "description": [
+            {
+                "accession": "ABC123",
+                "taxid": "1234",
+                "title": "Foo"
+            }
+        ],
+        "hsps": [
+            {
+                "identity": 0.86,
+                "evalue": 0.0000000123,
+                "align_len": 231,
+                "score": 98,
+                "bit_score": 1092,
+                "gaps": 3
+            }
+        ],
+        "len": 4321
+    }
+
+    if missing:
+        del hit["description"][0][missing]
+
+    if sciname:
+        hit["description"][0]["sciname"] = sciname
+
+    formatted = virtool.bio.format_blast_hit(hit)
+
+    assert formatted == {
+        "accession": "" if missing == "accession" else "ABC123",
+        "len": 4321,
+        "taxid": "" if missing == "taxid" else "1234",
+        "title": "" if missing == "title" else "Foo",
+        "name": sciname if sciname else "No name",
+        "identity": 0.86,
+        "evalue": 0.0000000123,
+        "align_len": 231,
+        "score": 98,
+        "bit_score": 1092,
+        "gaps": 3
+    }
+
+
 async def test_initialize_ncbi_blast(mock_blast_server):
     """
     Using a mock BLAST server, test that a BLAST initialization request works properly.
@@ -193,8 +240,8 @@ def test_extract_blast_info():
     Test that the function returns the correct RID and RTOE from the stored test HTML file.
 
     """
-    with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f:\
-        assert virtool.bio.extract_blast_info(f.read()) == ("YA40WNN5014", 19)
+    with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f: \
+            assert virtool.bio.extract_blast_info(f.read()) == ("YA40WNN5014", 19)
 
 
 @pytest.mark.parametrize("rid,expected", [
