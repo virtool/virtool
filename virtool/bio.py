@@ -364,7 +364,14 @@ async def check_rid(settings, rid):
             return "Status=WAITING" not in await resp.text()
 
 
-def format_blast_hit(hit):
+def format_blast_hit(hit: dict) -> dict:
+    """
+    Format a BLAST hit from NCBI into a format more usable by Virtool.
+
+    :param hit: the BLAST hit
+    :return: the formatted hit
+
+    """
     cleaned = {key: hit["description"][0].get(key, "") for key in ["accession", "taxid", "title"]}
 
     hsps = {key: hit["hsps"][0][key] for key in [
