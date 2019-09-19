@@ -176,7 +176,8 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, mocker, spawn_client, resp_is, static_time):
+@pytest.mark.parametrize("imported", [True, False])
+async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -186,6 +187,7 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
             "_id": "test",
             "name": "Test",
             "created_at": static_time.datetime,
+            "imported": imported,
             "files": [
                 {
                     "id": "foo",
@@ -203,20 +205,38 @@ async def test_get(error, mocker, spawn_client, resp_is, static_time):
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "id": "test",
-        "name": "Test",
-        "created_at": "2015-10-06T20:00:00Z",
-        "files": [
-            {
-                "id": "foo",
-                "name": "Bar.fq.gz",
-                "download_url": "/download/samples/files/file_1.fq.gz",
-                "replace_url": "/upload/samples/test/files/1"
-            }
-        ],
-        "caches": []
-    }
+    if imported:
+        assert await resp.json() == {
+            "id": "test",
+            "name": "Test",
+            "created_at": "2015-10-06T20:00:00Z",
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
+                    "replace_url": "/upload/samples/test/files/1"
+                }
+            ],
+            "imported": imported,
+            "caches": []
+        }
+
+    else:
+        assert await resp.json() == {
+            "id": "test",
+            "name": "Test",
+            "created_at": "2015-10-06T20:00:00Z",
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz"
+                }
+            ],
+            "imported": imported,
+            "caches": []
+        }
 
 
 class TestCreate:
@@ -483,7 +503,6 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("term", [None, "bob", "Baz"])
 async def test_find_analyses(error, term, mocker, spawn_client, resp_is, static_time):
-
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)

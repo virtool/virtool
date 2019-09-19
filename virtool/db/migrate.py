@@ -44,7 +44,6 @@ async def migrate_files(db):
     """
     Make all files unreserved. This is only called when the server first starts.
 
-    :param db:
     """
     logger.info(" • files")
 
