@@ -53,7 +53,7 @@ ReferenceItemHeader.propTypes = {
     dataType: PropTypes.string,
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
-    organism: PropTypes.number,
+    organism: PropTypes.string,
     otuCount: PropTypes.number,
     userId: PropTypes.string.isRequired
 };
