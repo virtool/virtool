@@ -364,6 +364,20 @@ async def check_rid(settings, rid):
             return "Status=WAITING" not in await resp.text()
 
 
+def extract_ncbi_blast_zip(data, rid):
+    """
+    Extract the BLAST result JSON data given zipped binary data. Fails if the data is not valid zip.
+
+    :param data: the binary zip data
+    :param rid: the RID for the blast request
+    :return: the extracted BLAST JSON data
+
+    """
+    zipped = zipfile.ZipFile(io.BytesIO(data))
+    string = zipped.open(rid + "_1.json", "r").read().decode()
+    return json.loads(string)
+
+
 def format_blast_hit(hit: dict) -> dict:
     """
     Format a BLAST hit from NCBI into a format more usable by Virtool.
@@ -417,6 +431,9 @@ def format_blast_hit(hit: dict) -> dict:
         "name": hit["description"][0].get("sciname", "No name"),
         "len": hit["len"]
     }
+
+
+async def get_ncbi_blast_result(settings, run_in_process, rid):
     params = {
         "CMD": "Get",
         "RID": rid,
@@ -426,15 +443,11 @@ def format_blast_hit(hit: dict) -> dict:
 
     async with aiohttp.ClientSession() as session:
         async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
-            return parse_blast_content(await resp.read(), rid)
+            data = await resp.read()
+            return await run_in_process(extract_ncbi_blast_zip, data, rid)
 
 
-def parse_blast_content(content, rid):
-    zipped = zipfile.ZipFile(io.BytesIO(content))
-    string = zipped.open(rid + "_1.json", "r").read().decode()
-
-    result = json.loads(string)
-
+def parse_blast_content(result):
     if len(result) != 1:
         raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
 
@@ -462,12 +475,15 @@ def parse_blast_content(content, rid):
     return output
 
 
-async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
+async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
 
     """
+    db = app["db"]
+    settings = app["settings"]
+
     try:
         ready = False
         interval = 3
@@ -487,16 +503,26 @@ async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
                 "rid": rid
             }
 
-            interval += 5
+            if ready:
+                result_json = await get_ncbi_blast_result(
+                    settings,
+                    app["run_in_process"],
+                    rid
+                )
 
-            if update["ready"]:
-                update["result"] = await get_ncbi_blast_result(settings, rid)
+                update["result"] = parse_blast_content(result_json)
 
             await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
                 "$set": {
                     "results.$.blast": update
                 }
             })
+
+            if ready:
+                return
+
+            interval += 5
+
     except asyncio.CancelledError:
         # Remove the BLAST record from the sequence if the server is shutdown.
         await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
