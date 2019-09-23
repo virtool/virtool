@@ -4,7 +4,7 @@ import io
 import json
 import re
 import zipfile
-from typing import Awaitable
+import logging
 
 import aiohttp
 
@@ -12,6 +12,8 @@ import virtool.analyses.utils
 import virtool.errors
 import virtool.http.proxy
 import virtool.utils
+
+logger = logging.getLogger(__name__)
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
@@ -311,8 +313,9 @@ async def initialize_ncbi_blast(settings: dict, sequence: str) -> Awaitable[tupl
                 raise virtool.errors.NCBIError(f"BLAST request returned status: {resp.status}")
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
-            return extract_blast_info(await resp.text())
+            html = await resp.text()
 
+            logging.debug("Started BLAST on NCBI")
 
 def extract_blast_info(html):
     """
@@ -496,6 +499,8 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
 
             ready = await check_rid(settings, rid)
 
+            logger.debug(f"Checked BLAST {rid} ({interval}s)")
+
             update = {
                 "interval": interval,
                 "last_checked_at": last_checked_at,
@@ -509,6 +514,8 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
                     app["run_in_process"],
                     rid
                 )
+
+                logger.debug(f"Result retrieved for BLAST {rid}")
 
                 update["result"] = parse_blast_content(result_json)
 
