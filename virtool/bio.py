@@ -392,6 +392,31 @@ def format_blast_hit(hit: dict) -> dict:
 
 
 async def get_ncbi_blast_result(settings, rid):
+def format_blast_hit(hit: dict) -> dict:
+    """
+    Format a BLAST hit from NCBI into a format more usable by Virtool.
+
+    :param hit: the BLAST hit
+    :return: the formatted hit
+
+    """
+    cleaned = {key: hit["description"][0].get(key, "") for key in ["accession", "taxid", "title"]}
+
+    hsps = {key: hit["hsps"][0][key] for key in [
+        "identity",
+        "evalue",
+        "align_len",
+        "score",
+        "bit_score",
+        "gaps"
+    ]}
+
+    return {
+        **cleaned,
+        **hsps,
+        "name": hit["description"][0].get("sciname", "No name"),
+        "len": hit["len"]
+    }
     params = {
         "CMD": "Get",
         "RID": rid,
