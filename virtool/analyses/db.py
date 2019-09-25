@@ -40,9 +40,6 @@ class BLAST:
         """
         Remove the BLAST result from the analysis document.
 
-        :param analysis_id: the id of the NuVs analysis
-        :param sequence_index: the index of the sequence the BLAST record is attached to
-
         """
         await remove_nuvs_blast(self.db, self.analysis_id, self.sequence_index)
 
