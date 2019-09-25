@@ -4,7 +4,7 @@ import coloredlogs
 
 
 def configure(verbose=False):
-    logging_level = logging.INFO if verbose else logging.DEBUG
+    logging_level = logging.DEBUG if verbose else logging.INFO
 
     logging.captureWarnings(True)
 

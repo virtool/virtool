@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<BLASTError /> should render 1`] = `
+<BLASTError__StyledBLASTError>
+  <span>
+    <strong>
+      Error during BLAST request.
+    </strong>
+    <span>
+       
+      Failure. BLAST did not work.
+    </span>
+  </span>
+  <a
+    href="#"
+    onClick={[MockFunction]}
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="redo"
+      pullRight={false}
+    />
+     Retry
+  </a>
+</BLASTError__StyledBLASTError>
+`;

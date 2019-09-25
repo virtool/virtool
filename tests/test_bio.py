@@ -257,5 +257,9 @@ async def test_check_rid(rid, expected, mock_blast_server):
 
 
 async def test_get_ncbi_blast_result(mock_blast_server):
-    with open(os.path.join(TEST_BIO_PATH, "blast.json"), "r") as f:
-        assert await virtool.bio.get_ncbi_blast_result({"proxy": ""}, "YA6M9135015") == json.load(f)
+    async def run_in_process(func, *args):
+        return func(*args)
+
+    with open(os.path.join(TEST_BIO_PATH, "unformatted_blast.json"), "r") as f:
+        result = await virtool.bio.get_ncbi_blast_result({"proxy": ""}, run_in_process, "YA6M9135015")
+        assert result == json.load(f)
