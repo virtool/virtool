@@ -48,11 +48,22 @@ exports[`<BLASTInProgress /> should render when [rid=null] 1`] = `
 
 exports[`<BLASTResults /> should render 1`] = `
 <Box__BoxGroup>
-  <Box__BoxGroupHeader>
-    <h2>
+  <BLAST__StyledBLASTResultsHeader>
+    <strong>
       NCBI BLAST
-    </h2>
-  </Box__BoxGroupHeader>
+    </strong>
+    <a
+      href="#"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="redo"
+        pullRight={false}
+      />
+       Retry
+    </a>
+  </BLAST__StyledBLASTResultsHeader>
   <Table>
     <thead>
       <tr>
@@ -78,13 +89,11 @@ exports[`<BLASTResults /> should render 1`] = `
         key="0"
       >
         <td>
-          <a
+          <ExternalLink
             href="https://www.ncbi.nlm.nih.gov/nuccore/NC123"
-            rel="noopener noreferrer"
-            target="_blank"
           >
             NC123
-          </a>
+          </ExternalLink>
         </td>
         <td>
           test
@@ -118,6 +127,7 @@ exports[`<NuVsBLAST /> should render 1`] = `
       },
     ]
   }
+  onBlast={[Function]}
 />
 `;
 

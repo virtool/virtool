@@ -2,16 +2,19 @@ import asyncio
 import gzip
 import io
 import json
+import logging
 import re
 import zipfile
-from typing import Awaitable
+from typing import Generator, List
 
 import aiohttp
 
-import virtool.analyses.utils
+import virtool.analyses.db
 import virtool.errors
 import virtool.http.proxy
 import virtool.utils
+
+logger = logging.getLogger(__name__)
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
@@ -120,7 +123,14 @@ TRANSLATION_TABLE = {
 }
 
 
-def read_fasta(path):
+def read_fasta(path: str) -> List[tuple]:
+    """
+    Parse the FASTA file at `path` and return its content as a `list` of tuples containing the header and sequence.
+
+    :param path: the path to the FASTA file
+    :return: the FASTA content
+
+    """
     data = list()
 
     with open(path, "r") as f:
@@ -148,9 +158,14 @@ def read_fasta(path):
     return data
 
 
-def read_fastq(f):
-    data = list()
+def read_fastq(f) -> Generator[tuple, None, list]:
+    """
+    Read the FASTQ content in the file object `f`. Yields tuples containing the header, sequence, and quality.
 
+    :param f: a file handle
+    :return: the FASTQ content as tuples
+
+    """
     had_plus = False
 
     header = None
@@ -176,10 +191,18 @@ def read_fastq(f):
             seq = None
             had_plus = False
 
-    return data
+    return list()
 
 
-def read_fastq_from_path(path):
+def read_fastq_from_path(path: str) -> Generator[tuple, None, None]:
+    """
+    Read the FASTQ file at `path` and yields its content as tuples. Accepts both uncompressed and GZIP-compressed FASTQ
+    files.
+
+    :param path: the path to the FASTQ File
+    :return: tuples containing the header, sequence, and quality
+
+    """
     try:
         with open(path, "r") as f:
             for record in read_fastq(f):
@@ -190,7 +213,14 @@ def read_fastq_from_path(path):
                 yield record
 
 
-def read_fastq_headers(path):
+def read_fastq_headers(path: str) -> list:
+    """
+    Return a list of FASTQ headers for the FASTQ file located at `path`. Only accepts uncompressed FASTQ files.
+
+    :param path: the path to the FASTQ file
+    :return: a list of FASTQ headers
+
+    """
     headers = list()
 
     had_plus = False
@@ -211,16 +241,27 @@ def read_fastq_headers(path):
     return headers
 
 
-def reverse_complement(sequence):
-    sequence = sequence.upper()
+def reverse_complement(sequence: str) -> str:
+    """
+    Calculate the reverse complement of the passed `sequence`.
 
-    complement = [COMPLEMENT_TABLE[s] for s in sequence]
+    :param sequence: the sequence to transform
+    :return: the reverse complement
+    """
+    complement = [COMPLEMENT_TABLE[s] for s in sequence.upper()]
     complement.reverse()
 
     return "".join(complement)
 
 
-def translate(sequence):
+def translate(sequence: str) -> str:
+    """
+    Translate the passed nucleotide sequence to protein. Substitutes _X_ for invalid codons.
+
+    :param sequence: the nucleotide sequence
+    :return: a translated protein sequence
+
+    """
     sequence = sequence.upper()
 
     protein = list()
@@ -234,7 +275,14 @@ def translate(sequence):
     return "".join(protein)
 
 
-def find_orfs(sequence):
+def find_orfs(sequence: str) -> List[dict]:
+    """
+    Return all ORFs for the nucelotide sequence. No ORFs will be returned for sequences shorter than 300 bp. Only ORFs
+    100 residues long or greater will be returned.
+
+    :param sequence:
+    :return: a list of ORFs and metadata
+    """
     orfs = list()
 
     sequence_length = len(sequence)
@@ -277,16 +325,13 @@ def find_orfs(sequence):
     return orfs
 
 
-async def initialize_ncbi_blast(settings: dict, sequence: str) -> Awaitable[tuple]:
+async def initialize_ncbi_blast(settings: dict, sequence: str) -> tuple:
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
     :param settings: the application settings object
-
     :param sequence: the nucleotide sequence to BLAST
-
     :return: the RID and RTOE for the request
-    :rtype:
 
     """
     # Parameters passed in the URL string. eg. ?CMD=Put&DATABASE=nr
@@ -302,7 +347,7 @@ async def initialize_ncbi_blast(settings: dict, sequence: str) -> Awaitable[tupl
 
     # Data passed as POST content.
     data = {
-        "QUERY": sequence,
+        "QUERY": sequence
     }
 
     async with aiohttp.ClientSession() as session:
@@ -311,18 +356,19 @@ async def initialize_ncbi_blast(settings: dict, sequence: str) -> Awaitable[tupl
                 raise virtool.errors.NCBIError(f"BLAST request returned status: {resp.status}")
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
-            return extract_blast_info(await resp.text())
+            html = await resp.text()
+
+            logging.debug("Started BLAST on NCBI")
+
+            return extract_blast_info(html)
 
 
-def extract_blast_info(html):
+def extract_blast_info(html: str) -> tuple:
     """
     Extract the RID and RTOE from BLAST HTML data containing a <QBlastInfo /> tag.
 
     :param html: the input HTML
-    :type html: str
-
     :return: a tuple containing the RID and RTOE
-    :rtype: tuple
 
     """
     string = html.split("<!--QBlastInfoBegin")[1].split("QBlastInfoEnd")[0]
@@ -336,18 +382,13 @@ def extract_blast_info(html):
     return rid, int(rtoe)
 
 
-async def check_rid(settings, rid):
+async def check_rid(settings: dict, rid: str) -> bool:
     """
     Check if the BLAST process identified by the passed RID is ready.
 
     :param rid: the RID to check
-    :type rid: str
-
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
     :return: ``True`` if ready, ``False`` otherwise
-    :rtype: Coroutine[bool]
 
     """
     params = {
@@ -364,7 +405,57 @@ async def check_rid(settings, rid):
             return "Status=WAITING" not in await resp.text()
 
 
-async def get_ncbi_blast_result(settings, rid):
+def extract_ncbi_blast_zip(data, rid: str) -> dict:
+    """
+    Extract the BLAST result JSON data given zipped binary data. Fails if the data is not valid zip.
+
+    :param data: the binary zip data
+    :param rid: the RID for the blast request
+    :return: the extracted BLAST JSON data
+
+    """
+    zipped = zipfile.ZipFile(io.BytesIO(data))
+    string = zipped.open(rid + "_1.json", "r").read().decode()
+    return json.loads(string)
+
+
+def format_blast_hit(hit: dict) -> dict:
+    """
+    Format a BLAST hit from NCBI into a format more usable by Virtool.
+
+    :param hit: the BLAST hit
+    :return: the formatted hit
+
+    """
+    cleaned = {key: hit["description"][0].get(key, "") for key in ["accession", "taxid", "title"]}
+
+    hsps = {key: hit["hsps"][0][key] for key in [
+        "identity",
+        "evalue",
+        "align_len",
+        "score",
+        "bit_score",
+        "gaps"
+    ]}
+
+    return {
+        **cleaned,
+        **hsps,
+        "name": hit["description"][0].get("sciname", "No name"),
+        "len": hit["len"]
+    }
+
+
+async def get_ncbi_blast_result(settings: dict, run_in_process: callable, rid: str) -> dict:
+    """
+    Retrieve the BLAST result with the given `rid` from NCBI.
+
+    :param settings: the application settings
+    :param run_in_process: the application processing running function
+    :param rid: the rid to retrieve a result for
+    :return: the BLAST result
+
+    """
     params = {
         "CMD": "Get",
         "RID": rid,
@@ -374,15 +465,18 @@ async def get_ncbi_blast_result(settings, rid):
 
     async with aiohttp.ClientSession() as session:
         async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_URL, params=params) as resp:
-            return parse_blast_content(await resp.read(), rid)
+            data = await resp.read()
+            return await run_in_process(extract_ncbi_blast_zip, data, rid)
 
 
-def parse_blast_content(content, rid):
-    zipped = zipfile.ZipFile(io.BytesIO(content))
-    string = zipped.open(rid + "_1.json", "r").read().decode()
+def format_blast_content(result: dict) -> dict:
+    """
+    Format the BLAST result data into a format easily usable by Virtool.
 
-    result = json.loads(string)
+    :param result: the raw BLAST result
+    :return: the formatted BLAST result
 
+    """
     if len(result) != 1:
         raise virtool.errors.NCBIError(f"Unexpected BLAST result count {len(result)} returned")
 
@@ -405,70 +499,58 @@ def parse_blast_content(content, rid):
         output["masking"] = None
 
     output["stat"] = result["stat"]
-
-    output["hits"] = list()
-
-    for hit in result["hits"]:
-        cleaned = {key: hit["description"][0].get(key, "") for key in ["taxid", "title", "accession"]}
-
-        cleaned["len"] = hit["len"]
-        cleaned["name"] = hit["description"][0]["sciname"]
-
-        hsps = {key: hit["hsps"][0][key] for key in [
-            "identity",
-            "evalue",
-            "align_len",
-            "score",
-            "bit_score",
-            "gaps"
-        ]}
-
-        cleaned.update(hsps)
-
-        output["hits"].append(cleaned)
+    output["hits"] = [format_blast_hit(h) for h in result["hits"]]
 
     return output
 
 
-async def wait_for_blast_result(db, settings, analysis_id, sequence_index, rid):
+async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
 
     """
+    db = app["db"]
+    settings = app["settings"]
+
+    blast = virtool.analyses.db.BLAST(
+        db,
+        settings,
+        analysis_id,
+        sequence_index,
+        rid
+    )
+
     try:
-        ready = False
-        interval = 3
+        while not blast.ready:
+            await blast.sleep()
 
-        while not ready:
-            await asyncio.sleep(interval)
+            blast.ready = await check_rid(settings, rid)
 
-            # Do this before checking RID for more accurate time.
-            last_checked_at = virtool.utils.timestamp()
+            logger.debug(f"Checked BLAST {rid} ({blast.interval}s)")
 
-            ready = await check_rid(settings, rid)
+            result = None
 
-            update = {
-                "interval": interval,
-                "last_checked_at": last_checked_at,
-                "ready": ready,
-                "rid": rid
-            }
+            if blast.ready:
+                try:
+                    result_json = await get_ncbi_blast_result(
+                        settings,
+                        app["run_in_process"],
+                        rid
+                    )
+                except zipfile.BadZipFile:
+                    await blast.update(False, None, error="Unable to interpret NCBI result")
+                    return
 
-            interval += 5
+                logger.debug(f"Retrieved result for BLAST {rid}")
+                result = format_blast_content(result_json)
 
-            if update["ready"]:
-                update["result"] = await get_ncbi_blast_result(settings, rid)
+                await blast.update(True, result, None)
+                return
 
-            await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-                "$set": {
-                    "results.$.blast": update
-                }
-            })
+            await blast.update(False, None, None)
+
     except asyncio.CancelledError:
         # Remove the BLAST record from the sequence if the server is shutdown.
-        await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-            "$set": {
-                "results.$.blast": None
-            }
-        })
+        await blast.remove()
+        logger.debug(f"Cancelled BLAST {rid}")

@@ -3,26 +3,29 @@ import numbro from "numbro";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Box, BoxGroup, BoxGroupHeader, BoxTitle, Button, Icon, InfoAlert, Table } from "../../../base";
+import { Box, BoxGroup, BoxGroupHeader, BoxTitle, Button, ExternalLink, Icon, InfoAlert, Table } from "../../../base";
 
 import { blastNuvs } from "../../actions";
+import { BLASTError } from "./BLASTError";
 import { BLASTInProgress } from "./BLASTInProgress";
 
 export const BLASTButton = styled(Button)`
     margin-left: auto;
 `;
 
-export const BLASTResults = ({ hits }) => {
+const StyledBLASTResultsHeader = styled(BoxGroupHeader)`
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+`;
+
+export const BLASTResults = ({ hits, onBlast }) => {
     const components = map(hits, (hit, index) => (
         <tr key={index}>
             <td>
-                <a
-                    target="_blank"
-                    href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}
-                    rel="noopener noreferrer"
-                >
+                <ExternalLink href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
                     {hit.accession}
-                </a>
+                </ExternalLink>
             </td>
             <td>{hit.name}</td>
             <td>{hit.evalue}</td>
@@ -33,9 +36,12 @@ export const BLASTResults = ({ hits }) => {
 
     return (
         <BoxGroup>
-            <BoxGroupHeader>
-                <h2>NCBI BLAST</h2>
-            </BoxGroupHeader>
+            <StyledBLASTResultsHeader>
+                <strong>NCBI BLAST</strong>
+                <a href="#" onClick={onBlast}>
+                    <Icon name="redo" /> Retry
+                </a>
+            </StyledBLASTResultsHeader>
             <Table>
                 <thead>
                     <tr>
@@ -56,9 +62,13 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
     const handleBlast = useCallback(() => onBlast(analysisId, sequenceIndex), [analysisId, sequenceIndex]);
 
     if (blast) {
+        if (blast.error) {
+            return <BLASTError error={blast.error} onBlast={handleBlast} />;
+        }
+
         if (blast.ready) {
             if (blast.result.hits.length) {
-                return <BLASTResults hits={blast.result.hits} />;
+                return <BLASTResults hits={blast.result.hits} onBlast={handleBlast} />;
             }
 
             return (

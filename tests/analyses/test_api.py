@@ -242,8 +242,9 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     blast = {
         "rid": "FOOBAR1337",
         "interval": 3,
+        "last_checked_at": static_time.iso,
         "ready": False,
-        "last_checked_at": static_time.iso
+        "result": None
     }
 
     assert await resp.json() == blast
@@ -259,8 +260,7 @@ async def test_blast(error, mocker, spawn_client, resp_is, static_time):
     )
 
     m_wait_for_blast_result.assert_called_with(
-        client.db,
-        client.settings,
+        client.app,
         "foobar",
         5,
         "FOOBAR1337"
