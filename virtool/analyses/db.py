@@ -1,4 +1,6 @@
+import asyncio
 import os
+from typing import Tuple, Union
 
 import virtool.analyses.utils
 import virtool.bio
@@ -157,27 +159,41 @@ async def new(app, sample_id, ref_id, user_id, algorithm):
     return document
 
 
-async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
+async def update_nuvs_blast(
+        db,
+        settings: dict,
+        analysis_id: str,
+        sequence_index: int,
+        rid: str,
+        error: Union[None, str] = None,
+        interval: int = 3,
+        ready: Union[None, bool] = None,
+        result: Union[None, dict] = None
+) -> Tuple[dict, dict]:
     """
     Update the BLAST data for a sequence in a NuVs analysis.
 
-    :param settings:
-    :param db:
-
-    :param analysis_id:
-    :param sequence_index:
-    :param rid:
-
+    :param db: the application database object
+    :param settings: the application settings
+    :param analysis_id: the id of the analysis the BLAST is for
+    :param sequence_index: the index of the NuVs sequence the BLAST is for
+    :param rid: the id of the request
+    :param error: an error message if the BLAST failed
+    :param interval: the current interval for checking the request status on NCBI
+    :param ready: indicates that the BLAST result is ready
+    :param result: the formatted result from NCBI
     :return: the blast data and the complete analysis document
-    :rtype: Tuple[dict, dict]
 
     """
-    # Do initial check of RID to populate BLAST embedded document.
+    if ready is None:
+        ready = await virtool.bio.check_rid(settings, rid)
+
     data = {
-        "rid": rid,
-        "ready": await virtool.bio.check_rid(settings, rid),
+        "interval": interval,
         "last_checked_at": virtool.utils.timestamp(),
-        "interval": 3
+        "rid": rid,
+        "ready": ready,
+        "result": result
     }
 
     document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
