@@ -145,37 +145,38 @@ async def test_format_analysis(algorithm, mocker):
         m_format_pathoscope.assert_called_with("db", "settings", document)
         assert not m_format_nuvs.called
 
-    async def test_remove_nuvs_blast(dbi):
-        """
-        Test that the correct BLAST result is removed.
 
-        """
-        documents = [
-            {
-                "_id": "foo",
-                "results": [
-                    {"index": 2, "blast": "bar"},
-                    {"index": 5, "blast": "baz"},
-                ]
-            },
-            {
+async def test_remove_nuvs_blast(dbi):
+    """
+    Test that the correct BLAST result is removed.
 
-                "_id": "bar",
-                "results": [
-                    {"index": 3, "blast": "bar"},
-                    {"index": 9, "blast": "baz"},
-                ]
-            }
-        ]
+    """
+    documents = [
+        {
+            "_id": "foo",
+            "results": [
+                {"index": 2, "blast": "bar"},
+                {"index": 5, "blast": "baz"},
+            ]
+        },
+        {
 
-        await dbi.analyses.insert_many(documents)
+            "_id": "bar",
+            "results": [
+                {"index": 3, "blast": "bar"},
+                {"index": 9, "blast": "baz"},
+            ]
+        }
+    ]
 
-        await virtool.analyses.db.remove_nuvs_blast(
-            dbi,
-            "foo",
-            5
-        )
+    await dbi.analyses.insert_many(documents)
 
-        documents[0]["results"][1]["blast"] = None
+    await virtool.analyses.db.remove_nuvs_blast(
+        dbi,
+        "foo",
+        5
+    )
 
-        assert await dbi.analyses.find().to_list(None) == documents
+    documents[0]["results"][1]["blast"] = None
+
+    assert await dbi.analyses.find().to_list(None) == documents
