@@ -2,13 +2,14 @@ import asyncio
 import gzip
 import io
 import json
+import logging
 import re
 import zipfile
-import logging
+from typing import Generator, List
 
 import aiohttp
 
-import virtool.analyses.utils
+import virtool.analyses.db
 import virtool.errors
 import virtool.http.proxy
 import virtool.utils
@@ -512,53 +513,44 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
     db = app["db"]
     settings = app["settings"]
 
+    blast = virtool.analyses.db.BLAST(
+        db,
+        settings,
+        analysis_id,
+        sequence_index,
+        rid
+    )
+
     try:
-        ready = False
-        interval = 3
+        while not blast.ready:
+            await blast.sleep()
 
-        while not ready:
-            await asyncio.sleep(interval)
+            blast.ready = await check_rid(settings, rid)
 
-            # Do this before checking RID for more accurate time.
-            last_checked_at = virtool.utils.timestamp()
+            logger.debug(f"Checked BLAST {rid} ({blast.interval}s)")
 
-            ready = await check_rid(settings, rid)
+            result = None
 
-            logger.debug(f"Checked BLAST {rid} ({interval}s)")
+            if blast.ready:
+                try:
+                    result_json = await get_ncbi_blast_result(
+                        settings,
+                        app["run_in_process"],
+                        rid
+                    )
+                except zipfile.BadZipFile:
+                    await blast.update(False, None, error="Unable to interpret NCBI result")
+                    return
 
-            update = {
-                "interval": interval,
-                "last_checked_at": last_checked_at,
-                "ready": ready,
-                "rid": rid
-            }
+                logger.debug(f"Retrieved result for BLAST {rid}")
+                result = format_blast_content(result_json)
 
-            if ready:
-                result_json = await get_ncbi_blast_result(
-                    settings,
-                    app["run_in_process"],
-                    rid
-                )
-
-                logger.debug(f"Result retrieved for BLAST {rid}")
-
-                update["result"] = parse_blast_content(result_json)
-
-            await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-                "$set": {
-                    "results.$.blast": update
-                }
-            })
-
-            if ready:
+                await blast.update(True, result, None)
                 return
 
-            interval += 5
+            await blast.update(False, None, None)
 
     except asyncio.CancelledError:
         # Remove the BLAST record from the sequence if the server is shutdown.
-        await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
-            "$set": {
-                "results.$.blast": None
-            }
-        })
+        await blast.remove()
+        logger.debug(f"Cancelled BLAST {rid}")
