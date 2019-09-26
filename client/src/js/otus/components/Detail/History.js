@@ -7,11 +7,13 @@
  *
  */
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
 import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, ListGroup } from "react-bootstrap";
 import { checkRefRight } from "../../../utils/utils";
+import { Change } from "./Change.js";
+import { ListGroup } from "react-bootstrap";
 
 import { getOTUHistory, revert } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, Label, LoadingPlaceholder } from "../../../base";
@@ -83,40 +85,6 @@ const getMethodIcon = ({ method_name }) => {
 
     return <Icon {...props} />;
 };
-
-export class Change extends React.Component {
-    handleRevert = () => {
-        this.props.revert(this.props.otu.id, this.props.otu.version, this.props._id);
-    };
-
-    render() {
-        let revertIcon;
-
-        if (this.props.unbuilt && this.props.canModify) {
-            revertIcon = <Icon name="undo" bsStyle="primary" tip="Revert" onClick={this.handleRevert} pullRight />;
-        }
-
-        return (
-            <ListGroupItem>
-                <Row>
-                    <Col md={1}>
-                        <Label>{this.props.otu.version}</Label>
-                    </Col>
-                    <Col md={6}>
-                        <Flex alignItems="center">
-                            {getMethodIcon(this.props)}
-                            <FlexItem pad={5}>{this.props.description || "No Description"}</FlexItem>
-                        </Flex>
-                    </Col>
-                    <Col md={4}>
-                        <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
-                    </Col>
-                    <Col md={1}>{revertIcon}</Col>
-                </Row>
-            </ListGroupItem>
-        );
-    }
-}
 
 export class HistoryList extends React.Component {
     render() {
