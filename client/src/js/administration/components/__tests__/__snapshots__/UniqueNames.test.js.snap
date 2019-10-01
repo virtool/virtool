@@ -2,9 +2,9 @@
 
 exports[`<UniqueNames /> should render when [enabled=false] 1`] = `
 <SettingsCheckbox>
-  <strong>
+  <h2>
     Unique Sample Names
-  </strong>
+  </h2>
   <small>
     Enable this feature to ensure that every created sample has a unique name. If a user attempts to assign an existing name to a new sample an error will be displayed.
   </small>
@@ -13,9 +13,9 @@ exports[`<UniqueNames /> should render when [enabled=false] 1`] = `
 
 exports[`<UniqueNames /> should render when [enabled=true] 1`] = `
 <SettingsCheckbox>
-  <strong>
+  <h2>
     Unique Sample Names
-  </strong>
+  </h2>
   <small>
     Enable this feature to ensure that every created sample has a unique name. If a user attempts to assign an existing name to a new sample an error will be displayed.
   </small>

@@ -5,7 +5,7 @@ import { SettingsCheckbox } from "./SettingsCheckbox";
 
 export const SentryOptions = ({ enabled, onToggle }) => (
     <SettingsCheckbox enabled={enabled} onToggle={onToggle}>
-        <strong>Sentry</strong>
+        <h2>Sentry</h2>
         <small>
             Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future errors.
         </small>

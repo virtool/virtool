@@ -71,9 +71,7 @@ exports[`<API /> should render two API keys 1`] = `
       </withRouter(LinkContainer)>
     </FlexItem>
   </Flex>
-  <ListGroup
-    bsClass="list-group"
-  >
+  <div>
     <Connect(APIKey)
       apiKey={
         Object {
@@ -90,7 +88,7 @@ exports[`<API /> should render two API keys 1`] = `
       }
       key="bar"
     />
-  </ListGroup>
+  </div>
   <Connect(CreateAPIKey) />
 </div>
 `;
@@ -172,13 +170,11 @@ exports[`<API /> should render with 0 API keys 1`] = `
       </withRouter(LinkContainer)>
     </FlexItem>
   </Flex>
-  <ListGroup
-    bsClass="list-group"
-  >
+  <div>
     <NoneFound
       noun="API keys"
     />
-  </ListGroup>
+  </div>
   <Connect(CreateAPIKey) />
 </div>
 `;

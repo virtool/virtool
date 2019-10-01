@@ -5,9 +5,9 @@ exports[`<Sentry /> should render correctly when disabled 1`] = `
   enabled={false}
   onToggle={[MockFunction]}
 >
-  <strong>
+  <h2>
     Sentry
-  </strong>
+  </h2>
   <small>
     Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future errors.
   </small>
@@ -19,9 +19,9 @@ exports[`<Sentry /> should render correctly when enabled 1`] = `
   enabled={true}
   onToggle={[MockFunction]}
 >
-  <strong>
+  <h2>
     Sentry
-  </strong>
+  </h2>
   <small>
     Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future errors.
   </small>

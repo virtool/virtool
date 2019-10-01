@@ -2,9 +2,12 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
+    "count",
     "file",
     "ready",
-    "job"
+    "job",
+    "nickname",
+    "user"
 ]
 
 

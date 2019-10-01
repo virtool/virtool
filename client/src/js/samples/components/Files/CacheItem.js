@@ -3,8 +3,7 @@ import styled from "styled-components";
 import { sumBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { ListGroupItem } from "react-bootstrap";
-import { Flex, FlexItem, RelativeTime } from "../../../base";
+import { BoxGroupSection, Flex, FlexItem, RelativeTime } from "../../../base";
 import { byteSize } from "../../../utils/utils";
 
 const calculateSize = files => byteSize(sumBy(files, "size"));
@@ -14,7 +13,7 @@ const CacheItemLink = styled(Link)`
     font-weight: bold;
 `;
 
-const StyledSampleCacheItem = styled(ListGroupItem)`
+const StyledSampleCacheItem = styled(BoxGroupSection)`
     align-items: flex-start;
     display: flex;
     justify-content: space-between;

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Box, Checkbox } from "../../base";
 
 const SettingsCheckboxContainer = styled.div`
-    padding-right: 10px;
+    padding: 10px;
 `;
 
 const SettingsCheckboxChildren = styled.div`
@@ -14,17 +14,17 @@ const StyledSettingsCheckbox = styled(Box)`
     align-items: center;
     display: flex;
     justify-content: space-between;
-    padding-right: 20px;
+    padding: 15px 20px 12px 15px;
 
     small {
         color: #4a5568;
-        font-size: 13px;
+        font-size: 14px;
     }
 
-    strong {
+    h2 {
         display: block;
-        font-size: 14px;
-        margin-bottom: 3px;
+        font-size: 15px;
+        margin: 0 0 3px;
         padding-bottom: 5px;
     }
 `;

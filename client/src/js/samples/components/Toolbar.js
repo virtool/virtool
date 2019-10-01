@@ -2,8 +2,7 @@ import { push } from "connected-react-router";
 import React from "react";
 import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Button, Flex, FlexItem, Icon } from "../../base";
+import { Button, Flex, FlexItem, Icon, LinkButton } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
 import AlgorithmFilter from "./AlgorithmFilter";
@@ -34,9 +33,9 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
 
     if (canCreate) {
         createButton = (
-            <LinkContainer to={{ state: { createSample: true } }}>
-                <Button tip="Create" icon="plus-square fa-fw" bsStyle="primary" />
-            </LinkContainer>
+            <LinkButton to={{ state: { createSample: true } }} tip="Create">
+                <Icon name="plus-square fa-fw" />
+            </LinkButton>
         );
     }
 

@@ -45,14 +45,9 @@ exports[`<JobStepIcon /> renders correct icon when state error 1`] = `
 `;
 
 exports[`<JobStepIcon /> renders correct icon when state running 1`] = `
-<Loader
+<Step__JobStepLoader
   color="#07689d"
   size="12px"
-  style={
-    Object {
-      "padding": "0 1.5px",
-    }
-  }
 />
 `;
 

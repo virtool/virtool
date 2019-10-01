@@ -2,7 +2,15 @@ import { get } from "lodash-es";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { InputError, LoadingPlaceholder, Panel, RelativeTime, SaveButton } from "../../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    InputError,
+    LoadingPlaceholder,
+    RelativeTime,
+    SaveButton
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { changePassword } from "../actions";
@@ -96,55 +104,51 @@ export class ChangePassword extends React.Component {
             errorConfirmPassword
         } = deriveState(this.props, this.state);
 
-        const hasError = errorOldPassword || errorNewPassword || errorConfirmPassword;
-
         return (
-            <Row>
-                <Col md={8} lg={6}>
-                    <Panel bsStyle={hasError ? "danger" : "default"}>
-                        <Panel.Heading>Password</Panel.Heading>
-                        <Panel.Body>
-                            <form onSubmit={this.onSubmit}>
-                                <InputError
-                                    label="Old Password"
-                                    type="password"
-                                    name="oldPassword"
-                                    value={oldPassword}
-                                    onChange={this.handleChange}
-                                    error={errorOldPassword}
-                                />
-                                <InputError
-                                    label="New password"
-                                    type="password"
-                                    name="newPassword"
-                                    value={newPassword}
-                                    onChange={this.handleChange}
-                                    error={errorNewPassword}
-                                />
-                                <InputError
-                                    label="Confirm New Password"
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={confirmPassword}
-                                    onChange={this.handleChange}
-                                    error={errorConfirmPassword}
-                                />
+            <BoxGroup>
+                <BoxGroupHeader>
+                    <h2>Password</h2>
+                </BoxGroupHeader>
+                <BoxGroupSection>
+                    <form onSubmit={this.onSubmit}>
+                        <InputError
+                            label="Old Password"
+                            type="password"
+                            name="oldPassword"
+                            value={oldPassword}
+                            onChange={this.handleChange}
+                            error={errorOldPassword}
+                        />
+                        <InputError
+                            label="New password"
+                            type="password"
+                            name="newPassword"
+                            value={newPassword}
+                            onChange={this.handleChange}
+                            error={errorNewPassword}
+                        />
+                        <InputError
+                            label="Confirm New Password"
+                            type="password"
+                            name="confirmPassword"
+                            value={confirmPassword}
+                            onChange={this.handleChange}
+                            error={errorConfirmPassword}
+                        />
 
-                                <div style={{ marginTop: "20px" }}>
-                                    <Row>
-                                        <Col xs={12} md={6} className="text-muted">
-                                            Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                                        </Col>
-                                        <Col xs={12} md={6}>
-                                            <SaveButton altText="Change" pullRight />
-                                        </Col>
-                                    </Row>
-                                </div>
-                            </form>
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-            </Row>
+                        <div style={{ marginTop: "20px" }}>
+                            <Row>
+                                <Col xs={12} md={6} className="text-muted">
+                                    Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                                </Col>
+                                <Col xs={12} md={6}>
+                                    <SaveButton altText="Change" pullRight />
+                                </Col>
+                            </Row>
+                        </div>
+                    </form>
+                </BoxGroupSection>
+            </BoxGroup>
         );
     }
 }

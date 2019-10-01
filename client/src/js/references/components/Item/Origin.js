@@ -1,45 +1,53 @@
-import React from "react";
 import PropTypes from "prop-types";
+import React from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "../../../base";
+import { ReferenceItemInfo } from "./Info";
+
+export const ClonedFrom = ({ id, name }) => (
+    <ReferenceItemInfo>
+        <strong>Cloned From </strong>
+        <Link to={`/refs/${id}`}>{name}</Link>
+        <small>This reference was cloned from another reference in your Virtool instance.</small>
+    </ReferenceItemInfo>
+);
+
+export const ImportedFrom = ({ name }) => (
+    <ReferenceItemInfo>
+        <strong>Imported From</strong>
+        <span>{name}</span>
+        <small>This reference was imported from a Virtool reference file.</small>
+    </ReferenceItemInfo>
+);
+
+export const RemotesFrom = ({ slug }) => (
+    <ReferenceItemInfo>
+        <span>
+            <strong>Remotes from </strong>
+            <ExternalLink href={`https://www.github.com/${slug}`}>{slug}</ExternalLink>
+        </span>
+        <small>This reference can be kept in sync with a reference published on GitHub.</small>
+    </ReferenceItemInfo>
+);
 
 export const ReferenceItemOrigin = ({ clonedFrom, importedFrom, remotesFrom }) => {
     if (clonedFrom) {
-        return (
-            <tr>
-                <th>Cloned From</th>
-                <td>
-                    <Link to={`/refs/${clonedFrom.id}`}>{clonedFrom.name}</Link>
-                </td>
-            </tr>
-        );
+        return <ClonedFrom {...clonedFrom} />;
     }
 
     if (importedFrom) {
-        return (
-            <tr>
-                <th>Imported From</th>
-                <td>{importedFrom.name}</td>
-            </tr>
-        );
+        return <ImportedFrom {...importedFrom} />;
     }
 
     if (remotesFrom) {
-        return (
-            <tr>
-                <th>Remotes from</th>
-                <td>
-                    <ExternalLink href={`https://www.github.com/${remotesFrom.slug}`}>{remotesFrom.slug}</ExternalLink>
-                </td>
-            </tr>
-        );
+        return <RemotesFrom {...remotesFrom} />;
     }
 
     return (
-        <tr>
-            <th>Created</th>
-            <td>No File</td>
-        </tr>
+        <span>
+            <strong>Created</strong>
+            <span>No File</span>
+        </span>
     );
 };
 

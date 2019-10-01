@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { InputError, Panel, SaveButton } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputError, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { updateAccount } from "../actions";
 
@@ -59,32 +59,30 @@ export class Email extends React.Component {
 
     render() {
         return (
-            <Row>
-                <Col md={8} lg={6}>
-                    <Panel bsStyle={this.state.error ? "danger" : "default"}>
-                        <Panel.Heading>Email</Panel.Heading>
-                        <Panel.Body>
-                            <form onSubmit={this.handleSubmit}>
-                                <InputError
-                                    label="Email address"
-                                    value={this.state.email}
-                                    onChange={this.handleChange}
-                                    onBlur={this.handleBlur}
-                                    error={this.state.error}
-                                />
+            <BoxGroup>
+                <BoxGroupHeader>
+                    <h2>Email</h2>
+                </BoxGroupHeader>
+                <BoxGroupSection>
+                    <form onSubmit={this.handleSubmit}>
+                        <InputError
+                            label="Email address"
+                            value={this.state.email}
+                            onChange={this.handleChange}
+                            onBlur={this.handleBlur}
+                            error={this.state.error}
+                        />
 
-                                <div style={{ marginTop: "20px" }}>
-                                    <Row>
-                                        <Col xs={24} md={12}>
-                                            <SaveButton pullRight />
-                                        </Col>
-                                    </Row>
-                                </div>
-                            </form>
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-            </Row>
+                        <div style={{ marginTop: "20px" }}>
+                            <Row>
+                                <Col xs={24} md={12}>
+                                    <SaveButton pullRight />
+                                </Col>
+                            </Row>
+                        </div>
+                    </form>
+                </BoxGroupSection>
+            </BoxGroup>
         );
     }
 }

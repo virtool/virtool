@@ -1,5 +1,6 @@
 import { get, map } from "lodash-es";
 import React from "react";
+import styled from "styled-components";
 import { Col, ListGroup, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
@@ -32,6 +33,12 @@ export class IsolateButton extends React.Component {
     }
 }
 
+const StyledIsolateEditor = styled.div`
+    h4 > a {
+        font-size: 14px;
+    }
+`;
+
 const IsolateEditor = props => {
     const isolateComponents = map(props.isolates, (isolate, index) => (
         <IsolateButton
@@ -53,7 +60,7 @@ const IsolateEditor = props => {
     }
 
     return (
-        <div>
+        <StyledIsolateEditor>
             <h4 style={{ display: "flex", alignItems: "center" }} className="section-header">
                 <FlexItem grow={0} shrink={0}>
                     <strong>Isolates</strong>
@@ -64,14 +71,9 @@ const IsolateEditor = props => {
                 </FlexItem>
 
                 {props.canModify ? (
-                    <Icon
-                        bsStyle="primary"
-                        name="plus-square"
-                        tip="Add Isolate"
-                        tipPlacement="left"
-                        style={{ fontSize: "15px" }}
-                        onClick={props.onShowAddIsolate}
-                    />
+                    <a href="#" onClick={props.onShowAddIsolate}>
+                        Add Isolate
+                    </a>
                 ) : null}
             </h4>
 
@@ -82,7 +84,7 @@ const IsolateEditor = props => {
                 </Col>
                 <Col md={9}>{noIsolatesFound ? null : <IsolateDetail canModify={props.canModify} />}</Col>
             </Row>
-        </div>
+        </StyledIsolateEditor>
     );
 };
 

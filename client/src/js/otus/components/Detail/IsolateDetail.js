@@ -1,8 +1,8 @@
 import { get } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Icon, SuccessLabel } from "../../../base";
+import styled from "styled-components";
+import { BoxGroup, BoxGroupHeader, Icon, SuccessLabel } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
@@ -102,22 +102,7 @@ export class IsolateDetail extends React.Component {
                             />
                         </div>
                     </IsolateDetailHeader>
-                    <BoxGroupSection>
-                        <span>
-                            <strong>Source Name: </strong>
-                            <span>{isolate.source_name}</span>
-                        </span>
-
-                        <span> / </span>
-
-                        <span>
-                            <strong>Source Type: </strong>
-                            <span>{isolate.source_type}</span>
-                        </span>
-                    </BoxGroupSection>
-                    <BoxGroupSection>
-                        <IsolateSequences canModify={this.props.canModify} />
-                    </BoxGroupSection>
+                    <IsolateSequences canModify={this.props.canModify} />
                 </BoxGroup>
             </div>
         );

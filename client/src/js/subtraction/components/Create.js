@@ -1,15 +1,21 @@
+import { push } from "connected-react-router";
+import { filter, get, map } from "lodash-es";
 import React from "react";
-import { filter, map, get } from "lodash-es";
-import { Row, Col, ListGroup, Modal } from "react-bootstrap";
+import { Col, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { push } from "connected-react-router";
+import styled from "styled-components";
+import { BoxGroup, BoxGroupSection, Button, Icon, InputError, NoneFoundSection, RelativeTime } from "../../base";
+import { clearError } from "../../errors/actions";
 
 import { findFiles } from "../../files/actions";
+import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createSubtraction } from "../actions";
-import { clearError } from "../../errors/actions";
-import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils/utils";
+
+const SubtractionFileItemTop = styled.div`
+    display: flex;
+    justify-content: space-between;
+`;
 
 export class SubtractionFileItem extends React.Component {
     handleClick = () => {
@@ -20,16 +26,14 @@ export class SubtractionFileItem extends React.Component {
         const { active, name, uploaded_at, user } = this.props;
 
         return (
-            <ListGroupItem active={active} onClick={this.handleClick}>
-                <Row>
-                    <Col xs={7}>
-                        <strong>{name}</strong>
-                    </Col>
-                    <Col xs={5}>
+            <BoxGroupSection active={active} onClick={this.handleClick}>
+                <SubtractionFileItemTop>
+                    <strong>{name}</strong>
+                    <span>
                         Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
-                    </Col>
-                </Row>
-            </ListGroupItem>
+                    </span>
+                </SubtractionFileItemTop>
+            </BoxGroupSection>
         );
     }
 }
@@ -119,13 +123,12 @@ export class CreateSubtraction extends React.Component {
             ));
         } else {
             fileComponents = (
-                <ListGroupItem className="text-center">
+                <NoneFoundSection>
                     <Icon name="info-circle" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
-                </ListGroupItem>
+                </NoneFoundSection>
             );
         }
 
-        const panelListStyle = this.state.errorFile ? "panel-list-custom-error" : "panel-list-custom";
         const inputErrorClassName = this.state.errorFile ? "input-form-error" : "input-form-error-none";
 
         const errorMessage = (
@@ -136,7 +139,6 @@ export class CreateSubtraction extends React.Component {
 
         return (
             <Modal
-                bsSize="large"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleModalEnter}
@@ -173,7 +175,7 @@ export class CreateSubtraction extends React.Component {
                         <h5>
                             <strong>Files</strong>
                         </h5>
-                        <ListGroup className={panelListStyle}>{fileComponents}</ListGroup>
+                        <BoxGroup>{fileComponents}</BoxGroup>
                         {errorMessage}
                     </Modal.Body>
 

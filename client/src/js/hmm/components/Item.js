@@ -1,10 +1,8 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
+import PropTypes from "prop-types";
+import React from "react";
 import { Col, Row } from "react-bootstrap";
-
-import { Label, ListGroupItem } from "../../base";
+import { Label, LinkBox } from "../../base";
 
 export default function HMMItem({ cluster, families, id, names }) {
     const filteredFamilies = reject(keys(families), family => family === "None");
@@ -16,21 +14,19 @@ export default function HMMItem({ cluster, families, id, names }) {
     ));
 
     return (
-        <LinkContainer to={`/hmm/${id}`}>
-            <ListGroupItem className="spaced">
-                <Row>
-                    <Col xs={2}>
-                        <strong>{cluster}</strong>
-                    </Col>
-                    <Col xs={5}>{names[0]}</Col>
-                    <Col xs={5}>
-                        <div className="pull-right">
-                            {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
-                        </div>
-                    </Col>
-                </Row>
-            </ListGroupItem>
-        </LinkContainer>
+        <LinkBox to={`/hmm/${id}`}>
+            <Row>
+                <Col xs={2}>
+                    <strong>{cluster}</strong>
+                </Col>
+                <Col xs={5}>{names[0]}</Col>
+                <Col xs={5}>
+                    <div className="pull-right">
+                        {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
+                    </div>
+                </Col>
+            </Row>
+        </LinkBox>
     );
 }
 

@@ -1,9 +1,35 @@
-import React from "react";
-import styled from "styled-components";
 import PropTypes from "prop-types";
+import React from "react";
 import { Collapse } from "react-bootstrap";
-import { Badge, Icon, Flex, FlexItem, Label, ListGroupItem, Table, InfoLabel } from "../../../base";
+import styled from "styled-components";
+import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
+
+const SequenceHeader = styled.div`
+    align-items: center;
+    display: flex;
+`;
+
+const SequenceHeaderButtons = styled.span`
+    align-items: center;
+    display: flex;
+    margin-left: auto;
+
+    button {
+        margin-left: 2px;
+    }
+
+    i.fas {
+        margin-right: 3px;
+    }
+`;
+
+const SequenceHeaderDefinition = styled.span`
+    margin-left: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+`;
 
 const SequenceTable = styled(Table)`
     margin-top: 10px;
@@ -47,44 +73,33 @@ class Sequence extends React.Component {
 
     render() {
         const accession = this.props.accession;
-        const id = this.props.id;
 
         let buttons;
 
         if (this.state.in) {
             buttons = (
-                <FlexItem>
-                    <Flex alignItem="center">
-                        {this.props.canModify ? (
-                            <FlexItem grow={0} shrink={0}>
-                                <Icon
-                                    name="pencil-alt"
-                                    bsStyle="warning"
-                                    tip="Edit Sequence"
-                                    onClick={this.handleShowEditSequence}
-                                />
-                            </FlexItem>
-                        ) : null}
-                        {this.props.canModify ? (
-                            <FlexItem grow={0} shrink={0} pad={3}>
-                                <Icon
-                                    name="trash"
-                                    bsStyle="danger"
-                                    tip="Remove Sequence"
-                                    onClick={this.handleShowRemoveSequence}
-                                />
-                            </FlexItem>
-                        ) : null}
-                        <FlexItem grow={0} shrink={0} pad={3}>
-                            <Icon name="download" tip="Download FASTA" onClick={this.handleDownload} />
-                        </FlexItem>
-                        <FlexItem pad={5}>
-                            <button type="button" className="close" onClick={this.handleCloseClick}>
-                                <span>×</span>
-                            </button>
-                        </FlexItem>
-                    </Flex>
-                </FlexItem>
+                <SequenceHeaderButtons>
+                    {this.props.canModify ? (
+                        <Icon
+                            name="pencil-alt"
+                            bsStyle="warning"
+                            tip="Edit Sequence"
+                            onClick={this.handleShowEditSequence}
+                        />
+                    ) : null}
+                    {this.props.canModify ? (
+                        <Icon
+                            name="trash"
+                            bsStyle="danger"
+                            tip="Remove Sequence"
+                            onClick={this.handleShowRemoveSequence}
+                        />
+                    ) : null}
+                    <Icon name="download" tip="Download FASTA" onClick={this.handleDownload} />
+                    <button type="button" className="close" onClick={this.handleCloseClick}>
+                        <span>×</span>
+                    </button>
+                </SequenceHeaderButtons>
             );
         }
 
@@ -95,25 +110,13 @@ class Sequence extends React.Component {
         }
 
         return (
-            <ListGroupItem
-                className="spaced"
-                componentClass="div"
-                key={id}
-                onClick={this.state.in ? null : () => this.setState({ in: true })}
-            >
-                <div>
-                    <Flex alignItems="center">
-                        <FlexItem grow={0} shrink={0}>
-                            <Label>{accession}</Label>
-                        </FlexItem>
-                        <FlexItem className="sequence-header-definition" grow={1} shrink={1} pad={5}>
-                            {this.props.definition}
-                        </FlexItem>
-                        {segment}
-                        {buttons}
-                    </Flex>
-                </div>
-
+            <BoxGroupSection onClick={this.state.in ? null : () => this.setState({ in: true })}>
+                <SequenceHeader>
+                    <Label>{accession}</Label>
+                    <SequenceHeaderDefinition>{this.props.definition}</SequenceHeaderDefinition>
+                    {segment}
+                    {buttons}
+                </SequenceHeader>
                 <Collapse in={this.state.in}>
                     <div>
                         <SequenceTable>
@@ -147,7 +150,7 @@ class Sequence extends React.Component {
                         </SequenceTable>
                     </div>
                 </Collapse>
-            </ListGroupItem>
+            </BoxGroupSection>
         );
     }
 }

@@ -1,257 +1,185 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Email /> should render with error in props 1`] = `
-<Row
-  bsClass="row"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    lg={6}
-    md={8}
-  >
-    <Panel
-      bsStyle="default"
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <form
+      onSubmit={[Function]}
     >
-      <PanelHeading
-        bsClass="panel"
-        componentClass="div"
+      <InputError
+        error=""
+        label="Email address"
+        onBlur={[Function]}
+        onChange={[Function]}
+        value="foo@example.com"
+      />
+      <div
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
       >
-        Email
-      </PanelHeading>
-      <PanelBody
-        bsClass="panel"
-        collapsible={false}
-      >
-        <form
-          onSubmit={[Function]}
+        <Row
+          bsClass="row"
+          componentClass="div"
         >
-          <InputError
-            error=""
-            label="Email address"
-            onBlur={[Function]}
-            onChange={[Function]}
-            value="foo@example.com"
-          />
-          <div
-            style={
-              Object {
-                "marginTop": "20px",
-              }
-            }
+          <Col
+            bsClass="col"
+            componentClass="div"
+            md={12}
+            xs={24}
           >
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                md={12}
-                xs={24}
-              >
-                <SaveButton
-                  pullRight={true}
-                />
-              </Col>
-            </Row>
-          </div>
-        </form>
-      </PanelBody>
-    </Panel>
-  </Col>
-</Row>
+            <SaveButton
+              pullRight={true}
+            />
+          </Col>
+        </Row>
+      </div>
+    </form>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
 `;
 
 exports[`<Email /> should render with error in state 1`] = `
-<Row
-  bsClass="row"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    lg={6}
-    md={8}
-  >
-    <Panel
-      bsStyle="danger"
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <form
+      onSubmit={[Function]}
     >
-      <PanelHeading
-        bsClass="panel"
-        componentClass="div"
+      <InputError
+        error="Foo error"
+        label="Email address"
+        onBlur={[Function]}
+        onChange={[Function]}
+        value="foo@example.com"
+      />
+      <div
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
       >
-        Email
-      </PanelHeading>
-      <PanelBody
-        bsClass="panel"
-        collapsible={false}
-      >
-        <form
-          onSubmit={[Function]}
+        <Row
+          bsClass="row"
+          componentClass="div"
         >
-          <InputError
-            error="Foo error"
-            label="Email address"
-            onBlur={[Function]}
-            onChange={[Function]}
-            value="foo@example.com"
-          />
-          <div
-            style={
-              Object {
-                "marginTop": "20px",
-              }
-            }
+          <Col
+            bsClass="col"
+            componentClass="div"
+            md={12}
+            xs={24}
           >
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                md={12}
-                xs={24}
-              >
-                <SaveButton
-                  pullRight={true}
-                />
-              </Col>
-            </Row>
-          </div>
-        </form>
-      </PanelBody>
-    </Panel>
-  </Col>
-</Row>
+            <SaveButton
+              pullRight={true}
+            />
+          </Col>
+        </Row>
+      </div>
+    </form>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
 `;
 
 exports[`<Email /> should render with initial email 1`] = `
-<Row
-  bsClass="row"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    lg={6}
-    md={8}
-  >
-    <Panel
-      bsStyle="default"
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <form
+      onSubmit={[Function]}
     >
-      <PanelHeading
-        bsClass="panel"
-        componentClass="div"
+      <InputError
+        error=""
+        label="Email address"
+        onBlur={[Function]}
+        onChange={[Function]}
+        value="foo@example.com"
+      />
+      <div
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
       >
-        Email
-      </PanelHeading>
-      <PanelBody
-        bsClass="panel"
-        collapsible={false}
-      >
-        <form
-          onSubmit={[Function]}
+        <Row
+          bsClass="row"
+          componentClass="div"
         >
-          <InputError
-            error=""
-            label="Email address"
-            onBlur={[Function]}
-            onChange={[Function]}
-            value="foo@example.com"
-          />
-          <div
-            style={
-              Object {
-                "marginTop": "20px",
-              }
-            }
+          <Col
+            bsClass="col"
+            componentClass="div"
+            md={12}
+            xs={24}
           >
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                md={12}
-                xs={24}
-              >
-                <SaveButton
-                  pullRight={true}
-                />
-              </Col>
-            </Row>
-          </div>
-        </form>
-      </PanelBody>
-    </Panel>
-  </Col>
-</Row>
+            <SaveButton
+              pullRight={true}
+            />
+          </Col>
+        </Row>
+      </div>
+    </form>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
 `;
 
 exports[`<Email /> should render without initial email 1`] = `
-<Row
-  bsClass="row"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    lg={6}
-    md={8}
-  >
-    <Panel
-      bsStyle="default"
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Email
+    </h2>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <form
+      onSubmit={[Function]}
     >
-      <PanelHeading
-        bsClass="panel"
-        componentClass="div"
+      <InputError
+        error=""
+        label="Email address"
+        onBlur={[Function]}
+        onChange={[Function]}
+        value=""
+      />
+      <div
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
       >
-        Email
-      </PanelHeading>
-      <PanelBody
-        bsClass="panel"
-        collapsible={false}
-      >
-        <form
-          onSubmit={[Function]}
+        <Row
+          bsClass="row"
+          componentClass="div"
         >
-          <InputError
-            error=""
-            label="Email address"
-            onBlur={[Function]}
-            onChange={[Function]}
-            value=""
-          />
-          <div
-            style={
-              Object {
-                "marginTop": "20px",
-              }
-            }
+          <Col
+            bsClass="col"
+            componentClass="div"
+            md={12}
+            xs={24}
           >
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                md={12}
-                xs={24}
-              >
-                <SaveButton
-                  pullRight={true}
-                />
-              </Col>
-            </Row>
-          </div>
-        </form>
-      </PanelBody>
-    </Panel>
-  </Col>
-</Row>
+            <SaveButton
+              pullRight={true}
+            />
+          </Col>
+        </Row>
+      </div>
+    </form>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
 `;

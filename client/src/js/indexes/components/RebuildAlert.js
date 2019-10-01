@@ -1,13 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, WarningAlert } from "../../base";
-
+import { Link } from "react-router-dom";
+import { Icon, WarningAlert } from "../../base";
 import { checkRefRight } from "../../utils/utils";
-import RebuildIndex from "./Rebuild";
 
-const RebuildAlert = ({ canBuild, modifiedCount, totalCount }) => {
-    if (totalCount === 0) {
+const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
+    if (showCountAlert === 0) {
         return (
             <WarningAlert level>
                 <Icon name="exclamation-circle" />
@@ -16,27 +14,21 @@ const RebuildAlert = ({ canBuild, modifiedCount, totalCount }) => {
         );
     }
 
-    if (modifiedCount) {
-        const button = canBuild ? (
-            <LinkContainer to={{ state: { rebuild: true } }}>
-                <Button bsStyle="warning" icon="wrench" pullRight>
-                    Rebuild
-                </Button>
-            </LinkContainer>
-        ) : null;
+    if (showIndexAlert) {
+        const to = {
+            pathname: `/refs/${refId}/indexes`,
+            state: { rebuild: true }
+        };
 
         return (
-            <React.Fragment>
-                <WarningAlert>
-                    <Icon name="exclamation-circle" />
-                    <span>
-                        The reference has unbuilt changes. A new index must be built before the information will be
-                        included in future analyses.
-                    </span>
-                    {button}
-                </WarningAlert>
-                <RebuildIndex />
-            </React.Fragment>
+            <WarningAlert level>
+                <Icon name="info-circle" />
+                <span>
+                    <span>There are unbuilt changes. </span>
+                    <Link to={to}>Rebuild the index</Link>
+                    <span> to use the changes in future analyses.</span>
+                </span>
+            </WarningAlert>
         );
     }
 
@@ -44,9 +36,9 @@ const RebuildAlert = ({ canBuild, modifiedCount, totalCount }) => {
 };
 
 const mapStateToProps = state => ({
-    canBuild: checkRefRight(state, "build"),
-    modifiedCount: state.indexes.modified_otu_count,
-    totalCount: state.indexes.total_otu_count
+    refId: state.references.detail.id,
+    showIndexAlert: state.indexes.modified_otu_count || state.otus.modified_count,
+    showCountAlert: checkRefRight(state, "build") && (state.indexes.total_otu_count || state.otus.total_count)
 });
 
 export default connect(mapStateToProps)(RebuildAlert);
