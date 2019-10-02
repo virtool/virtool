@@ -1,10 +1,8 @@
 import React from "react";
 import styled from "styled-components";
-import { get, groupBy, map, reverse } from "lodash-es";
-import { Row, Col } from "react-bootstrap";
+import { get, groupBy, map } from "lodash-es";
 
-import { getOTUHistory } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon, Label } from "../../../base";
+import { Flex, ListGroupItem, RelativeTime, Icon, Label } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {

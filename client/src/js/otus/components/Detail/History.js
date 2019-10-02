@@ -7,7 +7,6 @@
  *
  */
 import React from "react";
-import styled from "styled-components";
 import PropTypes from "prop-types";
 import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
