@@ -2,9 +2,40 @@ import React from "react";
 import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
-import { Col, Row } from "react-bootstrap";
+import styled from "styled-components";
 
 import { Label, ListGroupItem } from "../../base";
+
+const StyledChange = styled(ListGroupItem)`
+    display: flex;
+    justify-content: space-between;
+`;
+
+const NameTag = styled.div`
+    display: flex;
+    justify-content: space-between;
+    width: 83%;
+
+    @media (max-width: 1080px) {
+        flex-flow: row wrap;
+        flex-direction: column;
+        width: 95%;
+    }
+`;
+
+const Name = styled.div`
+    display: flex;
+    @media (max-width: 1080px) {
+        justify-content: flex-start;
+    }
+`;
+
+const Tag = styled.div`
+    display: flex;
+    @media (max-width: 1080px) {
+        justify-content: flex-start;
+    }
+`;
 
 export default function HMMItem({ cluster, families, id, names }) {
     const filteredFamilies = reject(keys(families), family => family === "None");
@@ -17,19 +48,17 @@ export default function HMMItem({ cluster, families, id, names }) {
 
     return (
         <LinkContainer to={`/hmm/${id}`}>
-            <ListGroupItem className="spaced">
-                <Row>
-                    <Col xs={2}>
-                        <strong>{cluster}</strong>
-                    </Col>
-                    <Col xs={5}>{names[0]}</Col>
-                    <Col xs={5}>
-                        <div className="pull-right">
-                            {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
-                        </div>
-                    </Col>
-                </Row>
-            </ListGroupItem>
+            <StyledChange>
+                <span>
+                    <strong>{cluster}</strong>
+                </span>
+                <NameTag>
+                    <Name>{names[0]}</Name>
+                    <Tag>
+                        {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
+                    </Tag>
+                </NameTag>
+            </StyledChange>
         </LinkContainer>
     );
 }
