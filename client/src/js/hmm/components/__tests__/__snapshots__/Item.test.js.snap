@@ -4,61 +4,39 @@ exports[`<HMMItem /> should render 1`] = `
 <withRouter(LinkContainer)
   to="/hmm/tester"
 >
-  <ListGroupItem
-    allowFocus={false}
-    className="spaced"
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={2}
-      >
-        <strong>
-          5
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={5}
-      >
+  <Item__StyledChange>
+    <span>
+      <strong>
+        5
+      </strong>
+    </span>
+    <Item__NameTag>
+      <Item__Name>
         string1
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={5}
-      >
-        <div
-          className="pull-right"
+      </Item__Name>
+      <Item__Tag>
+        <Label
+          key="0"
+          spaced={true}
         >
-          <Label
-            key="0"
-            spaced={true}
-          >
-            Family1
-          </Label>
-          <Label
-            key="1"
-            spaced={true}
-          >
-            Family2
-          </Label>
-          <Label
-            key="2"
-            spaced={true}
-          >
-            Family3
-          </Label>
-           
-          ...
-        </div>
-      </Col>
-    </Row>
-  </ListGroupItem>
+          Family1
+        </Label>
+        <Label
+          key="1"
+          spaced={true}
+        >
+          Family2
+        </Label>
+        <Label
+          key="2"
+          spaced={true}
+        >
+          Family3
+        </Label>
+         
+        ...
+      </Item__Tag>
+    </Item__NameTag>
+  </Item__StyledChange>
 </withRouter(LinkContainer)>
 `;
