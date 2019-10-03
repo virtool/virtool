@@ -4,34 +4,17 @@ exports[`<HMMItem /> should render 1`] = `
 <Box__LinkBox
   to="/hmm/tester"
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={2}
-    >
+  <Item__StyledChange>
+    <span>
       <strong>
         5
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={5}
-    >
-      string1
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={5}
-    >
-      <div
-        className="pull-right"
-      >
+    </span>
+    <Item__NameTag>
+      <Item__Name>
+        string1
+      </Item__Name>
+      <Item__Tag>
         <Label
           key="0"
           spaced={true}
@@ -52,8 +35,8 @@ exports[`<HMMItem /> should render 1`] = `
         </Label>
          
         ...
-      </div>
-    </Col>
-  </Row>
-</Box__LinkBox>
+      </Item__Tag>
+    </Item__NameTag>
+  </Item__StyledChange>
+</withRouter(LinkContainer)>
 `;
