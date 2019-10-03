@@ -46,6 +46,8 @@ const AnalysisMappingLegendLabel = styled.div`
     align-items: center;
     display: flex;
     margin-bottom: 5px;
+    justify-content: space-between;
+    width: 500px;
 `;
 
 const AnalysisMappingLegendCount = styled.div`
@@ -61,6 +63,11 @@ const StyledAnalysisMapping = styled(Box)`
         display: flex;
         justify-content: space-between;
     }
+`;
+
+const AnalysisMappingLegendIconReference = styled.div`
+    display: flex;
+    align-items: center;
 `;
 
 export const AnalysisMapping = ({ index, reference, subtraction, toReference, total, toSubtraction = 0 }) => {
@@ -86,17 +93,20 @@ export const AnalysisMapping = ({ index, reference, subtraction, toReference, to
             <Flex>
                 <FlexItem>
                     <AnalysisMappingLegendLabel>
-                        <AnalysisMappingLegendIcon name="circle" color="blue" />
-                        <AnalysisMappingReference reference={reference} index={index} />
+                        <AnalysisMappingLegendIconReference>
+                            <AnalysisMappingLegendIcon name="circle" color="blue" />
+                            <AnalysisMappingReference reference={reference} index={index} />
+                        </AnalysisMappingLegendIconReference>
+                        <AnalysisMappingLegendCount>{toThousand(toReference)}</AnalysisMappingLegendCount>
                     </AnalysisMappingLegendLabel>
+
                     <AnalysisMappingLegendLabel>
-                        <AnalysisMappingLegendIcon name="circle" color="yellow" />
-                        <AnalysisMappingSubtraction subtraction={subtraction} />
+                        <AnalysisMappingLegendIconReference>
+                            <AnalysisMappingLegendIcon name="circle" color="yellow" />
+                            <AnalysisMappingSubtraction subtraction={subtraction} />
+                        </AnalysisMappingLegendIconReference>
+                        <AnalysisMappingLegendCount>{toThousand(toSubtraction)}</AnalysisMappingLegendCount>
                     </AnalysisMappingLegendLabel>
-                </FlexItem>
-                <FlexItem>
-                    <AnalysisMappingLegendCount>{toThousand(toReference)}</AnalysisMappingLegendCount>
-                    <AnalysisMappingLegendCount>{toThousand(toSubtraction)}</AnalysisMappingLegendCount>
                 </FlexItem>
             </Flex>
         </StyledAnalysisMapping>
