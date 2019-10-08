@@ -12,7 +12,6 @@ import {
     WS_REMOVE_SAMPLE,
     WS_UPDATE_SAMPLE
 } from "../../app/actionTypes";
-import { listSubtractionIds } from "../../subtraction/actions";
 import {
     createSample,
     editSample,

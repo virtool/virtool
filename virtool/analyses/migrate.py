@@ -61,7 +61,6 @@ async def add_subtractions_to_analyses(db):
     ]
 
     async for item in db.samples.aggregate(pipeline):
-        subtraction_id = item["_id"]
         sample_ids = item["id_list"]
 
         await db.analyses.update_many({"sample.id": {"$in": sample_ids}}, {
