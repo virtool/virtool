@@ -7,17 +7,9 @@ import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
-const StyledChange = styled(ListGroupItem)`
+const NameCreationSize = styled(ListGroupItem)`
     display: flex;
-    flex-direction: row;
-
     justify-content: space-between;
-    @media (max-width: 1080px) {
-        display: flex;
-        /* flex-flow: row wrap;
-        flex-direction: column; */
-        /* justify-content: flex-start; */
-    }
 `;
 
 const NameCreation = styled.div`
@@ -28,20 +20,14 @@ const NameCreation = styled.div`
     }
 `;
 
-const SizeTrashCan = styled.section`
-    @media (max-width: 1080px) {
-    }
-`;
-
-const Creation = styled.section`
+const Creation = styled.div`
     display: flex;
     margin-left: 9px;
-    font-size: 12px;
     margin-top: 1px;
+    font-size: 12px;
     @media (max-width: 1080px) {
-        flex-direction: row;
-        margin-left: 0px;
-        margin-top: 0px;
+        margin-left: 0;
+        margin-top: 0;
     }
 `;
 
@@ -70,12 +56,12 @@ export const File = ({ canRemove, entry, onRemove }) => {
     }
 
     return (
-        <StyledChange>
+        <NameCreationSize className="spaced">
             <NameCreation>
                 <strong>{name}</strong>
                 <Creation>{creation}</Creation>
             </NameCreation>
-            <SizeTrashCan>
+            <div>
                 {byteSize(size)}
                 {canRemove ? (
                     <Icon
@@ -86,8 +72,8 @@ export const File = ({ canRemove, entry, onRemove }) => {
                         pullRight
                     />
                 ) : null}
-            </SizeTrashCan>
-        </StyledChange>
+            </div>
+        </NameCreationSize>
     );
 };
 
