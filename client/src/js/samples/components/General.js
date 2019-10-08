@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import EditSample from "./Edit";
+import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
 
 export const SampleDetailGeneral = ({
     count,
@@ -18,6 +19,7 @@ export const SampleDetailGeneral = ({
     srna
 }) => (
     <div>
+        <SampleFileSizeWarning />
         <Table>
             <tbody>
                 <tr>

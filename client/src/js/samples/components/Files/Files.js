@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { getLinkedJob } from "../../../jobs/actions";
 import SampleFilesMessage from "../LegacyAlert";
+import SampleFileSizeWarning from "../SampleFileSizeWarning.js";
 import SampleFilesCache from "./Cache";
 import SampleFilesRaw from "./Raw";
 
@@ -15,6 +16,7 @@ const SampleDetailFiles = ({ onGetJob, jobId }) => {
 
     return (
         <div>
+            <SampleFileSizeWarning />
             <SampleFilesMessage />
             <SampleFilesRaw />
             <SampleFilesCache />
