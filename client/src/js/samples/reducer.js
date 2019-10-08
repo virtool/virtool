@@ -1,21 +1,20 @@
 import { xor } from "lodash-es";
 import {
-    WS_INSERT_SAMPLE,
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
+    CLEAR_SAMPLE_SELECTION,
+    FIND_READ_FILES,
     FIND_SAMPLES,
     GET_SAMPLE,
-    UPDATE_SAMPLE,
-    REMOVE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS,
-    SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
-    FIND_READ_FILES,
-    FIND_READY_HOSTS,
+    REMOVE_SAMPLE,
     SELECT_SAMPLE,
-    CLEAR_SAMPLE_SELECTION
+    SHOW_REMOVE_SAMPLE,
+    UPDATE_SAMPLE,
+    UPDATE_SAMPLE_RIGHTS,
+    WS_INSERT_SAMPLE,
+    WS_REMOVE_SAMPLE,
+    WS_UPDATE_SAMPLE
 } from "../app/actionTypes";
-import { updateDocuments, insert, update, remove } from "../utils/reducers";
+import { insert, remove, update, updateDocuments } from "../utils/reducers";
 
 export const initialState = {
     documents: null,
@@ -59,9 +58,6 @@ export default function samplesReducer(state = initialState, action) {
 
         case FIND_READ_FILES.SUCCEEDED:
             return { ...state, readFiles: action.data.documents };
-
-        case FIND_READY_HOSTS.SUCCEEDED:
-            return { ...state, readyHosts: action.data.documents };
 
         case GET_SAMPLE.REQUESTED:
             return { ...state, detail: null };

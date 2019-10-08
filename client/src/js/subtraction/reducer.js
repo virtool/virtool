@@ -9,10 +9,11 @@ import {
 import { updateDocuments, insert, update, remove } from "../utils/reducers";
 
 export const initialState = {
+    detail: null,
     documents: null,
+    ids: null,
     page: 0,
-    total_count: 0,
-    detail: null
+    total_count: 0
 };
 
 export default function subtractionsReducer(state = initialState, action) {
@@ -32,6 +33,9 @@ export default function subtractionsReducer(state = initialState, action) {
 
         case FIND_SUBTRACTIONS.SUCCEEDED:
             return updateDocuments(state, action, "id");
+
+        case LIST_SUBTRACTION_IDS.SUCCEEDED:
+            return { ...state, ids: action.data };
 
         case GET_SUBTRACTION.REQUESTED:
             return { ...state, detail: null };

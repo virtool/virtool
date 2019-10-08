@@ -1,32 +1,31 @@
 import {
-    WS_INSERT_SAMPLE,
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    FIND_READ_FILES,
-    FIND_READY_HOSTS,
-    GET_SAMPLE,
     CREATE_SAMPLE,
-    UPDATE_SAMPLE,
-    UPDATE_SAMPLE_RIGHTS,
+    FIND_READ_FILES,
+    FIND_SAMPLES,
+    GET_SAMPLE,
+    HIDE_SAMPLE_MODAL,
     REMOVE_SAMPLE,
     SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL,
-    FIND_SAMPLES
+    UPDATE_SAMPLE,
+    UPDATE_SAMPLE_RIGHTS,
+    WS_INSERT_SAMPLE,
+    WS_REMOVE_SAMPLE,
+    WS_UPDATE_SAMPLE
 } from "../../app/actionTypes";
+import { listSubtractionIds } from "../../subtraction/actions";
 import {
-    wsInsertSample,
-    wsUpdateSample,
-    wsRemoveSample,
-    findReadFiles,
-    findReadyHosts,
-    getSample,
     createSample,
     editSample,
-    updateSampleRights,
+    findReadFiles,
+    findSamples,
+    getSample,
+    hideSampleModal,
     removeSample,
     showRemoveSample,
-    hideSampleModal,
-    findSamples
+    updateSampleRights,
+    wsInsertSample,
+    wsRemoveSample,
+    wsUpdateSample
 } from "../actions";
 
 describe("Sample Action Creators:", () => {
@@ -85,12 +84,6 @@ describe("Sample Action Creators:", () => {
     it("findReadFiles", () => {
         expect(findReadFiles()).toEqual({
             type: FIND_READ_FILES.REQUESTED
-        });
-    });
-
-    it("findReadyHosts", () => {
-        expect(findReadyHosts()).toEqual({
-            type: FIND_READY_HOSTS.REQUESTED
         });
     });
 

@@ -5,9 +5,10 @@ import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { clearError } from "../../../errors/actions";
+import { listSubtractionIds } from "../../../subtraction/actions";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 
-import { createSample, findReadFiles, findReadyHosts } from "../../actions";
+import { createSample, findReadFiles } from "../../actions";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
@@ -267,7 +268,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onFindHostsAndFiles: () => {
-        dispatch(findReadyHosts());
+        dispatch(listSubtractionIds());
         dispatch(findReadFiles());
     },
 

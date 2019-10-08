@@ -4,7 +4,6 @@ import { call, put, select, takeEvery, takeLatest, throttle } from "redux-saga/e
 import {
     CREATE_SAMPLE,
     FIND_READ_FILES,
-    FIND_READY_HOSTS,
     FIND_SAMPLES,
     GET_SAMPLE,
     REMOVE_SAMPLE,
@@ -22,7 +21,6 @@ import { createFindURL } from "./utils";
 
 export function* watchSamples() {
     yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
-    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
@@ -60,10 +58,6 @@ export function* findReadFiles() {
         },
         FIND_READ_FILES
     );
-}
-
-export function* findReadyHosts(action) {
-    yield apiCall(samplesAPI.findReadyHosts, action, FIND_READY_HOSTS);
 }
 
 export function* getSample(action) {

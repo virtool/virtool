@@ -10,12 +10,6 @@ export const find = ({ term, page, pathoscope, nuvs }) =>
 
 export const filter = ({ term }) => Request.get(`/api/samples?find=${term}`);
 
-export const findReadyHosts = () =>
-    Request.get("/api/subtractions").query({
-        ready: true,
-        is_host: true
-    });
-
 export const get = ({ sampleId }) => Request.get(`/api/samples/${sampleId}`);
 
 export const create = action => Request.post("/api/samples").send(action);
