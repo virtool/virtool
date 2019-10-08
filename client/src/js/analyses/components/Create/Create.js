@@ -4,10 +4,12 @@ import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
 import { AlgorithmSelect, Button, Flex, FlexItem } from "../../../base";
-import { getSelectedDocuments } from "../../../samples/selectors";
+import { getDefaultSubtraction, getSelectedDocuments } from "../../../samples/selectors";
+import { listSubtractionIds } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
 import { IndexSelector } from "./IndexSelector";
 import { SelectedSamples } from "./SelectedSamples";
+import { SubtractionSelector } from "./SubtractionSelector";
 
 const MultiSummary = ({ samples, selected }) => {
     const product = selected.length * samples.length;
@@ -37,7 +39,12 @@ export class CreateAnalysis extends React.Component {
         this.state = getInitialState(props);
     }
 
+    componentDidMount() {
+        this.props.onListSubtractionIds();
+    }
+
     handleEnter = () => {
+        this.props.onListSubtractionIds();
         this.setState(getInitialState(this.props));
     };
 
@@ -72,7 +79,7 @@ export class CreateAnalysis extends React.Component {
     };
 
     render() {
-        const { selected, algorithm } = this.state;
+        const { selected, subtraction, algorithm } = this.state;
 
         const show = !!(this.props.documents && this.props.documents.length);
 
@@ -87,13 +94,17 @@ export class CreateAnalysis extends React.Component {
                             onChange={this.handleSelectAlgorithm}
                             hasHmm={this.props.hasHmm}
                         />
+                        <SubtractionSelector
+                            subtractions={this.props.subtractionIds}
+                            value={subtraction}
+                            onChange={this.handleSelectSubtraction}
+                        />
                         <IndexSelector
                             indexes={this.props.indexes}
                             onSelect={this.handleSelectIndex}
                             selected={selected}
                             error={this.state.error}
                         />
-                        <Subtrac
                     </Modal.Body>
                     <Modal.Footer>
                         <Flex alignItems="center">
@@ -118,10 +129,11 @@ export class CreateAnalysis extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    defaultSubtraction: getDefaultSubtraction(state),
     documents: getSelectedDocuments(state),
     hasHmm: !!state.hmms.total_count,
     indexes: state.analyses.readyIndexes,
-    defaultSubtraction: state.samples.detail.subtraction.id,
+    subtractionIds: state.subtraction.ids,
     userId: state.account.id
 });
 
@@ -135,6 +147,9 @@ const mapDispatchToProps = dispatch => ({
     },
     onHide: () => {
         dispatch(pushState({}));
+    },
+    onListSubtractionIds: () => {
+        dispatch(listSubtractionIds());
     }
 });
 

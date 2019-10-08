@@ -1,14 +1,8 @@
-import React, { useCallback } from "react";
-import styled from "styled-components";
 import { map, some } from "lodash-es";
-import { Col, Label, ListGroup } from "react-bootstrap";
+import React, { useCallback } from "react";
+import { Label, ListGroup } from "react-bootstrap";
+import styled from "styled-components";
 import { Checkbox, ListGroupItem, NoneFound } from "../../../base";
-
-export const IndexSelectError = ({ error }) => (
-    <div className="input-form-error">
-        <span className="input-error-message">{error}</span>
-    </div>
-);
 
 const StyledIndexSelectItem = styled(ListGroupItem)`
     align-items: center;

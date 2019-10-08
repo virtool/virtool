@@ -51,7 +51,7 @@ class CreateSample extends React.Component {
     }
 
     componentDidMount() {
-        this.props.onFindHostsAndFiles();
+        this.props.onLoadSubtractionsAndFiles();
     }
 
     handleHide = () => {
@@ -267,7 +267,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    onFindHostsAndFiles: () => {
+    onLoadSubtractionsAndFiles: () => {
         dispatch(listSubtractionIds());
         dispatch(findReadFiles());
     },
