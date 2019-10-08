@@ -478,6 +478,9 @@ async def find_analyses(req):
     "ref_id": {
         "type": "string",
         "required": True
+    },
+    "subtraction_id": {
+        "type": "string"
     }
 })
 async def analyze(req):
@@ -506,11 +509,18 @@ async def analyze(req):
     if not await db.indexes.count({"reference.id": ref_id, "ready": True}):
         return bad_request("No ready index")
 
+    subtraction_id = data.get("subtraction_id")
+
+    if subtraction_id is None:
+        subtraction = await virtool.db.utils.get_one_field(db.samples, "subtraction", sample_id)
+        subtraction_id = subtraction["id"]
+
     # Generate a unique _id for the analysis entry
     document = await virtool.analyses.db.new(
         req.app,
         sample_id,
         ref_id,
+        subtraction_id,
         req["client"].user_id,
         data["algorithm"]
     )
