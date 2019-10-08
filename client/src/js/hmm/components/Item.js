@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
 import styled from "styled-components";
-
 import { Label, ListGroupItem } from "../../base";
 
 const StyledChange = styled(ListGroupItem)`
