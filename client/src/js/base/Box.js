@@ -104,3 +104,9 @@ export const LinkBox = styled(Link)`
         background-color: #f7fafc;
     }
 `;
+
+export const LinkBoxTop = styled.div`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+`;
