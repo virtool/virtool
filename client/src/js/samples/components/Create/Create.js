@@ -210,7 +210,7 @@ class CreateSample extends React.Component {
                                 <InputError
                                     name="subtraction"
                                     type="select"
-                                    label="Subtraction Host"
+                                    label="Default Subtraction"
                                     value={this.state.subtraction}
                                     onChange={this.handleChange}
                                     error={errorSubtraction}
