@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RightIcon /> should render loader when [ready=false] 1`] = `
+<Loader
+  color="#3c8786"
+  size="14px"
+/>
+`;
+
+exports[`<RightIcon /> should render remove icon when [ready=true] and [canModify=true] 1`] = `
+<Icon
+  bsStyle="danger"
+  faStyle="fas"
+  fixedWidth={false}
+  name="trash"
+  onClick={[MockFunction]}
+  pullRight={false}
+  style={
+    Object {
+      "fontSize": "17px",
+    }
+  }
+/>
+`;
+
+exports[`<RightIcon /> should return null when [ready=true] and [canModify=false] 1`] = `""`;

@@ -59,7 +59,7 @@ exports[`<CreateAnalysis /> renders 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -201,7 +201,7 @@ exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
         onChange={[Function]}
         value="nuvs"
       />
-      <IndexSelect
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -343,7 +343,7 @@ exports[`<CreateAnalysis /> renders with error 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <IndexSelector
         error="Please select reference(s)"
         indexes={
           Array [
@@ -485,7 +485,7 @@ exports[`<CreateAnalysis /> renders with index selected 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -641,7 +641,7 @@ exports[`<CreateAnalysis /> renders with summary 1`] = `
         onChange={[Function]}
         value="nuvs"
       />
-      <IndexSelect
+      <IndexSelector
         error=""
         indexes={
           Array [

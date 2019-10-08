@@ -1,4 +1,4 @@
-import { CreateAnalysis } from "../Create";
+import { CreateAnalysis } from "../Create/Create";
 
 describe("<CreateAnalysis />", () => {
     let props;
