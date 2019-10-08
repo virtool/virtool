@@ -114,7 +114,8 @@ class Job(virtool.jobs.job.Job):
 
     def clean_watch(self):
         """ Remove the original read files from the files directory """
-        self.db.files.delete_many({"_id": {"$in": self.params["files"]}})
+        file_ids = [f["id"] for f in self.params["files"]]
+        self.db.files.delete_many({"_id": {"$in": file_ids}})
         self.dispatch("files", "delete", self.params["files"])
 
     def cleanup(self):
