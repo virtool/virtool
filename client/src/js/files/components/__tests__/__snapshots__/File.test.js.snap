@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<File /> should render 1`] = `
-<File__StyledChange>
+<File__NameCreationSize
+  className="spaced"
+>
   <File__NameCreation>
     <strong>
       foo.fa
@@ -26,7 +28,7 @@ exports[`<File /> should render 1`] = `
       </span>
     </File__Creation>
   </File__NameCreation>
-  <File__SizeTrashCan>
+  <div>
     <Icon
       bsStyle="danger"
       faStyle="fas"
@@ -41,12 +43,14 @@ exports[`<File /> should render 1`] = `
         }
       }
     />
-  </File__SizeTrashCan>
-</File__StyledChange>
+  </div>
+</File__NameCreationSize>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
-<File__StyledChange>
+<File__NameCreationSize
+  className="spaced"
+>
   <File__NameCreation>
     <strong>
       foo.fa
@@ -71,12 +75,14 @@ exports[`<File /> should render when [canRemove=false] 1`] = `
       </span>
     </File__Creation>
   </File__NameCreation>
-  <File__SizeTrashCan />
-</File__StyledChange>
+  <div />
+</File__NameCreationSize>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
-<File__StyledChange>
+<File__NameCreationSize
+  className="spaced"
+>
   <File__NameCreation>
     <strong>
       foo.fa
@@ -90,7 +96,7 @@ exports[`<File /> should render when [user=null] 1`] = `
       </span>
     </File__Creation>
   </File__NameCreation>
-  <File__SizeTrashCan>
+  <div>
     <Icon
       bsStyle="danger"
       faStyle="fas"
@@ -105,6 +111,6 @@ exports[`<File /> should render when [user=null] 1`] = `
         }
       }
     />
-  </File__SizeTrashCan>
-</File__StyledChange>
+  </div>
+</File__NameCreationSize>
 `;
