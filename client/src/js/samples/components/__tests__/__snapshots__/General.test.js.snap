@@ -2,6 +2,7 @@
 
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -124,6 +125,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 
 exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -246,6 +248,7 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 
 exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -368,6 +371,7 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
 
 exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
