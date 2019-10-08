@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateAnalysis /> renders 1`] = `
+exports[`<CreateAnalysis /> should render 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -21,7 +21,7 @@ exports[`<CreateAnalysis /> renders 1`] = `
       "remove": [Function],
     }
   }
-  onExited={[Function]}
+  onEnter={[Function]}
   onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
@@ -41,7 +41,7 @@ exports[`<CreateAnalysis /> renders 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
-      <SamplesList
+      <SelectedSamples
         samples={
           Array [
             Object {
@@ -59,7 +59,10 @@ exports[`<CreateAnalysis /> renders 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -142,7 +145,7 @@ exports[`<CreateAnalysis /> renders 1`] = `
 </Modal>
 `;
 
-exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
+exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -163,7 +166,7 @@ exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
       "remove": [Function],
     }
   }
-  onExited={[Function]}
+  onEnter={[Function]}
   onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
@@ -183,7 +186,7 @@ exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
-      <SamplesList
+      <SelectedSamples
         samples={
           Array [
             Object {
@@ -201,7 +204,10 @@ exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
         onChange={[Function]}
         value="nuvs"
       />
-      <IndexSelect
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -284,7 +290,7 @@ exports[`<CreateAnalysis /> renders with algorithm selected 1`] = `
 </Modal>
 `;
 
-exports[`<CreateAnalysis /> renders with error 1`] = `
+exports[`<CreateAnalysis /> should render with error 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -305,7 +311,7 @@ exports[`<CreateAnalysis /> renders with error 1`] = `
       "remove": [Function],
     }
   }
-  onExited={[Function]}
+  onEnter={[Function]}
   onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
@@ -325,7 +331,7 @@ exports[`<CreateAnalysis /> renders with error 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
-      <SamplesList
+      <SelectedSamples
         samples={
           Array [
             Object {
@@ -343,7 +349,10 @@ exports[`<CreateAnalysis /> renders with error 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
         error="Please select reference(s)"
         indexes={
           Array [
@@ -426,7 +435,7 @@ exports[`<CreateAnalysis /> renders with error 1`] = `
 </Modal>
 `;
 
-exports[`<CreateAnalysis /> renders with index selected 1`] = `
+exports[`<CreateAnalysis /> should render with index selected 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -447,7 +456,7 @@ exports[`<CreateAnalysis /> renders with index selected 1`] = `
       "remove": [Function],
     }
   }
-  onExited={[Function]}
+  onEnter={[Function]}
   onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
@@ -467,7 +476,7 @@ exports[`<CreateAnalysis /> renders with index selected 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
-      <SamplesList
+      <SelectedSamples
         samples={
           Array [
             Object {
@@ -485,7 +494,10 @@ exports[`<CreateAnalysis /> renders with index selected 1`] = `
         onChange={[Function]}
         value="pathoscope_bowtie"
       />
-      <IndexSelect
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
         error=""
         indexes={
           Array [
@@ -582,7 +594,7 @@ exports[`<CreateAnalysis /> renders with index selected 1`] = `
 </Modal>
 `;
 
-exports[`<CreateAnalysis /> renders with summary 1`] = `
+exports[`<CreateAnalysis /> should render with summary 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -603,7 +615,7 @@ exports[`<CreateAnalysis /> renders with summary 1`] = `
       "remove": [Function],
     }
   }
-  onExited={[Function]}
+  onEnter={[Function]}
   onHide={[MockFunction]}
   renderBackdrop={[Function]}
   restoreFocus={true}
@@ -623,7 +635,7 @@ exports[`<CreateAnalysis /> renders with summary 1`] = `
       bsClass="modal-body"
       componentClass="div"
     >
-      <SamplesList
+      <SelectedSamples
         samples={
           Array [
             Object {
@@ -641,7 +653,10 @@ exports[`<CreateAnalysis /> renders with summary 1`] = `
         onChange={[Function]}
         value="nuvs"
       />
-      <IndexSelect
+      <SubtractionSelector
+        onChange={[Function]}
+      />
+      <IndexSelector
         error=""
         indexes={
           Array [

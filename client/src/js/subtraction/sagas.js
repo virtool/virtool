@@ -4,6 +4,7 @@ import {
     CREATE_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
+    LIST_SUBTRACTION_IDS,
     REMOVE_SUBTRACTION,
     UPDATE_SUBTRACTION
 } from "../app/actionTypes";
@@ -26,6 +27,10 @@ export function* createSubtraction(action) {
     yield setPending(apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION, {}, extraFunc));
 }
 
+export function* listSubtractionIds(action) {
+    yield apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS);
+}
+
 export function* updateSubtraction(action) {
     yield setPending(apiCall(subtractionAPI.update, action, UPDATE_SUBTRACTION));
 }
@@ -38,9 +43,10 @@ export function* removeSubtraction(action) {
 }
 
 export function* watchSubtraction() {
+    yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
     yield takeLatest(FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
-    yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
+    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(UPDATE_SUBTRACTION.REQUESTED, updateSubtraction);
     yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
 }

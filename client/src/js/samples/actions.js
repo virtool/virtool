@@ -5,7 +5,6 @@ import {
     WS_REMOVE_SAMPLE,
     FIND_SAMPLES,
     FIND_READ_FILES,
-    FIND_READY_HOSTS,
     GET_SAMPLE,
     CREATE_SAMPLE,
     REPLACE_LEGACY_FILES,
@@ -57,14 +56,6 @@ export const findSamples = (term, page = 1, pathoscope = [], nuvs = []) => ({
 });
 
 export const findReadFiles = simpleActionCreator(FIND_READ_FILES.REQUESTED);
-
-/**
- * Returns action that can trigger an API call for getting all available subtraction hosts.
- *
- * @func
- * @returns {object}
- */
-export const findReadyHosts = simpleActionCreator(FIND_READY_HOSTS.REQUESTED);
 
 /**
  * Returns action that can trigger an API call for getting a specific sample.

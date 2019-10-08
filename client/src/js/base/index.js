@@ -38,6 +38,7 @@ export * from "./Logo";
 export * from "./Modal";
 export * from "./NoneFound";
 export * from "./Table";
+export * from "./SlashList";
 export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";

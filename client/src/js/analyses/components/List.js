@@ -7,7 +7,7 @@ import { routerLocationHasState } from "../../utils/utils";
 import { findAnalyses } from "../actions";
 import { getCanModify } from "../../samples/selectors";
 import { NoneFound } from "../../base/index";
-import CreateAnalysis from "./Create";
+import CreateAnalysis from "./Create/Create";
 import AnalysisItem from "./Item";
 import AnalysesToolbar from "./Toolbar";
 import AnalysisHMMAlert from "./HMMAlert";

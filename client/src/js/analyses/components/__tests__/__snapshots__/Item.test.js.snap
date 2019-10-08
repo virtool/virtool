@@ -1,234 +1,178 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AnalysisItem /> should render 1`] = `
-<withRouter(LinkContainer)
-  to="/samples/bar/analyses/baz"
->
-  <div
-    className="list-group-item spaced"
-    style={
-      Object {
-        "color": "#555",
-      }
-    }
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        sm={4}
-        xs={4}
-      >
-        <strong>
-          NuVs
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        sm={4}
-        xs={5}
-      >
-        Started 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-         by bob
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={2}
-      >
-        <span>
-          <span>
-            Foo
-             
-          </span>
-          <Label>
-            3
-          </Label>
-        </span>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={2}
-        sm={2}
-        xsHidden={true}
-      >
-        <RightIcon
-          canModify={true}
-          onRemove={[MockFunction]}
-          ready={false}
-        />
-      </Col>
-    </Row>
-  </div>
-</withRouter(LinkContainer)>
-`;
-
-exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
-<div
-  className="list-group-item spaced"
-  style={
-    Object {
-      "color": "#555",
-    }
-  }
->
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      sm={4}
-      xs={4}
+<Item__StyledAnalysisItem>
+  <Box__LinkBoxTop>
+    <Link
+      to="/samples/bar/analyses/baz"
     >
       <strong>
         NuVs
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      sm={4}
-      xs={5}
-    >
-      Started 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={2}
+    </Link>
+    <AnalysisItemRightIcon
+      canModify={true}
+      onRemove={[MockFunction]}
+      ready={false}
     />
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={2}
-      sm={2}
-      xsHidden={true}
+  </Box__LinkBoxTop>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="bob"
+  />
+  <Item__AnalysisItemContent>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="equals"
+      pullRight={false}
+    />
+    <SlashList>
+      <li>
+        <Link
+          to="/refs/undefined"
+        >
+          Foo
+        </Link>
+      </li>
+      <li>
+        <Link
+          to="/refs/undefined/indexes/undefined"
+        >
+          Index 
+          3
+        </Link>
+      </li>
+    </SlashList>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="not-equal"
+      pullRight={false}
+    />
+    <Link
+      to="/subtraction/Prunus persica"
     >
-      <RightIcon
-        canModify={true}
-        onRemove={[MockFunction]}
-        ready={false}
-      />
-    </Col>
-  </Row>
-</div>
+      Prunus persica
+    </Link>
+  </Item__AnalysisItemContent>
+</Item__StyledAnalysisItem>
+`;
+
+exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
+<Item__StyledAnalysisItem>
+  <Box__LinkBoxTop>
+    <Link
+      to="/samples/bar/analyses/baz"
+    >
+      <strong>
+        NuVs
+      </strong>
+    </Link>
+    <AnalysisItemRightIcon
+      canModify={true}
+      onRemove={[MockFunction]}
+      ready={false}
+    />
+  </Box__LinkBoxTop>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="bob"
+  />
+  <Item__AnalysisItemContent>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="equals"
+      pullRight={false}
+    />
+    <SlashList>
+      <li>
+        <Link
+          to="/refs/undefined"
+        >
+          Foo
+        </Link>
+      </li>
+      <li>
+        <Link
+          to="/refs/undefined/indexes/undefined"
+        >
+          Index 
+          3
+        </Link>
+      </li>
+    </SlashList>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="not-equal"
+      pullRight={false}
+    />
+    <Link
+      to="/subtraction/Prunus persica"
+    >
+      Prunus persica
+    </Link>
+  </Item__AnalysisItemContent>
+</Item__StyledAnalysisItem>
 `;
 
 exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
-<withRouter(LinkContainer)
-  to="/samples/bar/analyses/baz"
->
-  <div
-    className="list-group-item spaced"
-    style={
-      Object {
-        "color": "#555",
-      }
-    }
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
+<Item__StyledAnalysisItem>
+  <Box__LinkBoxTop>
+    <Link
+      to="/samples/bar/analyses/baz"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        sm={4}
-        xs={4}
-      >
-        <strong>
-          NuVs
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        sm={4}
-        xs={5}
-      >
-        Started 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-         by bob
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={2}
-      >
-        <span>
-          <span>
-            Foo
-             
-          </span>
-          <Label>
-            3
-          </Label>
-        </span>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={2}
-        sm={2}
-        xsHidden={true}
-      >
-        <RightIcon
-          canModify={true}
-          onRemove={[MockFunction]}
-          ready={false}
-        />
-      </Col>
-    </Row>
-  </div>
-</withRouter(LinkContainer)>
-`;
-
-exports[`<RightIcon /> should render loader when [ready=false] 1`] = `
-<div
-  className="pull-right"
->
-  <Loader
-    color="#3c8786"
-    size="14px"
+      <strong>
+        NuVs
+      </strong>
+    </Link>
+    <AnalysisItemRightIcon
+      canModify={true}
+      onRemove={[MockFunction]}
+      ready={false}
+    />
+  </Box__LinkBoxTop>
+  <Attribution
+    time="2018-02-14T17:12:00.000000Z"
+    user="bob"
   />
-</div>
+  <Item__AnalysisItemContent>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="equals"
+      pullRight={false}
+    />
+    <SlashList>
+      <li>
+        <Link
+          to="/refs/undefined"
+        >
+          Foo
+        </Link>
+      </li>
+      <li>
+        <Link
+          to="/refs/undefined/indexes/undefined"
+        >
+          Index 
+          3
+        </Link>
+      </li>
+    </SlashList>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="not-equal"
+      pullRight={false}
+    />
+    <Link
+      to="/subtraction/Prunus persica"
+    >
+      Prunus persica
+    </Link>
+  </Item__AnalysisItemContent>
+</Item__StyledAnalysisItem>
 `;
-
-exports[`<RightIcon /> should render remove icon when [ready=true] and [canModify=true] 1`] = `
-<Icon
-  bsStyle="danger"
-  faStyle="fas"
-  fixedWidth={false}
-  name="trash"
-  onClick={[MockFunction]}
-  pullRight={true}
-  style={
-    Object {
-      "fontSize": "17px",
-    }
-  }
-/>
-`;
-
-exports[`<RightIcon /> should return null when [ready=true] and [canModify=false] 1`] = `""`;

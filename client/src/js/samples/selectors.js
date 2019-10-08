@@ -32,6 +32,9 @@ export const getCanModifyRights = createSelector(
     }
 );
 
+export const getDefaultSubtraction = state =>
+    get(state, "samples.detail.subtraction.id", get(state, ["subtraction", "ids", 0]));
+
 export const getSampleFiles = state => state.samples.detail.files;
 
 export const getSampleUpdateJobId = state => get(state, "samples.detail.update_job.id");

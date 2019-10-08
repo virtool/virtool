@@ -16,12 +16,13 @@ PROJECTION = [
     "_id",
     "algorithm",
     "created_at",
-    "ready",
-    "job",
     "index",
+    "job",
+    "ready",
     "reference",
-    "user",
-    "sample"
+    "sample",
+    "subtraction",
+    "user"
 ]
 
 
@@ -91,7 +92,7 @@ class BLAST:
         return data, document
 
 
-async def new(app, sample_id, ref_id, user_id, algorithm):
+async def new(app, sample_id, ref_id, subtraction_id, user_id, algorithm):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
@@ -127,6 +128,9 @@ async def new(app, sample_id, ref_id, user_id, algorithm):
         "reference": {
             "id": ref_id,
             "name": await virtool.db.utils.get_one_field(db.references, "name", ref_id)
+        },
+        "subtraction": {
+            "id": subtraction_id
         },
         "user": {
             "id": user_id,

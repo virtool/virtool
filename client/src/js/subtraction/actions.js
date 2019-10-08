@@ -6,8 +6,11 @@ import {
     UPDATE_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION,
-    FIND_SUBTRACTIONS
+    FIND_SUBTRACTIONS,
+    LIST_SUBTRACTION_IDS
 } from "../app/actionTypes";
+
+import { simpleActionCreator } from "../utils/utils";
 
 export const wsInsertSubtraction = data => ({
     type: WS_INSERT_SUBTRACTION,
@@ -29,6 +32,8 @@ export const findSubtractions = (term, page) => ({
     term,
     page
 });
+
+export const listSubtractionIds = simpleActionCreator(LIST_SUBTRACTION_IDS.REQUESTED);
 
 /**
  * Returns action that can trigger an API call to retrieve a subtraction.

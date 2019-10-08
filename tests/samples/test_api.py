@@ -751,7 +751,8 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
 
     resp = await client.post("/api/samples/test/analyses", data={
         "algorithm": "pathoscope_bowtie",
-        "ref_id": "foo"
+        "ref_id": "foo",
+        "subtraction_id": "bar"
     })
 
     if error == "400_reference":
@@ -778,6 +779,7 @@ async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
         client.app,
         "test",
         "foo",
+        "bar",
         "test",
         "pathoscope_bowtie"
     )

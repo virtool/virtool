@@ -9,7 +9,6 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     FIND_READ_FILES,
-    FIND_READY_HOSTS,
     FIND_SAMPLES
 } from "../../app/actionTypes";
 import reducer, { initialState } from "../reducer";
@@ -128,25 +127,6 @@ describe("Samples Reducer", () => {
         expect(result).toEqual({
             ...initialState,
             readFiles: action.data.documents
-        });
-    });
-
-    it("should handle FIND_READY_HOSTS_SUCCEEDED", () => {
-        const action = {
-            type: FIND_READY_HOSTS.SUCCEEDED,
-            data: {
-                documents: [],
-                found_count: 0,
-                page: 1,
-                page_count: 0,
-                per_page: 25,
-                total_count: 0
-            }
-        };
-        const result = reducer(initialState, action);
-        expect(result).toEqual({
-            ...initialState,
-            readyHosts: action.data.documents
         });
     });
 

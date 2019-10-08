@@ -5,6 +5,92 @@ import virtool.analyses.migrate
 from aiohttp.test_utils import make_mocked_coro
 
 
+@pytest.mark.parametrize("skip", [True, False])
+async def test_add_subtractions_to_analyses(skip, dbi):
+    """
+    Test that function assigns subtraction fields to analyses by checking their parent samples subtractions. Ensure
+    that the migration is skipped if all analyses already have
+
+    """
+    await dbi.samples.insert_many([
+        {
+            "_id": "foo",
+            "subtraction": {
+                "id": "prunus"
+            }
+        },
+        {
+            "_id": "bar",
+            "subtraction": {
+                "id": "malus"
+            }
+        },
+        {
+            "_id": "baz",
+            "subtraction": {
+                "id": "malus"
+            }
+        }
+    ])
+
+    await dbi.subtraction.insert_many([
+        {
+            "_id": "malus"
+        },
+        {
+            "_id": "prunus"
+        }
+    ])
+
+    analyses = [
+        {
+            "_id": "a",
+            "sample": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "b",
+            "sample": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "c",
+            "sample": {
+                "id": "baz"
+            }
+        },
+        {
+            "_id": "d",
+            "sample": {
+                "id": "baz"
+            }
+        }
+    ]
+
+    if skip:
+        analyses = [{**a, "subtraction": {"id": "ficus"}} for a in analyses]
+
+    await dbi.analyses.insert_many(analyses)
+
+    return_value = await virtool.analyses.migrate.add_subtractions_to_analyses(dbi)
+
+    expected = [
+        {"_id": "a", "sample": {"id": "foo"}, "subtraction": {"id": "prunus"}},
+        {"_id": "b", "sample": {"id": "bar"}, "subtraction": {"id": "malus"}},
+        {"_id": "c", "sample": {"id": "baz"}, "subtraction": {"id": "malus"}},
+        {"_id": "d", "sample": {"id": "baz"}, "subtraction": {"id": "malus"}}
+    ]
+
+    if skip:
+        expected = analyses
+
+    assert await dbi.analyses.find().sort("_id").to_list(None) == expected
+
+    assert return_value is (None if skip else True)
+
+
 async def test_migrate_analyses(mocker, dbi):
     """
     Make sure all of the migration functions compose together correctly.

@@ -1,4 +1,4 @@
-import { CreateAnalysis } from "../Create";
+import { CreateAnalysis } from "../Create/Create";
 
 describe("<CreateAnalysis />", () => {
     let props;
@@ -25,37 +25,44 @@ describe("<CreateAnalysis />", () => {
                 }
             ],
             userId: "bob",
+            onAnalyze: jest.fn(),
             onHide: jest.fn(),
-            onAnalyze: jest.fn()
+            onListSubtractionIds: jest.fn()
         };
     });
 
-    it("renders", () => {
+    it("should render", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders with index selected", () => {
+    it("should render with index selected", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
         wrapper.setState({ selected: [{ id: "ref1", refId: "fer1" }] });
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders with algorithm selected", () => {
+    it("should render with algorithm selected", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
         wrapper.setState({ algorithm: "nuvs" });
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders with summary", () => {
+    it("should render with summary", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
         wrapper.setState({ algorithm: "nuvs", selected: [{ id: "ref1", refId: "fer1" }] });
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders with error", () => {
+    it("should render with error", () => {
         const wrapper = shallow(<CreateAnalysis {...props} />);
         wrapper.setState({ error: "Please select reference(s)" });
         expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onListSubtractionIds on mount", () => {
+        expect(props.onListSubtractionIds).not.toHaveBeenCalled();
+        shallow(<CreateAnalysis {...props} />);
+        expect(props.onListSubtractionIds).toHaveBeenCalled();
     });
 });
