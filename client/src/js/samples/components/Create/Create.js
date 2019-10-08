@@ -12,7 +12,7 @@ import { createSample, findReadFiles } from "../../actions";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
-const getReadyHosts = props => (props.readyHosts && props.readyHosts.length ? props.readyHosts[0].id || "" : "");
+const getActiveSubtraction = props => (props.subtractions && props.subtractions.length ? props.subtractions[0] : "");
 
 const getInitialState = props => ({
     selected: [],
@@ -21,12 +21,11 @@ const getInitialState = props => ({
     isolate: "",
     locale: "",
     srna: false,
-    subtraction: getReadyHosts(props),
+    subtraction: getActiveSubtraction(props),
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: "",
-    readyHosts: props.readyHosts
+    errorFile: ""
 });
 
 class CreateSample extends React.Component {
@@ -115,7 +114,7 @@ class CreateSample extends React.Component {
     };
 
     render() {
-        if (this.props.readyHosts === null) {
+        if (this.props.subtractions === null) {
             return (
                 <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>
@@ -125,7 +124,9 @@ class CreateSample extends React.Component {
             );
         }
 
-        const hostComponents = map(this.props.readyHosts, host => <option key={host.id}>{host.id}</option>);
+        const hostComponents = map(this.props.subtractions, subtractionId => (
+            <option key={subtractionId}>{subtractionId}</option>
+        ));
 
         const userGroup = this.props.forceGroupChoice ? (
             <SampleUserGroup
@@ -258,12 +259,12 @@ class CreateSample extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "createSample"),
-    groups: state.account.groups,
-    readyHosts: state.samples.readyHosts,
-    readyReads: filter(state.samples.readFiles, { reserved: false }),
+    error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
-    error: get(state, "errors.CREATE_SAMPLE_ERROR.message", "")
+    groups: state.account.groups,
+    readyReads: filter(state.samples.readFiles, { reserved: false }),
+    show: routerLocationHasState(state, "createSample"),
+    subtractions: state.subtraction.ids
 });
 
 const mapDispatchToProps = dispatch => ({
