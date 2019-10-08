@@ -72,13 +72,13 @@ export const SampleDetailGeneral = ({
 
         <BoxGroup>
             <BoxGroupHeader>
-                <h2>Subtraction</h2>
-                <p>This host genome is used for excluding reads from analysis.</p>
+                <h2>Default Subtraction</h2>
+                <p>This subtraction will be the default selection when creating an analysis.</p>
             </BoxGroupHeader>
             <Table>
                 <tbody>
                     <tr>
-                        <th>Host</th>
+                        <th>Subtraction</th>
                         <td>
                             <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
                         </td>

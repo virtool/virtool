@@ -95,17 +95,17 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
-        Subtraction
+        Default Subtraction
       </h2>
       <p>
-        This host genome is used for excluding reads from analysis.
+        This subtraction will be the default selection when creating an analysis.
       </p>
     </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -217,17 +217,17 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
-        Subtraction
+        Default Subtraction
       </h2>
       <p>
-        This host genome is used for excluding reads from analysis.
+        This subtraction will be the default selection when creating an analysis.
       </p>
     </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -339,17 +339,17 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
-        Subtraction
+        Default Subtraction
       </h2>
       <p>
-        This host genome is used for excluding reads from analysis.
+        This subtraction will be the default selection when creating an analysis.
       </p>
     </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -461,17 +461,17 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
-        Subtraction
+        Default Subtraction
       </h2>
       <p>
-        This host genome is used for excluding reads from analysis.
+        This subtraction will be the default selection when creating an analysis.
       </p>
     </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
