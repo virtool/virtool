@@ -1,6 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
+import styled from "styled-components";
+import { Box, BoxGroupSection } from "./Box";
 import { Icon } from "./Icon";
 
 /**
@@ -24,8 +25,31 @@ export const NoneFound = ({ noun, noListGroup, style }) => {
     return <ListGroup style={style}>{item}</ListGroup>;
 };
 
-NoneFound.propTypes = {
-    noun: PropTypes.string.isRequired,
-    noListGroup: PropTypes.bool,
-    style: PropTypes.object
-};
+const StyledNoneFoundBox = styled(Box)`
+    align-items: center;
+    display: flex;
+    min-height: 30px;
+`;
+
+export const NoneFoundBox = ({ noun }) => (
+    <StyledNoneFoundBox>
+        <Icon name="info-circle" /> No {noun} found
+    </StyledNoneFoundBox>
+);
+
+const StyledNoneFoundSection = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+    min-height: 52px;
+    justify-content: center;
+
+    i.fas {
+        margin-right: 5px;
+    }
+`;
+
+export const NoneFoundSection = ({ noun }) => (
+    <StyledNoneFoundSection>
+        <Icon name="info-circle" /> No {noun} found
+    </StyledNoneFoundSection>
+);

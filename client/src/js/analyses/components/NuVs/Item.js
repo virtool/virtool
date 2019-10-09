@@ -3,7 +3,7 @@ import numbro from "numbro";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, ListGroupItem } from "../../../base";
+import { Badge, Box } from "../../../base";
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches } from "../../selectors";
 
@@ -29,7 +29,7 @@ const NuVsItemHeader = styled.div`
     justify-content: space-between;
 `;
 
-const StyledNuVsItem = styled(ListGroupItem)`
+const StyledNuVsItem = styled(Box)`
     border-bottom: none;
     ${props => (props.selected ? `box-shadow: inset 3px 0 0 ${props.theme.color.primary};` : "")}
 `;

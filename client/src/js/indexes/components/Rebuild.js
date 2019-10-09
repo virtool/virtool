@@ -1,13 +1,12 @@
-import React from "react";
-import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { get } from "lodash-es";
+import React from "react";
+import { Modal } from "react-bootstrap";
+import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-
-import { getUnbuilt, createIndex } from "../actions";
-import { clearError } from "../../errors/actions";
 import { Button } from "../../base";
+import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
+import { createIndex, getUnbuilt } from "../actions";
 import RebuildHistory from "./History";
 
 export const RebuildIndexError = ({ error }) => {

@@ -141,21 +141,16 @@ it("analyze() should return action to analyze sample", () => {
     const algorithm = "algorithm";
     const refId = "123abc";
     const userId = "bob";
-    const created_at = new Date().toISOString();
-    const result = analyze(sampleId, refId, algorithm, userId);
+    const subtractionId = "bar";
+    const result = analyze(sampleId, refId, algorithm, subtractionId, userId);
 
     expect(result).toEqual({
         type: ANALYZE.REQUESTED,
         algorithm,
-        placeholder: {
-            algorithm,
-            created_at,
-            ready: false,
-            placeholder: true
-        },
         userId,
         refId,
-        sampleId
+        sampleId,
+        subtractionId
     });
 
     global.Date = originalDate;

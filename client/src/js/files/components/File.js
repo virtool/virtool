@@ -1,10 +1,35 @@
 import React, { useCallback } from "react";
 import { get } from "lodash-es";
 import { connect } from "react-redux";
-import { Col, Row } from "react-bootstrap";
+import styled from "styled-components";
+
 import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
+
+const NameCreationSize = styled(ListGroupItem)`
+    display: flex;
+    justify-content: space-between;
+`;
+
+const NameCreation = styled.div`
+    display: flex;
+    align-items: flex-start;
+    @media (max-width: 1080px) {
+        flex-direction: column;
+    }
+`;
+
+const Creation = styled.div`
+    display: flex;
+    margin-left: 9px;
+    margin-top: 1px;
+    font-size: 12px;
+    @media (max-width: 1080px) {
+        margin-left: 0;
+        margin-top: 0;
+    }
+`;
 
 export const File = ({ canRemove, entry, onRemove }) => {
     const handleRemove = useCallback(() => onRemove(entry.id), [entry.id]);
@@ -22,36 +47,33 @@ export const File = ({ canRemove, entry, onRemove }) => {
     } else {
         creation = (
             <span>
-                Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
+                <span style={{ fontSize: 12 }}>
+                    Uploaded <RelativeTime time={uploaded_at} />
+                </span>{" "}
+                by {user.id}
             </span>
         );
     }
 
     return (
-        <ListGroupItem className="spaced" style={{ color: "#555" }}>
-            <Row>
-                <Col xs={4} sm={4} md={4}>
-                    <strong>{name}</strong>
-                </Col>
-                <Col xs={2} sm={2} md={2}>
-                    {byteSize(size)}
-                </Col>
-                <Col xs={5} sm={5} md={5}>
-                    {creation}
-                </Col>
-                <Col xs={1} sm={1} md={1}>
-                    {canRemove ? (
-                        <Icon
-                            name="trash"
-                            bsStyle="danger"
-                            style={{ fontSize: "17px" }}
-                            onClick={handleRemove}
-                            pullRight
-                        />
-                    ) : null}
-                </Col>
-            </Row>
-        </ListGroupItem>
+        <NameCreationSize className="spaced">
+            <NameCreation>
+                <strong>{name}</strong>
+                <Creation>{creation}</Creation>
+            </NameCreation>
+            <div>
+                {byteSize(size)}
+                {canRemove ? (
+                    <Icon
+                        name="trash"
+                        bsStyle="danger"
+                        style={{ fontSize: "17px", marginLeft: "9px" }}
+                        onClick={handleRemove}
+                        pullRight
+                    />
+                ) : null}
+            </div>
+        </NameCreationSize>
     );
 };
 

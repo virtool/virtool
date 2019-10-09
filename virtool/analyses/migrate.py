@@ -27,8 +27,49 @@ async def migrate_analyses(db: virtool.db.core.DB, settings: dict):
     await rename_results_field(db)
     await convert_pathoscope_files(db, settings)
     await rename_analysis_json_files(settings)
-
+    await add_subtractions_to_analyses(db)
     await virtool.db.migrate.delete_unready(db.analyses)
+
+
+async def add_subtractions_to_analyses(db):
+    """
+    Add subtraction fields to analysis documents based on the subtraction of their parent samples.
+
+    :param db:
+    :return:
+    """
+    # Return early if all analyses have subtraction fields.
+    if await db.analyses.count({"subtraction": {"$exists": False}}) == 0:
+        return
+
+    pipeline = [
+        {
+            "$match": {
+                "subtraction": {
+                    "$exists": True
+                }
+            }
+        },
+        {
+            "$group": {
+                "_id": "$subtraction.id",
+                "id_list": {
+                    "$addToSet": "$_id"
+                }
+            }
+        }
+    ]
+
+    async for item in db.samples.aggregate(pipeline):
+        sample_ids = item["id_list"]
+
+        await db.analyses.update_many({"sample.id": {"$in": sample_ids}}, {
+            "$set": {
+                "subtraction.id": item["_id"]
+            }
+        })
+
+    return True
 
 
 async def convert_pathoscope_file(db, analysis_id, sample_id, data_path):

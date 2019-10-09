@@ -1,7 +1,7 @@
 import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import CreateAnalysis from "../../analyses/components/Create";
+import CreateAnalysis from "../../analyses/components/Create/Create";
 import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";

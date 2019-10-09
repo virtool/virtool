@@ -1,7 +1,6 @@
 import { AlgorithmSelect } from "./AlgorithmSelect";
 import { AutoProgressBar, ProgressBar } from "./ProgressBar";
 import { bsStyles } from "./utils";
-import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { Flex, FlexItem } from "./Flex";
 import { Help } from "./Help";
@@ -12,7 +11,6 @@ import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { Loader } from "./Loader";
-import { NoneFound } from "./NoneFound";
 import { NotFound } from "./NotFound";
 import { Panel } from "./Panel";
 import { Radio } from "./Radio";
@@ -26,14 +24,21 @@ import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
 
 export * from "./Alert";
+export * from "./Attribution";
 export * from "./Badge";
 export * from "./Box";
+export * from "./Button";
+export * from "./ButtonGroup";
+export * from "./ButtonToolbar";
+export * from "./Code";
 export * from "./ExternalLink";
 export * from "./Label";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
 export * from "./Modal";
+export * from "./NoneFound";
 export * from "./Table";
+export * from "./SlashList";
 export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
@@ -43,7 +48,6 @@ export {
     AlgorithmSelect,
     AutoProgressBar,
     bsStyles,
-    Button,
     Checkbox,
     Flex,
     FlexItem,
@@ -55,7 +59,6 @@ export {
     InputSave,
     ListGroupItem,
     Loader,
-    NoneFound,
     NotFound,
     Panel,
     ProgressBar,

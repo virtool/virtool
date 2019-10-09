@@ -1,13 +1,12 @@
-import React from "react";
 import { map } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { ListGroup } from "react-bootstrap";
+import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../base/index";
 
 import { getAPIKeys } from "../../actions";
-import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../base/index";
-import APIKey from "./Key";
 import CreateAPIKey from "./Create";
+import APIKey from "./Key";
 
 export class APIKeys extends React.Component {
     componentDidMount() {
@@ -50,7 +49,7 @@ export class APIKeys extends React.Component {
                     </FlexItem>
                 </Flex>
 
-                <ListGroup>{keyComponents}</ListGroup>
+                <div>{keyComponents}</div>
 
                 <CreateAPIKey />
             </div>

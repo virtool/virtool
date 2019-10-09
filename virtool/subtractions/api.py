@@ -20,11 +20,7 @@ async def find(req):
     ids = req.query.get("ids", False)
 
     if ids:
-        return json_response(await db.subtraction.distinct("_id"))
-
-    host_count = await db.subtraction.count({"is_host": True})
-
-    ready_host_count = await db.subtraction.count({"is_host": True, "ready": True})
+        return json_response(await db.subtraction.distinct("_id", {"ready": True}))
 
     term = req.query.get("find", None)
 
@@ -42,8 +38,7 @@ async def find(req):
     )
 
     data.update({
-        "host_count": host_count,
-        "ready_host_count": ready_host_count
+        "ready_count": await db.subtraction.count({"ready": True})
     })
 
     return json_response(data)

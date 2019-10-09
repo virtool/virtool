@@ -28,9 +28,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
         grow={1}
         shrink={0}
       >
-        <small>
-          <div />
-        </small>
+        <small />
         <small>
           <Icon
             bsStyle="warning"
@@ -64,53 +62,28 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
       </tr>
       <tr>
         <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
           GC Estimate
         </th>
         <td>
           0.400
         </td>
       </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          1
+        </td>
+      </tr>
     </tbody>
   </Table>
-  <h4
-    className="section-header"
-  >
-    <strong>
-      Linked Samples
-    </strong>
-     
-    <Badge>
-      1
-    </Badge>
-  </h4>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      className="linked-sample-button"
-      componentClass="div"
-      key="456def"
-      lg={2}
-      md={3}
-      sm={4}
-      xs={6}
-    >
-      <withRouter(LinkContainer)
-        to="/samples/456def"
-      >
-        <Button
-          block={true}
-          bsStyle="default"
-          pullRight={false}
-          tipPlacement="top"
-        >
-          test-sample
-        </Button>
-      </withRouter(LinkContainer)>
-    </Col>
-  </Row>
   <Connect(EditSubtraction)
     entry={
       Object {

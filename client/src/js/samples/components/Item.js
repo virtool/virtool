@@ -22,6 +22,7 @@ const StyledSampleEntryLabel = styled.div`
     display: flex;
     font-size: 11px;
     font-weight: bold;
+    margin-right: 5px;
     padding: 2px 4px;
 `;
 

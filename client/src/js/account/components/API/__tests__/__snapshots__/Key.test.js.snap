@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<APIKey /> should render when [state.changed=true] 1`] = `
-<ListGroupItem
-  allowFocus={false}
-  className="spaced"
+<Box__SpacedBox
   key="123abc"
   onClick={[Function]}
 >
@@ -62,13 +60,11 @@ exports[`<APIKey /> should render when [state.changed=true] 1`] = `
       xs={1}
     />
   </Row>
-</ListGroupItem>
+</Box__SpacedBox>
 `;
 
 exports[`<APIKey /> should render when collapsed 1`] = `
-<ListGroupItem
-  allowFocus={false}
-  className="spaced"
+<Box__SpacedBox
   key="123abc"
   onClick={[Function]}
 >
@@ -127,13 +123,11 @@ exports[`<APIKey /> should render when collapsed 1`] = `
       xs={1}
     />
   </Row>
-</ListGroupItem>
+</Box__SpacedBox>
 `;
 
 exports[`<APIKey /> should render when expanded 1`] = `
-<ListGroupItem
-  allowFocus={false}
-  className="spaced"
+<Box__SpacedBox
   key="123abc"
   onClick={null}
 >
@@ -212,7 +206,7 @@ exports[`<APIKey /> should render when expanded 1`] = `
         componentClass="div"
         xs={12}
       >
-        <Connect(APIPermissions)
+        <Key__KeyAPIPermissions
           keyPermissions={
             Object {
               "bar": true,
@@ -221,11 +215,6 @@ exports[`<APIKey /> should render when expanded 1`] = `
             }
           }
           onChange={[Function]}
-          style={
-            Object {
-              "marginTop": "15px",
-            }
-          }
         />
       </Col>
     </Row>
@@ -238,10 +227,7 @@ exports[`<APIKey /> should render when expanded 1`] = `
         componentClass="div"
         xs={12}
       >
-        <ButtonToolbar
-          bsClass="btn-toolbar"
-          className="pull-right"
-        >
+        <ButtonToolbar>
           <Button
             bsStyle="danger"
             icon="trash"
@@ -265,5 +251,5 @@ exports[`<APIKey /> should render when expanded 1`] = `
       </Col>
     </Row>
   </div>
-</ListGroupItem>
+</Box__SpacedBox>
 `;

@@ -2,8 +2,9 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Panel, Table } from "../../base";
+import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import EditSample from "./Edit";
+import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
 
 export const SampleDetailGeneral = ({
     count,
@@ -18,6 +19,7 @@ export const SampleDetailGeneral = ({
     srna
 }) => (
     <div>
+        <SampleFileSizeWarning />
         <Table>
             <tbody>
                 <tr>
@@ -35,8 +37,11 @@ export const SampleDetailGeneral = ({
             </tbody>
         </Table>
 
-        <Panel>
-            <Panel.Heading>Library</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Library</h2>
+                <p>Information about the sequencing reads in this sample.</p>
+            </BoxGroupHeader>
             <Table>
                 <tbody>
                     <tr>
@@ -65,21 +70,24 @@ export const SampleDetailGeneral = ({
                     </tr>
                 </tbody>
             </Table>
-        </Panel>
+        </BoxGroup>
 
-        <Panel>
-            <Panel.Heading>Subtraction</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Default Subtraction</h2>
+                <p>This subtraction will be the default selection when creating an analysis.</p>
+            </BoxGroupHeader>
             <Table>
                 <tbody>
                     <tr>
-                        <th>Host</th>
+                        <th>Subtraction</th>
                         <td>
                             <Link to={`/subtraction/${subtractionId}`}>{subtractionId}</Link>
                         </td>
                     </tr>
                 </tbody>
             </Table>
-        </Panel>
+        </BoxGroup>
 
         <EditSample />
     </div>

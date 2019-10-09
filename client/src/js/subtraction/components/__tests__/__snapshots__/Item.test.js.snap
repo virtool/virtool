@@ -1,119 +1,109 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
-<withRouter(LinkContainer)
-  className="spaced"
+<Box__LinkBox
   key="Foo Bar"
   to="/subtraction/Foo Bar"
 >
-  <ListGroupItem
-    allowFocus={false}
+  <Row
+    bsClass="row"
+    componentClass="div"
   >
-    <Row
-      bsClass="row"
+    <Col
+      bsClass="col"
       componentClass="div"
+      md={8}
+      xs={8}
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        xs={8}
+      <strong>
+        Foo Bar
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+      xs={4}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        className="pull-right"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
       >
-        <strong>
-          Foo Bar
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        xs={4}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="center"
-          className="pull-right"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
+        <SubtractionItemIcon
+          ready={false}
+        />
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
         >
-          <SubtractionItemIcon
-            ready={false}
-          />
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={true}
-            shrink={1}
-          >
-            <strong>
-              Importing
-            </strong>
-          </FlexItem>
-        </Flex>
-      </Col>
-    </Row>
-  </ListGroupItem>
-</withRouter(LinkContainer)>
+          <strong>
+            Importing
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+  </Row>
+</Box__LinkBox>
 `;
 
 exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
-<withRouter(LinkContainer)
-  className="spaced"
+<Box__LinkBox
   key="Foo Bar"
   to="/subtraction/Foo Bar"
 >
-  <ListGroupItem
-    allowFocus={false}
+  <Row
+    bsClass="row"
+    componentClass="div"
   >
-    <Row
-      bsClass="row"
+    <Col
+      bsClass="col"
       componentClass="div"
+      md={8}
+      xs={8}
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        xs={8}
+      <strong>
+        Foo Bar
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+      xs={4}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="center"
+        className="pull-right"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
       >
-        <strong>
-          Foo Bar
-        </strong>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        xs={4}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="center"
-          className="pull-right"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
+        <SubtractionItemIcon
+          ready={true}
+        />
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
         >
-          <SubtractionItemIcon
-            ready={true}
-          />
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={true}
-            shrink={1}
-          >
-            <strong>
-              Ready
-            </strong>
-          </FlexItem>
-        </Flex>
-      </Col>
-    </Row>
-  </ListGroupItem>
-</withRouter(LinkContainer)>
+          <strong>
+            Ready
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+  </Row>
+</Box__LinkBox>
 `;
 
 exports[`<SubtractionItemIcon /> should render when [ready=false] 1`] = `

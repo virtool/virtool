@@ -1,4 +1,4 @@
-import { every, filter, get, includes } from "lodash-es";
+import { every, filter, get, some, includes } from "lodash-es";
 import { createSelector } from "reselect";
 import { getTermSelectorFactory } from "../utils/selectors";
 
@@ -31,6 +31,9 @@ export const getCanModifyRights = createSelector(
         return administrator || sample.user.id === userId;
     }
 );
+
+export const getDefaultSubtraction = state =>
+    get(state, "samples.detail.subtraction.id", get(state, ["subtraction", "ids", 0]));
 
 export const getSampleFiles = state => state.samples.detail.files;
 
@@ -68,3 +71,5 @@ export const getSelectedDocuments = createSelector(
         return filter(documents, document => includes(selected, document.id));
     }
 );
+
+export const getFilesUndersized = state => some(state.samples.detail.files, file => file.size < 10000000);

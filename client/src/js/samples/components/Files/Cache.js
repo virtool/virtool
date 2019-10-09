@@ -1,8 +1,7 @@
 import { map } from "lodash-es";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { NoneFound, Panel } from "../../../base";
+import { BoxGroup, BoxGroupHeader, NoneFoundSection } from "../../../base";
 import SampleCacheItem from "./CacheItem";
 
 export const SampleFilesCache = ({ caches }) => {
@@ -11,16 +10,17 @@ export const SampleFilesCache = ({ caches }) => {
     if (caches && caches.length) {
         fileComponents = map(caches, cache => <SampleCacheItem key={cache.id} {...cache} />);
     } else {
-        fileComponents = <NoneFound key="none" noun="cached trims" noListGroup />;
+        fileComponents = <NoneFoundSection key="none" noun="cached trims" />;
     }
 
     return (
-        <Panel>
-            <Panel.Heading>
-                <strong>Cached Trims</strong>
-            </Panel.Heading>
-            <ListGroup>{fileComponents}</ListGroup>
-        </Panel>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>Cached Trims</h2>
+                <p>Trimmed reads saved from analysis runs that can be reused in future analyses.</p>
+            </BoxGroupHeader>
+            {fileComponents}
+        </BoxGroup>
     );
 };
 

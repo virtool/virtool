@@ -111,28 +111,19 @@ export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
  *
  * @func
  * @param sampleId {string} unique sample id
+ * @param refId {string} unique id for a reference
  * @param algorithm {string} algorithm type
+ * @param userId {string} the id of the requesting user
  * @returns {object}
  */
-export const analyze = (sampleId, refId, algorithm, userId) => {
-    const createdAt = new Date();
-
-    const placeholder = {
-        algorithm,
-        created_at: createdAt.toISOString(),
-        ready: false,
-        placeholder: true
-    };
-
-    return {
-        type: ANALYZE.REQUESTED,
-        algorithm,
-        placeholder,
-        refId,
-        sampleId,
-        userId
-    };
-};
+export const analyze = (sampleId, refId, algorithm, subtractionId, userId) => ({
+    type: ANALYZE.REQUESTED,
+    algorithm,
+    refId,
+    sampleId,
+    subtractionId,
+    userId
+});
 
 /**
  * Returns action that can trigger an API call for BLASTing NuV analysis contigs.

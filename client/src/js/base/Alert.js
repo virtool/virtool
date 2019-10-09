@@ -14,8 +14,7 @@ export const UnstyledAlert = ({ children, className, color, icon }) => {
 export const Alert = styled(UnstyledAlert)`
     align-items: ${props => (props.level ? "center" : "normal")};
     border: 1px solid grey;
-    border-left-width: 3px;
-    border-radius: 3px;
+    border-left-width: 4px;
     display: ${props => (props.block ? "block" : "flex")};
     margin-bottom: 16px;
     padding: 15px;
@@ -42,4 +41,8 @@ export const WarningAlert = styled(Alert)`
     border-color: #fbd38d;
     background-color: #fffaf0;
     color: #c05621;
+
+    a:last-child {
+        margin-left: auto;
+    }
 `;

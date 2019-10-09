@@ -1,78 +1,61 @@
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { Panel, ProgressBar, Table } from "../../../base";
+import styled from "styled-components";
+import { SpacedBox } from "../../../base";
 import { getReferenceItemProgress } from "../../selectors";
+import { ReferenceItemBuild } from "./Build";
 import { ReferenceItemHeader } from "./Header";
 import { ReferenceItemOrigin } from "./Origin";
-import { ReferenceItemBuild } from "./Build";
+import { ReferenceItemProgress } from "./Progress";
 
-const ReferenceItemTable = styled(Table)`
-    tr {
-        td,
-        th {
-            min-width: 70px;
-        }
+const ReferenceItemBody = styled.div`
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    margin-bottom: 5px;
+    padding: 0 15px 5px;
 
-        &:first-child {
-            border-top: 1px solid #dddddd;
-        }
+    @media (min-width: 1060px) {
+        grid-template-columns: 1fr 1fr;
     }
 `;
 
-const StyledReferenceItem = styled(Panel)`
-    box-shadow: 1px 1px 2px 0 #d5d5d5;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    .progress {
-        flex: 0 0 auto;
-        width: 100%;
-        height: 5px;
-    }
-
-    table {
-        margin-bottom: 0;
-    }
-
-    th {
-        padding-left: 15px !important;
-    }
+const StyledReferenceItem = styled(SpacedBox)`
+    padding: 0;
+    margin-bottom: 15px;
 `;
 
 export const ReferenceItem = ({
     clonedFrom,
     createdAt,
+    dataType,
     id,
     importedFrom,
     latestBuild,
     name,
     organism,
+    otuCount,
     progress,
     remotesFrom,
     userId
 }) => {
     return (
         <StyledReferenceItem>
-            <div>
-                <ReferenceItemHeader id={id} createdAt={createdAt} name={name} userId={userId} />
-                <ReferenceItemTable>
-                    <tbody>
-                        <tr>
-                            <th>Organism</th>
-                            <td className="text-capitalize">{organism || "unknown"}</td>
-                        </tr>
-                        <ReferenceItemOrigin
-                            clonedFrom={clonedFrom}
-                            importedFrom={importedFrom}
-                            remotesFrom={remotesFrom}
-                        />
-                        <ReferenceItemBuild id={id} latestBuild={latestBuild} progress={progress} />
-                    </tbody>
-                </ReferenceItemTable>
-            </div>
-            <ProgressBar bsStyle={progress === 100 ? "success" : "warning"} now={progress} affixed />
+            <ReferenceItemHeader
+                id={id}
+                createdAt={createdAt}
+                dataType={dataType}
+                name={name}
+                organism={organism}
+                otuCount={otuCount}
+                userId={userId}
+            />
+            <ReferenceItemBody>
+                <ReferenceItemOrigin clonedFrom={clonedFrom} importedFrom={importedFrom} remotesFrom={remotesFrom} />
+                <ReferenceItemBuild id={id} latestBuild={latestBuild} progress={progress} />
+            </ReferenceItemBody>
+            <ReferenceItemProgress now={progress} />
         </StyledReferenceItem>
     );
 };
@@ -81,11 +64,13 @@ export const mapStateToProps = (state, ownProps) => {
     const {
         cloned_from,
         created_at,
+        data_type,
         id,
         imported_from,
         latest_build,
         name,
         organism,
+        otu_count,
         remotes_from,
         user
     } = state.references.documents[ownProps.index];
@@ -99,8 +84,10 @@ export const mapStateToProps = (state, ownProps) => {
         progress,
         clonedFrom: cloned_from,
         createdAt: created_at,
+        dataType: data_type,
         importedFrom: imported_from,
         latestBuild: latest_build,
+        otuCount: otu_count,
         remotesFrom: remotes_from,
         userId: user.id
     };

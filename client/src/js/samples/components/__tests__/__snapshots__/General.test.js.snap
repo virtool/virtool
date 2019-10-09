@@ -2,6 +2,7 @@
 
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -30,13 +31,15 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Library
-    </PanelHeading>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Library
+      </h2>
+      <p>
+        Information about the sequencing reads in this sample.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
@@ -89,19 +92,21 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Subtraction
-    </PanelHeading>
+  </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Default Subtraction
+      </h2>
+      <p>
+        This subtraction will be the default selection when creating an analysis.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -113,13 +118,14 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
+  </Box__BoxGroup>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -148,13 +154,15 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Library
-    </PanelHeading>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Library
+      </h2>
+      <p>
+        Information about the sequencing reads in this sample.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
@@ -207,19 +215,21 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Subtraction
-    </PanelHeading>
+  </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Default Subtraction
+      </h2>
+      <p>
+        This subtraction will be the default selection when creating an analysis.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -231,13 +241,14 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
+  </Box__BoxGroup>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -266,13 +277,15 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Library
-    </PanelHeading>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Library
+      </h2>
+      <p>
+        Information about the sequencing reads in this sample.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
@@ -325,19 +338,21 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Subtraction
-    </PanelHeading>
+  </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Default Subtraction
+      </h2>
+      <p>
+        This subtraction will be the default selection when creating an analysis.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -349,13 +364,14 @@ exports[`<SampleDetailGeneral /> should render with [srna=false] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
+  </Box__BoxGroup>
   <Connect(EditSample) />
 </div>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
 <div>
+  <Connect(SampleFileSizeWarning) />
   <Table>
     <tbody>
       <tr>
@@ -384,13 +400,15 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
       </tr>
     </tbody>
   </Table>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Library
-    </PanelHeading>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Library
+      </h2>
+      <p>
+        Information about the sequencing reads in this sample.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
@@ -443,19 +461,21 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
-  <Panel>
-    <PanelHeading
-      bsClass="panel"
-      componentClass="div"
-    >
-      Subtraction
-    </PanelHeading>
+  </Box__BoxGroup>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Default Subtraction
+      </h2>
+      <p>
+        This subtraction will be the default selection when creating an analysis.
+      </p>
+    </Box__BoxGroupHeader>
     <Table>
       <tbody>
         <tr>
           <th>
-            Host
+            Subtraction
           </th>
           <td>
             <Link
@@ -467,7 +487,7 @@ exports[`<SampleDetailGeneral /> should render with [srna=true] 1`] = `
         </tr>
       </tbody>
     </Table>
-  </Panel>
+  </Box__BoxGroup>
   <Connect(EditSample) />
 </div>
 `;

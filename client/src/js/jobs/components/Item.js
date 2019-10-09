@@ -8,7 +8,7 @@ import { Icon, RelativeTime, ProgressBar, Flex, FlexItem, Loader } from "../../b
 import { getTaskDisplayName } from "../../utils/utils";
 import { cancelJob, removeJob } from "../actions";
 
-export class JobEntry extends React.Component {
+export class JobItem extends React.Component {
     static propTypes = {
         id: PropTypes.string.isRequired,
         task: PropTypes.string.isRequired,
@@ -129,4 +129,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     null,
     mapDispatchToProps
-)(JobEntry);
+)(JobItem);

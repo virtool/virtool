@@ -2,6 +2,8 @@ import Request from "superagent";
 
 export const find = ({ term, page }) => Request.get("/api/subtractions").query({ find: term, page });
 
+export const listIds = () => Request.get("/api/subtractions?ids=true");
+
 export const get = ({ subtractionId }) => Request.get(`/api/subtractions/${subtractionId}`);
 
 export const create = ({ subtractionId, fileId, nickname }) =>

@@ -1,18 +1,20 @@
 import {
-    WS_INSERT_SUBTRACTION,
-    WS_UPDATE_SUBTRACTION,
-    WS_REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
-    UPDATE_SUBTRACTION
+    LIST_SUBTRACTION_IDS,
+    UPDATE_SUBTRACTION,
+    WS_INSERT_SUBTRACTION,
+    WS_REMOVE_SUBTRACTION,
+    WS_UPDATE_SUBTRACTION
 } from "../app/actionTypes";
-import { updateDocuments, insert, update, remove } from "../utils/reducers";
+import { insert, remove, update, updateDocuments } from "../utils/reducers";
 
 export const initialState = {
+    detail: null,
     documents: null,
+    ids: null,
     page: 0,
-    total_count: 0,
-    detail: null
+    total_count: 0
 };
 
 export default function subtractionsReducer(state = initialState, action) {
@@ -32,6 +34,9 @@ export default function subtractionsReducer(state = initialState, action) {
 
         case FIND_SUBTRACTIONS.SUCCEEDED:
             return updateDocuments(state, action, "id");
+
+        case LIST_SUBTRACTION_IDS.SUCCEEDED:
+            return { ...state, ids: action.data };
 
         case GET_SUBTRACTION.REQUESTED:
             return { ...state, detail: null };

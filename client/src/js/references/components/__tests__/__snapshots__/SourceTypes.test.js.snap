@@ -1,10 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SourceTypeItem /> renders when [disabled=false] 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
+exports[`<SourceTypeItem /> should render when [disabled=false] 1`] = `
+<Box__BoxGroupSection
   disabled={false}
-  listItem={false}
 >
   <span
     className="text-capitalize"
@@ -19,131 +17,112 @@ exports[`<SourceTypeItem /> renders when [disabled=false] 1`] = `
     onClick={[Function]}
     pullRight={true}
   />
-</ListGroupItem>
+</Box__BoxGroupSection>
 `;
 
-exports[`<SourceTypeItem /> renders when [disabled=true] 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
+exports[`<SourceTypeItem /> should render when [disabled=true] 1`] = `
+<Box__BoxGroupSection
   disabled={true}
-  listItem={false}
 >
   <span
     className="text-capitalize"
   >
     genotype
   </span>
-</ListGroupItem>
+</Box__BoxGroupSection>
 `;
 
-exports[`<SourceTypes /> renders when global 1`] = `
-<Panel>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <strong>
+exports[`<SourceTypes /> should render when global 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      <span>
         Default Source Types
-      </strong>
-    </ListGroupItem>
-    <GlobalDescription />
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
+      </span>
+    </h2>
+    <p>
+      
+    Configure a list of default source types. New references will automatically take these values as their allowed
+    source types.
+
+    </p>
+  </Box__BoxGroupHeader>
+  <SourceTypes__SourceTypesForm>
+    <form
+      onSubmit={[Function]}
     >
-      <div
-        className="clearfix"
+      <FormGroup
+        bsClass="form-group"
       >
-        <form
-          onSubmit={[Function]}
+        <InputGroup
+          bsClass="input-group"
         >
-          <FormGroup
-            bsClass="form-group"
+          <FormControl
+            bsClass="form-control"
+            componentClass="input"
+            disabled={false}
+            onChange={[Function]}
+            type="text"
+            value=""
+          />
+          <InputGroupButton
+            bsClass="input-group-btn"
           >
-            <InputGroup
-              bsClass="input-group"
+            <Button
+              bsStyle="primary"
+              disabled={false}
+              pullRight={false}
+              tipPlacement="top"
+              type="submit"
             >
-              <FormControl
-                bsClass="form-control"
-                componentClass="input"
-                disabled={false}
-                onChange={[Function]}
-                type="text"
-                value=""
+              <Icon
+                faStyle="fas"
+                fixedWidth={false}
+                name="plus-square"
+                pullRight={false}
+                style={
+                  Object {
+                    "paddingLeft": "3px",
+                  }
+                }
               />
-              <InputGroupButton
-                bsClass="input-group-btn"
-              >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="primary"
-                  disabled={false}
-                  type="submit"
-                >
-                  <Icon
-                    faStyle="fas"
-                    fixedWidth={false}
-                    name="plus-square"
-                    pullRight={false}
-                    style={
-                      Object {
-                        "paddingLeft": "3px",
-                      }
-                    }
-                  />
-                </Button>
-              </InputGroupButton>
-            </InputGroup>
-            <div
-              className="input-form-error-none"
-            >
-              <span
-                className="input-error-message"
-              >
-                None
-              </span>
-            </div>
-          </FormGroup>
-        </form>
-        <ListGroup
-          bsClass="list-group"
+            </Button>
+          </InputGroupButton>
+        </InputGroup>
+        <div
+          className="input-form-error-none"
         >
-          <SourceTypeItem
-            disabled={false}
-            key="isolate"
-            onRemove={[Function]}
-            sourceType="isolate"
-          />
-          <SourceTypeItem
-            disabled={false}
-            key="serotype"
-            onRemove={[Function]}
-            sourceType="serotype"
-          />
-        </ListGroup>
-      </div>
-    </ListGroupItem>
-  </ListGroup>
-</Panel>
+          <span
+            className="input-error-message"
+          >
+            None
+          </span>
+        </div>
+      </FormGroup>
+    </form>
+  </SourceTypes__SourceTypesForm>
+  <SourceTypeItem
+    disabled={false}
+    key="isolate"
+    onRemove={[Function]}
+    sourceType="isolate"
+  />
+  <SourceTypeItem
+    disabled={false}
+    key="serotype"
+    onRemove={[Function]}
+    sourceType="serotype"
+  />
+</Box__BoxGroup>
 `;
 
-exports[`<SourceTypes /> renders when not global and not remote 1`] = `
-<Panel>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <strong>
+exports[`<SourceTypes /> should render when neither 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      <span>
          Source Types
-      </strong>
+      </span>
       <Checkbox
         checked={true}
         label="Enable"
@@ -151,182 +130,165 @@ exports[`<SourceTypes /> renders when not global and not remote 1`] = `
         partial={false}
         pullRight={true}
       />
-    </ListGroupItem>
-    <LocalDescription />
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
+    </h2>
+    <p>
+      
+    Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
+    source type from this list. If this feature is disabled, users will be able to enter any string as a source
+    type.
+
+    </p>
+  </Box__BoxGroupHeader>
+  <SourceTypes__SourceTypesForm>
+    <form
+      onSubmit={[Function]}
     >
-      <div
-        className="clearfix"
+      <FormGroup
+        bsClass="form-group"
       >
-        <form
-          onSubmit={[Function]}
+        <InputGroup
+          bsClass="input-group"
         >
-          <FormGroup
-            bsClass="form-group"
+          <FormControl
+            bsClass="form-control"
+            componentClass="input"
+            disabled={false}
+            onChange={[Function]}
+            type="text"
+            value=""
+          />
+          <InputGroupButton
+            bsClass="input-group-btn"
           >
-            <InputGroup
-              bsClass="input-group"
+            <Button
+              bsStyle="primary"
+              disabled={false}
+              pullRight={false}
+              tipPlacement="top"
+              type="submit"
             >
-              <FormControl
-                bsClass="form-control"
-                componentClass="input"
-                disabled={false}
-                onChange={[Function]}
-                type="text"
-                value=""
+              <Icon
+                faStyle="fas"
+                fixedWidth={false}
+                name="plus-square"
+                pullRight={false}
+                style={
+                  Object {
+                    "paddingLeft": "3px",
+                  }
+                }
               />
-              <InputGroupButton
-                bsClass="input-group-btn"
-              >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="primary"
-                  disabled={false}
-                  type="submit"
-                >
-                  <Icon
-                    faStyle="fas"
-                    fixedWidth={false}
-                    name="plus-square"
-                    pullRight={false}
-                    style={
-                      Object {
-                        "paddingLeft": "3px",
-                      }
-                    }
-                  />
-                </Button>
-              </InputGroupButton>
-            </InputGroup>
-            <div
-              className="input-form-error-none"
-            >
-              <span
-                className="input-error-message"
-              >
-                None
-              </span>
-            </div>
-          </FormGroup>
-        </form>
-        <ListGroup
-          bsClass="list-group"
+            </Button>
+          </InputGroupButton>
+        </InputGroup>
+        <div
+          className="input-form-error-none"
         >
-          <SourceTypeItem
-            disabled={false}
-            key="isolate"
-            onRemove={[Function]}
-            sourceType="isolate"
-          />
-          <SourceTypeItem
-            disabled={false}
-            key="serotype"
-            onRemove={[Function]}
-            sourceType="serotype"
-          />
-        </ListGroup>
-      </div>
-    </ListGroupItem>
-  </ListGroup>
-</Panel>
+          <span
+            className="input-error-message"
+          >
+            None
+          </span>
+        </div>
+      </FormGroup>
+    </form>
+  </SourceTypes__SourceTypesForm>
+  <SourceTypeItem
+    disabled={false}
+    key="isolate"
+    onRemove={[Function]}
+    sourceType="isolate"
+  />
+  <SourceTypeItem
+    disabled={false}
+    key="serotype"
+    onRemove={[Function]}
+    sourceType="serotype"
+  />
+</Box__BoxGroup>
 `;
 
-exports[`<SourceTypes /> renders when not global and remote 1`] = `
-<Panel>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <strong>
+exports[`<SourceTypes /> should render when remote 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      <span>
          Source Types
-      </strong>
-    </ListGroupItem>
-    <LocalDescription />
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
+      </span>
+    </h2>
+    <p>
+      
+    Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
+    source type from this list. If this feature is disabled, users will be able to enter any string as a source
+    type.
+
+    </p>
+  </Box__BoxGroupHeader>
+  <SourceTypes__SourceTypesForm>
+    <form
+      onSubmit={[Function]}
     >
-      <div
-        className="clearfix"
+      <FormGroup
+        bsClass="form-group"
       >
-        <form
-          onSubmit={[Function]}
+        <InputGroup
+          bsClass="input-group"
         >
-          <FormGroup
-            bsClass="form-group"
+          <FormControl
+            bsClass="form-control"
+            componentClass="input"
+            disabled={true}
+            onChange={[Function]}
+            type="text"
+            value=""
+          />
+          <InputGroupButton
+            bsClass="input-group-btn"
           >
-            <InputGroup
-              bsClass="input-group"
+            <Button
+              bsStyle="primary"
+              disabled={true}
+              pullRight={false}
+              tipPlacement="top"
+              type="submit"
             >
-              <FormControl
-                bsClass="form-control"
-                componentClass="input"
-                disabled={true}
-                onChange={[Function]}
-                type="text"
-                value=""
+              <Icon
+                faStyle="fas"
+                fixedWidth={false}
+                name="plus-square"
+                pullRight={false}
+                style={
+                  Object {
+                    "paddingLeft": "3px",
+                  }
+                }
               />
-              <InputGroupButton
-                bsClass="input-group-btn"
-              >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="primary"
-                  disabled={true}
-                  type="submit"
-                >
-                  <Icon
-                    faStyle="fas"
-                    fixedWidth={false}
-                    name="plus-square"
-                    pullRight={false}
-                    style={
-                      Object {
-                        "paddingLeft": "3px",
-                      }
-                    }
-                  />
-                </Button>
-              </InputGroupButton>
-            </InputGroup>
-            <div
-              className="input-form-error-none"
-            >
-              <span
-                className="input-error-message"
-              >
-                None
-              </span>
-            </div>
-          </FormGroup>
-        </form>
-        <ListGroup
-          bsClass="list-group"
+            </Button>
+          </InputGroupButton>
+        </InputGroup>
+        <div
+          className="input-form-error-none"
         >
-          <SourceTypeItem
-            disabled={true}
-            key="isolate"
-            onRemove={[Function]}
-            sourceType="isolate"
-          />
-          <SourceTypeItem
-            disabled={true}
-            key="serotype"
-            onRemove={[Function]}
-            sourceType="serotype"
-          />
-        </ListGroup>
-      </div>
-    </ListGroupItem>
-  </ListGroup>
-</Panel>
+          <span
+            className="input-error-message"
+          >
+            None
+          </span>
+        </div>
+      </FormGroup>
+    </form>
+  </SourceTypes__SourceTypesForm>
+  <SourceTypeItem
+    disabled={true}
+    key="isolate"
+    onRemove={[Function]}
+    sourceType="isolate"
+  />
+  <SourceTypeItem
+    disabled={true}
+    key="serotype"
+    onRemove={[Function]}
+    sourceType="serotype"
+  />
+</Box__BoxGroup>
 `;

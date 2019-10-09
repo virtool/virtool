@@ -16,11 +16,11 @@ export const HMMToolbar = ({ onFind, term }) => (
     </FormGroup>
 );
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     term: getStateTerm(state)
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onFind: e => {
         dispatch(findHmms(e.target.value, 1, false));
     }

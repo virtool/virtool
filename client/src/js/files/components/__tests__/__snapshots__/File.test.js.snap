@@ -1,204 +1,116 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<File /> should render 1`] = `
-<ListGroupItem
-  allowFocus={false}
+<File__NameCreationSize
   className="spaced"
-  style={
-    Object {
-      "color": "#555",
-    }
-  }
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      sm={4}
-      xs={4}
-    >
-      <strong>
-        foo.fa
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={2}
-      sm={2}
-      xs={2}
-    />
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={5}
-      sm={5}
-      xs={5}
-    >
+  <File__NameCreation>
+    <strong>
+      foo.fa
+    </strong>
+    <File__Creation>
       <span>
-        Uploaded 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-         by 
+        <span
+          style={
+            Object {
+              "fontSize": 12,
+            }
+          }
+        >
+          Uploaded 
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+        </span>
+         
+        by 
         bill
       </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={1}
-      sm={1}
-      xs={1}
-    >
-      <Icon
-        bsStyle="danger"
-        faStyle="fas"
-        fixedWidth={false}
-        name="trash"
-        onClick={[Function]}
-        pullRight={true}
-        style={
-          Object {
-            "fontSize": "17px",
-          }
+    </File__Creation>
+  </File__NameCreation>
+  <div>
+    <Icon
+      bsStyle="danger"
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
+      onClick={[Function]}
+      pullRight={true}
+      style={
+        Object {
+          "fontSize": "17px",
+          "marginLeft": "9px",
         }
-      />
-    </Col>
-  </Row>
-</ListGroupItem>
+      }
+    />
+  </div>
+</File__NameCreationSize>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
-<ListGroupItem
-  allowFocus={false}
+<File__NameCreationSize
   className="spaced"
-  style={
-    Object {
-      "color": "#555",
-    }
-  }
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      sm={4}
-      xs={4}
-    >
-      <strong>
-        foo.fa
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={2}
-      sm={2}
-      xs={2}
-    />
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={5}
-      sm={5}
-      xs={5}
-    >
+  <File__NameCreation>
+    <strong>
+      foo.fa
+    </strong>
+    <File__Creation>
       <span>
-        Uploaded 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-         by 
+        <span
+          style={
+            Object {
+              "fontSize": 12,
+            }
+          }
+        >
+          Uploaded 
+          <RelativeTime
+            time="2018-02-14T17:12:00.000000Z"
+          />
+        </span>
+         
+        by 
         bill
       </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={1}
-      sm={1}
-      xs={1}
-    />
-  </Row>
-</ListGroupItem>
+    </File__Creation>
+  </File__NameCreation>
+  <div />
+</File__NameCreationSize>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
-<ListGroupItem
-  allowFocus={false}
+<File__NameCreationSize
   className="spaced"
-  style={
-    Object {
-      "color": "#555",
-    }
-  }
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      sm={4}
-      xs={4}
-    >
-      <strong>
-        foo.fa
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={2}
-      sm={2}
-      xs={2}
-    />
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={5}
-      sm={5}
-      xs={5}
-    >
+  <File__NameCreation>
+    <strong>
+      foo.fa
+    </strong>
+    <File__Creation>
       <span>
         Retrieved 
         <RelativeTime
           time="2018-02-14T17:12:00.000000Z"
         />
       </span>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={1}
-      sm={1}
-      xs={1}
-    >
-      <Icon
-        bsStyle="danger"
-        faStyle="fas"
-        fixedWidth={false}
-        name="trash"
-        onClick={[Function]}
-        pullRight={true}
-        style={
-          Object {
-            "fontSize": "17px",
-          }
+    </File__Creation>
+  </File__NameCreation>
+  <div>
+    <Icon
+      bsStyle="danger"
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
+      onClick={[Function]}
+      pullRight={true}
+      style={
+        Object {
+          "fontSize": "17px",
+          "marginLeft": "9px",
         }
-      />
-    </Col>
-  </Row>
-</ListGroupItem>
+      }
+    />
+  </div>
+</File__NameCreationSize>
 `;

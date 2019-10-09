@@ -1,12 +1,16 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { ListGroup } from "react-bootstrap";
-import { Badge, ListGroupItem } from "../../base";
+import { Badge, BoxGroup, BoxGroupSection } from "../../base";
 
-const HMMTaxonomyItem = styled(ListGroupItem)`
+const HMMTaxonomyItem = styled(BoxGroupSection)`
     display: flex;
     justify-content: space-between;
+`;
+
+const StyledHMMTaxonomy = styled(BoxGroup)`
+    max-height: 210px;
+    overflow-y: auto;
 `;
 
 export const HMMTaxonomy = ({ counts }) => {
@@ -18,5 +22,5 @@ export const HMMTaxonomy = ({ counts }) => {
         </HMMTaxonomyItem>
     ));
 
-    return <ListGroup style={{ maxHeight: 210, overflowY: "auto" }}>{components}</ListGroup>;
+    return <StyledHMMTaxonomy>{components}</StyledHMMTaxonomy>;
 };

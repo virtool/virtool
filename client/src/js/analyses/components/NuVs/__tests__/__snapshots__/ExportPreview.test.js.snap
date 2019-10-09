@@ -5,10 +5,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
   <label>
     Preview
   </label>
-  <Well
-    bsClass="well"
-    className="text-muted"
-  >
+  <Code>
     <p
       style={
         Object {
@@ -33,7 +30,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
         …
       </code>
     </p>
-  </Well>
+  </Code>
   <label>
     Header Fields
   </label>
@@ -89,10 +86,7 @@ exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
   <label>
     Preview
   </label>
-  <Well
-    bsClass="well"
-    className="text-muted"
-  >
+  <Code>
     <p
       style={
         Object {
@@ -117,7 +111,7 @@ exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
         …
       </code>
     </p>
-  </Well>
+  </Code>
   <label>
     Header Fields
   </label>

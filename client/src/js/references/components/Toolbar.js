@@ -1,7 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
-import { Icon, Button } from "../../base";
+import { Icon, LinkButton } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findReferences } from "../actions";
 
@@ -10,9 +9,9 @@ export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
 
     if (canCreate) {
         createButton = (
-            <LinkContainer to={{ state: { newReference: true, createReference: true } }}>
-                <Button bsStyle="primary" tip="Create" icon="plus-square fa-fw" />
-            </LinkContainer>
+            <LinkButton to={{ state: { newReference: true, createReference: true } }} tip="Create">
+                <Icon name="plus-square fa-fw" />
+            </LinkButton>
         );
     }
 
