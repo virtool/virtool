@@ -47,7 +47,7 @@ export default function HMMItem({ cluster, families, id, names }) {
 
     return (
         <LinkContainer to={`/hmm/${id}`}>
-            <StyledChange>
+            <StyledChange className="spaced">
                 <span>
                     <strong>{cluster}</strong>
                 </span>
