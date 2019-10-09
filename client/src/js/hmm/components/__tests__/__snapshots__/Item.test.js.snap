@@ -4,7 +4,9 @@ exports[`<HMMItem /> should render 1`] = `
 <withRouter(LinkContainer)
   to="/hmm/tester"
 >
-  <Item__StyledChange>
+  <Item__StyledChange
+    className="spaced"
+  >
     <span>
       <strong>
         5
