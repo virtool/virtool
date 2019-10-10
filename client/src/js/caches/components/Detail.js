@@ -1,61 +1,23 @@
-import { map } from "lodash-es";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
-    Panel,
     LoadingPlaceholder,
     RelativeTime,
     SubviewHeader,
     SubviewHeaderAttribution,
-    SubviewHeaderTitle,
-    Table
+    SubviewHeaderTitle
 } from "../../base";
 import { getCache } from "../actions";
 import CacheQuality from "./Quality";
-
-const CacheGeneral = ({ hash, program }) => (
-    <Table>
-        <tbody>
-            <tr>
-                <th>Hash</th>
-                <td>{hash}</td>
-            </tr>
-            <tr>
-                <th>Trimming Program</th>
-                <td>{program}</td>
-            </tr>
-        </tbody>
-    </Table>
-);
-
-const CacheParameterKey = styled.th`
-    font-family: "Roboto Mono", monospace;
-    padding-left: 15px !important;
-`;
-
-const CacheParameters = ({ parameters }) => {
-    const rowComponents = map(parameters, (value, key) => (
-        <tr key={key}>
-            <CacheParameterKey>{key}</CacheParameterKey>
-            <td>{value}</td>
-        </tr>
-    ));
-    return (
-        <Panel>
-            <Panel.Heading>Trim Parameters</Panel.Heading>
-            <Table>
-                <tbody>{rowComponents}</tbody>
-            </Table>
-        </Panel>
-    );
-};
+import CacheGeneral from "./General";
+import CacheParameters from "./Parameters";
 
 const StyledCacheDetail = styled.div`
     overflow-x: hidden;
 `;
 
-const CacheDetail = ({ detail, match, sampleName, onGet }) => {
+export const CacheDetail = ({ detail, match, sampleName, onGet }) => {
     useEffect(() => onGet(match.params.cacheId), [match.params.cacheId]);
 
     if (detail === null) {
@@ -77,18 +39,20 @@ const CacheDetail = ({ detail, match, sampleName, onGet }) => {
     );
 };
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     return {
         detail: state.caches.detail,
         sampleName: state.samples.detail.name
     };
 };
 
-const mapDispatchToProps = dispatch => ({
-    onGet: cacheId => {
-        dispatch(getCache(cacheId));
-    }
-});
+export const mapDispatchToProps = dispatch => {
+    return {
+        onGet: cacheId => {
+            dispatch(getCache(cacheId));
+        }
+    };
+};
 
 export default connect(
     mapStateToProps,
