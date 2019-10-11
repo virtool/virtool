@@ -12,7 +12,7 @@ export const CacheQuality = props => (
     </Panel>
 );
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     const { bases, composition, sequences } = state.caches.detail.quality;
     return { bases, composition, sequences };
 };
