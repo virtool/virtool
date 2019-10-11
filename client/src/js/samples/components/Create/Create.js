@@ -35,10 +35,9 @@ class CreateSample extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (nextProps.readyHosts !== prevState.readyHosts) {
+        if (nextProps.subtractions !== prevState.subtractions) {
             return {
-                subtraction: getReadyHosts(nextProps),
-                readyHosts: nextProps.readyHosts
+                subtraction: getActiveSubtraction(nextProps)
             };
         }
 
@@ -68,9 +67,14 @@ class CreateSample extends React.Component {
         const { name, value, error } = getTargetChange(e.target);
 
         if (name === "name" || name === "subtraction") {
-            this.setState({ [name]: value, [error]: "" });
+            this.setState({
+                [name]: value,
+                [error]: ""
+            });
         } else {
-            this.setState({ [name]: value });
+            this.setState({
+                [name]: value
+            });
         }
     };
 
@@ -84,10 +88,10 @@ class CreateSample extends React.Component {
             this.setState({ errorName: "Required Field" });
         }
 
-        if (!this.props.readyHosts || !this.props.readyHosts.length) {
+        if (!this.props.subtractions || !this.props.subtractions.length) {
             hasError = true;
             this.setState({
-                errorSubtraction: "A host genome must be added to Virtool before samples can be created and analyzed."
+                errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed."
             });
         }
 
@@ -124,7 +128,7 @@ class CreateSample extends React.Component {
             );
         }
 
-        const hostComponents = map(this.props.subtractions, subtractionId => (
+        const subtractionComponents = map(this.props.subtractions, subtractionId => (
             <option key={subtractionId}>{subtractionId}</option>
         ));
 
@@ -201,7 +205,7 @@ class CreateSample extends React.Component {
                             <Col xs={12} md={6}>
                                 <InputError
                                     name="host"
-                                    label="True Host"
+                                    label="Host"
                                     value={this.state.host}
                                     onChange={this.handleChange}
                                 />
@@ -216,7 +220,7 @@ class CreateSample extends React.Component {
                                     onChange={this.handleChange}
                                     error={errorSubtraction}
                                 >
-                                    {hostComponents}
+                                    {subtractionComponents}
                                 </InputError>
                             </Col>
                         </Row>
