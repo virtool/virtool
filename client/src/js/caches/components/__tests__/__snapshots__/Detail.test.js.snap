@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CacheDetail /> should render 1`] = `
+<Detail__StyledCacheDetail>
+  <ViewHeader__SubviewHeader>
+    <ViewHeader__SubviewHeaderTitle>
+      Cache for 
+      Foo
+    </ViewHeader__SubviewHeaderTitle>
+    <ViewHeader__SubviewHeaderAttribution>
+      Created 
+      <RelativeTime
+        time="2018-01-01T00:00:00.000000Z"
+      />
+    </ViewHeader__SubviewHeaderAttribution>
+  </ViewHeader__SubviewHeader>
+  <CacheGeneral
+    created_at="2018-01-01T00:00:00.000000Z"
+    hash="123abc"
+    parameters={
+      Object {
+        "foo": "bar",
+      }
+    }
+    program="foo"
+  />
+  <CacheParameters
+    parameters={
+      Object {
+        "foo": "bar",
+      }
+    }
+  />
+  <Connect(CacheQuality) />
+</Detail__StyledCacheDetail>
+`;
+
+exports[`<CacheDetail /> should render when [detail=null] 1`] = `<LoadingPlaceholder />`;

@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CacheQuality /> should render 1`] = `
+<Panel>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    Quality
+  </PanelHeading>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    <Quality
+      foo="bar"
+    />
+  </PanelBody>
+</Panel>
+`;
