@@ -1,8 +1,7 @@
 import React from "react";
 import { map } from "lodash-es";
 import styled from "styled-components";
-import { Panel } from "../../base/Panel";
-import { Table } from "../../base/Table";
+import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 
 const CacheParameterKey = styled.th`
     font-family: "Roboto Mono", monospace;
@@ -16,13 +15,14 @@ const CacheParameters = ({ parameters }) => {
             <td>{value}</td>
         </tr>
     ));
+
     return (
-        <Panel>
-            <Panel.Heading>Trim Parameters</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>Trim Parameters</BoxGroupHeader>
             <Table>
                 <tbody>{rowComponents}</tbody>
             </Table>
-        </Panel>
+        </BoxGroup>
     );
 };
 
