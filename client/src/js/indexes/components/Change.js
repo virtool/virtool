@@ -16,7 +16,7 @@ export const IndexChange = ({ description, otuName }) => (
     </SpacedBox>
 );
 
-const mapStateToProps = (state, ownProps) => {
+export const mapStateToProps = (state, ownProps) => {
     const { otu, description } = state.indexes.history.documents[ownProps.index];
     return {
         description,
