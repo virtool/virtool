@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReleasesList /> should render with one release 1`] = `
+<Fragment>
+  <List__ReleasesListHeader>
+    <strong
+      className="text-warning"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="arrow-alt-circle-up"
+        pullRight={false}
+      />
+       Update
+       Available
+    </strong>
+    <Button
+      bsStyle="primary"
+      icon="download"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tipPlacement="top"
+    >
+      Install
+    </Button>
+  </List__ReleasesListHeader>
+  <List__ReleasesListGroup>
+    <Release
+      body="Foo"
+      html_url="FOO"
+      key="foo"
+      name="foo"
+    />
+  </List__ReleasesListGroup>
+  <Connect(SoftwareInstall) />
+</Fragment>
+`;
+
+exports[`<ReleasesList /> should render with two releases 1`] = `
+<Fragment>
+  <List__ReleasesListHeader>
+    <strong
+      className="text-warning"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="arrow-alt-circle-up"
+        pullRight={false}
+      />
+       Update
+      s
+       Available
+    </strong>
+    <Button
+      bsStyle="primary"
+      icon="download"
+      onClick={[MockFunction]}
+      pullRight={false}
+      tipPlacement="top"
+    >
+      Install
+    </Button>
+  </List__ReleasesListHeader>
+  <List__ReleasesListGroup>
+    <Release
+      body="Foo"
+      html_url="FOO"
+      key="foo"
+      name="foo"
+    />
+    <Release
+      body="Bar"
+      html_url="BAR"
+      key="bar"
+      name="bar"
+    />
+  </List__ReleasesListGroup>
+  <Connect(SoftwareInstall) />
+</Fragment>
+`;
