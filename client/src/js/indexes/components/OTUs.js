@@ -2,8 +2,7 @@ import { map } from "lodash-es";
 import React from "react";
 import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
-import { Badge, Panel } from "../../base";
+import { Panel } from "../../base";
 import { PanelBadgeHeader } from "./General";
 import { IndexOTU } from "./OTU";
 
