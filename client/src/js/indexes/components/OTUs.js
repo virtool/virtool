@@ -1,9 +1,7 @@
 import { map } from "lodash-es";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Panel } from "../../base";
-import { PanelBadgeHeader } from "./General";
+import { Badge, BoxGroup, BoxGroupHeader } from "../../base";
 import { IndexOTU } from "./OTU";
 
 export const IndexOTUs = ({ otus, refId }) => {
@@ -12,12 +10,14 @@ export const IndexOTUs = ({ otus, refId }) => {
     ));
 
     return (
-        <Panel>
-            <Panel.Heading>
-                <PanelBadgeHeader title="OTUs" count={otus.length} />
-            </Panel.Heading>
-            <ListGroup>{otuComponents}</ListGroup>
-        </Panel>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>
+                    OTUs <Badge>{otus.length}</Badge>
+                </h2>
+            </BoxGroupHeader>
+            {otuComponents}
+        </BoxGroup>
     );
 };
 
