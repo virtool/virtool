@@ -14,7 +14,7 @@ exports[`<AnalysisHMMAlert /> should render when [installed = false] 1`] = `
   />
   <span>
     <span>
-      HMM data is not installed.
+      HMM data is not installed. 
     </span>
     <Link
       to="/hmm"
