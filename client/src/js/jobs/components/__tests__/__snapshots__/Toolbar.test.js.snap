@@ -1,0 +1,117 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
+<div
+  className="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[MockFunction]}
+        placeholder="User or task"
+        value="foo"
+      />
+    </InputGroup>
+  </FormGroup>
+  <Uncontrolled(Dropdown)
+    className="split-dropdown"
+    id="job-clear-dropdown"
+    pullRight={true}
+  >
+    <Button
+      bsStyle="default"
+      onClick={[Function]}
+      pullRight={false}
+      tip="Clear Finished"
+      tipPlacement="top"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        pullRight={false}
+      />
+    </Button>
+    <DropdownToggle
+      bsClass="dropdown-toggle"
+      bsRole="toggle"
+      open={false}
+      useAnchor={false}
+    />
+    <DropdownMenu
+      bsClass="dropdown-menu"
+      bsRole="menu"
+      pullRight={false}
+    >
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="failed"
+        header={false}
+        onSelect={[MockFunction]}
+      >
+        Failed
+      </MenuItem>
+      <MenuItem
+        bsClass="dropdown"
+        disabled={false}
+        divider={false}
+        eventKey="complete"
+        header={false}
+        onSelect={[MockFunction]}
+      >
+        Complete
+      </MenuItem>
+    </DropdownMenu>
+  </Uncontrolled(Dropdown)>
+</div>
+`;
+
+exports[`<JobsToolbar /> should render without dropdown menu 1`] = `
+<div
+  className="toolbar"
+>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[MockFunction]}
+        placeholder="User or task"
+        value="foo"
+      />
+    </InputGroup>
+  </FormGroup>
+</div>
+`;
