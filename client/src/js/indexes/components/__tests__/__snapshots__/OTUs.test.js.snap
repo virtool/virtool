@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexOTUs /> should render 1`] = `
+<Panel>
+  <PanelHeading
+    bsClass="panel"
+    componentClass="div"
+  >
+    <PanelBadgeHeader
+      count={1}
+      title="OTUs"
+    />
+  </PanelHeading>
+  <ListGroup
+    bsClass="list-group"
+  >
+    <IndexOTU
+      changeCount={1}
+      id="Foo"
+      key="Foo"
+      name="Bar"
+      refId="baz"
+    />
+  </ListGroup>
+</Panel>
+`;
