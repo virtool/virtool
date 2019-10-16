@@ -11,7 +11,7 @@ import Sidebar from "../nav/components/Sidebar";
 import UploadOverlay from "../files/components/UploadOverlay";
 import { getSettings } from "../administration/actions";
 import { listProcesses } from "../processes/actions";
-import { LoadingPlaceholder } from "../base";
+import { Container, LoadingPlaceholder } from "../base";
 import WSConnection from "./websocket";
 
 const Administration = lazy(() => import("../administration/components/Settings"));
@@ -24,9 +24,9 @@ const Subtraction = lazy(() => import("../subtraction/components/Subtraction"));
 const Welcome = lazy(() => import("../home/components/Welcome"));
 
 const Fallback = () => (
-    <div className="container">
+    <Container>
         <LoadingPlaceholder />
-    </div>
+    </Container>
 );
 
 const setupWebSocket = () => {

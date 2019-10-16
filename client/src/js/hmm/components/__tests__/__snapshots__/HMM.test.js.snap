@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMM /> should render 1`] = `
-<div
-  className="container"
->
+<Container>
   <Switch>
     <Route
       component={
@@ -35,5 +33,5 @@ exports[`<HMM /> should render 1`] = `
       path="/hmm/:hmmId"
     />
   </Switch>
-</div>
+</Container>
 `;
