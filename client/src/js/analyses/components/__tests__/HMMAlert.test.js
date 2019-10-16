@@ -22,31 +22,35 @@ describe("<AnalysisHMMAlert />", () => {
 });
 
 describe("mapStateToProps", () => {
-    const state = {
-        hmms: {
-            status: {
-                installed: {
-                    foo: "bar"
+    it("should return props", () => {
+        const state = {
+            hmms: {
+                status: {
+                    installed: {
+                        foo: "bar"
+                    }
                 }
             }
-        }
-    };
-    const props = mapStateToProps(state);
+        };
+        const props = mapStateToProps(state);
 
-    expect(props).toEqual({
-        installed: true
+        expect(props).toEqual({
+            installed: true
+        });
     });
 });
 
-describe("mapStateToProps when installed is not defineds", () => {
-    const state = {
-        hmms: {
-            status: {}
-        }
-    };
-    const props = mapStateToProps(state);
+describe("mapStateToProps", () => {
+    it("should return false when installed is not defineds", () => {
+        const state = {
+            hmms: {
+                status: {}
+            }
+        };
+        const props = mapStateToProps(state);
 
-    expect(props).toEqual({
-        installed: false
+        expect(props).toEqual({
+            installed: false
+        });
     });
 });
