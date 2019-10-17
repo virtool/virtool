@@ -1,31 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Group should render as active when [active=true] 1`] = `
-<ListGroupItem
+<Group__StyledGroup
   active={true}
-  allowFocus={false}
   key="foo"
   onClick={[MockFunction]}
 >
-  <span
-    className="text-capitalize"
-  >
-    foo
-  </span>
-</ListGroupItem>
+  foo
+</Group__StyledGroup>
 `;
 
 exports[`Group should render correct with default props 1`] = `
-<ListGroupItem
+<Group__StyledGroup
   active={false}
-  allowFocus={false}
   key="foo"
   onClick={[MockFunction]}
 >
-  <span
-    className="text-capitalize"
-  >
-    foo
-  </span>
-</ListGroupItem>
+  foo
+</Group__StyledGroup>
 `;

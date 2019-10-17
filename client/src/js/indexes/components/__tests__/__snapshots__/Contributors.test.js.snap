@@ -26,29 +26,24 @@ exports[`<Contributor /> should render when count is 5 1`] = `
 `;
 
 exports[`<Contributors /> should render 1`] = `
-<Panel>
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
-    <PanelBadgeHeader
-      count={2}
-      title="Contributors"
-    />
-  </PanelHeading>
-  <ListGroup
-    bsClass="list-group"
-  >
-    <Contributor
-      count={5}
-      id="bob"
-      key="bob"
-    />
-    <Contributor
-      count={12}
-      id="fred"
-      key="fred"
-    />
-  </ListGroup>
-</Panel>
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Contributors 
+      <Badge>
+        2
+      </Badge>
+    </h2>
+  </Box__BoxGroupHeader>
+  <Contributor
+    count={5}
+    id="bob"
+    key="bob"
+  />
+  <Contributor
+    count={12}
+    id="fred"
+    key="fred"
+  />
+</Box__BoxGroup>
 `;
