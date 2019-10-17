@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import { BoxGroup, Icon, Identicon, Flex, FlexItem } from "../../../base";
-import GroupIcon from "../../../groups/components/GroupIcon";
+import GroupIcon from "../../../groups/components/Icon";
 
 const StyledMemberItem = styled(BoxGroup.Section)`
     align-items: center;

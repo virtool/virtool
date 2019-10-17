@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Subtraction /> should render 1`] = `
-<div
-  className="container"
->
+<Container>
   <Switch>
     <Route
       component={
@@ -35,7 +33,7 @@ exports[`<Subtraction /> should render 1`] = `
       path="/subtraction/:subtractionId"
     />
   </Switch>
-</div>
+</Container>
 `;
 
 exports[`<SubtractionFileManager /> should render 1`] = `

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 
-import { TabLink, Tabs, ViewHeader } from "../../base";
+import { TabLink, Tabs, ViewHeader, WideContainer } from "../../base";
 import { getAccount } from "../actions";
 import AccountProfile from "./Profile";
 import APIKeys from "./API/API";
@@ -11,7 +11,7 @@ export const Account = ({ userId, onGet }) => {
     useEffect(() => onGet(), [userId]);
 
     return (
-        <div className="container-noside">
+        <WideContainer>
             <ViewHeader title="Account">
                 <strong>Account</strong>
             </ViewHeader>
@@ -26,7 +26,7 @@ export const Account = ({ userId, onGet }) => {
                 <Route path="/account/profile" component={AccountProfile} />
                 <Route path="/account/api" component={APIKeys} />
             </Switch>
-        </div>
+        </WideContainer>
     );
 };
 
