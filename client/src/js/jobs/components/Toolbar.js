@@ -52,12 +52,12 @@ export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     term: state.jobs.term,
     canRemove: checkAdminOrPermission(state, "remove_job")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onFind: e => {
         dispatch(findJobs(e.target.value, 1));
     },

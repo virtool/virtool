@@ -1,5 +1,6 @@
-import styled from "styled-components";
 import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { Badge } from "./Badge";
 import { Table } from "./Table";
 
 export const Box = styled.div`
@@ -64,8 +65,11 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
         align-items: center;
         display: flex;
         font-size: 15px;
-        justify-content: space-between;
         margin: 0;
+
+        ${Badge} {
+            margin-left: 5px;
+        }
     }
 
     p {

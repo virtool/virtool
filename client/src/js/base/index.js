@@ -10,7 +10,6 @@ import { Input } from "./Input";
 import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
-import { Loader } from "./Loader";
 import { NotFound } from "./NotFound";
 import { Panel } from "./Panel";
 import { Radio } from "./Radio";
@@ -31,8 +30,10 @@ export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
 export * from "./Code";
+export * from "./Container";
 export * from "./ExternalLink";
 export * from "./Label";
+export * from "./Loader";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";
 export * from "./Modal";
@@ -58,7 +59,6 @@ export {
     InputError,
     InputSave,
     ListGroupItem,
-    Loader,
     NotFound,
     Panel,
     ProgressBar,

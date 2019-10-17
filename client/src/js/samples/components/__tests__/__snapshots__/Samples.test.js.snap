@@ -7,9 +7,7 @@ exports[`<SampleFileManager /> should render 1`] = `
 `;
 
 exports[`<Samples /> should render 1`] = `
-<div
-  className="container"
->
+<Container>
   <Switch>
     <Route
       component={
@@ -46,7 +44,7 @@ exports[`<Samples /> should render 1`] = `
       path="/samples/:sampleId"
     />
   </Switch>
-</div>
+</Container>
 `;
 
 exports[`<SamplesSettings /> should render 1`] = `

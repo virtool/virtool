@@ -1,12 +1,10 @@
 import { map } from "lodash-es";
 import React from "react";
-import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, Panel } from "../../base";
-import { PanelBadgeHeader } from "./General";
+import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
 
-const StyledContributor = styled(ListGroupItem)`
+const StyledContributor = styled(BoxGroupSection)`
     display: flex;
     justify-content: space-between;
 `;
@@ -26,12 +24,14 @@ export const Contributors = ({ contributors }) => {
     ));
 
     return (
-        <Panel>
-            <Panel.Heading>
-                <PanelBadgeHeader title="Contributors" count={contributors.length} />
-            </Panel.Heading>
-            <ListGroup>{contributorComponents}</ListGroup>
-        </Panel>
+        <BoxGroup>
+            <BoxGroupHeader>
+                <h2>
+                    Contributors <Badge>{contributors.length}</Badge>
+                </h2>
+            </BoxGroupHeader>
+            {contributorComponents}
+        </BoxGroup>
     );
 };
 

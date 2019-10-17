@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Account /> should render 1`] = `
-<div
-  className="container-noside"
->
+<Container__WideContainer>
   <ViewHeader
     title="Account"
   >
@@ -54,5 +52,5 @@ exports[`<Account /> should render 1`] = `
       path="/account/api"
     />
   </Switch>
-</div>
+</Container__WideContainer>
 `;

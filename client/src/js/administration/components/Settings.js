@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
-import { LoadingPlaceholder, TabLink, Tabs, ViewHeader } from "../../base";
+import { LoadingPlaceholder, TabLink, Tabs, ViewHeader, WideContainer } from "../../base";
 import Updates from "../../updates/components/Viewer";
 
 import User from "../../users/components/User";
@@ -27,7 +27,7 @@ export const Settings = ({ loading }) => {
     }
 
     return (
-        <div className="container-noside">
+        <WideContainer>
             <ViewHeader title="Administration">
                 <strong>Administration</strong>
             </ViewHeader>
@@ -39,7 +39,7 @@ export const Settings = ({ loading }) => {
             </Tabs>
 
             {content}
-        </div>
+        </WideContainer>
     );
 };
 

@@ -1,14 +1,22 @@
 import { push } from "connected-react-router";
-import { filter, find, get, includes, map, sortBy, transform } from "lodash-es";
+import { find, get, includes, map, sortBy } from "lodash-es";
 import React from "react";
-import { Col, InputGroup, ListGroup, Modal, Row } from "react-bootstrap";
+import { InputGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { AutoProgressBar, Button, Icon, InputError, Label, ListGroupItem, LoadingPlaceholder, Panel } from "../../base";
+import styled from "styled-components";
+import { BoxGroup, Button, InputError, LoadingPlaceholder } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
 import { createGroup, removeGroup, setGroupPermission } from "../actions";
+import { GroupDetail } from "./Detail";
 import Group from "./Group";
+
+const GroupsModalBody = styled(Modal.Body)`
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    grid-column-gap: 15px;
+`;
 
 class Groups extends React.Component {
     constructor(props) {
@@ -79,28 +87,6 @@ class Groups extends React.Component {
 
         const activeGroup = find(this.props.groups, { id: this.props.activeId });
 
-        let members;
-
-        if (activeGroup) {
-            members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
-        }
-
-        let memberComponents;
-
-        if (members && members.length) {
-            memberComponents = map(members, member => (
-                <Label key={member.id} spaced>
-                    {member.id}
-                </Label>
-            ));
-        } else {
-            memberComponents = (
-                <div className="text-center">
-                    <Icon name="info-circle" /> No members found.
-                </div>
-            );
-        }
-
         let error;
 
         if (this.state.submitted && this.props.error) {
@@ -111,79 +97,39 @@ class Groups extends React.Component {
             error = "Group names may not contain spaces";
         }
 
-        let permissionComponents = [];
-
-        if (activeGroup) {
-            permissionComponents = transform(
-                activeGroup.permissions,
-                (result, value, key) => {
-                    result.push(
-                        <ListGroupItem
-                            key={key}
-                            onClick={() => this.props.onSetPermission(activeGroup.id, key, !value)}
-                        >
-                            <code>{key}</code> <Icon faStyle="far" name={value ? "check-square" : "square"} pullRight />
-                        </ListGroupItem>
-                    );
-
-                    return result;
-                },
-                []
-            );
-        }
-
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
+            <Modal bsSize="lg" show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Groups
                 </Modal.Header>
 
-                <AutoProgressBar active={this.props.pending} affixed />
-
-                <Modal.Body>
-                    <Row>
-                        <Col md={5}>
-                            <InputGroup>
-                                <InputError
-                                    type="text"
-                                    value={this.state.createGroupId}
-                                    onChange={this.handleChange}
-                                    error={error || this.state.error}
-                                />
-                                <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
-                                    <Button type="button" bsStyle="primary" onClick={this.handleSubmit}>
-                                        <Icon
-                                            name="plus-square"
-                                            style={{ verticalAlign: "middle", marginLeft: "3px" }}
-                                        />
-                                    </Button>
-                                </InputGroup.Button>
-                            </InputGroup>
-                            <br />
-                            <ListGroup>{groupComponents}</ListGroup>
-                        </Col>
-                        <Col md={7}>
-                            <Panel>
-                                <Panel.Heading>Permissions</Panel.Heading>
-                                <ListGroup>{permissionComponents}</ListGroup>
-                            </Panel>
-
-                            <Panel>
-                                <Panel.Heading>Members</Panel.Heading>
-                                <Panel.Body>{memberComponents}</Panel.Body>
-                            </Panel>
-
-                            <Button
-                                icon="trash"
-                                bsStyle="danger"
-                                onClick={() => this.props.onRemove(activeGroup.id)}
-                                block
-                            >
-                                Remove Group
-                            </Button>
-                        </Col>
-                    </Row>
-                </Modal.Body>
+                <GroupsModalBody>
+                    <div>
+                        <InputGroup>
+                            <InputError
+                                type="text"
+                                value={this.state.createGroupId}
+                                onChange={this.handleChange}
+                                placeholder="Group name"
+                                error={error || this.state.error}
+                            />
+                            <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
+                                <Button type="button" icon="plus-square" bsStyle="primary" onClick={this.handleSubmit}>
+                                    &nbsp;Add
+                                </Button>
+                            </InputGroup.Button>
+                        </InputGroup>
+                        <br />
+                        <BoxGroup>{groupComponents}</BoxGroup>
+                    </div>
+                    <GroupDetail
+                        group={activeGroup}
+                        pending={this.props.pending}
+                        users={this.props.users}
+                        onRemove={this.props.onRemove}
+                        onSetPermission={this.props.onSetPermission}
+                    />
+                </GroupsModalBody>
             </Modal>
         );
     }

@@ -1,27 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CacheParameters /> should rander when [hash=null] 1`] = `
-<Panel>
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
     Trim Parameters
-  </PanelHeading>
+  </Box__BoxGroupHeader>
   <Table>
     <tbody />
   </Table>
-</Panel>
+</Box__BoxGroup>
 `;
 
 exports[`<CacheParameters /> should render 1`] = `
-<Panel>
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
     Trim Parameters
-  </PanelHeading>
+  </Box__BoxGroupHeader>
   <Table>
     <tbody>
       <tr
@@ -56,5 +50,5 @@ exports[`<CacheParameters /> should render 1`] = `
       </tr>
     </tbody>
   </Table>
-</Panel>
+</Box__BoxGroup>
 `;
