@@ -12,7 +12,7 @@ import { createSample, findReadFiles } from "../../actions";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
-const getActiveSubtraction = props => (props.subtractions && props.subtractions.length ? props.subtractions[0] : "");
+const getActiveSubtraction = props => get(props, ["subtractions", 0], "");
 
 const getInitialState = props => ({
     selected: [],
@@ -32,24 +32,15 @@ class CreateSample extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
+        console.log(props, this.state);
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (nextProps.subtractions !== prevState.subtractions) {
-            return {
-                subtraction: getActiveSubtraction(nextProps)
-            };
-        }
-
         if (!prevState.errorName.length && !!nextProps.error) {
             return { errorName: nextProps.error };
         }
 
         return null;
-    }
-
-    componentDidMount() {
-        this.props.onLoadSubtractionsAndFiles();
     }
 
     handleHide = () => {
@@ -118,9 +109,14 @@ class CreateSample extends React.Component {
     };
 
     render() {
-        if (this.props.subtractions === null) {
+        if (this.props.subtractions === null || this.props.readyReads === null) {
             return (
-                <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
+                <Modal
+                    bsSize="large"
+                    show={this.props.show}
+                    onHide={this.props.onHide}
+                    onEnter={this.props.onLoadSubtractionsAndFiles}
+                >
                     <Modal.Body>
                         <LoadingPlaceholder margin="36px" />
                     </Modal.Body>
@@ -129,7 +125,9 @@ class CreateSample extends React.Component {
         }
 
         const subtractionComponents = map(this.props.subtractions, subtractionId => (
-            <option key={subtractionId}>{subtractionId}</option>
+            <option key={subtractionId} value={subtractionId}>
+                {subtractionId}
+            </option>
         ));
 
         const userGroup = this.props.forceGroupChoice ? (
@@ -149,7 +147,7 @@ class CreateSample extends React.Component {
                 bsSize="large"
                 show={this.props.show}
                 onHide={this.handleHide}
-                onEnter={this.modalEnter}
+                onEnter={this.props.onLoadSubtractionsAndFiles}
                 onExited={this.handleModalExited}
             >
                 <Modal.Header onHide={this.handleHide} closeButton>
