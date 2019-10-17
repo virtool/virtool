@@ -1,12 +1,17 @@
 import React from "react";
+import styled from "styled-components";
 import { connect } from "react-redux";
-import { ListGroupItem } from "../../base";
+import { BoxGroupSection } from "../../base";
 import { changeActiveGroup } from "../actions";
 
+const StyledGroup = styled(BoxGroupSection)`
+    text-transform: capitalize;
+`;
+
 export const Group = ({ id, active, onSelect }) => (
-    <ListGroupItem key={id} active={active} onClick={onSelect}>
-        <span className="text-capitalize">{id}</span>
-    </ListGroupItem>
+    <StyledGroup key={id} active={active} onClick={onSelect}>
+        {id}
+    </StyledGroup>
 );
 
 export const mapStateToProps = (state, ownProps) => ({

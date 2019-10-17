@@ -1,10 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Switch, Route } from "react-router-dom";
+import { Route, Switch } from "react-router-dom";
 import { mapSettingsStateToProps } from "../../administration/mappers";
-import { LoadingPlaceholder } from "../../base";
-import JobsList from "./List";
+import { Container, LoadingPlaceholder } from "../../base";
 import JobDetail from "./Detail";
+import JobsList from "./List";
 import JobsResources from "./Resources";
 
 export const Jobs = ({ loading }) => {
@@ -13,13 +13,13 @@ export const Jobs = ({ loading }) => {
     }
 
     return (
-        <div className="container">
+        <Container>
             <Switch>
                 <Route path="/jobs" component={JobsList} exact />
                 <Route path="/jobs/resources" component={JobsResources} />
                 <Route path="/jobs/:jobId" component={JobDetail} />
             </Switch>
-        </div>
+        </Container>
     );
 };
 

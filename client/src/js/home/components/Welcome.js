@@ -1,7 +1,7 @@
 import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, Panel } from "../../base";
+import { Box, Container, Icon } from "../../base";
 
 const Welcome = props => {
     let version;
@@ -10,23 +10,16 @@ const Welcome = props => {
         version = <small className="text-muted">{props.version}</small>;
     }
     return (
-        <div className="container">
-            <Panel>
-                <Panel.Body>
-                    <h3>Virtool {version}</h3>
-                    <p>Viral infection diagnostics using next-generation sequencing</p>
+        <Container>
+            <Box>
+                <h3>Virtool {version}</h3>
+                <p>Viral infection diagnostics using next-generation sequencing</p>
 
-                    <a
-                        className="btn btn-default"
-                        href="http://www.virtool.ca/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Icon name="globe" /> Website
-                    </a>
-                </Panel.Body>
-            </Panel>
-        </div>
+                <a className="btn btn-default" href="http://www.virtool.ca/" target="_blank" rel="noopener noreferrer">
+                    <Icon name="globe" /> Website
+                </a>
+            </Box>
+        </Container>
     );
 };
 

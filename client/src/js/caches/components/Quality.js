@@ -1,15 +1,15 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Quality } from "../../quality/components/Quality";
-import { Panel } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
 
 export const CacheQuality = props => (
-    <Panel>
-        <Panel.Heading>Quality</Panel.Heading>
-        <Panel.Body>
+    <BoxGroup>
+        <BoxGroupHeader>Quality</BoxGroupHeader>
+        <BoxGroupSection>
             <Quality {...props} />
-        </Panel.Body>
-    </Panel>
+        </BoxGroupSection>
+    </BoxGroup>
 );
 
 export const mapStateToProps = state => {

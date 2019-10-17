@@ -1,11 +1,10 @@
-import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-
+import React from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { ListGroupItem } from "react-bootstrap";
-import { Badge } from "../../base";
+import { Badge, BoxGroupSection } from "../../base";
 
-const StyledIndexOTU = styled(ListGroupItem)`
+const StyledIndexOTU = styled(BoxGroupSection)`
     display: flex;
     justify-content: space-between;
 `;
