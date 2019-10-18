@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SubtractionSelector /> should render 1`] = `
+<Input
+  autoComplete={true}
+  formGroupStyle={Object {}}
+  label="Subtraction"
+  name="subtraction"
+  onChange={[MockFunction]}
+  type="select"
+  value="foo"
+>
+  <option
+    key="foo"
+    value="foo"
+  >
+    foo
+  </option>
+  <option
+    key="bar"
+    value="bar"
+  >
+    bar
+  </option>
+</Input>
+`;
