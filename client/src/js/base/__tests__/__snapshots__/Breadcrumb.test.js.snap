@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<BreadcrumbItem /> should render 1`] = `
+<li>
+  <Link
+    to="bar"
+  >
+    foo
+  </Link>
+</li>
+`;
+
+exports[`<BreadcrumbItem /> should return when [to=null] 1`] = `
+<li>
+  foo
+</li>
+`;
