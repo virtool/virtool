@@ -202,6 +202,8 @@ async def init_db(app):
             logger.critical("Could not connect to MongoDB server")
             sys.exit(1)
 
+        await virtool.db.utils.check_mongo_version(db_client, logger)
+
         app["db"] = virtool.db.core.DB(
             db_client[settings["db_name"]],
             app["dispatcher"].dispatch
