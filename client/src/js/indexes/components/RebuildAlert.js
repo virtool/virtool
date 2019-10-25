@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Icon, WarningAlert } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 
-const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
+export const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
     if (showCountAlert === 0) {
         return (
             <WarningAlert level>
@@ -35,7 +35,7 @@ const RebuildAlert = ({ refId, showCountAlert, showIndexAlert }) => {
     return null;
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     refId: state.references.detail.id,
     showIndexAlert: state.indexes.modified_otu_count || state.otus.modified_count,
     showCountAlert: checkRefRight(state, "build") && (state.indexes.total_otu_count || state.otus.total_count)
