@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RebuildAlert /> should render 1`] = `
+<Alert__WarningAlert
+  level={true}
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="exclamation-circle"
+    pullRight={false}
+  />
+  At least one OTU must be added to the database before an index can be built.
+</Alert__WarningAlert>
+`;
+
+exports[`<RebuildAlert /> should render when [showCountAlert!=0, showIndexAlert=true] 1`] = `
+<Alert__WarningAlert
+  level={true}
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="info-circle"
+    pullRight={false}
+  />
+  <span>
+    <span>
+      There are unbuilt changes. 
+    </span>
+    <Link
+      to={
+        Object {
+          "pathname": "/refs/foo/indexes",
+          "state": Object {
+            "rebuild": true,
+          },
+        }
+      }
+    >
+      Rebuild the index
+    </Link>
+    <span>
+       to use the changes in future analyses.
+    </span>
+  </span>
+</Alert__WarningAlert>
+`;
+
+exports[`<RebuildAlert /> should return null when [showCountAlert!=0, showIndexAlert=false] 1`] = `""`;
