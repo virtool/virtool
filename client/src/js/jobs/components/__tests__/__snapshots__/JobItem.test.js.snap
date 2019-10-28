@@ -1,0 +1,99 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobItem /> should render 1`] = `
+<div
+  className="list-group-item hoverable spaced job"
+  onClick={[Function]}
+  style={
+    Object {
+      "color": "#555",
+    }
+  }
+>
+  <ProgressBar
+    affixed={true}
+    bsStyle="success"
+    now={100}
+  />
+  <Row
+    bsClass="row"
+    componentClass="div"
+  >
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={4}
+      sm={4}
+      xs={6}
+    >
+      <strong>
+        Baz
+      </strong>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={5}
+      sm={5}
+      xs={5}
+    >
+      Started 
+      <RelativeTime
+        time="Foo"
+      />
+       by 
+      Bar
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={2}
+      sm={2}
+      xsHidden={true}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-end"
+        wrap="nowrap"
+      >
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          shrink={1}
+        >
+          <JobStatusIcon
+            state="bar"
+          />
+        </FlexItem>
+        <FlexItem
+          alignSelf={null}
+          basis="auto"
+          grow={0}
+          pad={true}
+          shrink={1}
+        >
+          <strong>
+            Bar
+          </strong>
+        </FlexItem>
+      </Flex>
+    </Col>
+    <Col
+      bsClass="col"
+      componentClass="div"
+      md={1}
+      sm={1}
+      xs={1}
+    >
+      <JobActionIcon
+        canCancel={true}
+        canRemove={true}
+        state="bar"
+      />
+    </Col>
+  </Row>
+</div>
+`;
