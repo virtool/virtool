@@ -29,42 +29,37 @@ describe("<FirstUser />", () => {
         expect(props.onSubmit).toHaveBeenCalledWith("fee", "baz");
     });
 
-    it("should call onChange username changes", () => {
+    it.each([
+        [
+            0,
+            {
+                username: "bar",
+                password: ""
+            }
+        ],
+        [
+            1,
+            {
+                username: "",
+                password: "foo"
+            }
+        ]
+    ])(".match(%o, %o)", (index, expected) => {
         const e = {
             target: {
-                name: "username",
-                value: "bar"
+                name: index === 0 ? "username" : "password",
+                value: index === 0 ? "bar" : "foo"
             }
         };
+
         const wrapper = shallow(<FirstUser {...props} />);
+
         wrapper
             .find("Input")
-            .at(0)
+            .at(index)
             .prop("onChange")(e);
 
-        expect(wrapper.state()).toEqual({
-            username: "bar",
-            password: ""
-        });
-    });
-
-    it("should call onChange when password changes", () => {
-        const e = {
-            target: {
-                name: "password",
-                value: "foo"
-            }
-        };
-        const wrapper = shallow(<FirstUser {...props} />);
-        wrapper
-            .find("Input")
-            .at(1)
-            .prop("onChange")(e);
-
-        expect(wrapper.state()).toEqual({
-            username: "",
-            password: "foo"
-        });
+        expect(wrapper.state()).toEqual(expected);
     });
 });
 
