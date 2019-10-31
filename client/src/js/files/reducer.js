@@ -76,7 +76,7 @@ export const updateProgress = (state, action) => {
  * @param action {object}
  * @returns {object}
  */
-export default function fileReducer(state = initialState, action) {
+export default function cacheReducer(state = initialState, action) {
     switch (action.type) {
         case WS_INSERT_FILE:
             if (action.data.type === state.fileType) {

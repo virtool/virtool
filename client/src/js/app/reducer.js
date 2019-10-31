@@ -21,7 +21,7 @@ import usersReducer from "../users/reducer";
 import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD, SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import rootSaga from "./sagas";
 
-const getInitialState = () => {
+export const getInitialState = () => {
     const { dev, first, login } = window.virtool;
 
     return {
@@ -33,7 +33,7 @@ const getInitialState = () => {
     };
 };
 
-const appReducer = (state = getInitialState(), action) => {
+export const appReducer = (state = getInitialState(), action) => {
     switch (action.type) {
         case SET_APP_PENDING:
             return { ...state, pending: true };
