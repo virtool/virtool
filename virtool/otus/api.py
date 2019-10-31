@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 
 from aiohttp import web
@@ -122,31 +123,19 @@ async def create(req):
     if message:
         return bad_request(message)
 
-    joined = await virtool.otus.db.create(
+    document = await asyncio.shield(virtool.otus.db.create(
         db,
         ref_id,
         name,
-        abbreviation
-    )
-
-    description = virtool.history.utils.compose_create_description(joined)
-
-    change = await virtool.history.db.add(
-        db,
-        "create",
-        None,
-        joined,
-        description,
+        abbreviation,
         req["client"].user_id
-    )
-
-    formatted = virtool.otus.utils.format_otu(joined, most_recent_change=change)
+    ))
 
     headers = {
-        "Location": "/api/otus/" + formatted["id"]
+        "Location": "/api/otus/" + document["id"]
     }
 
-    return json_response(formatted, status=201, headers=headers)
+    return json_response(document, status=201, headers=headers)
 
 
 @routes.patch("/api/otus/{otu_id}", schema={

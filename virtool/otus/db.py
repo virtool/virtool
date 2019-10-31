@@ -98,7 +98,7 @@ async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
     return False
 
 
-async def create(db, ref_id, name, abbreviation):
+async def create(db, ref_id, name, abbreviation, user_id):
     otu_id = await virtool.db.utils.get_new_id(db.otus)
 
     # Start building a otu document.
@@ -120,7 +120,18 @@ async def create(db, ref_id, name, abbreviation):
     # Insert the otu document.
     await db.otus.insert_one(document)
 
-    return document
+    description = virtool.history.utils.compose_create_description(document)
+
+    change = await virtool.history.db.add(
+        db,
+        "create",
+        None,
+        document,
+        description,
+        user_id
+    )
+
+    return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
 async def find(db, names, term, req_query, verified, ref_id=None):
