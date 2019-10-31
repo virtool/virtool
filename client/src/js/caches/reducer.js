@@ -4,7 +4,7 @@ const initialState = {
     detail: null
 };
 
-export default function fileReducer(state = initialState, action) {
+export default function cacheReducer(state = initialState, action) {
     switch (action.type) {
         case GET_CACHE.REQUESTED:
             return { ...state, detail: null };
