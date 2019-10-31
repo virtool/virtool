@@ -134,6 +134,43 @@ async def create(db, ref_id, name, abbreviation, user_id):
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
+async def edit(db, otu_id, old, data, name, abbreviation, schema, user_id):
+    # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
+    # modify the otu.
+    data["verified"] = False
+
+    # If the name is changing, update the ``lower_name`` field in the otu document.
+    if name:
+        data["lower_name"] = name.lower()
+
+    # Update the database collection.
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": data,
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    await virtool.otus.db.update_sequence_segments(db, old, document)
+
+    new = await virtool.otus.db.join(db, otu_id, document)
+
+    issues = await virtool.otus.db.update_verification(db, new)
+
+    description = virtool.history.utils.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
+
+    await virtool.history.db.add(
+        db,
+        "edit",
+        old,
+        new,
+        description,
+        user_id
+    )
+
+    return await virtool.otus.db.join_and_format(db, otu_id, joined=new, issues=issues)
+
+
 async def find(db, names, term, req_query, verified, ref_id=None):
     db_query = dict()
 

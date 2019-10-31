@@ -184,40 +184,18 @@ async def edit(req):
     if message:
         return bad_request(message)
 
-    # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
-    # modify the otu.
-    data["verified"] = False
-
-    # If the name is changing, update the ``lower_name`` field in the otu document.
-    if name:
-        data["lower_name"] = name.lower()
-
-    # Update the database collection.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": data,
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    await virtool.otus.db.update_sequence_segments(db, old, document)
-
-    new = await virtool.otus.db.join(db, otu_id, document)
-
-    issues = await virtool.otus.db.update_verification(db, new)
-
-    description = virtool.history.utils.compose_edit_description(name, abbreviation, old["abbreviation"], schema)
-
-    await virtool.history.db.add(
+    document = await asyncio.shield(virtool.otus.db.edit(
         db,
-        "edit",
+        otu_id,
         old,
-        new,
-        description,
+        data,
+        name,
+        abbreviation,
+        schema,
         req["client"].user_id
-    )
+    ))
 
-    return json_response(await virtool.otus.db.join_and_format(db, otu_id, joined=new, issues=issues))
+    return json_response(document)
 
 
 @routes.delete("/api/otus/{otu_id}")
@@ -238,11 +216,11 @@ async def remove(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    await virtool.otus.db.remove(
+    await asyncio.shield(virtool.otus.db.remove(
         db,
         otu_id,
         req["client"].user_id
-    )
+    ))
 
     return web.Response(status=204)
 
