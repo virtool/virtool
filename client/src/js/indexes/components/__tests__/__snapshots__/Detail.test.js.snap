@@ -77,45 +77,23 @@ exports[`<IndexDetail /> should render 1`] = `
 `;
 
 exports[`<IndexDetailBreadCrumb /> should render 1`] = `
-<Breadcrumb
-  bsClass="breadcrumb"
->
+<Breadcrumb>
   <BreadcrumbItem
-    active={false}
+    to="/refs/"
   >
-    <withRouter(LinkContainer)
-      to="/refs/"
-    >
-      <span>
-        References
-      </span>
-    </withRouter(LinkContainer)>
+    References
   </BreadcrumbItem>
   <BreadcrumbItem
-    active={false}
+    to="/refs/baz"
   >
-    <withRouter(LinkContainer)
-      to="/refs/baz"
-    >
-      <span>
-        Baz
-      </span>
-    </withRouter(LinkContainer)>
+    Baz
   </BreadcrumbItem>
   <BreadcrumbItem
-    active={false}
+    to="/refs/baz/indexes"
   >
-    <withRouter(LinkContainer)
-      to="/refs/baz/indexes"
-    >
-      <span>
-        Indexes
-      </span>
-    </withRouter(LinkContainer)>
+    Indexes
   </BreadcrumbItem>
-  <BreadcrumbItem
-    active={true}
-  >
+  <BreadcrumbItem>
     Index 
     2
   </BreadcrumbItem>

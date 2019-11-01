@@ -4,7 +4,7 @@ exports[`<BLASTInProgress /> should render when [rid="ABC123"] 1`] = `
 <BLASTInProgress__StyledBLASTInProgress>
   <Loader
     color="#000"
-    size={16}
+    size="16px"
   />
   <div>
     <div>
@@ -27,7 +27,7 @@ exports[`<BLASTInProgress /> should render when [rid=null] 1`] = `
 <BLASTInProgress__StyledBLASTInProgress>
   <Loader
     color="#000"
-    size={16}
+    size="16px"
   />
   <div>
     <div>

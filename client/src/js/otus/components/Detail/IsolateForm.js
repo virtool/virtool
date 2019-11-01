@@ -11,13 +11,14 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { capitalize, map, toLower } from "lodash-es";
+import { toLower } from "lodash-es";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils/utils";
 import { InputError, SaveButton } from "../../../base";
+import { SourceTypeInput } from "./SourceTypeInput";
 
-export default class IsolateForm extends React.Component {
+export class IsolateForm extends React.Component {
     static propTypes = {
         sourceType: PropTypes.string,
         sourceName: PropTypes.string,
@@ -42,39 +43,19 @@ export default class IsolateForm extends React.Component {
     };
 
     render() {
-        let sourceTypeInput;
-
-        const sourceTypeInputProps = {
-            label: "Source Type",
-            value: capitalize(this.props.sourceType),
-            onChange: this.changeSourceType
-        };
-
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
-        if (this.props.restrictSourceTypes) {
-            const optionComponents = map(this.props.allowedSourceTypes, sourceType => (
-                <option key={sourceType} value={capitalize(sourceType)}>
-                    {capitalize(sourceType)}
-                </option>
-            ));
-
-            sourceTypeInput = (
-                <InputError type="select" {...sourceTypeInputProps}>
-                    <option key="default" value="unknown">
-                        Unknown
-                    </option>
-                    {optionComponents}
-                </InputError>
-            );
-        } else {
-            sourceTypeInput = <InputError type="text" {...sourceTypeInputProps} />;
-        }
-
         return (
             <form onSubmit={this.props.onSubmit}>
                 <Modal.Body>
                     <Row>
-                        <Col md={6}>{sourceTypeInput}</Col>
+                        <Col md={6}>
+                            <SourceTypeInput
+                                restrictSourceTypes={this.props.restrictSourceTypes}
+                                allowedSourceTypes={this.props.allowedSourceTypes}
+                                value={this.props.sourceType}
+                                onChange={this.changeSourceType}
+                            />
+                        </Col>
                         <Col md={6}>
                             <InputError
                                 label="Source Name"
@@ -96,3 +77,5 @@ export default class IsolateForm extends React.Component {
         );
     }
 }
+
+export default IsolateForm;

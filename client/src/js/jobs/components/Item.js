@@ -4,9 +4,10 @@ import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { Icon, RelativeTime, ProgressBar, Flex, FlexItem, Loader } from "../../base";
+import { RelativeTime, ProgressBar, Flex, FlexItem } from "../../base";
 import { getTaskDisplayName } from "../../utils/utils";
 import { cancelJob, removeJob } from "../actions";
+import { JobActionIcon, JobStatusIcon } from "./Icons";
 
 export class JobItem extends React.Component {
     static propTypes = {
@@ -39,34 +40,6 @@ export class JobItem extends React.Component {
     };
 
     render() {
-        let actionIcon;
-        let statusIcon;
-
-        if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
-            actionIcon = (
-                <Icon bsStyle="danger" name="ban" onClick={this.handleCancel} style={{ fontSize: "17px" }} pullRight />
-            );
-
-            statusIcon = <Loader size="14px" color="#3c8786" />;
-        } else if (this.props.canRemove) {
-            actionIcon = (
-                <Icon
-                    bsStyle="danger"
-                    name="trash"
-                    onClick={this.handleRemove}
-                    style={{ fontSize: "17px" }}
-                    pullRight
-                />
-            );
-
-            statusIcon =
-                this.props.state === "complete" ? (
-                    <Icon name="check fa-fw" bsStyle="success" />
-                ) : (
-                    <Icon name="times fa-fw" bsStyle="danger" />
-                );
-        }
-
         let progressStyle = "success";
 
         const progressValue = this.props.progress * 100;
@@ -97,14 +70,22 @@ export class JobItem extends React.Component {
                     </Col>
                     <Col xsHidden sm={2} md={2}>
                         <Flex justifyContent="flex-end">
-                            <FlexItem>{statusIcon}</FlexItem>
+                            <FlexItem>
+                                <JobStatusIcon state={this.props.state} />
+                            </FlexItem>
                             <FlexItem pad>
                                 <strong>{capitalize(this.props.state)}</strong>
                             </FlexItem>
                         </Flex>
                     </Col>
                     <Col xs={1} sm={1} md={1}>
-                        {actionIcon || null}
+                        <JobActionIcon
+                            state={this.props.state}
+                            canCancel={this.props.canCancel}
+                            canRemove={this.props.canRemove}
+                            onCancel={this.onCancel}
+                            onRemove={this.onRemove}
+                        />
                     </Col>
                 </Row>
             </div>
@@ -112,7 +93,7 @@ export class JobItem extends React.Component {
     }
 }
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCancel: jobId => {
         dispatch(cancelJob(jobId));
     },

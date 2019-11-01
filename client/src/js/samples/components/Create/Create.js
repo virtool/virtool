@@ -32,7 +32,6 @@ class CreateSample extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
-        console.log(props, this.state);
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {

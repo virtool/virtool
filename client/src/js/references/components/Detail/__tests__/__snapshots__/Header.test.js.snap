@@ -1,0 +1,232 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceDetailHeader/> should render 1`] = `
+<ViewHeader
+  title="baz - References"
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="flex-end"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <strong>
+          baz
+        </strong>
+      </Flex>
+    </FlexItem>
+    <ReferenceDetailHeaderIcon
+      canModify={true}
+      isRemote={true}
+      onEdit={[MockFunction]}
+    />
+    <ReferenceDetailHeaderExportButton
+      isClone={true}
+      onSelect={[Function]}
+    />
+  </Flex>
+  <div
+    className="text-muted"
+    style={
+      Object {
+        "fontSize": "12px",
+      }
+    }
+  >
+    Created 
+    <RelativeTime
+      time="foo"
+    />
+     by 
+    1
+  </div>
+</ViewHeader>
+`;
+
+exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
+<ViewHeader
+  title="baz - References"
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="flex-end"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <strong>
+          baz
+        </strong>
+      </Flex>
+    </FlexItem>
+  </Flex>
+  <div
+    className="text-muted"
+    style={
+      Object {
+        "fontSize": "12px",
+      }
+    }
+  >
+    Created 
+    <RelativeTime
+      time="foo"
+    />
+     by 
+    1
+  </div>
+</ViewHeader>
+`;
+
+exports[`<ReferenceDetailHeaderExportButton /> should render 1`] = `
+<Header__ExportDropdown
+  id="dropdown-export-reference"
+>
+  <CustomToggle
+    bsRole="toggle"
+  />
+  <DropdownMenu
+    bsClass="dropdown-menu"
+    bsRole="menu"
+    pullRight={false}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="built"
+      header={false}
+      onSelect={[MockFunction]}
+    >
+      <div>
+        Normal
+      </div>
+      <small>
+        Export the reference with the local OTU IDs.
+      </small>
+    </MenuItem>
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="remote"
+      header={false}
+      onSelect={[MockFunction]}
+    >
+      <div>
+        Remote
+      </div>
+      <small>
+        Export the reference using the OTU IDs from the source reference for this clone.
+      </small>
+    </MenuItem>
+  </DropdownMenu>
+</Header__ExportDropdown>
+`;
+
+exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = false] 1`] = `
+<Header__ExportDropdown
+  id="dropdown-export-reference"
+>
+  <CustomToggle
+    bsRole="toggle"
+  />
+  <DropdownMenu
+    bsClass="dropdown-menu"
+    bsRole="menu"
+    pullRight={false}
+  >
+    <MenuItem
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="built"
+      header={false}
+      onSelect={[MockFunction]}
+    >
+      <div>
+        Normal
+      </div>
+      <small>
+        Export the reference with the local OTU IDs.
+      </small>
+    </MenuItem>
+  </DropdownMenu>
+</Header__ExportDropdown>
+`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `
+<Icon
+  bsStyle="default"
+  faStyle="fas"
+  fixedWidth={false}
+  name="lock"
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+/>
+`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [both canModify=false, isRemote=false] 1`] = `""`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [canModify=false] 1`] = `
+<Icon
+  bsStyle="default"
+  faStyle="fas"
+  fixedWidth={false}
+  name="lock"
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+/>
+`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [isRemote=false] 1`] = `
+<Icon
+  bsStyle="warning"
+  faStyle="fas"
+  fixedWidth={false}
+  name="pencil-alt"
+  onClick={[MockFunction]}
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+  tip="Edit"
+/>
+`;

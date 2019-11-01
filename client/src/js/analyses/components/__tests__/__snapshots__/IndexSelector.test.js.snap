@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexSelector /> should render 1`] = `
+<div
+  style={
+    Object {
+      "marginBottom": "16px",
+    }
+  }
+>
+  <label
+    className="control-label"
+  >
+    References
+  </label>
+  <IndexSelectorList
+    error={
+      Array [
+        "foo",
+      ]
+    }
+    indexes={
+      Array [
+        Object {
+          "id": "foo",
+        },
+        Object {
+          "id": "bar",
+        },
+      ]
+    }
+    onSelect="foo"
+    selected={
+      Array [
+        Object {
+          "id": "foo",
+        },
+        Object {
+          "id": "bar",
+        },
+      ]
+    }
+  />
+</div>
+`;

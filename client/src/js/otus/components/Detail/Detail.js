@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
-import { Breadcrumb } from "react-bootstrap";
 import { get } from "lodash-es";
 import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, TabLink, Tabs } from "../../../base";
+import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
@@ -81,22 +80,10 @@ class OTUDetail extends React.Component {
                 <ViewHeader title={`${name} - OTU`} />
 
                 <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <LinkContainer to="/refs/">
-                            <span>References</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <LinkContainer to={`/refs/${refId}`}>
-                            <span>{this.props.refName}</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <LinkContainer to={`/refs/${refId}/otus`}>
-                            <span>OTUs</span>
-                        </LinkContainer>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item active>{name}</Breadcrumb.Item>
+                    <BreadcrumbItem to="/refs/">References</BreadcrumbItem>
+                    <BreadcrumbItem to={`/refs/${refId}`}>{this.props.refName}</BreadcrumbItem>
+                    <BreadcrumbItem to={`/refs/${refId}/otus`}>OTUs</BreadcrumbItem>
+                    <BreadcrumbItem>{name}</BreadcrumbItem>
                 </Breadcrumb>
 
                 <h3 style={{ marginBottom: "20px" }}>

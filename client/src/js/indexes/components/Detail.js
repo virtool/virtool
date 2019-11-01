@@ -1,32 +1,28 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Breadcrumb } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { Redirect, Route, Switch } from "react-router-dom";
-import { Badge, LoadingPlaceholder, NotFound, RelativeTime, TabLink, Tabs, ViewHeader } from "../../base";
+import {
+    Badge,
+    Breadcrumb,
+    BreadcrumbItem,
+    LoadingPlaceholder,
+    NotFound,
+    RelativeTime,
+    TabLink,
+    Tabs,
+    ViewHeader
+} from "../../base";
 import { getIndex, getIndexHistory } from "../actions";
 import IndexChanges from "./Changes";
 import IndexGeneral from "./General";
 
 export const IndexDetailBreadCrumb = ({ refDetail, version }) => (
     <Breadcrumb>
-        <Breadcrumb.Item>
-            <LinkContainer to="/refs/">
-                <span>References</span>
-            </LinkContainer>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-            <LinkContainer to={`/refs/${refDetail.id}`}>
-                <span>{refDetail.name}</span>
-            </LinkContainer>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-            <LinkContainer to={`/refs/${refDetail.id}/indexes`}>
-                <span>Indexes</span>
-            </LinkContainer>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active>Index {version}</Breadcrumb.Item>
+        <BreadcrumbItem to="/refs/">References</BreadcrumbItem>
+        <BreadcrumbItem to={`/refs/${refDetail.id}`}>{refDetail.name}</BreadcrumbItem>
+        <BreadcrumbItem to={`/refs/${refDetail.id}/indexes`}>Indexes</BreadcrumbItem>
+        <BreadcrumbItem>Index {version}</BreadcrumbItem>
     </Breadcrumb>
 );
 

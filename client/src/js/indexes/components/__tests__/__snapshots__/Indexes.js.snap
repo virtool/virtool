@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<IndexesList /> should render 1`] = `
+exports[`<Indexes /> should render 1`] = `
 <div>
+  <Connect(ReferenceDetailHeader) />
+  <Connect(ReferenceDetailTabs) />
   <Connect(RebuildAlert) />
   <Connect(RebuildIndex) />
   <ScrollList
@@ -21,10 +23,12 @@ exports[`<IndexesList /> should render 1`] = `
 </div>
 `;
 
-exports[`<IndexesList /> should render with [documents=null] 1`] = `<LoadingPlaceholder />`;
+exports[`<Indexes /> should render with [documents=null] 1`] = `<LoadingPlaceholder />`;
 
-exports[`<IndexesList /> should render with empty documents array 1`] = `
+exports[`<Indexes /> should render with empty documents array 1`] = `
 <div>
+  <Connect(ReferenceDetailHeader) />
+  <Connect(ReferenceDetailTabs) />
   <Connect(RebuildAlert) />
   <Connect(RebuildIndex) />
   <NoneFound

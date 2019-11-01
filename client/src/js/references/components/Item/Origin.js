@@ -44,10 +44,12 @@ export const ReferenceItemOrigin = ({ clonedFrom, importedFrom, remotesFrom }) =
     }
 
     return (
-        <span>
-            <strong>Created</strong>
-            <span>No File</span>
-        </span>
+        <ReferenceItemInfo>
+            <span>
+                <strong>Created from scratch.</strong>
+            </span>
+            <small>Populate this reference with OTUs to use it.</small>
+        </ReferenceItemInfo>
     );
 };
 

@@ -2,22 +2,9 @@ import React from "react";
 import styled from "styled-components";
 import { map } from "lodash-es";
 
-import { Badge, ListGroup } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { ListGroupItem } from "../../../base";
-
-export const SelectedSamplesLabel = ({ count }) => {
-    let tail;
-
-    if (count > 1) {
-        tail = (
-            <React.Fragment>
-                s <Badge>{count}</Badge>
-            </React.Fragment>
-        );
-    }
-
-    return <label className="control-label">Sample{tail}</label>;
-};
+import { SelectedSamplesLabel } from "./SelectedSamplesLabel";
 
 const SelectedSamplesListGroupContainer = styled(ListGroup)`
     margin-bottom: 16px;

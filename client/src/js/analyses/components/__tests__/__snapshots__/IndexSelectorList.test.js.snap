@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IndexSelectorList /> should render 1`] = `
+<IndexSelectorList__StyledIndexSelectorList
+  error={
+    Array [
+      "foo",
+    ]
+  }
+>
+  <IndexSelectorItem
+    id="foo"
+    isSelected={true}
+    key="foo"
+    onSelect="Bar"
+  />
+  <IndexSelectorItem
+    id="bar"
+    isSelected={true}
+    key="bar"
+    onSelect="Bar"
+  />
+  <IndexSelectorItem
+    id="baz"
+    isSelected={false}
+    key="baz"
+    onSelect="Bar"
+  />
+</IndexSelectorList__StyledIndexSelectorList>
+`;
+
+exports[`<IndexSelectorList /> should render when [error.length = 0] 1`] = `
+<IndexSelectorList__StyledIndexSelectorList
+  error={Array []}
+>
+  <IndexSelectorItem
+    id="foo"
+    isSelected={true}
+    key="foo"
+    onSelect="Bar"
+  />
+  <IndexSelectorItem
+    id="bar"
+    isSelected={true}
+    key="bar"
+    onSelect="Bar"
+  />
+  <IndexSelectorItem
+    id="baz"
+    isSelected={false}
+    key="baz"
+    onSelect="Bar"
+  />
+</IndexSelectorList__StyledIndexSelectorList>
+`;
+
+exports[`<IndexSelectorList /> should render when [indexes.length = 0] 1`] = `<NoneFound />`;
