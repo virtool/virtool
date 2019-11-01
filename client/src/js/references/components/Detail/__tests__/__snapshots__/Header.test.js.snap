@@ -181,3 +181,52 @@ exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = fal
   </DropdownMenu>
 </Header__ExportDropdown>
 `;
+
+exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `
+<Icon
+  bsStyle="default"
+  faStyle="fas"
+  fixedWidth={false}
+  name="lock"
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+/>
+`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [both canModify=false, isRemote=false] 1`] = `""`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [canModify=false] 1`] = `
+<Icon
+  bsStyle="default"
+  faStyle="fas"
+  fixedWidth={false}
+  name="lock"
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+/>
+`;
+
+exports[`<ReferenceDetailHeaderIcon /> should render when [isRemote=false] 1`] = `
+<Icon
+  bsStyle="warning"
+  faStyle="fas"
+  fixedWidth={false}
+  name="pencil-alt"
+  onClick={[MockFunction]}
+  pullRight={true}
+  style={
+    Object {
+      "fontSize": "65%",
+    }
+  }
+  tip="Edit"
+/>
+`;

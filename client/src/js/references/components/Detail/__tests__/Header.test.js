@@ -2,7 +2,8 @@ import {
     mapDispatchToProps,
     mapStateToProps,
     ReferenceDetailHeader,
-    ReferenceDetailHeaderExportButton
+    ReferenceDetailHeaderExportButton,
+    ReferenceDetailHeaderIcon
 } from "../Header";
 
 describe("<ReferenceDetailHeaderExportButton />", () => {
@@ -31,6 +32,49 @@ describe("<ReferenceDetailHeaderExportButton />", () => {
             .at(0)
             .simulate("select");
         expect(props.onSelect).toHaveBeenCalled();
+    });
+});
+
+describe("<ReferenceDetailHeaderIcon />", () => {
+    let props;
+
+    beforeEach(() => {
+        props = {
+            canModify: true,
+            isRemote: true,
+            onEdit: jest.fn()
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should render when [canModify=false]", () => {
+        props.canModify = false;
+        const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should render when [isRemote=false]", () => {
+        props.isRemote = false;
+        const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should render when [both canModify=false, isRemote=false]", () => {
+        props.canModify = false;
+        props.isRemote = false;
+        const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onEdit", () => {
+        props.isRemote = false;
+        const wrapper = shallow(<ReferenceDetailHeaderIcon {...props} />);
+        wrapper
+            .find("Icon")
+            .at(0)
+            .simulate("click");
+        expect(props.onEdit).toHaveBeenCalled();
     });
 });
 
