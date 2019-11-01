@@ -1,4 +1,38 @@
-import { mapDispatchToProps, mapStateToProps, ReferenceDetailHeader } from "../Header";
+import {
+    mapDispatchToProps,
+    mapStateToProps,
+    ReferenceDetailHeader,
+    ReferenceDetailHeaderExportButton
+} from "../Header";
+
+describe("<ReferenceDetailHeaderExportButton />", () => {
+    let props;
+    beforeEach(() => {
+        props = {
+            isClone: true,
+            onSelect: jest.fn()
+        };
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should render when [isClone = false]", () => {
+        props.isClone = false;
+        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should call onSelect prop of ReferenceDetailHeaderExportButton", () => {
+        const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
+        expect(props.onSelect).not.toHaveBeenCalled();
+        wrapper
+            .find("MenuItem")
+            .at(0)
+            .simulate("select");
+        expect(props.onSelect).toHaveBeenCalled();
+    });
+});
 
 describe("<ReferenceDetailHeader/>", () => {
     let props;
