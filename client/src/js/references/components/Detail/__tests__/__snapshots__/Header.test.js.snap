@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceDetailHeader/> should render 1`] = `
+<ViewHeader
+  title="baz - References"
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="flex-end"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <strong>
+          baz
+        </strong>
+      </Flex>
+    </FlexItem>
+    <ReferenceDetailHeaderIcon
+      canModify={true}
+      isRemote={true}
+      onEdit={[MockFunction]}
+    />
+    <ReferenceDetailHeaderExportButton
+      isClone={true}
+      onSelect={[Function]}
+    />
+  </Flex>
+  <div
+    className="text-muted"
+    style={
+      Object {
+        "fontSize": "12px",
+      }
+    }
+  >
+    Created 
+    <RelativeTime
+      time="foo"
+    />
+     by 
+    1
+  </div>
+</ViewHeader>
+`;
+
+exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
+<ViewHeader
+  title="baz - References"
+>
+  <Flex
+    alignContent="stretch"
+    alignItems="flex-end"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <Flex
+        alignContent="stretch"
+        alignItems="stretch"
+        direction="row"
+        justifyContent="flex-start"
+        wrap="nowrap"
+      >
+        <strong>
+          baz
+        </strong>
+      </Flex>
+    </FlexItem>
+  </Flex>
+  <div
+    className="text-muted"
+    style={
+      Object {
+        "fontSize": "12px",
+      }
+    }
+  >
+    Created 
+    <RelativeTime
+      time="foo"
+    />
+     by 
+    1
+  </div>
+</ViewHeader>
+`;
