@@ -5,7 +5,9 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Badge, ListGroupItem, NoneFound, Panel, RelativeTime, Table } from "../../../base";
 import { checkUpdates, updateRemoteReference } from "../../actions";
+import ReferenceDetailHeader from "./Header";
 import RemoteReference from "./Remote";
+import ReferenceDetailTabs from "./Tabs";
 
 const Clone = ({ source }) => (
     <Panel>
@@ -71,6 +73,9 @@ const ReferenceManage = ({ detail }) => {
 
     return (
         <div>
+            <ReferenceDetailHeader />
+            <ReferenceDetailTabs />
+
             <Table>
                 <tbody>
                     <tr>
