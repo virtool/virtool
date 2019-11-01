@@ -359,58 +359,22 @@ async def edit_isolate(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    reference = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
-
-    isolates = deepcopy(document["isolates"])
-
-    isolate = virtool.otus.utils.find_isolate(isolates, isolate_id)
-
     # All source types are stored in lower case.
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
 
-        if reference["restrict_source_types"] and data["source_type"] not in reference["source_types"]:
+        if not await virtool.references.db.check_source_type(db, ref_id, data["source_type"]):
             return bad_request("Source type is not allowed")
 
-    old_isolate_name = virtool.otus.utils.format_isolate_name(isolate)
-
-    isolate.update(data)
-
-    old = await virtool.otus.db.join(db, otu_id)
-
-    # Replace the isolates list with the update one.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    # Get the joined entry now that it has been updated.
-    new = await virtool.otus.db.join(db, otu_id, document)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
-
-    # Use the old and new entry to add a new history document for the change.
-    await virtool.history.db.add(
+    isolate = await asyncio.shield(virtool.otus.db.edit_isolate(
         db,
-        "edit_isolate",
-        old,
-        new,
-        f"Renamed {old_isolate_name} to {isolate_name}",
+        otu_id,
+        isolate_id,
+        data,
         req["client"].user_id
-    )
+    ))
 
-    complete = await virtool.otus.db.join_and_format(db, otu_id, joined=new)
-
-    for isolate in complete["isolates"]:
-        if isolate["id"] == isolate_id:
-            return json_response(isolate, status=200)
+    return json_response(isolate, status=200)
 
 
 @routes.put("/api/otus/{otu_id}/isolates/{isolate_id}/default")

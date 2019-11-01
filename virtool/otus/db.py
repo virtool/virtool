@@ -221,6 +221,49 @@ async def edit(db, otu_id, old, data, name, abbreviation, schema, user_id):
     return await virtool.otus.db.join_and_format(db, otu_id, joined=new, issues=issues)
 
 
+async def edit_isolate(db, otu_id, isolate_id, data, user_id):
+    isolates = await virtool.db.utils.get_one_field(db.otus, "isolates", otu_id)
+    isolate = virtool.otus.utils.find_isolate(isolates, isolate_id)
+
+    old_isolate_name = virtool.otus.utils.format_isolate_name(isolate)
+
+    isolate.update(data)
+
+    old = await virtool.otus.db.join(db, otu_id)
+
+    # Replace the isolates list with the update one.
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": {
+            "isolates": isolates,
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    # Get the joined entry now that it has been updated.
+    new = await virtool.otus.db.join(db, otu_id, document)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
+
+    # Use the old and new entry to add a new history document for the change.
+    await virtool.history.db.add(
+        db,
+        "edit_isolate",
+        old,
+        new,
+        f"Renamed {old_isolate_name} to {isolate_name}",
+        user_id
+    )
+
+    complete = await virtool.otus.db.join_and_format(db, otu_id, joined=new)
+
+    return virtool.otus.utils.find_isolate(complete["isolates"], isolate_id)
+
+
 async def find(db, names, term, req_query, verified, ref_id=None):
     db_query = dict()
 
