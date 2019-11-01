@@ -14,6 +14,7 @@ const FirstUserModal = styled(BoxGroup)`
     display: flex;
     flex-direction: column;
     margin-bottom: 260px;
+    max-width: 620px;
     width: 60%;
 
     button {

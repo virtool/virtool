@@ -1,7 +1,8 @@
+import { get } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 
-import { ListGroupItem, RelativeTime, Icon, Label } from "../../../base";
+import { Icon, Label, ListGroupItem, RelativeTime } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {
@@ -81,24 +82,24 @@ const StyledChange = styled(ListGroupItem)`
     }
 `;
 
-const IconDescriptionNameDate = styled.section`
+const IconDescriptionNameDate = styled.div`
+    align-items: start;
     display: flex;
     flex-direction: row;
-    margin-left: 9px;
     justify-content: space-between;
+    margin-left: 9px;
     width: 90%;
-    align-items: start;
+
     @media (max-width: 1080px) {
-        display: flex;
         flex-flow: row wrap;
         flex-direction: column;
     }
 `;
 
 const Name = styled.div`
+    align-items: center;
     display: flex;
     flex-flow: row wrap;
-    align-items: center;
     margin-right: 10px;
 `;
 
