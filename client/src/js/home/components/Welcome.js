@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Box, Container, Icon } from "../../base";
 
-const Welcome = props => {
+export const Welcome = props => {
     let version;
 
     if (props.version) {
@@ -23,7 +23,7 @@ const Welcome = props => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     version: get(state.updates, "version")
 });
 
