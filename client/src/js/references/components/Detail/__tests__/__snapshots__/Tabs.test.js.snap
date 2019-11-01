@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceDetailTabs /> should render 1`] = `
+<Tabs>
+  <TabLink
+    to="/refs/foo/manage"
+  >
+    Manage
+  </TabLink>
+  <TabLink
+    to="/refs/foo/otus"
+  >
+    OTUs 
+    <Badge>
+      203
+    </Badge>
+  </TabLink>
+  <TabLink
+    to="/refs/foo/indexes"
+  >
+    Indexes
+  </TabLink>
+  <TabLink
+    to="/refs/foo/settings"
+  >
+    Settings
+  </TabLink>
+</Tabs>
+`;
