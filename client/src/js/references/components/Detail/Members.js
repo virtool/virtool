@@ -24,6 +24,7 @@ const getInitialState = () => ({
 
 const NewMemberLink = styled.a`
     cursor: pointer;
+    margin-left: auto;
 `;
 
 const NoMembers = styled(BoxGroup.Section)`
