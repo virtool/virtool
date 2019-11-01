@@ -1,4 +1,5 @@
 import pymongo.errors
+import copy
 
 import virtool.history.db
 import virtool.db.utils
@@ -26,6 +27,55 @@ SEQUENCE_PROJECTION = [
     "sequence",
     "segment"
 ]
+
+
+async def add_isolate(db, otu_id, data, user_id):
+    document = await db.otus.find_one(otu_id)
+
+    isolates = copy.deepcopy(document["isolates"])
+
+    # True if the new isolate should be default and any existing isolates should be non-default.
+    will_be_default = not isolates or data["default"]
+
+    # Get the complete, joined entry before the update.
+    old = await virtool.otus.db.join(db, otu_id, document)
+
+    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
+    if isolates and data["default"]:
+        for isolate in isolates:
+            isolate["default"] = False
+
+    # Force the new isolate as default if it is the first isolate.
+    if not isolates:
+        data["default"] = True
+
+    # Set the isolate as the default isolate if it is the first one.
+    data["default"] = will_be_default
+
+    isolate_id = await virtool.otus.db.append_isolate(db, otu_id, isolates, data)
+
+    # Get the joined entry now that it has been updated.
+    new = await virtool.otus.db.join(db, otu_id)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate_name = virtool.otus.utils.format_isolate_name(data)
+
+    description = f"Added {isolate_name}"
+
+    if will_be_default:
+        description += " as default"
+
+    await virtool.history.db.add(
+        db,
+        "add_isolate",
+        old,
+        new,
+        description,
+        user_id
+    )
+
+    return dict(data, id=isolate_id, sequences=[])
 
 
 async def append_isolate(db, otu_id, isolates, isolate):

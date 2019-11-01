@@ -296,7 +296,7 @@ async def add_isolate(req):
 
     otu_id = req.match_info["otu_id"]
 
-    document = await db.otus.find_one(otu_id)
+    document = await db.otus.find_one(otu_id, ["reference"])
 
     if not document:
         return not_found()
@@ -304,61 +304,25 @@ async def add_isolate(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    isolates = deepcopy(document["isolates"])
-
-    # True if the new isolate should be default and any existing isolates should be non-default.
-    will_be_default = not isolates or data["default"]
-
-    # Get the complete, joined entry before the update.
-    old = await virtool.otus.db.join(db, otu_id, document)
-
-    # All source types are stored in lower case.
+        # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
     if not await virtool.references.db.check_source_type(db, document["reference"]["id"], data["source_type"]):
         return bad_request("Source type is not allowed")
 
-    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    if isolates and data["default"]:
-        for isolate in isolates:
-            isolate["default"] = False
-
-    # Force the new isolate as default if it is the first isolate.
-    if not isolates:
-        data["default"] = True
-
-    # Set the isolate as the default isolate if it is the first one.
-    data["default"] = will_be_default
-
-    isolate_id = await virtool.otus.db.append_isolate(db, otu_id, isolates, data)
-
-    # Get the joined entry now that it has been updated.
-    new = await virtool.otus.db.join(db, otu_id)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate_name = virtool.otus.utils.format_isolate_name(data)
-
-    description = f"Added {isolate_name}"
-
-    if will_be_default:
-        description += " as default"
-
-    await virtool.history.db.add(
+    isolate = await asyncio.shield(virtool.otus.db.add_isolate(
         db,
-        "add_isolate",
-        old,
-        new,
-        description,
+        otu_id,
+        data,
         req["client"].user_id
-    )
+    ))
 
     headers = {
-        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}"
+        "Location": f"/api/otus/{otu_id}/isolates/{isolate['id']}"
     }
 
     return json_response(
-        dict(data, id=isolate_id, sequences=[]),
+        isolate,
         status=201,
         headers=headers
     )
