@@ -345,6 +345,24 @@ async def find(db, names, term, req_query, verified, ref_id=None):
     return data
 
 
+async def get_sequence(db, otu_id, isolate_id, sequence_id):
+    if not await db.otus.count({"_id": otu_id, "isolates.id": isolate_id}):
+        return None
+
+    query = {
+        "_id": sequence_id,
+        "otu_id": otu_id,
+        "isolate_id": isolate_id
+    }
+
+    document = await db.sequences.find_one(query, virtool.otus.db.SEQUENCE_PROJECTION)
+
+    if not document:
+        return None
+
+    return virtool.utils.base_processor(document)
+
+
 async def join(db, query, document=None):
     """
     Join the otu associated with the supplied ``otu_id`` with its sequences. If a otu entry is also passed,

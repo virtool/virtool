@@ -467,21 +467,17 @@ async def get_sequence(req):
     isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    if not await db.otus.count({"_id": otu_id, "isolates.id": isolate_id}):
+    sequence = await virtool.otus.db.get_sequence(
+        db,
+        otu_id,
+        isolate_id,
+        sequence_id
+    )
+
+    if sequence is None:
         return not_found()
 
-    query = {
-        "_id": sequence_id,
-        "otu_id": otu_id,
-        "isolate_id": isolate_id
-    }
-
-    document = await db.sequences.find_one(query, virtool.otus.db.SEQUENCE_PROJECTION)
-
-    if not document:
-        return not_found()
-
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(sequence)
 
 
 @routes.post("/api/otus/{otu_id}/isolates/{isolate_id}/sequences", schema={
