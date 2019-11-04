@@ -410,7 +410,52 @@ async def update_verification(db, joined):
 
         joined["verified"] = True
 
-    return issues
+
+async def set_default_isolate(db, otu_id, isolate_id, user_id):
+    document = await db.otus.find_one(otu_id)
+
+    isolate = virtool.otus.utils.find_isolate(document["isolates"], isolate_id)
+
+    # If the default isolate will be unchanged, immediately return the existing isolate.
+    if isolate["default"]:
+        return isolate
+
+    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
+    isolates = [{**isolate, "default": isolate_id == isolate["id"]} for isolate in document["isolates"]]
+
+    old = await virtool.otus.db.join(db, otu_id)
+
+    # Replace the isolates list with the updated one.
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": {
+            "isolates": isolates,
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    # Get the joined entry now that it has been updated.
+    new = await virtool.otus.db.join(db, otu_id, document)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
+
+    # Use the old and new entry to add a new history document for the change.
+    await virtool.history.db.add(
+        db,
+        "set_as_default",
+        old,
+        new,
+        f"Set {isolate_name} as default",
+        user_id
+    )
+
+    complete = await virtool.otus.db.join_and_format(db, otu_id, new)
+
+    return virtool.otus.utils.find_isolate(new["isolates"], isolate_id)
 
 
 async def verify(db, otu_id, joined=None):

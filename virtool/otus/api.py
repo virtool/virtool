@@ -388,7 +388,7 @@ async def set_as_default(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
         return not_found()
@@ -396,57 +396,14 @@ async def set_as_default(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    isolates = deepcopy(document["isolates"])
-
-    isolate = virtool.otus.utils.find_isolate(isolates, isolate_id)
-
-    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    for existing_isolate in isolates:
-        existing_isolate["default"] = False
-
-    isolate["default"] = True
-
-    if isolates == document["isolates"]:
-        complete = await virtool.otus.db.join_and_format(db, otu_id)
-        for isolate in complete["isolates"]:
-            if isolate["id"] == isolate_id:
-                return json_response(isolate)
-
-    old = await virtool.otus.db.join(db, otu_id)
-
-    # Replace the isolates list with the updated one.
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    # Get the joined entry now that it has been updated.
-    new = await virtool.otus.db.join(db, otu_id, document)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
-
-    # Use the old and new entry to add a new history document for the change.
-    await virtool.history.db.add(
+    isolate = await asyncio.shield(virtool.otus.db.set_default_isolate(
         db,
-        "set_as_default",
-        old,
-        new,
-        f"Set {isolate_name} as default",
+        otu_id,
+        isolate_id,
         req["client"].user_id
-    )
+    ))
 
-    complete = await virtool.otus.db.join_and_format(db, otu_id, new)
-
-    for isolate in complete["isolates"]:
-        if isolate["id"] == isolate_id:
-            return json_response(isolate)
+    return json_response(isolate)
 
 
 @routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}")
