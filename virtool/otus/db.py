@@ -184,6 +184,53 @@ async def create(db, ref_id, name, abbreviation, user_id):
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
+async def create_sequence(db, ref_id, otu_id, isolate_id, data, user_id):
+    segment = data.get("segment")
+
+    # Update POST data to make sequence document.
+    to_insert = {
+        **data,
+        "otu_id": otu_id,
+        "isolate_id": isolate_id,
+        "host": data.get("host", ""),
+        "reference": {
+            "id": ref_id
+        },
+        "segment": segment,
+        "sequence": data["sequence"].replace(" ", "").replace("\n", "")
+    }
+
+    old = await virtool.otus.db.join(db, otu_id)
+
+    sequence_document = await db.sequences.insert_one(to_insert)
+
+    await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": {
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    new = await virtool.otus.db.join(db, otu_id)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
+
+    await virtool.history.db.add(
+        db,
+        "create_sequence",
+        old,
+        new,
+        f"Created new sequence {data['accession']} in {virtool.otus.utils.format_isolate_name(isolate)}",
+        user_id
+    )
+
+    return virtool.utils.base_processor(sequence_document)
+
+
 async def edit(db, otu_id, old, data, name, abbreviation, schema, user_id):
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.

@@ -522,7 +522,7 @@ async def create_sequence(req):
     otu_id, isolate_id = (req.match_info[key] for key in ["otu_id", "isolate_id"])
 
     # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
 
     if not document:
         return not_found()
@@ -532,56 +532,25 @@ async def create_sequence(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    segment = data.get("segment", None)
+    segment = data.get("segment")
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
         return bad_request("Segment does not exist")
 
-    # Update POST data to make sequence document.
-    data.update({
-        "otu_id": otu_id,
-        "isolate_id": isolate_id,
-        "host": data.get("host", ""),
-        "reference": {
-            "id": ref_id
-        },
-        "segment": segment,
-        "sequence": data["sequence"].replace(" ", "").replace("\n", "")
-    })
-
-    old = await virtool.otus.db.join(db, otu_id, document)
-
-    sequence_document = await db.sequences.insert_one(data)
-
-    new = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    new = await virtool.otus.db.join(db, otu_id, new)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
-
-    await virtool.history.db.add(
+    sequence_document = await asyncio.shield(virtool.otus.db.create_sequence(
         db,
-        "create_sequence",
-        old,
-        new,
-        f"Created new sequence {data['accession']} in {virtool.otus.utils.format_isolate_name(isolate)}",
+        ref_id,
+        otu_id,
+        isolate_id,
+        data,
         req["client"].user_id
-    )
+    ))
 
     headers = {
-        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['_id']}"
+        "Location": f"/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}"
     }
 
-    return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
+    return json_response(sequence_document, status=201, headers=headers)
 
 
 @routes.patch("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}", schema={
