@@ -398,17 +398,68 @@ async def remove(db, otu_id, user_id, document=None, silent=False):
     return True
 
 
-async def update_verification(db, joined):
-    issues = virtool.otus.utils.verify(joined)
+async def remove_isolate(db, otu_id, isolate_id, user_id):
+    document = await db.otus.find_one(otu_id)
+
+    isolates = copy.deepcopy(document["isolates"])
+
+    # Get any isolates that have the isolate id to be removed (only one should match!).
+    isolate_to_remove = virtool.otus.utils.find_isolate(isolates, isolate_id)
+
+    # Remove the isolate from the otu' isolate list.
+    isolates.remove(isolate_to_remove)
+
+    new_default = None
+
+    # Set the first isolate as default if the removed isolate was the default.
+    if isolate_to_remove["default"] and len(isolates):
+        new_default = isolates[0]
+        new_default["default"] = True
+
+    old = await virtool.otus.db.join(db, otu_id, document)
+
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": {
+            "isolates": isolates,
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    new = await virtool.otus.db.join(db, otu_id, document)
+
+    issues = await virtool.otus.db.verify(db, otu_id, joined=new)
 
     if issues is None:
-        await db.otus.update_one({"_id": joined["_id"]}, {
+        await db.otus.update_one({"_id": otu_id}, {
             "$set": {
                 "verified": True
             }
         })
 
-        joined["verified"] = True
+        new["verified"] = True
+
+    # Remove any sequences associated with the removed isolate.
+    await db.sequences.delete_many({"otu_id": otu_id, "isolate_id": isolate_id})
+
+    old_isolate_name = virtool.otus.utils.format_isolate_name(isolate_to_remove)
+
+    description = f"Removed {old_isolate_name}"
+
+    if isolate_to_remove["default"] and new_default:
+        new_isolate_name = virtool.otus.utils.format_isolate_name(new_default)
+        description += f" and set {new_isolate_name} as default"
+
+    await virtool.history.db.add(
+        db,
+        "remove_isolate",
+        old,
+        new,
+        description,
+        user_id
+    )
 
 
 async def set_default_isolate(db, otu_id, isolate_id, user_id):
@@ -518,3 +569,18 @@ async def update_sequence_segments(db, old, new):
             "segment": ""
         }
     })
+
+
+async def update_verification(db, joined):
+    issues = virtool.otus.utils.verify(joined)
+
+    if issues is None:
+        await db.otus.update_one({"_id": joined["_id"]}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        joined["verified"] = True
+
+    return issues

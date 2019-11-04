@@ -417,7 +417,7 @@ async def remove_isolate(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
     if not document:
         return not_found()
@@ -425,65 +425,12 @@ async def remove_isolate(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    isolates = deepcopy(document["isolates"])
-
-    # Get any isolates that have the isolate id to be removed (only one should match!).
-    isolate_to_remove = virtool.otus.utils.find_isolate(isolates, isolate_id)
-
-    # Remove the isolate from the otu' isolate list.
-    isolates.remove(isolate_to_remove)
-
-    new_default = None
-
-    # Set the first isolate as default if the removed isolate was the default.
-    if isolate_to_remove["default"] and len(isolates):
-        new_default = isolates[0]
-        new_default["default"] = True
-
-    old = await virtool.otus.db.join(db, otu_id, document)
-
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "isolates": isolates,
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    new = await virtool.otus.db.join(db, otu_id, document)
-
-    issues = await virtool.otus.db.verify(db, otu_id, joined=new)
-
-    if issues is None:
-        await db.otus.update_one({"_id": otu_id}, {
-            "$set": {
-                "verified": True
-            }
-        })
-
-        new["verified"] = True
-
-    # Remove any sequences associated with the removed isolate.
-    await db.sequences.delete_many({"otu_id": otu_id, "isolate_id": isolate_id})
-
-    old_isolate_name = virtool.otus.utils.format_isolate_name(isolate_to_remove)
-
-    description = f"Removed {old_isolate_name}"
-
-    if isolate_to_remove["default"] and new_default:
-        new_isolate_name = virtool.otus.utils.format_isolate_name(new_default)
-        description += f" and set {new_isolate_name} as default"
-
-    await virtool.history.db.add(
+    await asyncio.shield(virtool.otus.db.remove_isolate(
         db,
-        "remove_isolate",
-        old,
-        new,
-        description,
+        otu_id,
+        isolate_id,
         req["client"].user_id
-    )
+    ))
 
     return no_content()
 
