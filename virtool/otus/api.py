@@ -574,11 +574,14 @@ async def create_sequence(req):
     }
 })
 async def edit_sequence(req):
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
-    otu_id, isolate_id, sequence_id = (req.match_info[key] for key in ["otu_id", "isolate_id", "sequence_id"])
+    otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
+    sequence_id = req.match_info["sequence_id"]
 
-    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"])
 
     if not document or not await db.sequences.count({"_id": sequence_id}):
         return not_found()
@@ -586,44 +589,21 @@ async def edit_sequence(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    old = await virtool.otus.db.join(db, otu_id, document)
-
-    segment = data.get("segment", None)
+    segment = data.get("segment")
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
         return not_found("Segment does not exist")
 
-    data["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
-
-    updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
-        "$set": data
-    })
-
-    document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": {
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    new = await virtool.otus.db.join(db, otu_id, document)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
-
-    await virtool.history.db.add(
+    sequence_document = await asyncio.shield(virtool.otus.db.edit_sequence(
         db,
-        "edit_sequence",
-        old,
-        new,
-        f"Edited sequence {sequence_id} in {virtool.otus.utils.format_isolate_name(isolate)}",
+        otu_id,
+        isolate_id,
+        sequence_id,
+        data,
         req["client"].user_id
-    )
+    ))
 
-    return json_response(virtool.utils.base_processor(updated_sequence))
+    return json_response(sequence_document)
 
 
 @routes.delete("/api/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_id}")
@@ -641,41 +621,21 @@ async def remove_sequence(req):
     if not await db.sequences.count({"_id": sequence_id}):
         return not_found()
 
-    old = await virtool.otus.db.join(db, {"_id": otu_id, "isolates.id": isolate_id})
+    document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
 
-    if old is None:
+    if document is None:
         return not_found()
 
-    if not await virtool.references.db.check_right(req, old["reference"]["id"], "modify_otu"):
+    if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
-    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
-
-    await db.sequences.delete_one({"_id": sequence_id})
-
-    await db.otus.update_one({"_id": otu_id}, {
-        "$set": {
-            "verified": False
-        },
-        "$inc": {
-            "version": 1
-        }
-    })
-
-    new = await virtool.otus.db.join(db, otu_id)
-
-    await virtool.otus.db.update_verification(db, new)
-
-    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
-
-    await virtool.history.db.add(
+    await asyncio.shield(virtool.otus.db.remove_sequence(
         db,
-        "remove_sequence",
-        old,
-        new,
-        f"Removed sequence {sequence_id} from {isolate_name}",
+        otu_id,
+        isolate_id,
+        sequence_id,
         req["client"].user_id
-    )
+    ))
 
     return no_content()
 

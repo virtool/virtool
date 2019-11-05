@@ -311,6 +311,45 @@ async def edit_isolate(db, otu_id, isolate_id, data, user_id):
     return virtool.otus.utils.find_isolate(complete["isolates"], isolate_id)
 
 
+async def edit_sequence(db, otu_id, isolate_id, sequence_id, data, user_id):
+    update = {
+        **data,
+        "sequence": data["sequence"].replace(" ", "").replace("\n", "")
+    }
+
+    old = await virtool.otus.db.join(db, otu_id)
+
+    sequence_document = await db.sequences.find_one_and_update({"_id": sequence_id}, {
+        "$set": update
+    })
+
+    document = await db.otus.find_one_and_update({"_id": otu_id}, {
+        "$set": {
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    new = await virtool.otus.db.join(db, otu_id, document)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
+
+    await virtool.history.db.add(
+        db,
+        "edit_sequence",
+        old,
+        new,
+        f"Edited sequence {sequence_id} in {virtool.otus.utils.format_isolate_name(isolate)}",
+        user_id
+    )
+
+    return virtool.utils.base_processor(sequence_document)
+
+
 async def find(db, names, term, req_query, verified, ref_id=None):
     db_query = dict()
 
@@ -523,6 +562,39 @@ async def remove_isolate(db, otu_id, isolate_id, user_id):
         old,
         new,
         description,
+        user_id
+    )
+
+
+async def remove_sequence(db, otu_id, isolate_id, sequence_id, user_id):
+
+    old = await virtool.otus.db.join(db, otu_id)
+
+    isolate = virtool.otus.utils.find_isolate(old["isolates"], isolate_id)
+
+    await db.sequences.delete_one({"_id": sequence_id})
+
+    await db.otus.update_one({"_id": otu_id}, {
+        "$set": {
+            "verified": False
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    new = await virtool.otus.db.join(db, otu_id)
+
+    await virtool.otus.db.update_verification(db, new)
+
+    isolate_name = virtool.otus.utils.format_isolate_name(isolate)
+
+    await virtool.history.db.add(
+        db,
+        "remove_sequence",
+        old,
+        new,
+        f"Removed sequence {sequence_id} from {isolate_name}",
         user_id
     )
 
