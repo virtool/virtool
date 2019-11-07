@@ -1,4 +1,3 @@
-from aiohttp.test_utils import make_mocked_coro
 import pytest
 import virtool.otus.sequences
 

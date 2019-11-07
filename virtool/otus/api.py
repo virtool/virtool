@@ -1,15 +1,16 @@
 import asyncio
-from copy import deepcopy
 
 from aiohttp import web
 
-import virtool.history.db
-import virtool.otus.db
-import virtool.references.db
 import virtool.db.utils
+import virtool.history.db
 import virtool.history.utils
 import virtool.http.routes
+import virtool.otus.db
+import virtool.otus.isolates
+import virtool.otus.sequences
 import virtool.otus.utils
+import virtool.references.db
 import virtool.references.utils
 import virtool.utils
 import virtool.validators

@@ -2,7 +2,6 @@
 Database functions and utilities for sequences.
 
 """
-import copy
 from typing import Union
 
 import virtool.history
