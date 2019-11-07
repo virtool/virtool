@@ -1,3 +1,4 @@
+from typing import Union
 import virtool.history.db
 import virtool.db.utils
 import virtool.errors
@@ -26,7 +27,7 @@ SEQUENCE_PROJECTION = [
 ]
 
 
-async def check_name_and_abbreviation(db, ref_id, name=None, abbreviation=None):
+async def check_name_and_abbreviation(db, ref_id: str, name: Union[None, str] = None, abbreviation: Union[None, str] = None):
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
     if the ``name`` or ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
@@ -111,18 +112,31 @@ async def create(db, ref_id, name, abbreviation, user_id):
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
-async def edit(db, otu_id, old, data, name, abbreviation, schema, user_id):
+async def edit(db, otu_id, name, abbreviation, schema, user_id):
     # Update the ``modified`` and ``verified`` fields in the otu document now, because we are definitely going to
     # modify the otu.
-    data["verified"] = False
+    update = {
+        "verified": False
+    }
 
     # If the name is changing, update the ``lower_name`` field in the otu document.
-    if name:
-        data["lower_name"] = name.lower()
+    if name is not None:
+        update.update({
+            "name": name,
+            "lower_name": name.lower()
+        })
+
+    if abbreviation is not None:
+        update["abbreviation"] = abbreviation
+
+    if schema is not None:
+        update["schema"] = schema
+
+    old = await virtool.otus.db.join(db, otu_id)
 
     # Update the database collection.
     document = await db.otus.find_one_and_update({"_id": otu_id}, {
-        "$set": data,
+        "$set": update,
         "$inc": {
             "version": 1
         }
@@ -212,25 +226,16 @@ async def join(db, query, document=None):
     return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
 
 
-async def join_and_format(db, otu_id, joined=None, issues=False):
+async def join_and_format(db, otu_id: str, joined: Union[dict, None] = None, issues: Union[dict, None, bool] = False) -> Union[dict, None]:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param otu_id: the id of the otu to join
-    :type otu_id: str
-
     :param joined:
-    :type joined: Union[dict, NoneType]
-
     :param issues: an object describing issues in the otu
-    :type issues: Union[dict, NoneType, bool]
-
     :return: a joined and formatted otu
-    :rtype: Coroutine[dict]
 
     """
     joined = joined or await join(db, otu_id)

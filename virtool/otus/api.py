@@ -162,17 +162,17 @@ async def edit(req):
     otu_id = req.match_info["otu_id"]
 
     # Get existing complete otu record, at the same time ensuring it exists. Send a ``404`` if not.
-    old = await virtool.otus.db.join(db, otu_id)
+    document = await db.otus.find_one(otu_id, ["abbreviation", "name", "reference", "schema"])
 
-    if not old:
+    if not document:
         return not_found()
 
-    ref_id = old["reference"]["id"]
+    ref_id = document["reference"]["id"]
 
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    name, abbreviation, schema = virtool.otus.utils.evaluate_changes(data, old)
+    name, abbreviation, schema = virtool.otus.utils.evaluate_changes(data, document)
 
     # Send ``200`` with the existing otu record if no change will be made.
     if name is None and abbreviation is None and schema is None:
@@ -187,8 +187,6 @@ async def edit(req):
     document = await asyncio.shield(virtool.otus.db.edit(
         db,
         otu_id,
-        old,
-        data,
         name,
         abbreviation,
         schema,

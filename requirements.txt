@@ -21,6 +21,7 @@ cx-Freeze==6.0b1
 dictdiffer==0.8.0
 et-xmlfile==1.0.1
 execnet==1.5.0
+fastdiff==0.2.0
 hiredis==0.2.0
 humanfriendly==4.16.1
 idna==2.7
@@ -53,11 +54,12 @@ raven==6.9.0
 raven-aiohttp==0.7.0
 semver==2.8.1
 six==1.11.0
-snapshottest==0.5.0
+snapshottest==0.5.1
 termcolor==1.1.0
 typing-extensions==3.7.2
 uvloop==0.12.2
 visvalingamwyatt==0.1.2
+wasmer==0.3.0
 wcwidth==0.1.7
 yarl==1.2.6
 zipp==0.5.2

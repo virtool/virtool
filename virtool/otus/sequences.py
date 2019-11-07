@@ -2,6 +2,7 @@
 Database functions and utilities for sequences.
 
 """
+import copy
 from typing import Union
 
 import virtool.history
@@ -12,7 +13,18 @@ import virtool.otus.utils
 import virtool.utils
 
 
-async def create(db, ref_id, otu_id, isolate_id, data, user_id):
+async def create(db, ref_id: str, otu_id: str, isolate_id: str, data: dict, user_id: str):
+    """
+    Create a new sequence document. Update the
+
+    :param db:
+    :param ref_id:
+    :param otu_id:
+    :param isolate_id:
+    :param data:
+    :param user_id:
+    :return:
+    """
     segment = data.get("segment")
 
     # Update POST data to make sequence document.
@@ -66,10 +78,10 @@ async def edit(db, otu_id: str, isolate_id: str, sequence_id: str, data: dict, u
     :return: the updated sequence document
 
     """
-    update = {
-        **data,
-        "sequence": data["sequence"].replace(" ", "").replace("\n", "")
-    }
+    update = dict(data)
+
+    if "sequence" in update:
+        update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
     old = await virtool.otus.db.join(db, otu_id)
 
