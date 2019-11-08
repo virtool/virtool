@@ -82,9 +82,6 @@ class TestBLAST:
         else:
             assert not m_check_rid.called
 
-        import pprint
-        pprint.pprint(await dbi.analyses.find_one())
-
         document["results"][1]["blast"] = {
             "error": error,
             "interval": 3,

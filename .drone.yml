@@ -10,16 +10,16 @@ steps:
 
   - name: test
     image: virtool/external-tools:0.1.2
-    
+
     commands:
       - pip install -qr requirements.txt
-      - pytest -x --aiohttp-loop uvloop --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
-      
+      - pytest -v --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
+
   - name: coverage
     image: python:3.6-alpine
     environment:
       CODACY_PROJECT_TOKEN:
-        from_secret: CODACY_PROJECT_TOKEN        
+        from_secret: CODACY_PROJECT_TOKEN
     commands:
       - apk add git
       - pip install codacy-coverage
@@ -44,9 +44,9 @@ steps:
     image: node:10-alpine
     commands:
       - cd client
-      - npm i      
+      - npm i
       - npx jest --coverage
-      
+
   - name: coverage
     image: node:10-alpine
     environment:

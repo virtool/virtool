@@ -23,6 +23,37 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, dbi
     assert result == return_value
 
 
+@pytest.mark.parametrize("abbreviation", ["", "TMV"])
+async def test_create(abbreviation, mocker, snapshot, dbi, test_random_alphanumeric, static_time):
+    await virtool.otus.db.create(
+        dbi,
+        "foo",
+        "Bar",
+        abbreviation,
+        "bob"
+    )
+
+    snapshot.assert_match(await dbi.otus.find_one())
+    snapshot.assert_match(await dbi.history.find_one())
+
+
+@pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
+async def test_edit(abbreviation, snapshot, dbi, test_otu, static_time, test_random_alphanumeric):
+    await dbi.otus.insert_one(test_otu)
+
+    await virtool.otus.db.edit(
+        dbi,
+        "6116cba1",
+        "Foo Virus",
+        abbreviation,
+        None,
+        "bob"
+    )
+
+    snapshot.assert_match(await dbi.otus.find_one(), "otu")
+    snapshot.assert_match(await dbi.history.find_one(), "history")
+
+
 @pytest.mark.parametrize("in_db", [True, False])
 @pytest.mark.parametrize("pass_document", [True, False])
 async def test_join(in_db, pass_document, mocker, dbi, test_otu, test_sequence, test_merged_otu):

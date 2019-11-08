@@ -107,7 +107,7 @@ class TestCreate:
 
     @pytest.mark.parametrize("exists", [True, False])
     @pytest.mark.parametrize("abbreviation", [None, "", "TMV"])
-    async def test(self, exists, abbreviation, mocker, spawn_client, test_merged_otu, check_ref_right, resp_is):
+    async def test(self, exists, abbreviation, mocker, snapshot, spawn_client, check_ref_right, resp_is, static_time, test_random_alphanumeric):
         """
         Test that a valid request results in the creation of a otu document and a ``201`` response.
 
@@ -120,19 +120,7 @@ class TestCreate:
             })
 
         # Pass ref exists check.
-        mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(True))
-
-        # Pass name and abbreviation check.
-        m_check_name_and_abbreviation = mocker.patch(
-            "virtool.otus.db.check_name_and_abbreviation",
-            make_mocked_coro(False)
-        )
-
-        m_add_history = mocker.patch("virtool.history.db.add", make_mocked_coro({"_id": "change.1"}))
-
-        m_compose = mocker.patch("virtool.history.utils.compose_create_description", return_value="Test description")
-
-        m_create = mocker.patch("virtool.otus.db.create", make_mocked_coro(test_merged_otu))
+        mocker.patch("virtool.db.utils.id_exists", make_mocked_coro(False))
 
         data = {
             "name": "Tobacco mosaic virus"
@@ -152,36 +140,12 @@ class TestCreate:
             return
 
         assert resp.status == 201
+        assert resp.headers["Location"] == "/api/otus/9pfsom1b"
 
-        assert resp.headers["Location"] == "/api/otus/" + test_merged_otu["_id"]
+        snapshot.assert_match(await resp.json(), "response")
+        snapshot.assert_match(await client.db.otus.find_one(), "otu")
+        snapshot.assert_match(await client.db.history.find_one(), "history")
 
-        # Abbreviation defaults to empty string for OTU creation.
-        m_check_name_and_abbreviation.assert_called_with(
-            client.db,
-            "foo",
-            "Tobacco mosaic virus",
-            abbreviation or ""
-        )
-
-        m_create.assert_called_with(
-            client.db,
-            "foo",
-            "Tobacco mosaic virus",
-            abbreviation or ""
-        )
-
-        m_compose.assert_called_with(test_merged_otu)
-
-        test_merged_otu["abbreviation"] = "PVF"
-
-        m_add_history.assert_called_with(
-            client.db,
-            "create",
-            None,
-            test_merged_otu,
-            "Test description",
-            "test"
-        )
 
     @pytest.mark.parametrize("error,message", [
         (None, None),
@@ -1156,7 +1120,7 @@ class TestEditIsolate:
 
 class TestSetAsDefault:
 
-    async def test(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history):
+    async def test(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, test_random_alphanumeric, static_time):
         """
         Test changing the default isolate results in the correct changes, history, and response.
 
@@ -1180,46 +1144,13 @@ class TestSetAsDefault:
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "id": "test",
-            "source_type": "isolate",
-            "source_name": "b",
-            "default": True,
-            "sequences": []
-        }
-
         new = await virtool.otus.db.join(client.db, "6116cba1")
 
-        assert new["isolates"] == [
-            {
-                "id": "cab8b360",
-                "default": False,
-                "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
-            },
-            {
-                "id": "test",
-                "source_name": "b",
-                "source_type": "isolate",
-                "default": True,
-                "sequences": []
-            }
-        ]
+        snapshot.assert_match(await resp.json(), "response")
+        snapshot.assert_match(new, "joined")
+        snapshot.assert_match(await client.db.history.find_one(), "history")
 
-        for joined in (test_otu, new):
-            for isolate in joined["isolates"]:
-                isolate["sequences"] = []
-
-        assert test_add_history.call_args[0][1:] == (
-            "set_as_default",
-            test_otu,
-            new,
-            "Set Isolate b as default",
-            "test"
-        )
-
-    async def test_no_change(self, spawn_client, check_ref_right, resp_is, test_otu, test_add_history):
+    async def test_no_change(self, snapshot, spawn_client, check_ref_right, resp_is, test_otu, static_time, test_random_alphanumeric):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
         Specifically no increment in version.
@@ -1244,36 +1175,13 @@ class TestSetAsDefault:
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "id": "cab8b360",
-            "default": True,
-            "source_type": "isolate",
-            "source_name": "8816-v2",
-            "sequences": []
-        }
+        snapshot.assert_match(await resp.json(), "response")
 
         new = await virtool.otus.db.join(client.db, "6116cba1")
 
-        assert new["version"] == 0
+        snapshot.assert_match(new, "joined")
 
-        assert new["isolates"] == [
-            {
-                "id": "cab8b360",
-                "default": True,
-                "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
-            },
-            {
-                "id": "test",
-                "source_name": "b",
-                "source_type": "isolate",
-                "default": False,
-                "sequences": []
-            }
-        ]
-
-        assert not test_add_history.called
+        assert await client.db.history.count() == 0
 
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
