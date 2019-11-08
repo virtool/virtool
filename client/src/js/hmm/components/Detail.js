@@ -1,10 +1,9 @@
 import { get, map } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
-import { Badge, Label, LoadingPlaceholder, NotFound, Panel, Table, ViewHeader } from "../../base";
+import { Badge, BoxGroup, Label, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
 
@@ -44,6 +43,20 @@ const ClusterTable = styled(Table)`
     tbody tr {
         display: table;
         table-layout: fixed;
+    }
+`;
+
+const TaxonomyGrid = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 15px;
+
+    @media (max-width: 720px) {
+        grid-template-columns: 1fr;
+    }
+
+    h5 {
+        font-weight: bold;
     }
 `;
 
@@ -122,7 +135,7 @@ class HMMDetail extends React.Component {
                     <strong>Cluster Members</strong> <Badge>{this.props.detail.entries.length}</Badge>
                 </h5>
 
-                <Panel>
+                <BoxGroup>
                     <ClusterTable>
                         <thead>
                             <tr>
@@ -133,22 +146,18 @@ class HMMDetail extends React.Component {
                         </thead>
                         <tbody>{clusterMembers}</tbody>
                     </ClusterTable>
-                </Panel>
+                </BoxGroup>
 
-                <Row>
-                    <Col md={6}>
-                        <h5>
-                            <strong>Families</strong>
-                        </h5>
+                <TaxonomyGrid>
+                    <div>
+                        <h5>Families</h5>
                         <HMMTaxonomy counts={this.props.detail.families} />
-                    </Col>
-                    <Col md={6}>
-                        <h5>
-                            <strong>Genera</strong>
-                        </h5>
+                    </div>
+                    <div>
+                        <h5>Genera</h5>
                         <HMMTaxonomy counts={this.props.detail.genera} />
-                    </Col>
-                </Row>
+                    </div>
+                </TaxonomyGrid>
             </div>
         );
     }

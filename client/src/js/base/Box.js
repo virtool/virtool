@@ -23,6 +23,14 @@ export const BoxGroup = styled(Box)`
         border-top: 1px solid #dddddd;
         margin: 0;
 
+        &:first-child {
+            border-top: none;
+        }
+
+        tbody {
+            border-top: none;
+        }
+
         td,
         th {
             min-width: 0;
