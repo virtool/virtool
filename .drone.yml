@@ -13,7 +13,7 @@ steps:
 
     commands:
       - pip install -qr requirements.txt
-      - pytest -v --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
+      - pytest -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
   - name: coverage
     image: python:3.6-alpine
