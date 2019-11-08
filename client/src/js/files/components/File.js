@@ -7,27 +7,27 @@ import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
-const NameCreationSize = styled(ListGroupItem)`
+const StyledFile = styled(ListGroupItem)`
     display: flex;
     justify-content: space-between;
 `;
 
-const NameCreation = styled.div`
-    display: flex;
+const FileHeader = styled.div`
     align-items: flex-start;
+    display: flex;
+
     @media (max-width: 1080px) {
         flex-direction: column;
     }
 `;
 
 const Creation = styled.div`
-    display: flex;
+    font-size: 12px;
     margin-left: 9px;
     margin-top: 1px;
-    font-size: 12px;
+
     @media (max-width: 1080px) {
-        margin-left: 0;
-        margin-top: 0;
+        margin: 0;
     }
 `;
 
@@ -40,27 +40,24 @@ export const File = ({ canRemove, entry, onRemove }) => {
 
     if (user === null) {
         creation = (
-            <span>
+            <React.Fragment>
                 Retrieved <RelativeTime time={uploaded_at} />
-            </span>
+            </React.Fragment>
         );
     } else {
         creation = (
-            <span>
-                <span style={{ fontSize: 12 }}>
-                    Uploaded <RelativeTime time={uploaded_at} />
-                </span>{" "}
-                by {user.id}
-            </span>
+            <React.Fragment>
+                Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
+            </React.Fragment>
         );
     }
 
     return (
-        <NameCreationSize className="spaced">
-            <NameCreation>
+        <StyledFile className="spaced">
+            <FileHeader>
                 <strong>{name}</strong>
                 <Creation>{creation}</Creation>
-            </NameCreation>
+            </FileHeader>
             <div>
                 {byteSize(size)}
                 {canRemove ? (
@@ -73,7 +70,7 @@ export const File = ({ canRemove, entry, onRemove }) => {
                     />
                 ) : null}
             </div>
-        </NameCreationSize>
+        </StyledFile>
     );
 };
 

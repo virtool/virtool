@@ -1,33 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<File /> should render 1`] = `
-<File__NameCreationSize
+<File__StyledFile
   className="spaced"
 >
-  <File__NameCreation>
+  <File__FileHeader>
     <strong>
       foo.fa
     </strong>
     <File__Creation>
-      <span>
-        <span
-          style={
-            Object {
-              "fontSize": 12,
-            }
-          }
-        >
-          Uploaded 
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-        </span>
-         
-        by 
-        bill
-      </span>
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      bill
     </File__Creation>
-  </File__NameCreation>
+  </File__FileHeader>
   <div>
     <Icon
       bsStyle="danger"
@@ -44,58 +33,45 @@ exports[`<File /> should render 1`] = `
       }
     />
   </div>
-</File__NameCreationSize>
+</File__StyledFile>
 `;
 
 exports[`<File /> should render when [canRemove=false] 1`] = `
-<File__NameCreationSize
+<File__StyledFile
   className="spaced"
 >
-  <File__NameCreation>
+  <File__FileHeader>
     <strong>
       foo.fa
     </strong>
     <File__Creation>
-      <span>
-        <span
-          style={
-            Object {
-              "fontSize": 12,
-            }
-          }
-        >
-          Uploaded 
-          <RelativeTime
-            time="2018-02-14T17:12:00.000000Z"
-          />
-        </span>
-         
-        by 
-        bill
-      </span>
+      Uploaded 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
+       by 
+      bill
     </File__Creation>
-  </File__NameCreation>
+  </File__FileHeader>
   <div />
-</File__NameCreationSize>
+</File__StyledFile>
 `;
 
 exports[`<File /> should render when [user=null] 1`] = `
-<File__NameCreationSize
+<File__StyledFile
   className="spaced"
 >
-  <File__NameCreation>
+  <File__FileHeader>
     <strong>
       foo.fa
     </strong>
     <File__Creation>
-      <span>
-        Retrieved 
-        <RelativeTime
-          time="2018-02-14T17:12:00.000000Z"
-        />
-      </span>
+      Retrieved 
+      <RelativeTime
+        time="2018-02-14T17:12:00.000000Z"
+      />
     </File__Creation>
-  </File__NameCreation>
+  </File__FileHeader>
   <div>
     <Icon
       bsStyle="danger"
@@ -112,5 +88,5 @@ exports[`<File /> should render when [user=null] 1`] = `
       }
     />
   </div>
-</File__NameCreationSize>
+</File__StyledFile>
 `;
