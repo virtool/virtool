@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
-import { Badge, BoxGroup, Label, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import { Badge, BoxGroup, BoxGroupHeader, Label, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
 
@@ -131,11 +131,12 @@ class HMMDetail extends React.Component {
                     </tbody>
                 </Table>
 
-                <h5>
-                    <strong>Cluster Members</strong> <Badge>{this.props.detail.entries.length}</Badge>
-                </h5>
-
                 <BoxGroup>
+                    <BoxGroupHeader>
+                        <h2>
+                            Cluster Members <Badge>{this.props.detail.entries.length}</Badge>
+                        </h2>
+                    </BoxGroupHeader>
                     <ClusterTable>
                         <thead>
                             <tr>
@@ -149,14 +150,8 @@ class HMMDetail extends React.Component {
                 </BoxGroup>
 
                 <TaxonomyGrid>
-                    <div>
-                        <h5>Families</h5>
-                        <HMMTaxonomy counts={this.props.detail.families} />
-                    </div>
-                    <div>
-                        <h5>Genera</h5>
-                        <HMMTaxonomy counts={this.props.detail.genera} />
-                    </div>
+                    <HMMTaxonomy title="Families" counts={this.props.detail.families} />
+                    <HMMTaxonomy title="Genera" counts={this.props.detail.genera} />
                 </TaxonomyGrid>
             </div>
         );
