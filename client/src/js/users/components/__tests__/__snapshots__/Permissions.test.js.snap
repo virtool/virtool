@@ -1,72 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UserPermissions /> renders correctly 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        key="test_create"
-        md={3}
-        xs={12}
-      >
-        <ListGroupItem
-          allowFocus={false}
-          bsStyle="success"
-          style={
-            Object {
-              "marginRight": "3px",
-            }
-          }
-        >
-          <code>
-            test_create
-          </code>
-           
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="check"
-            pullRight={true}
-          />
-        </ListGroupItem>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        key="test_delete"
-        md={3}
-        xs={12}
-      >
-        <ListGroupItem
-          allowFocus={false}
-          bsStyle="danger"
-          style={
-            Object {
-              "marginRight": "3px",
-            }
-          }
-        >
-          <code>
-            test_delete
-          </code>
-           
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="times"
-            pullRight={true}
-          />
-        </ListGroupItem>
-      </Col>
-    </Row>
-  </PanelBody>
-</Panel>
+exports[`<UserPermissions /> should render 1`] = `
+<Box>
+  <Row
+    bsClass="row"
+    componentClass="div"
+  />
+</Box>
 `;
