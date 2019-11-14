@@ -12,8 +12,7 @@
 import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
-import { Icon, ListGroupItem } from "../../base";
+import { Row } from "react-bootstrap";
 import { Box } from "../../base/Box";
 import { PermissionItem } from "./Permission";
 

@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import { Col, Row } from "react-bootstrap";
 import { Icon, ListGroupItem } from "../../base";
 
 const PermissionItems = styled.div`

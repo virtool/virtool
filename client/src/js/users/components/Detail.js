@@ -31,7 +31,7 @@ import UserGroups from "./Groups";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 
-export class UserItem extends React.Component {
+export class UserDetail extends React.Component {
     componentDidMount() {
         this.props.onGetUser(this.props.match.params.userId);
 
@@ -153,7 +153,7 @@ export class UserItem extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     detail: state.users.detail,
     activeUser: state.account.id,
     activeUserIsAdmin: state.account.administrator,
@@ -162,7 +162,7 @@ const mapStateToProps = state => ({
     error: get(state, "errors.GET_USER_ERROR.message", "")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onGetUser: userId => {
         dispatch(getUser(userId));
     },
@@ -191,4 +191,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(UserItem);
+)(UserDetail);
