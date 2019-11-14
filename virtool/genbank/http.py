@@ -1,3 +1,5 @@
+import Bio.SeqIO
+import io
 import logging
 import string
 
@@ -47,27 +49,20 @@ async def fetch(settings, session, accession):
 
             return None
 
+        gb = Bio.SeqIO.read(io.StringIO(body), "gb")
+
         data = {
+            "accession": gb.id,
+            "definition": gb.description,
+            "sequence": str(gb.seq),
             "host": ""
         }
 
-        for line in body.split("\n"):
-
-            if line.startswith("VERSION"):
-                data["accession"] = line.replace("VERSION", "").lstrip(" ")
-
-            if line.startswith("DEFINITION"):
-                data["definition"] = line.replace("DEFINITION", "").lstrip(" ")
-
-            if "/host=" in line:
-                data["host"] = line.lstrip(" ").replace("/host=", "").replace('"', "")
-
-            # Extract sequence
-            sequence_field = body.split("ORIGIN")[1].lower()
-
-            for char in [" ", "/", "\n"] + list(string.digits):
-                sequence_field = sequence_field.replace(char, "")
-
-            data["sequence"] = sequence_field.upper()
+        for feature in gb.features:
+            if feature.type == "source":
+                try:
+                    data["host"] = feature.qualifiers["host"][0]
+                except (IndexError, KeyError):
+                    data["host"] = ""
 
         return data

@@ -19,7 +19,7 @@ UPDATED_VTA_PATH = os.path.join(BASE_PATH, "updated.vta")
 VTA_PATH = os.path.join(BASE_PATH, "test.vta")
 
 
-@pytest.fixture("session")
+@pytest.fixture(scope="session")
 def expected_em():
     with open(EM_PATH, "rb") as handle:
         em_dict = pickle.load(handle)
@@ -27,7 +27,7 @@ def expected_em():
     return em_dict
 
 
-@pytest.fixture("session")
+@pytest.fixture(scope="session")
 def expected_scores():
     with open(SCORES, "rb") as handle:
         scores = pickle.load(handle)
