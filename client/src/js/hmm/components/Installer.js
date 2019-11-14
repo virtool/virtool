@@ -7,7 +7,7 @@ import { checkAdminOrPermission } from "../../utils/utils";
 
 import { installHMMs } from "../actions";
 
-class HMMInstall extends React.Component {
+class HMMInstaller extends React.Component {
     handleInstall = () => {
         this.props.onInstall(this.props.releaseId);
     };
@@ -107,4 +107,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(HMMInstall);
+)(HMMInstaller);

@@ -15,24 +15,25 @@ describe("<UsersList />", () => {
         };
     });
 
-    it("renders correctly", () => {
+    it("should render", () => {
         const wrapper = shallow(<UsersList {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("passes renderRow to <ScrollList />", () => {
+    it("should call onLoadNextPage() on mount", () => {
         const wrapper = mount(<UsersList {...props} />);
-        const renderRow = wrapper.find(ScrollList).prop("onLoadNextPage")(8);
-        expect(wrapper.renderRow).toBe(renderRow);
+        wrapper.find(ScrollList).prop("onLoadNextPage")(1);
     });
 
-    it("onLoadNextPage is called correctly", () => {
+    it("should call onLoadNextPage() when paged", () => {
         const wrapper = mount(<UsersList {...props} />);
         wrapper.find(ScrollList).prop("onLoadNextPage")(8);
         expect(props.onLoadNextPage).toHaveBeenCalledWith("foo", 8);
     });
+});
 
-    it("mapStateToProps returns props", () => {
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
         const users = {
             documents: [{ id: "bob" }],
             page: 2,
@@ -45,8 +46,10 @@ describe("<UsersList />", () => {
 
         expect(props).toEqual(users);
     });
+});
 
-    it("mapDispatchToProps returns onLoadNextPage", () => {
+describe("mapDispatchToProps()", () => {
+    it("should return onLoadNextPage() in props", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         const term = "foo";

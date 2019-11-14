@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UserItem /> renders correctly 1`] = `
+exports[`<UserDetail /> should render 1`] = `
 <div>
   <Flex
     alignContent="stretch"
@@ -17,7 +17,7 @@ exports[`<UserItem /> renders correctly 1`] = `
       wrap="nowrap"
     >
       <Identicon
-        hash="randomhashof15c"
+        hash="foo"
         size={64}
       />
       <FlexItem
@@ -28,7 +28,9 @@ exports[`<UserItem /> renders correctly 1`] = `
         shrink={1}
       >
         <h5>
-          <strong />
+          <strong>
+            foo
+          </strong>
         </h5>
       </FlexItem>
       <FlexItem
@@ -37,7 +39,15 @@ exports[`<UserItem /> renders correctly 1`] = `
         grow={0}
         pad={10}
         shrink={1}
-      />
+      >
+        <Icon
+          bsStyle="primary"
+          faStyle="fas"
+          fixedWidth={false}
+          name="user-shield"
+          pullRight={false}
+        />
+      </FlexItem>
     </Flex>
     <Flex
       alignContent="stretch"
@@ -74,19 +84,41 @@ exports[`<UserItem /> renders correctly 1`] = `
     <label>
       Groups
     </label>
-    <Connect(UserGroups) />
+    <Connect(UserGroups)
+      memberGroups="bar"
+      userId="foo"
+    />
     <label>
       Primary Group
     </label>
     <InputError
       onChange={[Function]}
       type="select"
+      value="Bar"
     >
       <option
         key="none"
         value="none"
       >
         None
+      </option>
+      <option
+        key="b"
+        value="b"
+      >
+        B
+      </option>
+      <option
+        key="a"
+        value="a"
+      >
+        A
+      </option>
+      <option
+        key="r"
+        value="r"
+      >
+        R
       </option>
     </InputError>
     <Flex
@@ -105,32 +137,12 @@ exports[`<UserItem /> renders correctly 1`] = `
         Change group membership to modify permissions
       </small>
     </Flex>
-    <UserPermissions />
-    <label>
-      User Role
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="Limited"
-    >
-      <option
-        key="admin"
-        value="Administrator"
-      >
-        Administrator
-      </option>
-      <option
-        key="limit"
-        value="Limited"
-      >
-        Limited
-      </option>
-    </InputError>
-    <RemoveBanner
-      buttonText="Delete"
-      message="Click the Delete button to permanently remove this user."
-      onClick={[Function]}
+    <UserPermissions
+      permissions={
+        Object {
+          "foo": "bar",
+        }
+      }
     />
   </div>
 </div>

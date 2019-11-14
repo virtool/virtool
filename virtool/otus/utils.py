@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def evaluate_changes(data, document):
-    name = data.get("name", None)
-    abbreviation = data.get("abbreviation", None)
-    schema = data.get("schema", None)
+    name = data.get("name")
+    abbreviation = data.get("abbreviation")
+    schema = data.get("schema")
 
     try:
         name = name.strip()

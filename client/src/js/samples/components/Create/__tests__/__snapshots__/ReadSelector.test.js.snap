@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReadSelector /> should render 1`] = `
+<div>
+  <ReadSelector__ReadSelectorHeader>
+    <strong>
+      Read Files
+    </strong>
+    <small>
+      2
+       of 
+      1
+       selected
+    </small>
+  </ReadSelector__ReadSelectorHeader>
+  <Box>
+    <Toolbar>
+      <FormGroup
+        bsClass="form-group"
+      >
+        <InputGroup
+          bsClass="input-group"
+        >
+          <Input
+            autoComplete={true}
+            formGroupStyle={Object {}}
+            onChange={[Function]}
+            placeholder="Filename"
+            type="text"
+            value=""
+          />
+          <InputGroupButton
+            bsClass="input-group-btn"
+          >
+            <Button
+              bsStyle="default"
+              onClick={[Function]}
+              pullRight={false}
+              tip="Clear"
+              tipPlacement="top"
+              type="button"
+            >
+              <Icon
+                faStyle="fas"
+                fixedWidth={false}
+                name="redo"
+                pullRight={false}
+              />
+            </Button>
+          </InputGroupButton>
+        </InputGroup>
+      </FormGroup>
+      <Button
+        bsStyle="default"
+        icon="retweet"
+        onClick={[Function]}
+        pullRight={false}
+        tip="Swap Orientations"
+        tipPlacement="top"
+        type="button"
+      />
+    </Toolbar>
+    <ReadSelector__ReadSelectorList>
+      <div
+        className="list-group"
+      >
+        <ReadItem
+          id="foo"
+          index={0}
+          key="foo"
+          name="bar"
+          onSelect={[Function]}
+          selected={true}
+          size={1024}
+        />
+      </div>
+    </ReadSelector__ReadSelectorList>
+    <div
+      className="input-form-error"
+    >
+      <div
+        className="input-error-message"
+      >
+        foo
+      </div>
+    </div>
+  </Box>
+</div>
+`;

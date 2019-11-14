@@ -13,8 +13,33 @@ import PropTypes from "prop-types";
 import React from "react";
 import { FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Button, Icon, Input, ListGroupItem, Panel } from "../../../base";
+import styled from "styled-components";
+
+import { Button, Icon, Input, ListGroupItem } from "../../../base";
+import { Box } from "../../../base/Box";
+import { Toolbar } from "../../../base/Toolbar";
+
 import ReadItem from "./ReadItem";
+
+const ReadSelectorHeader = styled.h5`
+    display: flex;
+    align-items: center;
+
+    strong {
+        flex: 1 0 auto;
+    }
+    small {
+        color: grey;
+    }
+`;
+const ReadSelectorList = styled.div`
+    max-height: 400px;
+    overflow-y: auto;
+
+    & > div {
+        margin-bottom: 0;
+    }
+`;
 
 export default class ReadSelector extends React.PureComponent {
     constructor(props) {
@@ -28,7 +53,8 @@ export default class ReadSelector extends React.PureComponent {
         files: PropTypes.arrayOf(PropTypes.object),
         error: PropTypes.string,
         selected: PropTypes.arrayOf(PropTypes.string),
-        onSelect: PropTypes.func
+        onSelect: PropTypes.func,
+        handleSelect: PropTypes.func
     };
 
     componentDidUpdate(prevProps) {
@@ -37,7 +63,7 @@ export default class ReadSelector extends React.PureComponent {
         }
     }
 
-    onSelect = selectedId => {
+    handleSelect = selectedId => {
         let selected;
 
         if (includes(this.props.selected, selectedId)) {
@@ -74,7 +100,9 @@ export default class ReadSelector extends React.PureComponent {
 
         let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file => {
             const index = indexOf(this.props.selected, file.id);
-            return <ReadItem key={file.id} {...file} index={index} selected={index > -1} onSelect={this.onSelect} />;
+            return (
+                <ReadItem key={file.id} {...file} index={index} selected={index > -1} onSelect={this.handleSelect} />
+            );
         });
 
         if (!fileComponents.length) {
@@ -95,49 +123,44 @@ export default class ReadSelector extends React.PureComponent {
 
         return (
             <div>
-                <h5 style={{ display: "flex", alignItems: "center" }}>
-                    <strong style={{ flex: "1 0 auto" }}>Read Files</strong>
-                    <small className="text-muted pull-right">
+                <ReadSelectorHeader>
+                    <strong>Read Files</strong>
+                    <small>
                         {this.props.selected.length} of {fileComponents.length} selected
                     </small>
-                </h5>
+                </ReadSelectorHeader>
 
-                <Panel bsStyle={error ? "danger" : "default"} ref={node => (this.panelNode = node)}>
-                    <Panel.Body>
-                        <div className="toolbar">
-                            <FormGroup>
-                                <InputGroup>
-                                    <Input
-                                        type="text"
-                                        placeholder="Filename"
-                                        value={this.state.filter}
-                                        onChange={e => this.setState({ filter: e.target.value })}
-                                    />
-                                    <InputGroup.Button>
-                                        <Button type="button" tip="Clear" onClick={this.reset}>
-                                            <Icon name="redo" />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </FormGroup>
-                            <Button
-                                type="button"
-                                icon="retweet"
-                                tip="Swap Orientations"
-                                tipPlacement="top"
-                                onClick={this.swap}
-                            />
-                        </div>
+                <Box>
+                    <Toolbar>
+                        <FormGroup>
+                            <InputGroup>
+                                <Input
+                                    type="text"
+                                    placeholder="Filename"
+                                    value={this.state.filter}
+                                    onChange={e => this.setState({ filter: e.target.value })}
+                                />
+                                <InputGroup.Button>
+                                    <Button type="button" tip="Clear" onClick={this.reset}>
+                                        <Icon name="redo" />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                        </FormGroup>
+                        <Button
+                            type="button"
+                            icon="retweet"
+                            tip="Swap Orientations"
+                            tipPlacement="top"
+                            onClick={this.swap}
+                        />
+                    </Toolbar>
+                    <ReadSelectorList>
+                        <div className="list-group">{fileComponents}</div>
+                    </ReadSelectorList>
 
-                        <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                            <div className="list-group" style={{ border: "none", marginBottom: 0 }}>
-                                {fileComponents}
-                            </div>
-                        </div>
-
-                        {errorMessage}
-                    </Panel.Body>
-                </Panel>
+                    {errorMessage}
+                </Box>
             </div>
         );
     }

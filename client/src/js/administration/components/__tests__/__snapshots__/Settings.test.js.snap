@@ -69,7 +69,7 @@ exports[`<Settings /> should render when [props.loading=false] 1`] = `
           "$$typeof": Symbol(react.memo),
           "WrappedComponent": [Function],
           "compare": null,
-          "displayName": "Connect(UserItem)",
+          "displayName": "Connect(UserDetail)",
           "type": [Function],
         }
       }

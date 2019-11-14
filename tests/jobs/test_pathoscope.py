@@ -28,7 +28,7 @@ FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
 HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
 
 
-@pytest.fixture("session")
+@pytest.fixture(scope="session")
 def otu_resource():
     map_dict = dict()
     otus = dict()

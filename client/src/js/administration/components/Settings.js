@@ -4,7 +4,7 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import { LoadingPlaceholder, TabLink, Tabs, ViewHeader, WideContainer } from "../../base";
 import Updates from "../../updates/components/Viewer";
 
-import User from "../../users/components/User";
+import UserDetail from "../../users/components/Detail";
 import Users from "../../users/components/Users";
 import { mapSettingsStateToProps } from "../mappers";
 import { ServerSettings } from "./Server";
@@ -21,7 +21,7 @@ export const Settings = ({ loading }) => {
                 <Route path="/administration/settings" component={ServerSettings} />
                 <Route path="/administration/users" component={Users} exact />
                 <Route path="/administration/updates" component={Updates} />
-                <Route path="/administration/users/:userId" component={User} />
+                <Route path="/administration/users/:userId" component={UserDetail} />
             </Switch>
         );
     }
