@@ -1,15 +1,18 @@
 import UserPermissions from "../Permissions";
 
 describe("<UserPermissions />", () => {
-    it("renders correctly", () => {
-        const props = {
-            permissions: {
+    let props;
+    beforeEach(() => {
+        props = {
+            premissions: {
                 test_create: true,
                 test_delete: false
             }
         };
-        const wrapper = shallow(<UserPermissions {...props} />);
+    });
 
+    it("should render", () => {
+        const wrapper = shallow(<UserPermissions {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<PermissionItem /> should render 1`] = `
+<Permission__PermissionItems>
+  <ListGroupItem
+    allowFocus={false}
+    bsStyle="success"
+  >
+    <code>
+      <Component />
+    </code>
+     
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="check"
+      pullRight={true}
+    />
+  </ListGroupItem>
+</Permission__PermissionItems>
+`;

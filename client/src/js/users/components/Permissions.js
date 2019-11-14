@@ -12,32 +12,21 @@
 import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
-import { Icon, ListGroupItem, Panel } from "../../base";
+import { Row } from "react-bootstrap";
+import { Box } from "../../base/Box";
+import { PermissionItem } from "./Permission";
 
 const UserPermissions = ({ permissions }) => {
     const permissionComponents = transform(
         permissions,
-        (acc, value, permission) => {
-            acc.push(
-                <Col key={permission} xs={12} md={3}>
-                    <ListGroupItem bsStyle={value ? "success" : "danger"} style={{ marginRight: "3px" }}>
-                        <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
-                    </ListGroupItem>
-                </Col>
-            );
-
-            return acc;
-        },
+        (acc, value, permission) => acc.push(<PermissionItem key={permission} permission={permission} value={value} />),
         []
     );
 
     return (
-        <Panel>
-            <Panel.Body>
-                <Row>{permissionComponents}</Row>
-            </Panel.Body>
-        </Panel>
+        <Box>
+            <Row>{permissionComponents}</Row>
+        </Box>
     );
 };
 
