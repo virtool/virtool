@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UsersList /> renders correctly 1`] = `
+exports[`<UsersList /> should render 1`] = `
 <ScrollList
   documents={Array []}
   onLoadNextPage={[Function]}
