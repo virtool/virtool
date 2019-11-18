@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<CreateUser /> renders correctly 1`] = `
+exports[`<CreateUser /> should render 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -25,93 +25,52 @@ exports[`<CreateUser /> renders correctly 1`] = `
   onHide={[Function]}
   renderBackdrop={[Function]}
   restoreFocus={true}
-  show={true}
+  show={false}
 >
   <ModalHeader
     bsClass="modal-header"
     closeButton={true}
     closeLabel="Close"
-    onHide={[Function]}
   >
     Create User
   </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={12}
-        >
-          <InputError
-            error=""
-            label="Username"
-            name="userId"
-            onChange={[Function]}
-            value=""
-          />
-        </Col>
-      </Row>
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={6}
-        >
-          <InputError
-            error=""
-            label="Password"
-            name="password"
-            onChange={[Function]}
-            type="password"
-            value=""
-          />
-        </Col>
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={6}
-        >
-          <InputError
-            error=""
-            label="Confirm"
-            name="confirm"
-            onChange={[Function]}
-            type="password"
-            value=""
-          />
-        </Col>
-      </Row>
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={12}
-        >
-          <Checkbox
-            checked={false}
-            label="Force user to reset password on login"
-            onClick={[Function]}
-            partial={false}
-            pullRight={false}
-          />
-        </Col>
-      </Row>
-    </ModalBody>
+    <Create__CreateUserContainer>
+      <InputError
+        error="foo"
+        label="Username"
+        name="userId"
+        onChange={[Function]}
+        value=""
+      />
+      <Create__CreateUserPasswords>
+        <InputError
+          error=""
+          label="Password"
+          name="password"
+          onChange={[Function]}
+          type="password"
+          value=""
+        />
+        <InputError
+          error=""
+          label="Confirm"
+          name="confirm"
+          onChange={[Function]}
+          type="password"
+          value=""
+        />
+      </Create__CreateUserPasswords>
+      <Checkbox
+        checked={false}
+        label="Force user to reset password on login"
+        onClick={[Function]}
+        partial={false}
+        pullRight={false}
+      />
+    </Create__CreateUserContainer>
     <ModalFooter
       bsClass="modal-footer"
       componentClass="div"
