@@ -1,42 +1,57 @@
 import { get, map } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { Col, ListGroup, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
-import { Badge, FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
+import styled from "styled-components";
+import { Badge, Box, BoxGroup, Icon, SectionHeader } from "../../../base";
 
-import { checkRefRight, formatIsolateName } from "../../../utils/utils";
+import { checkRefRight } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
+import { IsolateButton } from "./IsolateButton";
 import IsolateDetail from "./IsolateDetail";
-
-export class IsolateButton extends React.Component {
-    handleSelectIsolate = () => {
-        this.props.onClick(this.props.id);
-    };
-
-    render() {
-        return (
-            <ListGroupItem className="isolate-item" active={this.props.active} onClick={this.handleSelectIsolate}>
-                <div className="isolate-item-name">
-                    <span>{formatIsolateName(this.props)}</span>
-                </div>
-                <div className="isolate-item-icon">
-                    <span>
-                        {this.props.default ? (
-                            <Icon className="pull-right" name="star" tip="Set as Default" tipPlacement="left" />
-                        ) : null}
-                    </span>
-                </div>
-            </ListGroupItem>
-        );
-    }
-}
 
 const StyledIsolateEditor = styled.div`
     h4 > a {
         font-size: 14px;
     }
+`;
+
+const IsolateEditorContainer = styled.div`
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: minmax(230px, 1fr) 3fr;
+`;
+
+const IsolateEditorEmpty = styled(Box)`
+    text-align: center;
+    padding: 50px 0;
+`;
+
+const IsolateEditorHeader = styled(SectionHeader)`
+    align-items: center;
+    display: flex;
+
+    strong {
+        padding-right: 5px;
+    }
+
+    a {
+        margin-left: auto;
+        font-size: 14px;
+        font-weight: bold;
+    }
+`;
+
+const IsolateEditorListContainer = styled(Box)`
+    height: 420px;
+    padding: 0;
+    overflow-y: scroll;
+`;
+
+const IsolateEditorList = styled(BoxGroup)`
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 0;
 `;
 
 const IsolateEditor = props => {
@@ -49,41 +64,34 @@ const IsolateEditor = props => {
         />
     ));
 
-    let noIsolatesFound;
+    const addIsolateLink = props.canModify ? (
+        <a href="#" onClick={props.onShowAddIsolate}>
+            Add Isolate
+        </a>
+    ) : null;
 
-    if (!isolateComponents.length) {
-        noIsolatesFound = (
-            <Col md={12}>
-                <NoneFound noun="isolates" />
-            </Col>
+    if (isolateComponents.length === 0) {
+        return (
+            <IsolateEditorEmpty>
+                <Icon name="flask" /> <strong>No Isolates</strong>. {addIsolateLink}.
+            </IsolateEditorEmpty>
         );
     }
 
     return (
         <StyledIsolateEditor>
-            <h4 style={{ display: "flex", alignItems: "center" }} className="section-header">
-                <FlexItem grow={0} shrink={0}>
-                    <strong>Isolates</strong>
-                </FlexItem>
+            <IsolateEditorHeader>
+                <strong>Isolates</strong>
+                <Badge>{isolateComponents.length}</Badge>
+                {addIsolateLink}
+            </IsolateEditorHeader>
 
-                <FlexItem grow={1} pad={5}>
-                    <Badge>{isolateComponents.length}</Badge>
-                </FlexItem>
-
-                {props.canModify ? (
-                    <a href="#" onClick={props.onShowAddIsolate}>
-                        Add Isolate
-                    </a>
-                ) : null}
-            </h4>
-
-            <Row>
-                {noIsolatesFound}
-                <Col md={3}>
-                    <ListGroup style={{ height: "100%" }}>{isolateComponents}</ListGroup>
-                </Col>
-                <Col md={9}>{noIsolatesFound ? null : <IsolateDetail canModify={props.canModify} />}</Col>
-            </Row>
+            <IsolateEditorContainer>
+                <IsolateEditorListContainer>
+                    <IsolateEditorList>{isolateComponents}</IsolateEditorList>
+                </IsolateEditorListContainer>
+                <IsolateDetail canModify={props.canModify} />
+            </IsolateEditorContainer>
         </StyledIsolateEditor>
     );
 };
