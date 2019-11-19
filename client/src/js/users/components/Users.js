@@ -102,7 +102,7 @@ export class ManageUsers extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     isAdmin: state.account.administrator,
     term: state.users.filter,
     groups: state.groups.list,
@@ -110,7 +110,7 @@ const mapStateToProps = state => ({
     error: get(state, "errors.LIST_USERS_ERROR.message", "")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onFind: e => {
         dispatch(findUsers(e.target.value || null, 1));
     },
