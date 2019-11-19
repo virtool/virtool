@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ViewHeader /> should render renders children 1`] = `
-<h3
-  className="view-header"
->
+<ViewHeader__StyledViewHeader>
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
@@ -12,29 +10,25 @@ exports[`<ViewHeader /> should render renders children 1`] = `
   <div>
     Hello world
   </div>
-</h3>
+</ViewHeader__StyledViewHeader>
 `;
 
 exports[`<ViewHeader /> should render with count 1`] = `
-<h3
-  className="view-header"
->
+<ViewHeader__StyledViewHeader>
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
     title="Foo"
   />
-</h3>
+</ViewHeader__StyledViewHeader>
 `;
 
 exports[`<ViewHeader /> should render with title 1`] = `
-<h3
-  className="view-header"
->
+<ViewHeader__StyledViewHeader>
   <HelmetWrapper
     defer={true}
     encodeSpecialCharacters={true}
     title="Foo"
   />
-</h3>
+</ViewHeader__StyledViewHeader>
 `;

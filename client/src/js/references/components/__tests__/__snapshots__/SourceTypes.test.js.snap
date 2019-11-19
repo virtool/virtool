@@ -123,12 +123,10 @@ exports[`<SourceTypes /> should render when neither 1`] = `
       <span>
          Source Types
       </span>
-      <Checkbox
+      <SourceTypes__SourceTypesCheckbox
         checked={true}
         label="Enable"
         onClick={[Function]}
-        partial={false}
-        pullRight={true}
       />
     </h2>
     <p>

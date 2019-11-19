@@ -1,8 +1,8 @@
-import { map } from "lodash-es";
+import { map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection } from "../../base";
+import { Badge, BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFoundSection } from "../../base";
 
 const StyledContributor = styled(BoxGroupSection)`
     display: flex;
@@ -19,9 +19,13 @@ export const Contributor = ({ id, count }) => (
 );
 
 export const Contributors = ({ contributors }) => {
-    const contributorComponents = map(contributors, contributor => (
-        <Contributor key={contributor.id} {...contributor} />
-    ));
+    const sorted = sortBy(contributors, ["id", "count"]);
+
+    let contributorComponents = map(sorted, contributor => <Contributor key={contributor.id} {...contributor} />);
+
+    if (contributorComponents.length === 0) {
+        contributorComponents = <NoneFoundSection noun="contributors" />;
+    }
 
     return (
         <BoxGroup>

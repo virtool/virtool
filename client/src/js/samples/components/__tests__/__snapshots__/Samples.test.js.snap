@@ -51,13 +51,9 @@ exports[`<SamplesSettings /> should render 1`] = `
 <div
   className="settings-container"
 >
-  <h3
-    className="view-header"
-  >
-    <strong>
-      Sample Settings
-    </strong>
-  </h3>
+  <ViewHeader
+    title="Sample Settings"
+  />
   <Connect(UniqueNames) />
   <Connect(SampleRights) />
 </div>

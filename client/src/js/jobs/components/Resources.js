@@ -1,11 +1,16 @@
 import React from "react";
+import styled from "styled-components";
 import Gauge from "react-svg-gauge";
 import { map, mean, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Flex, FlexItem, LoadingPlaceholder, NotFound } from "../../base";
+import { Flex, FlexItem, LoadingPlaceholder, NotFound, SectionHeader } from "../../base";
 import { getResources } from "../actions";
 
 const color = "#d44b40";
+
+const JobsResourcesHeader = styled(SectionHeader)`
+    margin-top: 20px;
+`;
 
 class JobsResources extends React.Component {
     componentDidMount() {
@@ -59,9 +64,7 @@ class JobsResources extends React.Component {
             <div>
                 <h3 style={{ marginBottom: "30px" }}>System Resources</h3>
 
-                <h4 style={{ display: "flex", alignItems: "center", marginTop: "20px" }} className="section-header">
-                    <strong>CPU Utilization</strong>
-                </h4>
+                <JobsResourcesHeader>CPU Utilization</JobsResourcesHeader>
 
                 <Flex alignItems="center">
                     <FlexItem>
@@ -82,9 +85,7 @@ class JobsResources extends React.Component {
                     </FlexItem>
                 </Flex>
 
-                <h4 style={{ display: "flex", alignItems: "center", marginTop: "20px" }} className="section-header">
-                    <strong>Memory Utilization (GB)</strong>
-                </h4>
+                <JobsResourcesHeader>Memory Utilization (GB)</JobsResourcesHeader>
 
                 <Gauge
                     color={color}

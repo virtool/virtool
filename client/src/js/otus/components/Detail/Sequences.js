@@ -1,8 +1,9 @@
 import { differenceWith, filter, find, get, indexOf, isEqual, map, sortBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
-import { Badge, BoxGroupSection, Flex, NoneFound } from "../../../base";
+import { Badge, BoxGroupSection, NoneFoundSection } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import AddSequence from "./AddSequence";
@@ -35,6 +36,20 @@ const getInitialState = props => {
     };
 };
 
+const IsolateSequencesHeader = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+
+    strong {
+        padding-right: 5px;
+    }
+
+    a {
+        font-weight: bold;
+        margin-left: auto;
+    }
+`;
+
 class IsolateSequences extends React.Component {
     constructor(props) {
         super(props);
@@ -66,24 +81,20 @@ class IsolateSequences extends React.Component {
                 />
             ));
         } else {
-            sequenceComponents = <NoneFound noun="sequences" noListGroup />;
+            sequenceComponents = <NoneFoundSection noun="sequences" />;
         }
 
         return (
             <React.Fragment>
-                <BoxGroupSection>
-                    <Flex alignItems="center">
-                        <strong style={{ flex: "0 1 auto" }}>Sequences</strong>
-                        <span style={{ flex: "1 0 auto", marginLeft: "5px" }}>
-                            <Badge>{this.props.sequences.length}</Badge>
-                        </span>
-                        {this.props.canModify ? (
-                            <a href="#" onClick={this.props.showAddSequence}>
-                                Add Sequence
-                            </a>
-                        ) : null}
-                    </Flex>
-                </BoxGroupSection>
+                <IsolateSequencesHeader>
+                    <strong>Sequences</strong>
+                    <Badge>{this.props.sequences.length}</Badge>
+                    {this.props.canModify ? (
+                        <a href="#" onClick={this.props.showAddSequence}>
+                            Add Sequence
+                        </a>
+                    ) : null}
+                </IsolateSequencesHeader>
 
                 <React.Fragment>{sequenceComponents}</React.Fragment>
 
