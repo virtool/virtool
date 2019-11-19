@@ -42,13 +42,13 @@ class Client:
     def authorize(self, document, is_api):
         try:
             self.session_id = document["_id"]
-            self.administrator = document["administrator"]
+            self.administrator = document.get("administrator", False)
             self.authorized = True
             self.user_id = document["user"]["id"]
             self.groups = document["groups"]
             self.permissions = document["permissions"]
             self.is_api = is_api
-            self.force_reset = document["force_reset"]
+            self.force_reset = document.get("force_reset", False)
         except KeyError:
             pass
 
@@ -146,8 +146,8 @@ async def middleware(req, handler):
     if req.path == "/api/account/login" or req.path == "/api/account/logout":
         return await handler(req)
 
-    if req.headers.get("AUTHORIZATION") and can_use_api_key(req):
-        return authorize_with_api_key(req, handler)
+    if req.headers.get("AUTHORIZATION") and await can_use_api_key(req):
+        return await authorize_with_api_key(req, handler)
 
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
