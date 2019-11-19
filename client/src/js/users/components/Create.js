@@ -1,13 +1,28 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { pick, get } from "lodash-es";
 
+import styled from "styled-components";
 import { createUser } from "../actions";
 import { clearError } from "../../errors/actions";
 import { InputError, Checkbox, SaveButton } from "../../base";
 import { routerLocationHasState, getTargetChange } from "../../utils/utils";
+
+const CreateUserContainer = styled.div`
+    margin: 15px;
+`;
+
+const CreateUserPasswords = styled.div`
+    display: grid;
+    grid-gap: 15px;
+    grid-template-columns: 1fr;
+
+    @media (min-width: 1080px) {
+        grid-template-columns: 1fr 1fr;
+    }
+`;
 
 const getInitialState = () => ({
     userId: "",
@@ -88,50 +103,41 @@ export class CreateUser extends React.PureComponent {
                     Create User
                 </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Username"
-                                    name="userId"
-                                    value={this.state.userId}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorUserId}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={6}>
-                                <InputError
-                                    type="password"
-                                    label="Password"
-                                    name="password"
-                                    value={this.state.password}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorPassword}
-                                />
-                            </Col>
-                            <Col xs={6}>
-                                <InputError
-                                    type="password"
-                                    label="Confirm"
-                                    name="confirm"
-                                    value={this.state.confirm}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorConfirm}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12}>
-                                <Checkbox
-                                    label="Force user to reset password on login"
-                                    checked={this.state.forceReset}
-                                    onClick={this.handleToggleForceReset}
-                                />
-                            </Col>
-                        </Row>
-                    </Modal.Body>
+                    <CreateUserContainer>
+                        <InputError
+                            label="Username"
+                            name="userId"
+                            value={this.state.userId}
+                            onChange={this.handleChange}
+                            error={this.state.errorUserId}
+                        />
+
+                        <CreateUserPasswords>
+                            <InputError
+                                type="password"
+                                label="Password"
+                                name="password"
+                                value={this.state.password}
+                                onChange={this.handleChange}
+                                error={this.state.errorPassword}
+                            />
+                            <InputError
+                                type="password"
+                                label="Confirm"
+                                name="confirm"
+                                value={this.state.confirm}
+                                onChange={this.handleChange}
+                                error={this.state.errorConfirm}
+                            />
+                        </CreateUserPasswords>
+
+                        <Checkbox
+                            label="Force user to reset password on login"
+                            checked={this.state.forceReset}
+                            onClick={this.handleToggleForceReset}
+                        />
+                    </CreateUserContainer>
+
                     <Modal.Footer>
                         <SaveButton pullRight />
                     </Modal.Footer>
@@ -141,14 +147,14 @@ export class CreateUser extends React.PureComponent {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createUser"),
     pending: state.users.createPending,
     minimumPasswordLength: state.settings.data.minimum_password_length,
     error: get(state, "errors.CREATE_USER_ERROR.message", "")
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCreate: data => {
         dispatch(createUser(data));
     },

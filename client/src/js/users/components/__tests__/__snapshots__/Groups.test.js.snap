@@ -1,5 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<UserGroups /> calls onEditGroup when group is edited should return loading placeholder when [props.documents === null] 1`] = `<LoadingPlaceholder />`;
+
+exports[`<UserGroups /> calls onEditGroup when group is edited should return nonefound when [props.documents === false] 1`] = `
+<NoneFound
+  noun="groups"
+/>
+`;
+
 exports[`<UserGroups /> renders <NoneFound /> if no groups available 1`] = `
 <NoneFound
   noun="groups"
@@ -7,7 +15,12 @@ exports[`<UserGroups /> renders <NoneFound /> if no groups available 1`] = `
 `;
 
 exports[`<UserGroups /> renders 1`] = `
-<NoneFound
-  noun="groups"
-/>
+<Box>
+  <UserGroup
+    id="foo"
+    key="foo"
+    onClick={[Function]}
+    toggled={true}
+  />
+</Box>
 `;
