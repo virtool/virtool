@@ -52,11 +52,8 @@ describe("mapStateToProps()", () => {
         };
         const props = mapStateToProps(state);
         expect(props).toEqual({
-            abbreviation: "FB",
             issues,
-            isolates,
-            name: "Foo Bar",
-            version: 3
+            isolates
         });
     });
 });

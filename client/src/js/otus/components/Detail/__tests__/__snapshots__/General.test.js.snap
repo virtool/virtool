@@ -1,90 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUGeneral /> should render with issues 1`] = `
-<Fragment>
-  <OTUIssues
-    isolates={
-      Array [
-        Object {
-          "id": "baz",
-        },
-      ]
-    }
-    issues={
+<OTUIssues
+  isolates={
+    Array [
       Object {
-        "empty_isolate": Array [
-          "456def",
-        ],
-        "empty_otu": false,
-        "empty_sequence": false,
-        "isolate_inconsistency": false,
-      }
+        "id": "baz",
+      },
+    ]
+  }
+  issues={
+    Object {
+      "empty_isolate": Array [
+        "456def",
+      ],
+      "empty_otu": false,
+      "empty_sequence": false,
+      "isolate_inconsistency": false,
     }
-  />
-  <Table
-    bordered={true}
-  >
-    <tbody>
-      <tr>
-        <th>
-          Name
-        </th>
-        <td>
-          Foo Bar
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Abbreviation
-        </th>
-        <td>
-          FB
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Version
-        </th>
-        <td>
-          3
-        </td>
-      </tr>
-    </tbody>
-  </Table>
-</Fragment>
+  }
+/>
 `;
 
-exports[`<OTUGeneral /> should render without issues 1`] = `
-<Fragment>
-  <Table
-    bordered={true}
-  >
-    <tbody>
-      <tr>
-        <th>
-          Name
-        </th>
-        <td>
-          Foo Bar
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Abbreviation
-        </th>
-        <td>
-          FB
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Version
-        </th>
-        <td>
-          3
-        </td>
-      </tr>
-    </tbody>
-  </Table>
-</Fragment>
-`;
+exports[`<OTUGeneral /> should render without issues 1`] = `""`;

@@ -1,39 +1,20 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Table } from "../../../base";
 import Issues from "./Issues";
 
-export const OTUGeneral = ({ abbreviation, issues, isolates, name, version }) => (
-    <React.Fragment>
-        {issues ? <Issues issues={issues} isolates={isolates} /> : null}
+export const OTUGeneral = ({ issues, isolates }) => {
+    if (issues) {
+        return <Issues issues={issues} isolates={isolates} />;
+    }
 
-        <Table bordered>
-            <tbody>
-                <tr>
-                    <th>Name</th>
-                    <td>{name}</td>
-                </tr>
-                <tr>
-                    <th>Abbreviation</th>
-                    <td>{abbreviation}</td>
-                </tr>
-                <tr>
-                    <th>Version</th>
-                    <td>{version}</td>
-                </tr>
-            </tbody>
-        </Table>
-    </React.Fragment>
-);
+    return null;
+};
 
 export const mapStateToProps = state => {
-    const { abbreviation, issues, isolates, name, version } = state.otus.detail;
+    const { issues, isolates } = state.otus.detail;
     return {
-        abbreviation,
         issues,
-        isolates,
-        name,
-        version
+        isolates
     };
 };
 
