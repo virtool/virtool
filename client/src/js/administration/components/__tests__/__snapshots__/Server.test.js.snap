@@ -1,9 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ServerSettings /> should render 1`] = `
-<div
-  className="settings-container"
->
-  <Connect(SentryOptions) />
+<div>
+  <div
+    className="settings-container"
+  >
+    <Connect(SentryOptions) />
+  </div>
+  <div
+    className="settings-container"
+  >
+    <Connect(API) />
+  </div>
 </div>
 `;

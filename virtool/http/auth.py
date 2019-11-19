@@ -146,8 +146,8 @@ async def middleware(req, handler):
     if req.path == "/api/account/login" or req.path == "/api/account/logout":
         return await handler(req)
 
-    if req.headers.get("AUTHORIZATION") and can_use_api_key(req):
-        return authorize_with_api_key(req, handler)
+    if req.headers.get("AUTHORIZATION") and await can_use_api_key(req):
+        return await authorize_with_api_key(req, handler)
 
     # Get session information from cookies.
     session_id = req.cookies.get("session_id")
