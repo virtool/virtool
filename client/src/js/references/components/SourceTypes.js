@@ -30,6 +30,10 @@ export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
     </BoxGroupSection>
 );
 
+const SourceTypesCheckbox = styled(Checkbox)`
+    margin-left: auto;
+`;
+
 const SourceTypesForm = styled(BoxGroupSection)`
     .form-group {
         margin: 0;
@@ -90,11 +94,10 @@ export class SourceTypes extends React.Component {
 
         if (!this.props.global && !this.props.remote) {
             checkbox = (
-                <Checkbox
+                <SourceTypesCheckbox
                     label="Enable"
                     checked={this.props.restrictSourceTypes}
                     onClick={this.handleEnable}
-                    pullRight
                 />
             );
         }
