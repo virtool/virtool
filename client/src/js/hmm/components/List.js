@@ -56,9 +56,7 @@ class HMMList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <strong>HMMs</strong>
-                </h3>
+                <ViewHeader title="HMMs" />
                 <HMMInstaller />
             </div>
         );
