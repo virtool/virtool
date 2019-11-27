@@ -71,12 +71,8 @@ class Bar extends React.Component {
                         <Nav pullRight>
                             <Update />
 
-                            <NavItem
-                                target="_blank"
-                                href="https://github.com/virtool/virtool"
-                                rel="noopener noreferrer"
-                            >
-                                <Icon name="github" faStyle="fab" />
+                            <NavItem target="_blank" href="https://gitter.im/virtool/virtool" rel="noopener noreferrer">
+                                <Icon name="comments" />
                             </NavItem>
 
                             <NavItem
