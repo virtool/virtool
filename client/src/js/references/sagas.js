@@ -100,14 +100,14 @@ export function* updateRemoteReference(action) {
 }
 
 export function* watchReferences() {
-    yield throttle(300, CREATE_REFERENCE.REQUESTED, createReference);
+    yield throttle(500, CREATE_REFERENCE.REQUESTED, createReference);
+    yield throttle(500, IMPORT_REFERENCE.REQUESTED, importReference);
+    yield throttle(500, CLONE_REFERENCE.REQUESTED, cloneReference);
+    yield throttle(500, REMOTE_REFERENCE.REQUESTED, remoteReference);
     yield takeEvery(EDIT_REFERENCE.REQUESTED, editReference);
     yield takeLatest(GET_REFERENCE.REQUESTED, getReference);
     yield takeLatest(FIND_REFERENCES.REQUESTED, findReferences);
-    yield takeEvery(REMOVE_REFERENCE.REQUESTED, removeReference);
-    yield takeLatest(IMPORT_REFERENCE.REQUESTED, importReference);
-    yield takeLatest(CLONE_REFERENCE.REQUESTED, cloneReference);
-    yield takeLatest(REMOTE_REFERENCE.REQUESTED, remoteReference);
+    yield throttle(500, REMOVE_REFERENCE.REQUESTED, removeReference);
     yield takeEvery(ADD_REFERENCE_USER.REQUESTED, addRefUser);
     yield takeEvery(EDIT_REFERENCE_USER.REQUESTED, editRefUser);
     yield takeEvery(REMOVE_REFERENCE_USER.REQUESTED, removeRefUser);
