@@ -1,104 +1,100 @@
-import { find, get, replace } from "lodash-es";
+import { get, replace } from "lodash-es";
 import React from "react";
-import { Col, ProgressBar, Row } from "react-bootstrap";
+import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Flex, FlexItem, Icon, Panel, WarningAlert } from "../../base";
+
+import styled from "styled-components";
 import { checkAdminOrPermission } from "../../utils/utils";
-
 import { installHMMs } from "../actions";
+import { getProcess } from "../selectors";
 
-class HMMInstaller extends React.Component {
-    handleInstall = () => {
-        this.props.onInstall(this.props.releaseId);
-    };
+import { Box } from "../../base/Box";
+import { InstallOption } from "./InstallOption";
 
-    getProcess = () => {
-        if (this.props.processId && this.props.processes.length) {
-            const process = find(this.props.processes, ["id", this.props.processId]);
-            return process || null;
-        }
-    };
+const LoadingBar = styled.div`
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 285px;
+`;
+const LoadingText = styled.div`
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+`;
 
+const Icon = styled.div`
+    display: flex;
+    font-size: 40px;
+    margin-left: 95px;
+    margin-right: 9px;
+`;
+const Button = styled.div`
+    width: 150px;
+`;
+const TextButton = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+const IconTextButton = styled.div`
+    display: flex;
+    align-items: top;
+    margin: 15px;
+`;
+
+export class HMMInstaller extends React.Component {
     render() {
-        if (this.props.processId && !this.props.installed) {
-            const process = this.getProcess();
-            const progress = process.progress * 100;
-            const step = replace(process.step, "_", " ");
+        if (this.props.process && !this.props.installed) {
+            const progress = this.props.process.progress * 100;
+            const step = replace(this.props.process.step, "_", " ");
 
             const barStyle = progress === 100 ? "success" : "warning";
 
             return (
-                <Panel>
-                    <Panel.Body>
-                        <Row>
-                            <Col xs={10} xsOffset={1} md={6} mdOffset={3}>
-                                <div className="text-center">
-                                    <p>
-                                        <strong>Installing</strong>
-                                    </p>
-                                    <ProgressBar bsStyle={barStyle} now={progress} />
-                                    <p>
-                                        <small className="text-muted text-capitalize">{step}</small>
-                                    </p>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Panel.Body>
-                </Panel>
+                <Box>
+                    <LoadingBar>
+                        <LoadingText>Installing</LoadingText>
+
+                        <ProgressBar bsStyle={barStyle} now={progress} />
+
+                        <LoadingText>
+                            <small className="text-muted text-capitalize">{step}</small>
+                        </LoadingText>
+                    </LoadingBar>
+                </Box>
             );
         }
 
-        const installOption = this.props.canInstall ? (
-            <Button icon="download" onClick={this.handleInstall}>
-                Install Official
-            </Button>
-        ) : (
-            <WarningAlert level>
-                <Icon name="exclamation-circle" />
-                <span>
-                    <strong>You do not have permission to install HMMs.</strong>
-                    <span> Contact an administrator.</span>
-                </span>
-            </WarningAlert>
-        );
-
         return (
-            <Panel>
-                <Panel.Body>
-                    <Flex justifyContent="center" style={{ padding: "10px 0" }}>
-                        <FlexItem>
-                            <i
-                                className="fas fa-info-circle text-primary"
-                                style={{ fontSize: "40px", padding: "5px 10px 0 5px" }}
-                            />
-                        </FlexItem>
-
-                        <FlexItem>
-                            <p style={{ fontSize: "22px", margin: "0 0 3px" }}>No HMM data available.</p>
-
-                            <p className="text-muted">
-                                You can download and install the offical HMM data automatically from our
-                                <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
-                            </p>
-
-                            {installOption}
-                        </FlexItem>
-                    </Flex>
-                </Panel.Body>
-            </Panel>
+            <Box>
+                <IconTextButton>
+                    <Icon>
+                        <i className="fas fa-info-circle text-primary" />
+                    </Icon>
+                    <TextButton>
+                        <p style={{ fontSize: "22px", margin: "0 0 3px" }}>No HMM data available.</p>
+                        <p className="text-muted">
+                            You can download and install the offical HMM data automatically from our
+                            <a href="https://github.com/virtool/virtool-hmm"> GitHub repository</a>.
+                        </p>
+                        <Button>{InstallOption(this.props)}</Button>
+                    </TextButton>
+                </IconTextButton>
+            </Box>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    processId: get(state.hmms.status, "process.id"),
+export const mapStateToProps = state => ({
     releaseId: get(state.hmms.status, "release.id"),
     installed: !!state.hmms.status.installed,
-    processes: state.processes.documents,
-    canInstall: checkAdminOrPermission(state, "modify_hmm")
+    canInstall: checkAdminOrPermission(state, "modify_hmm"),
+    process: getProcess(state)
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onInstall: releaseId => {
         dispatch(installHMMs(releaseId));
     }
