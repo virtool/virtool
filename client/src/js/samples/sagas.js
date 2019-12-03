@@ -23,7 +23,7 @@ export function* watchSamples() {
     yield throttle(300, FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READ_FILES.REQUESTED, findReadFiles);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
-    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
+    yield throttle(500, CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield takeEvery(UPLOAD_SAMPLE_FILE.REQUESTED, uploadSampleFile);
