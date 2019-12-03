@@ -1,11 +1,18 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
+import styled from "styled-components";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 import { Alert, Button, ButtonToolbar } from "../../base";
 import { getTargetChange } from "../../utils/utils";
-import ReferenceForm from "./Form";
+import { ReferenceForm } from "./Form";
+
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin: 15px;
+`;
 
 const getInitialState = () => ({
     name: "",
@@ -13,7 +20,8 @@ const getInitialState = () => ({
     dataType: "genome",
     organism: "",
     errorName: "",
-    errorDataType: ""
+    errorDataType: "",
+    mode: "create"
 });
 
 export class CreateReference extends React.Component {
@@ -49,27 +57,35 @@ export class CreateReference extends React.Component {
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit}>
-                <Modal.Body>
+            <Container>
+                <form onSubmit={this.handleSubmit}>
                     <Alert>
                         <strong>Create an empty reference.</strong>
                     </Alert>
-                    <ReferenceForm state={this.state} onChange={this.handleChange} />
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <ButtonToolbar>
-                        <Button type="submit" icon="save" bsStyle="primary">
-                            Save
-                        </Button>
-                    </ButtonToolbar>
-                </Modal.Footer>
-            </form>
+                    <ReferenceForm
+                        description={this.state.description}
+                        errorFile={this.state.errorFile}
+                        errorName={this.state.errorName}
+                        errorSelect={this.state.errorSelect}
+                        name={this.state.name}
+                        mode={this.state.mode}
+                        organism={this.state.organism}
+                        onChange={this.handleChange}
+                    />
+                    <Modal.Footer>
+                        <ButtonToolbar>
+                            <Button type="submit" icon="save" bsStyle="primary">
+                                Save
+                            </Button>
+                        </ButtonToolbar>
+                    </Modal.Footer>
+                </form>
+            </Container>
         );
     }
 }
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (name, description, dataType, organism) => {
         dispatch(createReference(name, description, dataType, organism));
     },

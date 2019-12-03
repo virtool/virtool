@@ -1,38 +1,32 @@
-import ReferenceForm from "../Form";
+import { ReferenceForm } from "../Form";
 
 describe("<ReferenceForm />", () => {
-    let props = {
-        state: {
-            name: "test",
-            description: "test-description",
-            dataType: "test-datatype",
-            organism: "test-organism",
-            onChange: jest.fn(),
-            errorName: "",
-            errorDataType: ""
-        }
-    };
-
-    it("should render without errors", () => {
+    let props;
+    beforeEach(() => {
         props = {
-            state: {
-                ...props.state,
-                errorFile: null,
-                errorSelect: null
-            }
+            errorFile: "foo",
+            errorSelect: "bar",
+            name: "fee",
+            onChange: jest.fn(),
+            errorName: "baz",
+            description: "Foo",
+            organism: "Bar",
+            mode: "clone"
         };
+    });
+
+    it("should render when [errorFile!=null]", () => {
         const wrapper = shallow(<ReferenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-
-    it("should render with errors", () => {
-        props = {
-            state: {
-                ...props.state,
-                errorFile: null,
-                errorSelect: "Error Select"
-            }
-        };
+    it("should render when [errorFile=null] and [errorSelect=null]", () => {
+        props.errorFile = null;
+        props.errorSelect = null;
+        const wrapper = shallow(<ReferenceForm {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it("should render when [mode=create]", () => {
+        props.mode = "create";
         const wrapper = shallow(<ReferenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

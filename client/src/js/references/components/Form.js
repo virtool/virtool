@@ -1,59 +1,63 @@
 import React from "react";
-import { Row, Col } from "react-bootstrap";
+import styled from "styled-components";
 import { InputError } from "../../base";
 
-export default class ReferenceForm extends React.Component {
-    render() {
-        let extraComponent;
+const Name = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: ${props => (props.mode == "create" ? "49%" : "100%")};
+`;
 
-        if (this.props.state.errorFile != null || this.props.state.errorSelect != null) {
-            extraComponent = (
-                <Col xs={12}>
-                    <div className="input-form-error">
-                        <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
-                            {this.props.state.errorFile || this.props.state.errorSelect}
-                        </span>
-                    </div>
-                </Col>
-            );
-        }
+const Organism = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 49%;
+`;
 
-        return (
-            <div>
-                <Row>{extraComponent}</Row>
-                <Row>
-                    <Col xs={12}>
-                        <InputError
-                            label="Name"
-                            name="name"
-                            value={this.props.state.name}
-                            onChange={this.props.onChange}
-                            error={this.props.state.errorName}
-                        />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col xs={12}>
-                        <InputError
-                            label="Description"
-                            type="textarea"
-                            name="description"
-                            value={this.props.state.description}
-                            onChange={this.props.onChange}
-                        />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col xs={12} md={6}>
-                        <InputError
-                            label="Organism"
-                            name="organism"
-                            value={this.props.state.organism}
-                            onChange={this.props.onChange}
-                        />
-                    </Col>
-                </Row>
+const NameOrganism = styled.div`
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+`;
+
+export const ReferenceForm = ({ errorFile, errorSelect, name, onChange, errorName, description, organism, mode }) => {
+    let extraComponent;
+    let inputOrganism;
+
+    if (errorFile != null || errorSelect != null) {
+        extraComponent = (
+            <div className="input-form-error">
+                <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
+                    {errorFile || errorSelect}
+                </span>
             </div>
         );
     }
-}
+    if (mode == "create") {
+        inputOrganism = (
+            <Organism>
+                <InputError label="Organism" name="organism" value={organism} onChange={onChange} />
+            </Organism>
+        );
+    }
+
+    return (
+        <div>
+            <div>{extraComponent}</div>
+            <NameOrganism>
+                <Name mode={mode}>
+                    <InputError label="Name" name="name" value={name} onChange={onChange} error={errorName} />
+                </Name>
+                {inputOrganism}
+            </NameOrganism>
+
+            <InputError
+                label="Description"
+                type="textarea"
+                name="description"
+                value={description}
+                onChange={onChange}
+            />
+        </div>
+    );
+};
