@@ -168,10 +168,14 @@ async def get(req):
         "type": "string",
         "coerce": virtool.validators.strip,
     },
-    "srna": {
-        "type": "boolean",
-        "coerce": virtool.utils.to_bool,
-        "default": False
+    "library_type": {
+        "type": "string",
+        "allowed": [
+            "normal",
+            "srna",
+            "amplicon"
+        ],
+        "default": "normal"
     },
     "subtraction": {
         "type": "string",
@@ -240,7 +244,7 @@ async def create(req):
         "group_write": settings["sample_group_write"],
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
-        "srna": data["srna"],
+        "library_type": data["library_type"],
         "subtraction": {
             "id": data["subtraction"]
         },
@@ -262,8 +266,7 @@ async def create(req):
 
     task_args = {
         "sample_id": sample_id,
-        "files": files,
-        "srna": data["srna"]
+        "files": files
     }
 
     # Create job document.
