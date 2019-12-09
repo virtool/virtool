@@ -295,52 +295,9 @@ class TestCreate:
 
         assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.history[0]
 
-        expected_group = "none"
+        snapshot.assert_match(await resp.json())
 
-        if group_setting == "users_primary_group":
-            expected_group = "technician"
-
-        if group_setting == "force_choice":
-            expected_group = "diagnostics"
-
-        expected = {
-            "name": "Foobar",
-            "files": [{
-                "id": "test.fq"
-            }],
-            "subtraction": {
-                "id": "apple"
-            },
-            "group": expected_group,
-            "nuvs": False,
-            "pathoscope": False,
-            "created_at": static_time.iso,
-            "format": "fastq",
-            "imported": "ip",
-            "quality": None,
-            "analyzed": False,
-            "hold": True,
-            "archived": False,
-            "group_read": True,
-            "group_write": True,
-            "all_read": True,
-            "all_write": True,
-            "srna": False,
-            "paired": False,
-            "user": {
-                "id": "test"
-            },
-            "id": test_random_alphanumeric.history[0]
-        }
-
-        assert await resp.json() == expected
-
-        expected.update({
-            "_id": expected.pop("id"),
-            "created_at": static_time.datetime
-        })
-
-        assert await client.db.samples.find_one() == expected
+        snapshot.assert_match(await client.db.samples.find_one())
 
         # Check call to file.reserve.
         m_reserve.assert_called_with(
