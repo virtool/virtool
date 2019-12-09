@@ -81,7 +81,6 @@ def test_make_analysis_dir(exists, mock_job):
 
 
 def test_map_otus(mock_job):
-
     os.mkdir(mock_job.params["analysis_path"])
 
     mock_job.eliminate_otus()
@@ -161,7 +160,7 @@ def test_assemble(is_paired, mock_job):
     os.mkdir(mock_job.params["analysis_path"])
 
     mock_job.params["paired"] = is_paired
-    mock_job.params["srna"] = False
+    mock_job.params["library_type"] = "normal"
 
     mock_job.proc = 2
     mock_job.mem = 10

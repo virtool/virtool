@@ -117,6 +117,7 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": paired,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -152,6 +153,7 @@ def test_make_analysis_dir(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -173,6 +175,7 @@ def test_map_otus(tmpdir, dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -216,6 +219,7 @@ def test_map_isolates(tmpdir, dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -260,6 +264,7 @@ def test_map_subtraction(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -287,6 +292,7 @@ def test_subtract_mapping(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -313,6 +319,7 @@ def test_pathoscope(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -391,6 +398,7 @@ def test_import_results(dbs, mock_job):
     dbs.samples.insert_one({
         "_id": "foobar",
         "paired": False,
+        "library_type": "normal",
         "subtraction": {
             "id": "Arabidopsis thaliana"
         },
@@ -439,5 +447,6 @@ def test_import_results(dbs, mock_job):
         "quality": {
             "count": 1337
         },
-        "paired": False
+        "paired": False,
+        "library_type": "normal"
     }

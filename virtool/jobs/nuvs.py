@@ -134,7 +134,7 @@ class Job(virtool.jobs.analysis.Job):
 
         k = "21,33,55,75"
 
-        if self.params["srna"]:
+        if self.params["library_type"] == "srna":
             k = "17,21,23"
 
         command += [
