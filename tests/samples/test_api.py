@@ -50,7 +50,7 @@ from aiohttp.test_utils import make_mocked_coro
         "total_count": 3
     })
 ])
-async def test_find(find, per_page, page, d_range, meta, spawn_client, static_time):
+async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
@@ -127,57 +127,12 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
 
     assert resp.status == 200
 
-    expected_documents = [
-        {
-            "user": {
-                "id": "fred"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "",
-            "created_at": "2015-10-06T22:00:00Z",
-            "archived": False,
-            "id": "cb400e6d",
-            "name": "16SPP044",
-            "pathoscope": False
-        },
-        {
-            "user": {
-                "id": "bob"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "Thing",
-            "created_at": "2015-10-06T21:00:00Z",
-            "archived": True,
-            "id": "beb1eb10",
-            "name": "16GVP042",
-            "pathoscope": False
-        },
-        {
-            "user": {
-                "id": "fred"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "archived": True,
-            "id": "72bb8b31",
-            "name": "16GVP043",
-            "pathoscope": False
-        }
-    ]
-
-    assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
+    snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("imported", [True, False])
-async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
+async def test_get(error, imported, snapshot, mocker, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -205,44 +160,13 @@ async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
 
     assert resp.status == 200
 
-    if imported:
-        assert await resp.json() == {
-            "id": "test",
-            "name": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                    "replace_url": "/upload/samples/test/files/1"
-                }
-            ],
-            "imported": imported,
-            "caches": []
-        }
-
-    else:
-        assert await resp.json() == {
-            "id": "test",
-            "name": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz"
-                }
-            ],
-            "imported": imported,
-            "caches": []
-        }
+    snapshot.assert_match(await resp.json())
 
 
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, mocker, spawn_client, static_time, test_random_alphanumeric):
+    async def test(self, group_setting, snapshot, mocker, spawn_client, static_time, test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
@@ -459,7 +383,7 @@ async def test_remove(delete_result, resp_is_attr, mocker, spawn_client, resp_is
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("term", [None, "bob", "Baz"])
-async def test_find_analyses(error, term, mocker, spawn_client, resp_is, static_time):
+async def test_find_analyses(error, term, snapshot, mocker, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -560,98 +484,7 @@ async def test_find_analyses(error, term, mocker, spawn_client, resp_is, static_
 
     assert resp.status == 200
 
-    documents = [
-        {
-            "id": "test_1",
-            "algorithm": "pathoscope_bowtie",
-            "created_at": "2015-10-06T20:00:00Z",
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "bob"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "sample": {
-                "id": "test"
-            }
-        },
-        {
-            "id": "test_2",
-            "algorithm": "pathoscope_bowtie",
-            "created_at": "2015-10-06T20:00:00Z",
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "fred"
-            },
-            "reference": {
-                "id": "baz",
-                "name": "Baz"
-            },
-            "sample": {
-                "id": "test"
-            }
-        },
-        {
-            "id": "test_3",
-            "algorithm": "pathoscope_bowtie",
-            "created_at": "2015-10-06T20:00:00Z",
-            "ready": True,
-            "job": {
-                "id": "test"
-            },
-            "index": {
-                "version": 2,
-                "id": "foo"
-            },
-            "user": {
-                "id": "fred"
-            },
-            "reference": {
-                "id": "foo",
-                "name": "Foo"
-            },
-            "sample": {
-                "id": "test"
-            }
-        }
-    ]
-
-    if term == "Baz":
-        documents = [
-            documents[0],
-            documents[1]
-        ]
-
-    if term == "bob":
-        documents = [
-            documents[0]
-        ]
-
-    assert await resp.json() == {
-        "total_count": 3,
-        "found_count": len(documents),
-        "page": 1,
-        "page_count": 1,
-        "per_page": 25,
-        "documents": documents
-    }
-
+    snapshot.assert_match(await resp.json())
 
 @pytest.mark.parametrize("error", [None, "400_reference", "400_index", "400_ready_index", "404"])
 async def test_analyze(error, mocker, spawn_client, static_time, resp_is):
