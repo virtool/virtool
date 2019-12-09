@@ -11,6 +11,7 @@ import virtool.jobs.db
 import virtool.otus.db
 import virtool.references.db
 import virtool.samples.db
+import virtool.samples.migrate
 import virtool.db.utils
 import virtool.otus.utils
 import virtool.references.utils
@@ -145,6 +146,8 @@ async def migrate_samples(app):
             "paired": True
         }
     })
+
+    await virtool.samples.migrate.add_library_type(motor_client)
 
 
 async def migrate_sessions(db):
