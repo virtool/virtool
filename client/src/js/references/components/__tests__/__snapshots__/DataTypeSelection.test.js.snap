@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<DataTypeSelection /> should render 1`] = `
+<div>
+  <label>
+    Data Type
+  </label>
+  <SelectBox__SelectBoxContainer>
+    <SelectBox
+      active={true}
+      onClick={[Function]}
+    >
+      <div>
+        Genome
+      </div>
+      <span>
+        Whole genomes for mapping-based detection
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        Barcode
+      </div>
+      <span>
+        Target sequences for barcode matching detection
+      </span>
+    </SelectBox>
+  </SelectBox__SelectBoxContainer>
+</div>
+`;

@@ -4,6 +4,7 @@ import { Modal } from "react-bootstrap";
 import styled from "styled-components";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
+
 import { Alert, Button, ButtonToolbar } from "../../base";
 import { getTargetChange } from "../../utils/utils";
 import { ReferenceForm } from "./Form";
@@ -37,6 +38,10 @@ export class CreateReference extends React.Component {
             [name]: value,
             [error]: ""
         });
+    };
+
+    handleChangeDataType = dataType => {
+        this.setState({ dataType });
     };
 
     handleSubmit = e => {

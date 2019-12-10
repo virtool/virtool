@@ -47,6 +47,7 @@ export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
 export * from "./ViewHeader";
+export * from "./SelectBox";
 
 export {
     AlgorithmSelect,
