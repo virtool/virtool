@@ -2,9 +2,7 @@
 
 exports[`<ReferenceSelect /> should render 1`] = `
 <div>
-  <label
-    className="control-label"
-  >
+  <label>
     Source Reference
   </label>
   <ReferenceSelect__ReferenceSelectList
@@ -27,9 +25,7 @@ exports[`<ReferenceSelect /> should render 1`] = `
 
 exports[`<ReferenceSelect /> should render NoneFound when [references.length=0] 1`] = `
 <div>
-  <label
-    className="control-label"
-  >
+  <label>
     Source Reference
   </label>
   <NoneFound

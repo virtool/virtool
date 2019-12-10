@@ -1,43 +1,18 @@
 import React from "react";
 import styled from "styled-components";
-import { Badge, ListGroupItem, RelativeTime } from "../../base";
+import { Attribution, Badge, BoxGroupSection } from "../../base";
 
-const NameDateBadge = styled(ListGroupItem)`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-
-    strong {
-        margin-left: 8px;
-    }
+const StyledReferenceSelectItem = styled(BoxGroupSection)`
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
 `;
 
-const DateBadge = styled.div`
-    display: flex;
-    flex-direction: row;
-    margin-right: 15px;
-    align-items: center;
-
-    ${Badge} {
-        margin-left: 65px;
-        color: white;
-    }
-    span {
-        font-size: 10px;
-        color: grey;
-    }
-`;
-
-export const ReferenceSelectItem = ({ reference, onClick }) => {
-    return (
-        <NameDateBadge onClick={onClick}>
-            <strong>{reference.name}</strong>
-            <DateBadge>
-                <span>
-                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
-                </span>
-                <Badge>{reference.otu_count}</Badge>
-            </DateBadge>
-        </NameDateBadge>
-    );
-};
+export const ReferenceSelectItem = ({ active, reference, onClick }) => (
+    <StyledReferenceSelectItem active={active} onClick={onClick}>
+        <strong>{reference.name}</strong>
+        <Attribution time={reference.created_at} user={reference.user.id} />
+        <div>
+            <Badge>{reference.otu_count} OTUs</Badge>
+        </div>
+    </StyledReferenceSelectItem>
+);

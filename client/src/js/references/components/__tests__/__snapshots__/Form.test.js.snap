@@ -2,35 +2,31 @@
 
 exports[`<ReferenceForm /> should render when [errorFile!=null] 1`] = `
 <div>
-  <div>
-    <div
-      className="input-form-error"
-    >
-      <span
-        className="input-error-message"
-        style={
-          Object {
-            "margin": "0 0 0 0",
-          }
+  <div
+    className="input-form-error"
+  >
+    <span
+      className="input-error-message"
+      style={
+        Object {
+          "margin": "0 0 0 0",
         }
-      >
-        foo
-      </span>
-    </div>
-  </div>
-  <Form__NameOrganism>
-    <Form__Name
-      mode="clone"
+      }
     >
-      <InputError
-        error="baz"
-        label="Name"
-        name="name"
-        onChange={[MockFunction]}
-        value="fee"
-      />
-    </Form__Name>
-  </Form__NameOrganism>
+      foo
+    </span>
+  </div>
+  <Form__ReferenceFormInputs
+    mode="clone"
+  >
+    <InputError
+      error="baz"
+      label="Name"
+      name="name"
+      onChange={[MockFunction]}
+      value="fee"
+    />
+  </Form__ReferenceFormInputs>
   <InputError
     label="Description"
     name="description"
@@ -43,20 +39,17 @@ exports[`<ReferenceForm /> should render when [errorFile!=null] 1`] = `
 
 exports[`<ReferenceForm /> should render when [errorFile=null] and [errorSelect=null] 1`] = `
 <div>
-  <div />
-  <Form__NameOrganism>
-    <Form__Name
-      mode="clone"
-    >
-      <InputError
-        error="baz"
-        label="Name"
-        name="name"
-        onChange={[MockFunction]}
-        value="fee"
-      />
-    </Form__Name>
-  </Form__NameOrganism>
+  <Form__ReferenceFormInputs
+    mode="clone"
+  >
+    <InputError
+      error="baz"
+      label="Name"
+      name="name"
+      onChange={[MockFunction]}
+      value="fee"
+    />
+  </Form__ReferenceFormInputs>
   <InputError
     label="Description"
     name="description"
@@ -69,43 +62,37 @@ exports[`<ReferenceForm /> should render when [errorFile=null] and [errorSelect=
 
 exports[`<ReferenceForm /> should render when [mode=create] 1`] = `
 <div>
-  <div>
-    <div
-      className="input-form-error"
-    >
-      <span
-        className="input-error-message"
-        style={
-          Object {
-            "margin": "0 0 0 0",
-          }
+  <div
+    className="input-form-error"
+  >
+    <span
+      className="input-error-message"
+      style={
+        Object {
+          "margin": "0 0 0 0",
         }
-      >
-        foo
-      </span>
-    </div>
-  </div>
-  <Form__NameOrganism>
-    <Form__Name
-      mode="create"
+      }
     >
-      <InputError
-        error="baz"
-        label="Name"
-        name="name"
-        onChange={[MockFunction]}
-        value="fee"
-      />
-    </Form__Name>
-    <Form__Organism>
-      <InputError
-        label="Organism"
-        name="organism"
-        onChange={[MockFunction]}
-        value="Bar"
-      />
-    </Form__Organism>
-  </Form__NameOrganism>
+      foo
+    </span>
+  </div>
+  <Form__ReferenceFormInputs
+    mode="create"
+  >
+    <InputError
+      error="baz"
+      label="Name"
+      name="name"
+      onChange={[MockFunction]}
+      value="fee"
+    />
+    <InputError
+      label="Organism"
+      name="organism"
+      onChange={[MockFunction]}
+      value="Bar"
+    />
+  </Form__ReferenceFormInputs>
   <InputError
     label="Description"
     name="description"

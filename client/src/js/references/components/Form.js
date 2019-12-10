@@ -2,30 +2,18 @@ import React from "react";
 import styled from "styled-components";
 import { InputError } from "../../base";
 
-const Name = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: ${props => (props.mode == "create" ? "49%" : "100%")};
-`;
-
-const Organism = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 49%;
-`;
-
-const NameOrganism = styled.div`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+const ReferenceFormInputs = styled.div`
+    display: grid;
+    grid-gap: 15px;
+    grid-template-columns: 1fr ${props => (props.mode === "create" ? "1fr" : "")};
 `;
 
 export const ReferenceForm = ({ errorFile, errorSelect, name, onChange, errorName, description, organism, mode }) => {
-    let extraComponent;
-    let inputOrganism;
+    let errorComponent;
+    let organismComponent;
 
     if (errorFile != null || errorSelect != null) {
-        extraComponent = (
+        errorComponent = (
             <div className="input-form-error">
                 <span className="input-error-message" style={{ margin: "0 0 0 0" }}>
                     {errorFile || errorSelect}
@@ -33,23 +21,19 @@ export const ReferenceForm = ({ errorFile, errorSelect, name, onChange, errorNam
             </div>
         );
     }
-    if (mode == "create") {
-        inputOrganism = (
-            <Organism>
-                <InputError label="Organism" name="organism" value={organism} onChange={onChange} />
-            </Organism>
-        );
+
+    if (mode === "create") {
+        organismComponent = <InputError label="Organism" name="organism" value={organism} onChange={onChange} />;
     }
 
     return (
         <div>
-            <div>{extraComponent}</div>
-            <NameOrganism>
-                <Name mode={mode}>
-                    <InputError label="Name" name="name" value={name} onChange={onChange} error={errorName} />
-                </Name>
-                {inputOrganism}
-            </NameOrganism>
+            {errorComponent}
+
+            <ReferenceFormInputs mode={mode}>
+                <InputError label="Name" name="name" value={name} onChange={onChange} error={errorName} />
+                {organismComponent}
+            </ReferenceFormInputs>
 
             <InputError
                 label="Description"
