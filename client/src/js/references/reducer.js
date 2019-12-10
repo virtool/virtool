@@ -12,6 +12,7 @@ import {
     REMOVE_REFERENCE_USER,
     UPDATE_REMOTE_REFERENCE,
     UPLOAD,
+    UPLOAD_PROGRESS,
     WS_INSERT_REFERENCE,
     WS_REMOVE_REFERENCE,
     WS_UPDATE_REFERENCE
@@ -26,7 +27,11 @@ export const initialState = {
     page: 0,
     total_count: 0,
     detail: null,
-    checking: false
+    checking: false,
+    importFileId: null,
+    importFileName: null,
+    importUploadId: null,
+    importUploadProgress: 0
 };
 
 export default function referenceReducer(state = initialState, action) {
@@ -70,8 +75,53 @@ export default function referenceReducer(state = initialState, action) {
         case EDIT_REFERENCE.SUCCEEDED:
             return { ...state, detail: action.data };
 
+        case UPLOAD.REQUESTED:
+            if (action.fileType === "reference") {
+                return {
+                    ...state,
+                    importFile: null,
+                    importUploadId: action.localId,
+                    importUploadName: action.name,
+                    importUploadProgress: 0
+                };
+            }
+
+            return state;
+
         case UPLOAD.SUCCEEDED:
-            return { ...state, importData: { ...action.data } };
+            if (state.importUploadId === action.data.localId) {
+                return {
+                    ...state,
+                    importFile: action.data,
+                    importUploadId: null,
+                    importUploadName: null,
+                    importUploadProgress: 0
+                };
+            }
+            return state;
+
+        case UPLOAD.FAILED:
+            if (action.fileType === "reference") {
+                return {
+                    ...state,
+                    importFile: null,
+                    importUploadId: null,
+                    importUploadProgress: 0
+                };
+            }
+
+            return state;
+
+        case UPLOAD_PROGRESS:
+            console.log("UPLOAD_PROGRESS", action);
+            if (state.importUploadId === action.localId) {
+                return {
+                    ...state,
+                    importUploadProgress: action.progress
+                };
+            }
+
+            return state;
 
         case CHECK_REMOTE_UPDATES.REQUESTED:
             return { ...state, checking: true };

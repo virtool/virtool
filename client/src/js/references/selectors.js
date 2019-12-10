@@ -43,3 +43,27 @@ export const getReferenceItemProgress = createSelector(
         return 100;
     }
 );
+
+export const getImportData = state => {
+    const file = get(state, "references.importFile");
+
+    if (file) {
+        const { id, name } = file;
+        return {
+            id,
+            name,
+            progress: 100,
+            ready: true
+        };
+    }
+
+    if (get(state, "references.importUploadId")) {
+        return {
+            name: get(state, "references.importUploadName"),
+            progress: get(state, "references.importUploadProgress"),
+            ready: false
+        };
+    }
+
+    return null;
+};
