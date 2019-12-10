@@ -1,0 +1,24 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceSelectItem /> should render 1`] = `
+<ReferenceSelectItem__NameDateBadge
+  onClick={[MockFunction]}
+>
+  <strong>
+    foo
+  </strong>
+  <ReferenceSelectItem__DateBadge>
+    <span>
+      Created 
+      <RelativeTime
+        time="boo"
+      />
+       by 
+      foo
+    </span>
+    <Badge>
+      bar
+    </Badge>
+  </ReferenceSelectItem__DateBadge>
+</ReferenceSelectItem__NameDateBadge>
+`;

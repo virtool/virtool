@@ -1,142 +1,117 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceForm /> should render with errors 1`] = `
+exports[`<ReferenceForm /> should render when [errorFile!=null] 1`] = `
 <div>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+  <div>
+    <div
+      className="input-form-error"
     >
-      <div
-        className="input-form-error"
-      >
-        <span
-          className="input-error-message"
-          style={
-            Object {
-              "margin": "0 0 0 0",
-            }
+      <span
+        className="input-error-message"
+        style={
+          Object {
+            "margin": "0 0 0 0",
           }
-        >
-          Error Select
-        </span>
-      </div>
-    </Col>
-  </Row>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+        }
+      >
+        foo
+      </span>
+    </div>
+  </div>
+  <Form__NameOrganism>
+    <Form__Name
+      mode="clone"
     >
       <InputError
-        error=""
+        error="baz"
         label="Name"
         name="name"
-        value="test"
+        onChange={[MockFunction]}
+        value="fee"
       />
-    </Col>
-  </Row>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
-    >
-      <InputError
-        label="Description"
-        name="description"
-        type="textarea"
-        value="test-description"
-      />
-    </Col>
-  </Row>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      <InputError
-        label="Organism"
-        name="organism"
-        value="test-organism"
-      />
-    </Col>
-  </Row>
+    </Form__Name>
+  </Form__NameOrganism>
+  <InputError
+    label="Description"
+    name="description"
+    onChange={[MockFunction]}
+    type="textarea"
+    value="Foo"
+  />
 </div>
 `;
 
-exports[`<ReferenceForm /> should render without errors 1`] = `
+exports[`<ReferenceForm /> should render when [errorFile=null] and [errorSelect=null] 1`] = `
 <div>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  />
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+  <div />
+  <Form__NameOrganism>
+    <Form__Name
+      mode="clone"
     >
       <InputError
-        error=""
+        error="baz"
         label="Name"
         name="name"
-        value="test"
+        onChange={[MockFunction]}
+        value="fee"
       />
-    </Col>
-  </Row>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+    </Form__Name>
+  </Form__NameOrganism>
+  <InputError
+    label="Description"
+    name="description"
+    onChange={[MockFunction]}
+    type="textarea"
+    value="Foo"
+  />
+</div>
+`;
+
+exports[`<ReferenceForm /> should render when [mode=create] 1`] = `
+<div>
+  <div>
+    <div
+      className="input-form-error"
+    >
+      <span
+        className="input-error-message"
+        style={
+          Object {
+            "margin": "0 0 0 0",
+          }
+        }
+      >
+        foo
+      </span>
+    </div>
+  </div>
+  <Form__NameOrganism>
+    <Form__Name
+      mode="create"
     >
       <InputError
-        label="Description"
-        name="description"
-        type="textarea"
-        value="test-description"
+        error="baz"
+        label="Name"
+        name="name"
+        onChange={[MockFunction]}
+        value="fee"
       />
-    </Col>
-  </Row>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
+    </Form__Name>
+    <Form__Organism>
       <InputError
         label="Organism"
         name="organism"
-        value="test-organism"
+        onChange={[MockFunction]}
+        value="Bar"
       />
-    </Col>
-  </Row>
+    </Form__Organism>
+  </Form__NameOrganism>
+  <InputError
+    label="Description"
+    name="description"
+    onChange={[MockFunction]}
+    type="textarea"
+    value="Foo"
+  />
 </div>
 `;

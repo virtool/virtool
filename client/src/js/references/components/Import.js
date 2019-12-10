@@ -8,7 +8,7 @@ import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import ReferenceForm from "./Form";
+import { ReferenceForm } from "./Form";
 
 const getInitialState = () => ({
     name: "",
@@ -18,7 +18,8 @@ const getInitialState = () => ({
     errorName: "",
     errorDataType: "",
     errorFile: "",
-    localId: ""
+    localId: "",
+    mode: "import"
 });
 
 class ImportReference extends React.Component {
@@ -117,7 +118,19 @@ class ImportReference extends React.Component {
                         style={{ marginBottom: "10px" }}
                     />
                     <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                    <ReferenceForm
+                        name={this.state.name}
+                        description={this.state.description}
+                        dataType={this.state.dataType}
+                        organism={this.state.organism}
+                        errorName={this.state.errorName}
+                        errorDataType={this.state.errorDataType}
+                        errorFile={this.state.errorFile}
+                        localId={this.state.localId}
+                        mode="import"
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
+                    />
                 </Modal.Body>
 
                 <Modal.Footer>

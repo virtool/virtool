@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CloneReference /> should render 1`] = `
+Object {
+  "dataType": "genome",
+  "description": "",
+  "errorDataType": "",
+  "errorName": "",
+  "errorSelect": "",
+  "mode": "clone",
+  "name": "",
+  "organism": "",
+  "reference": "",
+}
+`;
