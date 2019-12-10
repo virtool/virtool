@@ -137,7 +137,7 @@ class CreateSample extends React.Component {
             />
         ) : null;
 
-        const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const Pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
 
@@ -238,7 +238,7 @@ class CreateSample extends React.Component {
 
                             {userGroup}
                             <Col xs={12} sm={6}>
-                                <InputError type="text" label="Library Type" value={libraryType} readOnly={true} />
+                                <InputError type="text" label="Pairedness" value={Pairedness} readOnly={true} />
                             </Col>
                         </Row>
 
