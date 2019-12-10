@@ -113,7 +113,6 @@ export default function referenceReducer(state = initialState, action) {
             return state;
 
         case UPLOAD_PROGRESS:
-            console.log("UPLOAD_PROGRESS", action);
             if (state.importUploadId === action.localId) {
                 return {
                     ...state,

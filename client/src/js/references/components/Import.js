@@ -87,8 +87,6 @@ class ImportReference extends React.Component {
         let message;
         let progress = 0;
 
-        console.log(file);
-
         if (file) {
             progress = file.progress;
             message = file.ready ? `${file.name}` : "Uploading...";
