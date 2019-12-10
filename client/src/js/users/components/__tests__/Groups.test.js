@@ -16,6 +16,7 @@ describe("<UserGroups />", () => {
     });
 
     it("renders", () => {
+        props.documents = [{ id: "foo" }];
         const wrapper = shallow(<UserGroups {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -50,6 +51,17 @@ describe("<UserGroups />", () => {
         it("disables membership", () => {
             wrapper.instance().handleEdit("foo");
             expect(props.onEditGroup).toHaveBeenCalledWith("bob", []);
+        });
+
+        it("should return loading placeholder when [props.documents === null]", () => {
+            props.documents = null;
+            const wrapper = shallow(<UserGroups {...props} />);
+            expect(wrapper).toMatchSnapshot();
+        });
+        it("should return nonefound when [props.documents === false]", () => {
+            props.documents = false;
+            const wrapper = shallow(<UserGroups {...props} />);
+            expect(wrapper).toMatchSnapshot();
         });
     });
 

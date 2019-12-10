@@ -1,9 +1,18 @@
-import { map, sortBy } from "lodash-es";
 import React from "react";
 import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Badge, ListGroupItem, NoneFound, Panel, RelativeTime, Table } from "../../../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    ListGroupItem,
+    NoneFoundSection,
+    Panel,
+    RelativeTime,
+    Table
+} from "../../../base";
+import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import ReferenceDetailHeader from "./Header";
 import RemoteReference from "./Remote";
@@ -24,37 +33,21 @@ const Clone = ({ source }) => (
     </Panel>
 );
 
-const Contributors = ({ contributors }) => {
-    if (contributors.length) {
-        const sorted = sortBy(contributors, ["id", "count"]);
-
-        const contributorComponents = map(sorted, entry => (
-            <ListGroupItem key={entry.id}>
-                {entry.id} <Badge>{entry.count}</Badge>
-            </ListGroupItem>
-        ));
-
-        return <ListGroup>{contributorComponents}</ListGroup>;
-    }
-
-    return <NoneFound noun="contributors" />;
-};
-
 const LatestBuild = ({ id, latestBuild }) => {
     if (latestBuild) {
         return (
-            <ListGroupItem>
+            <BoxGroupSection>
                 <strong>
                     <Link to={`/refs/${id}/indexes/${latestBuild.id}`}>Index {latestBuild.version}</Link>
                 </strong>
                 <span>
                     &nbsp;/ Created <RelativeTime time={latestBuild.created_at} /> by {latestBuild.user.id}
                 </span>
-            </ListGroupItem>
+            </BoxGroupSection>
         );
     }
 
-    return <NoneFound noun="builds" noListGroup />;
+    return <NoneFoundSection noun="index builds" />;
 };
 
 const ReferenceManage = ({ detail }) => {
@@ -92,18 +85,14 @@ const ReferenceManage = ({ detail }) => {
             {remote}
             {clone}
 
-            <Panel>
-                <Panel.Heading>Latest Index Build</Panel.Heading>
+            <BoxGroup>
+                <BoxGroupHeader>
+                    <h2>Latest Index Build</h2>
+                </BoxGroupHeader>
+                <LatestBuild refId={id} latestBuild={latest_build} />
+            </BoxGroup>
 
-                <ListGroup>
-                    <LatestBuild refId={id} latestBuild={latest_build} />
-                </ListGroup>
-            </Panel>
-
-            <Panel>
-                <Panel.Heading>Contributors</Panel.Heading>
-                <Contributors contributors={contributors} />
-            </Panel>
+            <Contributors contributors={contributors} />
         </div>
     );
 };

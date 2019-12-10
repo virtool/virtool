@@ -1,8 +1,9 @@
 import { includes, map, xor } from "lodash-es";
 import React from "react";
-import { Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, NoneFound, Panel } from "../../base";
+import { Box } from "../../base/Box";
+
+import { LoadingPlaceholder, NoneFound } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { editUser } from "../actions";
 import { UserGroup } from "./Group";
@@ -34,13 +35,7 @@ export class UserGroups extends React.Component {
             />
         ));
 
-        return (
-            <Panel>
-                <Panel.Body>
-                    <Row>{groupComponents}</Row>
-                </Panel.Body>
-            </Panel>
-        );
+        return <Box>{groupComponents}</Box>;
     }
 }
 

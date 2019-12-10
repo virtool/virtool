@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<API /> should render 1`] = `
+<SettingsCheckbox
+  enabled={true}
+  onToggle={[MockFunction]}
+>
+  <h2>
+    JSON API
+  </h2>
+  <small>
+    Enable API access for clients other than Virtool. See link to API documentation.
+  </small>
+  <ExternalLink
+    href="https://www.virtool.ca/docs/developer/api_account"
+  >
+    API documentation
+  </ExternalLink>
+</SettingsCheckbox>
+`;

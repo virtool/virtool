@@ -1,14 +1,15 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "connected-react-router";
 import { find } from "lodash-es";
+import { pushState } from "../../app/actions";
 import { Alert, ProgressBar, SaveButton, UploadBar } from "../../base";
 import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
 import { clearError } from "../../errors/actions";
-import ReferenceForm from "./Form";
+import { getImportData } from "../selectors";
+import { ReferenceForm } from "./Form";
 
 const getInitialState = () => ({
     name: "",
@@ -18,7 +19,8 @@ const getInitialState = () => ({
     errorName: "",
     errorDataType: "",
     errorFile: "",
-    localId: ""
+    localId: "",
+    mode: "import"
 });
 
 class ImportReference extends React.Component {
@@ -56,7 +58,7 @@ class ImportReference extends React.Component {
 
         const localId = createRandomString();
         this.setState({ localId });
-        this.props.onDrop("reference", file[0], localId);
+        this.props.onDrop(localId, file[0], "reference");
     };
 
     handleSubmit = e => {
@@ -75,30 +77,23 @@ class ImportReference extends React.Component {
             this.state.description,
             this.state.dataType,
             this.state.organism,
-            this.props.importId
+            this.props.file.id
         );
     };
 
     render() {
+        const { file } = this.props;
+
+        let message;
         let progress = 0;
-        let uploadedFile;
-        let message = "";
 
-        if (this.state.localId.length) {
-            uploadedFile = find(this.props.uploads, { localId: this.state.localId });
-            if (uploadedFile) {
-                progress = uploadedFile.progress;
-            }
-        }
-
-        if (progress !== 0 && progress < 100) {
-            message = `File upload in progress: ${uploadedFile.name}`;
-        } else if (progress === 100) {
-            message = `Upload complete: ${uploadedFile.name}`;
+        if (file) {
+            progress = file.progress;
+            message = file.ready ? `${file.name}` : "Uploading...";
         }
 
         const fileErrorStyle = {
-            border: this.state.errorFile.length ? "1px solid #d44b40" : "1px solid transparent",
+            border: `1px solid ${this.state.errorFile.length ? "#d44b40" : "transparent"}`,
             marginBottom: "3px"
         };
 
@@ -117,7 +112,19 @@ class ImportReference extends React.Component {
                         style={{ marginBottom: "10px" }}
                     />
                     <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
-                    <ReferenceForm state={this.state} onChange={this.handleChange} toggle={this.toggleCheck} />
+                    <ReferenceForm
+                        name={this.state.name}
+                        description={this.state.description}
+                        dataType={this.state.dataType}
+                        organism={this.state.organism}
+                        errorName={this.state.errorName}
+                        errorDataType={this.state.errorDataType}
+                        errorFile={this.state.errorFile}
+                        localId={this.state.localId}
+                        mode="import"
+                        onChange={this.handleChange}
+                        toggle={this.toggleCheck}
+                    />
                 </Modal.Body>
 
                 <Modal.Footer>
@@ -129,8 +136,7 @@ class ImportReference extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    uploads: state.files.uploads,
-    importId: state.references.importData ? state.references.importData.id : null
+    file: getImportData(state)
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -138,12 +144,12 @@ const mapDispatchToProps = dispatch => ({
         dispatch(importReference(name, description, dataType, organism, fileId));
     },
 
-    onDrop: (fileType, file, localId) => {
+    onDrop: (localId, file, fileType) => {
         dispatch(upload(localId, file, fileType));
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { importReference: false } }));
+        dispatch(pushState({ importReference: false }));
     },
 
     onClearError: error => {

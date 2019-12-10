@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<InstallOption /> should render when [canInstall=false] 1`] = `
+<Alert__WarningAlert
+  level={true}
+>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="exclamation-circle"
+    pullRight={false}
+  />
+  <span>
+    <strong>
+      You do not have permission to install HMMs.
+    </strong>
+    <span>
+       Contact an administrator.
+    </span>
+  </span>
+</Alert__WarningAlert>
+`;
+
+exports[`<InstallOption /> should render when [canInstall=true] 1`] = `
+<Button
+  bsStyle="default"
+  icon="download"
+  onClick={[Function]}
+  pullRight={false}
+  tipPlacement="top"
+>
+  Install Official
+</Button>
+`;

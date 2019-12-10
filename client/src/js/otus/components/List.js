@@ -11,7 +11,7 @@ import CreateOTU from "./Create";
 import OTUItem from "./Item";
 import OTUToolbar from "./Toolbar";
 
-class OTUsList extends React.Component {
+export class OTUsList extends React.Component {
     componentDidMount() {
         this.props.onLoadNextPage(this.props.refId, this.props.term, this.props.verified, 1);
     }
@@ -54,14 +54,14 @@ class OTUsList extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     ...state.otus,
     term: getTerm(state),
     refId: state.references.detail.id,
     verified: state.otus.verified
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(push({ state: { createOTU: false } }));
     },

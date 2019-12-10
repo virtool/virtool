@@ -170,7 +170,7 @@ export class Password extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     const { force_reset, id, last_password_change } = state.users.detail;
     return {
         id,
@@ -181,7 +181,7 @@ const mapStateToProps = state => {
     };
 };
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (userId, password) => {
         dispatch(editUser(userId, { password }));
     },

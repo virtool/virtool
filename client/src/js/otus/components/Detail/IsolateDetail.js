@@ -9,6 +9,10 @@ import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import IsolateSequences from "./Sequences";
 
+const IsolateDetailBox = styled(BoxGroup)`
+    margin: 0;
+`;
+
 const IsolateDetailHeader = styled(BoxGroupHeader)`
     align-items: center;
     display: flex;
@@ -86,7 +90,7 @@ export class IsolateDetail extends React.Component {
 
                 <RemoveIsolate />
 
-                <BoxGroup>
+                <IsolateDetailBox>
                     <IsolateDetailHeader>
                         <div>{isolate.name}</div>
                         <div>
@@ -103,7 +107,7 @@ export class IsolateDetail extends React.Component {
                         </div>
                     </IsolateDetailHeader>
                     <IsolateSequences canModify={this.props.canModify} />
-                </BoxGroup>
+                </IsolateDetailBox>
             </div>
         );
     }

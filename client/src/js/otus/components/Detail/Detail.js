@@ -1,11 +1,12 @@
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Switch, Route, Redirect } from "react-router-dom";
-import { get } from "lodash-es";
-import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
-import { Flex, FlexItem, Icon, LoadingPlaceholder, ViewHeader, NotFound, TabLink, Tabs } from "../../../base";
+import { Redirect, Route, Switch } from "react-router-dom";
+import styled from "styled-components";
+import { Icon, LoadingPlaceholder, NotFound, TabLink, Tabs, ViewHeader } from "../../../base";
 import { Breadcrumb, BreadcrumbItem } from "../../../base/Breadcrumb";
 import { checkRefRight } from "../../../utils/utils";
+import { getOTU, showEditOTU, showRemoveOTU } from "../../actions";
 import AddIsolate from "./AddIsolate";
 import IsolateEditor from "./Editor";
 import EditOTU from "./EditOTU";
@@ -21,6 +22,27 @@ const OTUSection = () => (
         <AddIsolate />
     </div>
 );
+
+const OTUDetailHeader = styled.h1`
+    align-items: baseline;
+    display: flex;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+
+    small {
+        font-weight: bold;
+        padding-left: 7px;
+
+        em {
+            font-weight: normal;
+        }
+    }
+
+    span:last-child {
+        margin-left: auto;
+    }
+`;
 
 class OTUDetail extends React.Component {
     componentDidMount() {
@@ -86,19 +108,11 @@ class OTUDetail extends React.Component {
                     <BreadcrumbItem>{name}</BreadcrumbItem>
                 </Breadcrumb>
 
-                <h3 style={{ marginBottom: "20px" }}>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <Flex alignItems="center">
-                                <strong>{name}</strong>
-                                <FlexItem grow={1} pad={5}>
-                                    <small className="text-strong">{abbreviation}</small>
-                                </FlexItem>
-                            </Flex>
-                        </FlexItem>
-                        {iconButtons}
-                    </Flex>
-                </h3>
+                <OTUDetailHeader>
+                    <strong>{name}</strong>
+                    <small>{abbreviation || <em>No Abbreviation</em>}</small>
+                    {iconButtons}
+                </OTUDetailHeader>
 
                 <Tabs>
                     <TabLink to={`/refs/${refId}/otus/${id}/otu`}>OTU</TabLink>
