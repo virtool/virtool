@@ -70,7 +70,7 @@ class Job(virtool.jobs.job.Job):
             "paired": sample["paired"],
             #: The number of reads in the sample library. Assigned after database connection is made.
             "read_count": int(sample["quality"]["count"]),
-            "srna": sample.get("srna", False),
+            "library_type": sample["library_type"],
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
@@ -110,7 +110,7 @@ class Job(virtool.jobs.job.Job):
 
         parameters = get_trimming_parameters(
             paired,
-            self.params["srna"]
+            self.params["library_type"]
         )
 
         cache = virtool.jobs.utils.find_cache(
@@ -319,16 +319,16 @@ def move_trimming_results(path, paired):
     )
 
 
-def get_trimming_parameters(paired: bool, srna: bool):
+def get_trimming_parameters(paired: bool, library_type: str):
     """
 
     :param paired:
-    :param srna:
+    :param library_type:
     :return:
     """
     parameters = dict(virtool.samples.utils.TRIM_PARAMETERS)
 
-    if srna:
+    if library_type == "srna":
         parameters.update({
             "min_length": 20,
             "max_length": 22
