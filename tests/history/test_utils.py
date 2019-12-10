@@ -1,6 +1,13 @@
+import datetime
+import json
+import os
+import sys
 import pytest
+import filecmp
 
 import virtool.history.utils
+
+TEST_DIFF_PATH = os.path.join(sys.path[0], "tests", "test_files", "diff.json")
 
 
 def test_calculate_diff(test_otu_edit):
@@ -81,3 +88,29 @@ def test_compose_create_description(document, description):
 ])
 def test_compose_edit_description(name, abbreviation, old_abbreviation, schema, description):
     assert virtool.history.utils.compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
+
+
+async def test_read_diff_file(mocker, snapshot):
+    """
+    Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
+
+    """
+    m = mocker.patch("virtool.history.utils.join_diff_path", return_value=TEST_DIFF_PATH)
+
+    diff = await virtool.history.utils.read_diff_file("foo", "bar", "baz")
+
+    m.assert_called_with("foo", "bar", "baz")
+    snapshot.assert_match(diff)
+
+
+async def test_write_diff_file(mocker, tmpdir):
+    """
+    Test that a diff file is written correctly.
+
+    """
+    with open(TEST_DIFF_PATH, "r") as f:
+        diff = json.load(f)
+
+    await virtool.history.utils.write_diff_file(str(tmpdir), "foo", "1", diff)
+
+    path = os.path.join(str(tmpdir), "foo_1.json")
