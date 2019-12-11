@@ -35,7 +35,12 @@ export class UserGroups extends React.Component {
             />
         ));
 
-        return <Box>{groupComponents}</Box>;
+        return (
+            <div>
+                <label>Groups</label>
+                <Box>{groupComponents}</Box>
+            </div>
+        );
     }
 }
 

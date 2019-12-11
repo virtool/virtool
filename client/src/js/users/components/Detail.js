@@ -30,6 +30,7 @@ import { editUser, getUser, removeUser } from "../actions";
 import UserGroups from "./Groups";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
+import PrimaryGroup from "./PrimaryGroup";
 
 export class UserDetail extends React.Component {
     componentDidMount() {
@@ -70,12 +71,6 @@ export class UserDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const groupOptions = map(this.props.detail.groups, groupId => (
-            <option key={groupId} value={groupId}>
-                {capitalize(groupId)}
-            </option>
-        ));
-
         const currentRole = this.props.detail.administrator ? "Administrator" : "Limited";
 
         const canModifyUser = this.props.activeUser !== this.props.detail.id && this.props.activeUserIsAdmin;
@@ -102,23 +97,11 @@ export class UserDetail extends React.Component {
                 </Flex>
 
                 <div style={{ marginTop: "20px" }}>
-                    <label>Change Password</label>
                     <Password />
 
-                    <label>Groups</label>
-                    <UserGroups userId={this.props.detail.id} memberGroups={this.props.detail.groups} />
+                    <UserGroups />
 
-                    <label>Primary Group</label>
-                    <InputError
-                        type="select"
-                        value={this.props.detail.primary_group}
-                        onChange={this.handleSetPrimaryGroup}
-                    >
-                        <option key="none" value="none">
-                            None
-                        </option>
-                        {groupOptions}
-                    </InputError>
+                    <PrimaryGroup />
 
                     <Flex alignItems="center" justifyContent="space-between">
                         <label>Permissions</label>
