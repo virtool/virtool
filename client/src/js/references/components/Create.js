@@ -3,8 +3,10 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
+
 import { Alert, Button, ButtonToolbar } from "../../base";
 import { getTargetChange } from "../../utils/utils";
+import { DataTypeSelection } from "./DataTypeSelection";
 import ReferenceForm from "./Form";
 
 const getInitialState = () => ({
@@ -31,6 +33,10 @@ export class CreateReference extends React.Component {
         });
     };
 
+    handleChangeDataType = dataType => {
+        this.setState({ dataType });
+    };
+
     handleSubmit = e => {
         e.preventDefault();
 
@@ -55,6 +61,7 @@ export class CreateReference extends React.Component {
                         <strong>Create an empty reference.</strong>
                     </Alert>
                     <ReferenceForm state={this.state} onChange={this.handleChange} />
+                    <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
                 </Modal.Body>
 
                 <Modal.Footer>
@@ -69,7 +76,7 @@ export class CreateReference extends React.Component {
     }
 }
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (name, description, dataType, organism) => {
         dispatch(createReference(name, description, dataType, organism));
     },

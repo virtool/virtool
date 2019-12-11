@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateReference /> should render 1`] = `
+<form
+  onSubmit={[Function]}
+>
+  <ModalBody
+    bsClass="modal-body"
+    componentClass="div"
+  >
+    <Alert>
+      <strong>
+        Create an empty reference.
+      </strong>
+    </Alert>
+    <ReferenceForm
+      onChange={[Function]}
+      state={
+        Object {
+          "dataType": "genome",
+          "description": "",
+          "errorDataType": "",
+          "errorName": "",
+          "name": "",
+          "organism": "",
+        }
+      }
+    />
+    <DataTypeSelection
+      dataType="genome"
+      onSelect={[Function]}
+    />
+  </ModalBody>
+  <ModalFooter
+    bsClass="modal-footer"
+    componentClass="div"
+  >
+    <ButtonToolbar>
+      <Button
+        bsStyle="primary"
+        icon="save"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Save
+      </Button>
+    </ButtonToolbar>
+  </ModalFooter>
+</form>
+`;
