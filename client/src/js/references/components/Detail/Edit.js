@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "connected-react-router";
 import { Modal } from "react-bootstrap";
-import ReferenceForm from "../Form";
+import { ReferenceForm } from "../Form";
 import { editReference } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { SaveButton } from "../../../base";

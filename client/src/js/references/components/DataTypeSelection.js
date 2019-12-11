@@ -11,7 +11,7 @@ export const DataTypeSelection = ({ onSelect, dataType }) => (
             </SelectBox>
             <SelectBox onClick={() => onSelect("barcode")} active={dataType === "barcode"}>
                 <div>Barcode</div>
-                <span>Target sequences for barcode matching detection</span>
+                <span>Target sequences for barcode analysis</span>
             </SelectBox>
         </SelectBoxContainer>
     </div>

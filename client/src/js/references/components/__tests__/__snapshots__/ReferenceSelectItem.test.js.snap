@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceSelectItem /> should render 1`] = `
+<ReferenceSelectItem__StyledReferenceSelectItem
+  onClick={[MockFunction]}
+>
+  <strong>
+    foo
+  </strong>
+  <Attribution
+    time="boo"
+    user="foo"
+  />
+  <div>
+    <Badge>
+      bar
+       OTUs
+    </Badge>
+  </div>
+</ReferenceSelectItem__StyledReferenceSelectItem>
+`;

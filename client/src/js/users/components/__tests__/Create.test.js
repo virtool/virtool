@@ -1,13 +1,11 @@
 jest.mock("connected-react-router");
 
-import * as actions from "../../actions";
-import CreateUserContainer, { CreateUser, mapStateToProps, mapDispatchToProps } from "../Create";
 import { push } from "connected-react-router";
+import { CreateUser, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateUser />", () => {
     let props;
     let state;
-    let hasError;
 
     beforeEach(() => {
         props = {
@@ -33,8 +31,6 @@ describe("<CreateUser />", () => {
     });
 
     it("should call handleChange when InputError is changed", () => {
-        let name, value, error;
-
         const e = {
             target: { name: "name", value: "foo" }
         };
@@ -172,7 +168,6 @@ describe("mapDispatchToProps", () => {
 
     it("should return onClearError() in props", () => {
         const error = true;
-        const onClearError = jest.fn();
         result.onClearError(error);
         expect(dispatch).toHaveBeenCalledWith({
             error: true,

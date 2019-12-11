@@ -6,10 +6,10 @@ export const SelectBox = styled(Box)`
 
     div {
         font-weight: bold;
-        font-size: 12px;
     }
+
     span {
-        font-size: 11px;
+        font-size: 12px;
     }
 `;
 

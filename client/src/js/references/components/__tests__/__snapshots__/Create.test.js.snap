@@ -1,12 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateReference /> should render 1`] = `
-<form
-  onSubmit={[Function]}
->
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
+<Create__Container>
+  <form
+    onSubmit={[Function]}
   >
     <Alert>
       <strong>
@@ -14,38 +11,33 @@ exports[`<CreateReference /> should render 1`] = `
       </strong>
     </Alert>
     <ReferenceForm
+      description=""
+      errorName=""
+      mode="create"
+      name=""
       onChange={[Function]}
-      state={
-        Object {
-          "dataType": "genome",
-          "description": "",
-          "errorDataType": "",
-          "errorName": "",
-          "name": "",
-          "organism": "",
-        }
-      }
+      organism=""
     />
     <DataTypeSelection
       dataType="genome"
       onSelect={[Function]}
     />
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
-  >
-    <ButtonToolbar>
-      <Button
-        bsStyle="primary"
-        icon="save"
-        pullRight={false}
-        tipPlacement="top"
-        type="submit"
-      >
-        Save
-      </Button>
-    </ButtonToolbar>
-  </ModalFooter>
-</form>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <ButtonToolbar>
+        <Button
+          bsStyle="primary"
+          icon="save"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Save
+        </Button>
+      </ButtonToolbar>
+    </ModalFooter>
+  </form>
+</Create__Container>
 `;

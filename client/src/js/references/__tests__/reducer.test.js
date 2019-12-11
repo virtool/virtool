@@ -132,7 +132,14 @@ describe("References Reducer", () => {
     it("should handle UPLOAD_SUCCEEDED", () => {
         const action = { type: UPLOAD.SUCCEEDED, data: { foo: "bar" } };
         const result = reducer({}, action);
-        expect(result).toEqual({ importData: { foo: "bar" } });
+        expect(result).toEqual({
+            importFile: {
+                foo: "bar"
+            },
+            importUploadId: null,
+            importUploadName: null,
+            importUploadProgress: 0
+        });
     });
 
     it("should handle CHECK_REMOTE_UPDATES_REQUESTED", () => {

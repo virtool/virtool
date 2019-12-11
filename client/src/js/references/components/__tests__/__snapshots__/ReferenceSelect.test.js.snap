@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceSelect /> should render 1`] = `
+<div>
+  <label>
+    Source Reference
+  </label>
+  <ReferenceSelect__ReferenceSelectList
+    hasError={false}
+  >
+    <ReferenceSelectItem
+      active={false}
+      key="foo"
+      onClick={[Function]}
+      reference={
+        Object {
+          "id": "foo",
+          "key": "bar",
+        }
+      }
+    />
+  </ReferenceSelect__ReferenceSelectList>
+</div>
+`;
+
+exports[`<ReferenceSelect /> should render NoneFound when [references.length=0] 1`] = `
+<div>
+  <label>
+    Source Reference
+  </label>
+  <NoneFound
+    noun="source references"
+  />
+</div>
+`;

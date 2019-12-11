@@ -20,7 +20,8 @@ describe("<CreateReference />", () => {
             dataType: "genome",
             organism: "",
             errorName: "",
-            errorDataType: ""
+            errorDataType: "",
+            mode: "create"
         };
     });
 

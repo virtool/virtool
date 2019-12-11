@@ -65,7 +65,13 @@ export function* watchUploadChannel(channel, actionType, localId) {
         }
 
         if (response) {
-            return yield put({ type: actionType.SUCCEEDED, data: response.body });
+            return yield put({
+                type: actionType.SUCCEEDED,
+                data: {
+                    ...response.body,
+                    localId
+                }
+            });
         }
 
         yield put(uploadProgress(localId, progress));

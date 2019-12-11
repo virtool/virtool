@@ -1,54 +1,20 @@
-import { find, map } from "lodash-es";
+import { find } from "lodash-es";
 import React from "react";
-import { Col, ListGroup, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Alert, Badge, ListGroupItem, NoneFound, RelativeTime, SaveButton } from "../../base";
+import styled from "styled-components";
+import { Alert, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
-import ReferenceForm from "./Form";
+import { ReferenceForm } from "./Form";
+import { ReferenceSelect } from "./ReferenceSelect";
 
-const ReferenceSelect = ({ references, onSelect, selected, hasError }) => {
-    const errorStyle = hasError ? { border: "1px solid #d44b40" } : { border: "1px solid transparent" };
-
-    return (
-        <div>
-            <label className="control-label">Source Reference</label>
-            {references.length ? (
-                <ListGroup
-                    style={{
-                        maxHeight: "85px",
-                        overflowY: "auto",
-                        marginBottom: "3px",
-                        ...errorStyle
-                    }}
-                >
-                    {map(references, reference => (
-                        <ListGroupItem
-                            key={reference.id}
-                            onClick={() => onSelect(reference.id)}
-                            active={selected === reference.id}
-                        >
-                            <Col xs={5}>
-                                <strong>{reference.name}</strong>
-                            </Col>
-                            <Col xs={6}>
-                                <span className="text-muted" style={{ fontSize: "10px" }}>
-                                    Created <RelativeTime time={reference.created_at} /> by {reference.user.id}
-                                </span>
-                            </Col>
-                            <Col xs={1}>
-                                <Badge>{reference.otu_count}</Badge>
-                            </Col>
-                        </ListGroupItem>
-                    ))}
-                </ListGroup>
-            ) : (
-                <NoneFound noun="source references" />
-            )}
-        </div>
-    );
-};
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin: 15px;
+`;
 
 const getInitialState = (refId, refArray) => {
     const originalRef = find(refArray, { id: refId });
@@ -62,7 +28,8 @@ const getInitialState = (refId, refArray) => {
             organism: originalRef.organism,
             errorName: "",
             errorDataType: "",
-            errorSelect: ""
+            errorSelect: "",
+            mode: "clone"
         };
     }
 
@@ -74,11 +41,12 @@ const getInitialState = (refId, refArray) => {
         organism: "",
         errorName: "",
         errorDataType: "",
-        errorSelect: ""
+        errorSelect: "",
+        mode: "clone"
     };
 };
 
-class CloneReference extends React.Component {
+export class CloneReference extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(this.props.refId, this.props.refDocuments);
@@ -134,8 +102,8 @@ class CloneReference extends React.Component {
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit}>
-                <Modal.Body>
+            <Container>
+                <form onSubmit={this.handleSubmit}>
                     <Alert>
                         <strong>Clone an existing reference.</strong>
                     </Alert>
@@ -145,23 +113,31 @@ class CloneReference extends React.Component {
                         selected={this.state.reference}
                         hasError={this.state.errorSelect}
                     />
-                    <ReferenceForm state={this.state} onChange={this.handleChange} />
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                </Modal.Footer>
-            </form>
+                    <ReferenceForm
+                        description={this.state.description}
+                        errorFile={this.state.errorFile}
+                        errorName={this.state.errorName}
+                        errorSelect={this.state.errorSelect}
+                        name={this.state.name}
+                        mode={this.state.mode}
+                        organism={this.state.organism}
+                        onChange={this.handleChange}
+                    />
+                    <Modal.Footer>
+                        <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
+                    </Modal.Footer>
+                </form>
+            </Container>
         );
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     refId: state.router.location.state.refId,
     refDocuments: state.references.documents
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (name, description, dataType, organism, refId) => {
         dispatch(cloneReference(name, description, dataType, organism, refId));
     },
