@@ -1,5 +1,12 @@
 import React from "react";
-import { SelectBox, SelectBoxContainer } from "../../base";
+import styled from "styled-components";
+import { SelectBox } from "../../base";
+
+const SelectBoxContainer = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 11px;
+`;
 
 export const DataTypeSelection = ({ onSelect, dataType }) => (
     <div>

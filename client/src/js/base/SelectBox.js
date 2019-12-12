@@ -12,9 +12,3 @@ export const SelectBox = styled(Box)`
         font-size: 11px;
     }
 `;
-
-export const SelectBoxContainer = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 11px;
-`;
