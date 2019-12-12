@@ -133,6 +133,27 @@ async def find(db, req_query, base_query=None):
     return data
 
 
+async def get(app, change_id):
+    """
+    Get a complete history document identified by the passed `changed_id`.
+
+    Loads diff field from file if necessary. Returns `None` if the document does not exist.
+
+    """
+    document = await app["db"].history.find_one(change_id, PROJECTION)
+
+    if document and document["diff"] == "file":
+        otu_id, otu_version = change_id.split(".")
+
+        document["diff"] = await virtool.history.utils.read_diff_file(
+            app["settings"]["data_path"],
+            otu_id,
+            otu_version
+        )
+
+    return virtool.utils.base_processor(document)
+
+
 async def get_contributors(db, query):
     """
     Return an list of contributors and their contribution count for a specific set of history.
