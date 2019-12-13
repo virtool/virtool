@@ -670,6 +670,6 @@ async def list_history(req):
     if not await db.otus.find({"_id": otu_id}).count():
         return not_found()
 
-    cursor = db.history.find({"otu.id": otu_id})
+    cursor = db.history.find({"otu.id": otu_id}, projection=virtool.history.db.LIST_PROJECTION)
 
     return json_response([d async for d in cursor])
