@@ -22,7 +22,7 @@ async def find(req):
     if ids:
         return json_response(await db.subtraction.distinct("_id", {"ready": True}))
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 

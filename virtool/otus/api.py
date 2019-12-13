@@ -49,8 +49,8 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req["query"].get("find", None)
-    verified = req["query"].get("verified", None)
+    term = req["query"].get("find")
+    verified = req["query"].get("verified")
     names = req["query"].get("names", False)
 
     data = await virtool.otus.db.find(

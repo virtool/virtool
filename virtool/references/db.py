@@ -405,7 +405,7 @@ async def add_group_or_user(db, ref_id, field, data):
     if not document:
         return None
 
-    subdocument_id = data.get("group_id", None) or data["user_id"]
+    subdocument_id = data.get("group_id") or data["user_id"]
 
     if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
         raise virtool.errors.DatabaseError("group does not exist")
@@ -1234,7 +1234,7 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
     # Build a ``description`` field for the otu creation change document.
     description = f"{verb.capitalize()}{e}d {name}"
 
-    abbreviation = joined.get("abbreviation", None)
+    abbreviation = joined.get("abbreviation")
 
     # Add the abbreviation to the description if there is one.
     if abbreviation:

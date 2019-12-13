@@ -24,7 +24,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
@@ -218,7 +218,7 @@ async def edit(req):
         if missing:
             return bad_request("Groups do not exist: " + ", ".join(missing))
 
-    primary_group = data.get("primary_group", None)
+    primary_group = data.get("primary_group")
 
     if primary_group and primary_group not in groups:
         return bad_request("Primary group does not exist")

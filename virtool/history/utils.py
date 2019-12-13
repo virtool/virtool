@@ -25,7 +25,7 @@ def calculate_diff(old, new):
 
 def compose_create_description(document):
     name = document["name"]
-    abbreviation = document.get("abbreviation", None)
+    abbreviation = document.get("abbreviation")
 
     # Build a ``description`` field for the otu creation change document.
     description = f"Created {name}"
@@ -72,7 +72,7 @@ def compose_edit_description(name, abbreviation, old_abbreviation, schema):
 
 def compose_remove_description(document):
     name = document["name"]
-    abbreviation = document.get("abbreviation", None)
+    abbreviation = document.get("abbreviation")
 
     description = f"Removed {name}"
 
