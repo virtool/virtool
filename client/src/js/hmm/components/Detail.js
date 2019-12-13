@@ -3,7 +3,17 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 
-import { Badge, BoxGroup, BoxGroupHeader, Label, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
+import {
+    device,
+    Badge,
+    BoxGroup,
+    BoxGroupHeader,
+    Label,
+    LoadingPlaceholder,
+    NotFound,
+    Table,
+    ViewHeader
+} from "../../base";
 import { getHmm } from "../actions";
 import { HMMTaxonomy } from "./Taxonomy";
 
@@ -51,7 +61,7 @@ const TaxonomyGrid = styled.div`
     grid-template-columns: 1fr 1fr;
     column-gap: 15px;
 
-    @media (max-width: 720px) {
+    @media (max-width: ${device.tablet}) {
         grid-template-columns: 1fr;
     }
 

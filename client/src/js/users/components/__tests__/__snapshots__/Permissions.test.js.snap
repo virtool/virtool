@@ -1,10 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UserPermissions /> should render 1`] = `
-<Box>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  />
-</Box>
-`;
+exports[`<UserPermissions /> should render 1`] = `<Permissions__StyledUserPermissions />`;
