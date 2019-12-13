@@ -14,14 +14,8 @@ describe("<SampleDetailGeneral />", () => {
             locale: "Bar",
             paired: false,
             subtractionId: "Arabidopsis thaliana",
-            srna: false
+            libraryType: ""
         };
-    });
-
-    it.each([true, false])("should render with [srna=%p]", srna => {
-        props.srna = srna;
-        const wrapper = shallow(<SampleDetailGeneral {...props} />);
-        expect(wrapper).toMatchSnapshot();
     });
 
     it.each([true, false])("should render with [paired=%p]", paired => {
@@ -50,7 +44,7 @@ describe("mapStateToProps()", () => {
                         encoding: "Foo 1.2",
                         length: [50, 100]
                     },
-                    srna: false,
+                    library_type: "normal",
                     subtraction: { id: "baz" }
                 }
             }
@@ -65,11 +59,20 @@ describe("mapStateToProps()", () => {
             isolate: "Isolate Foo",
             locale: "Bar",
             paired: false,
-            srna: false,
             gc: "31.2 %",
             count: "13.2 m",
             lengthRange: "50 - 100",
-            subtractionId: "baz"
+            subtractionId: "baz",
+            libraryType: "Normal"
         });
     });
+
+    it.each([["normal", "Normal"], ["srna", "sRNA"], ["amplicon", "Amplicon"]])(
+        "state.library_type(%s) should equal props.libraryType(%s)",
+        (a, b) => {
+            state.samples.detail.library_type = a;
+            const result = mapStateToProps(state).libraryType;
+            expect(result).toEqual(b);
+        }
+    );
 });
