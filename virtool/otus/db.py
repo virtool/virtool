@@ -191,7 +191,7 @@ async def find(db, names, term, req_query, verified, ref_id=None):
         projection=PROJECTION
     )
 
-    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["otu"]).distinct("otu.name"))
+    data["modified_count"] = len(await db.history.distinct("otu.name", {"index.id": "unbuilt"}))
 
     return data
 
