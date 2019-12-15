@@ -6,6 +6,12 @@ import { BoxGroup, BoxGroupHeader, Table } from "../../base";
 import EditSample from "./Edit";
 import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
 
+const libraryTypes = {
+    normal: "Normal",
+    srna: "sRNA",
+    amplicon: "Amplicon"
+};
+
 export const SampleDetailGeneral = ({
     count,
     encoding,
@@ -16,7 +22,7 @@ export const SampleDetailGeneral = ({
     locale,
     paired,
     subtractionId,
-    srna
+    libraryType
 }) => (
     <div>
         <SampleFileSizeWarning />
@@ -53,8 +59,8 @@ export const SampleDetailGeneral = ({
                         <td>{count}</td>
                     </tr>
                     <tr>
-                        <th>Read Size</th>
-                        <td>{srna ? "sRNA" : "Normal"}</td>
+                        <th>Library Type</th>
+                        <td>{libraryType}</td>
                     </tr>
                     <tr>
                         <th>Length Range</th>
@@ -94,7 +100,7 @@ export const SampleDetailGeneral = ({
 );
 
 export const mapStateToProps = state => {
-    const { host, isolate, locale, paired, quality, srna, subtraction } = state.samples.detail;
+    const { host, isolate, locale, paired, quality, library_type, subtraction } = state.samples.detail;
     const { count, encoding, gc, length } = quality;
 
     return {
@@ -103,7 +109,7 @@ export const mapStateToProps = state => {
         isolate,
         locale,
         paired,
-        srna,
+        libraryType: libraryTypes[library_type],
         gc: numbro(gc / 100).format("0.0 %"),
         count: numbro(count).format("0.0 a"),
         lengthRange: length.join(" - "),
