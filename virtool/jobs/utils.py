@@ -99,9 +99,10 @@ def find_cache(db, sample_id: str, program: str, parameters: dict) -> Union[dict
 
     """
     document = db.caches.find_one({
-        "sample.id": sample_id,
+        "hash": virtool.caches.db.calculate_cache_hash(parameters),
+        "missing": False,
         "program": program,
-        "hash": virtool.caches.db.calculate_cache_hash(parameters)
+        "sample.id": sample_id
     })
 
     if document:
