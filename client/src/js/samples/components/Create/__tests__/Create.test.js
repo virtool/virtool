@@ -7,10 +7,9 @@ describe("<CreateSample>", () => {
     let e;
     beforeEach(() => {
         props = {
-            subtractions: null,
+            subtractions: [],
             readyReads: [],
             forceGroupChoice: false,
-            subtractions: [],
             onCreate: jest.fn()
         };
         state = {
@@ -24,7 +23,7 @@ describe("<CreateSample>", () => {
             errorName: "",
             errorSubtraction: "",
             errorFile: "",
-            libraryType: ""
+            libraryType: "normal"
         };
         e = {
             preventDefault: jest.fn(),

@@ -159,7 +159,7 @@ export class CreateSample extends React.Component {
 
         return (
             <Modal
-                bsSize="lg"
+                bsSize="large"
                 show={this.props.show}
                 onHide={this.handleHide}
                 onEnter={this.props.onLoadSubtractionsAndFiles}
