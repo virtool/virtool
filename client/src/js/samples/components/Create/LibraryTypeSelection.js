@@ -19,14 +19,17 @@ export const LibraryTypeSelection = ({ onSelect, libraryType }) => (
         <LibraryTypeSelectBoxContainer>
             <SelectBox onClick={() => onSelect("Normal")} active={libraryType === "Normal"}>
                 Normal
+                <span>Search against whole genome references using normal reads.</span>
             </SelectBox>
 
             <SelectBox onClick={() => onSelect("sRNA")} active={libraryType === "sRNA"}>
                 sRNA
+                <span>Search against whole genome references using sRNA reads</span>
             </SelectBox>
 
             <SelectBox onClick={() => onSelect("Amplicon")} active={libraryType === "Amplicon"}>
                 Amplicon
+                <span>Search against barcode references using amplicon reads.</span>
             </SelectBox>
         </LibraryTypeSelectBoxContainer>
     </div>
