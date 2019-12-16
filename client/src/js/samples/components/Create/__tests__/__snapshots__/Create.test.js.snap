@@ -166,7 +166,7 @@ exports[`<CreateSample> should render 1`] = `
           xs={12}
         >
           <InputError
-            label="pairdness"
+            label="Pairdness"
             readOnly={true}
             type="text"
             value="Unpaired"
@@ -183,7 +183,7 @@ exports[`<CreateSample> should render 1`] = `
           xs={12}
         >
           <LibraryTypeSelection
-            libraryType=""
+            libraryType="normal"
             onSelect={[Function]}
           />
         </Col>
@@ -390,7 +390,7 @@ exports[`<CreateSample> should render when [this.props.subtractions!=null] and [
           xs={12}
         >
           <InputError
-            label="pairdness"
+            label="Pairdness"
             readOnly={true}
             type="text"
             value="Unpaired"
@@ -407,7 +407,7 @@ exports[`<CreateSample> should render when [this.props.subtractions!=null] and [
           xs={12}
         >
           <LibraryTypeSelection
-            libraryType=""
+            libraryType="normal"
             onSelect={[Function]}
           />
         </Col>
@@ -601,7 +601,7 @@ exports[`<CreateSample> should render when [this.props.subtractions=null] 1`] = 
           xs={12}
         >
           <InputError
-            label="pairdness"
+            label="Pairdness"
             readOnly={true}
             type="text"
             value="Unpaired"
@@ -618,7 +618,7 @@ exports[`<CreateSample> should render when [this.props.subtractions=null] 1`] = 
           xs={12}
         >
           <LibraryTypeSelection
-            libraryType=""
+            libraryType="normal"
             onSelect={[Function]}
           />
         </Col>
