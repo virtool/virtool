@@ -28,7 +28,7 @@ const getInitialState = props => ({
     errorName: "",
     errorSubtraction: "",
     errorFile: "",
-    libraryType: ""
+    libraryType: "normal"
 });
 
 export class CreateSample extends React.Component {
@@ -144,13 +144,13 @@ export class CreateSample extends React.Component {
             />
         ) : null;
 
-        const Pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
 
         return (
             <Modal
-                bsSize="large"
+                bsSize="lg"
                 show={this.props.show}
                 onHide={this.handleHide}
                 onEnter={this.props.onLoadSubtractionsAndFiles}
@@ -227,7 +227,7 @@ export class CreateSample extends React.Component {
                                 />
                             </Col>
                             <Col xs={12} sm={6}>
-                                <InputError type="text" label="pairdness" value={Pairedness} readOnly={true} />
+                                <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
                             </Col>
                         </Row>
 
