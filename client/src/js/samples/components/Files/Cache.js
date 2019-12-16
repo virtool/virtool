@@ -8,7 +8,9 @@ export const SampleFilesCache = ({ caches }) => {
     let fileComponents;
 
     if (caches && caches.length) {
-        fileComponents = map(caches, cache => <SampleCacheItem key={cache.id} {...cache} />);
+        fileComponents = map(caches, ({ created_at, files, hash, id, missing }) => (
+            <SampleCacheItem key={id} createdAt={created_at} files={files} hash={hash} id={id} missing={missing} />
+        ));
     } else {
         fileComponents = <NoneFoundSection key="none" noun="cached trims" />;
     }
@@ -24,7 +26,7 @@ export const SampleFilesCache = ({ caches }) => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     caches: state.samples.detail.caches
 });
 
