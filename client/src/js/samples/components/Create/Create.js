@@ -1,14 +1,17 @@
-import { push } from "connected-react-router";
 import { filter, get, map, replace, split } from "lodash-es";
 import React from "react";
 import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import { pushState } from "../../../app/actions";
+
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 
 import { createSample, findReadFiles } from "../../actions";
+import { LibraryTypeSelection } from "./LibraryTypeSelection";
+
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
@@ -20,15 +23,15 @@ const getInitialState = props => ({
     host: "",
     isolate: "",
     locale: "",
-    srna: false,
     subtraction: getActiveSubtraction(props),
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: ""
+    errorFile: "",
+    libraryType: "normal"
 });
 
-class CreateSample extends React.Component {
+export class CreateSample extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
@@ -66,6 +69,10 @@ class CreateSample extends React.Component {
                 [name]: value
             });
         }
+    };
+
+    handleLibrarySelect = libraryType => {
+        this.setState({ libraryType });
     };
 
     handleSubmit = e => {
@@ -137,7 +144,7 @@ class CreateSample extends React.Component {
             />
         ) : null;
 
-        const Pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
 
@@ -156,7 +163,7 @@ class CreateSample extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Row>
-                            <Col xs={12}>
+                            <Col xs={12} md={6}>
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
                                     <InputError
@@ -177,17 +184,6 @@ class CreateSample extends React.Component {
                                     </InputGroup.Button>
                                 </InputGroup>
                             </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="isolate"
-                                    label="Isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
                             <Col xs={12} md={6}>
                                 <InputError
                                     name="locale"
@@ -201,13 +197,12 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col xs={12} md={6}>
                                 <InputError
-                                    name="host"
-                                    label="Host"
-                                    value={this.state.host}
+                                    name="isolate"
+                                    label="Isolate"
+                                    value={this.state.isolate}
                                     onChange={this.handleChange}
                                 />
                             </Col>
-
                             <Col md={6}>
                                 <InputError
                                     name="subtraction"
@@ -223,23 +218,28 @@ class CreateSample extends React.Component {
                         </Row>
 
                         <Row>
-                            <Col xs={12} sm={6}>
+                            <Col xs={12} md={6}>
                                 <InputError
-                                    name="srna"
-                                    type="select"
-                                    label="Read Size"
-                                    value={this.state.srna}
+                                    name="host"
+                                    label="Host"
+                                    value={this.state.host}
                                     onChange={this.handleChange}
-                                >
-                                    <option value={false}>Normal</option>
-                                    <option value={true}>sRNA</option>
-                                </InputError>
+                                />
+                            </Col>
+                            <Col xs={12} sm={6}>
+                                <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col xs={12}>
+                                <LibraryTypeSelection
+                                    onSelect={this.handleLibrarySelect}
+                                    libraryType={this.state.libraryType}
+                                />
                             </Col>
 
                             {userGroup}
-                            <Col xs={12} sm={6}>
-                                <InputError type="text" label="Pairedness" value={Pairedness} readOnly={true} />
-                            </Col>
                         </Row>
 
                         <ReadSelector
@@ -259,7 +259,7 @@ class CreateSample extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
     groups: state.account.groups,
@@ -268,18 +268,18 @@ const mapStateToProps = state => ({
     subtractions: state.subtraction.ids
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onLoadSubtractionsAndFiles: () => {
         dispatch(listSubtractionIds());
         dispatch(findReadFiles());
     },
 
-    onCreate: ({ name, isolate, host, locale, srna, subtraction, files }) => {
-        dispatch(createSample(name, isolate, host, locale, srna, subtraction, files));
+    onCreate: ({ name, isolate, host, locale, libraryType, subtraction, files }) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtraction, files));
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { create: false } }));
+        dispatch(pushState({ create: false }));
     },
 
     onClearError: error => {
