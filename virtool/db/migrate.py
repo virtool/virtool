@@ -6,6 +6,7 @@ import pymongo.errors
 
 import virtool.analyses.db
 import virtool.analyses.migrate
+import virtool.caches.migrate
 import virtool.history.db
 import virtool.jobs.db
 import virtool.otus.db
@@ -33,6 +34,7 @@ async def migrate(app):
 
     logger.info(" • analyses")
     await virtool.analyses.migrate.migrate_analyses(db, app["settings"])
+    await virtool.caches.migrate.migrate_caches(app)
     await migrate_files(db)
     await migrate_groups(db)
     await migrate_sessions(db)
