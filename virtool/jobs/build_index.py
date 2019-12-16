@@ -34,6 +34,8 @@ class Job(virtool.jobs.job.Job):
         """
         self.params = dict(self.task_args)
 
+        document = self.db.references.find_one(self.params["ref_id"], ["library_type"])
+
         self.params["reference_path"] = os.path.join(
             self.settings["data_path"],
             "references",
@@ -44,6 +46,8 @@ class Job(virtool.jobs.job.Job):
             self.params["reference_path"],
             self.params["index_id"]
         )
+
+        self.params["library_type"] = document["library_type"]
 
     def mk_index_dir(self):
         """
@@ -109,15 +113,16 @@ class Job(virtool.jobs.job.Job):
         The root name for the new reference is 'reference'
 
         """
-        command = [
-            "bowtie2-build",
-            "-f",
-            "--threads", str(self.proc),
-            os.path.join(self.params["index_path"], "ref.fa"),
-            os.path.join(self.params["index_path"], "reference")
-        ]
+        if self.params["library_type"] != "amplicon":
+            command = [
+                "bowtie2-build",
+                "-f",
+                "--threads", str(self.proc),
+                os.path.join(self.params["index_path"], "ref.fa"),
+                os.path.join(self.params["index_path"], "reference")
+            ]
 
-        self.run_subprocess(command)
+            self.run_subprocess(command)
 
     def replace_old(self):
         """
