@@ -1,5 +1,4 @@
 import { JobAction } from "../Action";
-import { JobItem } from "../Item";
 
 describe("<JobActionIcon />", () => {
     let props;
