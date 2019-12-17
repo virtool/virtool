@@ -25,7 +25,7 @@ describe("<UserGroup />", () => {
 
     it("should call [onClick] when clicked", () => {
         const wrapper = shallow(<UserGroup {...props} />);
-        wrapper.find(ListGroupItem).simulate("click");
+        wrapper.simulate("click");
         expect(props.onClick).toHaveBeenCalledWith(props.id);
     });
 });

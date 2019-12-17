@@ -1,7 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Col } from "react-bootstrap";
-import { Checkbox, ListGroupItem } from "../../base";
+import styled from "styled-components";
+import { Checkbox, ListGroupItem, device } from "../../base";
+
+export const Groups = styled(ListGroupItem)`
+    @media (min-width: ${device.tablet}) {
+        max-width: 333px;
+    }
+`;
 
 export class UserGroup extends React.Component {
     static propTypes = {
@@ -16,12 +22,10 @@ export class UserGroup extends React.Component {
 
     render() {
         return (
-            <Col xs={12} md={4}>
-                <ListGroupItem className="text-capitalize" onClick={this.handleClick}>
-                    {this.props.id}
-                    <Checkbox checked={this.props.toggled} pullRight />
-                </ListGroupItem>
-            </Col>
+            <Groups className="text-capitalize" onClick={this.handleClick}>
+                {this.props.id}
+                <Checkbox checked={this.props.toggled} pullRight />
+            </Groups>
         );
     }
 }

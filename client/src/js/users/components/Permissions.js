@@ -12,9 +12,18 @@
 import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { Row } from "react-bootstrap";
+import styled from "styled-components";
 import { Box } from "../../base/Box";
+import { device } from "../../base";
 import { PermissionItem } from "./Permission";
+
+const StyledUserPermissions = styled(Box)`
+    @media (min-width: ${device.desktop}) {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-gap: 6px;
+    }
+`;
 
 const UserPermissions = ({ permissions }) => {
     const permissionComponents = transform(
@@ -23,11 +32,7 @@ const UserPermissions = ({ permissions }) => {
         []
     );
 
-    return (
-        <Box>
-            <Row>{permissionComponents}</Row>
-        </Box>
-    );
+    return <StyledUserPermissions>{permissionComponents}</StyledUserPermissions>;
 };
 
 UserPermissions.propTypes = {
