@@ -7,22 +7,36 @@ describe("<JobItem />", () => {
         props = {
             id: "foo",
             progress: 1,
-            state: "bar",
-            task: "baz",
+            task: "build_index",
             created_at: "Foo",
             user: {
-                id: "Bar"
+                id: "bob"
             },
             canCancel: true,
             canRemove: true,
-            handleCancel: "Baz",
-            handleRemove: "foe"
+            onCancel: jest.fn(),
+            onRemove: jest.fn()
         };
     });
-    it("should render", () => {
+
+    it.each(["waiting", "running", "cancelled", "error", "complete"])("should render when [state=%p]", state => {
+        props.state = state;
         const wrapper = shallow(<JobItem {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+
+    it.each([[true, true], [true, false], [false, true], [false, false]])(
+        "should render when [canCancel=%p] and [canRemove=%p]",
+        (canCancel, canRemove) => {
+            props = {
+                ...props,
+                canCancel,
+                canRemove
+            };
+            const wrapper = shallow(<JobItem {...props} />);
+            expect(wrapper).toMatchSnapshot();
+        }
+    );
 });
 
 describe("mapDispatchToProps", () => {
@@ -31,19 +45,10 @@ describe("mapDispatchToProps", () => {
         const props = mapDispatchToProps(dispatch);
 
         props.onCancel("foo");
+
         expect(dispatch).toHaveBeenCalledWith({
             type: "CANCEL_JOB_REQUESTED",
             jobId: "foo"
-        });
-    });
-    it("should return onNavigate() in props", () => {
-        const dispatch = jest.fn();
-        const props = mapDispatchToProps(dispatch);
-
-        props.onNavigate("foo");
-        expect(dispatch).toHaveBeenCalledWith({
-            payload: { args: ["/jobs/foo"], method: "push" },
-            type: "@@router/CALL_HISTORY_METHOD"
         });
     });
     it("should return onRemove() in props", () => {
@@ -51,6 +56,7 @@ describe("mapDispatchToProps", () => {
         const props = mapDispatchToProps(dispatch);
 
         props.onRemove("foo");
+
         expect(dispatch).toHaveBeenCalledWith({
             jobId: "foo",
             type: "REMOVE_JOB_REQUESTED"

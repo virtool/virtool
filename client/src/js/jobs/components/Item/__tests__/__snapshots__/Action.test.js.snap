@@ -1,0 +1,70 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobActionIcon /> should render when [state="cancelled"] 1`] = `
+<Action__JobActionOverlay>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="trash"
+    onClick={[MockFunction]}
+    pullRight={false}
+  />
+</Action__JobActionOverlay>
+`;
+
+exports[`<JobActionIcon /> should render when [state="complete"] 1`] = `
+<Action__JobActionOverlay>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="trash"
+    onClick={[MockFunction]}
+    pullRight={false}
+  />
+</Action__JobActionOverlay>
+`;
+
+exports[`<JobActionIcon /> should render when [state="complete"] and [canRemove=false] 1`] = `""`;
+
+exports[`<JobActionIcon /> should render when [state="error"] 1`] = `
+<Action__JobActionOverlay>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="trash"
+    onClick={[MockFunction]}
+    pullRight={false}
+  />
+</Action__JobActionOverlay>
+`;
+
+exports[`<JobActionIcon /> should render when [state="running"] 1`] = `
+<Action__JobActionOverlay>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="ban"
+    onClick={[MockFunction]}
+    pullRight={false}
+  />
+</Action__JobActionOverlay>
+`;
+
+exports[`<JobActionIcon /> should render when [state="waiting"] 1`] = `
+<Action__JobActionOverlay>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="ban"
+    onClick={[MockFunction]}
+    pullRight={false}
+  />
+</Action__JobActionOverlay>
+`;
+
+exports[`<JobActionIcon /> should render when [state="waiting"] and [canCancel=false] 1`] = `""`;
