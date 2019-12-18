@@ -77,73 +77,8 @@ exports[`<UserDetail /> should render 1`] = `
       }
     }
   >
-    <label>
-      Change Password
-    </label>
     <Connect(Password) />
-    <label>
-      Groups
-    </label>
-    <Connect(UserGroups)
-      memberGroups="bar"
-      userId="foo"
-    />
-    <label>
-      Primary Group
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="Bar"
-    >
-      <option
-        key="none"
-        value="none"
-      >
-        None
-      </option>
-      <option
-        key="b"
-        value="b"
-      >
-        B
-      </option>
-      <option
-        key="a"
-        value="a"
-      >
-        A
-      </option>
-      <option
-        key="r"
-        value="r"
-      >
-        R
-      </option>
-    </InputError>
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="space-between"
-      wrap="nowrap"
-    >
-      <label>
-        Permissions
-      </label>
-      <small
-        className="text-muted"
-      >
-        Change group membership to modify permissions
-      </small>
-    </Flex>
-    <UserPermissions
-      permissions={
-        Object {
-          "foo": "bar",
-        }
-      }
-    />
+    <GroupPrimaryPermissions />
   </div>
 </div>
 `;

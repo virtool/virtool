@@ -1,5 +1,4 @@
-import { ListGroupItem } from "../../../base";
-import { Groups, UserGroup } from "../Group";
+import { UserGroup } from "../Group";
 
 describe("<UserGroup />", () => {
     let props;

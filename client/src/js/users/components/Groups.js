@@ -1,7 +1,6 @@
 import { includes, map, xor } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Box } from "../../base/Box";
 
 import { LoadingPlaceholder, NoneFound } from "../../base";
 import { listGroups } from "../../groups/actions";
@@ -38,7 +37,7 @@ export class UserGroups extends React.Component {
         return (
             <div>
                 <label>Groups</label>
-                <Box>{groupComponents}</Box>
+                {groupComponents}
             </div>
         );
     }

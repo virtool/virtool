@@ -1,7 +1,8 @@
 import React from "react";
-import { map } from "lodash-es";
+import { map, capitalize } from "lodash-es";
 import { connect } from "react-redux";
 import { InputError } from "../../base";
+import { editUser } from "../actions";
 
 export class PrimaryGroup extends React.Component {
     handleSetPrimaryGroup = e => {
@@ -10,7 +11,7 @@ export class PrimaryGroup extends React.Component {
     };
 
     render() {
-        const groupOptions = map(this.props.detail.groups, groupId => (
+        const groupOptions = map(this.props.groups, groupId => (
             <option key={groupId} value={groupId}>
                 {capitalize(groupId)}
             </option>
@@ -18,7 +19,8 @@ export class PrimaryGroup extends React.Component {
         return (
             <div>
                 <label>Primary Group</label>
-                <InputError type="select" value={this.props.detail.primary_group} onChange={this.handleSetPrimaryGroup}>
+
+                <InputError type="select" value={this.props.primary_group} onChange={this.handleSetPrimaryGroup}>
                     <option key="none" value="none">
                         None
                     </option>
@@ -29,12 +31,8 @@ export class PrimaryGroup extends React.Component {
     }
 }
 export const mapStateToProps = state => ({
-    detail: state.users.detail,
-    activeUser: state.account.id,
-    activeUserIsAdmin: state.account.administrator,
-    groups: state.groups.list,
-    groupsFetched: state.groups.fetched,
-    error: get(state, "errors.GET_USER_ERROR.message", "")
+    group: state.users.detail.group,
+    primary_group: state.users.detail.primary_group
 });
 
 export const mapDispatchToProps = dispatch => ({
