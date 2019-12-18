@@ -15,12 +15,15 @@ exports[`<UserGroups /> renders <NoneFound /> if no groups available 1`] = `
 `;
 
 exports[`<UserGroups /> renders 1`] = `
-<Box>
+<div>
+  <label>
+    Groups
+  </label>
   <UserGroup
     id="foo"
     key="foo"
     onClick={[Function]}
     toggled={true}
   />
-</Box>
+</div>
 `;

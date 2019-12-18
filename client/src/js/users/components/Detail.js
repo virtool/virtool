@@ -9,8 +9,7 @@
  * @exports Users
  */
 
-import { push } from "connected-react-router";
-import { capitalize, get, map } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -27,10 +26,8 @@ import {
 import { listGroups } from "../../groups/actions";
 
 import { editUser, getUser, removeUser } from "../actions";
-import UserGroups from "./Groups";
 import Password from "./Password";
-import UserPermissions from "./Permissions";
-import PrimaryGroup from "./PrimaryGroup";
+import { GroupPrimaryPermissions } from "./GroupPrimaryPermissions";
 
 export class UserDetail extends React.Component {
     componentDidMount() {
@@ -99,15 +96,7 @@ export class UserDetail extends React.Component {
                 <div style={{ marginTop: "20px" }}>
                     <Password />
 
-                    <UserGroups />
-
-                    <PrimaryGroup />
-
-                    <Flex alignItems="center" justifyContent="space-between">
-                        <label>Permissions</label>
-                        <small className="text-muted">Change group membership to modify permissions</small>
-                    </Flex>
-                    <UserPermissions permissions={this.props.detail.permissions} />
+                    <GroupPrimaryPermissions />
 
                     {canModifyUser ? (
                         <React.Fragment>
@@ -140,7 +129,6 @@ export const mapStateToProps = state => ({
     detail: state.users.detail,
     activeUser: state.account.id,
     activeUserIsAdmin: state.account.administrator,
-    groups: state.groups.list,
     groupsFetched: state.groups.fetched,
     error: get(state, "errors.GET_USER_ERROR.message", "")
 });
@@ -152,10 +140,6 @@ export const mapDispatchToProps = dispatch => ({
 
     onRemoveUser: userId => {
         dispatch(removeUser(userId));
-    },
-
-    onClose: () => {
-        dispatch(push("/administration/users"));
     },
 
     onSetPrimaryGroup: (userId, groupId) => {

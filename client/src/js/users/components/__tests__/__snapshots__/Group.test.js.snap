@@ -1,7 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserGroup /> should render with [toggled=false] 1`] = `
-<Group__Groups
+<ListGroupItem
+  allowFocus={false}
   className="text-capitalize"
   onClick={[Function]}
 >
@@ -11,11 +12,12 @@ exports[`<UserGroup /> should render with [toggled=false] 1`] = `
     partial={false}
     pullRight={true}
   />
-</Group__Groups>
+</ListGroupItem>
 `;
 
 exports[`<UserGroup /> should render with [toggled=true] 1`] = `
-<Group__Groups
+<ListGroupItem
+  allowFocus={false}
   className="text-capitalize"
   onClick={[Function]}
 >
@@ -25,5 +27,5 @@ exports[`<UserGroup /> should render with [toggled=true] 1`] = `
     partial={false}
     pullRight={true}
   />
-</Group__Groups>
+</ListGroupItem>
 `;

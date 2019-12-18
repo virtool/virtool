@@ -62,15 +62,16 @@ describe("mapStateToProps", () => {
             fetched: true
         }
     };
-
     const props = mapStateToProps(state);
-    expect(props).toEqual({
-        detail: "foo",
-        activeUser: "foo",
-        activeUserIsAdmin: true,
-        groups: "foo",
-        groupsFetched: true,
-        error: ""
+
+    it("should renturn props", () => {
+        expect(props).toEqual({
+            activeUser: "foo",
+            detail: "foo",
+            activeUserIsAdmin: true,
+            groupsFetched: true,
+            error: ""
+        });
     });
 });
 
@@ -99,13 +100,7 @@ describe("mapDispatchToProps", () => {
             userId
         });
     });
-    it("should return onClose() in props", () => {
-        result.onClose();
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "@@router/CALL_HISTORY_METHOD",
-            payload: { args: ["/administration/users"], method: "push" }
-        });
-    });
+
     it("should return onSetPrimaryGroup() in props", () => {
         const userId = "foo";
         const groupId = "bar";
