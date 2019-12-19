@@ -21,10 +21,10 @@ LIST_PROJECTION = [
     "isolate",
     "created_at",
     "user",
-    "imported",
     "archived",
     "pathoscope",
     "nuvs"
+    "ready",
 ]
 
 PROJECTION = [
@@ -32,7 +32,6 @@ PROJECTION = [
     "name",
     "created_at",
     "user",
-    "imported",
     "archived",
     "pathoscope",
     "nuvs",
@@ -41,6 +40,7 @@ PROJECTION = [
     "group_write",
     "all_read",
     "all_write"
+    "ready",
 ]
 
 RIGHTS_PROJECTION = {

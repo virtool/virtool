@@ -60,15 +60,6 @@ async def add_library_type(db):
     })
 
 
-async def delete_unready(db):
-    await db.samples.delete_many({
-        "$or": [
-            {"imported": False},
-            {"imported": "ip"}
-        ]
-    })
-
-
 async def update_file_representation(app):
     motor_client = app["db"].motor_client
     samples_path = os.path.join(app["settings"]["data_path"], "samples")
@@ -120,5 +111,20 @@ async def update_pairedness(db):
     await db.samples.update_many({**PAIRED_QUERY, "files": {"$size": 2}}, {
         "$set": {
             "paired": True
+        }
+    })
+
+
+async def update_ready(db):
+    await db.samples.delete_many({
+        "$or": [
+            {"imported": "ip"},
+            {"ready": False}
+        ]
+    })
+
+    await db.samples.update_many({}, {
+        "$set": {
+            "ready": True
         }
     })
