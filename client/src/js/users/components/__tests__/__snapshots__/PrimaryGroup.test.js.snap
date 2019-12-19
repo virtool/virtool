@@ -8,7 +8,7 @@ exports[`<PrimaryGroup /> should render 1`] = `
   <InputError
     onChange={[Function]}
     type="select"
-    value="fee"
+    value="bar"
   >
     <option
       key="none"
@@ -16,12 +16,24 @@ exports[`<PrimaryGroup /> should render 1`] = `
     >
       None
     </option>
-    <option
+    <PrimaryGroup__StyledGroupOption
+      key="foo"
+      value="foo"
+    >
+      Foo
+    </PrimaryGroup__StyledGroupOption>
+    <PrimaryGroup__StyledGroupOption
       key="bar"
       value="bar"
     >
       Bar
-    </option>
+    </PrimaryGroup__StyledGroupOption>
+    <PrimaryGroup__StyledGroupOption
+      key="baz"
+      value="baz"
+    >
+      Baz
+    </PrimaryGroup__StyledGroupOption>
   </InputError>
 </div>
 `;

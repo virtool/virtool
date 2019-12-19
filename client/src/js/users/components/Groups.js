@@ -1,17 +1,17 @@
 import { includes, map, xor } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 
-import { LoadingPlaceholder, NoneFound } from "../../base";
-import { listGroups } from "../../groups/actions";
+import { BoxGroup, LoadingPlaceholder, NoneFound } from "../../base";
 import { editUser } from "../actions";
 import { UserGroup } from "./Group";
 
-export class UserGroups extends React.Component {
-    componentDidMount() {
-        this.props.onList();
-    }
+const UserGroupsList = styled(BoxGroup)`
+    margin-bottom: 15px;
+`;
 
+export class UserGroups extends React.Component {
     handleEdit = groupId => {
         this.props.onEditGroup(this.props.userId, xor(this.props.memberGroups, [groupId]));
     };
@@ -25,19 +25,14 @@ export class UserGroups extends React.Component {
             return <NoneFound noun="groups" />;
         }
 
-        const groupComponents = map(this.props.documents, document => (
-            <UserGroup
-                key={document.id}
-                id={document.id}
-                toggled={includes(this.props.memberGroups, document.id)}
-                onClick={this.handleEdit}
-            />
+        const groupComponents = map(this.props.documents, ({ id }) => (
+            <UserGroup key={id} id={id} toggled={includes(this.props.memberGroups, id)} onClick={this.handleEdit} />
         ));
 
         return (
             <div>
                 <label>Groups</label>
-                {groupComponents}
+                <UserGroupsList>{groupComponents}</UserGroupsList>
             </div>
         );
     }
@@ -50,9 +45,6 @@ export const mapStateToProps = state => ({
 });
 
 export const mapDispatchToProps = dispatch => ({
-    onList: () => {
-        dispatch(listGroups());
-    },
     onEditGroup: (userId, groups) => {
         dispatch(editUser(userId, { groups }));
     }

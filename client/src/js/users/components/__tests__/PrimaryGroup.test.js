@@ -1,38 +1,49 @@
-import { mapStateToProps, mapDispatchToProps, PrimaryGroup } from "../PrimaryGroup";
+import { mapDispatchToProps, mapStateToProps, PrimaryGroup } from "../PrimaryGroup";
 
 describe("<PrimaryGroup />", () => {
     const props = {
-        onSetPrimaryGroup: jest.fn(),
-        detail: { id: "foo" },
-        groups: { foo: "bar" },
-        primary_group: "fee"
+        groups: ["foo", "bar", "baz"],
+        id: "bob",
+        primaryGroup: "bar",
+        onSetPrimaryGroup: jest.fn()
     };
 
     it("should render", () => {
         const wrapper = shallow(<PrimaryGroup {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
+
+    it("should call onSetPrimaryGroup() when selection changes", () => {
+        const wrapper = shallow(<PrimaryGroup {...props} />);
+        wrapper.find("InputError").simulate("change", { target: { value: "baz" } });
+        expect(props.onSetPrimaryGroup).toHaveBeenCalledWith("bob", "baz");
+    });
 });
 
 describe("mapStateToProps", () => {
+    const groups = ["foo", "bar", "baz"];
     const state = {
         users: {
-            detail: { group: "foo", primary_group: "bar" }
+            detail: { id: "bob", groups, primary_group: "bar" }
         }
     };
     it("should return props", () => {
         const result = mapStateToProps(state);
         expect(result).toEqual({
-            group: "foo",
-            primary_group: "bar"
+            id: "bob",
+            groups,
+            primaryGroup: "bar"
         });
     });
 });
+
 describe("mapDispatchToProps", () => {
-    it("should return editUser in props ", () => {
+    it("should return onSetPrimaryGroup() in props ", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
+
         props.onSetPrimaryGroup("foo", "bar");
+
         expect(dispatch).toHaveBeenCalledWith({
             type: "EDIT_USER_REQUESTED",
             update: {

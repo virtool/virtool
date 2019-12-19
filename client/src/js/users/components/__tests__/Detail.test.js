@@ -1,29 +1,28 @@
+jest.mock("../../selectors");
+
 import { UserDetail, mapStateToProps, mapDispatchToProps } from "../Detail";
+import { getCanModifyUser } from "../../selectors";
 
 describe("<UserDetail />", () => {
     let props;
 
     beforeEach(() => {
         props = {
-            onGetUser: jest.fn(),
+            canModifyUser: true,
             match: {
                 params: {
                     userId: "foo"
                 }
             },
-            groupsFetched: true,
-            onListGroups: jest.fn(),
-            onSetUserRole: jest.fn(),
+            error: [],
             detail: {
-                id: "foo",
-                groups: "bar",
-                administrator: "baz",
-                identicon: "foo",
-                primary_group: "Bar",
-                permissions: { foo: "bar" }
+                id: "bob",
+                administrator: true,
+                identicon: "foo"
             },
+            onGetUser: jest.fn(),
             onRemoveUser: jest.fn(),
-            error: []
+            onListGroups: jest.fn()
         };
     });
 
@@ -32,19 +31,32 @@ describe("<UserDetail />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("componentDidMount should call onGetUser", () => {
-        expect(props.onGetUser).not.toHaveBeenCalled();
-        shallow(<UserDetail {...props} />);
-        expect(props.onGetUser).toHaveBeenCalledWith("foo");
+    it("should render when [administrator=false]", () => {
+        props.detail.administrator = false;
+        const wrapper = shallow(<UserDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("componentDidMount should call onListGroups", () => {
-        expect(props.onListGroups).not.toHaveBeenCalled();
+    it("should render when [canModifyUser=false]", () => {
+        props.canModifyUser = false;
+        const wrapper = shallow(<UserDetail {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
-    it("componentDidMount should not call onListGroups when [props.groupsFetched = false]", () => {
-        props.groupsFetched = false;
+
+    it("should call onGetUser() and onListGroups() on mount", () => {
+        expect(props.onGetUser).not.toHaveBeenCalled();
+        expect(props.onListGroups).not.toHaveBeenCalled();
+
         shallow(<UserDetail {...props} />);
+
+        expect(props.onGetUser).toHaveBeenCalledWith("foo");
         expect(props.onListGroups).toHaveBeenCalled();
+    });
+
+    it("should call onRemoveUser() when RemoveBanner clicked", () => {
+        const wrapper = shallow(<UserDetail {...props} />);
+        wrapper.find("RemoveBanner").prop("onClick")();
+        expect(props.onRemoveUser).toHaveBeenCalledWith("bob");
     });
 });
 
@@ -53,25 +65,24 @@ describe("mapStateToProps", () => {
         users: {
             detail: "foo"
         },
-        account: {
-            id: "foo",
-            administrator: true
-        },
         groups: {
             list: "foo",
             fetched: true
         }
     };
-    const props = mapStateToProps(state);
 
-    it("should renturn props", () => {
+    it.each([true, false])("should return props when [canModifyUser=%p]", canModifyUser => {
+        getCanModifyUser.mockReturnValue(canModifyUser);
+
+        const props = mapStateToProps(state);
+
         expect(props).toEqual({
-            activeUser: "foo",
+            canModifyUser,
             detail: "foo",
-            activeUserIsAdmin: true,
-            groupsFetched: true,
             error: ""
         });
+
+        expect(getCanModifyUser).toHaveBeenCalledWith(state);
     });
 });
 
@@ -92,41 +103,20 @@ describe("mapDispatchToProps", () => {
             userId
         });
     });
+
+    it("should return onListGroups() in props", () => {
+        result.onListGroups();
+        expect(dispatch).toHaveBeenCalledWith({
+            type: "LIST_GROUPS_REQUESTED"
+        });
+    });
+
     it("should return onRemoveUser() in props", () => {
         const userId = "foo";
         result.onRemoveUser(userId);
         expect(dispatch).toHaveBeenCalledWith({
             type: "REMOVE_USER_REQUESTED",
             userId
-        });
-    });
-
-    it("should return onSetPrimaryGroup() in props", () => {
-        const userId = "foo";
-        const groupId = "bar";
-        result.onSetPrimaryGroup(userId, groupId);
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "EDIT_USER_REQUESTED",
-            update: { primary_group: "bar" },
-            userId: "foo"
-        });
-    });
-    it("should return onSetUserRole() in props", () => {
-        const userId = "foo";
-        const isAdmin = true;
-        result.onSetUserRole(userId, isAdmin);
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "EDIT_USER_REQUESTED",
-            update: {
-                administrator: true
-            },
-            userId: "foo"
-        });
-    });
-    it("should return onListGroups() in props", () => {
-        result.onListGroups();
-        expect(dispatch).toHaveBeenCalledWith({
-            type: "LIST_GROUPS_REQUESTED"
         });
     });
 });
