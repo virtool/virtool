@@ -8,30 +8,43 @@
  *
  * @exports GroupsPermissions
  */
-
+import { connect } from "react-redux";
 import { transform } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { Row } from "react-bootstrap";
-import { Box } from "../../base/Box";
+import styled from "styled-components";
 import { PermissionItem } from "./Permission";
 
-const UserPermissions = ({ permissions }) => {
-    const permissionComponents = transform(
-        permissions,
-        (acc, value, permission) => acc.push(<PermissionItem key={permission} permission={permission} value={value} />),
-        []
-    );
+const StyledPermissions = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+`;
+export class UserPermissions extends React.Component {
+    render() {
+        const permissionComponents = transform(
+            this.props.permissions,
+            (acc, value, permission) =>
+                acc.push(<PermissionItem key={permission} permission={permission} value={value} />),
+            []
+        );
 
-    return (
-        <Box>
-            <Row>{permissionComponents}</Row>
-        </Box>
-    );
-};
+        return (
+            <div>
+                <StyledPermissions>
+                    <label>Permissions</label>
+                    <small className="text-muted">Change group membership to modify permissions</small>
+                </StyledPermissions>
+                {permissionComponents}
+            </div>
+        );
+    }
+}
 
 UserPermissions.propTypes = {
     permissions: PropTypes.object
 };
-
-export default UserPermissions;
+export const mapStateToProps = state => ({
+    permissions: state.users.detail.permissions
+});
+export default connect(mapStateToProps)(UserPermissions);

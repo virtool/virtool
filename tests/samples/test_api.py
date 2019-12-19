@@ -65,14 +65,13 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
             "isolate": "Thing",
             "created_at": time_2,
-            "archived": True,
             "_id": "beb1eb10",
             "name": "16GVP042",
             "pathoscope": False,
-            "all_read": True
+            "all_read": True,
+            "ready": True
         },
         {
             "user": {
@@ -81,14 +80,13 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
             "isolate": "Test",
             "created_at": time_1,
-            "archived": True,
             "_id": "72bb8b31",
             "name": "16GVP043",
             "pathoscope": False,
-            "all_read": True
+            "all_read": True,
+            "ready": True
         },
         {
             "user": {
@@ -97,10 +95,9 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
+            "ready": True,
             "isolate": "",
             "created_at": time_3,
-            "archived": False,
             "_id": "cb400e6d",
             "name": "16SPP044",
             "pathoscope": False,
@@ -131,8 +128,8 @@ async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client,
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("imported", [True, False])
-async def test_get(error, imported, snapshot, mocker, spawn_client, resp_is, static_time):
+@pytest.mark.parametrize("ready", [True, False])
+async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -142,7 +139,7 @@ async def test_get(error, imported, snapshot, mocker, spawn_client, resp_is, sta
             "_id": "test",
             "name": "Test",
             "created_at": static_time.datetime,
-            "imported": imported,
+            "ready": ready,
             "files": [
                 {
                     "id": "foo",

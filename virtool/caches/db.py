@@ -53,6 +53,7 @@ def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = Fa
             "files": list(),
             "hash": calculate_cache_hash(parameters),
             "legacy": legacy,
+            "missing": False,
             "paired": paired,
             "parameters": parameters,
             "program": program,

@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 
-import { Icon, Label, ListGroupItem, RelativeTime } from "../../../base";
+import { device, Icon, Label, ListGroupItem, RelativeTime } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {
@@ -75,7 +75,7 @@ const getMethodIcon = ({ method_name }) => {
 const StyledChange = styled(ListGroupItem)`
     display: flex;
     flex-flow: row wrap;
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         align-items: flex-start;
         display: flex;
         flex-flow: row wrap;
@@ -90,7 +90,7 @@ const IconDescriptionNameDate = styled.div`
     margin-left: 9px;
     width: 90%;
 
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         flex-flow: row wrap;
         flex-direction: column;
     }
@@ -109,7 +109,7 @@ const ChangeIcon = styled.div`
 `;
 
 const DateUserId = styled.div`
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         font-size: 12px;
     }
 `;

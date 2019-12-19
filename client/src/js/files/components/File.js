@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
-import { Icon, ListGroupItem, RelativeTime } from "../../base";
+import { Icon, ListGroupItem, RelativeTime, device } from "../../base";
 
 const StyledFile = styled(ListGroupItem)`
     display: flex;
@@ -16,7 +16,7 @@ const FileHeader = styled.div`
     align-items: flex-start;
     display: flex;
 
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.desktop}) {
         flex-direction: column;
     }
 `;
@@ -26,7 +26,7 @@ const Creation = styled.div`
     margin-left: 9px;
     margin-top: 1px;
 
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.desktop}) {
         margin: 0;
     }
 `;

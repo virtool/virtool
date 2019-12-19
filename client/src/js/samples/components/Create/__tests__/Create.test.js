@@ -5,21 +5,22 @@ describe("<CreateSample>", () => {
     let props;
     let state;
     let e;
+
     beforeEach(() => {
         props = {
-            subtractions: [],
+            subtractions: ["sub_foo", "sub_bar"],
             readyReads: [],
             forceGroupChoice: false,
             onCreate: jest.fn()
         };
         state = {
             selected: [],
-            name: "",
-            host: "",
-            isolate: "",
-            locale: "",
-            subtraction: "",
-            group: "",
+
+            host: "Host",
+            isolate: "Isolate",
+            locale: "Timbuktu",
+            subtraction: "sub_bar",
+            group: "technician",
             errorName: "",
             errorSubtraction: "",
             errorFile: "",
@@ -39,23 +40,26 @@ describe("<CreateSample>", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
-    it("should render when [this.props.subtractions=null]", () => {
-        const wrapper = shallow(<CreateSample {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-    it("should render when [this.props.subtractions!=null] and [this.props.readyReads!==null]", () => {
-        props.subtractions = "foo";
-        props.readyReads = [{ foo: "bar" }];
+
+    it("should render LoadingPlaceholder when [this.props.subtractions=null]", () => {
+        props.subtractions = null;
         const wrapper = shallow(<CreateSample {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleModalExited() should update state when Modal is exited", () => {
+    it("should render LoadingPlaceholder when [this.props.readyReads=null]", () => {
+        props.readyReads = null;
+        const wrapper = shallow(<CreateSample {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should update state when Modal exits", () => {
         props.subtractions = ["foo"];
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.find("Modal").simulate("exit");
         expect(wrapper.state()).toEqual({ ...state, subtraction: "foo" });
     });
+
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper
@@ -64,6 +68,7 @@ describe("<CreateSample>", () => {
             .simulate("change", e);
         expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     });
+
     it("handleChange() should update [name] when [name!=name] and [name!=subtraction]", () => {
         e.target.name = "Foo";
         const wrapper = shallow(<CreateSample {...props} />);
@@ -73,6 +78,7 @@ describe("<CreateSample>", () => {
             .simulate("change", e);
         expect(wrapper.state()).toEqual({ ...state, Foo: "foo" });
     });
+
     it("handleLibrarySelect() should update libraryType when LibraryTypeSelection is selected", () => {
         const libraryType = "sRNA";
         const wrapper = shallow(<CreateSample {...props} />);
@@ -90,6 +96,7 @@ describe("<CreateSample>", () => {
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({ ...state, selected: ["bar"], errorName: "Required Field" });
     });
+
     it("handleSubmit() should update errorSubtraction when form is submitted and [this.props.subtractions=[]]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState({ ...state, name: "foo", selected: ["bar"] });
@@ -101,6 +108,7 @@ describe("<CreateSample>", () => {
             name: "foo"
         });
     });
+
     it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
         props.subtractions = ["foo"];
         const wrapper = shallow(<CreateSample {...props} />);
@@ -112,34 +120,46 @@ describe("<CreateSample>", () => {
             name: "foo"
         });
     });
-    it("handleSubmit() should call onCreate when form is submitted and [hasError=false]", () => {
+
+    it("should call onCreate() when form is submitted and [hasError=false]", () => {
         props.subtractions = ["foo"];
+
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState({ ...state, name: "foo", selected: ["foo"] });
         wrapper.find("form").simulate("submit", e);
-        expect(props.onCreate).toHaveBeenCalledWith({ ...state, name: "foo", selected: ["foo"], files: ["foo"] });
+
+        expect(props.onCreate).toHaveBeenCalledWith(
+            "Sample 1",
+            "foo",
+            "Isolate",
+            "Host",
+            "Timbuktu",
+            undefined,
+            "sub_bar",
+            ["foo"]
+        );
     });
 
-    it("auto fill should update name when Button is clicked", () => {
+    it("should update name when auto-fill Button is clicked", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState({
-            ...state,
-            selected: ["foo"]
+            ...state
         });
         wrapper.find("Button").simulate("click");
-        expect(wrapper.state()).toEqual({ ...state, name: "foo", selected: ["foo"] });
+        expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     });
 
-    it("handleSelect() should update selected selected and errorFile when ReadSelector is selected", () => {
-        const selected = ["foo"];
+    it("should update selected and errorFile when read is selected", () => {
+        const selected = ["foo", "bar"];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.find("ReadSelector").simulate("select", selected);
-        expect(wrapper.state()).toEqual({ ...state, selected: ["foo"], errorFile: "" });
+        wrapper.find("ReadSelector").prop("select")(selected);
+        expect(wrapper.state()).toEqual({ ...state, selected: ["foo"] });
     });
 });
 
 describe("mapStateToProps()", () => {
     it("should return props", () => {
+        const subtractions = ["sub_foo", "sub_bar"];
         const state = {
             router: { location: { stae: "foo" } },
             settings: {
@@ -158,10 +178,13 @@ describe("mapStateToProps()", () => {
                     }
                 ]
             },
-            subtraction: { ids: "bar" }
+            subtraction: {
+                ids: subtractions
+            }
         };
         const props = mapStateToProps(state);
         expect(props).toEqual({
+            defaultSubtraction: "sub_foo",
             error: "",
             forceGroupChoice: true,
             groups: "foo",
@@ -172,31 +195,26 @@ describe("mapStateToProps()", () => {
                 }
             ],
             show: false,
-            subtractions: "bar"
+            subtractions
         });
     });
 });
 describe("mapDispatchToProps()", () => {
     const dispatch = jest.fn();
     const props = mapDispatchToProps(dispatch);
+
     it("onLoadSubtractionsAndFiles() should return listSubtractionIds in props", () => {
         props.onLoadSubtractionsAndFiles();
         expect(dispatch).toHaveBeenCalledWith({ type: "LIST_SUBTRACTION_IDS_REQUESTED" });
     });
+
     it("onLoadSubtractionsAndFiles() should return findReadFiles in props", () => {
         props.onLoadSubtractionsAndFiles();
         expect(dispatch).toHaveBeenCalledWith({ type: "FIND_READ_FILES_REQUESTED" });
     });
+
     it("onCreate() should return createSample in props", () => {
-        props.onCreate({
-            name: "name",
-            isolate: "isolate",
-            host: "host",
-            locale: "locale",
-            libraryType: "libraryType",
-            subtraction: "subtraction",
-            files: "files"
-        });
+        props.onCreate("name", "isolate", "host", "locale", "libraryType", "subtraction", "files");
         expect(dispatch).toHaveBeenCalledWith({
             name: "name",
             isolate: "isolate",
@@ -213,6 +231,7 @@ describe("mapDispatchToProps()", () => {
         props.onHide();
         expect(dispatch).toHaveBeenCalledWith({ state: { create: false }, type: "PUSH_STATE" });
     });
+
     it("onClearError() should return clearError in props", () => {
         props.onClearError("foo");
         expect(dispatch).toHaveBeenCalledWith({ error: "foo", type: "CLEAR_ERROR" });

@@ -65,8 +65,9 @@ def test_get_sample_params(dbs):
 
 
 @pytest.mark.parametrize("exists", [True, False])
+@pytest.mark.parametrize("missing", [True, False])
 @pytest.mark.parametrize("returned_hash", ["abc123", "foobar"])
-def test_find_cache(exists, returned_hash, mocker, dbs):
+def test_find_cache(exists, missing, returned_hash, mocker, dbs):
     parameters = {
         "a": 1,
         "b": "hello",
@@ -78,6 +79,7 @@ def test_find_cache(exists, returned_hash, mocker, dbs):
             "_id": "bar",
             "program": "skewer-0.2.2",
             "hash": "abc123",
+            "missing": missing,
             "sample": {
                 "id": "foo"
             }
@@ -89,7 +91,7 @@ def test_find_cache(exists, returned_hash, mocker, dbs):
 
     m_calculate_cache_hash.assert_called_with(parameters)
 
-    if not exists or returned_hash == "foobar":
+    if missing or not exists or returned_hash == "foobar" :
         assert result is None
         return
 
@@ -97,6 +99,7 @@ def test_find_cache(exists, returned_hash, mocker, dbs):
         "id": "bar",
         "program": "skewer-0.2.2",
         "hash": "abc123",
+        "missing": False,
         "sample": {
             "id": "foo"
         }

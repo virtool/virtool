@@ -27,6 +27,7 @@ export * from "./Attribution";
 export * from "./Badge";
 export * from "./Box";
 export * from "./Breadcrumb";
+export * from "./Breakpoints";
 export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";

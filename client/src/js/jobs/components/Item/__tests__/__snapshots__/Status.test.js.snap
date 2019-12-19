@@ -1,0 +1,159 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<JobStatusIcon /> should render when [pad=false] and [state="cancelled"] 1`] = `
+<Status__StyledJobStatus
+  pad={false}
+>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="times fa-fw"
+    pullRight={false}
+  />
+  <span>
+    cancelled
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=false] and [state="complete"] 1`] = `
+<Status__StyledJobStatus
+  pad={false}
+>
+  <Icon
+    bsStyle="success"
+    faStyle="fas"
+    fixedWidth={false}
+    name="check fa-fw"
+    pullRight={false}
+  />
+  <span>
+    complete
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=false] and [state="error"] 1`] = `
+<Status__StyledJobStatus
+  pad={false}
+>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="times fa-fw"
+    pullRight={false}
+  />
+  <span>
+    error
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=false] and [state="running"] 1`] = `
+<Status__StyledJobStatus
+  pad={false}
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+  <span>
+    running
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=false] and [state="waiting"] 1`] = `
+<Status__StyledJobStatus
+  pad={false}
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+  <span>
+    waiting
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=true] and [state="cancelled"] 1`] = `
+<Status__StyledJobStatus
+  pad={true}
+>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="times fa-fw"
+    pullRight={false}
+  />
+  <span>
+    cancelled
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=true] and [state="complete"] 1`] = `
+<Status__StyledJobStatus
+  pad={true}
+>
+  <Icon
+    bsStyle="success"
+    faStyle="fas"
+    fixedWidth={false}
+    name="check fa-fw"
+    pullRight={false}
+  />
+  <span>
+    complete
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=true] and [state="error"] 1`] = `
+<Status__StyledJobStatus
+  pad={true}
+>
+  <Icon
+    bsStyle="danger"
+    faStyle="fas"
+    fixedWidth={false}
+    name="times fa-fw"
+    pullRight={false}
+  />
+  <span>
+    error
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=true] and [state="running"] 1`] = `
+<Status__StyledJobStatus
+  pad={true}
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+  <span>
+    running
+  </span>
+</Status__StyledJobStatus>
+`;
+
+exports[`<JobStatusIcon /> should render when [pad=true] and [state="waiting"] 1`] = `
+<Status__StyledJobStatus
+  pad={true}
+>
+  <Loader
+    color="#3c8786"
+    size="14px"
+  />
+  <span>
+    waiting
+  </span>
+</Status__StyledJobStatus>
+`;

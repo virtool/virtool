@@ -13,34 +13,33 @@ import virtool.samples.utils
 
 logger = logging.getLogger(__name__)
 
-
 LIST_PROJECTION = [
     "_id",
-    "name",
+    "created_at",
     "host",
     "isolate",
-    "created_at",
-    "user",
-    "imported",
-    "archived",
+    "library_type",
     "pathoscope",
-    "nuvs"
+    "name",
+    "nuvs",
+    "ready",
+    "user"
 ]
 
 PROJECTION = [
     "_id",
-    "name",
     "created_at",
-    "user",
-    "imported",
-    "archived",
+    "library_type",
+    "name",
     "pathoscope",
     "nuvs",
     "group",
     "group_read",
     "group_write",
     "all_read",
-    "all_write"
+    "all_write",
+    "ready",
+    "user",
 ]
 
 RIGHTS_PROJECTION = {
