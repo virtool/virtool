@@ -1,29 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserGroup /> should render with [toggled=false] 1`] = `
-<Group__Groups
-  className="text-capitalize"
+<Group__StyledUserGroup
   onClick={[Function]}
 >
-  bob
+  <span>
+    bob
+  </span>
   <Checkbox
     checked={false}
     partial={false}
-    pullRight={true}
+    pullRight={false}
   />
-</Group__Groups>
+</Group__StyledUserGroup>
 `;
 
 exports[`<UserGroup /> should render with [toggled=true] 1`] = `
-<Group__Groups
-  className="text-capitalize"
+<Group__StyledUserGroup
   onClick={[Function]}
 >
-  bob
+  <span>
+    bob
+  </span>
   <Checkbox
     checked={true}
     partial={false}
-    pullRight={true}
+    pullRight={false}
   />
-</Group__Groups>
+</Group__StyledUserGroup>
 `;

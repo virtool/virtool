@@ -2,148 +2,114 @@
 
 exports[`<UserDetail /> should render 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="stretch"
-    direction="row"
-    justifyContent="space-between"
-    wrap="nowrap"
-  >
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <Identicon
-        hash="foo"
-        size={64}
+  <Detail__UserDetailHeader>
+    <Identicon
+      hash="foo"
+      size={56}
+    />
+    <Detail__UserDetailTitle>
+      <span>
+        bob
+      </span>
+      <Icon
+        bsStyle="primary"
+        faStyle="fas"
+        fixedWidth={false}
+        name="user-shield"
+        pullRight={false}
       />
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
+      <Link
+        to="/administration/users"
       >
-        <h5>
-          <strong>
-            foo
-          </strong>
-        </h5>
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
-      >
-        <Icon
-          bsStyle="primary"
-          faStyle="fas"
-          fixedWidth={false}
-          name="user-shield"
-          pullRight={false}
-        />
-      </FlexItem>
-    </Flex>
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="flex-start"
-      wrap="nowrap"
-    >
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        shrink={1}
-      >
-        <Link
-          to="/administration/users"
-        >
-          Back To List
-        </Link>
-      </FlexItem>
-    </Flex>
-  </Flex>
-  <div
-    style={
-      Object {
-        "marginTop": "20px",
-      }
-    }
-  >
-    <label>
-      Change Password
-    </label>
-    <Connect(Password) />
-    <label>
-      Groups
-    </label>
-    <Connect(UserGroups)
-      memberGroups="bar"
-      userId="foo"
+        Back To List
+      </Link>
+    </Detail__UserDetailTitle>
+  </Detail__UserDetailHeader>
+  <Connect(Password) />
+  <Detail__UserDetailGroups>
+    <div>
+      <Connect(UserGroups) />
+      <Connect(PrimaryGroup) />
+    </div>
+    <Connect(UserPermissions) />
+  </Detail__UserDetailGroups>
+  <Connect(UserRole) />
+  <RemoveBanner
+    buttonText="Delete"
+    message="Click the Delete button to permanently remove this user."
+    onClick={[Function]}
+  />
+</div>
+`;
+
+exports[`<UserDetail /> should render when [administrator=false] 1`] = `
+<div>
+  <Detail__UserDetailHeader>
+    <Identicon
+      hash="foo"
+      size={56}
     />
-    <label>
-      Primary Group
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="Bar"
-    >
-      <option
-        key="none"
-        value="none"
+    <Detail__UserDetailTitle>
+      <span>
+        bob
+      </span>
+      <Link
+        to="/administration/users"
       >
-        None
-      </option>
-      <option
-        key="b"
-        value="b"
-      >
-        B
-      </option>
-      <option
-        key="a"
-        value="a"
-      >
-        A
-      </option>
-      <option
-        key="r"
-        value="r"
-      >
-        R
-      </option>
-    </InputError>
-    <Flex
-      alignContent="stretch"
-      alignItems="center"
-      direction="row"
-      justifyContent="space-between"
-      wrap="nowrap"
-    >
-      <label>
-        Permissions
-      </label>
-      <small
-        className="text-muted"
-      >
-        Change group membership to modify permissions
-      </small>
-    </Flex>
-    <UserPermissions
-      permissions={
-        Object {
-          "foo": "bar",
-        }
-      }
+        Back To List
+      </Link>
+    </Detail__UserDetailTitle>
+  </Detail__UserDetailHeader>
+  <Connect(Password) />
+  <Detail__UserDetailGroups>
+    <div>
+      <Connect(UserGroups) />
+      <Connect(PrimaryGroup) />
+    </div>
+    <Connect(UserPermissions) />
+  </Detail__UserDetailGroups>
+  <Connect(UserRole) />
+  <RemoveBanner
+    buttonText="Delete"
+    message="Click the Delete button to permanently remove this user."
+    onClick={[Function]}
+  />
+</div>
+`;
+
+exports[`<UserDetail /> should render when [canModifyUser=false] 1`] = `
+<div>
+  <Detail__UserDetailHeader>
+    <Identicon
+      hash="foo"
+      size={56}
     />
-  </div>
+    <Detail__UserDetailTitle>
+      <span>
+        bob
+      </span>
+      <Icon
+        bsStyle="primary"
+        faStyle="fas"
+        fixedWidth={false}
+        name="user-shield"
+        pullRight={false}
+      />
+      <Link
+        to="/administration/users"
+      >
+        Back To List
+      </Link>
+    </Detail__UserDetailTitle>
+  </Detail__UserDetailHeader>
+  <Connect(Password) />
+  <Detail__UserDetailGroups>
+    <div>
+      <Connect(UserGroups) />
+      <Connect(PrimaryGroup) />
+    </div>
+    <Connect(UserPermissions) />
+  </Detail__UserDetailGroups>
+  <Connect(UserRole) />
 </div>
 `;

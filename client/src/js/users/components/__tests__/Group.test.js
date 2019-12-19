@@ -1,4 +1,3 @@
-import { ListGroupItem } from "../../../base";
 import { UserGroup } from "../Group";
 
 describe("<UserGroup />", () => {

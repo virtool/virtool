@@ -1,12 +1,14 @@
 import React from "react";
-import PropTypes from "prop-types";
 import styled from "styled-components";
-import { Checkbox, ListGroupItem, device } from "../../base";
+import PropTypes from "prop-types";
 
-export const Groups = styled(ListGroupItem)`
-    @media (min-width: ${device.tablet}) {
-        max-width: 333px;
-    }
+import { BoxGroupSection, Checkbox } from "../../base";
+
+const StyledUserGroup = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    text-transform: capitalize;
 `;
 
 export class UserGroup extends React.Component {
@@ -22,10 +24,10 @@ export class UserGroup extends React.Component {
 
     render() {
         return (
-            <Groups className="text-capitalize" onClick={this.handleClick}>
-                {this.props.id}
-                <Checkbox checked={this.props.toggled} pullRight />
-            </Groups>
+            <StyledUserGroup onClick={this.handleClick}>
+                <span>{this.props.id}</span>
+                <Checkbox checked={this.props.toggled} />
+            </StyledUserGroup>
         );
     }
 }
