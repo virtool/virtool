@@ -50,7 +50,7 @@ from aiohttp.test_utils import make_mocked_coro
         "total_count": 3
     })
 ])
-async def test_find(find, per_page, page, d_range, meta, spawn_client, static_time):
+async def test_find(find, per_page, page, d_range, meta, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     time_1 = arrow.get(static_time.datetime).datetime
@@ -65,14 +65,13 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
             "isolate": "Thing",
             "created_at": time_2,
-            "archived": True,
             "_id": "beb1eb10",
             "name": "16GVP042",
             "pathoscope": False,
-            "all_read": True
+            "all_read": True,
+            "ready": True
         },
         {
             "user": {
@@ -81,14 +80,13 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
             "isolate": "Test",
             "created_at": time_1,
-            "archived": True,
             "_id": "72bb8b31",
             "name": "16GVP043",
             "pathoscope": False,
-            "all_read": True
+            "all_read": True,
+            "ready": True
         },
         {
             "user": {
@@ -97,10 +95,9 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
             "nuvs": False,
             "host": "",
             "foobar": True,
-            "imported": True,
+            "ready": True,
             "isolate": "",
             "created_at": time_3,
-            "archived": False,
             "_id": "cb400e6d",
             "name": "16SPP044",
             "pathoscope": False,
@@ -127,57 +124,12 @@ async def test_find(find, per_page, page, d_range, meta, spawn_client, static_ti
 
     assert resp.status == 200
 
-    expected_documents = [
-        {
-            "user": {
-                "id": "fred"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "",
-            "created_at": "2015-10-06T22:00:00Z",
-            "archived": False,
-            "id": "cb400e6d",
-            "name": "16SPP044",
-            "pathoscope": False
-        },
-        {
-            "user": {
-                "id": "bob"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "Thing",
-            "created_at": "2015-10-06T21:00:00Z",
-            "archived": True,
-            "id": "beb1eb10",
-            "name": "16GVP042",
-            "pathoscope": False
-        },
-        {
-            "user": {
-                "id": "fred"
-            },
-            "nuvs": False,
-            "host": "",
-            "imported": True,
-            "isolate": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "archived": True,
-            "id": "72bb8b31",
-            "name": "16GVP043",
-            "pathoscope": False
-        }
-    ]
-
-    assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
+    snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("imported", [True, False])
-async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
+@pytest.mark.parametrize("ready", [True, False])
+async def test_get(error, ready, mocker, snapshot, spawn_client, resp_is, static_time):
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
 
     client = await spawn_client(authorize=True)
@@ -187,7 +139,7 @@ async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
             "_id": "test",
             "name": "Test",
             "created_at": static_time.datetime,
-            "imported": imported,
+            "ready": ready,
             "files": [
                 {
                     "id": "foo",
@@ -205,44 +157,13 @@ async def test_get(error, imported, mocker, spawn_client, resp_is, static_time):
 
     assert resp.status == 200
 
-    if imported:
-        assert await resp.json() == {
-            "id": "test",
-            "name": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                    "replace_url": "/upload/samples/test/files/1"
-                }
-            ],
-            "imported": imported,
-            "caches": []
-        }
-
-    else:
-        assert await resp.json() == {
-            "id": "test",
-            "name": "Test",
-            "created_at": "2015-10-06T20:00:00Z",
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz"
-                }
-            ],
-            "imported": imported,
-            "caches": []
-        }
+    snapshot.assert_match(await resp.json())
 
 
 class TestCreate:
 
     @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
-    async def test(self, group_setting, mocker, spawn_client, static_time, test_random_alphanumeric):
+    async def test(self, group_setting, mocker, snapshot, spawn_client, static_time, test_random_alphanumeric):
 
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
@@ -295,52 +216,9 @@ class TestCreate:
 
         assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.history[0]
 
-        expected_group = "none"
+        snapshot.assert_match(await resp.json())
 
-        if group_setting == "users_primary_group":
-            expected_group = "technician"
-
-        if group_setting == "force_choice":
-            expected_group = "diagnostics"
-
-        expected = {
-            "name": "Foobar",
-            "files": [{
-                "id": "test.fq"
-            }],
-            "subtraction": {
-                "id": "apple"
-            },
-            "group": expected_group,
-            "nuvs": False,
-            "pathoscope": False,
-            "created_at": static_time.iso,
-            "format": "fastq",
-            "imported": "ip",
-            "quality": None,
-            "analyzed": False,
-            "hold": True,
-            "archived": False,
-            "group_read": True,
-            "group_write": True,
-            "all_read": True,
-            "all_write": True,
-            "srna": False,
-            "paired": False,
-            "user": {
-                "id": "test"
-            },
-            "id": test_random_alphanumeric.history[0]
-        }
-
-        assert await resp.json() == expected
-
-        expected.update({
-            "_id": expected.pop("id"),
-            "created_at": static_time.datetime
-        })
-
-        assert await client.db.samples.find_one() == expected
+        snapshot.assert_match(await client.db.samples.find_one())
 
         # Check call to file.reserve.
         m_reserve.assert_called_with(
