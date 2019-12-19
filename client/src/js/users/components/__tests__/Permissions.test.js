@@ -1,4 +1,4 @@
-import UserPermissions from "../Permissions";
+import { mapStateToProps, UserPermissions } from "../Permissions";
 
 describe("<UserPermissions />", () => {
     let props;
@@ -14,5 +14,21 @@ describe("<UserPermissions />", () => {
     it("should render", () => {
         const wrapper = shallow(<UserPermissions {...props} />);
         expect(wrapper).toMatchSnapshot();
+    });
+});
+
+describe("mapStateToProps", () => {
+    const state = {
+        users: {
+            detail: {
+                permissions: "foo"
+            }
+        }
+    };
+    it("should return props", () => {
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            permissions: "foo"
+        });
     });
 });

@@ -1,45 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserGroup /> should render with [toggled=false] 1`] = `
-<Col
-  bsClass="col"
-  componentClass="div"
-  md={4}
-  xs={12}
+<Group__StyledUserGroup
+  onClick={[Function]}
 >
-  <ListGroupItem
-    allowFocus={false}
-    className="text-capitalize"
-    onClick={[Function]}
-  >
+  <span>
     bob
-    <Checkbox
-      checked={false}
-      partial={false}
-      pullRight={true}
-    />
-  </ListGroupItem>
-</Col>
+  </span>
+  <Checkbox
+    checked={false}
+    partial={false}
+    pullRight={false}
+  />
+</Group__StyledUserGroup>
 `;
 
 exports[`<UserGroup /> should render with [toggled=true] 1`] = `
-<Col
-  bsClass="col"
-  componentClass="div"
-  md={4}
-  xs={12}
+<Group__StyledUserGroup
+  onClick={[Function]}
 >
-  <ListGroupItem
-    allowFocus={false}
-    className="text-capitalize"
-    onClick={[Function]}
-  >
+  <span>
     bob
-    <Checkbox
-      checked={true}
-      partial={false}
-      pullRight={true}
-    />
-  </ListGroupItem>
-</Col>
+  </span>
+  <Checkbox
+    checked={true}
+    partial={false}
+    pullRight={false}
+  />
+</Group__StyledUserGroup>
 `;

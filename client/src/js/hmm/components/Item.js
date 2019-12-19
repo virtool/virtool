@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
 import styled from "styled-components";
-import { Label, ListGroupItem } from "../../base";
+import { device, Label, ListGroupItem } from "../../base";
 
 const StyledChange = styled(ListGroupItem)`
     display: flex;
@@ -15,7 +15,7 @@ const NameTag = styled.div`
     justify-content: space-between;
     width: 83%;
 
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         flex-flow: row wrap;
         flex-direction: column;
         width: 95%;
@@ -24,14 +24,14 @@ const NameTag = styled.div`
 
 const Name = styled.div`
     display: flex;
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         justify-content: flex-start;
     }
 `;
 
 const Tag = styled.div`
     display: flex;
-    @media (max-width: 1080px) {
+    @media (max-width: ${device.tabelet}) {
         justify-content: flex-start;
     }
 `;

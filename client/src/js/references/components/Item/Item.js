@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { SpacedBox } from "../../../base";
+import { SpacedBox, device } from "../../../base";
 import { getReferenceItemProgress } from "../../selectors";
 import { ReferenceItemBuild } from "./Build";
 import { ReferenceItemHeader } from "./Header";
@@ -16,7 +16,7 @@ const ReferenceItemBody = styled.div`
     margin-bottom: 5px;
     padding: 0 15px 5px;
 
-    @media (min-width: 1060px) {
+    @media (min-width: ${device.desktop}) {
         grid-template-columns: 1fr 1fr;
     }
 `;
