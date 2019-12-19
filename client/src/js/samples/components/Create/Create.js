@@ -6,13 +6,12 @@ import { connect } from "react-redux";
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
+import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 
 import { createSample, findReadFiles } from "../../actions";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
-
-const getActiveSubtraction = props => get(props, ["subtractions", 0], "");
 
 const getInitialState = props => ({
     selected: [],
@@ -21,7 +20,7 @@ const getInitialState = props => ({
     isolate: "",
     locale: "",
     srna: false,
-    subtraction: getActiveSubtraction(props),
+    subtraction: "",
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
@@ -93,7 +92,16 @@ class CreateSample extends React.Component {
         }
 
         if (!hasError) {
-            this.props.onCreate({ ...this.state, files: this.state.selected });
+            const { name, isolate, host, locale, srna, subtraction } = this.state;
+            this.props.onCreate(
+                name,
+                isolate,
+                host,
+                locale,
+                srna,
+                subtraction || this.props.defaultSubtraction,
+                this.state.selected
+            );
         }
     };
 
@@ -213,7 +221,7 @@ class CreateSample extends React.Component {
                                     name="subtraction"
                                     type="select"
                                     label="Default Subtraction"
-                                    value={this.state.subtraction}
+                                    value={this.state.subtraction || this.props.defaultSubtraction}
                                     onChange={this.handleChange}
                                     error={errorSubtraction}
                                 >
@@ -260,12 +268,13 @@ class CreateSample extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    defaultSubtraction: getFirstSubtractionId(state),
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     show: routerLocationHasState(state, "createSample"),
-    subtractions: state.subtraction.ids
+    subtractions: getSubtractionIds(state)
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -274,7 +283,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(findReadFiles());
     },
 
-    onCreate: ({ name, isolate, host, locale, srna, subtraction, files }) => {
+    onCreate: (name, isolate, host, locale, srna, subtraction, files) => {
         dispatch(createSample(name, isolate, host, locale, srna, subtraction, files));
     },
 
