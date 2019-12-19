@@ -42,8 +42,8 @@ class SampleDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        if (this.props.detail.imported === "ip") {
-            return <LoadingPlaceholder message="Sample is still being imported." margin="220px" />;
+        if (!this.props.detail.ready) {
+            return <LoadingPlaceholder message="Sample is still being created." margin="220px" />;
         }
 
         const detail = this.props.detail;

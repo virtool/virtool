@@ -26,13 +26,55 @@ snapshots['test_add_library_type[uvloop] 1'] = [
     }
 ]
 
-snapshots['test_delete_unready[uvloop] 1'] = [
+snapshots['test_update_ready[uvloop] 1'] = [
     {
         '_id': 'foo',
-        'imported': True
+        'imported': True,
+        'ready': True
     },
     {
         '_id': 'baz',
-        'imported': True
+        'imported': True,
+        'ready': True
+    },
+    {
+        '_id': 'far',
+        'ready': True
+    }
+]
+
+snapshots['test_prune_fields[uvloop] 1'] = [
+    {
+        '_id': 'foo'
+    },
+    {
+        '_id': 'bar',
+        'ready': True
+    }
+]
+
+snapshots['test_update_pairedness[uvloop] 1'] = [
+    {
+        '_id': 'foo',
+        'files': [
+            '1'
+        ],
+        'paired': False
+    },
+    {
+        '_id': 'bar',
+        'files': [
+            '1',
+            '2'
+        ],
+        'paired': True
+    },
+    {
+        '_id': 'baz',
+        'paired': True
+    },
+    {
+        '_id': 'boo',
+        'paired': False
     }
 ]

@@ -106,7 +106,7 @@ class Job(virtool.jobs.job.Job):
         self.db.samples.update_one({"_id": self.params["sample_id"]}, {
             "$set": {
                 "quality": qc,
-                "imported": False
+                "ready": True
             }
         })
 

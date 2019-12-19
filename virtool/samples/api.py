@@ -132,7 +132,7 @@ async def get(req):
 
     document["caches"] = caches
 
-    if document["imported"] is True:
+    if document["ready"] is True:
         # Only update file fields if sample creation is complete.
         for index, file in enumerate(document["files"]):
             snake_case = document["name"].replace(" ", "_")
@@ -233,11 +233,9 @@ async def create(req):
         "pathoscope": False,
         "created_at": virtool.utils.timestamp(),
         "format": "fastq",
-        "imported": "ip",
+        "ready": False,
         "quality": None,
-        "analyzed": False,
         "hold": True,
-        "archived": False,
         "group_read": settings["sample_group_read"],
         "group_write": settings["sample_group_write"],
         "all_read": settings["sample_all_read"],

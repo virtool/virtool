@@ -24,8 +24,9 @@ RE_FILE_PREFIX = re.compile("^[0-9a-z]{8}-")
 async def migrate_samples(app):
     motor_client = app["db"].motor_client
 
-    await delete_unready(motor_client)
+    await update_ready(motor_client)
     await update_pairedness(motor_client)
+    await prune_fields(motor_client)
     await add_library_type(motor_client)
 
     for sample_id in await motor_client.samples.distinct("_id"):
@@ -57,15 +58,6 @@ async def add_library_type(db):
         "$unset": {
             "srna": ""
         }
-    })
-
-
-async def delete_unready(db):
-    await db.samples.delete_many({
-        "$or": [
-            {"imported": False},
-            {"imported": "ip"}
-        ]
     })
 
 
@@ -110,7 +102,24 @@ async def update_file_representation(app):
         })
 
 
+async def prune_fields(db):
+    await db.samples.update_many({}, {
+        "$unset": {
+            "imported": "",
+            "archived": "",
+            "analyzed": ""
+        }
+    })
+
+
 async def update_pairedness(db):
+    """
+    If a sample doesn't have a `paired` field, derive it based on the length of the `files` list and add a `paired`
+    field to the document.
+
+    :param db: a DB client object
+
+    """
     await db.samples.update_many({**PAIRED_QUERY, "files": {"$size": 1}}, {
         "$set": {
             "paired": False
@@ -120,5 +129,20 @@ async def update_pairedness(db):
     await db.samples.update_many({**PAIRED_QUERY, "files": {"$size": 2}}, {
         "$set": {
             "paired": True
+        }
+    })
+
+
+async def update_ready(db):
+    await db.samples.delete_many({
+        "$or": [
+            {"imported": "ip"},
+            {"ready": False}
+        ]
+    })
+
+    await db.samples.update_many({}, {
+        "$set": {
+            "ready": True
         }
     })

@@ -60,16 +60,7 @@ class SampleEntry extends React.Component {
         let analyzeIcon;
         let spinner;
 
-        if (this.props.imported === "ip") {
-            spinner = (
-                <Flex alignItems="center" className="pull-right">
-                    <Loader size="14px" color="#3c8786" />
-                    <FlexItem pad>
-                        <strong>Creating</strong>
-                    </FlexItem>
-                </Flex>
-            );
-        } else {
+        if (this.props.ready) {
             analyzeIcon = (
                 <div className="sample-icon-overlay">
                     <Icon
@@ -82,6 +73,15 @@ class SampleEntry extends React.Component {
                         pullRight
                     />
                 </div>
+            );
+        } else {
+            spinner = (
+                <Flex alignItems="center" className="pull-right">
+                    <Loader size="14px" color="#3c8786" />
+                    <FlexItem pad>
+                        <strong>Creating</strong>
+                    </FlexItem>
+                </Flex>
             );
         }
 
