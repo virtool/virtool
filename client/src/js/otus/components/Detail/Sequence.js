@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import React from "react";
+import { connect } from "react-redux";
 import { Collapse } from "react-bootstrap";
 import styled from "styled-components";
 import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
@@ -52,7 +53,8 @@ class Sequence extends React.Component {
         sequence: PropTypes.string,
         showEditSequence: PropTypes.func,
         showRemoveSequence: PropTypes.func,
-        canModify: PropTypes.bool
+        canModify: PropTypes.bool,
+        dataType: PropTypes.string
     };
 
     handleCloseClick = () => {
@@ -108,7 +110,17 @@ class Sequence extends React.Component {
         if (!this.state.in && this.props.segment) {
             segment = <InfoLabel className="text-mono">{this.props.segment}</InfoLabel>;
         }
-
+        const SegmentRow = () => {
+            if (this.props.dataType === "barcode") {
+                return null;
+            }
+            return (
+                <tr>
+                    <th>Segment</th>
+                    <td>{segment}</td>
+                </tr>
+            );
+        };
         return (
             <BoxGroupSection onClick={this.state.in ? null : () => this.setState({ in: true })}>
                 <SequenceHeader>
@@ -129,10 +141,7 @@ class Sequence extends React.Component {
                                     <th>Definition</th>
                                     <td>{this.props.definition}</td>
                                 </tr>
-                                <tr>
-                                    <th>Segment</th>
-                                    <td>{segment}</td>
-                                </tr>
+                                <SegmentRow />
                                 <tr>
                                     <th>Host</th>
                                     <td>{this.props.host}</td>
@@ -155,4 +164,7 @@ class Sequence extends React.Component {
     }
 }
 
-export default Sequence;
+const mapStateToProps = state => ({
+    dataType: state.references.detail.data_type
+});
+export default connect(mapStateToProps)(Sequence);

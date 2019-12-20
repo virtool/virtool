@@ -10,15 +10,17 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
-import { get, find } from "lodash-es";
+import { Modal, InputGroup, ControlLabel } from "react-bootstrap";
+import { get, find, concat, map } from "lodash-es";
 
 import { addSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, Loader } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
+import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
 import SequenceForm from "./SequenceForm";
+import { SegmentCol } from "./SegmentCol";
 
 const getInitialState = () => ({
     id: "",
@@ -160,9 +162,22 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
-
-        const accessionCol = (
-            <Col xs={12} md={6}>
+        const defaultOption = (
+            <option key="None" value="">
+                {" "}
+                - None -{" "}
+            </option>
+        );
+        const segmentNames = concat(
+            defaultOption,
+            map(this.props.schema, segment => (
+                <option key={segment} value={segment}>
+                    {segment}
+                </option>
+            ))
+        );
+        const AccessionCol = (
+            <div>
                 <ControlLabel>Accession (ID)</ControlLabel>
                 <InputGroup>
                     <InputError
@@ -177,8 +192,23 @@ class AddSequence extends React.Component {
                         </Button>
                     </InputGroup.Button>
                 </InputGroup>
-            </Col>
+            </div>
         );
+
+        let AccessionSegmentCol = (
+            <StyledAccessionSegmentCol>
+                {AccessionCol}
+                <SegmentCol
+                    segmentNames={segmentNames}
+                    value={this.state.segment}
+                    onChange={this.handleChange}
+                    error={this.state.errorSegment}
+                />
+            </StyledAccessionSegmentCol>
+        );
+        if (this.props.dataType === "barcode") {
+            AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+        }
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -189,13 +219,10 @@ class AddSequence extends React.Component {
                     host={this.state.host}
                     definition={this.state.definition}
                     sequence={this.state.sequence}
-                    segment={this.state.segment}
-                    schema={this.props.schema}
                     overlay={overlay}
-                    accessionCol={accessionCol}
+                    AccessionSegmentCol={AccessionSegmentCol}
                     handleChange={this.handleChange}
                     handleSubmit={this.handleSubmit}
-                    errorSegment={this.state.errorSegment}
                     errorDefinition={this.state.errorDefinition}
                     errorSequence={this.state.errorSequence}
                 />
@@ -209,7 +236,8 @@ const mapStateToProps = state => ({
     show: state.otus.addSequence,
     otuId: state.otus.detail.id,
     isolateId: state.otus.activeIsolateId,
-    error: get(state, "errors.ADD_SEQUENCE_ERROR", "")
+    error: get(state, "errors.ADD_SEQUENCE_ERROR", ""),
+    dataType: state.references.detail.data_type
 });
 
 const mapDispatchToProps = dispatch => ({
