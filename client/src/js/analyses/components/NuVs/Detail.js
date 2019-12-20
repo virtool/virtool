@@ -74,7 +74,13 @@ const StyledNuVsDetail = styled(Box)`
     margin-left: 10px;
 `;
 
-export const NuVsDetail = ({ blast, e, families, filterORFs, index, maxSequenceLength, orfs, sequence }) => {
+export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
+    if (!hit) {
+        return <StyledNuVsDetail>No Hits</StyledNuVsDetail>;
+    }
+
+    const { blast, e, families, index, orfs, sequence } = hit;
+
     const [width, setWidth] = useState(-1);
 
     let filtered;
@@ -114,12 +120,21 @@ export const NuVsDetail = ({ blast, e, families, filterORFs, index, maxSequenceL
 };
 
 const mapStateToProps = state => {
-    return {
-        ...getActiveHit(state),
-        analysisId: state.analyses.detail.id,
+    const props = {
         filterORFs: state.analyses.filterORFs,
         maxSequenceLength: getMaxSequenceLength(state)
     };
+
+    const activeHit = getActiveHit(state);
+
+    if (activeHit) {
+        return {
+            ...props,
+            ...activeHit
+        };
+    }
+
+    return props;
 };
 
 export default connect(mapStateToProps)(NuVsDetail);
