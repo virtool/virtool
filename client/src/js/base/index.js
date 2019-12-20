@@ -34,6 +34,7 @@ export * from "./ButtonToolbar";
 export * from "./Code";
 export * from "./Container";
 export * from "./ExternalLink";
+export * from "./Key";
 export * from "./Label";
 export * from "./Loader";
 export * from "./LoadingPlaceholder";
