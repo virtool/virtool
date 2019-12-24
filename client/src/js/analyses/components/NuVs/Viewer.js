@@ -7,7 +7,7 @@ import NuVsToolbar from "./Toolbar";
 
 const NuVsPanes = styled.div`
     display: grid;
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 230px 1fr;
 `;
 
 export const NuVsViewer = () => (

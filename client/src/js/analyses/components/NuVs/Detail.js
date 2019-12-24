@@ -119,22 +119,10 @@ export const NuVsDetail = ({ filterORFs, hit, maxSequenceLength }) => {
     );
 };
 
-const mapStateToProps = state => {
-    const props = {
-        filterORFs: state.analyses.filterORFs,
-        maxSequenceLength: getMaxSequenceLength(state)
-    };
-
-    const activeHit = getActiveHit(state);
-
-    if (activeHit) {
-        return {
-            ...props,
-            ...activeHit
-        };
-    }
-
-    return props;
-};
+const mapStateToProps = state => ({
+    filterORFs: state.analyses.filterORFs,
+    maxSequenceLength: getMaxSequenceLength(state),
+    hit: getActiveHit(state)
+});
 
 export default connect(mapStateToProps)(NuVsDetail);
