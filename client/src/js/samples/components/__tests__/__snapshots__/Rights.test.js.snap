@@ -1,0 +1,168 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SampleRights /> should render 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Sample Rights
+    </h2>
+    <p>
+      Control who can read and write this sample and which user group owns the sample.
+    </p>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="Group"
+      onChange={[Function]}
+      type="select"
+    >
+      <option
+        value="none"
+      >
+        None
+      </option>
+    </Input>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="Group Rights"
+      name="groupRights"
+      onChange={[Function]}
+      type="select"
+      value="rw"
+    >
+      <option
+        value=""
+      >
+        None
+      </option>
+      <option
+        value="r"
+      >
+        Read
+      </option>
+      <option
+        value="rw"
+      >
+        Read & write
+      </option>
+    </Input>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="All Users' Rights"
+      name="allUsers"
+      onChange={[Function]}
+      type="select"
+      value="rw"
+    >
+      <option
+        value=""
+      >
+        None
+      </option>
+      <option
+        value="r"
+      >
+        Read
+      </option>
+      <option
+        value="rw"
+      >
+        Read & write
+      </option>
+    </Input>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
+`;
+
+exports[`<SampleRights /> should return LoadingPlaceholder when[this.props.groups=null] 1`] = `
+<Box__BoxGroup>
+  <Box__BoxGroupHeader>
+    <h2>
+      Sample Rights
+    </h2>
+    <p>
+      Control who can read and write this sample and which user group owns the sample.
+    </p>
+  </Box__BoxGroupHeader>
+  <Box__BoxGroupSection>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="Group"
+      onChange={[Function]}
+      type="select"
+    >
+      <option
+        value="none"
+      >
+        None
+      </option>
+    </Input>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="Group Rights"
+      name="groupRights"
+      onChange={[Function]}
+      type="select"
+      value="rw"
+    >
+      <option
+        value=""
+      >
+        None
+      </option>
+      <option
+        value="r"
+      >
+        Read
+      </option>
+      <option
+        value="rw"
+      >
+        Read & write
+      </option>
+    </Input>
+    <Input
+      autoComplete={true}
+      formGroupStyle={Object {}}
+      label="All Users' Rights"
+      name="allUsers"
+      onChange={[Function]}
+      type="select"
+      value="rw"
+    >
+      <option
+        value=""
+      >
+        None
+      </option>
+      <option
+        value="r"
+      >
+        Read
+      </option>
+      <option
+        value="rw"
+      >
+        Read & write
+      </option>
+    </Input>
+  </Box__BoxGroupSection>
+</Box__BoxGroup>
+`;
+
+exports[`<SampleRights /> should return Not allowed panel when[this.props.canModifyRights=false] 1`] = `
+<Panel>
+  <PanelBody
+    bsClass="panel"
+    collapsible={false}
+  >
+    Not allowed
+  </PanelBody>
+</Panel>
+`;

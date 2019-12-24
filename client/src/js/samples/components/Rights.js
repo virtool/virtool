@@ -7,7 +7,7 @@ import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
 import { getCanModifyRights } from "../selectors";
 
-class SampleRights extends React.Component {
+export class SampleRights extends React.Component {
     componentDidMount() {
         this.props.onListGroups();
     }
@@ -19,6 +19,9 @@ class SampleRights extends React.Component {
     handleChangeRights = (e, scope) => {
         this.props.onChangeRights(this.props.sampleId, scope, e.target.value);
     };
+
+    getValueGroupRights = () => (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
+    getValueAllRights = () => (this.props.all_read ? "r" : "") + (this.props.all_write ? "w" : "");
 
     render() {
         if (this.props.groups === null) {
@@ -33,8 +36,8 @@ class SampleRights extends React.Component {
             );
         }
 
-        const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
-        const allRights = (this.props.all_read ? "r" : "") + (this.props.all_write ? "w" : "");
+        const groupRights = this.getValueGroupRights();
+        const allRights = this.getValueAllRights();
 
         const nameOptionComponents = map(this.props.groups, group => (
             <option key={group.id} value={group.id}>
@@ -83,7 +86,7 @@ class SampleRights extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
+export const mapStateToProps = state => {
     const { all_read, all_write, group, group_read, group_write, id, user } = state.samples.detail;
 
     return {
@@ -101,7 +104,7 @@ const mapStateToProps = state => {
     };
 };
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onListGroups: () => {
         dispatch(listGroups());
     },
