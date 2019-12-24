@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SampleFileSizeWarning /> should render when [show=false] 1`] = `""`;
+
+exports[`<SampleFileSizeWarning /> should render when [show=true] 1`] = `
+<SampleFileSizeWarning__StyledSampleFileSizeWarning>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="exclamation-triangle"
+    pullRight={false}
+  />
+  <strong>
+    The read files in this sample are smaller than expected
+  </strong>
+</SampleFileSizeWarning__StyledSampleFileSizeWarning>
+`;
