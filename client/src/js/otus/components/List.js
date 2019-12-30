@@ -71,7 +71,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(OTUsList);
+export default connect(mapStateToProps, mapDispatchToProps)(OTUsList);

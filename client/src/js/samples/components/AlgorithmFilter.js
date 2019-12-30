@@ -76,7 +76,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(AlgorithmFilter);
+export default connect(mapStateToProps, mapDispatchToProps)(AlgorithmFilter);

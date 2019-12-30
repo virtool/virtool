@@ -1,4 +1,4 @@
-import IndexGeneral  from "../General";
+import IndexGeneral from "../General";
 
 describe("<IndexGeneral />", () => {
     it("should render", () => {

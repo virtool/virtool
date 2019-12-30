@@ -65,7 +65,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    null,
-    mapDispatchToProps
-)(EditSubtraction);
+export default connect(null, mapDispatchToProps)(EditSubtraction);

@@ -180,7 +180,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Schema);
+export default connect(mapStateToProps, mapDispatchToProps)(Schema);

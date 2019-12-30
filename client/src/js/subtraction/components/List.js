@@ -88,7 +88,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SubtractionList);
+export default connect(mapStateToProps, mapDispatchToProps)(SubtractionList);

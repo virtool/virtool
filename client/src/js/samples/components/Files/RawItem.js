@@ -110,7 +110,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SampleRawItem);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleRawItem);

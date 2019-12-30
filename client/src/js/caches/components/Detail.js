@@ -54,7 +54,4 @@ export const mapDispatchToProps = dispatch => {
     };
 };
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(CacheDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(CacheDetail);

@@ -104,9 +104,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps
-    )(CreateOTU)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateOTU));

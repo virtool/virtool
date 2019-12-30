@@ -25,7 +25,10 @@ describe("<Contributor />", () => {
 describe("<Contributors />", () => {
     it("should render", () => {
         const props = {
-            contributors: [{ id: "bob", count: 5 }, { id: "fred", count: 12 }]
+            contributors: [
+                { id: "bob", count: 5 },
+                { id: "fred", count: 12 }
+            ]
         };
         const wrapper = shallow(<Contributors {...props} />);
         expect(wrapper).toMatchSnapshot();
@@ -34,7 +37,10 @@ describe("<Contributors />", () => {
 
 describe("mapStateToProps()", () => {
     it("should return props", () => {
-        const contributors = [{ id: "bob", count: 5 }, { id: "fred", count: 12 }];
+        const contributors = [
+            { id: "bob", count: 5 },
+            { id: "fred", count: 12 }
+        ];
         const state = {
             indexes: {
                 detail: {

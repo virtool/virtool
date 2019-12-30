@@ -120,7 +120,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SampleRights);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleRights);

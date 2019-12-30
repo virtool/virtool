@@ -112,7 +112,4 @@ const mapStateToProps = state => ({
     errors: state.errors
 });
 
-export default connect(
-    mapStateToProps,
-    null
-)(SegmentForm);
+export default connect(mapStateToProps, null)(SegmentForm);

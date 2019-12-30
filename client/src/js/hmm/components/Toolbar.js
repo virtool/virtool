@@ -26,7 +26,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(HMMToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(HMMToolbar);

@@ -1,9 +1,9 @@
-var path = require("path");
-var CleanWebpackPlugin = require("clean-webpack-plugin");
-var MiniCssExtractPlugin = require("mini-css-extract-plugin");
-var HTMLPlugin = require("html-webpack-plugin");
-var TerserWebpackPlugin = require("terser-webpack-plugin");
-var webpack = require("webpack");
+const path = require("path");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HTMLPlugin = require("html-webpack-plugin");
+const TerserWebpackPlugin = require("terser-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
   entry: "./src/js/index.js",

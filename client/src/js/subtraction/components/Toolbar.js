@@ -44,7 +44,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SubtractionToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(SubtractionToolbar);
