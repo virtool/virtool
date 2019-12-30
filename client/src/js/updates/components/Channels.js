@@ -37,7 +37,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SoftwareChannels);
+export default connect(mapStateToProps, mapDispatchToProps)(SoftwareChannels);

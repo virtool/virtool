@@ -114,9 +114,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        mapDispatchToProps
-    )(IsolateEditor)
-);
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));

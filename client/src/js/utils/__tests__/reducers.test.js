@@ -4,7 +4,11 @@ describe("Reducer utility functions", () => {
     let documents;
 
     beforeEach(() => {
-        documents = [{ id: "bar", meta: "alpha" }, { id: "baz", meta: "gamma" }, { id: "foo", meta: "beta" }];
+        documents = [
+            { id: "bar", meta: "alpha" },
+            { id: "baz", meta: "gamma" },
+            { id: "foo", meta: "beta" }
+        ];
     });
 
     describe("updateDocuments: updates documents with action data", () => {
@@ -48,7 +52,10 @@ describe("Reducer utility functions", () => {
             const state = {
                 documents
             };
-            const updated = [{ ...documents[0], meta: "theta" }, { id: "test", meta: "chi" }];
+            const updated = [
+                { ...documents[0], meta: "theta" },
+                { id: "test", meta: "chi" }
+            ];
             const action = {
                 type: "UPDATE_DOCUMENTS",
                 data: {
@@ -67,7 +74,10 @@ describe("Reducer utility functions", () => {
             const state = {
                 documents
             };
-            const updated = [{ ...documents[0], meta: "theta" }, { id: "test", meta: "chi" }];
+            const updated = [
+                { ...documents[0], meta: "theta" },
+                { id: "test", meta: "chi" }
+            ];
             const action = {
                 type: "UPDATE_DOCUMENTS",
                 data: {
@@ -86,7 +96,10 @@ describe("Reducer utility functions", () => {
             const state = {
                 documents
             };
-            const updated = [{ ...documents[0], meta: "theta" }, { id: "test", meta: "chi" }];
+            const updated = [
+                { ...documents[0], meta: "theta" },
+                { id: "test", meta: "chi" }
+            ];
             const action = {
                 type: "UPDATE_DOCUMENTS",
                 data: {

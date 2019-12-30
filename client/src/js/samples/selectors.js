@@ -39,10 +39,7 @@ export const getSampleFiles = state => state.samples.detail.files;
 
 export const getSampleUpdateJobId = state => get(state, "samples.detail.update_job.id");
 
-export const getHasRawFilesOnly = createSelector(
-    [getSampleFiles],
-    files => every(files, "raw")
-);
+export const getHasRawFilesOnly = createSelector([getSampleFiles], files => every(files, "raw"));
 
 export const getIsReadyToReplace = createSelector(
     [getSampleFiles, getSampleUpdateJobId],

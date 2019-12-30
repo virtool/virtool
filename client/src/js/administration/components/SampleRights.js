@@ -4,7 +4,11 @@ import { connect } from "react-redux";
 import { updateSetting, updateSettings } from "../actions";
 import { BoxGroup, BoxGroupHeader, BoxGroupSection, Help, InputError } from "../../base";
 
-const rights = [{ label: "None", value: "" }, { label: "Read", value: "r" }, { label: "Read & write", value: "rw" }];
+const rights = [
+    { label: "None", value: "" },
+    { label: "Read", value: "r" },
+    { label: "Read & write", value: "rw" }
+];
 
 export const SampleRights = props => {
     const options = map(rights, (entry, index) => (
@@ -95,7 +99,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SampleRights);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleRights);

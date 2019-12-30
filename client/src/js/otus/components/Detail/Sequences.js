@@ -156,7 +156,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(IsolateSequences);
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateSequences);

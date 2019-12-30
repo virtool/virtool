@@ -40,7 +40,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(IndexChanges);
+export default connect(mapStateToProps, mapDispatchToProps)(IndexChanges);

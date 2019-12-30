@@ -71,9 +71,4 @@ const mapStateToProps = state => ({
     administrator: state.account.administrator
 });
 
-export default withRouter(
-    connect(
-        mapStateToProps,
-        null
-    )(Sidebar)
-);
+export default withRouter(connect(mapStateToProps, null)(Sidebar));

@@ -160,7 +160,10 @@ describe("filesReducer()", () => {
             };
             const result = reducer(state, action);
             expect(result).toEqual({
-                uploads: [{ localId: "foo", progress: 50 }, { localId: "bar", progress: 22 }]
+                uploads: [
+                    { localId: "foo", progress: 50 },
+                    { localId: "bar", progress: 22 }
+                ]
             });
         });
 
@@ -172,7 +175,10 @@ describe("filesReducer()", () => {
             };
             const result = reducer(state, action);
             expect(result).toEqual({
-                uploads: [{ localId: "foo", progress: 65 }, { localId: "bar", progress: 0 }]
+                uploads: [
+                    { localId: "foo", progress: 65 },
+                    { localId: "bar", progress: 0 }
+                ]
             });
         });
 

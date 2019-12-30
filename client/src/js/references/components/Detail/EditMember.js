@@ -87,7 +87,4 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(EditReferenceMember);
+export default connect(mapStateToProps, mapDispatchToProps)(EditReferenceMember);

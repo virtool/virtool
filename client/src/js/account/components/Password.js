@@ -170,7 +170,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(ChangePassword);
+export default connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
