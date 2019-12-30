@@ -15,6 +15,7 @@ import {
     ViewHeader
 } from "../../base";
 import { getHmm } from "../actions";
+import ClusterMembers from "./ClusterMembers";
 import { HMMTaxonomy } from "./Taxonomy";
 
 const ClusterTable = styled(Table)`
@@ -70,7 +71,7 @@ const TaxonomyGrid = styled.div`
     }
 `;
 
-class HMMDetail extends React.Component {
+export class HMMDetail extends React.Component {
     componentDidMount() {
         this.props.onGet(this.props.match.params.hmmId);
     }
@@ -84,28 +85,11 @@ class HMMDetail extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) => (
-            <tr key={index}>
-                <td>
-                    <a
-                        href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {accession}
-                    </a>
-                </td>
-                <td>{name}</td>
-                <td>{organism}</td>
-            </tr>
-        ));
-
         const names = map(this.props.detail.names, (name, index) => (
             <Label key={index} spaced>
                 {name}
             </Label>
         ));
-
         return (
             <div>
                 <ViewHeader title={`${this.props.detail.names[0]} - HMMs`}>
@@ -155,7 +139,9 @@ class HMMDetail extends React.Component {
                                 <th>Organism</th>
                             </tr>
                         </thead>
-                        <tbody>{clusterMembers}</tbody>
+                        <tbody>
+                            <ClusterMembers />
+                        </tbody>
                     </ClusterTable>
                 </BoxGroup>
 
@@ -168,12 +154,12 @@ class HMMDetail extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     error: get(state, "errors.GET_HMM_ERROR", null),
     detail: state.hmms.detail
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onGet: hmmId => {
         dispatch(getHmm(hmmId));
     }

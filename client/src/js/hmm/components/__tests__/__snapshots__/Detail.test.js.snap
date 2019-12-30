@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HMMDetail /> should render 1`] = `
+<div>
+  <ViewHeader
+    title="foo - HMMs"
+  >
+    <strong>
+      foo
+    </strong>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Cluster
+        </th>
+        <td>
+          bar
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Best Definitions
+        </th>
+        <td>
+          <Label
+            key="0"
+            spaced={true}
+          >
+            foo
+          </Label>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Length
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          Mean Entropy
+        </th>
+        <td>
+          baz
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Total Entropy
+        </th>
+        <td>
+          boo
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Cluster Members 
+        <Badge>
+          1
+        </Badge>
+      </h2>
+    </Box__BoxGroupHeader>
+    <Detail__ClusterTable>
+      <thead>
+        <tr>
+          <th>
+            Accession
+          </th>
+          <th>
+            Name
+          </th>
+          <th>
+            Organism
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <Connect(ClusterMembers) />
+      </tbody>
+    </Detail__ClusterTable>
+  </Box__BoxGroup>
+  <Detail__TaxonomyGrid>
+    <HMMTaxonomy
+      counts="Bar"
+      title="Families"
+    />
+    <HMMTaxonomy
+      counts="Baz"
+      title="Genera"
+    />
+  </Detail__TaxonomyGrid>
+</div>
+`;
+
+exports[`<HMMDetail /> should return LoadingPlaceholder when [ props.detail=null] 1`] = `
+<LoadingPlaceholder
+  margin="130px"
+/>
+`;
+
+exports[`<HMMDetail /> should return NotFound when [ props.error=true] 1`] = `<NotFound />`;
