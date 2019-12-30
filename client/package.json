@@ -110,7 +110,6 @@
     "snapshotSerializers": [
       "enzyme-to-json/serializer"
     ],
-    "testURL": "https://www.virtool.com/",
-    "testEnvironment": "node"
+    "testURL": "https://www.virtool.com/"
   }
 }
