@@ -1,4 +1,4 @@
-import { filter, get, map, replace, split } from "lodash-es";
+import { filter, get, map, replace } from "lodash-es";
 import React from "react";
 import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -15,6 +15,10 @@ import { LibraryTypeSelection } from "./LibraryTypeSelection";
 
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
+
+const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
+
+const getFileNameFromId = id => id.match(extensionRegex)[1];
 
 const getInitialState = props => ({
     selected: [],
@@ -113,9 +117,11 @@ export class CreateSample extends React.Component {
     };
 
     autofill = () => {
-        this.setState({
-            name: split(replace(this.state.selected[0], /[0-9a-z]{8}-/, ""), /_S\d+/)[0]
-        });
+        if (this.state.selected.length) {
+            this.setState({
+                name: getFileNameFromId(this.state.selected[0])
+            });
+        }
     };
 
     handleSelect = selected => {

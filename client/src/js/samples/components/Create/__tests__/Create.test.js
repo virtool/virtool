@@ -8,14 +8,16 @@ describe("<CreateSample>", () => {
 
     beforeEach(() => {
         props = {
+            show: true,
+            error: "",
             subtractions: ["sub_foo", "sub_bar"],
             readyReads: [],
             forceGroupChoice: false,
             onCreate: jest.fn()
         };
         state = {
-            selected: [],
-
+            name: "Sample 1",
+            selected: ["abc123-Foo.fq.gz", "789xyz-Bar.fq.gz"],
             host: "Host",
             isolate: "Isolate",
             locale: "Timbuktu",
@@ -54,14 +56,27 @@ describe("<CreateSample>", () => {
     });
 
     it("should update state when Modal exits", () => {
-        props.subtractions = ["foo"];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.find("Modal").simulate("exit");
-        expect(wrapper.state()).toEqual({ ...state, subtraction: "foo" });
+        wrapper.setState(state);
+        wrapper.find("Modal").prop("onExited")();
+        expect(wrapper.state()).toEqual({
+            errorFile: "",
+            errorName: "",
+            errorSubtraction: "",
+            group: "",
+            host: "",
+            isolate: "",
+            libraryType: "normal",
+            locale: "",
+            name: "",
+            selected: [],
+            subtraction: ""
+        });
     });
 
     it("handleChange() should update state [name] and [error] when InputError is changed and [name=name]", () => {
         const wrapper = shallow(<CreateSample {...props} />);
+        wrapper.setState(state);
         wrapper
             .find("InputError")
             .at(0)
@@ -69,19 +84,24 @@ describe("<CreateSample>", () => {
         expect(wrapper.state()).toEqual({ ...state, name: "foo" });
     });
 
-    it("handleChange() should update [name] when [name!=name] and [name!=subtraction]", () => {
-        e.target.name = "Foo";
+    it("handleChange() should update [name] when [name='isolate']", () => {
+        e.target.name = "isolate";
+        e.target.value = "Foo Isolate";
+
         const wrapper = shallow(<CreateSample {...props} />);
+        wrapper.setState(state);
         wrapper
             .find("InputError")
             .at(0)
             .simulate("change", e);
-        expect(wrapper.state()).toEqual({ ...state, Foo: "foo" });
+
+        expect(wrapper.state()).toEqual({ ...state, isolate: "Foo Isolate" });
     });
 
     it("handleLibrarySelect() should update libraryType when LibraryTypeSelection is selected", () => {
-        const libraryType = "sRNA";
+        const libraryType = "srna";
         const wrapper = shallow(<CreateSample {...props} />);
+        wrapper.setState(state);
         wrapper
             .find("LibraryTypeSelection")
             .at(0)
@@ -90,69 +110,63 @@ describe("<CreateSample>", () => {
     });
 
     it("handleSubmit() should update errorName when form is submitted and [this.state.name='']", () => {
-        props.subtractions = ["foo"];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, selected: ["bar"] });
+        wrapper.setState({ ...state, name: "" });
         wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({ ...state, selected: ["bar"], errorName: "Required Field" });
+        expect(wrapper.state()).toEqual({ ...state, name: "", errorName: "Required Field" });
     });
 
     it("handleSubmit() should update errorSubtraction when form is submitted and [this.props.subtractions=[]]", () => {
+        props.subtractions = [];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, name: "foo", selected: ["bar"] });
+        wrapper.setState({
+            ...state,
+            selected: ["foo"]
+        });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
             errorSubtraction: "At least one subtraction must be added to Virtool before samples can be analyzed.",
-            selected: ["bar"],
-            name: "foo"
+            selected: ["foo"]
         });
     });
 
     it("handleSubmit() should update errorFile when form is submitted and [this.props.selected=[]]", () => {
-        props.subtractions = ["foo"];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, name: "foo" });
+        wrapper.setState({
+            ...state,
+            selected: []
+        });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
-            errorFile: "At least one read file must be attached to the sample",
-            name: "foo"
+            selected: [],
+            errorFile: "At least one read file must be attached to the sample"
         });
     });
 
     it("should call onCreate() when form is submitted and [hasError=false]", () => {
-        props.subtractions = ["foo"];
-
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({ ...state, name: "foo", selected: ["foo"] });
+        wrapper.setState({ ...state, selected: ["foo"] });
         wrapper.find("form").simulate("submit", e);
 
-        expect(props.onCreate).toHaveBeenCalledWith(
-            "Sample 1",
-            "foo",
-            "Isolate",
-            "Host",
-            "Timbuktu",
-            undefined,
-            "sub_bar",
-            ["foo"]
-        );
+        expect(props.onCreate).toHaveBeenCalledWith("Sample 1", "Isolate", "Host", "Timbuktu", "normal", "sub_bar", [
+            "foo"
+        ]);
     });
 
     it("should update name when auto-fill Button is clicked", () => {
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.setState({
-            ...state
-        });
+        const selected = ["abc123-FooBar.fq.gz"];
+        wrapper.setState({ ...state, selected });
         wrapper.find("Button").simulate("click");
-        expect(wrapper.state()).toEqual({ ...state, name: "foo" });
+        expect(wrapper.state()).toEqual({ ...state, name: "FooBar", selected });
     });
 
     it("should update selected and errorFile when read is selected", () => {
-        const selected = ["foo", "bar"];
         const wrapper = shallow(<CreateSample {...props} />);
-        wrapper.find("ReadSelector").prop("select")(selected);
+        wrapper.setState(state);
+        wrapper.find("ReadSelector").prop("onSelect")(["foo"]);
         expect(wrapper.state()).toEqual({ ...state, selected: ["foo"] });
     });
 });

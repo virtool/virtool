@@ -18,23 +18,21 @@ describe("<ReadSelector />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("componentDidUpdate should not call onChange() if props.file does not change ", () => {
-        expect(props.onSelect).not.toHaveBeenCalled();
-    });
-
-    it("componentDidUpdate should call onChange() if props.file changes ", () => {
+    it("should call onChange() on update if files change ", () => {
         const wrapper = shallow(<ReadSelector {...props} />);
         wrapper.setProps({
-            files: [{ id: "Foo", size: 2048, name: "Bar" }],
-            error: "foo",
-            selected: ["foo", "bar"],
-            onSelect: jest.fn(),
-            handleSelect: jest.fn(),
-            state: {
-                filter: "foo"
-            }
+            files: [{ id: "foo", size: 2048, name: "Bar" }]
         });
         expect(props.onSelect).toHaveBeenCalled();
+    });
+
+    it("should not call onChange() on update files do not change ", () => {
+        const files = props.files;
+        const wrapper = shallow(<ReadSelector {...props} />);
+        wrapper.setProps({
+            files
+        });
+        expect(props.onSelect).not.toHaveBeenCalled();
     });
 
     it("should change state when Input onChange is called", () => {

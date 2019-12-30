@@ -8,7 +8,7 @@
  *
  * @exports ReadSelector
  */
-import { filter, includes, indexOf, intersection, map, sortBy, toLower, without } from "lodash-es";
+import { filter, includes, indexOf, isEqual, intersection, map, some, sortBy, toLower, without } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { FormGroup, InputGroup } from "react-bootstrap";
@@ -28,10 +28,12 @@ const ReadSelectorHeader = styled.h5`
     strong {
         flex: 1 0 auto;
     }
+
     small {
         color: grey;
     }
 `;
+
 const ReadSelectorList = styled.div`
     max-height: 400px;
     overflow-y: auto;
@@ -58,7 +60,7 @@ export default class ReadSelector extends React.PureComponent {
     };
 
     componentDidUpdate(prevProps) {
-        if (this.props.files !== prevProps.files) {
+        if (!isEqual(this.props.files, prevProps.files)) {
             prevProps.onSelect(intersection(prevProps.selected, map(this.props.files, "id")));
         }
     }
