@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ClusterMembers /> should render 1`] = `
+Array [
+  <tr
+    key="0"
+  >
+    <td>
+      <ExternalLink
+        href="http://www.ncbi.nlm.nih.gov/protein/undefined"
+        rel="noopener noreferrer"
+        target="_blank"
+      />
+    </td>
+    <td />
+    <td />
+  </tr>,
+  <tr
+    key="1"
+  >
+    <td>
+      <ExternalLink
+        href="http://www.ncbi.nlm.nih.gov/protein/undefined"
+        rel="noopener noreferrer"
+        target="_blank"
+      />
+    </td>
+    <td />
+    <td />
+  </tr>,
+  <tr
+    key="2"
+  >
+    <td>
+      <ExternalLink
+        href="http://www.ncbi.nlm.nih.gov/protein/undefined"
+        rel="noopener noreferrer"
+        target="_blank"
+      />
+    </td>
+    <td />
+    <td />
+  </tr>,
+]
+`;
