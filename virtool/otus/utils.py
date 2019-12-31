@@ -51,6 +51,12 @@ def extract_default_sequences(joined: dict) -> List[dict]:
             return isolate["sequences"]
 
 
+def extract_sequences(otu):
+    for isolate in otu["isolates"]:
+        for sequence in isolate["sequences"]:
+            yield sequence
+
+
 def extract_sequence_ids(otu):
     """
     Extract all sequence ids from a merged otu.

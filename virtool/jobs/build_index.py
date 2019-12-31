@@ -1,4 +1,5 @@
 import os
+import typing
 
 import virtool.history.db
 import virtool.indexes.db
@@ -45,6 +46,10 @@ class Job(virtool.jobs.job.Job):
             self.params["index_id"]
         )
 
+        document = self.db.references.find_one(self.params["ref_id"], ["data_type"])
+
+        self.params["data_type"] = document["data_type"]
+
     def mk_index_dir(self):
         """
         Make dir for the new index at ``<data_path/references/<index_id>``.
@@ -61,37 +66,22 @@ class Job(virtool.jobs.job.Job):
         the accession numbers.
 
         """
-        fasta_dict = dict()
+        patched_otus = get_patched_otus(
+            self.db,
+            self.params["manifest"]
+        )
+
         sequence_otu_map = dict()
 
-        for patch_id, patch_version in self.params["manifest"].items():
-            document = self.db.otus.find_one(patch_id)
-
-            if document["version"] == patch_version:
-                joined = virtool.db.sync.join_otu(self.db, patch_id, document)
-            else:
-                _, joined, _ = virtool.db.sync.patch_otu_to_version(self.db, patch_id, patch_version)
-
-            for isolate in joined["isolates"]:
-                for sequence in isolate["sequences"]:
-                    sequence_otu_map[sequence["_id"]] = patch_id
-
-            # Extract the list of sequences from the joined patched patch.
-            sequences = virtool.otus.utils.extract_default_sequences(joined)
-
-            defaults = list()
-
-            try:
-                for sequence in sequences:
-                    defaults.append(sequence["_id"])
-                    fasta_dict[sequence["_id"]] = sequence["sequence"]
-
-            except TypeError:
-                raise
+        sequences = get_sequences_from_patched_otus(
+            patched_otus,
+            self.params["data_type"],
+            sequence_otu_map
+        )
 
         fasta_path = os.path.join(self.params["index_path"], "ref.fa")
 
-        write_fasta_dict_to_file(fasta_path, fasta_dict)
+        write_sequences_to_file(fasta_path, sequences)
 
         index_id = self.params["index_id"]
 
@@ -109,15 +99,16 @@ class Job(virtool.jobs.job.Job):
         The root name for the new reference is 'reference'
 
         """
-        command = [
-            "bowtie2-build",
-            "-f",
-            "--threads", str(self.proc),
-            os.path.join(self.params["index_path"], "ref.fa"),
-            os.path.join(self.params["index_path"], "reference")
-        ]
+        if self.params["data_type"] != "barcode":
+            command = [
+                "bowtie2-build",
+                "-f",
+                "--threads", str(self.proc),
+                os.path.join(self.params["index_path"], "ref.fa"),
+                os.path.join(self.params["index_path"], "reference")
+            ]
 
-        self.run_subprocess(command)
+            self.run_subprocess(command)
 
     def replace_old(self):
         """
@@ -155,7 +146,7 @@ class Job(virtool.jobs.job.Job):
 
         self.dispatch("indexes", "update", id_list)
 
-        # Find otus with changes.
+        # Find OTUs with changes.
         pipeline = [
             {"$project": {
                 "reference": True,
@@ -187,7 +178,9 @@ class Job(virtool.jobs.job.Job):
 
     def cleanup(self):
         """
-        Cleanup if the job fails. Removes the nascent index document and change the *index_id* and *index_version*
+        Cleanup if the job fails.
+
+        Removes the nascent index document and change the *index_id* and *index_version*
         fields all history items being included in the new index to be 'unbuilt'.
 
         """
@@ -221,26 +214,82 @@ class Job(virtool.jobs.job.Job):
         virtool.utils.rm(self.params["index_path"], True)
 
 
-def remove_unused_index_files(base_path, retained):
+def get_patched_otus(db, manifest: dict) -> typing.Generator[dict, None, None]:
     """
-    Cleans up unused index dirs. Only the **active** index (latest ready index) is ever available for running
-    analysis from the web client. Any older indexes are removed from disk. If a running analysis still needs an old
-    index, it cannot be removed.
+    Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
-    This method removes old index dirs while ensuring to retain old ones that are still references by pending
-    analyses.
+    :param db: the job database client
+    :param manifest: the manifest
+    :return:
 
     """
-    for dir_name in os.listdir(base_path):
-        if dir_name not in retained:
+    for patch_id, patch_version in manifest.items():
+        _, joined, _ = virtool.db.sync.patch_otu_to_version(db, patch_id, patch_version)
+        yield joined
+
+
+def get_sequences_from_patched_otus(otus: typing.Iterable[dict], data_type: str, sequence_otu_map: dict) -> typing.Generator[dict, None, None]:
+    """
+    Return sequence documents based on an `Iterable` of joined OTU documents. Writes a map of sequence IDs to OTU IDs
+    into the passed `sequence_otu_map`.
+
+    If `data_type` is `barcode`, all sequences are returned. Otherwise, only sequences of default isolates are returned.
+
+    :param otus: an Iterable of joined OTU documents
+    :param data_type: the data type of the parent reference for the OTUs
+    :param sequence_otu_map: a dict to populate with sequence-OTU map information
+    :return: a generator that yields sequence documents
+
+    """
+    for otu in otus:
+        otu_id = otu["_id"]
+
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                sequence_id = sequence["_id"]
+                sequence_otu_map[sequence_id] = otu_id
+
+        if data_type == "barcode":
+            for sequence in virtool.otus.utils.extract_sequences(otu):
+                yield sequence
+        else:
+            for sequence in virtool.otus.utils.extract_default_sequences(otu):
+                yield sequence
+
+
+def remove_unused_index_files(reference_path: str, active_index_ids: list):
+    """
+    Cleans up unused index files for a reference given it's path.
+
+    Only the **active** index (latest ready index) is available for running analysis from the web client. Any older
+    indexes are removed from disk. If a running analysis still needs an old index, it will not be removed.
+
+    :param reference_path: the path to the reference
+    :param active_index_ids: ids of indexes that are still in use by analysis jobs
+
+    """
+    for index_id in os.listdir(reference_path):
+        if index_id not in active_index_ids:
             try:
-                virtool.utils.rm(os.path.join(base_path, dir_name), recursive=True)
-            except OSError:
+                virtool.utils.rm(os.path.join(reference_path, index_id), recursive=True)
+            except FileNotFoundError:
                 pass
 
 
-def write_fasta_dict_to_file(path, fasta_dict):
+def write_sequences_to_file(path: str, sequences: typing.Iterable):
+    """
+    Write a FASTA file based on a given `Iterable` containing sequence documents.
+
+    Headers will contain the `_id` field of the document and the sequence text is from the `sequence` field.
+
+    :param path: the path to write the file to
+    :param sequences: the sequences to write to file
+
+    """
     with open(path, "w") as handle:
-        for sequence_id, sequence in fasta_dict.items():
-            line = f">{sequence_id}\n{sequence}\n"
+        for sequence in sequences:
+            sequence_id = sequence["_id"]
+            sequence_data = sequence["sequence"]
+
+            line = f">{sequence_id}\n{sequence_data}\n"
             handle.write(line)
