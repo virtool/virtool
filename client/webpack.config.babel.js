@@ -1,7 +1,7 @@
-const path = require("path");
-const HTMLPlugin = require("html-webpack-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const path = require("path")
+const HTMLPlugin = require("html-webpack-plugin") 
+const { CleanWebpackPlugin } = require("clean-webpack-plugin")
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = {
   entry: "./src/js/index.js",
