@@ -64,6 +64,11 @@ class OTUDetail extends React.Component {
         let iconButtons = [];
         let modifyOTUComponents;
 
+        let segmentComponent;
+        if (this.props.dataType !== "barcode") {
+            segmentComponent = <TabLink to={`/refs/${refId}/otus/${id}/schema`}>Schema</TabLink>;
+        }
+
         if (this.props.canModify) {
             iconButtons = (
                 <span>
@@ -116,7 +121,7 @@ class OTUDetail extends React.Component {
 
                 <Tabs>
                     <TabLink to={`/refs/${refId}/otus/${id}/otu`}>OTU</TabLink>
-                    <TabLink to={`/refs/${refId}/otus/${id}/schema`}>Schema</TabLink>
+                    {segmentComponent}
                     <TabLink to={`/refs/${refId}/otus/${id}/history`}>History</TabLink>
                 </Tabs>
 
@@ -138,7 +143,8 @@ const mapStateToProps = state => {
         error: get(state, "errors.GET_OTU_ERROR", null),
         detail: state.otus.detail,
         refName: state.references.detail.name,
-        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+        canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+        dataType: state.references.detail.data_type
     };
 };
 

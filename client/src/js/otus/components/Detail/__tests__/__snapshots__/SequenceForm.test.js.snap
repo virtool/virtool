@@ -12,44 +12,7 @@ exports[`<SequenceForm /> renders correctly 1`] = `
       <Row
         bsClass="row"
         componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={6}
-          xs={12}
-        >
-          <InputError
-            error=""
-            label="Segment"
-            name="segment"
-            onChange={[MockFunction]}
-            type="select"
-            value="test-segment"
-          >
-            <option
-              key="None"
-              value=""
-            >
-               
-              - None -
-               
-            </option>
-            <option
-              key="hello"
-              value="hello"
-            >
-              hello
-            </option>
-            <option
-              key="world"
-              value="world"
-            >
-              world
-            </option>
-          </InputError>
-        </Col>
-      </Row>
+      />
       <Row
         bsClass="row"
         componentClass="div"

@@ -19,6 +19,8 @@ import { clearError } from "../../../errors/actions";
 import { InputError } from "../../../base";
 import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
+import { SegmentCol } from "./SegmentCol";
+import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
 
 const getInitialState = props => {
     if (props.sequenceId) {
@@ -120,12 +122,16 @@ class EditSequence extends React.Component {
                 </div>
             );
         }
-
-        const accessionCol = (
-            <Col xs={12} md={6}>
-                <InputError label="Accession (ID)" name="id" value={this.props.sequenceId} readOnly />
-            </Col>
+        const AccessionCol = <InputError label="Accession (ID)" name="id" value={this.props.sequenceId} readOnly />;
+        let AccessionSegmentCol = (
+            <StyledAccessionSegmentCol>
+                {AccessionCol}
+                <SegmentCol value={this.state.segment} onChange={this.handleChange} error={this.state.errorSegment} />
+            </StyledAccessionSegmentCol>
         );
+        if (this.props.dataType === "barcode") {
+            AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+        }
 
         return (
             <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
@@ -136,13 +142,11 @@ class EditSequence extends React.Component {
                     host={this.state.host}
                     definition={this.state.definition}
                     sequence={this.state.sequence}
-                    segment={this.state.segment}
                     schema={this.state.schema}
                     overlay={overlay}
-                    accessionCol={accessionCol}
+                    AccessionSegmentCol={AccessionSegmentCol}
                     handleChange={this.handleChange}
                     handleSubmit={this.handleSubmit}
-                    errorSegment={this.state.error}
                     errorDefinition={this.state.errorDefinition}
                     errorSequence={this.state.errorSequence}
                 />
@@ -155,7 +159,8 @@ const mapStateToProps = state => ({
     detail: state.otus.detail,
     isolate: state.otus.activeIsolate,
     sequenceId: state.otus.editSequence,
-    otuId: state.otus.detail.id
+    otuId: state.otus.detail.id,
+    dataType: state.references.detail.data_type
 });
 
 const mapDispatchToProps = dispatch => ({

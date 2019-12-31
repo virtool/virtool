@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SegmentCol /> should render 1`] = `
+<div>
+  <InputError
+    error="baz"
+    label="Segment"
+    name="segment"
+    onChange={[MockFunction]}
+    type="select"
+    value="foo"
+  >
+    bar
+  </InputError>
+</div>
+`;

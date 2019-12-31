@@ -7,7 +7,7 @@ import { Badge, Box, BoxGroup, Icon, SectionHeader } from "../../../base";
 
 import { checkRefRight } from "../../../utils/utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { IsolateButton } from "./IsolateButton";
+import IsolateButton from "./IsolateButton";
 import IsolateDetail from "./IsolateDetail";
 
 const StyledIsolateEditor = styled.div`
