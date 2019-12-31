@@ -67,7 +67,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(APIKeys);
+export default connect(mapStateToProps, mapDispatchToProps)(APIKeys);

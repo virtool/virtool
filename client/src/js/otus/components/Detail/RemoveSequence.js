@@ -54,7 +54,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(RemoveSequence);
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);

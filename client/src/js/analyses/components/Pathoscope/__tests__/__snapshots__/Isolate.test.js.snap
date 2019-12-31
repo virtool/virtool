@@ -49,7 +49,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
             "attrs": Array [],
             "componentStyle": ComponentStyle {
               "componentId": "Isolate__PathoscopeIsolateHeader-sc-2hw4nu-2",
-              "isStatic": true,
+              "isStatic": false,
               "lastClassName": "cvgTKV",
               "rules": Array [
                 "align-items:center;display:flex;padding-bottom:2px;padding-top:15px;margin-bottom:4px;& > strong{padding-left:5px;}",
@@ -102,7 +102,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
             "attrs": Array [],
             "componentStyle": ComponentStyle {
               "componentId": "Isolate__PathoscopeChartContainer-sc-2hw4nu-0",
-              "isStatic": true,
+              "isStatic": false,
               "lastClassName": "HhofF",
               "rules": Array [
                 "border-radius:2px;box-shadow:inset 0 2px 4px 0 rgba(0,0,0,0.1);margin-top:5px;overflow-x:scroll;",
@@ -419,7 +419,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,115.04545454545455)"
+                          transform="translate(0,115.04545454545453)"
                         >
                           <line
                             stroke="currentColor"
@@ -436,7 +436,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,102.31818181818181)"
+                          transform="translate(0,102.31818181818183)"
                         >
                           <line
                             stroke="currentColor"
@@ -470,7 +470,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,76.86363636363637)"
+                          transform="translate(0,76.86363636363636)"
                         >
                           <line
                             stroke="currentColor"
@@ -504,7 +504,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,51.40909090909091)"
+                          transform="translate(0,51.409090909090914)"
                         >
                           <line
                             stroke="currentColor"
@@ -521,7 +521,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,38.68181818181817)"
+                          transform="translate(0,38.68181818181818)"
                         >
                           <line
                             stroke="currentColor"
@@ -538,7 +538,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,25.954545454545453)"
+                          transform="translate(0,25.954545454545446)"
                         >
                           <line
                             stroke="currentColor"
@@ -555,7 +555,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                         <g
                           class="tick"
                           opacity="1"
-                          transform="translate(0,13.227272727272734)"
+                          transform="translate(0,13.227272727272732)"
                         >
                           <line
                             stroke="currentColor"
@@ -825,7 +825,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                   "attrs": Array [],
                   "componentStyle": ComponentStyle {
                     "componentId": "Isolate__PathoscopeChartRibbon-sc-2hw4nu-1",
-                    "isStatic": true,
+                    "isStatic": false,
                     "lastClassName": "iwWEsl",
                     "rules": Array [
                       "white-space:nowrap;",
@@ -862,7 +862,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                           "attrs": Array [],
                           "componentStyle": ComponentStyle {
                             "componentId": "Coverage__StyledCoverageChart-umswn9-0",
-                            "isStatic": true,
+                            "isStatic": false,
                             "lastClassName": "dRxTaL",
                             "rules": Array [
                               "display:inline-block;margin-top:5px;",
@@ -1173,7 +1173,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,115.04545454545455)"
+                                    transform="translate(0,115.04545454545453)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1190,7 +1190,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,102.31818181818181)"
+                                    transform="translate(0,102.31818181818183)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1224,7 +1224,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,76.86363636363637)"
+                                    transform="translate(0,76.86363636363636)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1258,7 +1258,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,51.40909090909091)"
+                                    transform="translate(0,51.409090909090914)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1275,7 +1275,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,38.68181818181817)"
+                                    transform="translate(0,38.68181818181818)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1292,7 +1292,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,25.954545454545453)"
+                                    transform="translate(0,25.954545454545446)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1309,7 +1309,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                                   <g
                                     class="tick"
                                     opacity="1"
-                                    transform="translate(0,13.227272727272734)"
+                                    transform="translate(0,13.227272727272732)"
                                   >
                                     <line
                                       stroke="currentColor"
@@ -1375,7 +1375,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
                           "attrs": Array [],
                           "componentStyle": ComponentStyle {
                             "componentId": "Coverage__StyledCoverageChart-umswn9-0",
-                            "isStatic": true,
+                            "isStatic": false,
                             "lastClassName": "dRxTaL",
                             "rules": Array [
                               "display:inline-block;margin-top:5px;",

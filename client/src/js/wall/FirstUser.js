@@ -98,7 +98,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    noop(),
-    mapDispatchToProps
-)(FirstUser);
+export default connect(noop(), mapDispatchToProps)(FirstUser);

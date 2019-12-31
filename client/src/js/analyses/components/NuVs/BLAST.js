@@ -103,7 +103,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(NuVsBLAST);
+export default connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);

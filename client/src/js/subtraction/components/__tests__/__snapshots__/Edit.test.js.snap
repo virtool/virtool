@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<EditSubtraction /> renders correctly 1`] = `
+exports[`<EditSubtraction /> should render 1`] = `
 <Modal
   animation={true}
   autoFocus={true}
@@ -59,7 +59,7 @@ exports[`<EditSubtraction /> renders correctly 1`] = `
             label="Unique Name"
             readOnly={true}
             type="text"
-            value="123abc"
+            value="foo"
           />
         </Col>
       </Row>
@@ -76,7 +76,7 @@ exports[`<EditSubtraction /> renders correctly 1`] = `
             label="Nickname"
             onChange={[Function]}
             type="text"
-            value="test-nickname"
+            value="baz"
           />
         </Col>
       </Row>
@@ -93,7 +93,7 @@ exports[`<EditSubtraction /> renders correctly 1`] = `
             label="File"
             readOnly={true}
             type="text"
-            value="test-file"
+            value="bar"
           />
         </Col>
       </Row>

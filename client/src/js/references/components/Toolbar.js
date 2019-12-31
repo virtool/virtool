@@ -48,7 +48,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(ReferenceToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceToolbar);

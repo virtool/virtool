@@ -112,7 +112,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(JobsResources);
+export default connect(mapStateToProps, mapDispatchToProps)(JobsResources);

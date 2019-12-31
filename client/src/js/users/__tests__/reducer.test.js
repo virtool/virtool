@@ -40,7 +40,10 @@ describe("Users Reducer", () => {
     });
     it("should handle WS_UPDATE_USER", () => {
         const state = {
-            documents: [{ id: "bob", administrator: true }, { id: "fred", administrator: false }]
+            documents: [
+                { id: "bob", administrator: true },
+                { id: "fred", administrator: false }
+            ]
         };
         const action = {
             type: WS_UPDATE_USER,
@@ -51,7 +54,10 @@ describe("Users Reducer", () => {
         };
         const result = reducer(state, action);
         expect(result).toEqual({
-            documents: [{ id: "bob", administrator: true }, { id: "fred", administrator: true }]
+            documents: [
+                { id: "bob", administrator: true },
+                { id: "fred", administrator: true }
+            ]
         });
     });
 

@@ -22,7 +22,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SentryOptions);
+export default connect(mapStateToProps, mapDispatchToProps)(SentryOptions);

@@ -41,7 +41,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(UserRole);
+export default connect(mapStateToProps, mapDispatchToProps)(UserRole);

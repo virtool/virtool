@@ -1,45 +1,62 @@
-import * as actions from "../../actions";
-import EditSubtractionContainer, { EditSubtraction } from "../Edit";
-
+import { EditSubtraction, mapDispatchToProps } from "../Edit";
 describe("<EditSubtraction />", () => {
-    let props;
-    let wrapper;
-    let spy;
+    const e = {
+        preventDefault: jest.fn(),
+        target: {
+            value: "Foo"
+        }
+    };
+    const props = {
+        entry: {
+            id: "foo",
+            file: { name: "bar" },
+            nickname: "baz"
+        },
+        onUpdate: jest.fn(),
+        exited: jest.fn(),
+        show: true,
+        exited: jest.fn()
+    };
+    const state = {
+        subtractionId: "foo",
+        nickname: "baz",
+        fileId: "bar"
+    };
 
-    beforeEach(() => {
-        props = {
-            show: true,
-            entry: {
-                id: "123abc",
-                file: { name: "test-file" },
-                nickname: "foo"
-            },
-            exited: jest.fn()
-        };
-    });
-
-    it("renders correctly", () => {
-        props = {
-            ...props,
-            onUpdate: jest.fn()
-        };
-        wrapper = shallow(<EditSubtraction {...props} />);
-        wrapper.find({ label: "Nickname" }).prop("onChange")({
-            target: { value: "test-nickname" }
-        });
+    it("should render", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("Submitting form dispatches updateSubtraction() action", () => {
-        spy = sinon.spy(actions, "updateSubtraction");
-        expect(spy.called).toBe(false);
+    it("should call handleSubmit() when form is submitted", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
+        wrapper.find("form").simulate("submit", e);
+        expect(props.onUpdate).toHaveBeenCalledWith("foo", "baz");
+        expect(props.exited).toHaveBeenCalled();
+    });
 
-        const store = mockStore({});
+    it("should change nickname when InputError is changed", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
+        wrapper
+            .find("InputError")
+            .at(1)
+            .simulate("change", e);
+        expect(wrapper.state()).toEqual({
+            ...state,
+            nickname: "Foo"
+        });
+    });
+});
 
-        wrapper = shallow(<EditSubtractionContainer store={store} {...props} />).dive();
-        wrapper.find("form").prop("onSubmit")({ preventDefault: jest.fn() });
-        expect(spy.calledWith(props.entry.id, props.entry.nickname)).toBe(true);
-
-        spy.restore();
+describe("mapDispatchToProps()", () => {
+    const dispatch = jest.fn();
+    it("should return updateSubtraction in props", () => {
+        const props = mapDispatchToProps(dispatch);
+        props.onUpdate("foo", "bar");
+        expect(dispatch).toHaveBeenCalledWith({
+            subtractionId: "foo",
+            nickname: "bar",
+            type: "UPDATE_SUBTRACTION_REQUESTED"
+        });
     });
 });

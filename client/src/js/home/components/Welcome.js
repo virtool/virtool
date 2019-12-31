@@ -27,7 +27,4 @@ export const mapStateToProps = state => ({
     version: get(state.updates, "version")
 });
 
-export default connect(
-    mapStateToProps,
-    null
-)(Welcome);
+export default connect(mapStateToProps, null)(Welcome);

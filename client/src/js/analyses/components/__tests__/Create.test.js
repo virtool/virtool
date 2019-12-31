@@ -5,7 +5,10 @@ describe("<CreateAnalysis />", () => {
 
     beforeEach(() => {
         props = {
-            documents: [{ id: "foo", name: "foo" }, { id: "bar", name: "Bar" }],
+            documents: [
+                { id: "foo", name: "foo" },
+                { id: "bar", name: "Bar" }
+            ],
             indexes: [
                 {
                     id: "ref1",

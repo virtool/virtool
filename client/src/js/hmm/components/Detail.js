@@ -15,6 +15,7 @@ import {
     ViewHeader
 } from "../../base";
 import { getHmm } from "../actions";
+import { ClusterMember } from "./ClusterMember";
 import { HMMTaxonomy } from "./Taxonomy";
 
 const ClusterTable = styled(Table)`
@@ -70,7 +71,7 @@ const TaxonomyGrid = styled.div`
     }
 `;
 
-class HMMDetail extends React.Component {
+export class HMMDetail extends React.Component {
     componentDidMount() {
         this.props.onGet(this.props.match.params.hmmId);
     }
@@ -83,21 +84,8 @@ class HMMDetail extends React.Component {
         if (this.props.detail === null) {
             return <LoadingPlaceholder margin="130px" />;
         }
-
         const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) => (
-            <tr key={index}>
-                <td>
-                    <a
-                        href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {accession}
-                    </a>
-                </td>
-                <td>{name}</td>
-                <td>{organism}</td>
-            </tr>
+            <ClusterMember name={name} accession={accession} organism={organism} key={index} />
         ));
 
         const names = map(this.props.detail.names, (name, index) => (
@@ -105,7 +93,6 @@ class HMMDetail extends React.Component {
                 {name}
             </Label>
         ));
-
         return (
             <div>
                 <ViewHeader title={`${this.props.detail.names[0]} - HMMs`}>
@@ -168,18 +155,15 @@ class HMMDetail extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     error: get(state, "errors.GET_HMM_ERROR", null),
     detail: state.hmms.detail
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onGet: hmmId => {
         dispatch(getHmm(hmmId));
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(HMMDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(HMMDetail);
