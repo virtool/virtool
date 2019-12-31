@@ -32,7 +32,7 @@ const StyledReadOrientation = styled.div`
     width: 48px;
 `;
 
-const ReadOrientation = ({ index, selected }) => {
+export const ReadOrientation = ({ index, selected }) => {
     if (selected) {
         return <StyledReadOrientation>{index === 0 ? "LEFT" : "RIGHT"}</StyledReadOrientation>;
     }
@@ -40,7 +40,7 @@ const ReadOrientation = ({ index, selected }) => {
     return null;
 };
 
-const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
+export const ReadItem = ({ id, index, name, selected, size, onSelect }) => {
     const select = useCallback(() => onSelect(id), []);
 
     return (
