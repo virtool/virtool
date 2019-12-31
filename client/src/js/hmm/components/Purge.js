@@ -36,7 +36,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(HMMPurge);
+export default connect(mapStateToProps, mapDispatchToProps)(HMMPurge);

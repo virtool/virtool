@@ -4,8 +4,6 @@ import { REMOVE_ANALYSIS } from "../../../app/actionTypes";
 import { AnalysisItem, mapStateToProps, mapDispatchToProps } from "../Item";
 import { getCanModify } from "../../../samples/selectors";
 
-
-
 describe("<AnalysisItem />", () => {
     let props;
 

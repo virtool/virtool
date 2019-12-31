@@ -78,7 +78,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    null,
-    mapDispatchToProps
-)(JobItem);
+export default connect(null, mapDispatchToProps)(JobItem);

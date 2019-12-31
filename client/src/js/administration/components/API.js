@@ -23,7 +23,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(API);
+export default connect(mapStateToProps, mapDispatchToProps)(API);

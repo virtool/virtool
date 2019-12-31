@@ -70,7 +70,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(EditIsolate);
+export default connect(mapStateToProps, mapDispatchToProps)(EditIsolate);

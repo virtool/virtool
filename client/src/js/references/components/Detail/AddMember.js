@@ -123,7 +123,4 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(AddReferenceMember);
+export default connect(mapStateToProps, mapDispatchToProps)(AddReferenceMember);

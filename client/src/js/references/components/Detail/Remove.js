@@ -31,7 +31,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(RemoveReference);
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveReference);

@@ -100,7 +100,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(HMMInstaller);
+export default connect(mapStateToProps, mapDispatchToProps)(HMMInstaller);

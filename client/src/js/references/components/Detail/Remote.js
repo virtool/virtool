@@ -171,7 +171,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Remote);
+export default connect(mapStateToProps, mapDispatchToProps)(Remote);

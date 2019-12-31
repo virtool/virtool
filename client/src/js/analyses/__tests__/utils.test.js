@@ -1,7 +1,16 @@
 import { fillAlign, formatPathoscopeData, formatSequence, median, mergeCoverage } from "../utils";
 
 describe("fillAlign()", () => {
-    const align = [[0, 0], [5, 3], [7, 3], [10, 5], [12, 5], [16, 2], [19, 2], [20, 0]];
+    const align = [
+        [0, 0],
+        [5, 3],
+        [7, 3],
+        [10, 5],
+        [12, 5],
+        [16, 2],
+        [19, 2],
+        [20, 0]
+    ];
     const length = 20;
 
     it("should return array of twenty zeros when align is undefined", () => {
@@ -17,7 +26,13 @@ describe("fillAlign()", () => {
 
 describe("formatSequence()", () => {
     it("should format a sequence record", () => {
-        const align = [[0, 0], [5, 3], [7, 3], [8, 5], [10, 5]];
+        const align = [
+            [0, 0],
+            [5, 3],
+            [7, 3],
+            [8, 5],
+            [10, 5]
+        ];
         const sequence = {
             align,
             foo: "bar",
