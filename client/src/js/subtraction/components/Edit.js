@@ -59,7 +59,7 @@ export class EditSubtraction extends React.Component {
     }
 }
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onUpdate: (id, nickname) => {
         dispatch(updateSubtraction(id, nickname));
     }
