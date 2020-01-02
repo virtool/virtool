@@ -197,7 +197,7 @@ class TestEdit:
         if control_id is not None:
             update["internal_control"] = control_id
 
-        m_get_internal_control = mocker.patch(
+        mocker.patch(
             "virtool.references.db.get_internal_control",
             make_mocked_coro({"id": "baz"} if control_exists else None)
         )
@@ -211,7 +211,7 @@ class TestEdit:
         snapshot.assert_match(await dbi.references.find_one())
         snapshot.assert_match(document)
 
-    async def test_reference_name(self, mocker, snapshot, dbi):
+    async def test_reference_name(self, snapshot, dbi):
         """
         Test that analyses that are linked to the edited reference have their `reference.name` fields changed when
         the `name` field of the reference changes.
