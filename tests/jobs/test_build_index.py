@@ -210,7 +210,7 @@ def test_remove_unused_index_files(tmpdir):
         active_index_ids
     )
 
-    assert os.listdir(str(tmpdir)) == active_index_ids
+    assert set(os.listdir(str(tmpdir))) == set(active_index_ids)
 
     for index_id in active_index_ids:
         assert os.listdir(os.path.join(str(tmpdir), index_id)) == ["test.fa"]
