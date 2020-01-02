@@ -7,6 +7,7 @@ import virtool.caches.migrate
 import virtool.db.utils
 import virtool.jobs.db
 import virtool.otus.utils
+import virtool.references.migrate
 import virtool.samples.migrate
 import virtool.users.utils
 import virtool.utils
@@ -30,6 +31,7 @@ async def migrate(app):
     await migrate_status(db, app["version"])
     await migrate_subtraction(db)
     await virtool.samples.migrate.migrate_samples(app)
+    await virtool.references.migrate.migrate_references(app)
 
 
 async def migrate_files(db):
