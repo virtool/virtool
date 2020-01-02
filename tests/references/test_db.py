@@ -1,5 +1,6 @@
 import os
 import sys
+from aiohttp.test_utils import make_mocked_coro
 
 import pytest
 
@@ -156,6 +157,114 @@ async def test_create_manifest(dbi, test_otu):
         "foo": 5,
         "bar": 11
     }
+
+
+class TestEdit:
+
+    @pytest.mark.parametrize("control_exists", [True, False])
+    @pytest.mark.parametrize("control_id", [None, "", "baz"])
+    async def test_control(self, control_exists, control_id, mocker, snapshot, dbi):
+        """
+        Test that the `internal_control` field is correctly set with various `internal_control` input value and the case
+        where the internal control ID refers to a non-existent OTU.
+
+        The field should only be set when the input value is truthy and the control ID exists.
+
+        """
+        await dbi.users.insert_one({
+            "_id": "bob",
+            "identicon": "abc123"
+        })
+
+        await dbi.references.insert_one({
+            "_id": "foo",
+            "data_type": "genome",
+            "internal_control": {
+                "id": "bar"
+            },
+            "users": [
+                {
+                    "id": "bob"
+                }
+            ]
+        })
+
+        update = {
+            "name": "Tester",
+            "description": "This is a test reference."
+        }
+
+        if control_id is not None:
+            update["internal_control"] = control_id
+
+        mocker.patch(
+            "virtool.references.db.get_internal_control",
+            make_mocked_coro({"id": "baz"} if control_exists else None)
+        )
+
+        document = await virtool.references.db.edit(
+            dbi,
+            "foo",
+            update
+        )
+
+        snapshot.assert_match(await dbi.references.find_one())
+        snapshot.assert_match(document)
+
+    async def test_reference_name(self, snapshot, dbi):
+        """
+        Test that analyses that are linked to the edited reference have their `reference.name` fields changed when
+        the `name` field of the reference changes.
+
+        """
+        await dbi.users.insert_one({
+            "_id": "bob",
+            "identicon": "abc123"
+        })
+
+        await dbi.references.insert_one({
+            "_id": "foo",
+            "name": "Foo",
+            "data_type": "genome",
+            "internal_control": {
+                "id": "bar"
+            },
+            "users": [
+                {
+                    "id": "bob"
+                }
+            ]
+        })
+
+        await dbi.analyses.insert_many([
+            {
+                "_id": "baz",
+                "reference": {
+                    "id": "foo",
+                    "name": "Foo"
+                }
+            },
+            {
+                "_id": "boo",
+                "reference": {
+                    "id": "foo",
+                    "name": "Foo"
+                }
+            }
+        ])
+
+        update = {
+            "name": "Bar"
+        }
+
+        await virtool.references.db.edit(
+            dbi,
+            "foo",
+            update
+        )
+
+        snapshot.assert_match(await dbi.references.find_one())
+        snapshot.assert_match(await dbi.analyses.find().to_list(None))
 
 
 @pytest.mark.parametrize("missing", [None, "reference", "subdocument"])
