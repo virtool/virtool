@@ -8,16 +8,17 @@ import pymongo
 import semver
 
 import virtool.api
-import virtool.history.db
-import virtool.otus.db
-import virtool.processes.db
 import virtool.db.utils
 import virtool.errors
 import virtool.github
+import virtool.history.db
 import virtool.http.utils
+import virtool.otus.db
 import virtool.otus.utils
+import virtool.processes.db
 import virtool.processes.process
 import virtool.references.utils
+import virtool.users.db
 import virtool.utils
 
 PROJECTION = [
@@ -622,7 +623,7 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
             return subdocument
 
 
-async def fetch_and_update_release(app, ref_id, ignore_errors=False):
+async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False) -> dict:
     """
     Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
     reference identified by the passed `ref_id` and return the release.
@@ -631,16 +632,9 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
     document.
 
     :param app: the application object
-    :type app: :class:`aiohttp.Application`
-
     :param ref_id: the id of the reference to update
-    :type ref_id: str
-
     :param ignore_errors: ignore exceptions raised during GitHub request
-    :type ignore_errors:
-
     :return: the latest release
-    :rtype: Coroutine[dict]
 
     """
     db = app["db"]
@@ -932,6 +926,9 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "user": user
     }
 
+    if data_type == "barcode":
+        document["targets"] = list()
+
     return document
 
 
@@ -1029,6 +1026,56 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
         await virtool.processes.db.update(db, process_id, progress=0.3, step="unpack")
 
         return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
+
+
+async def edit(db, ref_id: str, data: dict) -> dict:
+    """
+    Edit and existing reference using the passed update `data`.
+
+    :param db: the application database object
+    :param ref_id: the id of the reference to update
+    :param data: update data from the HTTP request
+    :return: the updated reference document
+
+    """
+    document = await db.references.find_one(ref_id)
+
+    if document["data_type"] != "barcode":
+        data.pop("targets", None)
+
+    internal_control_id = data.get("internal_control")
+
+    if internal_control_id == "":
+        data["internal_control"] = None
+
+    elif internal_control_id:
+        internal_control = await virtool.references.db.get_internal_control(db, internal_control_id, ref_id)
+
+        if internal_control is None:
+            data["internal_control"] = None
+        else:
+            data["internal_control"] = {
+                "id": internal_control_id
+            }
+
+    document = await db.references.find_one_and_update({"_id": ref_id}, {
+        "$set": data
+    })
+
+    document.update(await virtool.references.db.get_computed(db, ref_id, internal_control_id))
+
+    if "name" in data:
+        await db.analyses.update_many({"reference.id": ref_id}, {
+            "$set": {
+                "reference.name": document["name"]
+            }
+        })
+
+    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
+
+    document["users"] = await virtool.users.db.attach_identicons(db, users)
+
+    return virtool.utils.base_processor(document)
 
 
 async def export(db, ref_id, scope):
