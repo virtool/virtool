@@ -12,7 +12,7 @@
 import React from "react";
 import { find, union } from "lodash-es";
 import { connect } from "react-redux";
-import { Col, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
