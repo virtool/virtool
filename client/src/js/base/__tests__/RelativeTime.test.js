@@ -67,9 +67,10 @@ describe("<RelativeTime />", () => {
             wrapper = shallow(<RelativeTime {...props} />);
         });
 
-        afterAll(() => {
-            spySCU.restore();
-            spyCDU.restore();
-        });
+    it("componentWillUnmount() should call window.clearInterval after component unmount", () => {
+        const wrapper = shallow(<RelativeTime {...props} />);
+        window.clearInterval = jest.fn();
+        wrapper.unmount();
+        expect(window.clearInterval).toHaveBeenCalled();
     });
 });
