@@ -4,12 +4,49 @@ Database functions and utilities for sequences.
 """
 from typing import Union
 
+import virtool.db.utils
 import virtool.history
 import virtool.history.db
 import virtool.otus
 import virtool.otus.db
 import virtool.otus.utils
 import virtool.utils
+
+
+async def check_segment_or_target(db, otu_id: str, ref_id: str, data: dict) -> Union[str, None]:
+    """
+    Returns an error message string if the segment or target provided in `data` is not compatible with the parent
+    reference (target) or OTU (segment).
+
+    Returns `None` if the check passes.
+
+    :param db: the application database object
+    :param otu_id: the ID of the parent OTU
+    :param ref_id: the ID of the parent reference
+    :param data: the data dict containing a target or segment value
+    :return: message or `None` if check passes
+
+    """
+    reference = await db.references.find_one(ref_id, ["data_type", "targets"])
+
+    if reference["data_type"] == "barcode":
+        try:
+            target = data["target"]
+        except KeyError:
+            return "The 'target' field is required for barcode references"
+
+        if target not in {t["name"] for t in reference.get("targets", [])}:
+            return f"Target {target} is not defined for the parent reference"
+
+    if reference["data_type"] == "genome" and data.get("segment"):
+        schema = await virtool.db.utils.get_one_field(db.otus, "schema", otu_id) or list()
+
+        segment = data.get("segment")
+
+        if segment not in {s["name"] for s in schema}:
+            return f"Segment {segment} is not defined for the parent OTU"
+
+    return None
 
 
 async def create(db, ref_id: str, otu_id: str, isolate_id: str, data: dict, user_id: str):
