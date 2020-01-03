@@ -2,6 +2,66 @@ import pytest
 import virtool.otus.sequences
 
 
+@pytest.mark.parametrize("data_type", ["genome", "barcode"])
+@pytest.mark.parametrize("defined", [True, False])
+@pytest.mark.parametrize("missing", [True, False])
+async def test_check_segment_or_target(data_type, defined, missing, dbi):
+    """
+    Test that issues with `segment` or `target` fields in sequence editing requests are detected.
+
+    """
+    await dbi.otus.insert_one({
+        "_id": "foo",
+        "schema": [
+            {
+                "name": "RNA1"
+            }
+        ]
+    })
+
+    await dbi.references.insert_one({
+        "_id": "bar",
+        "data_type": data_type,
+        "targets": [
+            {
+                "name": "CPN60"
+            }
+        ]
+    })
+
+    data = dict()
+
+    if data_type == "barcode":
+        data["target"] = "CPN60" if defined else "ITS2"
+    else:
+        data["segment"] = "RNA1" if defined else "RNA2"
+
+    if missing:
+        data = dict()
+
+    message = await virtool.otus.sequences.check_segment_or_target(
+        dbi,
+        "foo",
+        "bar",
+        data
+    )
+
+    if data_type == "barcode" and missing:
+        assert message == "The 'target' field is required for barcode references"
+        return
+
+    if not defined and data_type == "barcode":
+        assert message == "Target ITS2 is not defined for the parent reference"
+        return
+
+    if not missing and not defined and data_type == "genome":
+        assert message == "Segment RNA2 is not defined for the parent OTU"
+        return
+
+    assert message is None
+    return
+
+
 @pytest.mark.parametrize("host", [True, False])
 @pytest.mark.parametrize("segment", [True, False])
 async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_random_alphanumeric):
