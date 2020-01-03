@@ -109,11 +109,6 @@ def test_merged_otu():
     }
 
 
-@pytest.fixture
-def test_add_history(mocker):
-    return mocker.patch("virtool.history.db.add", make_mocked_coro())
-
-
 @pytest.fixture(scope="function")
 def import_json(import_json_from_file):
     return copy.deepcopy(import_json_from_file)
