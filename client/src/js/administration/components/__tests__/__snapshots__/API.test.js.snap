@@ -9,12 +9,13 @@ exports[`<API /> should render 1`] = `
     JSON API
   </h2>
   <small>
-    Enable API access for clients other than Virtool. See link to API documentation.
+    Enable API access for clients other than Virtool. See 
   </small>
   <ExternalLink
     href="https://www.virtool.ca/docs/developer/api_account"
   >
     API documentation
   </ExternalLink>
+  .
 </SettingsCheckbox>
 `;
