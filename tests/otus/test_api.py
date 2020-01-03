@@ -146,7 +146,6 @@ class TestCreate:
         snapshot.assert_match(await client.db.otus.find_one(), "otu")
         snapshot.assert_match(await client.db.history.find_one(), "history")
 
-
     @pytest.mark.parametrize("error,message", [
         (None, None),
         ("400_name_exists", "Name already exists"),

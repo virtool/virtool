@@ -504,6 +504,9 @@ async def get_sequence(req):
         "coerce": virtool.validators.strip,
         "empty": False,
         "required": True
+    },
+    "target": {
+        "type": "string"
     }
 })
 async def create_sequence(req):
@@ -511,10 +514,11 @@ async def create_sequence(req):
     Create a new sequence record for the given isolate.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
-    # Extract variables from URL path.
-    otu_id, isolate_id = (req.match_info[key] for key in ["otu_id", "isolate_id"])
+    otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
 
     # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
@@ -527,10 +531,15 @@ async def create_sequence(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    segment = data.get("segment")
+    message = await virtool.otus.sequences.check_segment_or_target(
+        db,
+        otu_id,
+        ref_id,
+        data
+    )
 
-    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return bad_request("Segment does not exist")
+    if message:
+        return bad_request(message)
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.create(
         db,
@@ -570,6 +579,9 @@ async def create_sequence(req):
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False
+    },
+    "target": {
+        "type": "string"
     }
 })
 async def edit_sequence(req):
@@ -587,6 +599,16 @@ async def edit_sequence(req):
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
+
+    message = await virtool.otus.sequences.check_segment_or_target(
+        db,
+        otu_id,
+        document["reference"]["id"],
+        data
+    )
+
+    if message:
+        return bad_request(message)
 
     segment = data.get("segment")
 
