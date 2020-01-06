@@ -56,7 +56,6 @@ describe("<AutoProgressBar />", () => {
 
 describe("<ProgressBar />", () => {
     let props;
-    let state;
 
     beforeEach(() => {
         props = {

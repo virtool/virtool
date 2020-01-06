@@ -3,15 +3,10 @@ import { RelativeTime } from "../RelativeTime";
 
 describe("<RelativeTime />", () => {
     let props;
-    let state;
 
     beforeEach(() => {
         props = {
             time: "2020-02-14T17:12:00.000000Z"
-        };
-        state = {
-            time: "2020-02-14T17:12:00.000000Z",
-            timeString: "bar"
         };
     });
 

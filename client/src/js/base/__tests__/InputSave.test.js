@@ -5,7 +5,6 @@ import { Flex, FlexItem, Button } from "../index";
 describe("<InputSave />", () => {
     let props;
     let state;
-    const blur = jest.fn();
     const e = {
         target: {
             value: "foo"
@@ -97,7 +96,7 @@ describe("<InputSave />", () => {
         expect(props.onSave).not.toHaveBeenCalled();
     });
 
-    it("handleSubmit should not call props.onSave when [this.state.value=this.props.initialValue]", () => {
+    it("should call onInvalid when FormControl is invalid", () => {
         const wrapper = mount(<InputSave {...props} />);
         wrapper.find("FormControl").simulate("invalid");
         expect(props.onInvalid).toHaveBeenCalled();
