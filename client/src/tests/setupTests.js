@@ -1,7 +1,6 @@
 import React from "react";
 import Enzyme, { shallow, render, mount } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
-import sinon from "sinon";
 
 // Note that enzyme-to-json snapshot serializer is configured in
 // jest configuration settings specified in package.json instead of here.
@@ -14,4 +13,3 @@ global.shallow = shallow;
 global.render = render;
 global.mount = mount;
 global.React = React;
-global.sinon = sinon;
