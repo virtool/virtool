@@ -8,7 +8,7 @@
  *
  * @exports ReadSelector
  */
-import { filter, includes, indexOf, isEqual, intersection, map, some, sortBy, toLower, without } from "lodash-es";
+import { filter, includes, indexOf, isEqual, intersection, map, sortBy, toLower, without } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { FormGroup, InputGroup } from "react-bootstrap";
