@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ReferenceManage /> should render 1`] = `
+<div>
+  <Connect(ReferenceDetailHeader) />
+  <Connect(ReferenceDetailTabs) />
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Description
+        </th>
+        <td>
+          boo
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Organism
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          Bar
+        </td>
+      </tr>
+      <tr>
+        <th>
+          DataType
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          Boo
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(Remote) />
+  <Clone
+    source="bar"
+  />
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Latest Index Build
+      </h2>
+    </Box__BoxGroupHeader>
+    <LatestBuild
+      latestBuild="Foo"
+      refId="foo"
+    />
+  </Box__BoxGroup>
+  <Contributors
+    contributors="baz"
+  />
+</div>
+`;

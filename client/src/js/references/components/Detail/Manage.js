@@ -50,8 +50,8 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFoundSection noun="index builds" />;
 };
 
-const ReferenceManage = ({ detail }) => {
-    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from } = detail;
+export const ReferenceManage = ({ detail }) => {
+    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from, data_type } = detail;
 
     let remote;
     let clone;
@@ -79,6 +79,10 @@ const ReferenceManage = ({ detail }) => {
                         <th>Organism</th>
                         <td className="text-capitalize">{organism}</td>
                     </tr>
+                    <tr>
+                        <th>DataType</th>
+                        <td className="text-capitalize">{data_type}</td>
+                    </tr>
                 </tbody>
             </Table>
 
@@ -97,11 +101,11 @@ const ReferenceManage = ({ detail }) => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     detail: state.references.detail
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCheckUpdates: refId => {
         dispatch(checkUpdates(refId));
     },
