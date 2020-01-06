@@ -12,14 +12,12 @@ export class ScrollList extends React.Component {
     }
 
     componentDidMount() {
-        this.getEventTarget().addEventListener("scroll", this.onScroll);
+        this.scrollList.current.addEventListener("scroll", this.onScroll);
     }
 
     componentWillUnmount() {
-        this.getEventTarget().removeEventListener("scroll", this.onScroll);
+        this.scrollList.current.removeEventListener("scroll", this.onScroll);
     }
-
-    getEventTarget = () => (this.props.isElement ? this.scrollList.current : window);
 
     getScrollRatio = () => {
         if (this.props.isElement) {

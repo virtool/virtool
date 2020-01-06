@@ -6,6 +6,7 @@ describe("<EditSubtraction />", () => {
             value: "Foo"
         }
     };
+
     const props = {
         entry: {
             id: "foo",
@@ -13,10 +14,10 @@ describe("<EditSubtraction />", () => {
             nickname: "baz"
         },
         onUpdate: jest.fn(),
-        exited: jest.fn(),
         show: true,
         exited: jest.fn()
     };
+
     const state = {
         subtractionId: "foo",
         nickname: "baz",
@@ -49,8 +50,8 @@ describe("<EditSubtraction />", () => {
 });
 
 describe("mapDispatchToProps()", () => {
-    const dispatch = jest.fn();
     it("should return updateSubtraction in props", () => {
+        const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         props.onUpdate("foo", "bar");
         expect(dispatch).toHaveBeenCalledWith({

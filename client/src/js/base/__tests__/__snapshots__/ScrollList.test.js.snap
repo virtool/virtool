@@ -1,25 +1,130 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ScrollList /> renders correctly if [noContainer=true], render without container 1`] = `
-<Fragment>
-  <Entry
-    key="0"
-  />
-</Fragment>
+exports[`<ScrollList /> should render when [noContainer == false] 1`] = `
+<ScrollList
+  document={
+    Array [
+      Object {
+        "foo": "bar",
+      },
+    ]
+  }
+  isElement={true}
+  noContainer={false}
+  onLoadNextPage={[MockFunction]}
+  page={1}
+  pageCount={2}
+>
+  <div />
+</ScrollList>
 `;
 
-exports[`<ScrollList /> renders correctly otherwise render within <div> container 1`] = `
-<div>
-  <Entry
-    key="0"
-  />
-</div>
+exports[`<ScrollList /> should return LoadingPlaceholder when [documents === null] and [page < pageCount] 1`] = `
+<ScrollList
+  document={
+    Array [
+      Object {
+        "foo": "bar",
+      },
+    ]
+  }
+  documents={null}
+  isElement={true}
+  onLoadNextPage={[MockFunction]}
+  page={1}
+  pageCount={2}
+>
+  <div>
+    <LoadingPlaceholder
+      margin="20px"
+    >
+      <div
+        className="text-center"
+        style={
+          Object {
+            "marginTop": "20px",
+          }
+        }
+      >
+        <Loader>
+          <Loader__StyledLoader
+            color="#3c8786"
+            size="22px"
+          >
+            <StyledComponent
+              color="#3c8786"
+              forwardedComponent={
+                Object {
+                  "$$typeof": Symbol(react.forward_ref),
+                  "attrs": Array [],
+                  "componentStyle": ComponentStyle {
+                    "componentId": "Loader__StyledLoader-sc-338y7h-0",
+                    "isStatic": false,
+                    "lastClassName": "kGgaOx",
+                    "rules": Array [
+                      "animation:",
+                      Keyframes {
+                        "id": "sc-keyframes-jglaHQ",
+                        "inject": [Function],
+                        "name": "jglaHQ",
+                        "rules": Array [
+                          "@-webkit-keyframes jglaHQ{0%{-webkit-transform:rotate(0deg);-ms-transform:rotate(0deg);transform:rotate(0deg);}50%{-webkit-transform:rotate(180deg);-ms-transform:rotate(180deg);transform:rotate(180deg);}100%{-webkit-transform:rotate(360deg);-ms-transform:rotate(360deg);transform:rotate(360deg);}}",
+                          "@keyframes jglaHQ{0%{-webkit-transform:rotate(0deg);-ms-transform:rotate(0deg);transform:rotate(0deg);}50%{-webkit-transform:rotate(180deg);-ms-transform:rotate(180deg);transform:rotate(180deg);}100%{-webkit-transform:rotate(360deg);-ms-transform:rotate(360deg);transform:rotate(360deg);}}",
+                        ],
+                        "toString": [Function],
+                      },
+                      " 0.75s 0s infinite linear;border:2px solid ",
+                      [Function],
+                      ";border-bottom-color:transparent !important;border-radius:100%;background:transparent;animation-fill-mode:both;display:inline-block;height:",
+                      [Function],
+                      ";width:",
+                      [Function],
+                      ";",
+                    ],
+                  },
+                  "displayName": "Loader__StyledLoader",
+                  "foldedComponentIds": Array [],
+                  "render": [Function],
+                  "styledComponentId": "Loader__StyledLoader-sc-338y7h-0",
+                  "target": "div",
+                  "toString": [Function],
+                  "warnTooManyClasses": [Function],
+                  "withComponent": [Function],
+                }
+              }
+              forwardedRef={null}
+              size="22px"
+            >
+              <div
+                className="Loader__StyledLoader-sc-338y7h-0 kGgaOx"
+                color="#3c8786"
+                size="22px"
+              >
+                <div />
+              </div>
+            </StyledComponent>
+          </Loader__StyledLoader>
+        </Loader>
+      </div>
+    </LoadingPlaceholder>
+  </div>
+</ScrollList>
 `;
 
-exports[`<ScrollList /> renders correctly renders a LoadingPlaceholder during a page retrieval request 1`] = `
-<div>
-  <LoadingPlaceholder
-    margin="20px"
-  />
-</div>
+exports[`<ScrollList /> should return React.Fragment when [noContainer == true] 1`] = `
+<ScrollList
+  document={
+    Array [
+      Object {
+        "foo": "bar",
+      },
+    ]
+  }
+  isElement={true}
+  onLoadNextPage={[MockFunction]}
+  page={1}
+  pageCount={2}
+>
+  <div />
+</ScrollList>
 `;
