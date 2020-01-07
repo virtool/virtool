@@ -90,6 +90,25 @@ def test_compose_edit_description(name, abbreviation, old_abbreviation, schema, 
     assert virtool.history.utils.compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
 
 
+@pytest.mark.parametrize("has_abbreviation", [True, False])
+def test_compose_remove_description(has_abbreviation):
+    document = {
+        "name": "Tobacco mosaic virus"
+    }
+
+    if has_abbreviation:
+        document["abbreviation"] = "TMV"
+
+    description = virtool.history.utils.compose_remove_description(document)
+
+    expected = "Removed Tobacco mosaic virus"
+
+    if has_abbreviation:
+        expected += " (TMV)"
+
+    assert description == expected
+
+
 async def test_read_diff_file(mocker, snapshot):
     """
     Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
