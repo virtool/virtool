@@ -162,6 +162,50 @@ def test_derive_otu_information(version, missing):
         assert otu_version == 5
 
 
+def test_join_diff_path():
+    path = virtool.history.utils.join_diff_path(
+        "/data",
+        "foo",
+        "2"
+    )
+
+    assert path == "/data/history/foo_2.json"
+
+
+@pytest.mark.parametrize("is_datetime", [True, False])
+def test_json_encoder(is_datetime, static_time):
+    """
+    Test that the custom encoder correctly encodes `datetime` objects to ISO format dates.
+
+    """
+    o = "foo"
+
+    if is_datetime:
+        o = static_time.datetime
+
+    result = virtool.history.utils.json_encoder(o)
+
+    assert result == "foo" if o == "foo" else static_time.iso
+
+
+def test_json_object_hook(static_time):
+    """
+    Test that the hook function correctly decodes created_at ISO format fields to naive `datetime` objects.
+
+    """
+    o = {
+        "foo": "bar",
+        "created_at": static_time.iso
+    }
+
+    result = virtool.history.utils.json_object_hook(o)
+
+    assert result == {
+        "foo": "bar",
+        "created_at": static_time.datetime
+    }
+
+
 async def test_read_diff_file(mocker, snapshot):
     """
     Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
