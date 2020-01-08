@@ -84,7 +84,11 @@ class Job(virtool.jobs.job.Job):
         sequence_otu_map = index_document.get("sequence_otu_map")
 
         if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(self.db, index_document["manifest"])
+            sequence_otu_map = get_sequence_otu_map(
+                self.db,
+                self.settings,
+                index_document["manifest"]
+            )
 
         self.params.update({
             "manifest": index_document["manifest"],
@@ -277,12 +281,13 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("samples", "update", [sample_id])
 
 
-def get_sequence_otu_map(db, manifest):
+def get_sequence_otu_map(db, settings, manifest):
     sequence_otu_map = dict()
 
     for otu_id, otu_version in manifest.items():
         _, patched, _ = virtool.db.sync.patch_otu_to_version(
             db,
+            settings,
             otu_id,
             otu_version
         )
