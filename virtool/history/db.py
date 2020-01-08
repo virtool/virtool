@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Union
 
 import dictdiffer
 
@@ -222,24 +223,19 @@ async def patch_to_verified(db, otu_id):
             return patched
 
 
-async def patch_to_version(db, otu_id, version):
+async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     """
     Take a joined otu back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the otu.
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
+    :param app: the application object
     :param otu_id: the id of the otu to patch
-    :type otu_id: str
-
     :param version: the version to patch to
-    :type version: str or int
-
     :return: the current joined otu, patched otu, and the ids of changes reverted in the process
-    :rtype: Coroutine[tuple]
 
     """
+    db = app["db"]
+
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
@@ -254,6 +250,13 @@ async def patch_to_version(db, otu_id, version):
     async for change in db.history.find({"otu.id": otu_id}, sort=[("otu.version", -1)]):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
+
+            if change["diff"] == "file":
+                change["diff"] = await virtool.history.utils.read_diff_file(
+                    app["settings"]["data_path"],
+                    otu_id,
+                    change["otu"]["version"]
+                )
 
             if change["method_name"] == "remove":
                 patched = change["diff"]
@@ -273,16 +276,16 @@ async def patch_to_version(db, otu_id, version):
     return current, patched, reverted_history_ids
 
 
-async def revert(db, change_id):
+async def revert(app, change_id: str):
     """
     Revert a history change given by the passed ``change_id``.
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param change_id: a unique id for the cah
-    :return:
+    :param app: the application object
+    :param change_id: a unique id for the change
+    :return: the updated OTU
     """
+    db = app["db"]
+
     change = await db.history.find_one({"_id": change_id}, ["index"])
 
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
@@ -294,7 +297,7 @@ async def revert(db, change_id):
         otu_version = int(otu_version)
 
     _, patched, history_to_delete = await patch_to_version(
-        db,
+        app,
         otu_id,
         otu_version - 1
     )

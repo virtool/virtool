@@ -119,7 +119,12 @@ async def test_format_analysis(algorithm, mocker):
     if algorithm:
         document["algorithm"] = algorithm
 
-    coroutine = virtool.analyses.format.format_analysis("db", "settings", document)
+    app = {
+        "db": "db",
+        "settings": "settings"
+    }
+
+    coroutine = virtool.analyses.format.format_analysis(app, document)
 
     if algorithm is None or algorithm == "foobar":
         with pytest.raises(ValueError) as excinfo:
@@ -135,11 +140,11 @@ async def test_format_analysis(algorithm, mocker):
     }
 
     if algorithm == "nuvs":
-        m_format_nuvs.assert_called_with("db", "settings", document)
+        m_format_nuvs.assert_called_with(app, document)
         assert not m_format_pathoscope.called
 
     elif algorithm == "pathoscope":
-        m_format_pathoscope.assert_called_with("db", "settings", document)
+        m_format_pathoscope.assert_called_with(app, document)
         assert not m_format_nuvs.called
 
 

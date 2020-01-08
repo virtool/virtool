@@ -166,7 +166,11 @@ async def download_reference(req):
     if scope not in ["built", "remote", "unbuilt", "unverified"]:
         scope = "built"
 
-    otu_list = await virtool.references.db.export(db, ref_id, scope)
+    otu_list = await virtool.references.db.export(
+        req.app,
+        ref_id,
+        scope
+    )
 
     data = {
         "otus": otu_list,

@@ -64,7 +64,7 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         inserted_otu_ids = list()
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await virtool.history.db.patch_to_version(self.db, source_otu_id, version)
+            _, patched, _ = await virtool.history.db.patch_to_version(self.app, source_otu_id, version)
 
             otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
 
@@ -1078,7 +1078,9 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     return virtool.utils.base_processor(document)
 
 
-async def export(db, ref_id, scope):
+async def export(app, ref_id, scope):
+    db = app["db"]
+
     otu_list = list()
 
     query = {
@@ -1090,7 +1092,7 @@ async def export(db, ref_id, scope):
 
         async for document in db.otus.find(query):
             _, joined, _ = await virtool.history.db.patch_to_version(
-                db,
+                app,
                 document["_id"],
                 document["last_indexed_version"]
             )

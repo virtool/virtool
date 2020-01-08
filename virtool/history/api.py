@@ -58,7 +58,7 @@ async def revert(req):
         return insufficient_rights()
 
     try:
-        await virtool.history.db.revert(db, change_id)
+        await virtool.history.db.revert(req.app, change_id)
     except virtool.errors.DatabaseError:
         return conflict("Change is already built")
 

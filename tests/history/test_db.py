@@ -1,4 +1,5 @@
 import datetime
+from aiohttp.test_utils import make_mocked_coro
 
 import pytest
 
@@ -8,11 +9,17 @@ import virtool.history.db
 class TestAdd:
 
     async def test(self, dbi, static_time, test_otu_edit, test_change):
+        app = {
+            "db": dbi,
+            "settings": {
+                "data_path": "/foo/bar"
+            }
+        }
 
         old, new = test_otu_edit
 
         returned_change = await virtool.history.db.add(
-            dbi,
+            app,
             "edit",
             old,
             new,
@@ -57,6 +64,13 @@ class TestAdd:
         }
 
     async def test_create(self, dbi, static_time, test_otu_edit, test_change):
+        app = {
+            "db": dbi,
+            "settings": {
+                "data_path": "/foo/bar"
+            }
+        }
+
         # There is no old document because this is a change document for a otu creation operation.
         old = None
 
@@ -65,7 +79,7 @@ class TestAdd:
         description = "Created {}".format(new["name"])
 
         returned_change = await virtool.history.db.add(
-            dbi,
+            app,
             "create",
             old,
             new,
@@ -102,6 +116,13 @@ class TestAdd:
         Test that the addition of a change due to otu removal inserts the expected change document.
 
         """
+        app = {
+            "db": dbi,
+            "settings": {
+                "data_path": "/foo/bar"
+            }
+        }
+
         # There is no new document because this is a change document for a otu removal operation.
         new = None
 
@@ -110,7 +131,7 @@ class TestAdd:
         description = "Removed {}".format(old["name"])
 
         returned_change = await virtool.history.db.add(
-            dbi,
+            app,
             "remove",
             old,
             new,
@@ -143,26 +164,33 @@ class TestAdd:
         assert returned_change == test_change
 
 
-@pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, dbi, test_merged_otu, create_mock_history):
-    expected_current = await create_mock_history(remove)
+@pytest.mark.parametrize("file", [True, False])
+async def test_get(file, mocker, snapshot, dbi):
+    await dbi.history.insert_one({
+        "_id": "baz.2",
+        "diff": "file" if file else {
+            "foo": "bar"
+        }
+    })
 
-    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        dbi,
-        "6116cba1",
-        1
-    )
+    m = mocker.patch("virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded"))
 
-    assert current == expected_current
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo/bar"
+        }
+    }
 
-    assert patched == dict(test_merged_otu, abbreviation="TST", version=1)
+    document = await virtool.history.db.get(app, "baz.2")
 
-    expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
+    assert document == {
+        "id": "baz.2",
+        "diff": "loaded" if file else {
+            "foo": "bar"
+        }
+    }
 
-    if remove:
-        expected_reverted_change_ids = ["6116cba1.removed"] + expected_reverted_change_ids
-
-    assert reverted_change_ids == expected_reverted_change_ids
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -231,3 +259,25 @@ async def test_get_most_recent_change(exists, dbi, static_time):
         }
     else:
         assert most_recent is None
+
+
+@pytest.mark.parametrize("remove", [True, False])
+async def test_patch_to_version(remove, dbi, test_merged_otu, create_mock_history):
+    expected_current = await create_mock_history(remove)
+
+    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+        dbi,
+        "6116cba1",
+        1
+    )
+
+    assert current == expected_current
+
+    assert patched == dict(test_merged_otu, abbreviation="TST", version=1)
+
+    expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
+
+    if remove:
+        expected_reverted_change_ids = ["6116cba1.removed"] + expected_reverted_change_ids
+
+    assert reverted_change_ids == expected_reverted_change_ids
