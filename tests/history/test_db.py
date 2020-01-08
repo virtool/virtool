@@ -104,7 +104,7 @@ async def test_get(file, mocker, snapshot, dbi):
         }
     })
 
-    m = mocker.patch("virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded"))
+    mocker.patch("virtool.history.utils.read_diff_file", make_mocked_coro(return_value="loaded"))
 
     app = {
         "db": dbi,
@@ -121,7 +121,6 @@ async def test_get(file, mocker, snapshot, dbi):
             "foo": "bar"
         }
     }
-
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -181,8 +180,6 @@ async def test_patch_to_version(remove, snapshot, dbi, test_merged_otu, create_m
     app = {
         "db": dbi
     }
-
-    expected_current = await create_mock_history(remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
         app,

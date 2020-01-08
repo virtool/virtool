@@ -1,9 +1,7 @@
-import datetime
 import json
 import os
 import sys
 import pytest
-import filecmp
 
 import virtool.history.utils
 
@@ -140,7 +138,7 @@ def test_derive_otu_information(version, missing):
         if version:
             new["version"] = version
 
-    otu_id, otu_name, otu_version, ref_id  = virtool.history.utils.derive_otu_information(
+    otu_id, otu_name, otu_version, ref_id = virtool.history.utils.derive_otu_information(
         old,
         new
     )
@@ -256,7 +254,7 @@ async def test_remove_diff_files(loop, tmpdir):
     assert os.listdir(str(history_dir)) == ["bar_1.json"]
 
 
-async def test_write_diff_file(mocker, tmpdir):
+async def test_write_diff_file(snapshot, tmpdir):
     """
     Test that a diff file is written correctly.
 
@@ -268,4 +266,7 @@ async def test_write_diff_file(mocker, tmpdir):
 
     await virtool.history.utils.write_diff_file(str(tmpdir), "foo", "1", diff)
 
-    path = os.path.join(str(tmpdir), "foo_1.json")
+    path = os.path.join(str(tmpdir), "history", "foo_1.json")
+
+    with open(path, "r") as f:
+        snapshot.assert_match(json.load(f))

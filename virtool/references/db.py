@@ -113,7 +113,7 @@ class CloneReferenceProcess(virtool.processes.process.Process):
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
             self.db.sequences.delete_many(query),
-            virtool.history.utils.remove_diff_files(diff_file_change_ids)
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
 
