@@ -68,6 +68,13 @@ async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_ra
     """
 
     """
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     data = {
         "accession": "abc123",
         "host": "Plant",
@@ -99,7 +106,7 @@ async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_ra
     })
 
     await virtool.otus.sequences.create(
-        dbi,
+        app,
         "foo",
         "bar",
         "baz",
@@ -120,11 +127,16 @@ async def test_create(host, segment, mocker, snapshot, dbi, static_time, test_ra
 @pytest.mark.parametrize("sequence", [True, False])
 async def test_edit(sequence, snapshot, dbi, static_time):
     """
+    Test that an existing sequence is edited, creating an appropriate history document in the process.
 
-    :param sequence:
-    :param dbi:
-    :return:
     """
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     await dbi.otus.insert_one({
         "_id": "foo",
         "name": "Foo Virus",
@@ -164,7 +176,7 @@ async def test_edit(sequence, snapshot, dbi, static_time):
         data["sequence"] = "ATAGAG GAGTA\nAGAGTGA"
 
     await virtool.otus.sequences.edit(
-        dbi,
+        app,
         "foo",
         "bar",
         "baz",
@@ -226,6 +238,13 @@ async def test_increment_otu_version(dbi, snapshot):
 
 
 async def test_remove(snapshot, dbi, test_otu, static_time):
+    app = {
+        "db": dbi,
+        "settings": {
+            "data_path": "/foo"
+        }
+    }
+
     await dbi.otus.insert_one(test_otu)
 
     await dbi.sequences.insert_one({
@@ -240,7 +259,7 @@ async def test_remove(snapshot, dbi, test_otu, static_time):
     })
 
     await virtool.otus.sequences.remove(
-        dbi,
+        app,
         "6116cba1",
         "cab8b360",
         "baz",

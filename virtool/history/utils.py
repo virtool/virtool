@@ -1,4 +1,5 @@
 import arrow
+from typing import Tuple, Union
 import datetime
 import os
 import json
@@ -80,6 +81,38 @@ def compose_remove_description(document):
         return f"{description} ({abbreviation})"
 
     return description
+
+
+def derive_otu_information(old: Union[dict, None], new: Union[dict, None]) -> Tuple[str, str, Union[int, str], str]:
+    """
+    Derive OTU information for a new change document from the old and new joined OTU documents.
+
+    :param old: the old, joined OTU document
+    :param new: the new, joined OTU document
+    :return: the parent reference ID and otu ID, name, and abbreviation
+
+    """
+    try:
+        otu_id = old["_id"]
+    except TypeError:
+        otu_id = new["_id"]
+
+    try:
+        otu_name = old["name"]
+    except TypeError:
+        otu_name = new["name"]
+
+    try:
+        otu_version = int(new["version"])
+    except (TypeError, KeyError):
+        otu_version = "removed"
+
+    try:
+        ref_id = old["reference"]["id"]
+    except (TypeError, KeyError):
+        ref_id = new["reference"]["id"]
+
+    return otu_id, otu_name, otu_version, ref_id
 
 
 def join_diff_path(data_path, otu_id, otu_version):

@@ -109,6 +109,59 @@ def test_compose_remove_description(has_abbreviation):
     assert description == expected
 
 
+@pytest.mark.parametrize("version", [None, "3", 5])
+@pytest.mark.parametrize("missing", [None, "old", "new"])
+def test_derive_otu_information(version, missing):
+    """
+    Test that OTU information is derived correctly from the old and new versions of a joined OTU.
+
+    """
+    old = None
+    new = None
+
+    if missing != "old":
+        old = {
+            "_id": "foo",
+            "name": "Foo",
+            "reference": {
+                "id": "foo_ref"
+            }
+        }
+
+    if missing != "new":
+        new = {
+            "_id": "bar",
+            "name": "Bar",
+            "reference": {
+                "id": "bar_ref"
+            }
+        }
+
+        if version:
+            new["version"] = version
+
+    otu_id, otu_name, otu_version, ref_id  = virtool.history.utils.derive_otu_information(
+        old,
+        new
+    )
+
+    if missing == "old":
+        assert otu_id == "bar"
+        assert otu_name == "Bar"
+        assert ref_id == "bar_ref"
+    else:
+        assert otu_id == "foo"
+        assert otu_name == "Foo"
+        assert ref_id == "foo_ref"
+
+    if missing == "new" or version is None:
+        assert otu_version == "removed"
+    elif version == "3":
+        assert otu_version == 3
+    else:
+        assert otu_version == 5
+
+
 async def test_read_diff_file(mocker, snapshot):
     """
     Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.

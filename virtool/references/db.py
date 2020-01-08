@@ -2,6 +2,7 @@ import asyncio
 import json.decoder
 import logging
 import os
+from typing import Union
 
 import aiohttp
 import pymongo
@@ -83,7 +84,7 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "clone", user_id)
+            await insert_change(self.app, otu_id, "clone", user_id)
             await tracker.add(1)
 
     async def cleanup(self):
@@ -193,7 +194,7 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "import", user_id)
+            await insert_change(self.app, otu_id, "import", user_id)
             await tracker.add(1)
 
 
@@ -245,7 +246,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
 
         async for document in self.db.otus.find({"reference.id": ref_id}):
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 document["_id"],
                 user_id,
                 document=document,
@@ -341,7 +342,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
                 old = None
 
             await insert_change(
-                self.db,
+                self.app,
                 otu_id,
                 "update" if old else "remote",
                 self.context["user_id"],
@@ -363,7 +364,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
 
         for otu_id in to_delete:
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 otu_id,
                 self.context["user_id"]
             )
@@ -1101,7 +1102,7 @@ async def export(app, ref_id, scope):
 
     elif scope == "unbuilt":
         async for document in db.otus.find(query):
-            last_verified = await virtool.history.db.patch_to_verified(db, document["_id"])
+            last_verified = await virtool.history.db.patch_to_verified(app, document["_id"])
             otu_list.append(last_verified)
 
     else:
@@ -1209,7 +1210,13 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     )
 
     for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "remote", user_id)
+        await insert_change(
+            app,
+            otu_id,
+            "remote",
+            user_id
+        )
+
         await progress_tracker.add(1)
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
@@ -1225,7 +1232,19 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     await virtool.processes.db.update(db, process_id, progress=1)
 
 
-async def insert_change(db, otu_id, verb, user_id, old=None):
+async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
+    """
+    Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU the change is for
+    :param verb: the change verb (eg. remove, insert)
+    :param user_id: the ID of the requesting user
+    :param old: the old joined OTU document
+
+    """
+    db = app["db"]
+
     # Join the otu document into a complete otu record. This will be used for recording history.
     joined = await virtool.otus.db.join(db, otu_id)
 
@@ -1243,7 +1262,7 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        db,
+        app,
         verb,
         old,
         joined,

@@ -6,7 +6,7 @@ import virtool.otus.utils
 import virtool.history.utils
 
 
-async def test_find(spawn_client, test_changes, static_time):
+async def test_find(snapshot, spawn_client, test_changes, static_time):
     """
     Test that a list of processed change documents are returned with a ``200`` status.
 

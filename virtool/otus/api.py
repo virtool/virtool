@@ -125,7 +125,7 @@ async def create(req):
         return bad_request(message)
 
     document = await asyncio.shield(virtool.otus.db.create(
-        db,
+        req.app,
         ref_id,
         name,
         abbreviation,
@@ -186,7 +186,7 @@ async def edit(req):
         return bad_request(message)
 
     document = await asyncio.shield(virtool.otus.db.edit(
-        db,
+        req.app,
         otu_id,
         name,
         abbreviation,
@@ -216,7 +216,7 @@ async def remove(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.db.remove(
-        db,
+        req.app,
         otu_id,
         req["client"].user_id
     ))
@@ -310,7 +310,7 @@ async def add_isolate(req):
         return bad_request("Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.add(
-        db,
+        req.app,
         otu_id,
         data,
         req["client"].user_id
@@ -366,7 +366,7 @@ async def edit_isolate(req):
             return bad_request("Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.edit(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         data,
@@ -396,7 +396,7 @@ async def set_as_default(req):
         return insufficient_rights()
 
     isolate = await asyncio.shield(virtool.otus.isolates.set_default(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         req["client"].user_id
@@ -425,7 +425,7 @@ async def remove_isolate(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.isolates.remove(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         req["client"].user_id
@@ -542,7 +542,7 @@ async def create_sequence(req):
         return bad_request(message)
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.create(
-        db,
+        req.app,
         ref_id,
         otu_id,
         isolate_id,
@@ -616,7 +616,7 @@ async def edit_sequence(req):
         return not_found("Segment does not exist")
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.edit(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         sequence_id,
@@ -651,7 +651,7 @@ async def remove_sequence(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.sequences.remove(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         sequence_id,
