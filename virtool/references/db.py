@@ -255,8 +255,8 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
 
         diff_file_change_ids = await self.db.history.distinct("_id", {
             "diff": "file",
-            "$in": {
-                unreferenced_otu_ids
+            "otu.id": {
+                "$in": unreferenced_otu_ids
             }
         })
 
