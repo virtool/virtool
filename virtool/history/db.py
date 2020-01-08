@@ -267,13 +267,14 @@ async def patch_to_version(app, otu_id: str, version: Union[str, int]) -> tuple:
     return current, patched, reverted_history_ids
 
 
-async def revert(app, change_id: str):
+async def revert(app, change_id: str) -> dict:
     """
     Revert a history change given by the passed ``change_id``.
 
     :param app: the application object
     :param change_id: a unique id for the change
     :return: the updated OTU
+
     """
     db = app["db"]
 

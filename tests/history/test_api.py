@@ -21,84 +21,13 @@ async def test_find(snapshot, spawn_client, test_changes, static_time):
 
     resp_json = await resp.json()
 
-    resp_json["documents"] = sorted(resp_json["documents"], key=itemgetter("id"))
+    documents = sorted(resp_json["documents"], key=itemgetter("id"))
 
-    assert resp_json == {
-        "found_count": 3,
-        "page": 1,
-        "page_count": 1,
-        "per_page": 25,
-        "total_count": 3,
-        "documents": sorted([
-            {
-                "description": "Edited Prunus virus E",
-                "id": "6116cba1.1",
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
-                "method_name": "edit",
-                "created_at": static_time.iso,
-                "user": {
-                    "id": "test"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 1
-                },
-                "reference": {
-                    "id": "hxn167"
-                }
-            },
-            {
-                "description": "Edited Prunus virus E",
-                "id": "foobar.1",
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
-                "method_name": "edit",
-                "created_at": static_time.iso,
-                "user": {
-                    "id": "test"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 1
-                },
-                "reference": {
-                    "id": "hxn167"
-                }
-            },
-            {
-                "description": "Edited Prunus virus E",
-                "id": "foobar.2",
-                "index": {
-                    "id": "unbuilt",
-                    "version": "unbuilt"
-                },
-                "method_name": "edit",
-                "created_at": static_time.iso,
-                "user": {
-                    "id": "test"
-                },
-                "otu": {
-                    "id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "version": 1
-                },
-                "reference": {
-                    "id": "hxn167"
-                }
-            }
-        ], key=itemgetter("id"))
-    }
+    snapshot.assert_match(documents)
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, resp_is, spawn_client, test_changes, static_time):
+async def test_get(error, snapshot, resp_is, spawn_client, test_changes, static_time):
     """
     Test that a specific history change can be retrieved by its change_id.
 
@@ -117,37 +46,12 @@ async def test_get(error, resp_is, spawn_client, test_changes, static_time):
 
     assert resp.status == 200
 
-    assert await resp.json() == {
-        "description": "Edited Prunus virus E",
-        "diff": [
-            ["change", "abbreviation", ["PVF", ""]],
-            ["change", "name", ["Prunus virus F", "Prunus virus E"]],
-            ["change", "version", [0, 1]]
-        ],
-        "id": "6116cba1.1",
-        "index": {
-            "id": "unbuilt",
-            "version": "unbuilt"
-        },
-        "method_name": "edit",
-        "created_at": static_time.iso,
-        "user": {
-            "id": "test"
-        },
-        "otu": {
-            "id": "6116cba1",
-            "name": "Prunus virus F",
-            "version": 1
-        },
-        "reference": {
-            "id": "hxn167"
-        }
-    }
+    snapshot.assert_match(await resp.json(), "json")
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 @pytest.mark.parametrize("remove", [False, True])
-async def test_revert(error, remove, create_mock_history, spawn_client, check_ref_right, resp_is):
+async def test_revert(error, remove, snapshot, create_mock_history, spawn_client, check_ref_right, resp_is):
     """
     Test that a valid request results in a reversion and a ``204`` response.
 
@@ -170,38 +74,6 @@ async def test_revert(error, remove, create_mock_history, spawn_client, check_re
 
     assert resp.status == 204
 
-    assert await virtool.otus.db.join(client.db, "6116cba1") == {
-        "_id": "6116cba1",
-        "abbreviation": "TST",
-        "imported": True,
-        "isolates": [
-            {
-                "default": True,
-                "id": "cab8b360",
-                "sequences": [
-                    {
-                        "_id": "KX269872",
-                        "definition": "Prunus virus F isolate 8816-s2 "
-                        "segment RNA2 polyprotein 2 gene, "
-                        "complete cds.",
-                        "host": "sweet cherry",
-                        "isolate_id": "cab8b360",
-                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                        "otu_id": "6116cba1",
-                        "segment": None
-                     }
-                ],
-                "source_name": "8816-v2",
-                "source_type": "isolate"
-            }
-        ],
-        "reference": {
-            "id": "hxn167"
-        },
-        "last_indexed_version": 0,
-        "lower_name": "prunus virus f",
-        "name": "Prunus virus F",
-        "verified": False,
-        "schema": [],
-        "version": 1
-    }
+    snapshot.assert_match(await client.db.otus.find_one())
+    snapshot.assert_match(await client.db.history.find().to_list(None))
+    snapshot.assert_match(await client.db.sequences.find().to_list(None))
