@@ -116,7 +116,7 @@ def derive_otu_information(old: Union[dict, None], new: Union[dict, None]) -> Tu
 
 
 def join_diff_path(data_path, otu_id, otu_version):
-    return os.path.join(data_path, f"{otu_id}_{otu_version}.json")
+    return os.path.join(data_path, "history", f"{otu_id}_{otu_version}.json")
 
 
 def json_encoder(o):
@@ -136,13 +136,38 @@ def json_object_hook(o):
 
 async def read_diff_file(data_path, otu_id, otu_version):
     """
-    Read a history JSON file.
+    Read a history diff JSON file.
 
     """
     path = join_diff_path(data_path, otu_id, otu_version)
 
     async with aiofiles.open(path, "r") as f:
         return json.loads(await f.read(), object_hook=json_object_hook)
+
+
+async def remove_diff_files(app, id_list: List[str]):
+    """
+    Remove multiple diff files given a list of change IDs (`id_list`).
+
+    :param app: the application object
+    :param id_list: a list of change IDs to remove diff files for
+
+    """
+    data_path = app["settings"]["data_path"]
+
+    for change_id in id_list:
+        otu_id, otu_version = change_id.split(".")
+
+        path = join_diff_path(
+            data_path,
+            otu_id,
+            otu_version
+        )
+
+        try:
+            await app["run_in_thread"](os.remove, path)
+        except FileNotFoundError:
+            pass
 
 
 async def write_diff_file(data_path, otu_id, otu_version, body):

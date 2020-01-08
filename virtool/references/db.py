@@ -13,6 +13,7 @@ import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
+import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
@@ -102,11 +103,17 @@ class CloneReferenceProcess(virtool.processes.process.Process):
 
         query = {"reference.id": ref_id}
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            **query,
+            "diff": "file"
+        })
+
         await asyncio.gather(
             self.db.references.delete_one({"_id": ref_id}),
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
-            self.db.sequences.delete_many(query)
+            self.db.sequences.delete_many(query),
+            virtool.history.utils.remove_diff_files(diff_file_change_ids)
         )
 
 
@@ -204,7 +211,13 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.app, otu_id, "import", user_id)
+            await insert_change(
+                self.app,
+                otu_id,
+                "import",
+                user_id
+            )
+
             await tracker.add(1)
 
 
@@ -240,10 +253,18 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
             }
         })
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            "diff": "file",
+            "$in": {
+                unreferenced_otu_ids
+            }
+        })
+
         await asyncio.gather(
             self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
             self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}})
+            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
     async def remove_referenced_otus(self):
@@ -1112,12 +1133,21 @@ async def export(app, ref_id, scope):
 
     elif scope == "unbuilt":
         async for document in db.otus.find(query):
-            last_verified = await virtool.history.db.patch_to_verified(app, document["_id"])
+            last_verified = await virtool.history.db.patch_to_verified(
+                app,
+                document["_id"]
+            )
+
             otu_list.append(last_verified)
 
     else:
         async for document in db.otus.find(query):
-            current = await virtool.otus.db.join(db, document["_id"], document)
+            current = await virtool.otus.db.join(
+                db,
+                document["_id"],
+                document
+            )
+
             otu_list.append(current)
 
     return virtool.references.utils.clean_export_list(otu_list, scope == "remote")

@@ -175,11 +175,50 @@ async def test_read_diff_file(mocker, snapshot):
     snapshot.assert_match(diff)
 
 
+async def test_remove_diff_files(loop, tmpdir):
+    """
+    Test that diff files are removed correctly and the function can handle a non-existent diff file.
+
+    """
+    history_dir = tmpdir.mkdir("history")
+
+    history_dir.join("foo_0.json").write("hello world")
+    history_dir.join("foo_1.json").write("hello world")
+    history_dir.join("bar_0.json").write("hello world")
+    history_dir.join("bar_1.json").write("hello world")
+
+    id_list = [
+        "foo.0",
+        "foo.1",
+        "foo.2",
+        "bar.0"
+    ]
+
+    async def run_in_thread(func, *args):
+        return await loop.run_in_executor(None, func, *args),
+
+    app = {
+        "run_in_thread": run_in_thread,
+        "settings": {
+            "data_path": str(tmpdir)
+        }
+    }
+
+    await virtool.history.utils.remove_diff_files(
+        app,
+        id_list
+    )
+
+    assert os.listdir(str(history_dir)) == ["bar_1.json"]
+
+
 async def test_write_diff_file(mocker, tmpdir):
     """
     Test that a diff file is written correctly.
 
     """
+    tmpdir.mkdir("history")
+
     with open(TEST_DIFF_PATH, "r") as f:
         diff = json.load(f)
 
