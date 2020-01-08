@@ -65,9 +65,19 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         inserted_otu_ids = list()
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await virtool.history.db.patch_to_version(self.app, source_otu_id, version)
+            _, patched, _ = await virtool.history.db.patch_to_version(
+                self.app,
+                source_otu_id,
+                version
+            )
 
-            otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
+            otu_id = await insert_joined_otu(
+                self.db,
+                patched,
+                created_at,
+                ref_id,
+                user_id
+            )
 
             inserted_otu_ids.append(otu_id)
 

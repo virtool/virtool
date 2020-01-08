@@ -85,7 +85,11 @@ async def format_pathoscope(app, document):
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["results"]}
 
     patched_otus = await asyncio.gather(*[
-        virtool.history.db.patch_to_version(app, otu_id, version) for otu_id, version in otu_specifiers
+        virtool.history.db.patch_to_version(
+            app,
+            otu_id,
+            version
+        ) for otu_id, version in otu_specifiers
     ])
 
     patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}

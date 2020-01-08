@@ -262,22 +262,19 @@ async def test_get_most_recent_change(exists, dbi, static_time):
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, dbi, test_merged_otu, create_mock_history):
+async def test_patch_to_version(remove, snapshot, dbi, test_merged_otu, create_mock_history):
+    app = {
+        "db": dbi
+    }
+
     expected_current = await create_mock_history(remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        dbi,
+        app,
         "6116cba1",
         1
     )
 
-    assert current == expected_current
-
-    assert patched == dict(test_merged_otu, abbreviation="TST", version=1)
-
-    expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
-
-    if remove:
-        expected_reverted_change_ids = ["6116cba1.removed"] + expected_reverted_change_ids
-
-    assert reverted_change_ids == expected_reverted_change_ids
+    snapshot.assert_match(current)
+    snapshot.assert_match(patched)
+    snapshot.assert_match(reverted_change_ids)
