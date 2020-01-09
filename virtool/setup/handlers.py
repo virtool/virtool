@@ -210,4 +210,11 @@ async def get_save(req):
 
     req.app["events"]["restart"].set()
 
-    return web.Response(status=302, headers={"Location": "/"})
+    template = Template(filename=os.path.join(sys.path[0], "templates", "setup_restart.html"))
+
+    html = template.render(
+        hash=virtool.utils.get_static_hash(req),
+        nonce=req["nonce"]
+    )
+
+    return web.Response(body=html, content_type="text/html")
