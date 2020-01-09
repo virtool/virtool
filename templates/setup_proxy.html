@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/main.${hash}.css">
+    <link rel="stylesheet" href="/static/main.${hash | h}.css">
     <title>Setup Proxy - Virtool</title>
 </head>
 
@@ -31,7 +31,7 @@
                     <form method="POST" action="/setup/proxy">
                         <div class="form-group">
                             <label for="proxy">Proxy</label>
-                            <input type="text" class="form-control" name="proxy" id="proxy" value='${proxy or ""}'>
+                            <input type="text" class="form-control" name="proxy" id="proxy" value='${(proxy or "")  | h}'>
                         </div>
 
                         %if error == "value_error":

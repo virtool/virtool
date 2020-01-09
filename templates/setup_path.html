@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/main.${hash}.css">
+    <link rel="stylesheet" href="/static/main.${hash | h}.css">
 
-    <style nonce="${ nonce }">
+    <style nonce="${nonce | h}">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -27,7 +27,7 @@
             <div class="list-group">
                 <div class="list-group-item spaced clearfix">
                     <h4 class="setup-header text-capitalize">
-                        ${mode} Location
+                        ${mode | h} Location
                     </h4>
 
                     <p class="text-muted setup-subheader">
@@ -39,10 +39,10 @@
                         %endif
                     </p>
 
-                    <form method="POST" action="/setup/${mode}">
+                    <form method="POST" action="/setup/${mode | h}">
                         <div class="form-group">
                             <label for="path">Path</label>
-                            <input type="text" class="form-control" name="path" id="path" placeholder="${mode}" value='${path or ""}'>
+                            <input type="text" class="form-control" name="path" id="path" placeholder="${mode | h}" value='${(path or "") | h}'>
                         </div>
 
                         %if error == "not_found_error":

@@ -5,10 +5,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
-    <link rel="stylesheet" href="/static/main.${hash}.css">
+    <link rel="stylesheet" href="/static/main.${hash | h}.css">
     <title>Setup - Virtool</title>
 
-    <style nonce="${nonce}">
+    <style nonce="${nonce | h}">
         @keyframes loader {
             0% {
                 transform: rotate(0deg);
@@ -60,7 +60,7 @@
         </div>
     </div>
 </div>
-<script nonce="${nonce}">
+<script nonce="${nonce | h}">
     function checkServer () {
         fetch("/")
             .then(function (response) {

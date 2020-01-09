@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/main.${hash}.css">
+    <link rel="stylesheet" href="/static/main.${hash | h}.css">
     <title>Setup - Virtool</title>
 </head>
 
@@ -31,7 +31,7 @@
                             </div>
                             <div>
                                 A configuration file will be written to:
-                                <small class="text-info">${config_path}</small>
+                                <small class="text-info">${config_path | h}</small>
                             </div>
                         </div>
                         %if proxy:
@@ -41,7 +41,7 @@
                                 </div>
                                 <div>
                                     Virtool will use the proxy at:
-                                    <small class="text-info">${proxy}</small>
+                                    <small class="text-info">${proxy | h}</small>
                                 </div>
                             </div>
                         %endif
@@ -51,7 +51,7 @@
                             </div>
                             <div>
                                 A data directory will be setup at:
-                                <small class="text-info">${data_path}</small>
+                                <small class="text-info">${data_path | h}</small>
                             </div>
                         </div>
                         <div class="list-group-item setup-flex-center">
@@ -60,7 +60,7 @@
                             </div>
                             <div>
                                 A watch directory will be created at:
-                                <small class="text-info">${watch_path}</small>
+                                <small class="text-info">${watch_path | h}</small>
 
                             </div>
                         </div>
@@ -70,7 +70,7 @@
                             </div>
                             <div>
                                 A database will be created with the name:
-                                <small class="text-info">${db_name}</small>
+                                <small class="text-info">${db_name | h}</small>
                             </div>
                         </div>
                     </div>
