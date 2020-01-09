@@ -74,15 +74,22 @@ async def load_results(settings: dict, document: dict) -> dict:
     return document
 
 
-async def format_pathoscope(db, settings, document):
-    document = await load_results(settings, document)
+async def format_pathoscope(app, document):
+    document = await load_results(
+        app["settings"],
+        document
+    )
 
     formatted = dict()
 
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in document["results"]}
 
     patched_otus = await asyncio.gather(*[
-        virtool.history.db.patch_to_version(db, otu_id, version) for otu_id, version in otu_specifiers
+        virtool.history.db.patch_to_version(
+            app,
+            otu_id,
+            version
+        ) for otu_id, version in otu_specifiers
     ])
 
     patched_otus = {patched["_id"]: patched for _, patched, _ in patched_otus}
@@ -150,12 +157,15 @@ async def format_pathoscope(db, settings, document):
     return document
 
 
-async def format_nuvs(db, settings, document):
-    document = await load_results(settings, document)
+async def format_nuvs(app, document):
+    document = await load_results(
+        app["settings"],
+        document
+    )
 
     hit_ids = list({h["hit"] for s in document["results"] for o in s["orfs"] for h in o["hits"]})
 
-    cursor = db.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
+    cursor = app["db"].hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
 
     hmms = {d.pop("_id"): d async for d in cursor}
 
@@ -244,12 +254,11 @@ async def format_analysis_to_csv(db, settings, document):
     return output.getvalue()
 
 
-async def format_analysis(db: virtool.db.core.DB, settings: dict, document: dict) -> dict:
+async def format_analysis(app, document: dict) -> dict:
     """
     Format an analysis document to be returned by the API.
 
-    :param db: the application database client
-    :param settings: the application settings object
+    :param app: the application object
     :param document: the analysis document to format
     :return: a formatted document
 
@@ -257,10 +266,10 @@ async def format_analysis(db: virtool.db.core.DB, settings: dict, document: dict
     algorithm = document.get("algorithm")
 
     if algorithm == "nuvs":
-        return await format_nuvs(db, settings, document)
+        return await format_nuvs(app, document)
 
     if algorithm and "pathoscope" in algorithm:
-        return await format_pathoscope(db, settings, document)
+        return await format_pathoscope(app, document)
 
     raise ValueError("Could not determine analysis algorithm")
 

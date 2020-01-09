@@ -149,7 +149,15 @@ def test_get_patched_otus(mocker, dbs):
         "baz": 4
     }
 
-    patched_otus = virtool.jobs.build_index.get_patched_otus(dbs, manifest)
+    settings = {
+        "data_path": "foo"
+    }
+
+    patched_otus = virtool.jobs.build_index.get_patched_otus(
+        dbs,
+        settings,
+        manifest
+    )
 
     assert isinstance(patched_otus, types.GeneratorType)
 
@@ -160,9 +168,9 @@ def test_get_patched_otus(mocker, dbs):
     ]
 
     m.assert_has_calls([
-        mocker.call(dbs, "foo", 2),
-        mocker.call(dbs, "bar", 10),
-        mocker.call(dbs, "baz", 4)
+        mocker.call(dbs, settings, "foo", 2),
+        mocker.call(dbs, settings, "bar", 10),
+        mocker.call(dbs, settings, "baz", 4)
     ])
 
 

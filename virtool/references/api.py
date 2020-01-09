@@ -43,7 +43,7 @@ RIGHTS_SCHEMA = {
 async def find(req):
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
@@ -213,8 +213,8 @@ async def find_otus(req):
     if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    term = req.query.get("find", None)
-    verified = req.query.get("verified", None)
+    term = req.query.get("find")
+    verified = req.query.get("verified")
     names = req.query.get("names", False)
 
     data = await virtool.otus.db.find(
@@ -242,7 +242,7 @@ async def find_history(req):
         "reference.id": ref_id
     }
 
-    unbuilt = req.query.get("unbuilt", None)
+    unbuilt = req.query.get("unbuilt")
 
     if unbuilt == "true":
         base_query["index.id"] = "unbuilt"

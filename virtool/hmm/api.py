@@ -24,7 +24,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
@@ -111,7 +111,7 @@ async def install(req):
         }
     })
 
-    release = document.get("release", None)
+    release = document.get("release")
 
     if release is None:
         return bad_request("Target release does not exist")

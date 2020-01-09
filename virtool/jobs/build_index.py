@@ -68,6 +68,7 @@ class Job(virtool.jobs.job.Job):
         """
         patched_otus = get_patched_otus(
             self.db,
+            self.settings,
             self.params["manifest"]
         )
 
@@ -214,17 +215,23 @@ class Job(virtool.jobs.job.Job):
         virtool.utils.rm(self.params["index_path"], True)
 
 
-def get_patched_otus(db, manifest: dict) -> typing.Generator[dict, None, None]:
+def get_patched_otus(db, settings: dict, manifest: dict) -> typing.Generator[dict, None, None]:
     """
     Get joined OTUs patched to a specific version based on a manifest of OTU ids and versions.
 
     :param db: the job database client
+    :param settings: the application settings
     :param manifest: the manifest
-    :return:
 
     """
     for patch_id, patch_version in manifest.items():
-        _, joined, _ = virtool.db.sync.patch_otu_to_version(db, patch_id, patch_version)
+        _, joined, _ = virtool.db.sync.patch_otu_to_version(
+            db,
+            settings,
+            patch_id,
+            patch_version
+        )
+
         yield joined
 
 

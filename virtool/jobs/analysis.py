@@ -81,10 +81,14 @@ class Job(virtool.jobs.job.Job):
 
         index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
 
-        sequence_otu_map = index_document.get("sequence_otu_map", None)
+        sequence_otu_map = index_document.get("sequence_otu_map")
 
         if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(self.db, index_document["manifest"])
+            sequence_otu_map = get_sequence_otu_map(
+                self.db,
+                self.settings,
+                index_document["manifest"]
+            )
 
         self.params.update({
             "manifest": index_document["manifest"],
@@ -206,7 +210,7 @@ class Job(virtool.jobs.job.Job):
 
     def prepare_qc(self):
         if self.intermediate["qc"]:
-            cache_id = self.intermediate.get("cache_id", None)
+            cache_id = self.intermediate.get("cache_id")
 
             if cache_id:
                 self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
@@ -250,7 +254,7 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("caches", "update", [cache_id])
 
     def cleanup(self):
-        cache_id = self.intermediate.get("cache_id", None)
+        cache_id = self.intermediate.get("cache_id")
 
         if cache_id:
             cache = self.db.caches.find_one(cache_id, ["ready"])
@@ -277,12 +281,13 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("samples", "update", [sample_id])
 
 
-def get_sequence_otu_map(db, manifest):
+def get_sequence_otu_map(db, settings, manifest):
     sequence_otu_map = dict()
 
     for otu_id, otu_version in manifest.items():
         _, patched, _ = virtool.db.sync.patch_otu_to_version(
             db,
+            settings,
             otu_id,
             otu_version
         )

@@ -78,7 +78,7 @@ async def find(req):
 
     db_query = dict()
 
-    term = query.get("find", None)
+    term = query.get("find")
 
     if term:
         db_query = compose_regex_query(term, ["name", "user.id"])
@@ -384,7 +384,7 @@ async def set_rights(req):
     if not req["client"].administrator and user_id != await virtool.samples.db.get_sample_owner(db, sample_id):
         return insufficient_rights("Must be administrator or sample owner")
 
-    group = data.get("group", None)
+    group = data.get("group")
 
     if group:
         existing_group_ids = await db.groups.distinct("_id") + ["none"]
@@ -447,7 +447,7 @@ async def find_analyses(req):
 
         raise
 
-    term = req.query.get("term", None)
+    term = req.query.get("term")
 
     db_query = dict()
 
