@@ -47,10 +47,11 @@ async def get_proxy(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_proxy.html"))
 
     html = template.render(
+        error=setup["proxy"]["error"],
         hash=virtool.utils.get_static_hash(req),
+        nonce=req["nonce"],
         proxy=setup["proxy"]["proxy"],
-        ready=setup["proxy"]["ready"],
-        error=setup["proxy"]["error"]
+        ready=setup["proxy"]["ready"]
     )
 
     return web.Response(body=html, content_type="text/html")
@@ -80,11 +81,12 @@ async def get_db(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_db.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req),
         db_connection_string=db_connection_string,
         db_name=db_name,
-        ready=ready,
-        error=error
+        hash=virtool.utils.get_static_hash(req),
+        error=error,
+        nonce=req["nonce"],
+        ready=ready
     )
 
     return web.Response(body=html, content_type="text/html")
@@ -112,7 +114,8 @@ async def get_path(req):
     html = template.render(
         hash=virtool.utils.get_static_hash(req),
         **req.app["setup"][mode],
-        mode=mode
+        mode=mode,
+        nonce=req["nonce"]
     )
 
     return web.Response(body=html, content_type="text/html")
@@ -164,11 +167,12 @@ async def get_finish(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup_finish.html"))
 
     html = template.render(
-        hash=virtool.utils.get_static_hash(req),
         config_path=config_path,
-        proxy=proxy,
         db_name=db_name,
         data_path=data_path,
+        hash=virtool.utils.get_static_hash(req),
+        nonce=req["nonce"],
+        proxy=proxy,
         watch_path=watch_path
     )
 
@@ -190,19 +194,11 @@ async def get_save(req):
 
     db = client[setup["db"]["db_name"]]
 
-    data_path = setup["data"]["path"]
-
-    virtool.setup.paths.create_data_tree(data_path)
-
-    watch_path = setup["watch"]["path"]
-
-    virtool.setup.paths.create_watch(watch_path)
-
     config = {
         "db_connection_string": db_connection_string,
         "db_name": db_name,
-        "data_path": data_path,
-        "watch_path": watch_path,
+        "data_path": setup["data"]["path"],
+        "watch_path": setup["watch"]["path"],
         "proxy": proxy
     }
 
