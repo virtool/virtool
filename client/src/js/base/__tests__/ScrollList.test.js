@@ -15,7 +15,7 @@ describe("<ScrollList />", () => {
         };
     });
 
-    it("should return LoadingPlaceholder when [documents === null] and [page < pageCount]", () => {
+    it("should return LoadingPlaceholder when [documents=null] and [page<pageCount]", () => {
         props.documents = null;
         const wrapper = mount(<ScrollList {...props} />);
         wrapper.instance().scrollList.current = {
@@ -25,7 +25,7 @@ describe("<ScrollList />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should return React.Fragment when [noContainer == true]", () => {
+    it("should return React.Fragment when [noContainer=true]", () => {
         const wrapper = mount(<ScrollList {...props} />);
         wrapper.instance().scrollList.current = {
             addEventListener,
@@ -34,7 +34,7 @@ describe("<ScrollList />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [noContainer == false]", () => {
+    it("should render when [noContainer=false]", () => {
         props.noContainer = false;
         const wrapper = mount(<ScrollList {...props} />);
         wrapper.instance().scrollList.current = {

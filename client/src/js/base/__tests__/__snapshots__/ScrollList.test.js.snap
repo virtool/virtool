@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ScrollList /> should render when [noContainer == false] 1`] = `
+exports[`<ScrollList /> should render when [noContainer=false] 1`] = `
 <ScrollList
   document={
     Array [
@@ -19,7 +19,7 @@ exports[`<ScrollList /> should render when [noContainer == false] 1`] = `
 </ScrollList>
 `;
 
-exports[`<ScrollList /> should return LoadingPlaceholder when [documents === null] and [page < pageCount] 1`] = `
+exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] and [page<pageCount] 1`] = `
 <ScrollList
   document={
     Array [
@@ -111,7 +111,7 @@ exports[`<ScrollList /> should return LoadingPlaceholder when [documents === nul
 </ScrollList>
 `;
 
-exports[`<ScrollList /> should return React.Fragment when [noContainer == true] 1`] = `
+exports[`<ScrollList /> should return React.Fragment when [noContainer=true] 1`] = `
 <ScrollList
   document={
     Array [

@@ -48,15 +48,6 @@ export class ScrollList extends React.Component {
             loading = <LoadingPlaceholder margin="20px" />;
         }
 
-        if (noContainer) {
-            return (
-                <React.Fragment>
-                    {entries}
-                    {loading}
-                </React.Fragment>
-            );
-        }
-
         return (
             <div ref={this.scrollList} style={this.props.style}>
                 {entries}
