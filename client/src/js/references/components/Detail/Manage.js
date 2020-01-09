@@ -17,6 +17,7 @@ import { checkUpdates, updateRemoteReference } from "../../actions";
 import ReferenceDetailHeader from "./Header";
 import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
+import Targets from "./Targets/Targets";
 
 const Clone = ({ source }) => (
     <Panel>
@@ -50,7 +51,7 @@ const LatestBuild = ({ id, latestBuild }) => {
     return <NoneFoundSection noun="index builds" />;
 };
 
-const ReferenceManage = ({ detail }) => {
+export const ReferenceManage = ({ detail }) => {
     const { id, cloned_from, contributors, description, latest_build, organism, remotes_from } = detail;
 
     let remote;
@@ -93,6 +94,7 @@ const ReferenceManage = ({ detail }) => {
             </BoxGroup>
 
             <Contributors contributors={contributors} />
+            <Targets />
         </div>
     );
 };
