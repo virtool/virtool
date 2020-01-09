@@ -13,6 +13,7 @@ def get_settings(no_job_manager, setup):
         "no_client": True,
         "no_db_checks": True,
         "no_job_manager": no_job_manager,
+        "no_file_checks": True,
         "no_file_manager": True,
         "no_refreshing": True,
         "no_setup": True,

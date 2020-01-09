@@ -17,7 +17,7 @@ snapshots['test_get_db[uvloop-False-False-None] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -95,7 +95,7 @@ snapshots['test_get_db[uvloop-False-False-auth_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -173,7 +173,7 @@ snapshots['test_get_db[uvloop-False-False-connection_error] 1'] = '''<!DOCTYPE h
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -251,7 +251,7 @@ snapshots['test_get_db[uvloop-False-False-name_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -329,7 +329,7 @@ snapshots['test_get_db[uvloop-False-True-None] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -407,7 +407,7 @@ snapshots['test_get_db[uvloop-False-True-auth_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -485,7 +485,7 @@ snapshots['test_get_db[uvloop-False-True-connection_error] 1'] = '''<!DOCTYPE ht
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -563,7 +563,7 @@ snapshots['test_get_db[uvloop-False-True-name_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -641,7 +641,7 @@ snapshots['test_get_db[uvloop-True-False-None] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -719,7 +719,7 @@ snapshots['test_get_db[uvloop-True-False-auth_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -801,7 +801,7 @@ snapshots['test_get_db[uvloop-True-False-connection_error] 1'] = '''<!DOCTYPE ht
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -883,7 +883,7 @@ snapshots['test_get_db[uvloop-True-False-name_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -966,7 +966,7 @@ snapshots['test_get_db[uvloop-True-True-None] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1043,7 +1043,7 @@ snapshots['test_get_db[uvloop-True-True-auth_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1124,7 +1124,7 @@ snapshots['test_get_db[uvloop-True-True-connection_error] 1'] = '''<!DOCTYPE htm
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1205,7 +1205,7 @@ snapshots['test_get_db[uvloop-True-True-name_error] 1'] = '''<!DOCTYPE html>
     <link rel="shortcut icon" href="/static/favicon.ico?v=2" type="images/x-icon"/>
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1287,7 +1287,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-data] 1'] = '''<!DOCTYPE h
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1349,7 +1349,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-False-watch] 1'] = '''<!DOCTYPE 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1412,7 +1412,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-data] 1'] = '''<!DOCTYPE ht
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1474,7 +1474,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-False-True-watch] 1'] = '''<!DOCTYPE h
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1537,7 +1537,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-data] 1'] = '''<!DOCTYPE ht
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1599,7 +1599,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-False-watch] 1'] = '''<!DOCTYPE h
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1662,7 +1662,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-data] 1'] = '''<!DOCTYPE htm
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1728,7 +1728,7 @@ snapshots['test_get_paths[uvloop-/foo/bar-True-True-watch] 1'] = '''<!DOCTYPE ht
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1795,7 +1795,7 @@ snapshots['test_get_paths[uvloop-False-False-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1857,7 +1857,7 @@ snapshots['test_get_paths[uvloop-False-False-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1920,7 +1920,7 @@ snapshots['test_get_paths[uvloop-False-True-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -1982,7 +1982,7 @@ snapshots['test_get_paths[uvloop-False-True-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2045,7 +2045,7 @@ snapshots['test_get_paths[uvloop-True-False-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2107,7 +2107,7 @@ snapshots['test_get_paths[uvloop-True-False-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2170,7 +2170,7 @@ snapshots['test_get_paths[uvloop-True-True-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2236,7 +2236,7 @@ snapshots['test_get_paths[uvloop-True-True-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2303,7 +2303,7 @@ snapshots['test_get_paths[uvloop-foo-False-False-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2365,7 +2365,7 @@ snapshots['test_get_paths[uvloop-foo-False-False-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2428,7 +2428,7 @@ snapshots['test_get_paths[uvloop-foo-False-True-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2490,7 +2490,7 @@ snapshots['test_get_paths[uvloop-foo-False-True-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2553,7 +2553,7 @@ snapshots['test_get_paths[uvloop-foo-True-False-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2615,7 +2615,7 @@ snapshots['test_get_paths[uvloop-foo-True-False-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2678,7 +2678,7 @@ snapshots['test_get_paths[uvloop-foo-True-True-data] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
@@ -2744,7 +2744,7 @@ snapshots['test_get_paths[uvloop-foo-True-True-watch] 1'] = '''<!DOCTYPE html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.11/css/all.css" integrity="sha384-p2jx59pefphTFIpeqCcISO9MdVfIm4pNnsL08A6v5vaQc4owkQqxMV8kg4Yvhaw/" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/main..css">
 
-    <style>
+    <style nonce="foo1bar2baz3">
         .setup-header {
             margin-bottom: 20px;
         }
