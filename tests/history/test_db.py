@@ -176,7 +176,9 @@ async def test_get_most_recent_change(exists, snapshot, dbi, static_time):
 
 
 @pytest.mark.parametrize("remove", [True, False])
-async def test_patch_to_version(remove, snapshot, dbi, test_merged_otu, create_mock_history):
+async def test_patch_to_version(remove, snapshot, dbi,  create_mock_history):
+    await create_mock_history(remove=remove)
+
     app = {
         "db": dbi
     }
