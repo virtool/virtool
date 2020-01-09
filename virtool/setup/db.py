@@ -60,6 +60,10 @@ def get_db(db_connection_string, db_name):
 async def populate_settings(db):
     defaults = virtool.settings.schema.get_defaults()
 
+    await db.settings.delete_one({
+        "_id": "settings"
+    })
+
     await db.settings.insert_one({
         "_id": "settings",
         **defaults
