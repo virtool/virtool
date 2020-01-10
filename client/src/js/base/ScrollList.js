@@ -38,7 +38,7 @@ export class ScrollList extends React.Component {
     };
 
     render() {
-        const { documents, renderRow, page, pageCount, noContainer } = this.props;
+        const { documents, renderRow, page, pageCount } = this.props;
 
         const entries = map(documents, (item, index) => renderRow(index));
 
