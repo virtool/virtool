@@ -1,4 +1,3 @@
-import Moment from "moment";
 import { RelativeTime } from "../RelativeTime";
 
 describe("<RelativeTime />", () => {
@@ -6,7 +5,7 @@ describe("<RelativeTime />", () => {
 
     beforeEach(() => {
         props = {
-            time: "2020-02-14T17:12:00.000000Z"
+            time: "2020-02-10T17:11:00.000000Z"
         };
     });
 
@@ -22,10 +21,10 @@ describe("<RelativeTime />", () => {
 
     it("componentDidUpdate() should update timeString when [prevProps.time !== this.props.time] and [newTimeString !== this.state.timeString]", () => {
         const wrapper = shallow(<RelativeTime {...props} />);
-        wrapper.setProps({ ...props, time: "2019-02-14T17:12:00.000000Z" });
+        wrapper.setProps({ ...props, time: "2020-01-10T12:21:00.000000Z" });
         expect(wrapper.state()).toEqual({
-            time: "2019-02-14T17:12:00.000000Z",
-            timeString: "a year ago"
+            time: "2020-01-10T12:21:00.000000Z",
+            timeString: "3 days ago"
         });
     });
 
