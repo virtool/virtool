@@ -1,70 +1,60 @@
-import { differenceWith, filter, get, isEqual, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
-
-import { Badge, BoxGroupSection, NoneFoundSection } from "../../../base";
+import { differenceWith, filter, get, isEqual, map, find } from "lodash-es";
+import { BoxGroupSection } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import { getActiveIsolate, getTargetName, getSequences } from "../../selectors";
+import { Target } from "./Target";
 import AddSequence from "./AddSequence";
+import Sequence from "./Sequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
-import Sequence from "./Sequence";
 
-const IsolateSequencesHeader = styled(BoxGroupSection)`
-    align-items: center;
-    display: flex;
+export const IsolateTargets = props => {
+    const required = props.target === true ? "REQUIRED" : "NOT REQUIRED";
 
-    strong {
-        padding-right: 5px;
-    }
-
-    a {
-        font-weight: bold;
-        margin-left: auto;
-    }
-`;
-
-export const IsolateSequences = props => {
-    let sequenceComponents;
-
-    if (props.sequences.length) {
-        sequenceComponents = map(props.sequences, sequence => (
-            <Sequence
-                key={sequence.id}
-                active={sequence.accession === props.activeSequenceId}
-                canModify={props.canModify}
-                showEditSequence={props.showEditSequence}
-                showRemoveSequence={props.showRemoveSequence}
-                {...sequence}
-            />
-        ));
-    } else {
-        sequenceComponents = <NoneFoundSection noun="sequences" />;
+    let targetComponents;
+    if (props.targets) {
+        targetComponents = map(props.targets, target => {
+            const sequence = find(props.sequences, { target: target.name });
+            if (sequence != null) {
+                return (
+                    <Sequence
+                        key={sequence.id}
+                        active={sequence.accession === props.activeSequenceId}
+                        canModify={props.canModify}
+                        showEditSequence={props.showEditSequence}
+                        showRemoveSequence={props.showRemoveSequence}
+                        targetName={sequence.target}
+                        description={target.description}
+                        length={target.length}
+                        required={required}
+                        name={target.name}
+                        {...sequence}
+                    />
+                );
+            }
+            return (
+                <Target
+                    key={target.name}
+                    name={target.name}
+                    required={required}
+                    description={target.description}
+                    length={target.length}
+                    onClick={() => props.showAddSequence(target.name)}
+                />
+            );
+        });
     }
 
     return (
-        <React.Fragment>
-            <IsolateSequencesHeader>
-                <strong>Sequences</strong>
-                <Badge>{props.sequences.length}</Badge>
-                {props.canModify ? (
-                    <a
-                        href="#"
-                        onClick={() => {
-                            props.showAddSequence(props.targetName);
-                        }}
-                    >
-                        Add Sequence
-                    </a>
-                ) : null}
-            </IsolateSequencesHeader>
+        <div>
+            <BoxGroupSection>
+                <strong>Targets</strong>
+            </BoxGroupSection>
 
-            <React.Fragment>{sequenceComponents}</React.Fragment>
-
-            <AddSequence schema={props.schema} />
-
+            {targetComponents}
             <EditSequence
                 otuId={props.otuId}
                 isolateId={props.activeIsolateId}
@@ -78,7 +68,9 @@ export const IsolateSequences = props => {
                 isolateName={props.isolateName}
                 schema={props.schema}
             />
-        </React.Fragment>
+
+            <AddSequence targetName={props.targetName} />
+        </div>
     );
 };
 
@@ -88,6 +80,7 @@ const mapStateToProps = state => {
 
     const activeIsolate = getActiveIsolate(state);
     const sequences = getSequences(state);
+
     const targetName = getTargetName(state);
 
     const originalSchema = map(schema, "name");
@@ -105,7 +98,10 @@ const mapStateToProps = state => {
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
         canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
-        error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
+        error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", ""),
+        targets: state.references.detail.targets,
+        schema: state.otus.detail.schema,
+        targetName: state.otus.addSequence
     };
 };
 
@@ -123,4 +119,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(IsolateSequences);
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateTargets);

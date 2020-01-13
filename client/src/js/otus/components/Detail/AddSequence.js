@@ -12,9 +12,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { get, find, concat, map } from "lodash-es";
-
 import { addSequence, hideOTUModal } from "../../actions";
+
 import { clearError } from "../../../errors/actions";
+
 import { Button, Icon, InputError, Loader } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
@@ -140,7 +141,8 @@ class AddSequence extends React.Component {
                 this.state.definition,
                 this.state.host,
                 this.state.sequence,
-                this.state.segment
+                this.state.segment,
+                this.props.targetName
             );
         } else {
             this.setState({
@@ -206,8 +208,11 @@ class AddSequence extends React.Component {
                 />
             </StyledAccessionSegmentCol>
         );
+
+        let targetName;
         if (this.props.dataType === "barcode") {
             AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+            targetName = this.props.targetName;
         }
 
         return (
@@ -215,6 +220,7 @@ class AddSequence extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
+                <Modal.Body>{targetName}</Modal.Body>
                 <SequenceForm
                     host={this.state.host}
                     definition={this.state.definition}
@@ -231,22 +237,26 @@ class AddSequence extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
-    sequences: state.otus.activeIsolate.sequences,
-    show: state.otus.addSequence,
-    otuId: state.otus.detail.id,
-    isolateId: state.otus.activeIsolateId,
-    error: get(state, "errors.ADD_SEQUENCE_ERROR", ""),
-    dataType: state.references.detail.data_type
-});
+const mapStateToProps = state => {
+    return {
+        sequences: state.otus.activeIsolate.sequences,
+        show: !!state.otus.addSequence,
+        targetName: state.otus.addSequence,
+        otuId: state.otus.detail.id,
+        isolateId: state.otus.activeIsolateId,
+        error: get(state, "errors.ADD_SEQUENCE_ERROR", ""),
+        dataType: state.references.detail.data_type,
+        targets: state.references.detail.targets
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(hideOTUModal());
     },
 
-    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment, target) => {
+        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment, target));
     },
 
     onClearError: error => {

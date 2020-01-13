@@ -202,7 +202,7 @@ export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment, target) => ({
     type: ADD_SEQUENCE.REQUESTED,
     otuId,
     isolateId,
@@ -210,7 +210,8 @@ export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequ
     definition,
     host,
     sequence,
-    segment
+    segment,
+    target
 });
 
 /**
@@ -336,7 +337,12 @@ export const showRemoveIsolate = simpleActionCreator(SHOW_REMOVE_ISOLATE);
  * @func
  * @returns {object}
  */
-export const showAddSequence = simpleActionCreator(SHOW_ADD_SEQUENCE);
+export const showAddSequence = targetName => {
+    return {
+        type: SHOW_ADD_SEQUENCE,
+        targetName
+    };
+};
 
 /**
  * Returns action for displaying the edit sequence modal.

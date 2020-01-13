@@ -192,7 +192,7 @@ export default function OTUsReducer(state = initialState, action) {
             return { ...state, removeIsolate: true };
 
         case SHOW_ADD_SEQUENCE:
-            return { ...state, addSequence: true };
+            return { ...state, addSequence: action.targetName, targetName: action.targetName };
 
         case SHOW_EDIT_SEQUENCE:
             return { ...state, editSequence: action.sequenceId };
