@@ -1,13 +1,13 @@
 import { noop } from "lodash-es";
 import { buffers, END, eventChannel } from "redux-saga";
-import { call, put, take, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, take, takeEvery, throttle } from "redux-saga/effects";
 import { FIND_FILES, REMOVE_FILE, UPLOAD } from "../app/actionTypes";
 import { apiCall, putGenericError, setPending } from "../utils/sagas";
 import { uploadProgress } from "./actions";
 import * as filesAPI from "./api";
 
 export function* watchFiles() {
-    yield takeLatest(FIND_FILES.REQUESTED, findFiles);
+    yield throttle(100, FIND_FILES.REQUESTED, findFiles);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
     yield takeEvery(UPLOAD.REQUESTED, upload);
 }
