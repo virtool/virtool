@@ -1,5 +1,5 @@
 import React from "react";
-import Moment from "moment";
+import { formatDistanceStrict } from "date-fns";
 import PropTypes from "prop-types";
 import { includes } from "lodash-es";
 
@@ -48,8 +48,7 @@ export class RelativeTime extends React.Component {
 
     getTimeString = () => {
         // Make the time string using Moment.js
-        const timeString = Moment(this.props.time).fromNow();
-
+        const timeString = formatDistanceStrict(new Date(this.props.time), Date.now(), { addSuffix: true });
         // It is possible that the relative time could be in the future if the browser time lags behind the server time.
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
         // alternative time string 'just now'.

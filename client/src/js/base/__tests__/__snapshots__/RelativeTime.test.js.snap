@@ -2,6 +2,6 @@
 
 exports[`<RelativeTime /> should render 1`] = `
 <span>
-  just now
+  in 28 days
 </span>
 `;
