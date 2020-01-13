@@ -50,11 +50,20 @@ def generate_csp_style_src(nonce):
     return f"style-src 'self' 'nonce-{nonce}' use.fontawesome.com;"
 
 
+def generate_nonce() -> str:
+    """
+    Generate a nonce.
+
+    :return: the nonce
+    """
+    return secrets.token_hex(20)
+
+
 @aiohttp.web.middleware
 async def middleware(req: aiohttp.web.Request, handler):
     # Allow the nonce to be accessed from request handlers and signals. The index handler will add the nonce to the
     # index.html template.
-    req["nonce"] = secrets.token_hex(20)
+    req["nonce"] = generate_nonce()
     return await handler(req)
 
 

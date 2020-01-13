@@ -1,73 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ProgressBar /> <AutoProgressBar /> renders correctly 1`] = `
+exports[`<AutoProgressBar /> should render when [this.state.fill!=0] 1`] = `
+<ProgressBar
+  affixed={true}
+  bsStyle="danger"
+  now={1}
+  onMoved={[Function]}
+/>
+`;
+
+exports[`<AutoProgressBar /> should render when [this.state.fill=0] 1`] = `
 <div
   className="progress-affixed-empty"
 />
 `;
 
-exports[`<ProgressBar /> applies given css properties to elements 1`] = `
+exports[`<ProgressBar /> should render 1`] = `
 <div
   className="progress progress-affixed"
-  style={
-    Object {
-      "paddingTop": "100px",
-    }
-  }
 >
   <div
     aria-valuemax="100"
     aria-valuemin="0"
-    aria-valuenow="0"
+    aria-valuenow="1"
     className="progress-bar progress-bar-danger"
     role="progressbar"
     style={
       Object {
-        "width": "0%",
-      }
-    }
-  />
-</div>
-`;
-
-exports[`<ProgressBar /> renders <div>, child <div> and optional children 1`] = `
-<div
-  className="progress"
->
-  <div
-    aria-valuemax="100"
-    aria-valuemin="0"
-    aria-valuenow="0"
-    className="progress-bar progress-bar-primary"
-    role="progressbar"
-    style={
-      Object {
-        "width": "0%",
+        "width": "1%",
       }
     }
   >
-    <div
-      id="test-child"
-    />
+    foo
   </div>
-</div>
-`;
-
-exports[`<ProgressBar /> renders correctly 1`] = `
-<div
-  className="progress"
->
-  <div
-    aria-valuemax="100"
-    aria-valuemin="0"
-    aria-valuenow="0"
-    className="progress-bar progress-bar-primary"
-    role="progressbar"
-    style={
-      Object {
-        "width": "0%",
-      }
-    }
-  />
 </div>
 `;

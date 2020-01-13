@@ -160,10 +160,11 @@ async def init_settings(app):
 
 async def init_sentry(app):
     if not app["settings"]["no_sentry"] and app["settings"].get("enable_sentry", True) and not app["settings"]["dev"]:
-        logger.info("Configured Sentry")
+        logger.info("Configuring Sentry")
         app["sentry"] = virtool.sentry.setup(app["version"])
 
-    logger.info("Skipped configuring Sentry")
+    else:
+        logger.info("Skipped configuring Sentry")
 
 
 async def init_dispatcher(app):
@@ -332,6 +333,17 @@ async def init_file_manager(app):
     await scheduler.spawn(app["file_manager"].run())
 
 
+async def init_paths(app):
+    if app["setup"] is None and app["settings"]["no_file_checks"] is False:
+        logger.info("Checking application data")
+        virtool.utils.ensure_data_dir(app["settings"]["data_path"])
+
+        try:
+            os.mkdir(app["settings"]["watch_path"])
+        except FileExistsError:
+            pass
+
+
 async def init_routes(app):
     if app["setup"] is None:
         logger.debug("Setting up routes")
@@ -416,6 +428,7 @@ def create_app(config):
         init_version,
         init_client_path,
         init_setup,
+        init_paths,
         init_http_client,
         init_routes,
         init_executors,

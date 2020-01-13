@@ -9,48 +9,32 @@ import pytest
 import virtool.utils
 
 
-@pytest.fixture
-def fake_dir(tmpdir):
-    file_1 = tmpdir.join("hello.txt")
-    file_2 = tmpdir.join("world.txt")
-
-    file_1.write("hello world")
-    file_2.write("this is a test file")
-
-    return tmpdir
-
-
 @pytest.fixture(scope="session")
 def alphanumeric():
     return "abcdefghijklmnopqrstuvwxyz1234567890"
 
 
-@pytest.fixture(scope="function")
-def randomizer():
-    source = ["abc123", "jkl932", "90r2ja", "87e9wa", "skk342", "skl1qq"]
+class TestAverageList:
 
-    def function():
-        return source.pop()
+    def test_default(self):
+        list1 = [2, 5, 6, 10, 14, 20]
+        list2 = [-1, 3, 0, 22, 12, 11]
 
-    return function
+        expected = [0.5, 4, 3, 16, 13, 15.5]
 
+        assert virtool.utils.average_list(list1, list2) == expected
 
-@pytest.fixture(scope="function")
-def collection():
-    return [
-        {
-            "id": 0,
-            "name": "lambert"
-        },
-        {
-            "id": 1,
-            "name": "winston"
-        },
-        {
-            "id": 2,
-            "name": "stuart"
-        },
-    ]
+    def test_mismatched(self):
+        with pytest.raises(TypeError):
+            virtool.utils.average_list([1, 3, 2, 4], [2, 3, 7])
+
+    def test_wrong_item_type(self):
+        with pytest.raises(TypeError):
+            virtool.utils.average_list([2, 5, 6], [8, "a", 5])
+
+    def test_wrong_arg_type(self):
+        with pytest.raises(TypeError):
+            virtool.utils.average_list([2, 5, 6], "a")
 
 
 def test_decompress_tgz(tmpdir):
@@ -67,58 +51,6 @@ def test_decompress_tgz(tmpdir):
     assert os.listdir(os.path.join(path, "de")) == ["virtool"]
 
     assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
-
-
-class TestRm:
-
-    def test_rm_file(self, fake_dir):
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt"}
-
-        path = os.path.join(str(fake_dir), "world.txt")
-
-        virtool.utils.rm(path)
-
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt"}
-
-    def test_rm_folder(self, fake_dir):
-        fake_dir.mkdir("dummy")
-
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt", "dummy"}
-
-        path = os.path.join(str(fake_dir), "dummy")
-
-        with pytest.raises(IsADirectoryError):
-            virtool.utils.rm(path)
-
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt", "dummy"}
-
-    def test_rm_folder_recursive(self, fake_dir):
-        fake_dir.mkdir("dummy_recursive")
-
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt", "dummy_recursive"}
-
-        path = os.path.join(str(fake_dir), "dummy_recursive")
-
-        virtool.utils.rm(path, recursive=True)
-
-        assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt"}
-
-
-def test_timestamp(mocker):
-    """
-    Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
-    zero.
-
-    """
-    m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
-
-    mocker.patch("arrow.utcnow", new=m)
-
-    timestamp = virtool.utils.timestamp()
-
-    assert isinstance(timestamp, datetime.datetime)
-
-    assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
 
 
 class TestRandomAlphanumeric:
@@ -143,24 +75,80 @@ class TestRandomAlphanumeric:
             assert all(l in alphanumeric for l in an)
 
 
-class TestAverageList:
+@pytest.mark.parametrize("recursive,expected", [
+    (True, {"foo.txt"}),
+    (False, {"foo.txt", "baz"})
+])
+def test_rm(recursive, expected, tmpdir):
+    """
+    Test that a file can be removed and that a folder can be removed when `recursive` is set to `True`.
 
-    def test_default(self):
-        list1 = [2, 5, 6, 10, 14, 20]
-        list2 = [-1, 3, 0, 22, 12, 11]
+    """
+    tmpdir.join("foo.txt").write("hello world")
+    tmpdir.join("bar.txt").write("hello world")
+    tmpdir.mkdir("baz")
 
-        expected = [0.5, 4, 3, 16, 13, 15.5]
+    assert set(os.listdir(str(tmpdir))) == {"foo.txt", "bar.txt", "baz"}
 
-        assert virtool.utils.average_list(list1, list2) == expected
+    virtool.utils.rm(os.path.join(str(tmpdir), "bar.txt"))
 
-    def test_mismatched(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([1, 3, 2, 4], [2, 3, 7])
+    if recursive:
+        virtool.utils.rm(
+            os.path.join(str(tmpdir), "baz"),
+            recursive=recursive
+        )
+    else:
+        with pytest.raises(IsADirectoryError):
+            virtool.utils.rm(
+                os.path.join(str(tmpdir), "baz"),
+                recursive=recursive
+            )
 
-    def test_wrong_item_type(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([2, 5, 6], [8, "a", 5])
+    assert set(os.listdir(str(tmpdir))) == expected
 
-    def test_wrong_arg_type(self):
-        with pytest.raises(TypeError):
-            virtool.utils.average_list([2, 5, 6], "a")
+
+@pytest.mark.parametrize("processes", [1, 4])
+@pytest.mark.parametrize("which", [None, "/usr/local/bin/pigz"])
+def test_should_use_pigz(processes, which, mocker):
+    mocker.patch("shutil.which", return_value=which)
+
+    result = virtool.utils.should_use_pigz(processes)
+
+    if processes == 4 and which is not None:
+        assert result is True
+    else:
+        assert result is False
+
+
+
+
+
+def test_timestamp(mocker):
+    """
+    Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
+    zero.
+
+    """
+    m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
+
+    mocker.patch("arrow.utcnow", new=m)
+
+    timestamp = virtool.utils.timestamp()
+
+    assert isinstance(timestamp, datetime.datetime)
+
+    assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
+
+
+@pytest.mark.parametrize("value,result", [
+    ("true", True),
+    ("1", True),
+    ("false", False),
+    ("0", False),
+])
+def test_to_bool(value, result):
+    """
+    Test that function converts expected input values correctly.
+
+    """
+    assert virtool.utils.to_bool(value) == result
