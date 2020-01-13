@@ -1,13 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RelativeTime /> renders 'just now' for browser lag future times 1`] = `
+exports[`<RelativeTime /> should render 1`] = `
 <span>
-  just now
-</span>
-`;
-
-exports[`<RelativeTime /> renders correctly 1`] = `
-<span>
-  2 months ago
+  in 28 days
 </span>
 `;

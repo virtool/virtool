@@ -12,14 +12,12 @@ export class ScrollList extends React.Component {
     }
 
     componentDidMount() {
-        this.getEventTarget().addEventListener("scroll", this.onScroll);
+        this.scrollList.current.addEventListener("scroll", this.onScroll);
     }
 
     componentWillUnmount() {
-        this.getEventTarget().removeEventListener("scroll", this.onScroll);
+        this.scrollList.current.removeEventListener("scroll", this.onScroll);
     }
-
-    getEventTarget = () => (this.props.isElement ? this.scrollList.current : window);
 
     getScrollRatio = () => {
         if (this.props.isElement) {
@@ -40,7 +38,7 @@ export class ScrollList extends React.Component {
     };
 
     render() {
-        const { documents, renderRow, page, pageCount, noContainer } = this.props;
+        const { documents, renderRow, page, pageCount } = this.props;
 
         const entries = map(documents, (item, index) => renderRow(index));
 
@@ -48,15 +46,6 @@ export class ScrollList extends React.Component {
 
         if (documents === null && page < pageCount) {
             loading = <LoadingPlaceholder margin="20px" />;
-        }
-
-        if (noContainer) {
-            return (
-                <React.Fragment>
-                    {entries}
-                    {loading}
-                </React.Fragment>
-            );
         }
 
         return (

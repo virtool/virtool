@@ -60,7 +60,12 @@ const NuVsToolbar = ({
     onSearch,
     onSelect
 }) => {
-    const handleChange = useCallback(e => onSearch(e.target.value, fuse), [id]);
+    const handleChange = useCallback(
+        e => {
+            onSearch(e.target.value, fuse);
+        },
+        [id]
+    );
 
     return (
         <StyledNuVsToolbar>
@@ -69,7 +74,11 @@ const NuVsToolbar = ({
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl onChange={handleChange} placeholder="Name or family" />
+                    <FormControl
+                        onChange={handleChange}
+                        onKeyDown={e => e.stopPropagation()}
+                        placeholder="Name or family"
+                    />
                 </InputGroup>
             </FormGroup>
             <SortDropdownButton sortKey={sortKey} onSelect={onSelect} />

@@ -1,17 +1,8 @@
 import React from "react";
-import { ListGroup } from "react-bootstrap";
+
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-    BoxGroup,
-    BoxGroupHeader,
-    BoxGroupSection,
-    ListGroupItem,
-    NoneFoundSection,
-    Panel,
-    RelativeTime,
-    Table
-} from "../../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFoundSection, RelativeTime, Table } from "../../../base";
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import ReferenceDetailHeader from "./Header";
@@ -19,18 +10,19 @@ import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
 
 const Clone = ({ source }) => (
-    <Panel>
-        <Panel.Heading>Clone Reference</Panel.Heading>
-        <ListGroup>
-            <ListGroupItem>
-                <strong>Source Reference</strong>
-                <span>
-                    {" / "}
-                    <a href={`/refs/${source.id}`}>{source.name}</a>
-                </span>
-            </ListGroupItem>
-        </ListGroup>
-    </Panel>
+    <BoxGroup>
+        <BoxGroupHeader>
+            <h2>Clone Reference</h2>
+        </BoxGroupHeader>
+
+        <BoxGroupSection>
+            <strong>Source Reference</strong>
+            <span>
+                {" / "}
+                <a href={`/refs/${source.id}`}>{source.name}</a>
+            </span>
+        </BoxGroupSection>
+    </BoxGroup>
 );
 
 const LatestBuild = ({ id, latestBuild }) => {

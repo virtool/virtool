@@ -19,7 +19,7 @@ async def test_unavailable(spawn_client):
 @pytest.mark.parametrize("error", (None, "auth_error", "connection_error", "name_error"))
 @pytest.mark.parametrize("ready", (True, False))
 @pytest.mark.parametrize("populated", (True, False))
-async def test_get_db(error, populated, ready, mocker, snapshot, spawn_client, setup_defaults):
+async def test_get_db(error, populated, ready, mocker, snapshot, spawn_client, setup_defaults, static_nonce):
     """
     Test that the HTML is rendered correctly given that db setup state.
 
@@ -45,7 +45,7 @@ async def test_get_db(error, populated, ready, mocker, snapshot, spawn_client, s
 @pytest.mark.parametrize("populated", (True, False))
 @pytest.mark.parametrize("ready", (True, False))
 @pytest.mark.parametrize("value", ("", "foo", "/foo/bar"))
-async def test_get_paths(path, populated, ready, value, snapshot, spawn_client):
+async def test_get_paths(path, populated, ready, value, snapshot, spawn_client, static_nonce):
     client = await spawn_client(setup=True)
 
     if populated:

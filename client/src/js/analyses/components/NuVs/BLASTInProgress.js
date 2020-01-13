@@ -1,4 +1,3 @@
-import Moment from "moment";
 import React from "react";
 import styled from "styled-components";
 import { Box, ExternalLink, Icon, Loader, RelativeTime } from "../../../base";

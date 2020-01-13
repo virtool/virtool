@@ -1,15 +1,6 @@
 import os
 import sys
 
-SUB_DIRS = [
-    "files",
-    "references",
-    "subtractions",
-    "samples",
-    "hmm",
-    "logs/jobs"
-]
-
 
 def check_empty(path: str) -> bool:
     """
@@ -42,22 +33,6 @@ def check_path(path: str) -> dict:
     except FileExistsError:
         if check_empty(path):
             return error_result("not_empty_error")
-
-
-def create_data_tree(path: str):
-    """
-    Create the folder structure for storing application data at `path`.
-
-    :param path: the path to create the data folder structure in
-
-    """
-    try:
-        os.mkdir(path)
-    except FileExistsError:
-        pass
-
-    for subdir in SUB_DIRS:
-        os.makedirs(os.path.join(path, subdir))
 
 
 def create_watch(path: str):
