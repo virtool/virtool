@@ -8,6 +8,7 @@ import { checkUpdates, updateRemoteReference } from "../../actions";
 import ReferenceDetailHeader from "./Header";
 import RemoteReference from "./Remote";
 import ReferenceDetailTabs from "./Tabs";
+import Targets from "./Targets/Targets";
 
 const Clone = ({ source }) => (
     <BoxGroup>
@@ -89,6 +90,7 @@ export const ReferenceManage = ({ detail }) => {
             </BoxGroup>
 
             <Contributors contributors={contributors} />
+            <Targets />
         </div>
     );
 };

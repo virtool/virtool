@@ -1,18 +1,22 @@
 import { ReferenceManage, mapStateToProps, mapDispatchToProps } from "../Manage";
 
 describe("<ReferenceManage />", () => {
-    const props = {
-        detail: {
-            id: "foo",
-            cloned_from: "bar",
-            contributors: "baz",
-            description: "boo",
-            latest_build: "Foo",
-            organism: "Bar",
-            remotes_from: "Baz",
-            data_type: "Boo"
-        }
-    };
+    let props;
+
+    beforeEach(() => {
+        props = {
+            detail: {
+                id: "foo",
+                cloned_from: "bar",
+                contributors: "baz",
+                description: "boo",
+                latest_build: "Foo",
+                organism: "Bar",
+                remotes_from: "Boo",
+                data_type: "Boo"
+            }
+        };
+    });
 
     it("should render", () => {
         const wrapper = shallow(<ReferenceManage {...props} />);

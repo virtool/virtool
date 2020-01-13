@@ -54,5 +54,6 @@ exports[`<ReferenceManage /> should render 1`] = `
   <Contributors
     contributors="baz"
   />
+  <Connect(Targets) />
 </div>
 `;
