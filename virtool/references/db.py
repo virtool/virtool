@@ -2,6 +2,7 @@ import asyncio
 import json.decoder
 import logging
 import os
+from typing import Union
 
 import aiohttp
 import pymongo
@@ -12,6 +13,7 @@ import virtool.db.utils
 import virtool.errors
 import virtool.github
 import virtool.history.db
+import virtool.history.utils
 import virtool.http.utils
 import virtool.otus.db
 import virtool.otus.utils
@@ -64,9 +66,19 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         inserted_otu_ids = list()
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await virtool.history.db.patch_to_version(self.db, source_otu_id, version)
+            _, patched, _ = await virtool.history.db.patch_to_version(
+                self.app,
+                source_otu_id,
+                version
+            )
 
-            otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
+            otu_id = await insert_joined_otu(
+                self.db,
+                patched,
+                created_at,
+                ref_id,
+                user_id
+            )
 
             inserted_otu_ids.append(otu_id)
 
@@ -83,7 +95,7 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "clone", user_id)
+            await insert_change(self.app, otu_id, "clone", user_id)
             await tracker.add(1)
 
     async def cleanup(self):
@@ -91,11 +103,17 @@ class CloneReferenceProcess(virtool.processes.process.Process):
 
         query = {"reference.id": ref_id}
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            **query,
+            "diff": "file"
+        })
+
         await asyncio.gather(
             self.db.references.delete_one({"_id": ref_id}),
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
-            self.db.sequences.delete_many(query)
+            self.db.sequences.delete_many(query),
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
 
@@ -193,7 +211,13 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "import", user_id)
+            await insert_change(
+                self.app,
+                otu_id,
+                "import",
+                user_id
+            )
+
             await tracker.add(1)
 
 
@@ -229,10 +253,18 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
             }
         })
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            "diff": "file",
+            "otu.id": {
+                "$in": unreferenced_otu_ids
+            }
+        })
+
         await asyncio.gather(
             self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
             self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}})
+            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
     async def remove_referenced_otus(self):
@@ -245,7 +277,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
 
         async for document in self.db.otus.find({"reference.id": ref_id}):
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 document["_id"],
                 user_id,
                 document=document,
@@ -341,7 +373,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
                 old = None
 
             await insert_change(
-                self.db,
+                self.app,
                 otu_id,
                 "update" if old else "remote",
                 self.context["user_id"],
@@ -363,7 +395,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
 
         for otu_id in to_delete:
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 otu_id,
                 self.context["user_id"]
             )
@@ -405,7 +437,7 @@ async def add_group_or_user(db, ref_id, field, data):
     if not document:
         return None
 
-    subdocument_id = data.get("group_id", None) or data["user_id"]
+    subdocument_id = data.get("group_id") or data["user_id"]
 
     if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
         raise virtool.errors.DatabaseError("group does not exist")
@@ -1078,7 +1110,9 @@ async def edit(db, ref_id: str, data: dict) -> dict:
     return virtool.utils.base_processor(document)
 
 
-async def export(db, ref_id, scope):
+async def export(app, ref_id, scope):
+    db = app["db"]
+
     otu_list = list()
 
     query = {
@@ -1090,7 +1124,7 @@ async def export(db, ref_id, scope):
 
         async for document in db.otus.find(query):
             _, joined, _ = await virtool.history.db.patch_to_version(
-                db,
+                app,
                 document["_id"],
                 document["last_indexed_version"]
             )
@@ -1099,12 +1133,21 @@ async def export(db, ref_id, scope):
 
     elif scope == "unbuilt":
         async for document in db.otus.find(query):
-            last_verified = await virtool.history.db.patch_to_verified(db, document["_id"])
+            last_verified = await virtool.history.db.patch_to_verified(
+                app,
+                document["_id"]
+            )
+
             otu_list.append(last_verified)
 
     else:
         async for document in db.otus.find(query):
-            current = await virtool.otus.db.join(db, document["_id"], document)
+            current = await virtool.otus.db.join(
+                db,
+                document["_id"],
+                document
+            )
+
             otu_list.append(current)
 
     return virtool.references.utils.clean_export_list(otu_list, scope == "remote")
@@ -1207,7 +1250,13 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     )
 
     for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "remote", user_id)
+        await insert_change(
+            app,
+            otu_id,
+            "remote",
+            user_id
+        )
+
         await progress_tracker.add(1)
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
@@ -1223,7 +1272,19 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     await virtool.processes.db.update(db, process_id, progress=1)
 
 
-async def insert_change(db, otu_id, verb, user_id, old=None):
+async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
+    """
+    Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU the change is for
+    :param verb: the change verb (eg. remove, insert)
+    :param user_id: the ID of the requesting user
+    :param old: the old joined OTU document
+
+    """
+    db = app["db"]
+
     # Join the otu document into a complete otu record. This will be used for recording history.
     joined = await virtool.otus.db.join(db, otu_id)
 
@@ -1234,14 +1295,14 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
     # Build a ``description`` field for the otu creation change document.
     description = f"{verb.capitalize()}{e}d {name}"
 
-    abbreviation = joined.get("abbreviation", None)
+    abbreviation = joined.get("abbreviation")
 
     # Add the abbreviation to the description if there is one.
     if abbreviation:
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        db,
+        app,
         verb,
         old,
         joined,

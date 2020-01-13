@@ -48,7 +48,6 @@ class ReferenceList extends React.Component {
                     page={this.props.page}
                     pageCount={this.props.pageCount}
                     renderRow={this.renderRow}
-                    noContainer
                 />
 
                 {installOfficialComponent}

@@ -45,7 +45,7 @@ async def get(req):
         return insufficient_rights()
 
     if document["ready"]:
-        document = await virtool.analyses.format.format_analysis(db, req.app["settings"], document)
+        document = await virtool.analyses.format.format_analysis(req.app, document)
 
     document["subtraction"] = {
         "id": sample["subtraction"]["id"]

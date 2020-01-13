@@ -24,6 +24,16 @@ exports[`<ReferenceManage /> should render 1`] = `
           Bar
         </td>
       </tr>
+      <tr>
+        <th>
+          DataType
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          Boo
+        </td>
+      </tr>
     </tbody>
   </Table>
   <Connect(Remote) />

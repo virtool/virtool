@@ -32,7 +32,7 @@ def evaluate_changes(data, document):
     if abbreviation == old_abbreviation:
         abbreviation = None
 
-    if schema == document.get("schema", None):
+    if schema == document.get("schema"):
         schema = None
 
     return name, abbreviation, schema

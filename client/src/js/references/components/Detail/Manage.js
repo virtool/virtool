@@ -1,17 +1,8 @@
 import React from "react";
-import { ListGroup } from "react-bootstrap";
+
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-    BoxGroup,
-    BoxGroupHeader,
-    BoxGroupSection,
-    ListGroupItem,
-    NoneFoundSection,
-    Panel,
-    RelativeTime,
-    Table
-} from "../../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFoundSection, RelativeTime, Table } from "../../../base";
 import { Contributors } from "../../../indexes/components/Contributors";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import ReferenceDetailHeader from "./Header";
@@ -20,18 +11,19 @@ import ReferenceDetailTabs from "./Tabs";
 import Targets from "./Targets/Targets";
 
 const Clone = ({ source }) => (
-    <Panel>
-        <Panel.Heading>Clone Reference</Panel.Heading>
-        <ListGroup>
-            <ListGroupItem>
-                <strong>Source Reference</strong>
-                <span>
-                    {" / "}
-                    <a href={`/refs/${source.id}`}>{source.name}</a>
-                </span>
-            </ListGroupItem>
-        </ListGroup>
-    </Panel>
+    <BoxGroup>
+        <BoxGroupHeader>
+            <h2>Clone Reference</h2>
+        </BoxGroupHeader>
+
+        <BoxGroupSection>
+            <strong>Source Reference</strong>
+            <span>
+                {" / "}
+                <a href={`/refs/${source.id}`}>{source.name}</a>
+            </span>
+        </BoxGroupSection>
+    </BoxGroup>
 );
 
 const LatestBuild = ({ id, latestBuild }) => {
@@ -52,7 +44,7 @@ const LatestBuild = ({ id, latestBuild }) => {
 };
 
 export const ReferenceManage = ({ detail }) => {
-    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from } = detail;
+    const { id, cloned_from, contributors, description, latest_build, organism, remotes_from, data_type } = detail;
 
     let remote;
     let clone;
@@ -80,6 +72,10 @@ export const ReferenceManage = ({ detail }) => {
                         <th>Organism</th>
                         <td className="text-capitalize">{organism}</td>
                     </tr>
+                    <tr>
+                        <th>DataType</th>
+                        <td className="text-capitalize">{data_type}</td>
+                    </tr>
                 </tbody>
             </Table>
 
@@ -99,11 +95,11 @@ export const ReferenceManage = ({ detail }) => {
     );
 };
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     detail: state.references.detail
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onCheckUpdates: refId => {
         dispatch(checkUpdates(refId));
     },

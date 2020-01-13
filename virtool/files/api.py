@@ -26,7 +26,7 @@ async def find(req):
         "reserved": False
     }
 
-    file_type = req.query.get("type", None)
+    file_type = req.query.get("type")
 
     db_query = dict()
 

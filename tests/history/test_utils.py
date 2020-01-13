@@ -1,6 +1,11 @@
+import json
+import os
+import sys
 import pytest
 
 import virtool.history.utils
+
+TEST_DIFF_PATH = os.path.join(sys.path[0], "tests", "test_files", "diff.json")
 
 
 def test_calculate_diff(test_otu_edit):
@@ -81,3 +86,187 @@ def test_compose_create_description(document, description):
 ])
 def test_compose_edit_description(name, abbreviation, old_abbreviation, schema, description):
     assert virtool.history.utils.compose_edit_description(name, abbreviation, old_abbreviation, schema) == description
+
+
+@pytest.mark.parametrize("has_abbreviation", [True, False])
+def test_compose_remove_description(has_abbreviation):
+    document = {
+        "name": "Tobacco mosaic virus"
+    }
+
+    if has_abbreviation:
+        document["abbreviation"] = "TMV"
+
+    description = virtool.history.utils.compose_remove_description(document)
+
+    expected = "Removed Tobacco mosaic virus"
+
+    if has_abbreviation:
+        expected += " (TMV)"
+
+    assert description == expected
+
+
+@pytest.mark.parametrize("version", [None, "3", 5])
+@pytest.mark.parametrize("missing", [None, "old", "new"])
+def test_derive_otu_information(version, missing):
+    """
+    Test that OTU information is derived correctly from the old and new versions of a joined OTU.
+
+    """
+    old = None
+    new = None
+
+    if missing != "old":
+        old = {
+            "_id": "foo",
+            "name": "Foo",
+            "reference": {
+                "id": "foo_ref"
+            }
+        }
+
+    if missing != "new":
+        new = {
+            "_id": "bar",
+            "name": "Bar",
+            "reference": {
+                "id": "bar_ref"
+            }
+        }
+
+        if version:
+            new["version"] = version
+
+    otu_id, otu_name, otu_version, ref_id = virtool.history.utils.derive_otu_information(
+        old,
+        new
+    )
+
+    if missing == "old":
+        assert otu_id == "bar"
+        assert otu_name == "Bar"
+        assert ref_id == "bar_ref"
+    else:
+        assert otu_id == "foo"
+        assert otu_name == "Foo"
+        assert ref_id == "foo_ref"
+
+    if missing == "new" or version is None:
+        assert otu_version == "removed"
+    elif version == "3":
+        assert otu_version == 3
+    else:
+        assert otu_version == 5
+
+
+def test_join_diff_path():
+    path = virtool.history.utils.join_diff_path(
+        "/data",
+        "foo",
+        "2"
+    )
+
+    assert path == "/data/history/foo_2.json"
+
+
+@pytest.mark.parametrize("is_datetime", [True, False])
+def test_json_encoder(is_datetime, static_time):
+    """
+    Test that the custom encoder correctly encodes `datetime` objects to ISO format dates.
+
+    """
+    o = "foo"
+
+    if is_datetime:
+        o = static_time.datetime
+
+    result = virtool.history.utils.json_encoder(o)
+
+    assert result == "foo" if o == "foo" else static_time.iso
+
+
+def test_json_object_hook(static_time):
+    """
+    Test that the hook function correctly decodes created_at ISO format fields to naive `datetime` objects.
+
+    """
+    o = {
+        "foo": "bar",
+        "created_at": static_time.iso
+    }
+
+    result = virtool.history.utils.json_object_hook(o)
+
+    assert result == {
+        "foo": "bar",
+        "created_at": static_time.datetime
+    }
+
+
+async def test_read_diff_file(mocker, snapshot):
+    """
+    Test that a diff is parsed to a `dict` correctly. ISO format dates must be converted to `datetime` objects.
+
+    """
+    m = mocker.patch("virtool.history.utils.join_diff_path", return_value=TEST_DIFF_PATH)
+
+    diff = await virtool.history.utils.read_diff_file("foo", "bar", "baz")
+
+    m.assert_called_with("foo", "bar", "baz")
+    snapshot.assert_match(diff)
+
+
+async def test_remove_diff_files(loop, tmpdir):
+    """
+    Test that diff files are removed correctly and the function can handle a non-existent diff file.
+
+    """
+    history_dir = tmpdir.mkdir("history")
+
+    history_dir.join("foo_0.json").write("hello world")
+    history_dir.join("foo_1.json").write("hello world")
+    history_dir.join("bar_0.json").write("hello world")
+    history_dir.join("bar_1.json").write("hello world")
+
+    id_list = [
+        "foo.0",
+        "foo.1",
+        "foo.2",
+        "bar.0"
+    ]
+
+    async def run_in_thread(func, *args):
+        return await loop.run_in_executor(None, func, *args),
+
+    app = {
+        "run_in_thread": run_in_thread,
+        "settings": {
+            "data_path": str(tmpdir)
+        }
+    }
+
+    await virtool.history.utils.remove_diff_files(
+        app,
+        id_list
+    )
+
+    assert os.listdir(str(history_dir)) == ["bar_1.json"]
+
+
+async def test_write_diff_file(snapshot, tmpdir):
+    """
+    Test that a diff file is written correctly.
+
+    """
+    tmpdir.mkdir("history")
+
+    with open(TEST_DIFF_PATH, "r") as f:
+        diff = json.load(f)
+
+    await virtool.history.utils.write_diff_file(str(tmpdir), "foo", "1", diff)
+
+    path = os.path.join(str(tmpdir), "history", "foo_1.json")
+
+    with open(path, "r") as f:
+        snapshot.assert_match(json.load(f))

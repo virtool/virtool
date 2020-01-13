@@ -7,9 +7,8 @@ import { SettingsCheckbox } from "./SettingsCheckbox";
 export const API = ({ enabled, onToggle }) => (
     <SettingsCheckbox enabled={enabled} onToggle={onToggle}>
         <h2>JSON API</h2>
-        <small>Enable API access for clients other than Virtool. See link to API documentation.</small>
-
-        <ExternalLink children="API documentation" href="https://www.virtool.ca/docs/developer/api_account" />
+        <small>Enable API access for clients other than Virtool. See </small>
+        <ExternalLink children="API documentation" href="https://www.virtool.ca/docs/developer/api_account" />.
     </SettingsCheckbox>
 );
 
