@@ -534,6 +534,7 @@ async def create_sequence(req):
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
         otu_id,
+        isolate_id,
         ref_id,
         data
     )
@@ -603,6 +604,7 @@ async def edit_sequence(req):
     message = await virtool.otus.sequences.check_segment_or_target(
         db,
         otu_id,
+        isolate_id,
         document["reference"]["id"],
         data
     )

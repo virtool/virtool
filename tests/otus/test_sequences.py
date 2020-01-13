@@ -5,7 +5,8 @@ import virtool.otus.sequences
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize("defined", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_check_segment_or_target(data_type, defined, missing, dbi):
+@pytest.mark.parametrize("used", [True, False])
+async def test_check_segment_or_target(data_type, defined, missing, used, dbi):
     """
     Test that issues with `segment` or `target` fields in sequence editing requests are detected.
 
@@ -29,6 +30,14 @@ async def test_check_segment_or_target(data_type, defined, missing, dbi):
         ]
     })
 
+    if used:
+        await dbi.sequences.insert_one({
+            "_id": "boo",
+            "otu_id": "foo",
+            "isolate_id": "baz",
+            "target": "CPN60" if used else "ITS2"
+        })
+
     data = dict()
 
     if data_type == "barcode":
@@ -42,6 +51,7 @@ async def test_check_segment_or_target(data_type, defined, missing, dbi):
     message = await virtool.otus.sequences.check_segment_or_target(
         dbi,
         "foo",
+        "baz",
         "bar",
         data
     )
@@ -56,6 +66,10 @@ async def test_check_segment_or_target(data_type, defined, missing, dbi):
 
     if not missing and not defined and data_type == "genome":
         assert message == "Segment RNA2 is not defined for the parent OTU"
+        return
+
+    if used and data_type == "barcode":
+        assert message == "Target CPN60 is already used in isolate baz"
         return
 
     assert message is None

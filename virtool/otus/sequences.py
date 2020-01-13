@@ -13,7 +13,7 @@ import virtool.otus.utils
 import virtool.utils
 
 
-async def check_segment_or_target(db, otu_id: str, ref_id: str, data: dict) -> Union[str, None]:
+async def check_segment_or_target(db, otu_id: str, isolate_id: str, ref_id: str, data: dict) -> Union[str, None]:
     """
     Returns an error message string if the segment or target provided in `data` is not compatible with the parent
     reference (target) or OTU (segment).
@@ -22,6 +22,7 @@ async def check_segment_or_target(db, otu_id: str, ref_id: str, data: dict) -> U
 
     :param db: the application database object
     :param otu_id: the ID of the parent OTU
+    :param isolate_id: the ID of the parent isolate
     :param ref_id: the ID of the parent reference
     :param data: the data dict containing a target or segment value
     :return: message or `None` if check passes
@@ -37,6 +38,11 @@ async def check_segment_or_target(db, otu_id: str, ref_id: str, data: dict) -> U
 
         if target not in {t["name"] for t in reference.get("targets", [])}:
             return f"Target {target} is not defined for the parent reference"
+
+        used_targets = await db.sequences.distinct("target", {"otu_id": otu_id, "isolate_id": isolate_id})
+
+        if target in used_targets:
+            return f"Target {target} is already used in isolate {isolate_id}"
 
     if reference["data_type"] == "genome" and data.get("segment"):
         schema = await virtool.db.utils.get_one_field(db.otus, "schema", otu_id) or list()
