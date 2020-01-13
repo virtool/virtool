@@ -52,7 +52,7 @@ exports[`<APIKey /> should render when [state.changed=true] 1`] = `
       mdHidden={true}
       xs={3}
     >
-      18-02-14
+      18-12-14
     </Col>
     <Col
       bsClass="col"
@@ -115,7 +115,7 @@ exports[`<APIKey /> should render when collapsed 1`] = `
       mdHidden={true}
       xs={3}
     >
-      18-02-14
+      18-12-14
     </Col>
     <Col
       bsClass="col"
@@ -178,7 +178,7 @@ exports[`<APIKey /> should render when expanded 1`] = `
       mdHidden={true}
       xs={3}
     >
-      18-02-14
+      18-12-14
     </Col>
     <Col
       bsClass="col"
