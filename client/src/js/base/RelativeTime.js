@@ -47,7 +47,6 @@ export class RelativeTime extends React.Component {
     }
 
     getTimeString = () => {
-        // Make the time string using Moment.js
         const timeString = formatDistanceStrict(new Date(this.props.time), Date.now(), { addSuffix: true });
         // It is possible that the relative time could be in the future if the browser time lags behind the server time.
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
