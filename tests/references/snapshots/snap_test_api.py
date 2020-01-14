@@ -219,37 +219,6 @@ snapshots['test_add_group_or_user[True-uvloop-user-None] 2'] = {
     ]
 }
 
-snapshots['test_edit[uvloop-None] 1'] = {
-    'contributors': [
-    ],
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'id': 'foo',
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Bar',
-    'otu_count': 0,
-    'unbuilt_change_count': 0,
-    'users': [
-        {
-            'id': 'bob',
-            'identicon': 'abc123'
-        }
-    ]
-}
-
-snapshots['test_edit[uvloop-None] 2'] = {
-    '_id': 'foo',
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'name': 'Bar',
-    'users': [
-        {
-            'id': 'bob'
-        }
-    ]
-}
-
 snapshots['test_edit[uvloop-None-genome] 1'] = {
     'contributors': [
     ],

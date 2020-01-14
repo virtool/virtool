@@ -534,6 +534,14 @@ async def edit(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
+    targets = data.get("targets")
+
+    if targets:
+        names = [t["name"] for t in targets]
+
+        if len(names) != len(set(names)):
+            return bad_request("The targets field may not contain duplicate names")
+
     document = await virtool.references.db.edit(
         db,
         ref_id,
