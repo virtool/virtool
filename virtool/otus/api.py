@@ -535,6 +535,7 @@ async def create_sequence(req):
         db,
         otu_id,
         isolate_id,
+        None,
         ref_id,
         data
     )
@@ -605,6 +606,7 @@ async def edit_sequence(req):
         db,
         otu_id,
         isolate_id,
+        sequence_id,
         document["reference"]["id"],
         data
     )
