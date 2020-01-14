@@ -24,7 +24,7 @@ describe("<RelativeTime />", () => {
         wrapper.setProps({ ...props, time: "2020-01-10T12:21:00.000000Z" });
         expect(wrapper.state()).toEqual({
             time: "2020-01-10T12:21:00.000000Z",
-            timeString: "3 days ago"
+            timeString: "4 days ago"
         });
     });
 
