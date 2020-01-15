@@ -5,7 +5,9 @@ import virtool.otus.sequences
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
 @pytest.mark.parametrize("defined", [True, False])
 @pytest.mark.parametrize("missing", [True, False])
-async def test_check_segment_or_target(data_type, defined, missing, dbi):
+@pytest.mark.parametrize("used", [True, False])
+@pytest.mark.parametrize("sequence_id", ["boo", "bad", None])
+async def test_check_segment_or_target(data_type, defined, missing, used, sequence_id, dbi):
     """
     Test that issues with `segment` or `target` fields in sequence editing requests are detected.
 
@@ -29,6 +31,13 @@ async def test_check_segment_or_target(data_type, defined, missing, dbi):
         ]
     })
 
+    await dbi.sequences.insert_one({
+        "_id": "boo",
+        "otu_id": "foo",
+        "isolate_id": "baz",
+        "target": "CPN60" if used else "ITS2"
+    })
+
     data = dict()
 
     if data_type == "barcode":
@@ -42,24 +51,31 @@ async def test_check_segment_or_target(data_type, defined, missing, dbi):
     message = await virtool.otus.sequences.check_segment_or_target(
         dbi,
         "foo",
+        "baz",
+        sequence_id,
         "bar",
         data
     )
 
-    if data_type == "barcode" and missing:
-        assert message == "The 'target' field is required for barcode references"
-        return
-
-    if not defined and data_type == "barcode":
-        assert message == "Target ITS2 is not defined for the parent reference"
-        return
-
-    if not missing and not defined and data_type == "genome":
+    # The only case where an error message should be returned for a genome-type reference.
+    if data_type == "genome" and not missing and not defined:
         assert message == "Segment RNA2 is not defined for the parent OTU"
         return
 
+    if data_type == "barcode":
+        if sequence_id is not None and missing:
+            assert message == "The 'target' field is required for barcode references"
+            return
+
+        if not missing and not defined:
+            assert message == "Target ITS2 is not defined for the parent reference"
+            return
+
+        if sequence_id != "boo" and not missing and used and data_type == "barcode":
+            assert message == "Target CPN60 is already used in isolate baz"
+            return
+
     assert message is None
-    return
 
 
 @pytest.mark.parametrize("host", [True, False])

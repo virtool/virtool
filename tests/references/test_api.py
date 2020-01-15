@@ -232,7 +232,7 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize("error", [None, "403", "404", "422"])
+@pytest.mark.parametrize("error", [None, "403", "404", "422", "400"])
 async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
@@ -272,11 +272,22 @@ async def test_edit(data_type, error, mocker, snapshot, spawn_client, resp_is):
             }
         ]
 
+    if error == "400":
+        data["targets"].append({
+            "name": "CPN60",
+            "description": "This has a duplicate name",
+            "required": False
+        })
+
     can_modify = error != "403"
 
     mocker.patch("virtool.references.db.check_right", make_mocked_coro(return_value=can_modify))
 
     resp = await client.patch("/api/refs/foo", data)
+
+    if error == "400":
+        assert await resp_is.bad_request(resp, "The targets field may not contain duplicate names")
+        return
 
     if error == "422":
         assert await resp_is.invalid_input(resp, {
