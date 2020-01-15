@@ -29,10 +29,13 @@ describe("<RelativeTime />", () => {
 
     it("componentDidUpdate() should update timeString when [prevProps.time !== this.props.time] and [newTimeString !== this.state.timeString]", () => {
         const wrapper = shallow(<RelativeTime {...props} />);
-        wrapper.setProps({ ...props, time: "2020-01-10T12:21:00.000000Z" });
+        const time = "2019-01-10T12:21:00.000000Z";
+
+        wrapper.setProps({ ...props, time });
+
         expect(wrapper.state()).toEqual({
-            time: "2020-01-10T12:21:00.000000Z",
-            timeString: "in 9 months"
+            time,
+            timeString: "3 months ago"
         });
     });
 
