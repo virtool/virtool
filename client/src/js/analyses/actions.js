@@ -17,7 +17,8 @@ import {
     TOGGLE_FILTER_SEQUENCES,
     SET_SEARCH_IDS,
     SET_ANALYSIS_SORT_KEY,
-    TOGGLE_RESULT_EXPANDED
+    TOGGLE_RESULT_EXPANDED,
+    CLEAR_ANALYSES
 } from "../app/actionTypes";
 import { simpleActionCreator } from "../utils/utils";
 
@@ -104,6 +105,7 @@ export const getAnalysis = analysisId => ({
     analysisId
 });
 
+export const clearAnalyses = simpleActionCreator(CLEAR_ANALYSES);
 export const clearAnalysis = simpleActionCreator(CLEAR_ANALYSIS);
 
 /**

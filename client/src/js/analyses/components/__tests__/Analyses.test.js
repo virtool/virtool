@@ -8,6 +8,7 @@ describe("<Analyses />", () => {
             sampleId: "foo",
             loading: false,
             onFindAnalyses: jest.fn(),
+            onClearAnalyses: jest.fn(),
             onFindHmms: jest.fn(),
             onListReadyIndexes: jest.fn()
         };
@@ -24,10 +25,17 @@ describe("<Analyses />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call API functions on mount", () => {
+    it("should call dispatch functions on mount", () => {
         shallow(<Analyses {...props} />);
         expect(props.onFindAnalyses).toHaveBeenCalledWith("foo");
         expect(props.onFindHmms).toHaveBeenCalled();
         expect(props.onListReadyIndexes).toHaveBeenCalled();
+    });
+
+    it("should call onClearAnalyses() on unmount", () => {
+        const wrapper = shallow(<Analyses {...props} />);
+        expect(props.onClearAnalyses).not.toHaveBeenCalled();
+        wrapper.unmount();
+        expect(props.onClearAnalyses).toHaveBeenCalled();
     });
 });
