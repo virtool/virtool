@@ -27,6 +27,7 @@ async def migrate(app):
     await virtool.caches.migrate.migrate_caches(app)
     await migrate_files(db)
     await migrate_groups(db)
+    await migrate_jobs(db)
     await migrate_sessions(db)
     await migrate_status(db, app["version"])
     await migrate_subtraction(db)
@@ -72,11 +73,10 @@ async def migrate_groups(db):
         }, silent=True)
 
 
-async def migrate_jobs(app):
+async def migrate_jobs(db):
     logger.info(" • jobs")
-    motor_client = app["db"].motor_client
+    await virtool.jobs.db.delete_zombies(db)
 
-    await virtool.jobs.db.delete_zombies(motor_client)
 
 async def migrate_sessions(db):
     logger.info(" • sessions")

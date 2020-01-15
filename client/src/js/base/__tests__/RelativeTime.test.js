@@ -1,30 +1,41 @@
 import { RelativeTime } from "../RelativeTime";
 
+const RealDate = Date;
+
 describe("<RelativeTime />", () => {
     let props;
 
     beforeEach(() => {
         props = {
-            time: "2020-02-10T17:11:00.000000Z"
+            time: "2019-02-10T17:11:00.000000Z"
         };
     });
 
+    beforeAll(() => {
+        Date.now = jest.fn(() => new Date("2019-04-22T10:20:30Z"));
+    });
+
     it("should render", () => {
+        // formatDistanceStrict.mockReturnValue("2 days ago");
+        // Date.now = jest.fn(() => new Date("2019-04-22T10:20:30Z"));
         const wrapper = shallow(<RelativeTime {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("componentDidMount() should update this.interval", () => {
         const wrapper = shallow(<RelativeTime {...props} />);
-        expect(wrapper.instance().interval).toBe(7);
+        expect(wrapper.instance().interval).toBe(8);
     });
 
     it("componentDidUpdate() should update timeString when [prevProps.time !== this.props.time] and [newTimeString !== this.state.timeString]", () => {
         const wrapper = shallow(<RelativeTime {...props} />);
-        wrapper.setProps({ ...props, time: "2020-01-10T12:21:00.000000Z" });
+        const time = "2019-01-10T12:21:00.000000Z";
+
+        wrapper.setProps({ ...props, time });
+
         expect(wrapper.state()).toEqual({
-            time: "2020-01-10T12:21:00.000000Z",
-            timeString: "3 days ago"
+            time,
+            timeString: "3 months ago"
         });
     });
 
@@ -41,5 +52,9 @@ describe("<RelativeTime />", () => {
         window.clearInterval = jest.fn();
         wrapper.unmount();
         expect(window.clearInterval).toHaveBeenCalledWith(14);
+    });
+
+    afterAll(() => {
+        Date = RealDate;
     });
 });
