@@ -3,6 +3,7 @@ import os
 from cerberus import Validator
 
 import virtool.files.db
+import virtool.uploads.db
 import virtool.samples.db
 import virtool.db.utils
 import virtool.http.routes
@@ -73,6 +74,8 @@ async def upload(req):
     file_id = document["id"]
 
     await naive_writer(req, file_id)
+
+    await virtool.uploads.db.finish_upload(req.app, file_id)
 
     headers = {
         "Location": f"/api/files/{file_id}"

@@ -27,7 +27,7 @@ const JobStepTimestamp = ({ timestamp }) => (
         <Icon name="clock" />
         <span>{format(new Date(timestamp), "hh:mm:ss")}</span>
         <Icon name="calendar" />
-        <span>{format(new Date(timestamp), "YYYY-MM-DD")}</span>
+        <span>{format(new Date(timestamp), "yyyy-MM-dd")}</span>
     </StyledJobStepTimestamp>
 );
 
