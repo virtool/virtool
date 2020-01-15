@@ -4,7 +4,7 @@ import { Switch, Route } from "react-router-dom";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 
-import { findAnalyses } from "../actions";
+import { clearAnalyses, findAnalyses } from "../actions";
 import { LoadingPlaceholder } from "../../base";
 import AnalysesList from "./List";
 import AnalysisDetail from "./Detail";
@@ -14,6 +14,10 @@ export class Analyses extends React.Component {
         this.props.onFindAnalyses(this.props.sampleId);
         this.props.onFindHmms();
         this.props.onListReadyIndexes();
+    }
+
+    componentWillUnmount() {
+        this.props.onClearAnalyses();
     }
 
     render() {
@@ -36,6 +40,9 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
+    onClearAnalyses: () => {
+        dispatch(clearAnalyses());
+    },
     onFindAnalyses: sampleId => {
         dispatch(findAnalyses(sampleId, "", 1));
     },
