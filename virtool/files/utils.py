@@ -1,5 +1,10 @@
 import os
-import aionotify
+
+try:
+    import aionotify
+except (ImportError, OSError):
+    aionotify = None
+
 
 #: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
 FILE_EXTENSION_FILTER = (
