@@ -7,7 +7,7 @@ import sys
 
 try:
     import aionotify
-except ImportError:
+except (ImportError, OSError):
     aionotify = None
 
 import virtool.files.db
