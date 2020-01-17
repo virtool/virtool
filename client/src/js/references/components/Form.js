@@ -8,7 +8,7 @@ const ReferenceFormInputs = styled.div`
     grid-template-columns: 1fr ${props => (props.mode === "create" ? "1fr" : "")};
 `;
 
-export const ReferenceForm = ({ errorFile, errorSelect, name, onChange, errorName, description, organism, mode }) => {
+export const ReferenceForm = ({ description, organism, mode, name, errorFile, errorName, errorSelect, onChange }) => {
     let errorComponent;
     let organismComponent;
 

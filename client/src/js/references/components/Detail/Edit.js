@@ -75,7 +75,16 @@ export class EditReference extends React.Component {
                 </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <ReferenceForm state={this.state} onChange={this.handleChange} />
+                        <ReferenceForm
+                            description={this.state.description}
+                            organism={this.state.organism}
+                            mode={this.state.mode}
+                            name={this.state.name}
+                            errorFile={this.state.errorFile}
+                            errorName={this.state.errorSelect}
+                            errorSelect={this.state.errorSelect}
+                            onChange={this.handleChange}
+                        />
                     </Modal.Body>
 
                     <Modal.Footer>
