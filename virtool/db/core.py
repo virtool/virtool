@@ -75,6 +75,12 @@ class Collection:
 
         return document
 
+    async def apply_processor(self, document):
+        if self.processor:
+            return await self.processor(self._collection.database, document)
+
+        return virtool.utils.base_processor(document)
+
     async def dispatch_conditionally(self, document: dict, operation: str, silent: bool):
         """
         Dispatch updates if the collection is not `silent` and the `silent` parameter is `False`. Applies the collection
@@ -90,7 +96,7 @@ class Collection:
             await self.dispatch(
                 self.name,
                 operation,
-                self.processor(projected)
+                await self.apply_processor(projected)
             )
 
     async def delete_many(self, query: dict, silent: bool = False) -> pymongo.results.DeleteResult:
@@ -199,7 +205,11 @@ class Collection:
         )
 
         if not self.silent:
-            await self.dispatch(self.name, "update", self.processor(replacement))
+            await self.dispatch(
+                self.name,
+                "update",
+                await self.apply_processor(replacement)
+            )
 
         return document
 
@@ -210,7 +220,11 @@ class Collection:
 
         if not silent and not self.silent:
             async for document in self._collection.find({"_id": {"$in": updated_ids}}, projection=self.projection):
-                await self.dispatch(self.name, "update", self.processor(document))
+                await self.dispatch(
+                    self.name,
+                    "update",
+                    await self.apply_processor(document)
+                )
 
         return update_result
 
@@ -225,7 +239,11 @@ class Collection:
             document = await self.find_one(query, projection=self.projection)
 
         if not silent and not self.silent and document:
-            await self.dispatch(self.name, "update", self.processor(document))
+            await self.dispatch(
+                self.name,
+                "update",
+                await self.apply_processor(document)
+            )
 
         return update_result
 
@@ -252,10 +270,9 @@ class DB:
         self.kinds = self.bind_collection("kinds", silent=True)
         self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
         self.processes = self.bind_collection("processes")
-        self.references = self.bind_collection("references", projection=virtool.references.db.PROJECTION)
+        self.references = self.bind_collection("references", processor=virtool.references.db.processor, projection=virtool.references.db.PROJECTION)
         self.samples = self.bind_collection("samples", projection=virtool.samples.db.LIST_PROJECTION)
-        self.settings = self.bind_collection("settings", projection=virtool.settings.db.PROJECTION,
-                                             processor=lambda d: d)
+        self.settings = self.bind_collection("settings", projection=virtool.settings.db.PROJECTION)
         self.sequences = self.bind_collection("sequences")
         self.sessions = self.bind_collection("sessions", silent=True)
         self.status = self.bind_collection("status")
@@ -267,7 +284,7 @@ class DB:
             name,
             self.motor_client[name],
             self.dispatch,
-            processor or virtool.utils.base_processor,
+            processor,
             projection,
             silent
         )
