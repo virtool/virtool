@@ -288,3 +288,9 @@ class DB:
             projection,
             silent
         )
+
+    def get_processor(self, collection_name):
+        return self.__getattribute__(collection_name).apply_processor
+
+    def get_projection(self, collection_name):
+        return self.__getattribute__(collection_name).projection
