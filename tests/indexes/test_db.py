@@ -40,6 +40,77 @@ async def test_get_next_version(empty, has_ref, test_indexes, dbi):
     assert await virtool.indexes.db.get_next_version(dbi, "hxn167" if has_ref else "foobar") == expected
 
 
+async def test_processor(mocker, dbi):
+    await dbi.history.insert_many([
+        {
+            "_id": "foo.0",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "foo.1",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "bar.0",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "bar.1",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "bar.2",
+            "index": {
+                "id": "baz"
+            },
+            "otu": {
+                "id": "bar"
+            }
+        },
+        {
+            "_id": "far.0",
+            "index": {
+                "id": "boo"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        }
+    ])
+
+    document = {
+        "_id": "baz"
+    }
+
+    result = await virtool.indexes.db.processor(dbi, document)
+
+    assert result == {
+        "id": "baz",
+        "change_count": 5,
+        "modified_otu_count": 2
+    }
+
+
 async def test_tag_unbuilt_changes(dbi, create_mock_history):
     await create_mock_history(False)
 

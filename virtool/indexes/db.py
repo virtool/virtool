@@ -1,6 +1,8 @@
+import asyncio
 import pymongo
 
 import virtool.history.db
+import virtool.utils
 from virtool.api import paginate
 
 PROJECTION = [
@@ -16,6 +18,33 @@ PROJECTION = [
     "reference",
     "version"
 ]
+
+
+async def processor(db, document):
+    """
+    A processor for index documents. Adds computed data about the index.
+
+    :param db: the application database client
+    :param document: the document to be processed
+    :return: the processed document
+
+    """
+    document = virtool.utils.base_processor(document)
+
+    query = {
+        "index.id": document["id"]
+    }
+
+    change_count, otu_ids = await asyncio.gather(
+        db.history.count(query),
+        db.history.distinct("otu.id", query)
+    )
+
+    return {
+        **document,
+        "change_count": change_count,
+        "modified_otu_count": len(otu_ids)
+    }
 
 
 async def find(db, req_query, ref_id=None):
@@ -36,8 +65,7 @@ async def find(db, req_query, ref_id=None):
         sort="version"
     )
 
-    for document in data["documents"]:
-        document.update(await get_modification_stats(db, document["id"]))
+    data["documents"] = [await processor(db, d) for d in data["documents"]]
 
     data.update(await get_unbuilt_stats(db, ref_id))
 
