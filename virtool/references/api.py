@@ -127,6 +127,9 @@ async def get_release(req):
     if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
+    if not await db.references.count({"_id": ref_id, "remotes_from": {"$exists": True}}):
+        return bad_request("Not a remote reference")
+
     try:
         release = await virtool.references.db.fetch_and_update_release(req.app, ref_id)
     except aiohttp.ClientConnectorError:
