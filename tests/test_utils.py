@@ -37,6 +37,15 @@ class TestAverageList:
             virtool.utils.average_list([2, 5, 6], "a")
 
 
+@pytest.mark.parametrize("document,result", [
+    (None, None),
+    ({"_id": "foo"}, {"id": "foo"}),
+    ({"id": "foo"}, {"id": "foo"}),
+])
+def test_base_processor(document, result):
+    assert virtool.utils.base_processor(document) == result
+
+
 def test_decompress_tgz(tmpdir):
     path = str(tmpdir)
 
@@ -118,9 +127,6 @@ def test_should_use_pigz(processes, which, mocker):
         assert result is True
     else:
         assert result is False
-
-
-
 
 
 def test_timestamp(mocker):

@@ -50,7 +50,11 @@ def base_processor(document: Union[dict, None]) -> Union[dict, None]:
         return None
 
     document = dict(document)
-    document["id"] = document.pop("_id")
+
+    try:
+        document["id"] = document.pop("_id")
+    except KeyError:
+        pass
 
     return document
 
