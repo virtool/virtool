@@ -94,6 +94,9 @@ def get_processor(interface: str):
     if interface == "jobs":
         return virtool.jobs.db.processor
 
+    if interface == "references":
+        return virtool.references.db.processor
+
     return virtool.utils.base_processor
 
 

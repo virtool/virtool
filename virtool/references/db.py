@@ -422,13 +422,40 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
         })
 
 
-def processor(document):
+async def processor(db, document: dict) -> dict:
+    """
+    Process a reference document. This adds a number of fields derived from other collections.
+
+    :param db: the application database client
+    :param document: the document to process
+    :return: the processed document
+
+    """
+    try:
+        ref_id = document["_id"]
+    except KeyError:
+        ref_id = document["id"]
+
+    latest_build, otu_count, unbuilt_count = await asyncio.gather(
+        virtool.references.db.get_latest_build(db, ref_id),
+        virtool.references.db.get_otu_count(db, ref_id),
+        virtool.references.db.get_unbuilt_count(db, ref_id)
+    )
+
+    document.update({
+        "latest_build": latest_build,
+        "otu_count": otu_count,
+        "unbuilt_change_count": unbuilt_count
+    })
+
     try:
         document["installed"] = document.pop("updates")[-1]
     except (KeyError, IndexError):
         pass
 
-    return virtool.utils.base_processor(document)
+    document["id"] = ref_id
+
+    return document
 
 
 async def add_group_or_user(db, ref_id, field, data):

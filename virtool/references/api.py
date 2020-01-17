@@ -66,18 +66,7 @@ async def find(req):
         projection=virtool.references.db.PROJECTION
     )
 
-    for d in data["documents"]:
-        latest_build, otu_count, unbuilt_count = await asyncio.gather(
-            virtool.references.db.get_latest_build(db, d["id"]),
-            virtool.references.db.get_otu_count(db, d["id"]),
-            virtool.references.db.get_unbuilt_count(db, d["id"])
-        )
-
-        d.update({
-            "latest_build": latest_build,
-            "otu_count": otu_count,
-            "unbuilt_change_count": unbuilt_count
-        })
+    data["documents"] = [await virtool.references.db.processor(db, d) for d in data["documents"]]
 
     return json_response(data)
 
@@ -111,7 +100,7 @@ async def get(req):
         "users": users
     })
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(await virtool.references.db.processor(db, document))
 
 
 @routes.get("/api/refs/{ref_id}/release")
