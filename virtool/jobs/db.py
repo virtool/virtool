@@ -128,7 +128,7 @@ async def get_waiting_and_running_ids(db):
     return [a["_id"] async for a in cursor]
 
 
-def processor(document: dict) -> dict:
+async def processor(db, document: dict) -> dict:
     """
     The default document processor for job documents. Transforms projected job documents to a structure that can be
     dispatches to clients.
@@ -141,8 +141,6 @@ def processor(document: dict) -> dict:
     :param document: a document to process
     :return: a processed document
     """
-    document["id"] = document.pop("_id")
-
     status = document.pop("status")
 
     last_update = status[-1]
@@ -154,4 +152,4 @@ def processor(document: dict) -> dict:
         "progress": status[-1]["progress"]
     })
 
-    return document
+    return virtool.utils.base_processor(document)
