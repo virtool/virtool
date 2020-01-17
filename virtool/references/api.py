@@ -62,7 +62,6 @@ async def find(req):
         req.query,
         sort="name",
         base_query=base_query,
-        processor=virtool.utils.base_processor,
         projection=virtool.references.db.PROJECTION
     )
 

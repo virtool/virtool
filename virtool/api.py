@@ -214,8 +214,15 @@ def invalid_query(errors):
     }, status=422)
 
 
-async def paginate(collection, db_query, url_query, sort=None, projection=None, base_query=None,
-                   processor=virtool.utils.base_processor, reverse=False):
+async def paginate(
+        collection,
+        db_query,
+        url_query,
+        sort=None,
+        projection=None,
+        base_query=None,
+        reverse=False
+):
     try:
         page = int(url_query["page"])
     except (KeyError, ValueError):
@@ -251,7 +258,7 @@ async def paginate(collection, db_query, url_query, sort=None, projection=None, 
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
-        documents = [processor(d) for d in await asyncio.shield(cursor.to_list(per_page))]
+        documents = [await collection.apply_processor(d) for d in await asyncio.shield(cursor.to_list(per_page))]
 
     total_count = await collection.count(base_query)
 
