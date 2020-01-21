@@ -17,7 +17,8 @@ import {
     TOGGLE_FILTER_SEQUENCES,
     SET_SEARCH_IDS,
     SET_ANALYSIS_SORT_KEY,
-    TOGGLE_RESULT_EXPANDED
+    TOGGLE_RESULT_EXPANDED,
+    CLEAR_ANALYSES
 } from "../app/actionTypes";
 import { insert, update, remove, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
@@ -171,6 +172,12 @@ export default function analysesReducer(state = initialState, action) {
         case GET_ANALYSIS.SUCCEEDED: {
             return updateIdLists(state, action);
         }
+
+        case CLEAR_ANALYSES:
+            return {
+                ...state,
+                documents: null
+            };
 
         case CLEAR_ANALYSIS:
             return {
