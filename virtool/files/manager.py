@@ -5,26 +5,33 @@ import re
 import shutil
 import sys
 
-import aionotify
+try:
+    import aionotify
+except (ImportError, OSError):
+    aionotify = None
 
 import virtool.files.db
 import virtool.files.utils
 import virtool.utils
 
-FILES_FLAGS = (
+FILES_FLAGS = None
+WATCH_FLAGS = None
+
+if aionotify:
+    FILES_FLAGS = (
         aionotify.Flags.CLOSE_WRITE |
         aionotify.Flags.CREATE |
         aionotify.Flags.DELETE |
         aionotify.Flags.MOVED_TO |
         aionotify.Flags.MOVED_FROM
-)
+    )
+
+    WATCH_FLAGS = (
+            aionotify.Flags.CLOSE_WRITE |
+            aionotify.Flags.MOVED_TO
+    )
 
 PATH_RE = re.compile("Error setting up watch on (.*) with flags ([0-9]+):")
-
-WATCH_FLAGS = (
-        aionotify.Flags.CLOSE_WRITE |
-        aionotify.Flags.MOVED_TO
-)
 
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
 TYPE_NAME_DICT = {
@@ -76,12 +83,20 @@ class Manager:
         self.watch_path = watch_path
         self.clean_interval = clean_interval
 
-        self.watcher = aionotify.Watcher()
+        try:
+            self.watcher = aionotify.Watcher()
+        except AttributeError:
+            self.watcher = None
 
-        self.watcher.watch(self.files_path, FILES_FLAGS, alias="files")
-        self.watcher.watch(self.watch_path, WATCH_FLAGS, alias="watch")
+        if self.watcher:
+            self.watcher.watch(self.files_path, FILES_FLAGS, alias="files")
+            self.watcher.watch(self.watch_path, WATCH_FLAGS, alias="watch")
 
     async def run(self):
+        if self.watcher is None:
+            logger.warning("File manager disabled because of host OS incompatibility")
+            return
+
         coros = [
             self.watch()
         ]
