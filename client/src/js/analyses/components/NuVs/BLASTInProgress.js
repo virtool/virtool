@@ -33,9 +33,7 @@ const StyledRIDTiming = styled.div`
 export const RIDTiming = ({ interval, lastCheckedAt }) => {
     if (lastCheckedAt) {
         const nextCheckAt = addSeconds(new Date(lastCheckedAt), interval);
-        const relativeNext = formatDistanceStrict(new Date(nextCheckAt), Date.now(), {
-            addSuffix: true
-        });
+        const relativeNext = formatDistanceStrict(new Date(nextCheckAt), Date.now());
 
         return (
             <StyledRIDTiming>
