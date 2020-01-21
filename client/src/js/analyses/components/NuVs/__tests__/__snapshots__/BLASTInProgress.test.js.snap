@@ -7,6 +7,6 @@ exports[`<RIDTiming> should render 1`] = `
     time="2019-02-10T17:11:00.000000Z"
   />
   . Checking again in 
-  11 months ago
+  7 seconds
 </BLASTInProgress__StyledRIDTiming>
 `;
