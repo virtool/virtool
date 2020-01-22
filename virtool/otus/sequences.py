@@ -34,7 +34,7 @@ async def check_segment_or_target(db, otu_id: str, isolate_id: str, sequence_id:
     if reference["data_type"] == "barcode":
         target = data.get("target")
 
-        if target is None and sequence_id is not None:
+        if sequence_id is None and target is None:
             return "The 'target' field is required for barcode references"
 
         if target:

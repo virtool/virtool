@@ -63,7 +63,7 @@ async def test_check_segment_or_target(data_type, defined, missing, used, sequen
         return
 
     if data_type == "barcode":
-        if sequence_id is not None and missing:
+        if sequence_id is None and missing:
             assert message == "The 'target' field is required for barcode references"
             return
 
