@@ -50,12 +50,7 @@ export const IsolateSequences = props => {
                 <strong>Sequences</strong>
                 <Badge>{props.sequences.length}</Badge>
                 {props.canModify ? (
-                    <a
-                        href="#"
-                        onClick={() => {
-                            props.showAddSequence(props.targetName);
-                        }}
-                    >
+                    <a href="#" onClick={props.showAddSequence}>
                         Add Sequence
                     </a>
                 ) : null}
@@ -110,8 +105,8 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = dispatch => ({
-    showAddSequence: targetName => {
-        dispatch(showAddSequence(targetName));
+    showAddSequence: () => {
+        dispatch(showAddSequence());
     },
 
     showEditSequence: sequenceId => {

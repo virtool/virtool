@@ -241,7 +241,7 @@ const mapStateToProps = state => {
     return {
         sequences: state.otus.activeIsolate.sequences,
         show: !!state.otus.addSequence,
-        targetName: state.otus.addSequence,
+        targetName: state.otus.targetName,
         otuId: state.otus.detail.id,
         isolateId: state.otus.activeIsolateId,
         error: get(state, "errors.ADD_SEQUENCE_ERROR", ""),

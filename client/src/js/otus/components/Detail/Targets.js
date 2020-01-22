@@ -1,10 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { differenceWith, filter, get, isEqual, map, find } from "lodash-es";
+import { get, map, find } from "lodash-es";
 import { BoxGroupSection } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
-import { getActiveIsolate, getTargetName, getSequences } from "../../selectors";
+import { getActiveIsolate, getSequences } from "../../selectors";
 import { Target } from "./Target";
 import AddSequence from "./AddSequence";
 import Sequence from "./Sequence";
@@ -55,53 +55,31 @@ export const IsolateTargets = props => {
             </BoxGroupSection>
 
             {targetComponents}
-            <EditSequence
-                otuId={props.otuId}
-                isolateId={props.activeIsolateId}
-                schema={props.schema}
-                error={props.error}
-            />
+            <EditSequence otuId={props.otuId} isolateId={props.activeIsolateId} error={props.error} />
 
-            <RemoveSequence
-                otuId={props.otuId}
-                isolateId={props.activeIsolateId}
-                isolateName={props.isolateName}
-                schema={props.schema}
-            />
+            <RemoveSequence otuId={props.otuId} isolateId={props.activeIsolateId} isolateName={props.isolateName} />
 
-            <AddSequence targetName={props.targetName} />
+            <AddSequence />
         </div>
     );
 };
 
 const mapStateToProps = state => {
     const activeIsolateId = state.otus.activeIsolateId;
-    const schema = state.otus.detail.schema;
 
     const activeIsolate = getActiveIsolate(state);
     const sequences = getSequences(state);
 
-    const targetName = getTargetName(state);
-
-    const originalSchema = map(schema, "name");
-    const sequencesWithSegment = filter(sequences, "segment");
-    const segmentsInUse = map(sequencesWithSegment, "segment");
-    const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
-
     return {
-        remainingSchema,
         activeIsolateId,
         sequences,
-        schema,
-        targetName,
+
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),
         canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
         error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", ""),
-        targets: state.references.detail.targets,
-        schema: state.otus.detail.schema,
-        targetName: state.otus.addSequence
+        targets: state.references.detail.targets
     };
 };
 
