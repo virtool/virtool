@@ -1,4 +1,4 @@
-import { differenceWith, filter, find, get, indexOf, isEqual, map, sortBy } from "lodash-es";
+import { differenceWith, filter, get, isEqual, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
@@ -6,35 +6,11 @@ import styled from "styled-components";
 import { Badge, BoxGroupSection, NoneFoundSection } from "../../../base";
 import { checkRefRight, formatIsolateName } from "../../../utils/utils";
 import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
+import { getActiveIsolate, getTargetName, getSequences } from "../../selectors";
 import AddSequence from "./AddSequence";
 import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
 import Sequence from "./Sequence";
-
-const getInitialState = props => {
-    const originalSchema = map(props.schema, "name");
-    const sequencesWithSegment = filter(props.sequences, "segment");
-    const segmentsInUse = map(sequencesWithSegment, "segment");
-    const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
-
-    let index;
-
-    const sortedSequences = sortBy(props.sequences, [
-        entry => {
-            index = indexOf(originalSchema, entry.segment);
-            if (index !== -1) {
-                return index;
-            }
-            return originalSchema.length;
-        }
-    ]);
-
-    return {
-        schema: remainingSchema,
-        sequences: sortedSequences,
-        error: props.error
-    };
-};
 
 const IsolateSequencesHeader = styled(BoxGroupSection)`
     align-items: center;
@@ -50,90 +26,76 @@ const IsolateSequencesHeader = styled(BoxGroupSection)`
     }
 `;
 
-class IsolateSequences extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(this.props);
+export const IsolateSequences = props => {
+    let sequenceComponents;
+
+    if (props.sequences.length) {
+        sequenceComponents = map(props.sequences, sequence => (
+            <Sequence
+                key={sequence.id}
+                active={sequence.accession === props.activeSequenceId}
+                canModify={props.canModify}
+                showEditSequence={props.showEditSequence}
+                showRemoveSequence={props.showRemoveSequence}
+                {...sequence}
+            />
+        ));
+    } else {
+        sequenceComponents = <NoneFoundSection noun="sequences" />;
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.sequences !== nextProps.sequences || (!prevState.error && nextProps.error)) {
-            return getInitialState(nextProps);
-        }
-        if (prevState.error && !nextProps.error) {
-            return { error: "" };
-        }
-        return null;
-    }
+    return (
+        <React.Fragment>
+            <IsolateSequencesHeader>
+                <strong>Sequences</strong>
+                <Badge>{props.sequences.length}</Badge>
+                {props.canModify ? (
+                    <a href="#" onClick={props.showAddSequence}>
+                        Add Sequence
+                    </a>
+                ) : null}
+            </IsolateSequencesHeader>
 
-    render() {
-        let sequenceComponents;
+            <React.Fragment>{sequenceComponents}</React.Fragment>
 
-        if (this.state.sequences.length) {
-            sequenceComponents = map(this.state.sequences, sequence => (
-                <Sequence
-                    key={sequence.id}
-                    active={sequence.accession === this.props.activeSequenceId}
-                    canModify={this.props.canModify}
-                    showEditSequence={this.props.showEditSequence}
-                    showRemoveSequence={this.props.showRemoveSequence}
-                    {...sequence}
-                />
-            ));
-        } else {
-            sequenceComponents = <NoneFoundSection noun="sequences" />;
-        }
+            <AddSequence schema={props.schema} />
 
-        return (
-            <React.Fragment>
-                <IsolateSequencesHeader>
-                    <strong>Sequences</strong>
-                    <Badge>{this.props.sequences.length}</Badge>
-                    {this.props.canModify ? (
-                        <a href="#" onClick={this.props.showAddSequence}>
-                            Add Sequence
-                        </a>
-                    ) : null}
-                </IsolateSequencesHeader>
+            <EditSequence
+                otuId={props.otuId}
+                isolateId={props.activeIsolateId}
+                schema={props.schema}
+                error={props.error}
+            />
 
-                <React.Fragment>{sequenceComponents}</React.Fragment>
-
-                <AddSequence schema={this.state.schema} />
-
-                <EditSequence
-                    otuId={this.props.otuId}
-                    isolateId={this.props.activeIsolateId}
-                    schema={this.state.schema}
-                    error={this.props.error}
-                />
-
-                <RemoveSequence
-                    otuId={this.props.otuId}
-                    isolateId={this.props.activeIsolateId}
-                    isolateName={this.props.isolateName}
-                    schema={this.state.schema}
-                />
-            </React.Fragment>
-        );
-    }
-}
+            <RemoveSequence
+                otuId={props.otuId}
+                isolateId={props.activeIsolateId}
+                isolateName={props.isolateName}
+                schema={props.schema}
+            />
+        </React.Fragment>
+    );
+};
 
 const mapStateToProps = state => {
-    let sequences = null;
-    let activeIsolate = null;
-
     const activeIsolateId = state.otus.activeIsolateId;
     const schema = state.otus.detail.schema;
 
-    if (state.otus.detail.isolates.length) {
-        activeIsolate = find(state.otus.detail.isolates, { id: activeIsolateId });
-        sequences = activeIsolate.sequences;
-    }
+    const activeIsolate = getActiveIsolate(state);
+    const sequences = getSequences(state);
+    const targetName = getTargetName(state);
+
+    const originalSchema = map(schema, "name");
+    const sequencesWithSegment = filter(sequences, "segment");
+    const segmentsInUse = map(sequencesWithSegment, "segment");
+    const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
 
     return {
+        remainingSchema,
         activeIsolateId,
         sequences,
         schema,
+        targetName,
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),

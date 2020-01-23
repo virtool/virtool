@@ -8,6 +8,7 @@ import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../a
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import IsolateSequences from "./Sequences";
+import IsolateTargets from "./Targets";
 
 const IsolateDetailBox = styled(BoxGroup)`
     margin: 0;
@@ -79,6 +80,13 @@ export class IsolateDetail extends React.Component {
             );
         }
 
+        const isolateComponent =
+            this.props.dataType === "barcode" ? (
+                <IsolateTargets />
+            ) : (
+                <IsolateSequences canModify={this.props.canModify} />
+            );
+
         return (
             <div>
                 <EditIsolate
@@ -107,7 +115,7 @@ export class IsolateDetail extends React.Component {
                             />
                         </div>
                     </IsolateDetailHeader>
-                    <IsolateSequences canModify={this.props.canModify} />
+                    {isolateComponent}
                 </IsolateDetailBox>
             </div>
         );
