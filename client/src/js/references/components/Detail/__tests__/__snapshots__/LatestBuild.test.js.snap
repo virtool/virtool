@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<LatestBuild /> should render when [latestBuild!=null] 1`] = `
+<Box__BoxGroupSection>
+  <strong>
+    <Link
+      to="/refs/foo/indexes/bar"
+    >
+      Index 
+      1.0
+    </Link>
+  </strong>
+  <span>
+     / Created 
+    <RelativeTime
+      time="2"
+    />
+     by 
+    baz
+  </span>
+</Box__BoxGroupSection>
+`;
+
+exports[`<LatestBuild /> should render when [latestBuild=null] 1`] = `
+<NoneFoundSection
+  noun="index builds"
+/>
+`;
