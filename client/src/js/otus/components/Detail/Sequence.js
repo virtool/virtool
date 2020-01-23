@@ -34,6 +34,10 @@ const SequenceHeaderDefinition = styled.span`
 
 const SequenceTable = styled(Table)`
     margin-top: 10px;
+    table-layout: fixed;
+    th {
+        width: 130px;
+    }
 `;
 
 class Sequence extends React.Component {
