@@ -167,10 +167,10 @@ async def format_nuvs(db, settings, document):
     return document
 
 
-async def format_analysis_to_excel(db, settings, document):
+async def format_analysis_to_excel(app, document):
     depths = calculate_median_depths(document)
 
-    formatted = await format_analysis(db, settings, document)
+    formatted = await format_analysis(app, document)
 
     output = io.BytesIO()
 
@@ -215,10 +215,10 @@ async def format_analysis_to_excel(db, settings, document):
     return output.getvalue()
 
 
-async def format_analysis_to_csv(db, settings, document):
+async def format_analysis_to_csv(app, document):
     depths = calculate_median_depths(document)
 
-    formatted = await format_analysis(db, settings, document)
+    formatted = await format_analysis(app, document)
 
     output = io.StringIO()
 
