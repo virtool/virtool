@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceManage /> should render 1`] = `
+exports[`<ReferenceManage /> should render when [props.cloned_from={ Bar: 'Bee' }] 1`] = `
 <div>
   <Connect(ReferenceDetailHeader) />
   <Connect(ReferenceDetailTabs) />
@@ -38,7 +38,11 @@ exports[`<ReferenceManage /> should render 1`] = `
   </Table>
   <Connect(Remote) />
   <Clone
-    source="bar"
+    source={
+      Object {
+        "Bar": "Bee",
+      }
+    }
   />
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
@@ -47,8 +51,77 @@ exports[`<ReferenceManage /> should render 1`] = `
       </h2>
     </Box__BoxGroupHeader>
     <LatestBuild
-      latestBuild="Foo"
-      refId="foo"
+      id="foo"
+      latestBuild={
+        Object {
+          "Foo": "fee",
+        }
+      }
+    />
+  </Box__BoxGroup>
+  <Contributors
+    contributors="baz"
+  />
+  <Connect(Targets) />
+</div>
+`;
+
+exports[`<ReferenceManage /> should render when [props.remotes_from=null] 1`] = `
+<div>
+  <Connect(ReferenceDetailHeader) />
+  <Connect(ReferenceDetailTabs) />
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Description
+        </th>
+        <td>
+          boo
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Organism
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          Bar
+        </td>
+      </tr>
+      <tr>
+        <th>
+          DataType
+        </th>
+        <td
+          className="text-capitalize"
+        >
+          Boo
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Clone
+    source={
+      Object {
+        "bar": "bee",
+      }
+    }
+  />
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        Latest Index Build
+      </h2>
+    </Box__BoxGroupHeader>
+    <LatestBuild
+      id="foo"
+      latestBuild={
+        Object {
+          "Foo": "fee",
+        }
+      }
     />
   </Box__BoxGroup>
   <Contributors

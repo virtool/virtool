@@ -5,20 +5,25 @@ describe("<ReferenceManage />", () => {
 
     beforeEach(() => {
         props = {
-            detail: {
-                id: "foo",
-                cloned_from: "bar",
-                contributors: "baz",
-                description: "boo",
-                latest_build: "Foo",
-                organism: "Bar",
-                remotes_from: "Boo",
-                data_type: "Boo"
-            }
+            id: "foo",
+            cloned_from: { bar: "bee" },
+            contributors: "baz",
+            description: "boo",
+            latest_build: { Foo: "fee" },
+            organism: "Bar",
+            remotes_from: "Boo",
+            data_type: "Boo"
         };
     });
 
-    it("should render", () => {
+    it("should render when [props.remotes_from=null]", () => {
+        props.remotes_from = null;
+        const wrapper = shallow(<ReferenceManage {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render when [props.cloned_from={ Bar: 'Bee' }]", () => {
+        props.cloned_from = { Bar: "Bee" };
         const wrapper = shallow(<ReferenceManage {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -28,12 +33,28 @@ describe("mapStateToProps()", () => {
     it("should return props", () => {
         const state = {
             references: {
-                detail: { foo: "bar" }
+                detail: {
+                    id: "foo",
+                    cloned_from: { bar: "bee" },
+                    contributors: "baz",
+                    description: "boo",
+                    latest_build: { Foo: "fee" },
+                    organism: "Bar",
+                    remotes_from: "Boo",
+                    data_type: "Boo"
+                }
             }
         };
         const props = mapStateToProps(state);
         expect(props).toEqual({
-            detail: { foo: "bar" }
+            id: "foo",
+            cloned_from: { bar: "bee" },
+            contributors: "baz",
+            description: "boo",
+            latest_build: { Foo: "fee" },
+            organism: "Bar",
+            remotes_from: "Boo",
+            data_type: "Boo"
         });
     });
 });
