@@ -1,32 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Alert /> should render 1`] = `
-<StyledComponent
-  forwardedComponent={
-    Object {
-      "$$typeof": Symbol(react.forward_ref),
-      "attrs": Array [],
-      "componentStyle": ComponentStyle {
-        "componentId": "Alert-whi9a-0",
-        "isStatic": false,
-        "rules": Array [
-          "align-items:",
-          [Function],
-          ";border:1px solid grey;border-left-width:4px;display:",
-          [Function],
-          ";margin-bottom:16px;padding:15px;i.fas:first-child{color:currentColor;padding-right:5px;}",
-        ],
-      },
-      "displayName": "Alert",
-      "foldedComponentIds": Array [],
-      "render": [Function],
-      "styledComponentId": "Alert-whi9a-0",
-      "target": [Function],
-      "toString": [Function],
-      "warnTooManyClasses": [Function],
-      "withComponent": [Function],
-    }
-  }
-  forwardedRef={null}
+<UnstyledAlert
+  className="Alert-whi9a-0 bksvTi"
 />
 `;
