@@ -1,3 +1,4 @@
+import { PUSH_STATE } from "../../../app/actionTypes";
 import { mapStateToProps, mapDispatchToProps, OTUsList } from "../List";
 
 describe("<OTUsList />", () => {
@@ -63,17 +64,10 @@ describe("mapDispatchToProps", () => {
     it("should return onHide in props", () => {
         props.onHide();
         expect(dispatch).toHaveBeenCalledWith({
-            payload: {
-                args: [
-                    {
-                        state: {
-                            createOTU: false
-                        }
-                    }
-                ],
-                method: "push"
-            },
-            type: "@@router/CALL_HISTORY_METHOD"
+            type: PUSH_STATE,
+            state: {
+                createOTU: false
+            }
         });
     });
 

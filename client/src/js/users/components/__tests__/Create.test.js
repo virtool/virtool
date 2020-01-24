@@ -1,6 +1,4 @@
-jest.mock("connected-react-router");
-
-import { push } from "connected-react-router";
+import { PUSH_STATE } from "../../../app/actionTypes";
 import { CreateUser, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateUser />", () => {
@@ -157,13 +155,8 @@ describe("mapDispatchToProps", () => {
         });
     });
     it("should return onHide() in props", () => {
-        push.mockReturnValue({
-            type: "PUSH"
-        });
-
-        result.onHide({ ...window.location, state: { createUser: false } });
-
-        expect(dispatch).toHaveBeenCalledWith({ type: "PUSH" });
+        result.onHide();
+        expect(dispatch).toHaveBeenCalledWith({ type: PUSH_STATE, state: { createUser: false } });
     });
 
     it("should return onClearError() in props", () => {

@@ -1,4 +1,5 @@
 import { push } from "connected-react-router";
+import { PUSH_STATE } from "../../../app/actionTypes";
 import { Releases, mapDispatchToProps, mapStateToProps } from "../Releases";
 
 describe("<Releases />", () => {
@@ -52,6 +53,9 @@ describe("mapDispatchToProps()", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         props.onShowInstall();
-        expect(dispatch).toHaveBeenCalledWith(push({ state: { install: true } }));
+        expect(dispatch).toHaveBeenCalledWith({
+            type: PUSH_STATE,
+            state: { install: true }
+        });
     });
 });
