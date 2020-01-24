@@ -70,8 +70,7 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
         }
 
         m_format_analysis.assert_called_with(
-            client.db,
-            client.app["settings"],
+            client.app,
             document
         )
 

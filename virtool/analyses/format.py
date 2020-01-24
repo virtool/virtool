@@ -244,16 +244,18 @@ async def format_analysis_to_csv(app, document):
     return output.getvalue()
 
 
-async def format_analysis(db: virtool.db.core.DB, settings: dict, document: dict) -> dict:
+async def format_analysis(app, document: dict) -> dict:
     """
     Format an analysis document to be returned by the API.
 
-    :param db: the application database client
-    :param settings: the application settings object
+    :param app: the application object
     :param document: the analysis document to format
     :return: a formatted document
 
     """
+    db = app["db"]
+    settings = app["settings"]
+
     algorithm = document.get("algorithm")
 
     if algorithm == "nuvs":
