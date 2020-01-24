@@ -1,6 +1,6 @@
-import { push } from "connected-react-router";
 import { get } from "lodash-es";
 import { all, put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import {
     CREATE_INDEX,
     FIND_INDEXES,
@@ -67,7 +67,7 @@ export function* listReadyIndexes(action) {
 
 export function* createIndex(action) {
     const extraFunc = {
-        closeModal: put(push({ state: { rebuild: false } }))
+        closeModal: put(pushState({ rebuild: false }))
     };
     yield setPending(apiCall(indexesAPI.create, action, CREATE_INDEX, {}, extraFunc));
 }

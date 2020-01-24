@@ -1,10 +1,10 @@
-import { push } from "connected-react-router";
 import { find, includes } from "lodash-es";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
+import { pushState } from "../../app/actions";
 import { Checkbox, Flex, FlexItem, Icon, ListGroupItem, Loader, RelativeTime } from "../../base";
 import { selectSample } from "../actions";
 
@@ -134,7 +134,7 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         dispatch(selectSample(ownProps.id));
     },
     onQuickAnalyze: () => {
-        dispatch(push({ state: { createAnalysis: [ownProps.id] } }));
+        dispatch(pushState({ createAnalysis: [ownProps.id] }));
     }
 });
 
