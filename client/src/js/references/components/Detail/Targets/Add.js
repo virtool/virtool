@@ -49,8 +49,13 @@ export class AddTarget extends React.Component {
 
     handleChange = e => {
         this.setState({
-            [e.target.name]: e.target.value,
-            required: e.target.checked
+            [e.target.name]: e.target.value
+        });
+    };
+
+    handleClick = () => {
+        this.setState({
+            required: !this.state.required
         });
     };
 
@@ -70,9 +75,8 @@ export class AddTarget extends React.Component {
                 <Modal.Header closeButton>
                     <span className="text-capitalize">Add target</span>
                 </Modal.Header>
-
-                <Modal.Body>
-                    <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
                         <TargetForm
                             onChange={this.handleChange}
                             name={this.state.name}
@@ -80,14 +84,15 @@ export class AddTarget extends React.Component {
                             length={this.state.length}
                             required={this.state.required}
                             errorName={this.errorName}
+                            onClick={this.handleClick}
                         />
-                        <Modal.Footer>
-                            <Button type="submit" icon="save" bsStyle="primary">
-                                Submit
-                            </Button>
-                        </Modal.Footer>
-                    </form>
-                </Modal.Body>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button type="submit" icon="save" bsStyle="primary">
+                            Submit
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }

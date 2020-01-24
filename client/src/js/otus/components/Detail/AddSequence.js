@@ -16,12 +16,13 @@ import { addSequence, hideOTUModal } from "../../actions";
 
 import { clearError } from "../../../errors/actions";
 
-import { Button, Icon, InputError, Loader } from "../../../base";
+import { Button, Icon, InputError, Loader, Box } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
 import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
 import SequenceForm from "./SequenceForm";
 import { SegmentCol } from "./SegmentCol";
+import { TargetComponent } from "./Target";
 
 const getInitialState = () => ({
     id: "",
@@ -209,18 +210,21 @@ class AddSequence extends React.Component {
             </StyledAccessionSegmentCol>
         );
 
-        let targetName;
         if (this.props.dataType === "barcode") {
             AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
-            targetName = this.props.targetName;
         }
+        const targetComponent = this.props.targets ? (
+            <Box>
+                <TargetComponent {...this.props} />
+            </Box>
+        ) : null;
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
-                <Modal.Body>{targetName}</Modal.Body>
+                <Modal.Body>{targetComponent}</Modal.Body>
                 <SequenceForm
                     host={this.state.host}
                     definition={this.state.definition}
@@ -240,7 +244,7 @@ class AddSequence extends React.Component {
 const mapStateToProps = state => {
     return {
         sequences: state.otus.activeIsolate.sequences,
-        show: !!state.otus.addSequence,
+        show: state.otus.addSequence,
         targetName: state.otus.targetName,
         otuId: state.otus.detail.id,
         isolateId: state.otus.activeIsolateId,

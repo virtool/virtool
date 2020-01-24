@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { map, filter } from "lodash-es";
+import { map, remove } from "lodash-es";
 import { BoxGroupHeader, BoxGroup } from "../../../../base";
 import { editReference } from "../../../actions";
 import AddTarget from "./Add";
@@ -42,8 +42,10 @@ export class Targets extends React.Component {
     };
 
     handleRemove = name => {
+        const targetsRemove = [...this.props.targets];
+        remove(targetsRemove, { name });
         const update = {
-            targets: filter([...this.props.targets], { name })
+            targets: targetsRemove
         };
 
         this.props.onRemove(this.props.refId, update);
@@ -62,15 +64,16 @@ export class Targets extends React.Component {
         ));
 
         return (
-            <div>
+            <BoxGroup>
                 <StyledAddTargets>
-                    Targets
+                    <h2>Targets</h2>
                     {addButton}
                 </StyledAddTargets>
-                <BoxGroup>{targetComponents}</BoxGroup>
+
+                <div>{targetComponents}</div>
                 <AddTarget show={this.state.showAdd} onHide={this.handleHide} />
                 <EditTarget show={this.state.showEdit} onHide={this.handleHide} activeName={this.state.activeName} />
-            </div>
+            </BoxGroup>
         );
     }
 }

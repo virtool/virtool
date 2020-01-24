@@ -5,16 +5,7 @@ import { Collapse } from "react-bootstrap";
 import styled from "styled-components";
 import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
-
-const TargetField = styled.div`
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row;
-`;
-
-const Name = styled.div`
-    font-weight: bold;
-`;
+import { TargetComponent } from "./Target";
 
 const SequenceHeader = styled.div`
     align-items: center;
@@ -136,12 +127,7 @@ class Sequence extends React.Component {
                 <tr>
                     <th>Target</th>
                     <td>
-                        <TargetField>
-                            <Name>{this.props.name}</Name>
-                            <span>{this.props.required}</span>
-                            <span>{this.props.length}</span>
-                        </TargetField>
-                        {this.props.description}
+                        <TargetComponent {...this.props} />
                     </td>
                 </tr>
             );
