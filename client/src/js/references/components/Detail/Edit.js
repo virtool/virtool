@@ -1,12 +1,12 @@
 import React from "react";
-import { connect } from "react-redux";
-import { push } from "connected-react-router";
 import { Modal } from "react-bootstrap";
-import { ReferenceForm } from "../Form";
-import { editReference } from "../../actions";
-import { clearError } from "../../../errors/actions";
+import { connect } from "react-redux";
+import { pushState } from "../../../app/actions";
 import { SaveButton } from "../../../base";
-import { routerLocationHasState, getTargetChange } from "../../../utils/utils";
+import { clearError } from "../../../errors/actions";
+import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
+import { editReference } from "../../actions";
+import { ReferenceForm } from "../Form";
 
 const getInitialState = detail => ({
     name: detail.name,
@@ -98,7 +98,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({ state: { editReference: false } }));
+        dispatch(pushState({ editReference: false }));
     },
 
     onClearError: error => {

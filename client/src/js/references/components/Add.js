@@ -1,14 +1,14 @@
 import React from "react";
-import styled from "styled-components";
-import { connect } from "react-redux";
-import { push } from "connected-react-router";
 import { Modal } from "react-bootstrap";
-import { routerLocationHasState } from "../../utils/utils";
+import { connect } from "react-redux";
+import styled from "styled-components";
+import { pushState } from "../../app/actions";
 import { TabLink, Tabs } from "../../base";
+import { routerLocationHasState } from "../../utils/utils";
+import CloneReference from "./Clone";
+import CreateReference from "./Create";
 
 import ImportReference from "./Import";
-import CreateReference from "./Create";
-import CloneReference from "./Clone";
 
 const AddReferenceTabs = styled(Tabs)`
     margin-bottom: 0;
@@ -104,7 +104,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({ state: { newReference: false } }));
+        dispatch(pushState({ newReference: false }));
     }
 });
 

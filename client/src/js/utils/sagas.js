@@ -3,10 +3,11 @@
  *
  * @module sagaUtils
  */
-import { push } from "connected-react-router";
+import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
 import { matchPath } from "react-router-dom";
 import { all, put } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 
@@ -78,7 +79,7 @@ export function* pushFindTerm(term, contains) {
     const url = createFindURL(term);
 
     if (!contains || includes(url.pathname, contains)) {
-        yield put(push(url.pathname + url.search));
+        yield put(replace(url.pathname + url.search));
     }
 }
 
@@ -89,7 +90,7 @@ export function* pushFindTerm(term, contains) {
  * @param update {object} a new state object
  */
 export function* pushHistoryState(update) {
-    yield put(push({ ...window.location, state: update }));
+    yield put(pushState(update));
 }
 
 /**

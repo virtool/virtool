@@ -1,12 +1,12 @@
-import React from "react";
 import { get, pick } from "lodash-es";
-import { push } from "connected-react-router";
+import React from "react";
+import { Col, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Row, Col, Modal } from "react-bootstrap";
+import { pushState } from "../../app/actions";
+import { InputError, SaveButton } from "../../base";
+import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
-import { clearError } from "../../errors/actions";
-import { SaveButton, InputError } from "../../base";
 
 const getInitialState = ({ name, isolate, host, locale }) => ({
     name: name || "",
@@ -131,7 +131,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({ state: { showEdit: false } }));
+        dispatch(pushState({ showEdit: false }));
     },
 
     onEdit: (sampleId, update) => {
