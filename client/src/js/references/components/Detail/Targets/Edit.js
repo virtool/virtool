@@ -26,7 +26,6 @@ export class EditTarget extends React.Component {
 
         const targets = this.props.targets;
         const initialTarget = this.props.initialTarget;
-
         const newTarget = [...this.props.targets];
         newTarget.splice(findIndex(targets, initialTarget), 1, {
             name: this.state.name,
@@ -90,7 +89,7 @@ export class EditTarget extends React.Component {
     }
 }
 
-const mapStateToProps = (state, ownProps) => {
+export const mapStateToProps = (state, ownProps) => {
     const activeName = ownProps.activeName;
 
     let initialTarget = {};
@@ -115,7 +114,7 @@ const mapStateToProps = (state, ownProps) => {
     };
 };
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (refId, update) => {
         dispatch(editReference(refId, update));
     }

@@ -19,7 +19,7 @@ const getInitialState = () => ({
     showEdit: false
 });
 
-const StyledAddTargetsButton = styled.a`
+export const StyledAddTargetsButton = styled.a`
     cursor: pointer;
 `;
 
@@ -78,13 +78,13 @@ export class Targets extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     ...state.references.detail.targets,
     refId: state.references.detail.id,
     targets: state.references.detail.targets
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onRemove: (refId, update) => {
         dispatch(editReference(refId, update));
     }

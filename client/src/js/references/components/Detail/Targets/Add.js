@@ -98,7 +98,7 @@ export class AddTarget extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     names: state.references.detail.name,
     dataType: state.references.detail.data_type,
     documents: state.references.documents,
@@ -106,7 +106,7 @@ const mapStateToProps = state => ({
     targets: state.references.detail.targets
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onSubmit: (refId, update) => {
         dispatch(editReference(refId, update));
     }
