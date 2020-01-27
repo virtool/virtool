@@ -1,7 +1,8 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
+
 import {
     BoxGroup,
     BoxGroupHeader,
@@ -14,6 +15,21 @@ import {
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { changePassword } from "../actions";
+
+const FormButton = styled(BoxGroupSection)`
+    height: 310px;
+`;
+
+const DateButton = styled.div`
+    margin-top: 17px;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+`;
+
+const Date = styled.div`
+    color: ${props => props.theme.color.greyDark};
+`;
 
 const getInitialState = props => ({
     oldPassword: "",
@@ -109,7 +125,7 @@ export class ChangePassword extends React.Component {
                 <BoxGroupHeader>
                     <h2>Password</h2>
                 </BoxGroupHeader>
-                <BoxGroupSection>
+                <FormButton>
                     <form onSubmit={this.onSubmit}>
                         <InputError
                             label="Old Password"
@@ -135,19 +151,14 @@ export class ChangePassword extends React.Component {
                             onChange={this.handleChange}
                             error={errorConfirmPassword}
                         />
-
-                        <div style={{ marginTop: "20px" }}>
-                            <Row>
-                                <Col xs={12} md={6} className="text-muted">
-                                    Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                                </Col>
-                                <Col xs={12} md={6}>
-                                    <SaveButton altText="Change" pullRight />
-                                </Col>
-                            </Row>
-                        </div>
+                        <DateButton>
+                            <Date>
+                                Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                            </Date>
+                            <SaveButton altText="Change" pullRight />
+                        </DateButton>
                     </form>
-                </BoxGroupSection>
+                </FormButton>
             </BoxGroup>
         );
     }

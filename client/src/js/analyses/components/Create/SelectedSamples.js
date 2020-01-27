@@ -2,11 +2,10 @@ import React from "react";
 import styled from "styled-components";
 import { map } from "lodash-es";
 
-import { ListGroup } from "react-bootstrap";
 import { ListGroupItem } from "../../../base";
 import { SelectedSamplesLabel } from "./SelectedSamplesLabel";
 
-const SelectedSamplesListGroupContainer = styled(ListGroup)`
+const SelectedSamplesListGroupContainer = styled.div`
     margin-bottom: 16px;
     max-height: 220px;
     overflow-y: ${props => (props.count > 1 ? "scroll" : "auto")};
@@ -28,9 +27,7 @@ export const SelectedSamples = ({ samples }) => {
     return (
         <React.Fragment>
             <SelectedSamplesLabel count={count} />
-            <SelectedSamplesListGroupContainer count={count}>
-                <ListGroup>{sampleComponents}</ListGroup>
-            </SelectedSamplesListGroupContainer>
+            <SelectedSamplesListGroupContainer count={count}>{sampleComponents}</SelectedSamplesListGroupContainer>
         </React.Fragment>
     );
 };
