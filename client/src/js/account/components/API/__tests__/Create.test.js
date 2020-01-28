@@ -1,10 +1,6 @@
-import { CLEAR_API_KEY, CREATE_API_KEY } from "../../../../app/actionTypes";
-import { CreateAPIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Create";
+import { CLEAR_API_KEY, CREATE_API_KEY, PUSH_STATE } from "../../../../app/actionTypes";
 import * as utils from "../../../../utils/utils";
-
-const connectedReactRouter = require("connected-react-router");
-
-jest.mock("connected-react-router");
+import { CreateAPIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Create";
 
 const createMockEvent = value => {
     const e = {
@@ -183,16 +179,13 @@ describe("mapDispatchToProps()", () => {
     });
 
     it("should return functional props.onHide", () => {
-        const pushAction = {
-            type: "PUSH",
-            foo: "bar"
-        };
-
-        connectedReactRouter.push.mockReturnValue(pushAction);
-
         props.onHide();
-
-        expect(dispatch).toHaveBeenCalledWith(pushAction);
+        expect(dispatch).toHaveBeenCalledWith({
+            type: PUSH_STATE,
+            state: {
+                createAPIKey: false
+            }
+        });
         expect(dispatch).toHaveBeenCalledWith({
             type: CLEAR_API_KEY
         });

@@ -1,8 +1,8 @@
-import { push } from "connected-react-router";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Icon, Box } from "../../base";
+import { pushState } from "../../app/actions";
 import Install from "./Install";
 import ReleasesList from "./List";
 
@@ -34,7 +34,7 @@ export const mapStateToProps = state => ({
 
 export const mapDispatchToProps = dispatch => ({
     onShowInstall: () => {
-        dispatch(push({ state: { install: true } }));
+        dispatch(pushState({ install: true }));
     }
 });
 

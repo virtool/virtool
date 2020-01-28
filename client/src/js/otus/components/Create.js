@@ -1,13 +1,12 @@
-import React from "react";
-import { connect } from "react-redux";
-import { push } from "connected-react-router";
-import { withRouter } from "react-router-dom";
-import { Modal } from "react-bootstrap";
 import { get } from "lodash-es";
-import { createOTU } from "../actions";
+import React from "react";
+import { Modal } from "react-bootstrap";
+import { connect } from "react-redux";
+import { pushState } from "../../app/actions";
 import { clearError } from "../../errors/actions";
+import { getTargetChange, routerLocationHasState } from "../../utils/utils";
+import { createOTU } from "../actions";
 import { getNextState } from "../utils";
-import { getTargetChange } from "../../utils/utils";
 import OTUForm from "./OTUForm";
 
 const getInitialState = () => ({
@@ -84,7 +83,7 @@ class CreateOTU extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: !!state.router.location.state && state.router.location.state.createOTU,
+    show: routerLocationHasState(state, "createOTU"),
     error: get(state, "errors.CREATE_OTU_ERROR.message", ""),
     pending: state.otus.createPending,
     refId: state.references.detail.id
@@ -95,8 +94,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(createOTU(refId, name, abbreviation));
     },
 
-    onHide: ({ location }) => {
-        dispatch(push({ ...location, state: { createOTU: false } }));
+    onHide: () => {
+        dispatch(pushState({ createOTU: false }));
     },
 
     onClearError: error => {
@@ -104,4 +103,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateOTU));
+export default connect(mapStateToProps, mapDispatchToProps)(CreateOTU);

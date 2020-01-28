@@ -119,7 +119,12 @@ async def test_format_analysis(algorithm, mocker):
     if algorithm:
         document["algorithm"] = algorithm
 
-    coroutine = virtool.analyses.format.format_analysis("db", "settings", document)
+    app = {
+        "db": "db",
+        "settings": "settings"
+    }
+
+    coroutine = virtool.analyses.format.format_analysis(app, document)
 
     if algorithm is None or algorithm == "foobar":
         with pytest.raises(ValueError) as excinfo:

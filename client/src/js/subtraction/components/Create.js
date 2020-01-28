@@ -1,10 +1,10 @@
-import { push } from "connected-react-router";
 import { filter, get, map } from "lodash-es";
 import React from "react";
 import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { pushState } from "../../app/actions";
 import { BoxGroup, BoxGroupSection, Button, Icon, InputError, NoneFoundSection, RelativeTime } from "../../base";
 import { clearError } from "../../errors/actions";
 
@@ -199,7 +199,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { createSubtraction: false } }));
+        dispatch(pushState({ createSubtraction: false }));
     },
 
     onClearError: error => {

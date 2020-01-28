@@ -1,5 +1,6 @@
 import { push } from "connected-react-router";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import {
     ADD_REFERENCE_GROUP,
     ADD_REFERENCE_USER,
@@ -48,14 +49,14 @@ export function* removeReference(action) {
 
 export function* importReference(action) {
     const extraFunc = {
-        closeModal: put(push({ state: { importReference: false } }))
+        closeModal: put(pushState({ importReference: false }))
     };
     yield setPending(apiCall(referenceAPI.importReference, action, IMPORT_REFERENCE, {}, extraFunc));
 }
 
 export function* cloneReference(action) {
     const extraFunc = {
-        closeModal: put(push({ state: { cloneReference: false } }))
+        closeModal: put(pushState({ cloneReference: false }))
     };
     yield setPending(apiCall(referenceAPI.cloneReference, action, CLONE_REFERENCE, {}, extraFunc));
 }
