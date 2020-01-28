@@ -1,9 +1,14 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col } from "react-bootstrap";
-import { Icon, RelativeTime, ListGroupItem, Loader } from "../../base";
+import styled from "styled-components";
+import { Icon, RelativeTime, Box, Loader } from "../../base";
 import { getActiveIndexId } from "../selectors";
+
+const IndexItems = styled(Box)`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+`;
 
 export const IndexItemChangeDescription = ({ changeCount, modifiedCount }) => {
     if (changeCount === null) {
@@ -50,25 +55,17 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
 
 export const IndexItem = ({ activeId, document, refId }) => (
     <LinkContainer to={`/refs/${refId}/indexes/${document.id}`} className="spaced">
-        <ListGroupItem>
-            <Row>
-                <Col xs={3}>
-                    <strong>Version {document.version}</strong>
-                </Col>
-                <Col xs={3}>
-                    Created <RelativeTime time={document.created_at} />
-                </Col>
-                <Col md={4} xsHidden smHidden>
-                    <IndexItemChangeDescription
-                        changeCount={document.change_count}
-                        modifiedCount={document.modified_otu_count}
-                    />
-                </Col>
-                <Col xs={6} md={2}>
-                    <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
-                </Col>
-            </Row>
-        </ListGroupItem>
+        <IndexItems>
+            <strong>Version {document.version}</strong>
+            <span>
+                Created <RelativeTime time={document.created_at} />
+            </span>
+            <IndexItemChangeDescription
+                changeCount={document.change_count}
+                modifiedCount={document.modified_otu_count}
+            />
+            <IndexItemIcon activeId={activeId} id={document.id} ready={document.ready} />
+        </IndexItems>
     </LinkContainer>
 );
 

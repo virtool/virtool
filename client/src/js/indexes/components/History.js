@@ -1,10 +1,19 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
-import { Col, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import styled from "styled-components";
-import { LoadingPlaceholder, Panel } from "../../base";
+import { LoadingPlaceholder, Panel, BoxGroupSection, Box, BoxGroupHeader, BoxGroup } from "../../base";
 
-const StyledRebuildHistoryEllipsis = styled(ListGroupItem)`
+const HistoryItem = styled(BoxGroupSection)`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+`;
+
+const Content = styled.div`
+    max-height: 700px;
+    overflow-y: auto;
+`;
+
+const StyledRebuildHistoryEllipsis = styled(BoxGroupSection)`
     text-align: right;
 `;
 
@@ -21,14 +30,11 @@ export const RebuildHistoryEllipsis = ({ unbuilt }) => {
 };
 
 export const RebuildHistoryItem = ({ description, otuName }) => (
-    <ListGroupItem>
-        <Row>
-            <Col md={5}>
-                <strong>{otuName}</strong>
-            </Col>
-            <Col md={7}>{description || "No Description"}</Col>
-        </Row>
-    </ListGroupItem>
+    <HistoryItem>
+        <strong>{otuName}</strong>
+
+        {description || "No Description"}
+    </HistoryItem>
 );
 
 export default function RebuildHistory({ unbuilt, error }) {
@@ -42,19 +48,19 @@ export default function RebuildHistory({ unbuilt, error }) {
         ));
 
         content = (
-            <ListGroup style={{ overflowY: "auto", maxHeight: "700px" }}>
+            <Content>
                 {historyComponents}
                 <RebuildHistoryEllipsis unbuilt={unbuilt} />
-            </ListGroup>
+            </Content>
         );
     }
 
     const panelStyle = error ? "panel-danger" : "panel-default";
 
     return (
-        <Panel className={panelStyle}>
-            <Panel.Heading>Changes</Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>Changes</BoxGroupHeader>
             {content}
-        </Panel>
+        </BoxGroup>
     );
 }
