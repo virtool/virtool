@@ -7,7 +7,7 @@ exports[`<Email /> should render with error in props 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Box__BoxGroupSection>
+  <Email__FormButton>
     <form
       onSubmit={[Function]}
     >
@@ -18,31 +18,11 @@ exports[`<Email /> should render with error in props 1`] = `
         onChange={[Function]}
         value="foo@example.com"
       />
-      <div
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
-      >
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            md={12}
-            xs={24}
-          >
-            <SaveButton
-              pullRight={true}
-            />
-          </Col>
-        </Row>
-      </div>
+      <SaveButton
+        pullRight={true}
+      />
     </form>
-  </Box__BoxGroupSection>
+  </Email__FormButton>
 </Box__BoxGroup>
 `;
 
@@ -53,7 +33,7 @@ exports[`<Email /> should render with error in state 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Box__BoxGroupSection>
+  <Email__FormButton>
     <form
       onSubmit={[Function]}
     >
@@ -64,31 +44,11 @@ exports[`<Email /> should render with error in state 1`] = `
         onChange={[Function]}
         value="foo@example.com"
       />
-      <div
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
-      >
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            md={12}
-            xs={24}
-          >
-            <SaveButton
-              pullRight={true}
-            />
-          </Col>
-        </Row>
-      </div>
+      <SaveButton
+        pullRight={true}
+      />
     </form>
-  </Box__BoxGroupSection>
+  </Email__FormButton>
 </Box__BoxGroup>
 `;
 
@@ -99,7 +59,7 @@ exports[`<Email /> should render with initial email 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Box__BoxGroupSection>
+  <Email__FormButton>
     <form
       onSubmit={[Function]}
     >
@@ -110,31 +70,11 @@ exports[`<Email /> should render with initial email 1`] = `
         onChange={[Function]}
         value="foo@example.com"
       />
-      <div
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
-      >
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            md={12}
-            xs={24}
-          >
-            <SaveButton
-              pullRight={true}
-            />
-          </Col>
-        </Row>
-      </div>
+      <SaveButton
+        pullRight={true}
+      />
     </form>
-  </Box__BoxGroupSection>
+  </Email__FormButton>
 </Box__BoxGroup>
 `;
 
@@ -145,7 +85,7 @@ exports[`<Email /> should render without initial email 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Box__BoxGroupSection>
+  <Email__FormButton>
     <form
       onSubmit={[Function]}
     >
@@ -156,30 +96,10 @@ exports[`<Email /> should render without initial email 1`] = `
         onChange={[Function]}
         value=""
       />
-      <div
-        style={
-          Object {
-            "marginTop": "20px",
-          }
-        }
-      >
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            md={12}
-            xs={24}
-          >
-            <SaveButton
-              pullRight={true}
-            />
-          </Col>
-        </Row>
-      </div>
+      <SaveButton
+        pullRight={true}
+      />
     </form>
-  </Box__BoxGroupSection>
+  </Email__FormButton>
 </Box__BoxGroup>
 `;

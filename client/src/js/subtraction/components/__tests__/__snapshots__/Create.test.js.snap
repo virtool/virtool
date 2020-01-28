@@ -47,43 +47,21 @@ exports[`<CreateSubtraction /> should render 1`] = `
         }
       }
     >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={12}
-        >
-          <InputError
-            error=""
-            label="Unique Name"
-            name="subtractionId"
-            onChange={[Function]}
-            type="text"
-            value=""
-          />
-        </Col>
-      </Row>
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={12}
-        >
-          <InputError
-            label="Nickname"
-            name="nickname"
-            onChange={[Function]}
-            type="text"
-            value=""
-          />
-        </Col>
-      </Row>
+      <InputError
+        error=""
+        label="Unique Name"
+        name="subtractionId"
+        onChange={[Function]}
+        type="text"
+        value=""
+      />
+      <InputError
+        label="Nickname"
+        name="nickname"
+        onChange={[Function]}
+        type="text"
+        value=""
+      />
       <h5>
         <strong>
           Files

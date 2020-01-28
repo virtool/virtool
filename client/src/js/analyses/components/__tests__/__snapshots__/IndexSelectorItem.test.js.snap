@@ -16,10 +16,7 @@ exports[`<IndexSelectorItem /> should render 1`] = `
   </span>
   <span>
     Index Version 
-    <Label
-      bsClass="label"
-      bsStyle="default"
-    />
+    <IndexSelectorItem__Label />
   </span>
 </IndexSelectorItem__StyledIndexSelectorItem>
 `;
@@ -40,10 +37,7 @@ exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
   </span>
   <span>
     Index Version 
-    <Label
-      bsClass="label"
-      bsStyle="default"
-    />
+    <IndexSelectorItem__Label />
   </span>
 </IndexSelectorItem__StyledIndexSelectorItem>
 `;

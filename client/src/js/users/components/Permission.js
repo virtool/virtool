@@ -1,8 +1,17 @@
 import React from "react";
-import { Icon, ListGroupItem } from "../../base";
+import { Icon, SuccessBoxGroupSection, DangerBoxGroupSection } from "../../base";
 
-export const PermissionItem = ({ permission, value }) => (
-    <ListGroupItem bsStyle={value ? "success" : "danger"}>
-        <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
-    </ListGroupItem>
-);
+export const PermissionItem = ({ permission, value }) => {
+    if (value) {
+        return (
+            <SuccessBoxGroupSection>
+                <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
+            </SuccessBoxGroupSection>
+        );
+    }
+    return (
+        <DangerBoxGroupSection>
+            <code>{permission}</code> <Icon name={value ? "check" : "times"} pullRight />
+        </DangerBoxGroupSection>
+    );
+};

@@ -9,11 +9,7 @@ exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
   }
   to="/administration/users/bob"
 >
-  <ListGroupItem
-    bsClass="list-group-item"
-    className="spaced"
-    listItem={false}
-  >
+  <Box__SpacedBox>
     <Flex
       alignContent="stretch"
       alignItems="center"
@@ -50,7 +46,7 @@ exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
         />
       </FlexItem>
     </Flex>
-  </ListGroupItem>
+  </Box__SpacedBox>
 </withRouter(LinkContainer)>
 `;
 
@@ -63,11 +59,7 @@ exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
   }
   to="/administration/users/bob"
 >
-  <ListGroupItem
-    bsClass="list-group-item"
-    className="spaced"
-    listItem={false}
-  >
+  <Box__SpacedBox>
     <Flex
       alignContent="stretch"
       alignItems="center"
@@ -96,6 +88,6 @@ exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
         shrink={1}
       />
     </Flex>
-  </ListGroupItem>
+  </Box__SpacedBox>
 </withRouter(LinkContainer)>
 `;

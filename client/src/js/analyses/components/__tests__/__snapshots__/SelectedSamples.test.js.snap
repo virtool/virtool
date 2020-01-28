@@ -8,17 +8,13 @@ exports[`<SelectedSamples /> should render 1`] = `
   <SelectedSamples__SelectedSamplesListGroupContainer
     count={1}
   >
-    <ListGroup
-      bsClass="list-group"
+    <ListGroupItem
+      allowFocus={false}
+      disabled={true}
+      key="foo"
     >
-      <ListGroupItem
-        allowFocus={false}
-        disabled={true}
-        key="foo"
-      >
-        bar
-      </ListGroupItem>
-    </ListGroup>
+      bar
+    </ListGroupItem>
   </SelectedSamples__SelectedSamplesListGroupContainer>
 </Fragment>
 `;
@@ -30,10 +26,6 @@ exports[`<SelectedSamples /> should return when [samples.length=0] 1`] = `
   />
   <SelectedSamples__SelectedSamplesListGroupContainer
     count={0}
-  >
-    <ListGroup
-      bsClass="list-group"
-    />
-  </SelectedSamples__SelectedSamplesListGroupContainer>
+  />
 </Fragment>
 `;
