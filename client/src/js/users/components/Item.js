@@ -1,19 +1,18 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { ListGroupItem } from "react-bootstrap";
 import { get } from "lodash-es";
-import { Flex, FlexItem, Identicon, Icon } from "../../base";
+import { Flex, FlexItem, Identicon, Icon, SpacedBox } from "../../base";
 
 export const UserItem = ({ id, identicon, administrator }) => (
     <LinkContainer to={`/administration/users/${id}`} style={{ paddingLeft: "10px" }}>
-        <ListGroupItem className="spaced">
+        <SpacedBox>
             <Flex alignItems="center">
                 <Identicon size={32} hash={identicon} />
                 <FlexItem pad={10}>{id}</FlexItem>
                 <FlexItem pad={10}>{administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}</FlexItem>
             </Flex>
-        </ListGroupItem>
+        </SpacedBox>
     </LinkContainer>
 );
 

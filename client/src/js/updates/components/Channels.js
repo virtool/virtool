@@ -2,7 +2,7 @@ import { capitalize, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { updateSetting } from "../../administration/actions";
-import { Panel, Radio } from "../../base";
+import { Radio, Box } from "../../base";
 
 export const ChannelButton = ({ channel, checked, onClick }) => (
     <Radio
@@ -18,12 +18,10 @@ export const SoftwareChannels = ({ channel, onSetSoftwareChannel }) => {
     ));
 
     return (
-        <Panel>
-            <Panel.Body>
-                <label>Software Channel</label>
-                {radioComponents}
-            </Panel.Body>
-        </Panel>
+        <Box>
+            <label>Software Channel</label>
+            {radioComponents}
+        </Box>
     );
 };
 

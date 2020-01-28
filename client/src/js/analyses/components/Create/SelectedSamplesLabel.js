@@ -4,7 +4,7 @@ import { Badge } from "../../../base/Badge";
 export const SelectedSamplesLabel = ({ count }) => {
     let tail;
 
-    if (count < 1) {
+    if (count > 1) {
         tail = (
             <React.Fragment>
                 s <Badge>{count}</Badge>

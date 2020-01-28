@@ -2,10 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
-import { Icon, RelativeTime, Box, Loader } from "../../base";
+import { Icon, RelativeTime, SpacedBox, Loader } from "../../base";
 import { getActiveIndexId } from "../selectors";
 
-const IndexItems = styled(Box)`
+const IndexItems = styled(SpacedBox)`
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
 `;

@@ -12,10 +12,16 @@
 import CX from "classnames";
 import { find, get } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, ButtonToolbar, Checkbox, DangerAlert, InputError, Panel, RelativeTime, SaveButton } from "../../base";
+import styled from "styled-components";
+import { Button, ButtonToolbar, Checkbox, DangerAlert, InputError, Box, RelativeTime, SaveButton } from "../../base";
 import { editUser } from "../actions";
+
+const Passwords = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 15px;
+`;
 
 const getInitialState = ({ lastPasswordChange }) => ({
     password: "",
@@ -103,71 +109,57 @@ export class Password extends React.Component {
 
         return (
             <div>
-                <label>Change Password</label>
-                <Panel>
-                    <Panel.Body>
-                        <p>
-                            <em>
-                                Last changed <RelativeTime time={lastPasswordChange} em={true} />
-                            </em>
-                        </p>
+                <Box>
+                    <label>Change Password</label>
 
-                        <form onSubmit={this.handleSubmit}>
-                            <Row>
-                                <Col xs={12} md={6}>
-                                    <InputError
-                                        type="password"
-                                        name="password"
-                                        placeholder="New Password"
-                                        value={this.state.password}
-                                        onChange={this.handleChange}
-                                        error={passwordLengthError}
-                                    />
-                                </Col>
+                    <p>
+                        <em>
+                            Last changed <RelativeTime time={lastPasswordChange} em={true} />
+                        </em>
+                    </p>
 
-                                <Col xs={12} md={6}>
-                                    <InputError
-                                        type="password"
-                                        name="confirm"
-                                        placeholder="Confirm Password"
-                                        value={this.state.confirm}
-                                        onChange={this.handleChange}
-                                        error={passwordMatchError}
-                                    />
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col xs={12} md={6}>
-                                    <Checkbox
-                                        label="Force user to reset password on next login"
-                                        checked={forceReset}
-                                        onClick={this.handleSetForceReset}
-                                    />
-                                </Col>
+                    <form onSubmit={this.handleSubmit}>
+                        <Passwords>
+                            <InputError
+                                type="password"
+                                name="password"
+                                placeholder="New Password"
+                                value={this.state.password}
+                                onChange={this.handleChange}
+                                error={passwordLengthError}
+                            />
 
-                                <Col xs={12} mdHidden lgHidden>
-                                    <div style={{ height: "15px" }} />
-                                </Col>
+                            <InputError
+                                type="password"
+                                name="confirm"
+                                placeholder="Confirm Password"
+                                value={this.state.confirm}
+                                onChange={this.handleChange}
+                                error={passwordMatchError}
+                            />
+                        </Passwords>
+                        <Checkbox
+                            label="Force user to reset password on next login"
+                            checked={forceReset}
+                            onClick={this.handleSetForceReset}
+                        />
 
-                                <Col xs={12} md={6}>
-                                    <ButtonToolbar>
-                                        <Button type="button" onClick={this.handleClear}>
-                                            Clear
-                                        </Button>
+                        <div style={{ height: "15px" }} />
 
-                                        <SaveButton />
-                                    </ButtonToolbar>
-                                </Col>
+                        <ButtonToolbar>
+                            <Button type="button" onClick={this.handleClear}>
+                                Clear
+                            </Button>
 
-                                <Col xs={12} className={CX({ hidden: !this.state.error })}>
-                                    <h5 className="text-danger">Passwords do not match</h5>
-                                </Col>
-                            </Row>
-                        </form>
+                            <SaveButton />
+                        </ButtonToolbar>
+                        <div className={CX({ hidden: !this.state.error })}>
+                            <h5 className="text-danger">Passwords do not match</h5>
+                        </div>
+                    </form>
 
-                        {error ? <DangerAlert>{error}</DangerAlert> : null}
-                    </Panel.Body>
-                </Panel>
+                    {error ? <DangerAlert>{error}</DangerAlert> : null}
+                </Box>
             </div>
         );
     }

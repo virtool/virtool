@@ -1,7 +1,7 @@
 import { map, sortBy } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { LoadingPlaceholder, Panel, BoxGroupSection, Box, BoxGroupHeader, BoxGroup } from "../../base";
+import { LoadingPlaceholder, BoxGroupSection, BoxGroupHeader, BoxGroup } from "../../base";
 
 const HistoryItem = styled(BoxGroupSection)`
     display: grid;
@@ -58,7 +58,7 @@ export default function RebuildHistory({ unbuilt, error }) {
     const panelStyle = error ? "panel-danger" : "panel-default";
 
     return (
-        <BoxGroup>
+        <BoxGroup className={panelStyle}>
             <BoxGroupHeader>Changes</BoxGroupHeader>
             {content}
         </BoxGroup>
