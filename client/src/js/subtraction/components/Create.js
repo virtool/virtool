@@ -1,7 +1,7 @@
 import { push } from "connected-react-router";
 import { filter, get, map } from "lodash-es";
 import React from "react";
-import { Col, Modal, Row } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -148,29 +148,22 @@ export class CreateSubtraction extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{ margin: "0 0 10px 0" }}>
-                        <Row>
-                            <Col md={12}>
-                                <InputError
-                                    type="text"
-                                    label="Unique Name"
-                                    name="subtractionId"
-                                    value={this.state.subtractionId}
-                                    onChange={this.handleChange}
-                                    error={this.state.errorSubtractionId}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <InputError
-                                    type="text"
-                                    label="Nickname"
-                                    name="nickname"
-                                    value={this.state.nickname}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
+                        <InputError
+                            type="text"
+                            label="Unique Name"
+                            name="subtractionId"
+                            value={this.state.subtractionId}
+                            onChange={this.handleChange}
+                            error={this.state.errorSubtractionId}
+                        />
+
+                        <InputError
+                            type="text"
+                            label="Nickname"
+                            name="nickname"
+                            value={this.state.nickname}
+                            onChange={this.handleChange}
+                        />
 
                         <h5>
                             <strong>Files</strong>

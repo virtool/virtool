@@ -1,5 +1,5 @@
 import React from "react";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { updateSubtraction } from "../actions";
 import { SaveButton, InputError } from "../../base";
@@ -28,26 +28,16 @@ export class EditSubtraction extends React.Component {
                 <Modal.Header closeButton>Edit Subtraction</Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{ margin: "0 0 10px 0" }}>
-                        <Row>
-                            <Col md={12}>
-                                <InputError type="text" label="Unique Name" value={this.state.subtractionId} readOnly />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <InputError
-                                    type="text"
-                                    label="Nickname"
-                                    value={this.state.nickname}
-                                    onChange={e => this.setState({ nickname: e.target.value })}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={12}>
-                                <InputError type="text" label="File" value={this.state.fileId} readOnly />
-                            </Col>
-                        </Row>
+                        <InputError type="text" label="Unique Name" value={this.state.subtractionId} readOnly />
+
+                        <InputError
+                            type="text"
+                            label="Nickname"
+                            value={this.state.nickname}
+                            onChange={e => this.setState({ nickname: e.target.value })}
+                        />
+
+                        <InputError type="text" label="File" value={this.state.fileId} readOnly />
                     </Modal.Body>
 
                     <Modal.Footer className="modal-footer">
