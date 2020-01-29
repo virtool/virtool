@@ -84,16 +84,6 @@ export function* pushFindTerm(term, contains) {
 }
 
 /**
- * Pushes new user-defined state to history.
- *
- * @generator
- * @param update {object} a new state object
- */
-export function* pushHistoryState(update) {
-    yield put(pushState(update));
-}
-
-/**
  * Should be called in the event of an HTTP error during an API call. Dispatches a ``FAILED`` request-style action
  * containing data related to the HTTP error.
  *
