@@ -5,7 +5,7 @@ import { Collapse } from "react-bootstrap";
 import styled from "styled-components";
 import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
-import { TargetComponent } from "./Target";
+import { TargetInfo } from "./Target";
 
 const SequenceHeader = styled.div`
     align-items: center;
@@ -127,7 +127,7 @@ class Sequence extends React.Component {
                 <tr>
                     <th>Target</th>
                     <td>
-                        <TargetComponent {...this.props} />
+                        <TargetInfo {...this.props} />
                     </td>
                 </tr>
             );

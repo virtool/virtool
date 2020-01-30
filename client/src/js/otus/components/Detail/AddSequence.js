@@ -22,7 +22,7 @@ import { getTargetChange } from "../../../utils/utils";
 import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
 import SequenceForm from "./SequenceForm";
 import { SegmentCol } from "./SegmentCol";
-import { TargetComponent } from "./Target";
+import { TargetInfo } from "./Target";
 
 const getInitialState = () => ({
     id: "",
@@ -215,7 +215,7 @@ class AddSequence extends React.Component {
         }
         const targetComponent = this.props.targets ? (
             <Box>
-                <TargetComponent {...this.props} />
+                <TargetInfo {...this.props} />
             </Box>
         ) : null;
 
