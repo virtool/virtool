@@ -1,10 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserPermissions /> should render 1`] = `
-<Box>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  />
-</Box>
+<div>
+  <Permissions__StyledPermissions>
+    <label>
+      Permissions
+    </label>
+    <small
+      className="text-muted"
+    >
+      Change group membership to modify permissions
+    </small>
+  </Permissions__StyledPermissions>
+</div>
 `;

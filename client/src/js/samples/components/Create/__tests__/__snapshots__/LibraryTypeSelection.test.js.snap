@@ -1,0 +1,130 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<LibraryTypeSelection> should select Amplicon type when [LibraryTypeSelection='amplicon'] 1`] = `
+<Fragment>
+  <label>
+    Library Type
+  </label>
+  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        Normal
+      </div>
+      <span>
+        Search against whole genome references using normal reads.
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        sRNA
+      </div>
+      <span>
+        Search against whole genome references using sRNA reads
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={true}
+      onClick={[Function]}
+    >
+      <div>
+        Amplicon
+      </div>
+      <span>
+        Search against barcode references using amplicon reads.
+      </span>
+    </SelectBox>
+  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+</Fragment>
+`;
+
+exports[`<LibraryTypeSelection> should select Normal type when [LibraryTypeSelection='normal'] 1`] = `
+<Fragment>
+  <label>
+    Library Type
+  </label>
+  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+    <SelectBox
+      active={true}
+      onClick={[Function]}
+    >
+      <div>
+        Normal
+      </div>
+      <span>
+        Search against whole genome references using normal reads.
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        sRNA
+      </div>
+      <span>
+        Search against whole genome references using sRNA reads
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        Amplicon
+      </div>
+      <span>
+        Search against barcode references using amplicon reads.
+      </span>
+    </SelectBox>
+  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+</Fragment>
+`;
+
+exports[`<LibraryTypeSelection> should select sRNA type when [LibraryTypeSelection='srna'] 1`] = `
+<Fragment>
+  <label>
+    Library Type
+  </label>
+  <LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        Normal
+      </div>
+      <span>
+        Search against whole genome references using normal reads.
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={true}
+      onClick={[Function]}
+    >
+      <div>
+        sRNA
+      </div>
+      <span>
+        Search against whole genome references using sRNA reads
+      </span>
+    </SelectBox>
+    <SelectBox
+      active={false}
+      onClick={[Function]}
+    >
+      <div>
+        Amplicon
+      </div>
+      <span>
+        Search against barcode references using amplicon reads.
+      </span>
+    </SelectBox>
+  </LibraryTypeSelection__LibraryTypeSelectBoxContainer>
+</Fragment>
+`;

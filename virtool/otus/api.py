@@ -49,8 +49,8 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req["query"].get("find", None)
-    verified = req["query"].get("verified", None)
+    term = req["query"].get("find")
+    verified = req["query"].get("verified")
     names = req["query"].get("names", False)
 
     data = await virtool.otus.db.find(
@@ -125,7 +125,7 @@ async def create(req):
         return bad_request(message)
 
     document = await asyncio.shield(virtool.otus.db.create(
-        db,
+        req.app,
         ref_id,
         name,
         abbreviation,
@@ -186,7 +186,7 @@ async def edit(req):
         return bad_request(message)
 
     document = await asyncio.shield(virtool.otus.db.edit(
-        db,
+        req.app,
         otu_id,
         name,
         abbreviation,
@@ -216,7 +216,7 @@ async def remove(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.db.remove(
-        db,
+        req.app,
         otu_id,
         req["client"].user_id
     ))
@@ -310,7 +310,7 @@ async def add_isolate(req):
         return bad_request("Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.add(
-        db,
+        req.app,
         otu_id,
         data,
         req["client"].user_id
@@ -366,7 +366,7 @@ async def edit_isolate(req):
             return bad_request("Source type is not allowed")
 
     isolate = await asyncio.shield(virtool.otus.isolates.edit(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         data,
@@ -396,7 +396,7 @@ async def set_as_default(req):
         return insufficient_rights()
 
     isolate = await asyncio.shield(virtool.otus.isolates.set_default(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         req["client"].user_id
@@ -425,7 +425,7 @@ async def remove_isolate(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.isolates.remove(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         req["client"].user_id
@@ -504,6 +504,9 @@ async def get_sequence(req):
         "coerce": virtool.validators.strip,
         "empty": False,
         "required": True
+    },
+    "target": {
+        "type": "string"
     }
 })
 async def create_sequence(req):
@@ -511,10 +514,11 @@ async def create_sequence(req):
     Create a new sequence record for the given isolate.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
-    # Extract variables from URL path.
-    otu_id, isolate_id = (req.match_info[key] for key in ["otu_id", "isolate_id"])
+    otu_id = req.match_info["otu_id"]
+    isolate_id = req.match_info["isolate_id"]
 
     # Get the subject otu document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "schema"])
@@ -527,13 +531,20 @@ async def create_sequence(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify_otu"):
         return insufficient_rights()
 
-    segment = data.get("segment")
+    message = await virtool.otus.sequences.check_segment_or_target(
+        db,
+        otu_id,
+        isolate_id,
+        None,
+        ref_id,
+        data
+    )
 
-    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return bad_request("Segment does not exist")
+    if message:
+        return bad_request(message)
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.create(
-        db,
+        req.app,
         ref_id,
         otu_id,
         isolate_id,
@@ -570,6 +581,9 @@ async def create_sequence(req):
         "type": "string",
         "coerce": virtool.validators.strip,
         "empty": False
+    },
+    "target": {
+        "type": "string"
     }
 })
 async def edit_sequence(req):
@@ -588,13 +602,25 @@ async def edit_sequence(req):
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
         return insufficient_rights()
 
+    message = await virtool.otus.sequences.check_segment_or_target(
+        db,
+        otu_id,
+        isolate_id,
+        sequence_id,
+        document["reference"]["id"],
+        data
+    )
+
+    if message:
+        return bad_request(message)
+
     segment = data.get("segment")
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
         return not_found("Segment does not exist")
 
     sequence_document = await asyncio.shield(virtool.otus.sequences.edit(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         sequence_id,
@@ -629,7 +655,7 @@ async def remove_sequence(req):
         return insufficient_rights()
 
     await asyncio.shield(virtool.otus.sequences.remove(
-        db,
+        req.app,
         otu_id,
         isolate_id,
         sequence_id,
@@ -648,6 +674,6 @@ async def list_history(req):
     if not await db.otus.find({"_id": otu_id}).count():
         return not_found()
 
-    cursor = db.history.find({"otu.id": otu_id})
+    cursor = db.history.find({"otu.id": otu_id}, projection=virtool.history.db.LIST_PROJECTION)
 
     return json_response([d async for d in cursor])

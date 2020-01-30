@@ -113,7 +113,12 @@ class Job(virtool.jobs.analysis.Job):
             # Iterate through each otu id referenced by the hit sequence ids.
             for otu_id in otu_ids:
                 otu_version = self.params["manifest"][otu_id]
-                _, patched, _ = virtool.db.sync.patch_otu_to_version(self.db, otu_id, otu_version)
+                _, patched, _ = virtool.db.sync.patch_otu_to_version(
+                    self.db,
+                    self.settings,
+                    otu_id,
+                    otu_version
+                )
                 for isolate in patched["isolates"]:
                     for sequence in isolate["sequences"]:
                         handle.write(f">{sequence['_id']}\n{sequence['sequence']}\n")

@@ -32,7 +32,7 @@ def evaluate_changes(data, document):
     if abbreviation == old_abbreviation:
         abbreviation = None
 
-    if schema == document.get("schema", None):
+    if schema == document.get("schema"):
         schema = None
 
     return name, abbreviation, schema
@@ -49,6 +49,12 @@ def extract_default_sequences(joined: dict) -> List[dict]:
     for isolate in joined["isolates"]:
         if isolate["default"]:
             return isolate["sequences"]
+
+
+def extract_sequences(otu):
+    for isolate in otu["isolates"]:
+        for sequence in isolate["sequences"]:
+            yield sequence
 
 
 def extract_sequence_ids(otu):

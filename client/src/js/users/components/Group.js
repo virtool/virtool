@@ -1,7 +1,15 @@
 import React from "react";
+import styled from "styled-components";
 import PropTypes from "prop-types";
-import { Col } from "react-bootstrap";
-import { Checkbox, ListGroupItem } from "../../base";
+
+import { BoxGroupSection, Checkbox } from "../../base";
+
+const StyledUserGroup = styled(BoxGroupSection)`
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    text-transform: capitalize;
+`;
 
 export class UserGroup extends React.Component {
     static propTypes = {
@@ -16,12 +24,10 @@ export class UserGroup extends React.Component {
 
     render() {
         return (
-            <Col xs={12} md={4}>
-                <ListGroupItem className="text-capitalize" onClick={this.handleClick}>
-                    {this.props.id}
-                    <Checkbox checked={this.props.toggled} pullRight />
-                </ListGroupItem>
-            </Col>
+            <StyledUserGroup onClick={this.handleClick}>
+                <span>{this.props.id}</span>
+                <Checkbox checked={this.props.toggled} />
+            </StyledUserGroup>
         );
     }
 }

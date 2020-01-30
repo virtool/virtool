@@ -118,7 +118,7 @@ def get_projection(interface: str) -> Union[dict, list]:
         "samples": virtool.samples.db.PROJECTION,
         "subtractions": virtool.subtractions.db.PROJECTION,
         "users": virtool.users.db.PROJECTION
-    }.get(interface, None)
+    }.get(interface)
 
 
 class Dispatcher:

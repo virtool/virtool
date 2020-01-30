@@ -27,12 +27,14 @@ export * from "./Attribution";
 export * from "./Badge";
 export * from "./Box";
 export * from "./Breadcrumb";
+export * from "./Breakpoints";
 export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
 export * from "./Code";
 export * from "./Container";
 export * from "./ExternalLink";
+export * from "./Key";
 export * from "./Label";
 export * from "./Loader";
 export * from "./LoadingPlaceholder";
@@ -46,6 +48,7 @@ export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
 export * from "./ViewHeader";
+export * from "./SelectBox";
 
 export {
     AlgorithmSelect,

@@ -70,7 +70,7 @@ class Job(virtool.jobs.job.Job):
             "paired": sample["paired"],
             #: The number of reads in the sample library. Assigned after database connection is made.
             "read_count": int(sample["quality"]["count"]),
-            "srna": sample.get("srna", False),
+            "library_type": sample["library_type"],
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
@@ -81,10 +81,14 @@ class Job(virtool.jobs.job.Job):
 
         index_document = self.db.indexes.find_one(self.task_args["index_id"], ["manifest", "sequence_otu_map"])
 
-        sequence_otu_map = index_document.get("sequence_otu_map", None)
+        sequence_otu_map = index_document.get("sequence_otu_map")
 
         if sequence_otu_map is None:
-            sequence_otu_map = get_sequence_otu_map(self.db, index_document["manifest"])
+            sequence_otu_map = get_sequence_otu_map(
+                self.db,
+                self.settings,
+                index_document["manifest"]
+            )
 
         self.params.update({
             "manifest": index_document["manifest"],
@@ -110,7 +114,7 @@ class Job(virtool.jobs.job.Job):
 
         parameters = get_trimming_parameters(
             paired,
-            self.params["srna"]
+            self.params["library_type"]
         )
 
         cache = virtool.jobs.utils.find_cache(
@@ -206,7 +210,7 @@ class Job(virtool.jobs.job.Job):
 
     def prepare_qc(self):
         if self.intermediate["qc"]:
-            cache_id = self.intermediate.get("cache_id", None)
+            cache_id = self.intermediate.get("cache_id")
 
             if cache_id:
                 self.db.analyses.update_one({"_id": self.params["analysis_id"]}, {
@@ -250,7 +254,7 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("caches", "update", [cache_id])
 
     def cleanup(self):
-        cache_id = self.intermediate.get("cache_id", None)
+        cache_id = self.intermediate.get("cache_id")
 
         if cache_id:
             cache = self.db.caches.find_one(cache_id, ["ready"])
@@ -277,12 +281,13 @@ class Job(virtool.jobs.job.Job):
         self.dispatch("samples", "update", [sample_id])
 
 
-def get_sequence_otu_map(db, manifest):
+def get_sequence_otu_map(db, settings, manifest):
     sequence_otu_map = dict()
 
     for otu_id, otu_version in manifest.items():
         _, patched, _ = virtool.db.sync.patch_otu_to_version(
             db,
+            settings,
             otu_id,
             otu_version
         )
@@ -319,16 +324,16 @@ def move_trimming_results(path, paired):
     )
 
 
-def get_trimming_parameters(paired: bool, srna: bool):
+def get_trimming_parameters(paired: bool, library_type: str):
     """
 
     :param paired:
-    :param srna:
+    :param library_type:
     :return:
     """
     parameters = dict(virtool.samples.utils.TRIM_PARAMETERS)
 
-    if srna:
+    if library_type == "srna":
         parameters.update({
             "min_length": 20,
             "max_length": 22

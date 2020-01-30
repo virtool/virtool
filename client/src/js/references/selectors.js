@@ -13,36 +13,30 @@ const getProcessId = state => get(state, "references.detail.process.id");
 
 const getProcesses = state => get(state, "processes.documents", []);
 
-export const getProgress = createSelector(
-    [getProcessId, getProcesses],
-    (processId, processes) => {
-        if (!processId || !processes.length) {
-            return 0;
-        }
-
-        const process = find(processes, { id: processId });
-
-        if (process) {
-            return get(process, "progress", 0);
-        }
-
+export const getProgress = createSelector([getProcessId, getProcesses], (processId, processes) => {
+    if (!processId || !processes.length) {
         return 0;
     }
-);
+
+    const process = find(processes, { id: processId });
+
+    if (process) {
+        return get(process, "progress", 0);
+    }
+
+    return 0;
+});
 
 export const getReferenceItemProcessId = (state, index) =>
     get(state, ["references", "documents", index, "process", "id"]);
 
-export const getReferenceItemProgress = createSelector(
-    [getReferenceItemProcessId, getProcesses],
-    (id, processes) => {
-        if (processes.length && id) {
-            return find(processes, { id }).progress * 100;
-        }
-
-        return 100;
+export const getReferenceItemProgress = createSelector([getReferenceItemProcessId, getProcesses], (id, processes) => {
+    if (processes.length && id) {
+        return find(processes, { id }).progress * 100;
     }
-);
+
+    return 100;
+});
 
 export const getImportData = state => {
     const file = get(state, "references.importFile");

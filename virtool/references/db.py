@@ -2,22 +2,25 @@ import asyncio
 import json.decoder
 import logging
 import os
+from typing import Union
 
 import aiohttp
 import pymongo
 import semver
 
 import virtool.api
-import virtool.history.db
-import virtool.otus.db
-import virtool.processes.db
 import virtool.db.utils
 import virtool.errors
 import virtool.github
+import virtool.history.db
+import virtool.history.utils
 import virtool.http.utils
+import virtool.otus.db
 import virtool.otus.utils
+import virtool.processes.db
 import virtool.processes.process
 import virtool.references.utils
+import virtool.users.db
 import virtool.utils
 
 PROJECTION = [
@@ -63,9 +66,19 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         inserted_otu_ids = list()
 
         for source_otu_id, version in manifest.items():
-            _, patched, _ = await virtool.history.db.patch_to_version(self.db, source_otu_id, version)
+            _, patched, _ = await virtool.history.db.patch_to_version(
+                self.app,
+                source_otu_id,
+                version
+            )
 
-            otu_id = await insert_joined_otu(self.db, patched, created_at, ref_id, user_id)
+            otu_id = await insert_joined_otu(
+                self.db,
+                patched,
+                created_at,
+                ref_id,
+                user_id
+            )
 
             inserted_otu_ids.append(otu_id)
 
@@ -82,7 +95,7 @@ class CloneReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "clone", user_id)
+            await insert_change(self.app, otu_id, "clone", user_id)
             await tracker.add(1)
 
     async def cleanup(self):
@@ -90,11 +103,17 @@ class CloneReferenceProcess(virtool.processes.process.Process):
 
         query = {"reference.id": ref_id}
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            **query,
+            "diff": "file"
+        })
+
         await asyncio.gather(
             self.db.references.delete_one({"_id": ref_id}),
             self.db.history.delete_many(query),
             self.db.otus.delete_many(query),
-            self.db.sequences.delete_many(query)
+            self.db.sequences.delete_many(query),
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
 
@@ -192,7 +211,13 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         tracker = self.get_tracker(len(inserted_otu_ids))
 
         for otu_id in inserted_otu_ids:
-            await insert_change(self.db, otu_id, "import", user_id)
+            await insert_change(
+                self.app,
+                otu_id,
+                "import",
+                user_id
+            )
+
             await tracker.add(1)
 
 
@@ -228,10 +253,18 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
             }
         })
 
+        diff_file_change_ids = await self.db.history.distinct("_id", {
+            "diff": "file",
+            "otu.id": {
+                "$in": unreferenced_otu_ids
+            }
+        })
+
         await asyncio.gather(
             self.db.otus.delete_many({"_id": {"$in": unreferenced_otu_ids}}),
             self.db.history.delete_many({"otu.id": {"$in": unreferenced_otu_ids}}),
-            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}})
+            self.db.sequences.delete_many({"otu_id": {"$in": unreferenced_otu_ids}}),
+            virtool.history.utils.remove_diff_files(self.app, diff_file_change_ids)
         )
 
     async def remove_referenced_otus(self):
@@ -244,7 +277,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
 
         async for document in self.db.otus.find({"reference.id": ref_id}):
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 document["_id"],
                 user_id,
                 document=document,
@@ -340,7 +373,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
                 old = None
 
             await insert_change(
-                self.db,
+                self.app,
                 otu_id,
                 "update" if old else "remote",
                 self.context["user_id"],
@@ -362,7 +395,7 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
 
         for otu_id in to_delete:
             await virtool.otus.db.remove(
-                self.db,
+                self.app,
                 otu_id,
                 self.context["user_id"]
             )
@@ -404,7 +437,7 @@ async def add_group_or_user(db, ref_id, field, data):
     if not document:
         return None
 
-    subdocument_id = data.get("group_id", None) or data["user_id"]
+    subdocument_id = data.get("group_id") or data["user_id"]
 
     if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
         raise virtool.errors.DatabaseError("group does not exist")
@@ -622,7 +655,7 @@ async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
             return subdocument
 
 
-async def fetch_and_update_release(app, ref_id, ignore_errors=False):
+async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False) -> dict:
     """
     Get the latest release for the GitHub repository identified by the passed `slug`. If a release is found, update the
     reference identified by the passed `ref_id` and return the release.
@@ -631,16 +664,9 @@ async def fetch_and_update_release(app, ref_id, ignore_errors=False):
     document.
 
     :param app: the application object
-    :type app: :class:`aiohttp.Application`
-
     :param ref_id: the id of the reference to update
-    :type ref_id: str
-
     :param ignore_errors: ignore exceptions raised during GitHub request
-    :type ignore_errors:
-
     :return: the latest release
-    :rtype: Coroutine[dict]
 
     """
     db = app["db"]
@@ -932,6 +958,9 @@ async def create_document(db, settings, name, organism, description, data_type, 
         "user": user
     }
 
+    if data_type == "barcode":
+        document["targets"] = list()
+
     return document
 
 
@@ -1031,7 +1060,59 @@ async def download_and_parse_release(app, url, process_id, progress_handler):
         return await app["run_in_thread"](virtool.references.utils.load_reference_file, download_path)
 
 
-async def export(db, ref_id, scope):
+async def edit(db, ref_id: str, data: dict) -> dict:
+    """
+    Edit and existing reference using the passed update `data`.
+
+    :param db: the application database object
+    :param ref_id: the id of the reference to update
+    :param data: update data from the HTTP request
+    :return: the updated reference document
+
+    """
+    document = await db.references.find_one(ref_id)
+
+    if document["data_type"] != "barcode":
+        data.pop("targets", None)
+
+    internal_control_id = data.get("internal_control")
+
+    if internal_control_id == "":
+        data["internal_control"] = None
+
+    elif internal_control_id:
+        internal_control = await virtool.references.db.get_internal_control(db, internal_control_id, ref_id)
+
+        if internal_control is None:
+            data["internal_control"] = None
+        else:
+            data["internal_control"] = {
+                "id": internal_control_id
+            }
+
+    document = await db.references.find_one_and_update({"_id": ref_id}, {
+        "$set": data
+    })
+
+    document.update(await virtool.references.db.get_computed(db, ref_id, internal_control_id))
+
+    if "name" in data:
+        await db.analyses.update_many({"reference.id": ref_id}, {
+            "$set": {
+                "reference.name": document["name"]
+            }
+        })
+
+    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
+
+    document["users"] = await virtool.users.db.attach_identicons(db, users)
+
+    return virtool.utils.base_processor(document)
+
+
+async def export(app, ref_id, scope):
+    db = app["db"]
+
     otu_list = list()
 
     query = {
@@ -1043,7 +1124,7 @@ async def export(db, ref_id, scope):
 
         async for document in db.otus.find(query):
             _, joined, _ = await virtool.history.db.patch_to_version(
-                db,
+                app,
                 document["_id"],
                 document["last_indexed_version"]
             )
@@ -1052,12 +1133,21 @@ async def export(db, ref_id, scope):
 
     elif scope == "unbuilt":
         async for document in db.otus.find(query):
-            last_verified = await virtool.history.db.patch_to_verified(db, document["_id"])
+            last_verified = await virtool.history.db.patch_to_verified(
+                app,
+                document["_id"]
+            )
+
             otu_list.append(last_verified)
 
     else:
         async for document in db.otus.find(query):
-            current = await virtool.otus.db.join(db, document["_id"], document)
+            current = await virtool.otus.db.join(
+                db,
+                document["_id"],
+                document
+            )
+
             otu_list.append(current)
 
     return virtool.references.utils.clean_export_list(otu_list, scope == "remote")
@@ -1160,7 +1250,13 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     )
 
     for otu_id in inserted_otu_ids:
-        await insert_change(db, otu_id, "remote", user_id)
+        await insert_change(
+            app,
+            otu_id,
+            "remote",
+            user_id
+        )
+
         await progress_tracker.add(1)
 
     await db.references.update_one({"_id": ref_id, "updates.id": release["id"]}, {
@@ -1176,7 +1272,19 @@ async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
     await virtool.processes.db.update(db, process_id, progress=1)
 
 
-async def insert_change(db, otu_id, verb, user_id, old=None):
+async def insert_change(app, otu_id: str, verb: str, user_id: str, old: Union[None, dict] = None):
+    """
+    Insert a history document for the OTU identified by `otu_id` and the passed `verb`.
+
+    :param app: the application object
+    :param otu_id: the ID of the OTU the change is for
+    :param verb: the change verb (eg. remove, insert)
+    :param user_id: the ID of the requesting user
+    :param old: the old joined OTU document
+
+    """
+    db = app["db"]
+
     # Join the otu document into a complete otu record. This will be used for recording history.
     joined = await virtool.otus.db.join(db, otu_id)
 
@@ -1187,14 +1295,14 @@ async def insert_change(db, otu_id, verb, user_id, old=None):
     # Build a ``description`` field for the otu creation change document.
     description = f"{verb.capitalize()}{e}d {name}"
 
-    abbreviation = joined.get("abbreviation", None)
+    abbreviation = joined.get("abbreviation")
 
     # Add the abbreviation to the description if there is one.
     if abbreviation:
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
-        db,
+        app,
         verb,
         old,
         joined,

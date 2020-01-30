@@ -1,18 +1,24 @@
-import { push } from "connected-react-router";
-import { filter, get, map, replace, split } from "lodash-es";
+import { filter, get, map } from "lodash-es";
 import React from "react";
 import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import { pushState } from "../../../app/actions";
+
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
+import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 
 import { createSample, findReadFiles } from "../../actions";
+import { LibraryTypeSelection } from "./LibraryTypeSelection";
+
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
-const getActiveSubtraction = props => get(props, ["subtractions", 0], "");
+const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
+
+const getFileNameFromId = id => id.match(extensionRegex)[1];
 
 const getInitialState = props => ({
     selected: [],
@@ -20,15 +26,15 @@ const getInitialState = props => ({
     host: "",
     isolate: "",
     locale: "",
-    srna: false,
-    subtraction: getActiveSubtraction(props),
+    subtraction: "",
     group: props.forceGroupChoice ? "none" : "",
     errorName: "",
     errorSubtraction: "",
-    errorFile: ""
+    errorFile: "",
+    libraryType: "normal"
 });
 
-class CreateSample extends React.Component {
+export class CreateSample extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
@@ -68,6 +74,10 @@ class CreateSample extends React.Component {
         }
     };
 
+    handleLibrarySelect = libraryType => {
+        this.setState({ libraryType });
+    };
+
     handleSubmit = e => {
         e.preventDefault();
 
@@ -93,14 +103,25 @@ class CreateSample extends React.Component {
         }
 
         if (!hasError) {
-            this.props.onCreate({ ...this.state, files: this.state.selected });
+            const { name, isolate, host, locale, libraryType, subtraction } = this.state;
+            this.props.onCreate(
+                name,
+                isolate,
+                host,
+                locale,
+                libraryType,
+                subtraction || this.props.defaultSubtraction,
+                this.state.selected
+            );
         }
     };
 
     autofill = () => {
-        this.setState({
-            name: split(replace(this.state.selected[0], /[0-9a-z]{8}-/, ""), /_S\d+/)[0]
-        });
+        if (this.state.selected.length) {
+            this.setState({
+                name: getFileNameFromId(this.state.selected[0])
+            });
+        }
     };
 
     handleSelect = selected => {
@@ -137,7 +158,7 @@ class CreateSample extends React.Component {
             />
         ) : null;
 
-        const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+        const pairedness = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         const { errorName, errorSubtraction, errorFile } = this.state;
 
@@ -156,7 +177,7 @@ class CreateSample extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Row>
-                            <Col xs={12}>
+                            <Col xs={12} md={6}>
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
                                     <InputError
@@ -177,17 +198,6 @@ class CreateSample extends React.Component {
                                     </InputGroup.Button>
                                 </InputGroup>
                             </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="isolate"
-                                    label="Isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
                             <Col xs={12} md={6}>
                                 <InputError
                                     name="locale"
@@ -201,19 +211,18 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col xs={12} md={6}>
                                 <InputError
-                                    name="host"
-                                    label="Host"
-                                    value={this.state.host}
+                                    name="isolate"
+                                    label="Isolate"
+                                    value={this.state.isolate}
                                     onChange={this.handleChange}
                                 />
                             </Col>
-
                             <Col md={6}>
                                 <InputError
                                     name="subtraction"
                                     type="select"
                                     label="Default Subtraction"
-                                    value={this.state.subtraction}
+                                    value={this.state.subtraction || this.props.defaultSubtraction}
                                     onChange={this.handleChange}
                                     error={errorSubtraction}
                                 >
@@ -223,23 +232,28 @@ class CreateSample extends React.Component {
                         </Row>
 
                         <Row>
-                            <Col xs={12} sm={6}>
+                            <Col xs={12} md={6}>
                                 <InputError
-                                    name="srna"
-                                    type="select"
-                                    label="Read Size"
-                                    value={this.state.srna}
+                                    name="host"
+                                    label="Host"
+                                    value={this.state.host}
                                     onChange={this.handleChange}
-                                >
-                                    <option value={false}>Normal</option>
-                                    <option value={true}>sRNA</option>
-                                </InputError>
+                                />
+                            </Col>
+                            <Col xs={12} sm={6}>
+                                <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col xs={12}>
+                                <LibraryTypeSelection
+                                    onSelect={this.handleLibrarySelect}
+                                    libraryType={this.state.libraryType}
+                                />
                             </Col>
 
                             {userGroup}
-                            <Col xs={12} sm={6}>
-                                <InputError type="text" label="Library Type" value={libraryType} readOnly={true} />
-                            </Col>
                         </Row>
 
                         <ReadSelector
@@ -259,27 +273,28 @@ class CreateSample extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
+    defaultSubtraction: getFirstSubtractionId(state),
     error: get(state, "errors.CREATE_SAMPLE_ERROR.message", ""),
     forceGroupChoice: state.settings.sample_group === "force_choice",
     groups: state.account.groups,
     readyReads: filter(state.samples.readFiles, { reserved: false }),
     show: routerLocationHasState(state, "createSample"),
-    subtractions: state.subtraction.ids
+    subtractions: getSubtractionIds(state)
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     onLoadSubtractionsAndFiles: () => {
         dispatch(listSubtractionIds());
         dispatch(findReadFiles());
     },
 
-    onCreate: ({ name, isolate, host, locale, srna, subtraction, files }) => {
-        dispatch(createSample(name, isolate, host, locale, srna, subtraction, files));
+    onCreate: (name, isolate, host, locale, libraryType, subtraction, files) => {
+        dispatch(createSample(name, isolate, host, locale, libraryType, subtraction, files));
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { create: false } }));
+        dispatch(pushState({ create: false }));
     },
 
     onClearError: error => {
@@ -287,7 +302,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(CreateSample);
+export default connect(mapStateToProps, mapDispatchToProps)(CreateSample);

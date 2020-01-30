@@ -29,14 +29,12 @@ async def get(req):
     Get a specific change document by its ``change_id``.
 
     """
-    db = req.app["db"]
-
     change_id = req.match_info["change_id"]
 
-    document = await db.history.find_one(change_id, virtool.history.db.PROJECTION)
+    document = await virtool.history.db.get(req.app, change_id)
 
     if document:
-        return json_response(virtool.utils.base_processor(document))
+        return json_response(document)
 
     return not_found()
 
@@ -60,7 +58,7 @@ async def revert(req):
         return insufficient_rights()
 
     try:
-        await virtool.history.db.revert(db, change_id)
+        await virtool.history.db.revert(req.app, change_id)
     except virtool.errors.DatabaseError:
         return conflict("Change is already built")
 

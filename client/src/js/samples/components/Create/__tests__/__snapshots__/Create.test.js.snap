@@ -1,0 +1,294 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<CreateSample> should render 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  bsSize="large"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[Function]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+    onHide={[Function]}
+  >
+    Create Sample
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+          xs={12}
+        >
+          <ControlLabel
+            bsClass="control-label"
+            srOnly={false}
+          >
+            Sample Name
+          </ControlLabel>
+          <InputGroup
+            bsClass="input-group"
+          >
+            <InputError
+              autocomplete={false}
+              error=""
+              name="name"
+              onChange={[Function]}
+              value=""
+            />
+            <InputGroupButton
+              bsClass="input-group-btn"
+              style={
+                Object {
+                  "verticalAlign": "top",
+                  "zIndex": "0",
+                }
+              }
+            >
+              <Button
+                bsStyle="default"
+                disabled={true}
+                onClick={[Function]}
+                pullRight={false}
+                tipPlacement="top"
+                type="button"
+              >
+                <Icon
+                  faStyle="fas"
+                  fixedWidth={false}
+                  name="magic"
+                  pullRight={false}
+                />
+              </Button>
+            </InputGroupButton>
+          </InputGroup>
+        </Col>
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+          xs={12}
+        >
+          <InputError
+            label="Locale"
+            name="locale"
+            onChange={[Function]}
+            value=""
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+          xs={12}
+        >
+          <InputError
+            label="Isolate"
+            name="isolate"
+            onChange={[Function]}
+            value=""
+          />
+        </Col>
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+        >
+          <InputError
+            error=""
+            label="Default Subtraction"
+            name="subtraction"
+            onChange={[Function]}
+            type="select"
+          >
+            <option
+              key="sub_foo"
+              value="sub_foo"
+            >
+              sub_foo
+            </option>
+            <option
+              key="sub_bar"
+              value="sub_bar"
+            >
+              sub_bar
+            </option>
+          </InputError>
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          md={6}
+          xs={12}
+        >
+          <InputError
+            label="Host"
+            name="host"
+            onChange={[Function]}
+            value=""
+          />
+        </Col>
+        <Col
+          bsClass="col"
+          componentClass="div"
+          sm={6}
+          xs={12}
+        >
+          <InputError
+            label="Pairdness"
+            readOnly={true}
+            type="text"
+            value="Unpaired"
+          />
+        </Col>
+      </Row>
+      <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          xs={12}
+        >
+          <LibraryTypeSelection
+            libraryType="normal"
+            onSelect={[Function]}
+          />
+        </Col>
+      </Row>
+      <ReadSelector
+        error=""
+        files={Array []}
+        onSelect={[Function]}
+        selected={Array []}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <SaveButton />
+    </ModalFooter>
+  </form>
+</Modal>
+`;
+
+exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  bsSize="large"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onHide={[Function]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalBody
+    bsClass="modal-body"
+    componentClass="div"
+  >
+    <LoadingPlaceholder
+      margin="36px"
+    />
+  </ModalBody>
+</Modal>
+`;
+
+exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  bsSize="large"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onHide={[Function]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={true}
+>
+  <ModalBody
+    bsClass="modal-body"
+    componentClass="div"
+  >
+    <LoadingPlaceholder
+      margin="36px"
+    />
+  </ModalBody>
+</Modal>
+`;

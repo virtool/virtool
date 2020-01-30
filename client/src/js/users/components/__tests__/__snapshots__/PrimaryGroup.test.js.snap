@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<PrimaryGroup /> should render 1`] = `
+<div>
+  <label>
+    Primary Group
+  </label>
+  <InputError
+    onChange={[Function]}
+    type="select"
+    value="bar"
+  >
+    <option
+      key="none"
+      value="none"
+    >
+      None
+    </option>
+    <PrimaryGroup__StyledGroupOption
+      key="foo"
+      value="foo"
+    >
+      Foo
+    </PrimaryGroup__StyledGroupOption>
+    <PrimaryGroup__StyledGroupOption
+      key="bar"
+      value="bar"
+    >
+      Bar
+    </PrimaryGroup__StyledGroupOption>
+    <PrimaryGroup__StyledGroupOption
+      key="baz"
+      value="baz"
+    >
+      Baz
+    </PrimaryGroup__StyledGroupOption>
+  </InputError>
+</div>
+`;

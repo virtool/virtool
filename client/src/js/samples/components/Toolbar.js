@@ -104,7 +104,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SampleToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(SampleToolbar);

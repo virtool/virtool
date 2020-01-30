@@ -1,5 +1,5 @@
-import Moment from "moment";
 import React from "react";
+import { formatDistanceStrict, addSeconds } from "date-fns";
 import styled from "styled-components";
 import { Box, ExternalLink, Icon, Loader, RelativeTime } from "../../../base";
 
@@ -32,9 +32,8 @@ const StyledRIDTiming = styled.div`
 
 export const RIDTiming = ({ interval, lastCheckedAt }) => {
     if (lastCheckedAt) {
-        const relativeNext = Moment(lastCheckedAt)
-            .add(interval, "seconds")
-            .fromNow();
+        const nextCheckAt = addSeconds(new Date(lastCheckedAt), interval);
+        const relativeNext = formatDistanceStrict(new Date(nextCheckAt), Date.now());
 
         return (
             <StyledRIDTiming>

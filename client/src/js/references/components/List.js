@@ -48,7 +48,6 @@ class ReferenceList extends React.Component {
                     page={this.props.page}
                     pageCount={this.props.pageCount}
                     renderRow={this.renderRow}
-                    noContainer
                 />
 
                 {installOfficialComponent}
@@ -77,7 +76,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(ReferenceList);
+export default connect(mapStateToProps, mapDispatchToProps)(ReferenceList);

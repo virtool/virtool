@@ -7,7 +7,7 @@ import { pick, get } from "lodash-es";
 import styled from "styled-components";
 import { createUser } from "../actions";
 import { clearError } from "../../errors/actions";
-import { InputError, Checkbox, SaveButton } from "../../base";
+import { InputError, Checkbox, SaveButton, device } from "../../base";
 import { routerLocationHasState, getTargetChange } from "../../utils/utils";
 
 const CreateUserContainer = styled.div`
@@ -19,7 +19,7 @@ const CreateUserPasswords = styled.div`
     grid-gap: 15px;
     grid-template-columns: 1fr;
 
-    @media (min-width: 1080px) {
+    @media (min-width: ${device.desktop}) {
         grid-template-columns: 1fr 1fr;
     }
 `;
@@ -168,7 +168,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(CreateUser);
+export default connect(mapStateToProps, mapDispatchToProps)(CreateUser);

@@ -6,7 +6,10 @@ describe("Test Files Selectors", () => {
     beforeEach(() => {
         state = {
             files: {
-                documents: [{ id: "foo", ready: true, reserved: false }, { id: "fud", ready: true, reserved: false }]
+                documents: [
+                    { id: "foo", ready: true, reserved: false },
+                    { id: "fud", ready: true, reserved: false }
+                ]
             }
         };
     });

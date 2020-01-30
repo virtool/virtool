@@ -9,45 +9,55 @@
  * @exports Users
  */
 
-import { push } from "connected-react-router";
-import { capitalize, get, map } from "lodash-es";
+import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-    Flex,
-    FlexItem,
-    Icon,
-    Identicon,
-    InputError,
-    LoadingPlaceholder,
-    RemoveBanner,
-    WarningAlert
-} from "../../base";
+import styled from "styled-components";
+import { device, Icon, Identicon, LoadingPlaceholder, RemoveBanner, WarningAlert } from "../../base";
 import { listGroups } from "../../groups/actions";
 
-import { editUser, getUser, removeUser } from "../actions";
+import { getUser, removeUser } from "../actions";
+import { getCanModifyUser } from "../selectors";
 import UserGroups from "./Groups";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
+import PrimaryGroup from "./PrimaryGroup";
+import UserRole from "./Role";
+
+const UserDetailGroups = styled.div`
+    margin-bottom: 15px;
+
+    @media (min-width: ${device.tablet}) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: 17px;
+    }
+`;
+
+const UserDetailHeader = styled.div`
+    display: flex;
+    margin-bottom: 20px;
+`;
+
+const UserDetailTitle = styled.div`
+    display: flex;
+    flex: 1 0 auto;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px 0 0 15px;
+
+    a {
+        font-size: 14px;
+        margin-left: auto;
+    }
+`;
 
 export class UserDetail extends React.Component {
     componentDidMount() {
         this.props.onGetUser(this.props.match.params.userId);
-
-        if (!this.props.groupsFetched) {
-            this.props.onListGroups();
-        }
+        this.props.onListGroups();
     }
-
-    handleSetPrimaryGroup = e => {
-        const value = e.target.value === "none" ? "" : e.target.value;
-        this.props.onSetPrimaryGroup(this.props.detail.id, value);
-    };
-
-    toggleAdmin = e => {
-        this.props.onSetUserRole(this.props.detail.id, e.target.value === "Administrator");
-    };
 
     handleRemove = () => {
         this.props.onRemoveUser(this.props.detail.id);
@@ -70,95 +80,46 @@ export class UserDetail extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const groupOptions = map(this.props.detail.groups, groupId => (
-            <option key={groupId} value={groupId}>
-                {capitalize(groupId)}
-            </option>
-        ));
-
-        const currentRole = this.props.detail.administrator ? "Administrator" : "Limited";
-
-        const canModifyUser = this.props.activeUser !== this.props.detail.id && this.props.activeUserIsAdmin;
+        const { id, identicon, administrator } = this.props.detail;
 
         return (
             <div>
-                <Flex justifyContent="space-between">
-                    <Flex alignItems="center">
-                        <Identicon size={64} hash={this.props.detail.identicon} />
-                        <FlexItem pad={10}>
-                            <h5>
-                                <strong>{this.props.detail.id}</strong>
-                            </h5>
-                        </FlexItem>
-                        <FlexItem pad={10}>
-                            {this.props.detail.administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
-                        </FlexItem>
-                    </Flex>
-                    <Flex alignItems="center">
-                        <FlexItem>
-                            <Link to="/administration/users">Back To List</Link>
-                        </FlexItem>
-                    </Flex>
-                </Flex>
+                <UserDetailHeader>
+                    <Identicon size={56} hash={identicon} />
+                    <UserDetailTitle>
+                        <span>{id}</span>
+                        {administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                        <Link to="/administration/users">Back To List</Link>
+                    </UserDetailTitle>
+                </UserDetailHeader>
 
-                <div style={{ marginTop: "20px" }}>
-                    <label>Change Password</label>
-                    <Password />
+                <Password />
 
-                    <label>Groups</label>
-                    <UserGroups userId={this.props.detail.id} memberGroups={this.props.detail.groups} />
+                <UserDetailGroups>
+                    <div>
+                        <UserGroups />
+                        <PrimaryGroup />
+                    </div>
+                    <UserPermissions />
+                </UserDetailGroups>
 
-                    <label>Primary Group</label>
-                    <InputError
-                        type="select"
-                        value={this.props.detail.primary_group}
-                        onChange={this.handleSetPrimaryGroup}
-                    >
-                        <option key="none" value="none">
-                            None
-                        </option>
-                        {groupOptions}
-                    </InputError>
+                <UserRole />
 
-                    <Flex alignItems="center" justifyContent="space-between">
-                        <label>Permissions</label>
-                        <small className="text-muted">Change group membership to modify permissions</small>
-                    </Flex>
-                    <UserPermissions permissions={this.props.detail.permissions} />
-
-                    {canModifyUser ? (
-                        <React.Fragment>
-                            <label>User Role</label>
-                            <InputError type="select" value={currentRole} onChange={this.toggleAdmin}>
-                                <option key="admin" value="Administrator">
-                                    Administrator
-                                </option>
-                                <option key="limit" value="Limited">
-                                    Limited
-                                </option>
-                            </InputError>
-                        </React.Fragment>
-                    ) : null}
-
-                    {canModifyUser ? (
-                        <RemoveBanner
-                            message="Click the Delete button to permanently remove this user."
-                            buttonText="Delete"
-                            onClick={this.handleRemove}
-                        />
-                    ) : null}
-                </div>
+                {this.props.canModifyUser ? (
+                    <RemoveBanner
+                        message="Click the Delete button to permanently remove this user."
+                        buttonText="Delete"
+                        onClick={this.handleRemove}
+                    />
+                ) : null}
             </div>
         );
     }
 }
 
 export const mapStateToProps = state => ({
+    canModifyUser: getCanModifyUser(state),
     detail: state.users.detail,
-    activeUser: state.account.id,
-    activeUserIsAdmin: state.account.administrator,
-    groups: state.groups.list,
-    groupsFetched: state.groups.fetched,
     error: get(state, "errors.GET_USER_ERROR.message", "")
 });
 
@@ -171,24 +132,9 @@ export const mapDispatchToProps = dispatch => ({
         dispatch(removeUser(userId));
     },
 
-    onClose: () => {
-        dispatch(push("/administration/users"));
-    },
-
-    onSetPrimaryGroup: (userId, groupId) => {
-        dispatch(editUser(userId, { primary_group: groupId }));
-    },
-
-    onSetUserRole: (userId, isAdmin) => {
-        dispatch(editUser(userId, { administrator: isAdmin }));
-    },
-
     onListGroups: () => {
         dispatch(listGroups());
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(UserDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(UserDetail);

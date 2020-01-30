@@ -1,5 +1,5 @@
 import { isEqual, reduce } from "lodash-es";
-import Moment from "moment";
+import { format } from "date-fns";
 import React from "react";
 import styled from "styled-components";
 import { Col, Row } from "react-bootstrap";
@@ -112,7 +112,7 @@ export class APIKey extends React.Component {
                         Created <RelativeTime time={this.props.apiKey.created_at} />
                     </Col>
                     <Col mdHidden lgHidden xs={3}>
-                        {Moment(this.props.apiKey.created_at).format("YY-MM-DD")}
+                        {format(new Date(this.props.apiKey.created_at), "yy-mm-dd")}
                     </Col>
 
                     <Col xs={1}>{closeButton}</Col>
@@ -138,7 +138,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(APIKey);
+export default connect(mapStateToProps, mapDispatchToProps)(APIKey);

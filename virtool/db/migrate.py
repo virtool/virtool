@@ -1,25 +1,18 @@
 import logging
-import os
-import re
 
 import pymongo.errors
 
-import virtool.analyses.db
 import virtool.analyses.migrate
-import virtool.history.db
-import virtool.jobs.db
-import virtool.otus.db
-import virtool.references.db
-import virtool.samples.db
+import virtool.caches.migrate
 import virtool.db.utils
+import virtool.jobs.db
 import virtool.otus.utils
-import virtool.references.utils
+import virtool.references.migrate
+import virtool.samples.migrate
 import virtool.users.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
-
-RE_FILE_PREFIX = re.compile("^[0-9a-z]{8}-")
 
 
 async def delete_unready(collection):
@@ -28,16 +21,18 @@ async def delete_unready(collection):
 
 async def migrate(app):
     db = app["db"]
-    server_version = app["version"]
 
     logger.info(" • analyses")
     await virtool.analyses.migrate.migrate_analyses(db, app["settings"])
+    await virtool.caches.migrate.migrate_caches(app)
     await migrate_files(db)
     await migrate_groups(db)
+    await migrate_jobs(db)
     await migrate_sessions(db)
     await migrate_status(db, app["version"])
     await migrate_subtraction(db)
-    await migrate_samples(app)
+    await virtool.samples.migrate.migrate_samples(app)
+    await virtool.references.migrate.migrate_references(app)
 
 
 async def migrate_files(db):
@@ -56,7 +51,8 @@ async def migrate_files(db):
 
 async def migrate_groups(db):
     """
-    Ensure that the permissions object for each group matches the permissions defined in `virtool.users.PERMISSIONS`.
+    Ensure that the permissions object for each group matches the permissions defined in
+    `virtool.users.utils.PERMISSIONS`.
 
     :param db:
 
@@ -77,74 +73,9 @@ async def migrate_groups(db):
         }, silent=True)
 
 
-async def migrate_jobs(app):
+async def migrate_jobs(db):
     logger.info(" • jobs")
-    motor_client = app["db"].motor_client
-
-    await virtool.jobs.db.delete_zombies(motor_client)
-
-
-async def migrate_samples(app):
-    motor_client = app["db"].motor_client
-
-    for sample_id in await motor_client.samples.distinct("_id"):
-        await virtool.samples.db.recalculate_algorithm_tags(motor_client, sample_id)
-
-    samples_path = os.path.join(app["settings"]["data_path"], "samples")
-
-    # Update how files are represented in sample documents.
-    async for document in motor_client.samples.find({"files.raw": {"$exists": False}}):
-        files = list()
-
-        sample_id = document["_id"]
-
-        for index, file in enumerate(document["files"]):
-            name = f"reads_{index + 1}.fastq"
-
-            path = os.path.join(samples_path, sample_id, name)
-
-            try:
-                stats = virtool.utils.file_stats(path)
-            except FileNotFoundError:
-                stats = {
-                    "size": None
-                }
-
-            files.append({
-                "name": name,
-                "download_url": f"/download/samples/{sample_id}/{name}",
-                "size": stats["size"],
-                "raw": False,
-                "from": {
-                    "id": file,
-                    "name": RE_FILE_PREFIX.sub("", file),
-                    "size": stats["size"]
-                }
-            })
-
-        await motor_client.samples.update_one({"_id": sample_id}, {
-            "$set": {
-                "files": files
-            }
-        })
-
-    paired_query = {
-       "paired": {
-           "$exists": False
-       }
-    }
-
-    await motor_client.samples.update_many({**paired_query, "files": {"$size": 1}}, {
-        "$set": {
-            "paired": False
-        }
-    })
-
-    await motor_client.samples.update_many({**paired_query, "files": {"$size": 2}}, {
-        "$set": {
-            "paired": True
-        }
-    })
+    await virtool.jobs.db.delete_zombies(db)
 
 
 async def migrate_sessions(db):

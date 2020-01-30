@@ -1,4 +1,5 @@
 import React from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
 import { BoxGroupSection, Icon } from "../../../base";
 import { formatIsolateName } from "../../../utils/utils";
@@ -28,8 +29,14 @@ export class IsolateButton extends React.Component {
         return (
             <StyledIsolateButton active={this.props.active} onClick={this.handleSelectIsolate}>
                 <span>{formatIsolateName(this.props)}</span>
-                {this.props.default ? <Icon name="star" /> : null}
+                {this.props.default & (this.props.dataType !== "barcode") ? <Icon name="star" /> : null}
             </StyledIsolateButton>
         );
     }
 }
+
+const mapStateToProps = state => ({
+    dataType: state.references.detail.data_type
+});
+
+export default connect(mapStateToProps)(IsolateButton);

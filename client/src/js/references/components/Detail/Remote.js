@@ -1,7 +1,17 @@
 import React from "react";
-import { ListGroup, ProgressBar, Row } from "react-bootstrap";
+import { ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Flex, FlexItem, Icon, ListGroupItem, Loader, Panel, RelativeTime } from "../../../base";
+import {
+    Button,
+    Flex,
+    FlexItem,
+    Icon,
+    Loader,
+    BoxGroup,
+    BoxGroupSection,
+    BoxGroupHeader,
+    RelativeTime
+} from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import { getProgress } from "../../selectors";
@@ -40,7 +50,7 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
     }
 
     return (
-        <ListGroupItem>
+        <BoxGroupSection>
             <Flex alignItems="center">
                 <FlexItem className={release.newer ? "text-primary" : "text-success"}>
                     <Icon name={release.newer ? "arrow-alt-circle-up" : "check"} />
@@ -72,12 +82,12 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
             </Flex>
 
             {button}
-        </ListGroupItem>
+        </BoxGroupSection>
     );
 };
 
 const Upgrade = ({ progress }) => (
-    <ListGroupItem>
+    <BoxGroupSection>
         <Flex alignItems="center" className="text-primary">
             <Icon name="arrow-alt-circle-up" />
 
@@ -89,7 +99,7 @@ const Upgrade = ({ progress }) => (
         <div style={{ paddingTop: "2rem" }}>
             <ProgressBar bsStyle="success" now={progress} min={0} max={1} />
         </div>
-    </ListGroupItem>
+    </BoxGroupSection>
 );
 
 const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {
@@ -101,7 +111,7 @@ const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {
 
     if (installed) {
         installedComponent = (
-            <ListGroupItem>
+            <BoxGroupSection>
                 <Flex alignItems="center">
                     <FlexItem>
                         <Icon name="hdd" />
@@ -114,7 +124,7 @@ const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {
                         / Published <RelativeTime time={installed.published_at} />
                     </FlexItem>
                 </Flex>
-            </ListGroupItem>
+            </BoxGroupSection>
         );
     }
 
@@ -135,22 +145,23 @@ const Remote = ({ detail, onCheckUpdates, onUpdate, checking, progress }) => {
     }
 
     return (
-        <Panel>
-            <Panel.Heading>
+        <BoxGroup>
+            <BoxGroupHeader>
                 <Flex>
-                    <FlexItem grow={1}>Remote Reference</FlexItem>
+                    <FlexItem grow={1}>
+                        <h2>Remote Reference</h2>
+                    </FlexItem>
                     <FlexItem>
                         <a href={`https://github.com/${slug}`} target="_blank" rel="noopener noreferrer">
                             <Icon faStyle="fab" name="github" /> {slug}
                         </a>
                     </FlexItem>
                 </Flex>
-            </Panel.Heading>
-            <ListGroup>
-                {installedComponent}
-                {statusComponent}
-            </ListGroup>
-        </Panel>
+            </BoxGroupHeader>
+
+            {installedComponent}
+            {statusComponent}
+        </BoxGroup>
     );
 };
 
@@ -171,7 +182,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Remote);
+export default connect(mapStateToProps, mapDispatchToProps)(Remote);

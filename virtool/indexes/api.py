@@ -202,7 +202,7 @@ async def find_history(req):
     if not await db.indexes.count({"_id": index_id}):
         return not_found()
 
-    term = req.query.get("term", None)
+    term = req.query.get("term")
 
     db_query = {
         "index.id": index_id

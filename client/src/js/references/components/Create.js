@@ -4,8 +4,10 @@ import { Modal } from "react-bootstrap";
 import styled from "styled-components";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
+
 import { Alert, Button, ButtonToolbar } from "../../base";
 import { getTargetChange } from "../../utils/utils";
+import { DataTypeSelection } from "./DataTypeSelection";
 import { ReferenceForm } from "./Form";
 
 const Container = styled.div`
@@ -39,6 +41,10 @@ export class CreateReference extends React.Component {
         });
     };
 
+    handleChangeDataType = dataType => {
+        this.setState({ dataType });
+    };
+
     handleSubmit = e => {
         e.preventDefault();
 
@@ -65,13 +71,14 @@ export class CreateReference extends React.Component {
                     <ReferenceForm
                         description={this.state.description}
                         errorFile={this.state.errorFile}
-                        errorName={this.state.errorName}
                         errorSelect={this.state.errorSelect}
+                        errorName={this.state.errorName}
                         name={this.state.name}
                         mode={this.state.mode}
                         organism={this.state.organism}
                         onChange={this.handleChange}
                     />
+                    <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
                     <Modal.Footer>
                         <ButtonToolbar>
                             <Button type="submit" icon="save" bsStyle="primary">
@@ -95,7 +102,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    null,
-    mapDispatchToProps
-)(CreateReference);
+export default connect(null, mapDispatchToProps)(CreateReference);

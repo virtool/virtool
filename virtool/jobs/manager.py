@@ -142,7 +142,7 @@ class IntegratedManager:
         :type job_id: str
 
         """
-        job = self._jobs.get(job_id, None)
+        job = self._jobs.get(job_id)
 
         if job:
             if job["process"] and job["process"].is_alive():

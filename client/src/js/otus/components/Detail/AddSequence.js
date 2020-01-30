@@ -10,15 +10,18 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
-import { get, find } from "lodash-es";
-
+import { Modal, InputGroup, ControlLabel } from "react-bootstrap";
+import { get, find, concat, map } from "lodash-es";
 import { addSequence, hideOTUModal } from "../../actions";
+
 import { clearError } from "../../../errors/actions";
+
 import { Button, Icon, InputError, Loader } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
+import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
 import SequenceForm from "./SequenceForm";
+import { SegmentCol } from "./SegmentCol";
 
 const getInitialState = () => ({
     id: "",
@@ -138,7 +141,8 @@ class AddSequence extends React.Component {
                 this.state.definition,
                 this.state.host,
                 this.state.sequence,
-                this.state.segment
+                this.state.segment,
+                this.props.targetName
             );
         } else {
             this.setState({
@@ -160,9 +164,22 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
-
-        const accessionCol = (
-            <Col xs={12} md={6}>
+        const defaultOption = (
+            <option key="None" value="">
+                {" "}
+                - None -{" "}
+            </option>
+        );
+        const segmentNames = concat(
+            defaultOption,
+            map(this.props.schema, segment => (
+                <option key={segment} value={segment}>
+                    {segment}
+                </option>
+            ))
+        );
+        const AccessionCol = (
+            <div>
                 <ControlLabel>Accession (ID)</ControlLabel>
                 <InputGroup>
                     <InputError
@@ -177,25 +194,41 @@ class AddSequence extends React.Component {
                         </Button>
                     </InputGroup.Button>
                 </InputGroup>
-            </Col>
+            </div>
         );
+
+        let AccessionSegmentCol = (
+            <StyledAccessionSegmentCol>
+                {AccessionCol}
+                <SegmentCol
+                    segmentNames={segmentNames}
+                    value={this.state.segment}
+                    onChange={this.handleChange}
+                    error={this.state.errorSegment}
+                />
+            </StyledAccessionSegmentCol>
+        );
+
+        let targetName;
+        if (this.props.dataType === "barcode") {
+            AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+            targetName = this.props.targetName;
+        }
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
+                <Modal.Body>{targetName}</Modal.Body>
                 <SequenceForm
                     host={this.state.host}
                     definition={this.state.definition}
                     sequence={this.state.sequence}
-                    segment={this.state.segment}
-                    schema={this.props.schema}
                     overlay={overlay}
-                    accessionCol={accessionCol}
+                    AccessionSegmentCol={AccessionSegmentCol}
                     handleChange={this.handleChange}
                     handleSubmit={this.handleSubmit}
-                    errorSegment={this.state.errorSegment}
                     errorDefinition={this.state.errorDefinition}
                     errorSequence={this.state.errorSequence}
                 />
@@ -204,21 +237,26 @@ class AddSequence extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
-    sequences: state.otus.activeIsolate.sequences,
-    show: state.otus.addSequence,
-    otuId: state.otus.detail.id,
-    isolateId: state.otus.activeIsolateId,
-    error: get(state, "errors.ADD_SEQUENCE_ERROR", "")
-});
+const mapStateToProps = state => {
+    return {
+        sequences: state.otus.activeIsolate.sequences,
+        show: !!state.otus.addSequence,
+        targetName: state.otus.targetName,
+        otuId: state.otus.detail.id,
+        isolateId: state.otus.activeIsolateId,
+        error: get(state, "errors.ADD_SEQUENCE_ERROR", ""),
+        dataType: state.references.detail.data_type,
+        targets: state.references.detail.targets
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(hideOTUModal());
     },
 
-    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment, target) => {
+        dispatch(addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment, target));
     },
 
     onClearError: error => {
@@ -226,7 +264,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(AddSequence);
+export default connect(mapStateToProps, mapDispatchToProps)(AddSequence);

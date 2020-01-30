@@ -263,6 +263,14 @@ def get_from_args():
     )
 
     parser.add_argument(
+        "--no-file-checks",
+        action="store_true",
+        default=False,
+        dest="no_file_checks",
+        help="disable checking the application data on start"
+    )
+
+    parser.add_argument(
         "--no-file-manager",
         action="store_true",
         default=False,

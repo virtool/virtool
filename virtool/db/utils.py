@@ -85,7 +85,7 @@ async def get_one_field(collection, field, query):
     if projected is None:
         return None
 
-    return projected.get(field, None)
+    return projected.get(field)
 
 
 async def get_non_existent_ids(collection, id_list):

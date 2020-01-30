@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<UserRole /> should render empty when [canModifyUser=false] 1`] = `""`;
+
+exports[`<UserRole /> should render when [role="administrator"] 1`] = `
+<Role__StyledUserRole>
+  <label>
+    User Role
+  </label>
+  <InputError
+    onChange={[Function]}
+    type="select"
+    value="administrator"
+  >
+    <option
+      key="administrator"
+      value="administrator"
+    >
+      Administrator
+    </option>
+    <option
+      key="limited"
+      value="limited"
+    >
+      Limited
+    </option>
+  </InputError>
+</Role__StyledUserRole>
+`;
+
+exports[`<UserRole /> should render when [role="limited"] 1`] = `
+<Role__StyledUserRole>
+  <label>
+    User Role
+  </label>
+  <InputError
+    onChange={[Function]}
+    type="select"
+    value="limited"
+  >
+    <option
+      key="administrator"
+      value="administrator"
+    >
+      Administrator
+    </option>
+    <option
+      key="limited"
+      value="limited"
+    >
+      Limited
+    </option>
+  </InputError>
+</Role__StyledUserRole>
+`;

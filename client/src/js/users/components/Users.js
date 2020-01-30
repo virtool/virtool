@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Users
- */
-
 import { get } from "lodash-es";
 import React from "react";
 import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
@@ -124,7 +113,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(ManageUsers);
+export default connect(mapStateToProps, mapDispatchToProps)(ManageUsers);

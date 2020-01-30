@@ -7,17 +7,19 @@ import virtool.otus.db
 import virtool.utils
 
 
-async def add(db, otu_id: str, data: dict, user_id: str) -> dict:
+async def add(app, otu_id: str, data: dict, user_id: str) -> dict:
     """
     Add an isolate to an existing OTU.
 
-    :param db: the application database object
+    :param app: the application object
     :param otu_id: the id of the OTU
     :param data: the isolate data
     :param user_id: the user making the change
-    :return: the isolate subdocument
+    :return: the isolate sub-document
 
     """
+    db = app["db"]
+
     document = await db.otus.find_one(otu_id)
 
     isolates = copy.deepcopy(document["isolates"])
@@ -51,7 +53,7 @@ async def add(db, otu_id: str, data: dict, user_id: str) -> dict:
         description += " as default"
 
     await virtool.history.db.add(
-        db,
+        app,
         "add_isolate",
         old,
         new,
@@ -84,7 +86,9 @@ async def append(db, otu_id, isolates, isolate):
     return isolate_id
 
 
-async def edit(db, otu_id, isolate_id, data, user_id):
+async def edit(app, otu_id, isolate_id, data, user_id):
+    db = app["db"]
+
     isolates = await virtool.db.utils.get_one_field(db.otus, "isolates", otu_id)
     isolate = virtool.otus.utils.find_isolate(isolates, isolate_id)
 
@@ -114,7 +118,7 @@ async def edit(db, otu_id, isolate_id, data, user_id):
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.history.db.add(
-        db,
+        app,
         "edit_isolate",
         old,
         new,
@@ -127,7 +131,9 @@ async def edit(db, otu_id, isolate_id, data, user_id):
     return virtool.otus.utils.find_isolate(complete["isolates"], isolate_id)
 
 
-async def remove(db, otu_id, isolate_id, user_id):
+async def remove(app, otu_id, isolate_id, user_id):
+    db = app["db"]
+
     document = await db.otus.find_one(otu_id)
 
     isolates = copy.deepcopy(document["isolates"])
@@ -173,7 +179,7 @@ async def remove(db, otu_id, isolate_id, user_id):
         description += f" and set {new_isolate_name} as default"
 
     await virtool.history.db.add(
-        db,
+        app,
         "remove_isolate",
         old,
         new,
@@ -182,16 +188,19 @@ async def remove(db, otu_id, isolate_id, user_id):
     )
 
 
-async def set_default(db, otu_id: str, isolate_id: str, user_id):
+async def set_default(app, otu_id: str, isolate_id: str, user_id):
     """
     Set a new default isolate.
 
-    :param db:
-    :param otu_id:
-    :param isolate_id:
-    :param user_id:
-    :return:
+    :param app: the application object
+    :param otu_id: the ID of the parent OTU
+    :param isolate_id: the ID of the isolate set as default
+    :param user_id: the ID of the requesting user
+    :return: the updated isolate
+
     """
+    db = app["db"]
+
     document = await db.otus.find_one(otu_id)
 
     isolate = virtool.otus.utils.find_isolate(document["isolates"], isolate_id)
@@ -217,7 +226,11 @@ async def set_default(db, otu_id: str, isolate_id: str, user_id):
     })
 
     # Get the joined entry now that it has been updated.
-    new = await virtool.otus.db.join(db, otu_id, document)
+    new = await virtool.otus.db.join(
+        db,
+        otu_id,
+        document
+    )
 
     await virtool.otus.db.update_verification(db, new)
 
@@ -225,7 +238,7 @@ async def set_default(db, otu_id: str, isolate_id: str, user_id):
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.history.db.add(
-        db,
+        app,
         "set_as_default",
         old,
         new,

@@ -12,9 +12,20 @@ exports[`<NuVsList /> should render 1`] = `
     height={500}
     itemCount={4}
     itemSize={58}
-    width={200}
+    width={230}
   >
     MockNuVsItem
   </List__StyledNuVsList>
+  <List__NuVsListFooter>
+    Use 
+    <Key>
+      w
+    </Key>
+     and 
+    <Key>
+      s
+    </Key>
+     to move
+  </List__NuVsListFooter>
 </div>
 `;

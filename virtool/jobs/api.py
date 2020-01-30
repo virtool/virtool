@@ -18,7 +18,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
@@ -83,7 +83,7 @@ async def cancel(req):
 async def clear(req):
     db = req.app["db"]
 
-    job_filter = req.query.get("filter", None)
+    job_filter = req.query.get("filter")
 
     # Remove jobs that completed successfully.
     complete = job_filter in [None, "finished", "complete"]

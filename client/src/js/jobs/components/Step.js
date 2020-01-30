@@ -1,6 +1,6 @@
-import Moment from "moment";
 import React from "react";
 import styled from "styled-components";
+import { format } from "date-fns";
 import { BoxGroupSection, Icon, Loader } from "../../base";
 import { getStepDescription } from "../utils";
 
@@ -25,9 +25,9 @@ const JobStepLoader = styled(Loader)`
 const JobStepTimestamp = ({ timestamp }) => (
     <StyledJobStepTimestamp>
         <Icon name="clock" />
-        <span>{Moment(timestamp).format("hh:mm:ss")}</span>
+        <span>{format(new Date(timestamp), "hh:mm:ss")}</span>
         <Icon name="calendar" />
-        <span>{Moment(timestamp).format("YYYY-MM-DD")}</span>
+        <span>{format(new Date(timestamp), "yyyy-MM-dd")}</span>
     </StyledJobStepTimestamp>
 );
 

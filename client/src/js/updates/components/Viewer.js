@@ -47,7 +47,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SoftwareUpdateViewer);
+export default connect(mapStateToProps, mapDispatchToProps)(SoftwareUpdateViewer);

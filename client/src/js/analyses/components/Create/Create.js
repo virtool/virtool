@@ -153,7 +153,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(CreateAnalysis);
+export default connect(mapStateToProps, mapDispatchToProps)(CreateAnalysis);

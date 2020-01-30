@@ -1,75 +1,60 @@
-import Moment from "moment";
 import { RelativeTime } from "../RelativeTime";
+
+const RealDate = Date;
 
 describe("<RelativeTime />", () => {
     let props;
-    let wrapper;
-    let expected;
 
-    it("renders correctly", () => {
-        const pastTime = `${Moment()
-            .subtract(60, "day")
-            .toDate()
-            .toISOString()}`;
-        props = { time: pastTime };
-        wrapper = shallow(<RelativeTime {...props} />);
-
-        expected = Moment(props.time).fromNow();
-
-        expect(wrapper.text()).toEqual(expected);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("renders 'just now' for browser lag future times", () => {
-        const futureTime = `${Moment()
-            .add(30, "seconds")
-            .toDate()
-            .toISOString()}`;
-        props = { time: futureTime };
-        wrapper = shallow(<RelativeTime {...props} />);
-
-        expect(wrapper.text()).toEqual("just now");
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("sets and clears interval in componentDidMount and componentWillUnmount respectively", () => {
-        const spySetInterval = sinon.spy(window, "setInterval");
-        const spyClearInterval = sinon.spy(window, "clearInterval");
-
+    beforeEach(() => {
         props = {
-            time: "2018-02-14T17:12:00.000000Z"
+            time: "2019-02-10T17:11:00.000000Z"
         };
-        wrapper = mount(<RelativeTime {...props} />);
-
-        expect(spySetInterval.calledOnce).toBe(true);
-        expect(spyClearInterval.called).toBe(false);
-
-        wrapper.unmount();
-
-        expect(spyClearInterval.calledOnce).toBe(true);
-
-        spySetInterval.restore();
-        spyClearInterval.restore();
     });
 
-    describe("when receiving new time prop:", () => {
-        let spySCU;
-        let spyCDU;
+    beforeAll(() => {
+        Date.now = jest.fn(() => new Date("2019-04-22T10:20:30Z"));
+    });
 
-        beforeAll(() => {
-            spySCU = sinon.spy(RelativeTime.prototype, "shouldComponentUpdate");
-            spyCDU = sinon.spy(RelativeTime.prototype, "componentDidUpdate");
+    it("should render", () => {
+        // formatDistanceStrict.mockReturnValue("2 days ago");
+        // Date.now = jest.fn(() => new Date("2019-04-22T10:20:30Z"));
+        const wrapper = shallow(<RelativeTime {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
 
-            props = {
-                time: "2018-02-14T17:12:00.000000Z"
-            };
+    it("componentDidMount() should update this.interval", () => {
+        const wrapper = shallow(<RelativeTime {...props} />);
+        expect(wrapper.instance().interval).toBe(8);
+    });
 
-            wrapper = shallow(<RelativeTime {...props} />);
+    it("componentDidUpdate() should update timeString when [prevProps.time !== this.props.time] and [newTimeString !== this.state.timeString]", () => {
+        const wrapper = shallow(<RelativeTime {...props} />);
+        const time = "2019-01-10T12:21:00.000000Z";
+
+        wrapper.setProps({ ...props, time });
+
+        expect(wrapper.state()).toEqual({
+            time,
+            timeString: "3 months ago"
         });
+    });
 
-        afterAll(() => {
-            spySCU.restore();
-            spyCDU.restore();
-        });
+    it("componentDidUpdate() should not call update when [prevProps.time === this.props.time]", () => {
+        const wrapper = shallow(<RelativeTime {...props} />);
+        wrapper.setProps({ ...props, time: "2020-02-14T17:12:00.000000Z" });
+        wrapper.instance().update = jest.fn();
+        expect(wrapper.instance().update).not.toHaveBeenCalled();
+    });
+
+    it("componentWillUnmount() should update this.interval", () => {
+        const wrapper = shallow(<RelativeTime {...props} />);
+        wrapper.instance().interval = 14;
+        window.clearInterval = jest.fn();
+        wrapper.unmount();
+        expect(window.clearInterval).toHaveBeenCalledWith(14);
+    });
+
+    afterAll(() => {
+        Date = RealDate;
     });
 });

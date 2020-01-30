@@ -104,7 +104,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(RebuildIndex);
+export default connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);

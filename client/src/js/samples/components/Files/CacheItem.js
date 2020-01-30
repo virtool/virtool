@@ -1,9 +1,9 @@
-import React from "react";
-import styled from "styled-components";
 import { sumBy } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { BoxGroupSection, Flex, FlexItem, RelativeTime } from "../../../base";
+import styled from "styled-components";
+import { BoxGroupSection, Flex, FlexItem, Icon, RedBadge, RelativeTime } from "../../../base";
 import { byteSize } from "../../../utils/utils";
 
 const calculateSize = files => byteSize(sumBy(files, "size"));
@@ -13,40 +13,50 @@ const CacheItemLink = styled(Link)`
     font-weight: bold;
 `;
 
+const CacheItemRight = styled.div`
+    display: flex;
+    font-weight: bold;
+    width: 180px;
+    justify-content: space-between;
+`;
+
 const StyledSampleCacheItem = styled(BoxGroupSection)`
     align-items: flex-start;
     display: flex;
     justify-content: space-between;
 `;
 
-export const SampleCacheItem = ({ created_at, files, hash, id, sampleId }) => (
-    <StyledSampleCacheItem>
-        <FlexItem>
+export const SampleCacheItem = ({ createdAt, files, hash, id, missing, sampleId }) => {
+    let missingBadge;
+
+    if (missing) {
+        missingBadge = (
+            <RedBadge>
+                <Icon name="exclamation-circle" /> Files Missing
+            </RedBadge>
+        );
+    }
+
+    return (
+        <StyledSampleCacheItem>
             <Flex alignItems="center">
                 <i className="fas fa-archive fa-fw" style={{ fontSize: "24px" }} />
                 <FlexItem pad={10}>
-                    <CacheItemLink to={`/samples/${sampleId}/files/${id}`}>
-                        <strong>{hash}</strong>
-                    </CacheItemLink>
-                    <div>
-                        <small>
-                            Created <RelativeTime time={created_at} />
-                        </small>
-                    </div>
+                    <CacheItemLink to={`/samples/${sampleId}/files/${id}`}>{hash}</CacheItemLink>
+                    <small>
+                        Created <RelativeTime time={createdAt} />
+                    </small>
                 </FlexItem>
             </Flex>
-        </FlexItem>
-        <FlexItem>
-            <div className="text-right">
-                <div>
-                    <strong>{calculateSize(files)}</strong>
-                </div>
-            </div>
-        </FlexItem>
-    </StyledSampleCacheItem>
-);
+            <CacheItemRight>
+                <div>{missingBadge}</div>
+                <div>{calculateSize(files)}</div>
+            </CacheItemRight>
+        </StyledSampleCacheItem>
+    );
+};
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     sampleId: state.samples.detail.id
 });
 

@@ -102,70 +102,73 @@ export class Password extends React.Component {
         const { error, forceReset, lastPasswordChange } = this.props;
 
         return (
-            <Panel>
-                <Panel.Body>
-                    <p>
-                        <em>
-                            Last changed <RelativeTime time={lastPasswordChange} em={true} />
-                        </em>
-                    </p>
+            <div>
+                <label>Change Password</label>
+                <Panel>
+                    <Panel.Body>
+                        <p>
+                            <em>
+                                Last changed <RelativeTime time={lastPasswordChange} em={true} />
+                            </em>
+                        </p>
 
-                    <form onSubmit={this.handleSubmit}>
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    type="password"
-                                    name="password"
-                                    placeholder="New Password"
-                                    value={this.state.password}
-                                    onChange={this.handleChange}
-                                    error={passwordLengthError}
-                                />
-                            </Col>
+                        <form onSubmit={this.handleSubmit}>
+                            <Row>
+                                <Col xs={12} md={6}>
+                                    <InputError
+                                        type="password"
+                                        name="password"
+                                        placeholder="New Password"
+                                        value={this.state.password}
+                                        onChange={this.handleChange}
+                                        error={passwordLengthError}
+                                    />
+                                </Col>
 
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    type="password"
-                                    name="confirm"
-                                    placeholder="Confirm Password"
-                                    value={this.state.confirm}
-                                    onChange={this.handleChange}
-                                    error={passwordMatchError}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <Checkbox
-                                    label="Force user to reset password on next login"
-                                    checked={forceReset}
-                                    onClick={this.handleSetForceReset}
-                                />
-                            </Col>
+                                <Col xs={12} md={6}>
+                                    <InputError
+                                        type="password"
+                                        name="confirm"
+                                        placeholder="Confirm Password"
+                                        value={this.state.confirm}
+                                        onChange={this.handleChange}
+                                        error={passwordMatchError}
+                                    />
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={12} md={6}>
+                                    <Checkbox
+                                        label="Force user to reset password on next login"
+                                        checked={forceReset}
+                                        onClick={this.handleSetForceReset}
+                                    />
+                                </Col>
 
-                            <Col xs={12} mdHidden lgHidden>
-                                <div style={{ height: "15px" }} />
-                            </Col>
+                                <Col xs={12} mdHidden lgHidden>
+                                    <div style={{ height: "15px" }} />
+                                </Col>
 
-                            <Col xs={12} md={6}>
-                                <ButtonToolbar>
-                                    <Button type="button" onClick={this.handleClear}>
-                                        Clear
-                                    </Button>
+                                <Col xs={12} md={6}>
+                                    <ButtonToolbar>
+                                        <Button type="button" onClick={this.handleClear}>
+                                            Clear
+                                        </Button>
 
-                                    <SaveButton />
-                                </ButtonToolbar>
-                            </Col>
+                                        <SaveButton />
+                                    </ButtonToolbar>
+                                </Col>
 
-                            <Col xs={12} className={CX({ hidden: !this.state.error })}>
-                                <h5 className="text-danger">Passwords do not match</h5>
-                            </Col>
-                        </Row>
-                    </form>
+                                <Col xs={12} className={CX({ hidden: !this.state.error })}>
+                                    <h5 className="text-danger">Passwords do not match</h5>
+                                </Col>
+                            </Row>
+                        </form>
 
-                    {error ? <DangerAlert>{error}</DangerAlert> : null}
-                </Panel.Body>
-            </Panel>
+                        {error ? <DangerAlert>{error}</DangerAlert> : null}
+                    </Panel.Body>
+                </Panel>
+            </div>
         );
     }
 }
@@ -191,7 +194,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Password);
+export default connect(mapStateToProps, mapDispatchToProps)(Password);

@@ -162,7 +162,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(PathoscopeToolbar);
+export default connect(mapStateToProps, mapDispatchToProps)(PathoscopeToolbar);

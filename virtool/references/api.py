@@ -43,7 +43,7 @@ RIGHTS_SCHEMA = {
 async def find(req):
     db = req.app["db"]
 
-    term = req.query.get("find", None)
+    term = req.query.get("find")
 
     db_query = dict()
 
@@ -213,8 +213,8 @@ async def find_otus(req):
     if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    term = req.query.get("find", None)
-    verified = req.query.get("verified", None)
+    term = req.query.get("find")
+    verified = req.query.get("verified")
     names = req.query.get("names", False)
 
     data = await virtool.otus.db.find(
@@ -242,7 +242,7 @@ async def find_history(req):
         "reference.id": ref_id
     }
 
-    unbuilt = req.query.get("unbuilt", None)
+    unbuilt = req.query.get("unbuilt")
 
     if unbuilt == "true":
         base_query["index.id"] = "unbuilt"
@@ -335,13 +335,12 @@ async def create(req):
 
     user_id = req["client"].user_id
 
-    clone_from = data.get("clone_from", None)
-    import_from = data.get("import_from", None)
-    remote_from = data.get("remote_from", None)
-    release_id = data.get("release_id", None) or 11447367
+    clone_from = data.get("clone_from")
+    import_from = data.get("import_from")
+    remote_from = data.get("remote_from")
+    release_id = data.get("release_id") or 11447367
 
     if clone_from:
-
         if not await db.references.count({"_id": clone_from}):
             return bad_request("Source reference does not exist")
 
@@ -480,10 +479,6 @@ async def create(req):
         "type": "string",
         "coerce": virtool.validators.strip
     },
-    "data_type": {
-        "type": "string",
-        "allowed": ["genome", "barcode"]
-    },
     "organism": {
         "type": "string",
         "coerce": virtool.validators.strip
@@ -501,6 +496,30 @@ async def create(req):
             "coerce": virtool.validators.strip,
             "empty": False
         }
+    },
+    "targets": {
+        "type": "list",
+        "schema": {
+            "type": "dict",
+            "schema": {
+                "name": {
+                    "type": "string",
+                    "empty": False,
+                    "required": True
+                },
+                "description": {
+                    "type": "string",
+                    "default": ""
+                },
+                "required": {
+                    "type": "boolean",
+                    "default": False
+                },
+                "length": {
+                    "type": "integer"
+                }
+            }
+        }
     }
 })
 async def edit(req):
@@ -515,39 +534,19 @@ async def edit(req):
     if not await virtool.references.db.check_right(req, ref_id, "modify"):
         return insufficient_rights()
 
-    internal_control_id = data.get("internal_control", None)
+    targets = data.get("targets")
 
-    if internal_control_id == "":
-        data["internal_control"] = None
+    if targets:
+        names = [t["name"] for t in targets]
 
-    elif internal_control_id:
-        internal_control = await virtool.references.db.get_internal_control(db, internal_control_id, ref_id)
+        if len(names) != len(set(names)):
+            return bad_request("The targets field may not contain duplicate names")
 
-        if internal_control is None:
-            data["internal_control"] = None
-        else:
-            data["internal_control"] = {
-                "id": internal_control_id
-            }
-
-    document = await db.references.find_one_and_update({"_id": ref_id}, {
-        "$set": data
-    })
-
-    document = virtool.utils.base_processor(document)
-
-    document.update(await virtool.references.db.get_computed(db, ref_id, internal_control_id))
-
-    if "name" in data:
-        await db.analyses.update_many({"reference.id": ref_id}, {
-            "$set": {
-                "reference.name": document["name"]
-            }
-        })
-
-    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
-
-    document["users"] = await virtool.users.db.attach_identicons(db, users)
+    document = await virtool.references.db.edit(
+        db,
+        ref_id,
+        data
+    )
 
     return json_response(document)
 

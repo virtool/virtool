@@ -14,3 +14,8 @@ export const Badge = styled.span`
     white-space: nowrap;
     text-align: center;
 `;
+
+export const RedBadge = styled(Badge)`
+    background-color: #c53030;
+    color: #ffffff;
+`;

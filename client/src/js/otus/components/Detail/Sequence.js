@@ -1,9 +1,20 @@
 import PropTypes from "prop-types";
 import React from "react";
+import { connect } from "react-redux";
 import { Collapse } from "react-bootstrap";
 import styled from "styled-components";
 import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
+
+const TargetField = styled.div`
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+`;
+
+const Name = styled.div`
+    font-weight: bold;
+`;
 
 const SequenceHeader = styled.div`
     align-items: center;
@@ -33,6 +44,10 @@ const SequenceHeaderDefinition = styled.span`
 
 const SequenceTable = styled(Table)`
     margin-top: 10px;
+    table-layout: fixed;
+    th {
+        width: 130px;
+    }
 `;
 
 class Sequence extends React.Component {
@@ -52,7 +67,12 @@ class Sequence extends React.Component {
         sequence: PropTypes.string,
         showEditSequence: PropTypes.func,
         showRemoveSequence: PropTypes.func,
-        canModify: PropTypes.bool
+        canModify: PropTypes.bool,
+        dataType: PropTypes.string,
+        name: PropTypes.string,
+        description: PropTypes.string,
+        required: PropTypes.string,
+        length: PropTypes.number
     };
 
     handleCloseClick = () => {
@@ -109,11 +129,43 @@ class Sequence extends React.Component {
             segment = <InfoLabel className="text-mono">{this.props.segment}</InfoLabel>;
         }
 
+        let segmentTargetRow;
+
+        if (this.props.dataType === "barcode") {
+            segmentTargetRow = (
+                <tr>
+                    <th>Target</th>
+                    <td>
+                        <TargetField>
+                            <Name>{this.props.name}</Name>
+                            <span>{this.props.required}</span>
+                            <span>{this.props.length}</span>
+                        </TargetField>
+                        {this.props.description}
+                    </td>
+                </tr>
+            );
+        } else {
+            segmentTargetRow = (
+                <tr>
+                    <th>Segment</th>
+                    <td>{segment}</td>
+                </tr>
+            );
+        }
+
+        const headerRow =
+            this.props.dataType === "barcode" ? (
+                <SequenceHeaderDefinition>{this.props.name}</SequenceHeaderDefinition>
+            ) : (
+                <SequenceHeaderDefinition>{this.props.definition}</SequenceHeaderDefinition>
+            );
+
         return (
             <BoxGroupSection onClick={this.state.in ? null : () => this.setState({ in: true })}>
                 <SequenceHeader>
                     <Label>{accession}</Label>
-                    <SequenceHeaderDefinition>{this.props.definition}</SequenceHeaderDefinition>
+                    {headerRow}
                     {segment}
                     {buttons}
                 </SequenceHeader>
@@ -129,10 +181,7 @@ class Sequence extends React.Component {
                                     <th>Definition</th>
                                     <td>{this.props.definition}</td>
                                 </tr>
-                                <tr>
-                                    <th>Segment</th>
-                                    <td>{segment}</td>
-                                </tr>
+                                {segmentTargetRow}
                                 <tr>
                                     <th>Host</th>
                                     <td>{this.props.host}</td>
@@ -155,4 +204,8 @@ class Sequence extends React.Component {
     }
 }
 
-export default Sequence;
+const mapStateToProps = state => ({
+    dataType: state.references.detail.data_type,
+    targets: state.references.detail.targets
+});
+export default connect(mapStateToProps)(Sequence);

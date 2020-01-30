@@ -5,7 +5,7 @@ import { findJobs } from "../actions";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { getTerm } from "../selectors";
 import JobsToolbar from "./Toolbar";
-import Job from "./Item";
+import Job from "./Item/Item";
 
 export class JobsList extends React.Component {
     componentDidMount() {
@@ -63,7 +63,4 @@ export const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(JobsList);
+export default connect(mapStateToProps, mapDispatchToProps)(JobsList);

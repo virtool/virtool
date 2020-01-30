@@ -8,6 +8,7 @@ import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../a
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import IsolateSequences from "./Sequences";
+import IsolateTargets from "./Targets";
 
 const IsolateDetailBox = styled(BoxGroup)`
     margin: 0;
@@ -37,11 +38,12 @@ export class IsolateDetail extends React.Component {
     render() {
         const isolate = this.props.activeIsolate;
 
-        const defaultIsolateLabel = isolate.default ? (
-            <SuccessLabel bsStyle="success">
-                <Icon name="star" /> Default Isolate
-            </SuccessLabel>
-        ) : null;
+        const defaultIsolateLabel =
+            isolate.default & (this.props.dataType !== "barcode") ? (
+                <SuccessLabel bsStyle="success">
+                    <Icon name="star" /> Default Isolate
+                </SuccessLabel>
+            ) : null;
 
         let modifyIcons;
 
@@ -56,7 +58,7 @@ export class IsolateDetail extends React.Component {
                         onClick={this.props.showEditIsolate}
                         style={{ paddingLeft: "7px" }}
                     />
-                    {isolate.default ? null : (
+                    {!isolate.default & (this.props.dataType !== "barcode") ? (
                         <Icon
                             name="star"
                             bsStyle="success"
@@ -65,7 +67,7 @@ export class IsolateDetail extends React.Component {
                             onClick={this.handleSetDefaultIsolate}
                             style={{ paddingLeft: "3px" }}
                         />
-                    )}
+                    ) : null}
                     <Icon
                         name="trash"
                         bsStyle="danger"
@@ -77,6 +79,13 @@ export class IsolateDetail extends React.Component {
                 </span>
             );
         }
+
+        const isolateComponent =
+            this.props.dataType === "barcode" ? (
+                <IsolateTargets />
+            ) : (
+                <IsolateSequences canModify={this.props.canModify} />
+            );
 
         return (
             <div>
@@ -106,7 +115,7 @@ export class IsolateDetail extends React.Component {
                             />
                         </div>
                     </IsolateDetailHeader>
-                    <IsolateSequences canModify={this.props.canModify} />
+                    {isolateComponent}
                 </IsolateDetailBox>
             </div>
         );
@@ -122,7 +131,8 @@ const mapStateToProps = state => ({
     editing: state.otus.editingIsolate,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
-    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu")
+    canModify: !get(state, "references.detail.remotes_from") && checkRefRight(state, "modify_otu"),
+    dataType: state.references.detail.data_type
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -139,7 +149,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(IsolateDetail);
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateDetail);

@@ -78,7 +78,7 @@ async def find(req):
 
     db_query = dict()
 
-    term = query.get("find", None)
+    term = query.get("find")
 
     if term:
         db_query = compose_regex_query(term, ["name", "user.id"])
@@ -132,7 +132,7 @@ async def get(req):
 
     document["caches"] = caches
 
-    if document["imported"] is True:
+    if document["ready"] is True:
         # Only update file fields if sample creation is complete.
         for index, file in enumerate(document["files"]):
             snake_case = document["name"].replace(" ", "_")
@@ -168,10 +168,14 @@ async def get(req):
         "type": "string",
         "coerce": virtool.validators.strip,
     },
-    "srna": {
-        "type": "boolean",
-        "coerce": virtool.utils.to_bool,
-        "default": False
+    "library_type": {
+        "type": "string",
+        "allowed": [
+            "normal",
+            "srna",
+            "amplicon"
+        ],
+        "default": "normal"
     },
     "subtraction": {
         "type": "string",
@@ -233,16 +237,14 @@ async def create(req):
         "pathoscope": False,
         "created_at": virtool.utils.timestamp(),
         "format": "fastq",
-        "imported": "ip",
+        "ready": False,
         "quality": None,
-        "analyzed": False,
         "hold": True,
-        "archived": False,
         "group_read": settings["sample_group_read"],
         "group_write": settings["sample_group_write"],
         "all_read": settings["sample_all_read"],
         "all_write": settings["sample_all_write"],
-        "srna": data["srna"],
+        "library_type": data["library_type"],
         "subtraction": {
             "id": data["subtraction"]
         },
@@ -264,8 +266,7 @@ async def create(req):
 
     task_args = {
         "sample_id": sample_id,
-        "files": files,
-        "srna": data["srna"]
+        "files": files
     }
 
     # Create job document.
@@ -383,7 +384,7 @@ async def set_rights(req):
     if not req["client"].administrator and user_id != await virtool.samples.db.get_sample_owner(db, sample_id):
         return insufficient_rights("Must be administrator or sample owner")
 
-    group = data.get("group", None)
+    group = data.get("group")
 
     if group:
         existing_group_ids = await db.groups.distinct("_id") + ["none"]
@@ -446,7 +447,7 @@ async def find_analyses(req):
 
         raise
 
-    term = req.query.get("term", None)
+    term = req.query.get("term")
 
     db_query = dict()
 

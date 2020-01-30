@@ -28,7 +28,11 @@ describe("mapStateToProps()", () => {
     it("should return props", () => {
         const state = {
             subtraction: {
-                documents: [{ id: "foo", ready: true }, { id: "bar", ready: true }, { id: "baz", ready: true }]
+                documents: [
+                    { id: "foo", ready: true },
+                    { id: "bar", ready: true },
+                    { id: "baz", ready: true }
+                ]
             }
         };
         const props = mapStateToProps(state, { index: 1 });
