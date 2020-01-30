@@ -2,21 +2,48 @@ import React from "react";
 import styled from "styled-components";
 import { BoxGroupSection, Button, Badge } from "../../../base";
 
-const TargetComponents = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 91px;
-`;
-
-const RequiredLength = styled.div`
+const TargetInfoHeader = styled.h4`
+    align-items: center;
     display: flex;
-    justify-content: space-between;
-    margin-left: 10px;
-    div {
-        color: ${props => props.theme.color.red};
+    font-size: 14px;
+    margin: 0;
+
+    & > span:first-child {
         font-weight: bold;
+        min-width: 200px;
+        max-width: 300px;
     }
 `;
+
+const TargetInfoLength = styled(Badge)`
+    margin-left: auto;
+`;
+
+const TargetInfoRequired = styled.span`
+    color: ${props => props.theme.color.red};
+    font-weight: bold;
+`;
+
+export const TargetInfo = ({ description, length, name, required }) => {
+    let lengthComponent;
+
+    if (length) {
+        lengthComponent = <TargetInfoLength>{length}</TargetInfoLength>;
+    }
+
+    const descriptionComponent = description ? <span>{description}</span> : <span>No description</span>;
+
+    return (
+        <div>
+            <TargetInfoHeader>
+                <span>{name}</span>
+                <TargetInfoRequired required={required}>{required}</TargetInfoRequired>
+                <TargetInfoLength>{lengthComponent}</TargetInfoLength>
+            </TargetInfoHeader>
+            {descriptionComponent}
+        </div>
+    );
+};
 
 const AddButton = styled.div`
     display: flex;
@@ -24,24 +51,14 @@ const AddButton = styled.div`
     padding-top: 15px;
 `;
 
-export class Target extends React.Component {
-    render() {
-        const lengthSection = this.props.length ? <Badge>{this.props.length}</Badge> : "";
+export const Target = props => {
+    return (
+        <BoxGroupSection>
+            <TargetInfo {...props} />
 
-        return (
-            <BoxGroupSection>
-                <TargetComponents>
-                    <span>{this.props.name}</span>
-                    <RequiredLength>
-                        <div>{this.props.required}</div>
-                        {lengthSection}
-                    </RequiredLength>
-                </TargetComponents>
-                <span>{this.props.description}</span>
-                <AddButton>
-                    <Button onClick={this.props.onClick}>Add</Button>
-                </AddButton>
-            </BoxGroupSection>
-        );
-    }
-}
+            <AddButton>
+                <Button onClick={props.onClick}>Add</Button>
+            </AddButton>
+        </BoxGroupSection>
+    );
+};

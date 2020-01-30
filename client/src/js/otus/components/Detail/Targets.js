@@ -15,9 +15,11 @@ export const IsolateTargets = props => {
     const required = props.target === true ? "REQUIRED" : "NOT REQUIRED";
 
     let targetComponents;
+
     if (props.targets) {
         targetComponents = map(props.targets, target => {
             const sequence = find(props.sequences, { target: target.name });
+
             if (sequence != null) {
                 return (
                     <Sequence
@@ -35,6 +37,7 @@ export const IsolateTargets = props => {
                     />
                 );
             }
+
             return (
                 <Target
                     key={target.name}
@@ -48,6 +51,9 @@ export const IsolateTargets = props => {
         });
     }
 
+    const targetDetail = find(props.targets, { name: props.targetName });
+    const addSequence = <AddSequence {...targetDetail} required={required} />;
+
     return (
         <div>
             <BoxGroupSection>
@@ -58,8 +64,7 @@ export const IsolateTargets = props => {
             <EditSequence otuId={props.otuId} isolateId={props.activeIsolateId} error={props.error} />
 
             <RemoveSequence otuId={props.otuId} isolateId={props.activeIsolateId} isolateName={props.isolateName} />
-
-            <AddSequence />
+            {addSequence}
         </div>
     );
 };
@@ -73,7 +78,7 @@ const mapStateToProps = state => {
     return {
         activeIsolateId,
         sequences,
-
+        targetName: state.otus.targetName,
         otuId: state.otus.detail.id,
         editing: state.otus.editSequence,
         isolateName: formatIsolateName(activeIsolate),

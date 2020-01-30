@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<AddTarget /> should render 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onExited={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={false}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+  >
+    <span
+      className="text-capitalize"
+    >
+      Add target
+    </span>
+  </ModalHeader>
+  <form
+    onSubmit={[Function]}
+  >
+    <ModalBody
+      bsClass="modal-body"
+      componentClass="div"
+    >
+      <TargetForm
+        description=""
+        length={0}
+        name=""
+        onChange={[Function]}
+        onClick={[Function]}
+        required={false}
+      />
+    </ModalBody>
+    <ModalFooter
+      bsClass="modal-footer"
+      componentClass="div"
+    >
+      <Button
+        bsStyle="primary"
+        icon="save"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </ModalFooter>
+  </form>
+</Modal>
+`;

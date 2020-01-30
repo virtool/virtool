@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<EditTarget /> should render 1`] = `
+<Modal
+  animation={true}
+  autoFocus={true}
+  backdrop={true}
+  bsClass="modal"
+  dialogComponentClass={[Function]}
+  enforceFocus={true}
+  keyboard={true}
+  manager={
+    ModalManager {
+      "add": [Function],
+      "containers": Array [],
+      "data": Array [],
+      "handleContainerOverflow": true,
+      "hideSiblingNodes": true,
+      "isTopModal": [Function],
+      "modals": Array [],
+      "remove": [Function],
+    }
+  }
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  renderBackdrop={[Function]}
+  restoreFocus={true}
+  show={false}
+>
+  <ModalHeader
+    bsClass="modal-header"
+    closeButton={true}
+    closeLabel="Close"
+  >
+    <span
+      className="text-capitalize"
+    >
+      Edit target
+    </span>
+  </ModalHeader>
+  <ModalBody
+    bsClass="modal-body"
+    componentClass="div"
+  >
+    <form
+      onSubmit={[Function]}
+    >
+      <TargetForm
+        description=""
+        length={0}
+        name=""
+        onChange={[Function]}
+        required={false}
+      />
+      <ModalFooter
+        bsClass="modal-footer"
+        componentClass="div"
+      >
+        <Button
+          bsStyle="primary"
+          icon="save"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Submit
+        </Button>
+      </ModalFooter>
+    </form>
+  </ModalBody>
+</Modal>
+`;

@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Targets /> should render 1`] = `
+<Box__BoxGroup>
+  <Targets__StyledAddTargets>
+    <h2>
+      Targets
+    </h2>
+    <Targets__StyledAddTargetsButton
+      onClick={[Function]}
+    >
+      Add target
+    </Targets__StyledAddTargetsButton>
+  </Targets__StyledAddTargets>
+  <div>
+    <TargetItem
+      key="foo"
+      name="foo"
+      onEdit={[Function]}
+      onRemove={[Function]}
+    />
+  </div>
+  <Connect(AddTarget)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(EditTarget)
+    onHide={[Function]}
+    show={false}
+  />
+</Box__BoxGroup>
+`;
