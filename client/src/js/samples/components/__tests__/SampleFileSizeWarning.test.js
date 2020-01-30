@@ -1,4 +1,4 @@
-import { SampleFileSizeWarning, mapStateToProps } from "../SampleFileSizeWarning";
+import { mapStateToProps, SampleFileSizeWarning } from "../SampleFileSizeWarning";
 
 describe("<SampleFileSizeWarning />", () => {
     let props;

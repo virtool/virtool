@@ -1,4 +1,4 @@
-import { SampleDetailGeneral, mapStateToProps } from "../General";
+import { mapStateToProps, SampleDetailGeneral } from "../General";
 
 describe("<SampleDetailGeneral />", () => {
     let props;
@@ -67,12 +67,13 @@ describe("mapStateToProps()", () => {
         });
     });
 
-    it.each([["normal", "Normal"], ["srna", "sRNA"], ["amplicon", "Amplicon"]])(
-        "state.library_type(%s) should equal props.libraryType(%s)",
-        (a, b) => {
-            state.samples.detail.library_type = a;
-            const result = mapStateToProps(state).libraryType;
-            expect(result).toEqual(b);
-        }
-    );
+    it.each([
+        ["normal", "Normal"],
+        ["srna", "sRNA"],
+        ["amplicon", "Amplicon"]
+    ])("state.library_type(%s) should equal props.libraryType(%s)", (a, b) => {
+        state.samples.detail.library_type = a;
+        const result = mapStateToProps(state).libraryType;
+        expect(result).toEqual(b);
+    });
 });
