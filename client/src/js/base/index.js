@@ -21,6 +21,7 @@ import { ScrollList } from "./ScrollList";
 import { Tooltip } from "./Tooltip";
 import { UploadBar } from "./UploadBar";
 import { ViewHeader } from "./ViewHeader";
+import { DropDown, DropDownItem } from "./DropDown";
 
 export * from "./Alert";
 export * from "./Attribution";
@@ -48,6 +49,7 @@ export * from "./TabLink";
 export * from "./Tabs";
 export * from "./Toolbar";
 export * from "./ViewHeader";
+export * from "./DropDown";
 
 export {
     AlgorithmSelect,
@@ -74,5 +76,7 @@ export {
     ScrollList,
     Tooltip,
     UploadBar,
-    ViewHeader
+    ViewHeader,
+    DropDown,
+    DropDownItem
 };
