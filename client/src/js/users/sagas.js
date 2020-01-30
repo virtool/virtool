@@ -1,7 +1,8 @@
 import { push } from "connected-react-router";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { pushState } from "../app/actions";
 import { CREATE_FIRST_USER, CREATE_USER, EDIT_USER, FIND_USERS, GET_USER, REMOVE_USER } from "../app/actionTypes";
-import { apiCall, pushFindTerm, pushHistoryState, setPending } from "../utils/sagas";
+import { apiCall, pushFindTerm, setPending } from "../utils/sagas";
 import * as usersAPI from "./api";
 
 function* findUsers(action) {
@@ -15,7 +16,7 @@ function* getUser(action) {
 
 function* createUser(action) {
     const extraFunc = {
-        closeModal: pushHistoryState({ createUser: false })
+        closeModal: put(pushState({ createUser: false }))
     };
 
     yield setPending(apiCall(usersAPI.create, action, CREATE_USER, {}, extraFunc));
