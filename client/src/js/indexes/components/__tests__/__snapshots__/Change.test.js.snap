@@ -1,55 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<IndexChange /> should render 1`] = `
-<Box__SpacedBox>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      <strong>
-        bar
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      foo
-    </Col>
-  </Row>
-</Box__SpacedBox>
+<Change__StyledIndexChange>
+  <strong>
+    bar
+  </strong>
+  foo
+</Change__StyledIndexChange>
 `;
 
 exports[`<IndexChange /> should render when [otuName=null] 1`] = `
-<Box__SpacedBox>
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      <strong />
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={6}
-      xs={12}
-    >
-      foo
-    </Col>
-  </Row>
-</Box__SpacedBox>
+<Change__StyledIndexChange>
+  <strong />
+  foo
+</Change__StyledIndexChange>
 `;

@@ -1,10 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<PermissionItem /> should render 1`] = `
-<ListGroupItem
-  allowFocus={false}
-  bsStyle="success"
->
+<Box__SuccessBoxGroupSection>
   <code>
     <Component />
   </code>
@@ -15,5 +12,5 @@ exports[`<PermissionItem /> should render 1`] = `
     name="check"
     pullRight={true}
   />
-</ListGroupItem>
+</Box__SuccessBoxGroupSection>
 `;

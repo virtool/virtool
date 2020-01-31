@@ -1,41 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Releases /> should render when there are no releases (up-to-date) 1`] = `
-<Panel>
-  <Releases__StyledReleasesPanelBody>
-    <Icon
-      bsStyle="success"
-      faStyle="fas"
-      fixedWidth={false}
-      name="check"
-      pullRight={false}
-    />
-    <strong
-      className="text-success"
-    >
-       Software is up-to-date
-    </strong>
-  </Releases__StyledReleasesPanelBody>
-</Panel>
+<Releases__StyledReleases>
+  <Icon
+    bsStyle="success"
+    faStyle="fas"
+    fixedWidth={false}
+    name="check"
+    pullRight={false}
+  />
+  <strong
+    className="text-success"
+  >
+     Software is up-to-date
+  </strong>
+</Releases__StyledReleases>
 `;
 
 exports[`<Releases /> should render when there are releases 1`] = `
-<Panel>
-  <Releases__StyledReleasesPanelBody>
-    <ReleasesList
-      onShowInstall={[MockFunction]}
-      releases={
-        Array [
-          Object {
-            "name": "foo",
-          },
-          Object {
-            "name": "b",
-          },
-        ]
-      }
-    />
-    <Connect(SoftwareInstall) />
-  </Releases__StyledReleasesPanelBody>
-</Panel>
+<Releases__StyledReleases>
+  <ReleasesList
+    onShowInstall={[MockFunction]}
+    releases={
+      Array [
+        Object {
+          "name": "foo",
+        },
+        Object {
+          "name": "b",
+        },
+      ]
+    }
+  />
+  <Connect(SoftwareInstall) />
+</Releases__StyledReleases>
 `;

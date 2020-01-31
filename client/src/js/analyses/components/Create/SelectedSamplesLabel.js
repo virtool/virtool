@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "react-bootstrap";
+import { Badge } from "../../../base/Badge";
 
 export const SelectedSamplesLabel = ({ count }) => {
     let tail;

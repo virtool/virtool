@@ -1,19 +1,18 @@
 import React from "react";
-import { Row, Col } from "react-bootstrap";
+import styled from "styled-components";
 import { connect } from "react-redux";
 import { SpacedBox } from "../../base";
 
+const StyledIndexChange = styled(SpacedBox)`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+`;
+
 export const IndexChange = ({ description, otuName }) => (
-    <SpacedBox>
-        <Row>
-            <Col xs={12} md={6}>
-                <strong>{otuName}</strong>
-            </Col>
-            <Col xs={12} md={6}>
-                {description}
-            </Col>
-        </Row>
-    </SpacedBox>
+    <StyledIndexChange>
+        <strong>{otuName}</strong>
+        {description}
+    </StyledIndexChange>
 );
 
 export const mapStateToProps = (state, ownProps) => {

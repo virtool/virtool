@@ -1,16 +1,14 @@
 import React, { useCallback } from "react";
-import { Label } from "react-bootstrap";
 import styled from "styled-components";
-import { Checkbox, ListGroupItem } from "../../../base";
+import { Checkbox, ListGroupItem, BoxGroupSection } from "../../../base";
 
+const Label = styled(BoxGroupSection)`
+    margin-left: 3px;
+`;
 const StyledIndexSelectorItem = styled(ListGroupItem)`
     align-items: center;
     display: flex;
     justify-content: space-between;
-
-    .label {
-        margin-left: 3px;
-    }
 
     span {
         align-items: center;

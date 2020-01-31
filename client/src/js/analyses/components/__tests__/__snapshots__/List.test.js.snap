@@ -4,14 +4,10 @@ exports[`<AnalysesList /> renders 1`] = `
 <div>
   <Connect(AnalysisHMMAlert) />
   <Connect(AnalysesToolbar) />
-  <ListGroup
-    bsClass="list-group"
-  >
-    <Connect(AnalysisItem)
-      id="bar"
-      key="0"
-    />
-  </ListGroup>
+  <Connect(AnalysisItem)
+    id="bar"
+    key="0"
+  />
   <Connect(CreateAnalysis)
     hasHmm={true}
     id="foo"
