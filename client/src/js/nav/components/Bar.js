@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { logout } from "../../account/actions";
 import { DropDown, DropDownItem, AutoProgressBar, Icon, VTLogo } from "../../base";
 import { isHomeActive } from "../utils";
@@ -35,7 +35,7 @@ const NavBarItem = styled(NavLink)`
 `;
 
 const NavBar = styled.div`
-    z-index: 9999;
+    z-index: 1000;
     position: fixed;
     top: 0;
     width: 100%;
@@ -67,7 +67,7 @@ const BarLogo = styled(VTLogo)`
     }
 `;
 
-class Bar extends React.Component {
+export class Bar extends React.Component {
     componentDidMount() {
         this.props.onGet();
     }
@@ -111,22 +111,22 @@ class Bar extends React.Component {
                     </NavBarItem>
 
                     <DropDown menuName={dropdownTitle}>
-                        <DropDownItem>
-                            <Link to="/account">Account</Link>
+                        <DropDownItem to="/account">Account</DropDownItem>
+
+                        {this.props.administrator ? (
+                            <DropDownItem to="/administration">dministration </DropDownItem>
+                        ) : null}
+
+                        <DropDownItem
+                            to="//gitreports.com/issue/virtool/virtool"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Report Issue
                         </DropDownItem>
-                        <DropDownItem>
-                            {this.props.administrator ? <Link to="/administration">Administration</Link> : null}
+                        <DropDownItem to="#" onClick={this.props.logout}>
+                            Logout
                         </DropDownItem>
-                        <DropDownItem>
-                            <div
-                                ck={() => {
-                                    window.open("https://gitreports.com/issue/virtool/virtool", "_blank");
-                                }}
-                            >
-                                Report Issue
-                            </div>
-                        </DropDownItem>
-                        <DropDownItem onClick={this.props.logout}>Logout</DropDownItem>
                     </DropDown>
 
                     <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
@@ -136,12 +136,12 @@ class Bar extends React.Component {
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     ...state.account,
     pending: state.app.pending
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     logout: () => {
         dispatch(logout());
     },
