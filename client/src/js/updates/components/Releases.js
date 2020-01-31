@@ -6,25 +6,25 @@ import { pushState } from "../../app/actions";
 import Install from "./Install";
 import ReleasesList from "./List";
 
-const StyledReleasesPanelBody = styled(Box)`
+const StyledReleases = styled(Box)`
     padding: 10px 15px;
 `;
 
 export const Releases = ({ onShowInstall, releases }) => {
     if (releases.length) {
         return (
-            <StyledReleasesPanelBody>
+            <StyledReleases>
                 <ReleasesList releases={releases} onShowInstall={onShowInstall} />
                 <Install />
-            </StyledReleasesPanelBody>
+            </StyledReleases>
         );
     }
 
     return (
-        <StyledReleasesPanelBody>
+        <StyledReleases>
             <Icon bsStyle="success" name="check" />
             <strong className="text-success"> Software is up-to-date</strong>
-        </StyledReleasesPanelBody>
+        </StyledReleases>
     );
 };
 

@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Checkbox, ListGroupItem } from "../../../base";
+import { Checkbox, ListGroupItem, BoxGroupSection } from "../../../base";
 
-const Label = styled.div`
+const Label = styled(BoxGroupSection)`
     margin-left: 3px;
 `;
 const StyledIndexSelectorItem = styled(ListGroupItem)`

@@ -20,7 +20,7 @@ exports[`<RebuildHistory /> should render with error 1`] = `
   <Box__BoxGroupHeader>
     Changes
   </Box__BoxGroupHeader>
-  <History__Content>
+  <History__RebuildHistoryContent>
     <RebuildHistoryItem
       description="test-description"
       key="123abc"
@@ -44,7 +44,7 @@ exports[`<RebuildHistory /> should render with error 1`] = `
         }
       }
     />
-  </History__Content>
+  </History__RebuildHistoryContent>
 </Box__BoxGroup>
 `;
 
@@ -55,7 +55,7 @@ exports[`<RebuildHistory /> should render without error 1`] = `
   <Box__BoxGroupHeader>
     Changes
   </Box__BoxGroupHeader>
-  <History__Content>
+  <History__RebuildHistoryContent>
     <RebuildHistoryItem
       description="test-description"
       key="123abc"
@@ -79,7 +79,7 @@ exports[`<RebuildHistory /> should render without error 1`] = `
         }
       }
     />
-  </History__Content>
+  </History__RebuildHistoryContent>
 </Box__BoxGroup>
 `;
 

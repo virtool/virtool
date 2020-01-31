@@ -17,18 +17,18 @@ import { getTargetChange } from "../../utils/utils";
 import { changePassword } from "../actions";
 
 const FormButton = styled(BoxGroupSection)`
-    height: 310px;
+    overflow: auto;
 `;
 
-const DateButton = styled.div`
+const ChangePasswordFooter = styled.div`
     margin-top: 17px;
     display: flex;
     justify-content: space-between;
     align-items: start;
-`;
 
-const Date = styled.div`
-    color: ${props => props.theme.color.greyDark};
+    > span {
+        color: ${props => props.theme.color.greyDark};
+    }
 `;
 
 const getInitialState = props => ({
@@ -151,12 +151,12 @@ export class ChangePassword extends React.Component {
                             onChange={this.handleChange}
                             error={errorConfirmPassword}
                         />
-                        <DateButton>
-                            <Date>
+                        <ChangePasswordFooter>
+                            <span>
                                 Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                            </Date>
+                            </span>
                             <SaveButton altText="Change" pullRight />
-                        </DateButton>
+                        </ChangePasswordFooter>
                     </form>
                 </FormButton>
             </BoxGroup>

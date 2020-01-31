@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Releases /> should render when there are no releases (up-to-date) 1`] = `
-<Releases__StyledReleasesPanelBody>
+<Releases__StyledReleases>
   <Icon
     bsStyle="success"
     faStyle="fas"
@@ -14,11 +14,11 @@ exports[`<Releases /> should render when there are no releases (up-to-date) 1`] 
   >
      Software is up-to-date
   </strong>
-</Releases__StyledReleasesPanelBody>
+</Releases__StyledReleases>
 `;
 
 exports[`<Releases /> should render when there are releases 1`] = `
-<Releases__StyledReleasesPanelBody>
+<Releases__StyledReleases>
   <ReleasesList
     onShowInstall={[MockFunction]}
     releases={
@@ -33,5 +33,5 @@ exports[`<Releases /> should render when there are releases 1`] = `
     }
   />
   <Connect(SoftwareInstall) />
-</Releases__StyledReleasesPanelBody>
+</Releases__StyledReleases>
 `;

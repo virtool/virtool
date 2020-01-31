@@ -3,16 +3,16 @@ import styled from "styled-components";
 import { connect } from "react-redux";
 import { SpacedBox } from "../../base";
 
-const NameDescription = styled(SpacedBox)`
+const StyledIndexChange = styled(SpacedBox)`
     display: grid;
     grid-template-columns: 1fr 1fr;
 `;
 
 export const IndexChange = ({ description, otuName }) => (
-    <NameDescription>
+    <StyledIndexChange>
         <strong>{otuName}</strong>
         {description}
-    </NameDescription>
+    </StyledIndexChange>
 );
 
 export const mapStateToProps = (state, ownProps) => {

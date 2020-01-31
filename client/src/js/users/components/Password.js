@@ -17,7 +17,7 @@ import styled from "styled-components";
 import { Button, ButtonToolbar, Checkbox, DangerAlert, InputError, Box, RelativeTime, SaveButton } from "../../base";
 import { editUser } from "../actions";
 
-const Passwords = styled.div`
+const StyledPassword = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 15px;
@@ -119,7 +119,7 @@ export class Password extends React.Component {
                     </p>
 
                     <form onSubmit={this.handleSubmit}>
-                        <Passwords>
+                        <StyledPassword>
                             <InputError
                                 type="password"
                                 name="password"
@@ -137,7 +137,7 @@ export class Password extends React.Component {
                                 onChange={this.handleChange}
                                 error={passwordMatchError}
                             />
-                        </Passwords>
+                        </StyledPassword>
                         <Checkbox
                             label="Force user to reset password on next login"
                             checked={forceReset}

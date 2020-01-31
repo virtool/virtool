@@ -6,8 +6,8 @@ import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputError, SaveButton } fro
 import { clearError } from "../../errors/actions";
 import { updateAccount } from "../actions";
 
-const FormButton = styled(BoxGroupSection)`
-    height: 154px;
+const EmailFormContainer = styled(BoxGroupSection)`
+    overflow: auto;
 `;
 
 const getInitialState = email => ({
@@ -67,7 +67,7 @@ export class Email extends React.Component {
                 <BoxGroupHeader>
                     <h2>Email</h2>
                 </BoxGroupHeader>
-                <FormButton>
+                <EmailFormContainer>
                     <form onSubmit={this.handleSubmit}>
                         <InputError
                             label="Email address"
@@ -78,7 +78,7 @@ export class Email extends React.Component {
                         />
                         <SaveButton pullRight />
                     </form>
-                </FormButton>
+                </EmailFormContainer>
             </BoxGroup>
         );
     }

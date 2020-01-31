@@ -8,7 +8,7 @@ const HistoryItem = styled(BoxGroupSection)`
     grid-template-columns: 1fr 1fr;
 `;
 
-const Content = styled.div`
+const RebuildHistoryContent = styled.div`
     max-height: 700px;
     overflow-y: auto;
 `;
@@ -48,10 +48,10 @@ export default function RebuildHistory({ unbuilt, error }) {
         ));
 
         content = (
-            <Content>
+            <RebuildHistoryContent>
                 {historyComponents}
                 <RebuildHistoryEllipsis unbuilt={unbuilt} />
-            </Content>
+            </RebuildHistoryContent>
         );
     }
 

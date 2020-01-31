@@ -7,7 +7,7 @@ exports[`<Email /> should render with error in props 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__FormButton>
+  <Email__EmailFormContainer>
     <form
       onSubmit={[Function]}
     >
@@ -22,7 +22,7 @@ exports[`<Email /> should render with error in props 1`] = `
         pullRight={true}
       />
     </form>
-  </Email__FormButton>
+  </Email__EmailFormContainer>
 </Box__BoxGroup>
 `;
 
@@ -33,7 +33,7 @@ exports[`<Email /> should render with error in state 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__FormButton>
+  <Email__EmailFormContainer>
     <form
       onSubmit={[Function]}
     >
@@ -48,7 +48,7 @@ exports[`<Email /> should render with error in state 1`] = `
         pullRight={true}
       />
     </form>
-  </Email__FormButton>
+  </Email__EmailFormContainer>
 </Box__BoxGroup>
 `;
 
@@ -59,7 +59,7 @@ exports[`<Email /> should render with initial email 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__FormButton>
+  <Email__EmailFormContainer>
     <form
       onSubmit={[Function]}
     >
@@ -74,7 +74,7 @@ exports[`<Email /> should render with initial email 1`] = `
         pullRight={true}
       />
     </form>
-  </Email__FormButton>
+  </Email__EmailFormContainer>
 </Box__BoxGroup>
 `;
 
@@ -85,7 +85,7 @@ exports[`<Email /> should render without initial email 1`] = `
       Email
     </h2>
   </Box__BoxGroupHeader>
-  <Email__FormButton>
+  <Email__EmailFormContainer>
     <form
       onSubmit={[Function]}
     >
@@ -100,6 +100,6 @@ exports[`<Email /> should render without initial email 1`] = `
         pullRight={true}
       />
     </form>
-  </Email__FormButton>
+  </Email__EmailFormContainer>
 </Box__BoxGroup>
 `;

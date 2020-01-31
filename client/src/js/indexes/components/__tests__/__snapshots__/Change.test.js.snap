@@ -1,17 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<IndexChange /> should render 1`] = `
-<Change__NameDescription>
+<Change__StyledIndexChange>
   <strong>
     bar
   </strong>
   foo
-</Change__NameDescription>
+</Change__StyledIndexChange>
 `;
 
 exports[`<IndexChange /> should render when [otuName=null] 1`] = `
-<Change__NameDescription>
+<Change__StyledIndexChange>
   <strong />
   foo
-</Change__NameDescription>
+</Change__StyledIndexChange>
 `;
