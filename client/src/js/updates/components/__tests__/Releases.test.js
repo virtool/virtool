@@ -1,6 +1,5 @@
-import { push } from "connected-react-router";
 import { PUSH_STATE } from "../../../app/actionTypes";
-import { Releases, mapDispatchToProps, mapStateToProps } from "../Releases";
+import { mapDispatchToProps, mapStateToProps, Releases } from "../Releases";
 
 describe("<Releases />", () => {
     let props;

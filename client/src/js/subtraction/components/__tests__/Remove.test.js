@@ -1,9 +1,8 @@
 jest.mock("../../../utils/utils");
 
-import { push } from "connected-react-router";
 import { PUSH_STATE, REMOVE_SUBTRACTION } from "../../../app/actionTypes";
-import { RemoveSubtraction, mapStateToProps, mapDispatchToProps } from "../Remove";
 import { routerLocationHasState } from "../../../utils/utils";
+import { mapDispatchToProps, mapStateToProps, RemoveSubtraction } from "../Remove";
 
 describe("<RemoveSubtraction />", () => {
     let props;

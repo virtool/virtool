@@ -7,7 +7,6 @@ import { replace } from "connected-react-router";
 import { get, includes } from "lodash-es";
 import { matchPath } from "react-router-dom";
 import { all, put } from "redux-saga/effects";
-import { pushState } from "../app/actions";
 import { LOGOUT, SET_APP_PENDING, UNSET_APP_PENDING } from "../app/actionTypes";
 import { createFindURL } from "./utils";
 
