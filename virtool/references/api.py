@@ -168,7 +168,7 @@ async def update(req):
     process = await virtool.processes.db.register(db, "update_remote_reference", context=context)
 
     release, update_subdocument = await asyncio.shield(virtool.references.db.update(
-        req.app,
+        req,
         created_at,
         process["id"],
         ref_id,

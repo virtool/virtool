@@ -780,21 +780,14 @@ async def get_contributors(db, ref_id: str) -> Union[None, List[dict]]:
     return await virtool.history.db.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id, ref_id):
+async def get_internal_control(db, internal_control_id: Union[None, str], ref_id: str) -> Union[None, dict]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param internal_control_id: the id of the otu to create a minimal dict for
-    :type internal_control_id: Union[None, str]
-
     :param ref_id: the id of the reference to look for the control OTU in
-    :type ref_id: str
-
     :return: a minimal dict describing the ref internal control
-    :rtype: Union[None, dict]
 
     """
     if internal_control_id is None:
@@ -987,6 +980,17 @@ async def create_import(db, settings: dict, name: str, description: str, import_
 
 
 async def create_remote(db, settings: dict, release: dict, remote_from: str, user_id: str):
+    """
+    Create a remote reference document in the database.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :param release: the latest release for the remote reference
+    :param remote_from: information about the remote (errors, GitHub slug)
+    :param user_id: the id of the requesting user
+    :return: the new reference document
+
+    """
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
@@ -1015,7 +1019,7 @@ async def create_remote(db, settings: dict, release: dict, remote_from: str, use
     }
 
 
-async def download_and_parse_release(app, url, process_id, progress_handler):
+async def download_and_parse_release(app, url: str, process_id: str, progress_handler: callable):
     db = app["db"]
 
     with virtool.utils.get_temp_dir() as tempdir:
@@ -1069,7 +1073,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
         "$set": data
     })
 
-    document.update(await virtool.references.db.get_computed(db, ref_id, internal_control_id))
+    document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
 
     if "name" in data:
         await db.analyses.update_many({"reference.id": ref_id}, {
@@ -1077,10 +1081,6 @@ async def edit(db, ref_id: str, data: dict) -> dict:
                 "reference.name": document["name"]
             }
         })
-
-    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
-
-    document["users"] = await virtool.users.db.attach_identicons(db, users)
 
     return virtool.utils.base_processor(document)
 

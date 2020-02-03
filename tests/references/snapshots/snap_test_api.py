@@ -9,6 +9,12 @@ snapshots = Snapshot()
 
 snapshots['test_create[uvloop-genome] 1'] = {
     'contributors': [
+        {
+            'bob': 4
+        },
+        {
+            'fred': 10
+        }
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'genome',
@@ -16,8 +22,14 @@ snapshots['test_create[uvloop-genome] 1'] = {
     'groups': [
     ],
     'id': '9pfsom1b',
-    'internal_control': None,
-    'latest_build': None,
+    'internal_control': {
+        'id': 'foo',
+        'name': 'Foo virus'
+    },
+    'latest_build': {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'foo'
+    },
     'name': 'Test Viruses',
     'organism': 'virus',
     'otu_count': 22,
@@ -43,6 +55,12 @@ snapshots['test_create[uvloop-genome] 1'] = {
 
 snapshots['test_create[uvloop-barcode] 1'] = {
     'contributors': [
+        {
+            'bob': 4
+        },
+        {
+            'fred': 10
+        }
     ],
     'created_at': '2015-10-06T20:00:00Z',
     'data_type': 'barcode',
@@ -50,8 +68,14 @@ snapshots['test_create[uvloop-barcode] 1'] = {
     'groups': [
     ],
     'id': '9pfsom1b',
-    'internal_control': None,
-    'latest_build': None,
+    'internal_control': {
+        'id': 'foo',
+        'name': 'Foo virus'
+    },
+    'latest_build': {
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 'foo'
+    },
     'name': 'Test Viruses',
     'organism': 'virus',
     'otu_count': 22,
