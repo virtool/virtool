@@ -1,6 +1,6 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Button, Icon, LoadingPlaceholder, WarningAlert } from "../../base";
@@ -58,31 +58,26 @@ export class ManageUsers extends React.Component {
 
         return (
             <div>
-                <Row>
-                    <Col xs={12}>
-                        <div className="toolbar">
-                            <FormGroup>
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        <Icon name="search" />
-                                    </InputGroup.Addon>
-                                    <FormControl type="text" value={this.state.term} onChange={this.props.onFind} />
-                                </InputGroup>
-                            </FormGroup>
+                <div className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" />
+                            </InputGroup.Addon>
+                            <FormControl type="text" value={this.state.term} onChange={this.props.onFind} />
+                        </InputGroup>
+                    </FormGroup>
 
-                            <LinkContainer to={{ state: { groups: true } }}>
-                                <Button icon="users" tip="Manage Groups" />
-                            </LinkContainer>
+                    <LinkContainer to={{ state: { groups: true } }}>
+                        <Button icon="users" tip="Manage Groups" />
+                    </LinkContainer>
 
-                            <LinkContainer to={{ state: { createUser: true } }}>
-                                <Button bsStyle="primary" icon="user-plus" tip="Create User" />
-                            </LinkContainer>
-                        </div>
-                    </Col>
-                    <Col xs={12}>
-                        <UsersList />
-                    </Col>
-                </Row>
+                    <LinkContainer to={{ state: { createUser: true } }}>
+                        <Button bsStyle="primary" icon="user-plus" tip="Create User" />
+                    </LinkContainer>
+                </div>
+
+                <UsersList />
 
                 <CreateUser />
                 <Groups />

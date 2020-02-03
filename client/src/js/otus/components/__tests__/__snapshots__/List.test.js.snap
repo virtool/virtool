@@ -6,7 +6,7 @@ exports[`<OTUsList /> should render 1`] = `
   <Connect(ReferenceDetailTabs) />
   <Connect(RebuildAlert) />
   <Connect(OTUToolbar) />
-  <withRouter(Connect(CreateOTU))
+  <Connect(CreateOTU)
     documents={
       Array [
         "foo",
@@ -71,7 +71,7 @@ exports[`<OTUsList /> should render when [this.props.documents.length == false] 
   <Connect(ReferenceDetailTabs) />
   <Connect(RebuildAlert) />
   <Connect(OTUToolbar) />
-  <withRouter(Connect(CreateOTU))
+  <Connect(CreateOTU)
     documents={false}
     onLoadNextPage={
       [MockFunction] {

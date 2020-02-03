@@ -1,14 +1,14 @@
+import { get, pick } from "lodash-es";
 import React from "react";
-import { connect } from "react-redux";
-import { push } from "connected-react-router";
 import { Modal } from "react-bootstrap";
-import { pick, get } from "lodash-es";
+import { connect } from "react-redux";
 
 import styled from "styled-components";
-import { createUser } from "../actions";
+import { pushState } from "../../app/actions";
+import { Checkbox, device, InputError, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
-import { InputError, Checkbox, SaveButton, device } from "../../base";
-import { routerLocationHasState, getTargetChange } from "../../utils/utils";
+import { getTargetChange, routerLocationHasState } from "../../utils/utils";
+import { createUser } from "../actions";
 
 const CreateUserContainer = styled.div`
     margin: 15px;
@@ -160,7 +160,7 @@ export const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { createUser: false } }));
+        dispatch(pushState({ createUser: false }));
     },
 
     onClearError: error => {

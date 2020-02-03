@@ -46,57 +46,24 @@ exports[`<EditSubtraction /> should render 1`] = `
         }
       }
     >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={12}
-        >
-          <InputError
-            label="Unique Name"
-            readOnly={true}
-            type="text"
-            value="foo"
-          />
-        </Col>
-      </Row>
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={12}
-        >
-          <InputError
-            label="Nickname"
-            onChange={[Function]}
-            type="text"
-            value="baz"
-          />
-        </Col>
-      </Row>
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          md={12}
-        >
-          <InputError
-            label="File"
-            readOnly={true}
-            type="text"
-            value="bar"
-          />
-        </Col>
-      </Row>
+      <InputError
+        label="Unique Name"
+        readOnly={true}
+        type="text"
+        value="foo"
+      />
+      <InputError
+        label="Nickname"
+        onChange={[Function]}
+        type="text"
+        value="baz"
+      />
+      <InputError
+        label="File"
+        readOnly={true}
+        type="text"
+        value="bar"
+      />
     </ModalBody>
     <ModalFooter
       bsClass="modal-footer"

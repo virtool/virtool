@@ -14,10 +14,7 @@ exports[`<SelectedSamplesLabel /> should return when [count>1] 1`] = `
 >
   Sample
   s 
-  <Badge
-    bsClass="badge"
-    pullRight={false}
-  >
+  <Badge>
     2
   </Badge>
 </label>

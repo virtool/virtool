@@ -1,8 +1,8 @@
-import { push } from "connected-react-router";
 import { get } from "lodash-es";
 import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
+import { pushState } from "../../app/actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, NotFound, Table, ViewHeader } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 
@@ -124,7 +124,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onShowRemove: () => {
-        dispatch(push({ state: { removeSubtraction: true } }));
+        dispatch(pushState({ removeSubtraction: true }));
     }
 });
 

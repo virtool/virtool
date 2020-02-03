@@ -1,10 +1,10 @@
 import CX from "classnames";
-import { push } from "connected-react-router";
 import { mapValues } from "lodash-es";
 import React from "react";
 import { Col, Row } from "react-bootstrap";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
+import { pushState } from "../../../app/actions";
 
 import { Button, Flex, FlexItem, Icon, Input, InputError, Modal, SaveButton } from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
@@ -158,7 +158,7 @@ export const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({ ...window.location, state: { createAPIKey: false } }));
+        dispatch(pushState({ createAPIKey: false }));
         dispatch(clearAPIKey());
     }
 });

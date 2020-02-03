@@ -1,0 +1,120 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Bar /> should render 1`] = `
+<Bar__NavBar
+  className="vt-header"
+>
+  <Bar__NavBarLeft>
+    <Bar__BarLogo />
+    <Bar__NavBarItem
+      isActive={[Function]}
+      to="/home"
+    >
+      Home
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      to="/jobs"
+    >
+      Jobs
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      to="/samples"
+    >
+      Samples
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      to="/refs"
+    >
+      References
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      to="/hmm"
+    >
+      HMM
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      to="/subtraction"
+    >
+      Subtraction
+    </Bar__NavBarItem>
+  </Bar__NavBarLeft>
+  <Bar__NavBarRight>
+    <Connect(NotificationIcon) />
+    <Bar__NavBarItem
+      rel="noopener noreferrer"
+      target="_blank"
+      to="//gitter.im/virtool/virtool"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="comments"
+        pullRight={false}
+      />
+    </Bar__NavBarItem>
+    <Bar__NavBarItem
+      rel="noopener noreferrer"
+      target="_blank"
+      to="//virtool.ca/docs/manual"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="book"
+        pullRight={false}
+      />
+    </Bar__NavBarItem>
+    <DropDown
+      menuName={
+        <span>
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="user"
+            pullRight={false}
+          />
+           
+          foo
+           
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="caret-down"
+            pullRight={false}
+          />
+        </span>
+      }
+    >
+      <DropDown__DropDownItem
+        to="/account"
+      >
+        Account
+      </DropDown__DropDownItem>
+      <DropDown__DropDownItem
+        to="/administration"
+      >
+        dministration 
+      </DropDown__DropDownItem>
+      <DropDown__DropDownItem
+        rel="noopener noreferrer"
+        target="_blank"
+        to="//gitreports.com/issue/virtool/virtool"
+      >
+        Report Issue
+      </DropDown__DropDownItem>
+      <DropDown__DropDownItem
+        onClick={[MockFunction]}
+        to="#"
+      >
+        Logout
+      </DropDown__DropDownItem>
+    </DropDown>
+    <AutoProgressBar
+      active={false}
+      affixed={true}
+      interval={80}
+      step={50}
+    />
+  </Bar__NavBarRight>
+</Bar__NavBar>
+`;

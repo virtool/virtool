@@ -1,7 +1,6 @@
 import React from "react";
 import { get, map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { ListGroup } from "react-bootstrap";
 import { routerLocationHasState } from "../../utils/utils";
 
 import { findAnalyses } from "../actions";
@@ -41,7 +40,7 @@ export class AnalysesList extends React.Component {
             <div>
                 <AnalysisHMMAlert />
                 <AnalysesToolbar />
-                <ListGroup>{listContent}</ListGroup>
+                {listContent}
 
                 <CreateAnalysis
                     id={this.props.sampleId}

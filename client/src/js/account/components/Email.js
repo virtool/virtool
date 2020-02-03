@@ -1,10 +1,14 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputError, SaveButton } from "../../base";
 import { clearError } from "../../errors/actions";
 import { updateAccount } from "../actions";
+
+const EmailFormContainer = styled(BoxGroupSection)`
+    overflow: auto;
+`;
 
 const getInitialState = email => ({
     email: email || "",
@@ -63,7 +67,7 @@ export class Email extends React.Component {
                 <BoxGroupHeader>
                     <h2>Email</h2>
                 </BoxGroupHeader>
-                <BoxGroupSection>
+                <EmailFormContainer>
                     <form onSubmit={this.handleSubmit}>
                         <InputError
                             label="Email address"
@@ -72,16 +76,9 @@ export class Email extends React.Component {
                             onBlur={this.handleBlur}
                             error={this.state.error}
                         />
-
-                        <div style={{ marginTop: "20px" }}>
-                            <Row>
-                                <Col xs={24} md={12}>
-                                    <SaveButton pullRight />
-                                </Col>
-                            </Row>
-                        </div>
+                        <SaveButton pullRight />
                     </form>
-                </BoxGroupSection>
+                </EmailFormContainer>
             </BoxGroup>
         );
     }

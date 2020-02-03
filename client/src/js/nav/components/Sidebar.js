@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { Route, Switch, withRouter } from "react-router-dom";
+import { Route, Switch } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 
 const StyledSidebar = styled.nav`
@@ -71,4 +71,4 @@ const mapStateToProps = state => ({
     administrator: state.account.administrator
 });
 
-export default withRouter(connect(mapStateToProps, null)(Sidebar));
+export default connect(mapStateToProps, null)(Sidebar);

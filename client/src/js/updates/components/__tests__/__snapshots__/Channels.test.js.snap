@@ -17,94 +17,79 @@ exports[`<ChannelButton /> should render when [channel="stable"] 1`] = `
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="alpha"] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <label>
-      Software Channel
-    </label>
-    <ChannelButton
-      channel="stable"
-      checked={false}
-      key="stable"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="beta"
-      checked={false}
-      key="beta"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="alpha"
-      checked={true}
-      key="alpha"
-      onClick={[MockFunction]}
-    />
-  </PanelBody>
-</Panel>
+<Box>
+  <label>
+    Software Channel
+  </label>
+  <ChannelButton
+    channel="stable"
+    checked={false}
+    key="stable"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="beta"
+    checked={false}
+    key="beta"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="alpha"
+    checked={true}
+    key="alpha"
+    onClick={[MockFunction]}
+  />
+</Box>
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="beta"] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <label>
-      Software Channel
-    </label>
-    <ChannelButton
-      channel="stable"
-      checked={false}
-      key="stable"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="beta"
-      checked={true}
-      key="beta"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="alpha"
-      checked={false}
-      key="alpha"
-      onClick={[MockFunction]}
-    />
-  </PanelBody>
-</Panel>
+<Box>
+  <label>
+    Software Channel
+  </label>
+  <ChannelButton
+    channel="stable"
+    checked={false}
+    key="stable"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="beta"
+    checked={true}
+    key="beta"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="alpha"
+    checked={false}
+    key="alpha"
+    onClick={[MockFunction]}
+  />
+</Box>
 `;
 
 exports[`<SoftwareChannels /> should render when [channel="stable"] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <label>
-      Software Channel
-    </label>
-    <ChannelButton
-      channel="stable"
-      checked={true}
-      key="stable"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="beta"
-      checked={false}
-      key="beta"
-      onClick={[MockFunction]}
-    />
-    <ChannelButton
-      channel="alpha"
-      checked={false}
-      key="alpha"
-      onClick={[MockFunction]}
-    />
-  </PanelBody>
-</Panel>
+<Box>
+  <label>
+    Software Channel
+  </label>
+  <ChannelButton
+    channel="stable"
+    checked={true}
+    key="stable"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="beta"
+    checked={false}
+    key="beta"
+    onClick={[MockFunction]}
+  />
+  <ChannelButton
+    channel="alpha"
+    checked={false}
+    key="alpha"
+    onClick={[MockFunction]}
+  />
+</Box>
 `;
