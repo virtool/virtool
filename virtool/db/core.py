@@ -254,30 +254,96 @@ class DB:
         self.motor_client = client
         self.dispatch = dispatch
 
-        self.analyses = self.bind_collection("analyses", projection=virtool.analyses.db.PROJECTION)
-        self.caches = self.bind_collection("caches", projection=virtool.caches.db.PROJECTION)
-        self.files = self.bind_collection("files", projection=virtool.files.db.PROJECTION)
+        self.analyses = self.bind_collection(
+            "analyses",
+            projection=virtool.analyses.db.PROJECTION
+        )
+
+        self.caches = self.bind_collection(
+            "caches",
+            projection=virtool.caches.db.PROJECTION
+        )
+
+        self.files = self.bind_collection(
+            "files",
+            projection=virtool.files.db.PROJECTION
+        )
+
         self.groups = self.bind_collection("groups")
-        self.history = self.bind_collection("history", projection=virtool.history.db.PROJECTION)
-        self.hmm = self.bind_collection("hmm", projection=virtool.hmm.db.PROJECTION)
-        self.indexes = self.bind_collection("indexes", projection=virtool.indexes.db.PROJECTION)
+
+        self.history = self.bind_collection(
+            "history",
+            projection=virtool.history.db.PROJECTION
+        )
+
+        self.hmm = self.bind_collection(
+            "hmm",
+            projection=virtool.hmm.db.PROJECTION
+        )
+
+        self.indexes = self.bind_collection(
+            "indexes",
+            projection=virtool.indexes.db.PROJECTION
+        )
+
         self.jobs = self.bind_collection(
             "jobs",
             projection=virtool.jobs.db.PROJECTION,
             processor=virtool.jobs.db.processor
         )
-        self.keys = self.bind_collection("keys", silent=True)
-        self.kinds = self.bind_collection("kinds", silent=True)
-        self.otus = self.bind_collection("otus", projection=virtool.otus.db.PROJECTION)
-        self.processes = self.bind_collection("processes")
-        self.references = self.bind_collection("references", processor=virtool.references.db.processor, projection=virtool.references.db.PROJECTION)
-        self.samples = self.bind_collection("samples", projection=virtool.samples.db.LIST_PROJECTION)
-        self.settings = self.bind_collection("settings", projection=virtool.settings.db.PROJECTION)
+
+        self.keys = self.bind_collection(
+            "keys",
+            silent=True
+        )
+
+        self.kinds = self.bind_collection(
+            "kinds",
+            silent=True
+        )
+
+        self.otus = self.bind_collection(
+            "otus",
+            projection=virtool.otus.db.PROJECTION
+        )
+
+        self.processes = self.bind_collection(
+            "processes"
+        )
+
+        self.references = self.bind_collection(
+            "references",
+            processor=virtool.references.db.processor,
+            projection=virtool.references.db.PROJECTION
+        )
+
+        self.samples = self.bind_collection(
+            "samples",
+            projection=virtool.samples.db.LIST_PROJECTION
+        )
+        self.settings = self.bind_collection(
+            "settings",
+            projection=virtool.settings.db.PROJECTION
+        )
+
         self.sequences = self.bind_collection("sequences")
-        self.sessions = self.bind_collection("sessions", silent=True)
+
+        self.sessions = self.bind_collection(
+            "sessions",
+            silent=True
+        )
+
         self.status = self.bind_collection("status")
-        self.subtraction = self.bind_collection("subtraction", projection=virtool.subtractions.db.PROJECTION)
-        self.users = self.bind_collection("users", projection=virtool.users.db.PROJECTION)
+
+        self.subtraction = self.bind_collection(
+            "subtraction",
+            projection=virtool.subtractions.db.PROJECTION
+        )
+
+        self.users = self.bind_collection(
+            "users",
+            projection=virtool.users.db.PROJECTION
+        )
 
     def bind_collection(self, name, processor=None, projection=None, silent=False):
         return Collection(

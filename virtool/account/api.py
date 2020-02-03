@@ -38,7 +38,7 @@ async def get(req):
     "email": {
         "type": "string",
         "coerce": virtool.validators.strip,
-        "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        "regex": r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     },
     "old_password": {
         "type": "string"
@@ -72,11 +72,7 @@ async def edit(req):
         if not await virtool.users.db.validate_credentials(db, user_id, old_password or ""):
             return bad_request("Invalid credentials")
 
-        update = virtool.account.db.compose_password_update(
-            user_id,
-            data["old_password"],
-            password
-        )
+        update = virtool.account.db.compose_password_update(password)
 
     if "email" in data:
         update["email"] = data["email"]

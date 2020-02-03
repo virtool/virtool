@@ -85,19 +85,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    try:
-        internal_control_id = document["internal_control"]["id"]
-    except (KeyError, TypeError):
-        internal_control_id = None
-
-    computed = await asyncio.shield(virtool.references.db.get_computed(db, ref_id, internal_control_id))
-
-    users = await asyncio.shield(virtool.users.db.attach_identicons(db, document["users"]))
-
-    document.update({
-        **computed,
-        "users": users
-    })
+    document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
 
     return json_response(await virtool.references.db.processor(db, document))
 
@@ -179,18 +167,14 @@ async def update(req):
 
     process = await virtool.processes.db.register(db, "update_remote_reference", context=context)
 
-    release, update_subdocument = await virtool.references.db.update(
+    release, update_subdocument = await asyncio.shield(virtool.references.db.update(
         req.app,
         created_at,
         process["id"],
         ref_id,
         release,
         user_id
-    )
-
-    p = virtool.references.db.UpdateRemoteReferenceProcess(req.app, process["id"])
-
-    await aiojobs.aiohttp.spawn(req, p.run())
+    ))
 
     return json_response(update_subdocument, status=201)
 
@@ -455,7 +439,7 @@ async def create(req):
         "Location": "/api/refs/" + document["_id"]
     }
 
-    document.update(await virtool.references.db.get_computed(db, document["_id"], None))
+    document = await virtool.references.db.attach_computed(db, document)
 
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 

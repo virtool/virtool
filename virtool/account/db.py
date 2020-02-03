@@ -17,13 +17,11 @@ PROJECTION = [
 ]
 
 
-def compose_password_update(user_id: str, old_password: str, password: str) -> dict:
+def compose_password_update(password: str) -> dict:
     """
     Compose an update dict for self-changing a users account password. This will disable forced reset and won't
     invalidate current sessions, unlike a password change by an administrator.
 
-    :param user_id: the id of the user to be updated
-    :param old_password: the old password for authorization
     :param password: the new password
     :return: a password update
 

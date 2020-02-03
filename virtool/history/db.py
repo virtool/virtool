@@ -36,7 +36,15 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(app, method_name: str, old: Union[None, dict], new: Union[None, dict], description: str, user_id: str, silent: bool = False) -> dict:
+async def add(
+        app,
+        method_name: str,
+        old: Union[None, dict],
+        new: Union[None, dict],
+        description: str,
+        user_id: str,
+        silent: bool = False
+) -> dict:
     """
     Add a change document to the history collection.
 

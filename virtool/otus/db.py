@@ -28,22 +28,20 @@ SEQUENCE_PROJECTION = [
 ]
 
 
-async def check_name_and_abbreviation(db, ref_id: str, name: Union[None, str] = None, abbreviation: Union[None, str] = None):
+async def check_name_and_abbreviation(
+        db,
+        ref_id: str,
+        name: Union[None, str] = None,
+        abbreviation: Union[None, str] = None
+):
     """
     Check is a otu name and abbreviation are already in use in the reference identified by `ref_id`. Returns a message
     if the ``name`` or ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to check in
-    :type ref_id: str
-
     :param name: a otu name
-    :type name: str
-
     :param abbreviation: a otu abbreviation
-    :type abbreviation: str
 
     """
     name_count = 0
@@ -126,7 +124,14 @@ async def create(app, ref_id, name, abbreviation, user_id):
     return virtool.otus.utils.format_otu(document, most_recent_change=change)
 
 
-async def edit(app, otu_id: Union[str, None], name: Union[str, None], abbreviation: Union[str, None], schema: Union[str, list], user_id: str):
+async def edit(
+        app,
+        otu_id: Union[str, None],
+        name: Union[str, None],
+        abbreviation: Union[str, None],
+        schema: Union[str, list],
+        user_id: str
+):
     """
     Edit an existing OTU identified by `otu_id`. Modifiable fields are `name`, `abbreviation`, and `schema`.
 
@@ -261,7 +266,11 @@ async def join(db, query, document=None):
     return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
 
 
-async def join_and_format(db, otu_id: str, joined: Union[dict, None] = None, issues: Union[dict, None, bool] = False) -> Union[dict, None]:
+async def join_and_format(
+        db, otu_id: str,
+        joined: Union[dict, None] = None,
+        issues: Union[dict, None, bool] = False
+) -> Union[dict, None]:
     """
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document if available. Then,
     format the joined otu into a format that can be directly returned to API clients.
@@ -286,7 +295,13 @@ async def join_and_format(db, otu_id: str, joined: Union[dict, None] = None, iss
     return virtool.otus.utils.format_otu(joined, issues, most_recent_change)
 
 
-async def remove(app, otu_id: str, user_id: str, document: Union[dict, None] = None, silent: bool = False) -> Union[None, bool]:
+async def remove(
+        app,
+        otu_id: str,
+        user_id: str,
+        document: Union[dict, None] = None,
+        silent: bool = False
+) -> Union[None, bool]:
     """
     Remove and OTU given its `otu_id`. Create a history document to record the change.
 

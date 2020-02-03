@@ -138,8 +138,10 @@ async def processor(db, document: dict) -> dict:
     3. Adds a ``created_at`` date taken from the first status entry in the job document.
     4. Adds ``state`` and ``progress`` fields derived from the most recent ``status`` entry in the job document.
 
+    :param db: the application database object
     :param document: a document to process
     :return: a processed document
+
     """
     status = document.pop("status")
 

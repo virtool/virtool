@@ -1,7 +1,7 @@
-import Bio.SeqIO
 import io
 import logging
-import string
+
+import Bio.SeqIO
 
 import virtool.http.proxy
 

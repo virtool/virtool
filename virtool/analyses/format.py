@@ -263,9 +263,6 @@ async def format_analysis(app, document: dict) -> dict:
     :return: a formatted document
 
     """
-    db = app["db"]
-    settings = app["settings"]
-
     algorithm = document.get("algorithm")
 
     if algorithm == "nuvs":

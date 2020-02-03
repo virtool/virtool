@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 
+import pymongo.results
 import aiofiles
 import aiohttp.client_exceptions
 import aiohttp.web
@@ -32,12 +33,13 @@ PROJECTION = [
 ]
 
 
-async def delete_unreferenced_hmms(db, settings):
+async def delete_unreferenced_hmms(db, settings: dict) -> pymongo.results.DeleteResult:
     """
     Deletes all HMM documents that are not used in analyses.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    :param settings: the application settings
+    :return: the delete result
 
     """
     in_db = await get_hmms_referenced_in_db(db)

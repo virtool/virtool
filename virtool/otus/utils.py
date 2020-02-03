@@ -241,8 +241,7 @@ def verify(joined):
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
     # error if the otu is not also emtpy (empty_otu error).
     errors["isolate_inconsistency"] = (
-            len(set(isolate_sequence_counts)) != 1 and not
-    (errors["empty_otu"] or errors["empty_isolate"])
+            len(set(isolate_sequence_counts)) != 1 and not (errors["empty_otu"] or errors["empty_isolate"])
     )
 
     # If there is an error in the otu, return the errors object. Otherwise return False.
