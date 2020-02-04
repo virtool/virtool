@@ -1,10 +1,20 @@
 import { push } from "connected-react-router";
 import { find, get, includes, map, sortBy } from "lodash-es";
 import React from "react";
-import { InputGroup, Modal } from "react-bootstrap";
+import { InputGroup } from "react-bootstrap";
+
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, Button, InputError, LoadingPlaceholder } from "../../base";
+import {
+    BoxGroup,
+    Button,
+    InputError,
+    LoadingPlaceholder,
+    Icon,
+    DialogBody,
+    ModalDialog,
+    DialogHeader
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
@@ -12,7 +22,7 @@ import { createGroup, removeGroup, setGroupPermission } from "../actions";
 import { GroupDetail } from "./Detail";
 import Group from "./Group";
 
-const GroupsModalBody = styled(Modal.Body)`
+const GroupsModalBody = styled(DialogBody)`
     display: grid;
     grid-template-columns: 2fr 3fr;
     grid-column-gap: 15px;
@@ -25,7 +35,8 @@ class Groups extends React.Component {
             createGroupId: "",
             spaceError: false,
             submitted: false,
-            error: ""
+            error: "",
+            open: false
         };
     }
 
@@ -40,6 +51,14 @@ class Groups extends React.Component {
         if (this.props.error) {
             this.props.onClearError("CREATE_GROUP_ERROR");
         }
+    };
+
+    handleHide = () => {
+        this.props.onHide();
+    };
+
+    handleOpen = () => {
+        return this.state.open;
     };
 
     handleChange = e => {
@@ -98,10 +117,17 @@ class Groups extends React.Component {
         }
 
         return (
-            <Modal bsSize="lg" show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <ModalDialog
+                label="group"
+                size="lg"
+                show={this.props.show}
+                onHide={this.handleHide}
+                onExited={this.handleModalExited}
+            >
+                <DialogHeader>
                     Groups
-                </Modal.Header>
+                    <Icon name="times" onClick={this.handleHide} style={{ color: "grey" }} />
+                </DialogHeader>
 
                 <GroupsModalBody>
                     <div>
@@ -130,19 +156,21 @@ class Groups extends React.Component {
                         onSetPermission={this.props.onSetPermission}
                     />
                 </GroupsModalBody>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    show: routerLocationHasState(state, "groups"),
-    users: state.users.documents,
-    groups: state.groups.documents,
-    pending: state.groups.pending,
-    activeId: state.groups.activeId,
-    error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
-});
+const mapStateToProps = state => {
+    return {
+        show: routerLocationHasState(state, "groups"),
+        users: state.users.documents,
+        groups: state.groups.documents,
+        pending: state.groups.pending,
+        activeId: state.groups.activeId,
+        error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
+    };
+};
 
 const mapDispatchToProps = dispatch => ({
     onCreate: groupId => {
