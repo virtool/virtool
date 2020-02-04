@@ -29,7 +29,6 @@ routes = virtool.http.routes.Routes()
 @routes.get("/download/analyses/{analysis_id}.{extension}")
 async def download_analysis(req):
     db = req.app["db"]
-    settings = req.app["settings"]
 
     analysis_id = req.match_info["analysis_id"]
     extension = req.match_info["extension"]
@@ -37,7 +36,7 @@ async def download_analysis(req):
     document = await db.analyses.find_one(analysis_id)
 
     if extension == "xlsx":
-        formatted = await virtool.analyses.format.format_analysis_to_excel(db, settings, document)
+        formatted = await virtool.analyses.format.format_analysis_to_excel(req.app, document)
 
         headers = {
             "Content-Disposition": f"attachment; filename={analysis_id}.xlsx",
@@ -46,7 +45,7 @@ async def download_analysis(req):
 
         return web.Response(body=formatted, headers=headers)
 
-    formatted = await virtool.analyses.format.format_analysis_to_csv(db, settings, document)
+    formatted = await virtool.analyses.format.format_analysis_to_csv(req.app, document)
 
     headers = {
         "Content-Disposition": f"attachment; filename={analysis_id}.csv",

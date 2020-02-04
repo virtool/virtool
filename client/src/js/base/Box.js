@@ -61,6 +61,16 @@ export const BoxGroupSection = styled.div`
     }
 `;
 
+export const SuccessBoxGroupSection = styled(BoxGroupSection)`
+    background-color: #dff0d8;
+    color: #3c763d;
+`;
+
+export const DangerBoxGroupSection = styled(BoxGroupSection)`
+    background-color: #f0c1bd;
+    color: #af3227;
+`;
+
 export const BoxGroupHeader = styled(BoxGroupSection)`
     align-items: stretch;
     background-color: #edf2f7;

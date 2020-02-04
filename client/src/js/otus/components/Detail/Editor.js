@@ -1,7 +1,6 @@
 import { get, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 import styled from "styled-components";
 import { Badge, Box, BoxGroup, Icon, SectionHeader } from "../../../base";
 
@@ -114,4 +113,4 @@ const mapDispatchToProps = dispatch => ({
     }
 });
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateEditor);

@@ -1,7 +1,7 @@
-import { push } from "connected-react-router";
 import React from "react";
 import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import { pushState } from "../../app/actions";
 import { Button, Flex, FlexItem, Icon, LinkButton } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
@@ -100,7 +100,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(toggleSelectSample(sampleId));
     },
     onQuickAnalyze: selected => {
-        dispatch(push({ state: { createAnalysis: selected } }));
+        dispatch(pushState({ createAnalysis: selected }));
     }
 });
 

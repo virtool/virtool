@@ -4,15 +4,13 @@
  * @author igboyes
  *
  */
-import React from "react";
-import { push } from "connected-react-router";
 import { forEach, map, reduce, replace } from "lodash-es";
-import { connect } from "react-redux";
-
+import React from "react";
 import { Modal } from "react-bootstrap";
-
-import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
+import { connect } from "react-redux";
+import { pushState } from "../../../app/actions";
 import { Button, ButtonGroup } from "../../../base/index";
+import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
 
@@ -155,7 +153,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({ state: { export: false } }));
+        dispatch(pushState({ export: false }));
     }
 });
 

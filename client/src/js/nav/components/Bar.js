@@ -1,24 +1,73 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { MenuItem, Nav, Navbar, NavDropdown, NavItem } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
-
+import { NavLink } from "react-router-dom";
 import { logout } from "../../account/actions";
-import { AutoProgressBar, Icon, VTLogo } from "../../base";
+import { DropDown, DropDownItem, AutoProgressBar, Icon, VTLogo } from "../../base";
 import { isHomeActive } from "../utils";
 import { getSoftwareUpdates } from "../../updates/actions";
 import Update from "./Update";
 
-const BarLogo = styled(VTLogo)`
-    margin: -5px 30px 0;
+const NavBarItem = styled(NavLink)`
+    color: white;
+    cursor: pointer;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 15px;
 
+    &:focus {
+        text-decoration: none;
+    }
+
+    &:hover {
+        opacity: 1;
+        text-decoration: none;
+        color: #245251;
+    }
+
+    &.active {
+        color: white;
+        opacity: 1;
+        background-color: rgb(50, 112, 111);
+    }
+`;
+
+const NavBar = styled.div`
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 45px;
+
+    display: flex;
+    justify-content: space-between;
+
+    background-color: teal;
+    color: white;
+`;
+
+const NavBarLeft = styled.div`
+    display: flex;
+    align-items: center;
+`;
+
+const NavBarRight = styled.div`
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+`;
+
+const BarLogo = styled(VTLogo)`
+    margin-left: 35px;
+    margin-right: 25px;
     svg {
         margin-left: 3px;
     }
 `;
 
-class Bar extends React.Component {
+export class Bar extends React.Component {
     componentDidMount() {
         this.props.onGet();
     }
@@ -26,93 +75,73 @@ class Bar extends React.Component {
     render() {
         const dropdownTitle = (
             <span>
-                <Icon name="user" /> {this.props.id}
+                <Icon name="user" /> {this.props.id} <Icon name="caret-down" />
             </span>
         );
 
         return (
-            <div className="vt-header">
-                <Navbar fixedTop>
-                    <Navbar.Header>
-                        <Navbar.Brand>
-                            <BarLogo />
-                        </Navbar.Brand>
+            <NavBar className="vt-header">
+                <NavBarLeft>
+                    <BarLogo />
 
-                        <Navbar.Toggle />
-                    </Navbar.Header>
+                    <NavBarItem to="/home" isActive={isHomeActive}>
+                        Home
+                    </NavBarItem>
 
-                    <Navbar.Collapse>
-                        <Nav>
-                            <LinkContainer to="/home" isActive={isHomeActive}>
-                                <NavItem>Home</NavItem>
-                            </LinkContainer>
+                    <NavBarItem to="/jobs">Jobs</NavBarItem>
 
-                            <LinkContainer to="/jobs">
-                                <NavItem>Jobs</NavItem>
-                            </LinkContainer>
+                    <NavBarItem to="/samples">Samples</NavBarItem>
 
-                            <LinkContainer to="/samples">
-                                <NavItem>Samples</NavItem>
-                            </LinkContainer>
+                    <NavBarItem to="/refs">References</NavBarItem>
 
-                            <LinkContainer to="/refs">
-                                <NavItem>References</NavItem>
-                            </LinkContainer>
+                    <NavBarItem to="/hmm">HMM</NavBarItem>
 
-                            <LinkContainer to="/hmm">
-                                <NavItem>HMM</NavItem>
-                            </LinkContainer>
+                    <NavBarItem to="/subtraction">Subtraction</NavBarItem>
+                </NavBarLeft>
 
-                            <LinkContainer to="/subtraction">
-                                <NavItem>Subtraction</NavItem>
-                            </LinkContainer>
-                        </Nav>
+                <NavBarRight>
+                    <Update />
 
-                        <Nav pullRight>
-                            <Update />
+                    <NavBarItem target="_blank" to="//gitter.im/virtool/virtool" rel="noopener noreferrer">
+                        <Icon name="comments" />
+                    </NavBarItem>
 
-                            <NavItem target="_blank" href="https://gitter.im/virtool/virtool" rel="noopener noreferrer">
-                                <Icon name="comments" />
-                            </NavItem>
+                    <NavBarItem target="_blank" to="//virtool.ca/docs/manual" rel="noopener noreferrer">
+                        <Icon name="book" />
+                    </NavBarItem>
 
-                            <NavItem
-                                target="_blank"
-                                href="https://www.virtool.ca/docs/manual"
-                                rel="noopener noreferrer"
-                            >
-                                <Icon name="book" />
-                            </NavItem>
+                    <DropDown menuName={dropdownTitle}>
+                        <DropDownItem to="/account">Account</DropDownItem>
 
-                            <NavDropdown id="account-dropdown" title={dropdownTitle}>
-                                <LinkContainer to="/account" activeClassName="">
-                                    <MenuItem>Account</MenuItem>
-                                </LinkContainer>
-                                {this.props.administrator ? (
-                                    <LinkContainer to="/administration">
-                                        <MenuItem>Administration</MenuItem>
-                                    </LinkContainer>
-                                ) : null}
-                                <MenuItem href="https://gitreports.com/issue/virtool/virtool" target="_blank">
-                                    Report Issue
-                                </MenuItem>
-                                <MenuItem onClick={this.props.logout}>Logout</MenuItem>
-                            </NavDropdown>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Navbar>
+                        {this.props.administrator ? (
+                            <DropDownItem to="/administration">dministration </DropDownItem>
+                        ) : null}
 
-                <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
-            </div>
+                        <DropDownItem
+                            to="//gitreports.com/issue/virtool/virtool"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Report Issue
+                        </DropDownItem>
+                        <DropDownItem to="#" onClick={this.props.logout}>
+                            Logout
+                        </DropDownItem>
+                    </DropDown>
+
+                    <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
+                </NavBarRight>
+            </NavBar>
         );
     }
 }
 
-const mapStateToProps = state => ({
+export const mapStateToProps = state => ({
     ...state.account,
     pending: state.app.pending
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     logout: () => {
         dispatch(logout());
     },

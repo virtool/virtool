@@ -1,40 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RebuildHistory /> should render <LoadingPlaceholder /> when unbuilt is null 1`] = `
-<Panel
+<Box__BoxGroup
   className="panel-default"
 >
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+  <Box__BoxGroupHeader>
     Changes
-  </PanelHeading>
+  </Box__BoxGroupHeader>
   <LoadingPlaceholder
     margin="22px"
   />
-</Panel>
+</Box__BoxGroup>
 `;
 
 exports[`<RebuildHistory /> should render with error 1`] = `
-<Panel
+<Box__BoxGroup
   className="panel-danger"
 >
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+  <Box__BoxGroupHeader>
     Changes
-  </PanelHeading>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "maxHeight": "700px",
-        "overflowY": "auto",
-      }
-    }
-  >
+  </Box__BoxGroupHeader>
+  <History__RebuildHistoryContent>
     <RebuildHistoryItem
       description="test-description"
       key="123abc"
@@ -58,29 +44,18 @@ exports[`<RebuildHistory /> should render with error 1`] = `
         }
       }
     />
-  </ListGroup>
-</Panel>
+  </History__RebuildHistoryContent>
+</Box__BoxGroup>
 `;
 
 exports[`<RebuildHistory /> should render without error 1`] = `
-<Panel
+<Box__BoxGroup
   className="panel-default"
 >
-  <PanelHeading
-    bsClass="panel"
-    componentClass="div"
-  >
+  <Box__BoxGroupHeader>
     Changes
-  </PanelHeading>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "maxHeight": "700px",
-        "overflowY": "auto",
-      }
-    }
-  >
+  </Box__BoxGroupHeader>
+  <History__RebuildHistoryContent>
     <RebuildHistoryItem
       description="test-description"
       key="123abc"
@@ -104,8 +79,8 @@ exports[`<RebuildHistory /> should render without error 1`] = `
         }
       }
     />
-  </ListGroup>
-</Panel>
+  </History__RebuildHistoryContent>
+</Box__BoxGroup>
 `;
 
 exports[`<RebuildHistoryEllipsis /> should render when page_count greater than 1 1`] = `
@@ -121,59 +96,19 @@ exports[`<RebuildHistoryEllipsis /> should render when page_count greater than 1
 exports[`<RebuildHistoryEllipsis /> should render when page_count is 1 1`] = `""`;
 
 exports[`<RebuildHistoryItem /> should render with description 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
-  listItem={false}
->
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={5}
-    >
-      <strong>
-        Foobar Virus
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={7}
-    >
-      Removed OTU
-    </Col>
-  </Row>
-</ListGroupItem>
+<History__HistoryItem>
+  <strong>
+    Foobar Virus
+  </strong>
+  Removed OTU
+</History__HistoryItem>
 `;
 
 exports[`<RebuildHistoryItem /> should render without description 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
-  listItem={false}
->
-  <Row
-    bsClass="row"
-    componentClass="div"
-  >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={5}
-    >
-      <strong>
-        Foobar Virus
-      </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={7}
-    >
-      No Description
-    </Col>
-  </Row>
-</ListGroupItem>
+<History__HistoryItem>
+  <strong>
+    Foobar Virus
+  </strong>
+  No Description
+</History__HistoryItem>
 `;

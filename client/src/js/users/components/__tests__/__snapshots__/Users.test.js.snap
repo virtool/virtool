@@ -2,85 +2,68 @@
 
 exports[`<ManageUsers /> renders correctly 1`] = `
 <div>
-  <Row
-    bsClass="row"
-    componentClass="div"
+  <div
+    className="toolbar"
   >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+    <FormGroup
+      bsClass="form-group"
     >
-      <div
-        className="toolbar"
+      <InputGroup
+        bsClass="input-group"
       >
-        <FormGroup
-          bsClass="form-group"
+        <InputGroupAddon
+          bsClass="input-group-addon"
         >
-          <InputGroup
-            bsClass="input-group"
-          >
-            <InputGroupAddon
-              bsClass="input-group-addon"
-            >
-              <Icon
-                faStyle="fas"
-                fixedWidth={false}
-                name="search"
-                pullRight={false}
-              />
-            </InputGroupAddon>
-            <FormControl
-              bsClass="form-control"
-              componentClass="input"
-              type="text"
-            />
-          </InputGroup>
-        </FormGroup>
-        <withRouter(LinkContainer)
-          to={
-            Object {
-              "state": Object {
-                "groups": true,
-              },
-            }
-          }
-        >
-          <Button
-            bsStyle="default"
-            icon="users"
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="search"
             pullRight={false}
-            tip="Manage Groups"
-            tipPlacement="top"
           />
-        </withRouter(LinkContainer)>
-        <withRouter(LinkContainer)
-          to={
-            Object {
-              "state": Object {
-                "createUser": true,
-              },
-            }
-          }
-        >
-          <Button
-            bsStyle="primary"
-            icon="user-plus"
-            pullRight={false}
-            tip="Create User"
-            tipPlacement="top"
-          />
-        </withRouter(LinkContainer)>
-      </div>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      xs={12}
+        </InputGroupAddon>
+        <FormControl
+          bsClass="form-control"
+          componentClass="input"
+          type="text"
+        />
+      </InputGroup>
+    </FormGroup>
+    <withRouter(LinkContainer)
+      to={
+        Object {
+          "state": Object {
+            "groups": true,
+          },
+        }
+      }
     >
-      <Connect(UsersList) />
-    </Col>
-  </Row>
+      <Button
+        bsStyle="default"
+        icon="users"
+        pullRight={false}
+        tip="Manage Groups"
+        tipPlacement="top"
+      />
+    </withRouter(LinkContainer)>
+    <withRouter(LinkContainer)
+      to={
+        Object {
+          "state": Object {
+            "createUser": true,
+          },
+        }
+      }
+    >
+      <Button
+        bsStyle="primary"
+        icon="user-plus"
+        pullRight={false}
+        tip="Create User"
+        tipPlacement="top"
+      />
+    </withRouter(LinkContainer)>
+  </div>
+  <Connect(UsersList) />
   <Connect(CreateUser) />
   <Connect(Groups) />
 </div>

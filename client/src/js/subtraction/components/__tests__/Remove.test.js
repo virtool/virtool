@@ -1,9 +1,8 @@
 jest.mock("../../../utils/utils");
 
-import { push } from "connected-react-router";
-import { REMOVE_SUBTRACTION } from "../../../app/actionTypes";
-import { RemoveSubtraction, mapStateToProps, mapDispatchToProps } from "../Remove";
+import { PUSH_STATE, REMOVE_SUBTRACTION } from "../../../app/actionTypes";
 import { routerLocationHasState } from "../../../utils/utils";
+import { mapDispatchToProps, mapStateToProps, RemoveSubtraction } from "../Remove";
 
 describe("<RemoveSubtraction />", () => {
     let props;
@@ -57,7 +56,10 @@ describe("mapDispatchToProps", () => {
 
     it("should return onHide() in props", () => {
         props.onHide();
-        expect(dispatch).toHaveBeenCalledWith(push({ state: { removeSubtraction: false } }));
+        expect(dispatch).toHaveBeenCalledWith({
+            type: PUSH_STATE,
+            state: { removeSubtraction: false }
+        });
     });
 
     it("should return onConfirm() in props", () => {

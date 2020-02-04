@@ -5,51 +5,32 @@ exports[`<SubtractionItem /> should render when [ready=false] 1`] = `
   key="Foo Bar"
   to="/subtraction/Foo Bar"
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
+  <strong>
+    Foo Bar
+  </strong>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    className="pull-right"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
   >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={8}
-      xs={8}
+    <SubtractionItemIcon
+      ready={false}
+    />
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={true}
+      shrink={1}
     >
       <strong>
-        Foo Bar
+        Importing
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      xs={4}
-    >
-      <Flex
-        alignContent="stretch"
-        alignItems="center"
-        className="pull-right"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <SubtractionItemIcon
-          ready={false}
-        />
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={true}
-          shrink={1}
-        >
-          <strong>
-            Importing
-          </strong>
-        </FlexItem>
-      </Flex>
-    </Col>
-  </Row>
+    </FlexItem>
+  </Flex>
 </Box__LinkBox>
 `;
 
@@ -58,51 +39,32 @@ exports[`<SubtractionItem /> should render when [ready=true] 1`] = `
   key="Foo Bar"
   to="/subtraction/Foo Bar"
 >
-  <Row
-    bsClass="row"
-    componentClass="div"
+  <strong>
+    Foo Bar
+  </strong>
+  <Flex
+    alignContent="stretch"
+    alignItems="center"
+    className="pull-right"
+    direction="row"
+    justifyContent="flex-start"
+    wrap="nowrap"
   >
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={8}
-      xs={8}
+    <SubtractionItemIcon
+      ready={true}
+    />
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={true}
+      shrink={1}
     >
       <strong>
-        Foo Bar
+        Ready
       </strong>
-    </Col>
-    <Col
-      bsClass="col"
-      componentClass="div"
-      md={4}
-      xs={4}
-    >
-      <Flex
-        alignContent="stretch"
-        alignItems="center"
-        className="pull-right"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <SubtractionItemIcon
-          ready={true}
-        />
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={true}
-          shrink={1}
-        >
-          <strong>
-            Ready
-          </strong>
-        </FlexItem>
-      </Flex>
-    </Col>
-  </Row>
+    </FlexItem>
+  </Flex>
 </Box__LinkBox>
 `;
 

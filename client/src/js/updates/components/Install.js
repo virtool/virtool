@@ -1,13 +1,13 @@
-import React from "react";
-import Request from "superagent";
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
+import React from "react";
 import { Modal, ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
-import { push } from "connected-react-router";
-
-import { installSoftwareUpdates } from "../actions";
+import Request from "superagent";
+import { pushState } from "../../app/actions";
 import { Button, Label, Loader } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
+
+import { installSoftwareUpdates } from "../actions";
 import { ReleaseMarkdown } from "./Release";
 
 export const attemptReload = () => {
@@ -118,7 +118,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(push({ state: { install: false } }));
+        dispatch(pushState({ install: false }));
     }
 });
 

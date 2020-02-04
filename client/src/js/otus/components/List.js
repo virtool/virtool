@@ -1,6 +1,6 @@
-import { push } from "connected-react-router";
 import React from "react";
 import { connect } from "react-redux";
+import { pushState } from "../../app/actions";
 import { LoadingPlaceholder, NoneFound, ScrollList } from "../../base";
 import RebuildAlert from "../../indexes/components/RebuildAlert";
 import ReferenceDetailHeader from "../../references/components/Detail/Header";
@@ -63,7 +63,7 @@ export const mapStateToProps = state => ({
 
 export const mapDispatchToProps = dispatch => ({
     onHide: () => {
-        dispatch(push({ state: { createOTU: false } }));
+        dispatch(pushState({ createOTU: false }));
     },
 
     onLoadNextPage: (refId, term, verified, page) => {

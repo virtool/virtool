@@ -3,7 +3,6 @@ import React from "react";
 import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-
 import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
