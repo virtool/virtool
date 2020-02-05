@@ -72,8 +72,7 @@ export class EditReferenceMember extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
     const noun = ownProps.noun;
-    const members = noun === "users" ? state.references.detail.users : state.references.detail.groups;
-
+    const members = noun === "user" ? state.references.detail.users : state.references.detail.groups;
     return {
         refId: state.references.detail.id,
         ...find(members, { id: ownProps.show })
@@ -82,7 +81,7 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
     onEdit: (refId, id, update) => {
-        const actionCreator = ownProps.noun === "users" ? editReferenceUser : editReferenceGroup;
+        const actionCreator = ownProps.noun === "user" ? editReferenceUser : editReferenceGroup;
         dispatch(actionCreator(refId, id, update));
     }
 });
