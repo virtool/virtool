@@ -1,48 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSample> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  bsSize="large"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="sample"
   onExited={[Function]}
   onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
+  <Modal__DialogHeader
     closeButton={true}
-    closeLabel="Close"
     onHide={[Function]}
   >
     Create Sample
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <Row
         bsClass="row"
         componentClass="div"
@@ -206,89 +181,38 @@ exports[`<CreateSample> should render 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <SaveButton />
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.readyReads=null] 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  bsSize="large"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
+<ModalDialog
+  label="sample"
   show={true}
+  size="lg"
 >
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <LoadingPlaceholder
       margin="36px"
     />
-  </ModalBody>
-</Modal>
+  </Modal__DialogBody>
+</ModalDialog>
 `;
 
 exports[`<CreateSample> should render LoadingPlaceholder when [this.props.subtractions=null] 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  bsSize="large"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
+<ModalDialog
+  label="sample"
   show={true}
+  size="lg"
 >
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <LoadingPlaceholder
       margin="36px"
     />
-  </ModalBody>
-</Modal>
+  </Modal__DialogBody>
+</ModalDialog>
 `;

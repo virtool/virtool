@@ -51,14 +51,14 @@ const modalContentOut = keyframes`
         opacity: 0;
     }
 `;
-export const ModalDialogOverlay = styled(({ show, out, ...rest }) => <DialogOverlay {...rest} />)`
+export const ModalDialogOverlay = styled(({ ...rest }) => <DialogOverlay {...rest} />)`
     z-index: 9999;
 
     animation: ${props => (props.out ? modalOverlayOut : modalOverlayIn)} 0.4s;
     animation-fill-mode: forwards;
 `;
 
-export const ModalDialogContent = styled(({ size, out, ...rest }) => <DialogContent {...rest} />)`
+export const ModalDialogContent = styled(({ ...rest }) => <DialogContent {...rest} />)`
     margin-top: -50px;
     overflow-y: overlay;
     box-shadow: rgba(0, 0, 0, 0.5) 0px 5px 15px;
@@ -112,7 +112,7 @@ export class ModalDialog extends React.Component {
 
     onAnimationStart = () => {
         if (this.state.in == true) {
-            () => this.props.onEnter();
+            this.props.onEnter();
         }
     };
 

@@ -58,7 +58,7 @@ describe("<CreateSample>", () => {
     it("should update state when Modal exits", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
-        wrapper.find("Modal").prop("onExited")();
+        wrapper.find("ModalDialog").prop("onExited")();
         expect(wrapper.state()).toEqual({
             errorFile: "",
             errorName: "",
