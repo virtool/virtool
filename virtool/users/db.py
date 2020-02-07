@@ -241,7 +241,7 @@ async def edit(db, user_id, administrator=None, force_reset=None, groups=None, p
 
 
 async def is_member_of_group(db, user_id, group_id):
-    return bool(await db.users.count({"_id": user_id, "groups": group_id}))
+    return bool(await db.users.count_documents({"_id": user_id, "groups": group_id}))
 
 
 async def validate_credentials(db, user_id, password):

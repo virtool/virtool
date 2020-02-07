@@ -107,7 +107,7 @@ async def test_remove(exception, dbi):
 
     await virtool.caches.db.remove(app, "baz")
 
-    assert await dbi.caches.count() == 0
+    assert await dbi.caches.count_documents({}) == 0
 
     app["run_in_thread"].assert_called_with(
         virtool.utils.rm,

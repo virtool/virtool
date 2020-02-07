@@ -182,7 +182,7 @@ async def index_handler(req: web.Request) -> web.Response:
     :return: the response
 
     """
-    requires_first_user = not await req.app["db"].users.count()
+    requires_first_user = not await req.app["db"].users.count_documents({})
 
     requires_login = not req["client"].user_id
 

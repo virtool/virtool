@@ -38,7 +38,7 @@ async def find(req):
     )
 
     data.update({
-        "ready_count": await db.subtraction.count({"ready": True})
+        "ready_count": await db.subtraction.count_documents({"ready": True})
     })
 
     return json_response(data)
@@ -91,7 +91,7 @@ async def create(req):
 
     subtraction_id = data["subtraction_id"]
 
-    if await db.subtraction.count({"_id": subtraction_id}):
+    if await db.subtraction.count_documents({"_id": subtraction_id}):
         return bad_request("Subtraction name already exists")
 
     file_id = data["file_id"]
@@ -185,7 +185,7 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
-    if await db.samples.count({"subtraction.id": subtraction_id}):
+    if await db.samples.count_documents({"subtraction.id": subtraction_id}):
         return conflict("Has linked samples")
 
     delete_result = await db.subtraction.delete_one({"_id": subtraction_id})

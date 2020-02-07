@@ -37,7 +37,7 @@ async def processor(db, document):
     }
 
     change_count, otu_ids = await asyncio.gather(
-        db.history.count(query),
+        db.history.count_documents(query),
         db.history.distinct("otu.id", query)
     )
 
@@ -154,21 +154,16 @@ async def get_otus(db, index_id):
     return [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} async for v in cursor]
 
 
-async def get_next_version(db, ref_id):
+async def get_next_version(db, ref_id: str) -> int:
     """
     Get the version number that should be used for the next index build.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to get the next version for
-    :type ref_id: str
-
     :return: the next version number
-    :rtype: int
 
     """
-    return await db.indexes.find({"reference.id": ref_id, "ready": True}).count()
+    return await db.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
 async def tag_unbuilt_changes(db, ref_id, index_id, index_version):
@@ -222,7 +217,7 @@ async def get_unbuilt_stats(db, ref_id: Union[str, None] = None) -> dict:
     }
 
     return {
-        "total_otu_count": await db.otus.count(ref_query),
-        "change_count": await db.history.count(history_query),
+        "total_otu_count": await db.otus.count_documents(ref_query),
+        "change_count": await db.history.count_documents(history_query),
         "modified_otu_count": len(await db.history.distinct("otu.id", history_query))
     }

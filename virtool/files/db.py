@@ -35,7 +35,7 @@ async def generate_file_id(db, filename: str) -> str:
     prefix = await virtool.db.utils.get_new_id(db.files)
     file_id = f"{prefix}-{filename}"
 
-    if await db.files.count({"_id": file_id}):
+    if await db.files.count_documents({"_id": file_id}):
         return await generate_file_id(db, filename)
 
     return file_id

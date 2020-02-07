@@ -163,7 +163,7 @@ async def test_remove(error, mocker, spawn_client, no_permissions, resp_is):
 
     assert resp.status == 204
 
-    assert not await client.db.groups.count({"_id": "test"})
+    assert not await client.db.groups.count_documents({"_id": "test"})
 
     m_update_member_users.assert_called_with(
         client.db,

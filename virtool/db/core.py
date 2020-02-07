@@ -50,7 +50,7 @@ class Collection:
         # No dispatches are necessary for these collection methods and they can be directly referenced instead of
         # wrapped.
         self.aggregate = self._collection.aggregate
-        self.count = self._collection.count
+        self.count_documents = self._collection.count_documents
         self.create_index = self._collection.create_index
         self.create_indexes = self._collection.create_indexes
         self.distinct = self._collection.distinct

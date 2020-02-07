@@ -247,7 +247,7 @@ async def paginate(
         sort=sort
     )
 
-    found_count = await asyncio.shield(cursor.count())
+    found_count = await collection.count_documents(db_query)
 
     page_count = int(math.ceil(found_count / per_page))
 
@@ -259,7 +259,7 @@ async def paginate(
 
         documents = [await collection.apply_processor(d) for d in await asyncio.shield(cursor.to_list(per_page))]
 
-    total_count = await collection.count(base_query)
+    total_count = await collection.count_documents(base_query)
 
     return {
         "documents": documents,

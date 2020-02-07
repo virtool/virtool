@@ -285,4 +285,4 @@ async def test_remove(snapshot, dbi, test_otu, static_time):
     snapshot.assert_match(await dbi.otus.find_one())
     snapshot.assert_match(await dbi.history.find_one())
 
-    assert await dbi.sequences.count() == 0
+    assert await dbi.sequences.count_documents({}) == 0

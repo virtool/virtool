@@ -144,7 +144,7 @@ async def test_handle_create(tracked, dbi, test_manager_instance):
         }
     else:
         assert document is None
-        assert await dbi.files.count() == 0
+        assert await dbi.files.count_documents({}) == 0
 
 
 @pytest.mark.parametrize("tracked", [True, False])
@@ -197,4 +197,4 @@ async def test_handle_delete(dbi, test_manager_instance):
 
     await test_manager_instance.handle_delete(filename)
 
-    assert not await dbi.files.count()
+    assert not await dbi.files.count_documents({})

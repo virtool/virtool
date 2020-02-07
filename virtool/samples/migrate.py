@@ -41,7 +41,7 @@ async def add_library_type(db):
     If the `srna` field is not defined `library_type` is set to normal.
 
     """
-    if await db.samples.count(LIBRARY_TYPE_QUERY):
+    if await db.samples.count_documents(LIBRARY_TYPE_QUERY):
         updates = list()
 
         async for document in db.samples.find(LIBRARY_TYPE_QUERY, ["_id", "srna"]):
