@@ -35,8 +35,7 @@ class Groups extends React.Component {
             createGroupId: "",
             spaceError: false,
             submitted: false,
-            error: "",
-            open: false
+            error: ""
         };
     }
 
@@ -51,14 +50,6 @@ class Groups extends React.Component {
         if (this.props.error) {
             this.props.onClearError("CREATE_GROUP_ERROR");
         }
-    };
-
-    handleHide = () => {
-        this.props.onHide();
-    };
-
-    handleOpen = () => {
-        return this.state.open;
     };
 
     handleChange = e => {
@@ -121,7 +112,7 @@ class Groups extends React.Component {
                 label="group"
                 size="lg"
                 show={this.props.show}
-                onHide={this.handleHide}
+                onHide={this.props.onHide}
                 onExited={this.handleModalExited}
             >
                 <DialogHeader>
