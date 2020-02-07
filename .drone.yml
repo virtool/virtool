@@ -16,7 +16,7 @@ steps:
       - pytest -x --db-connection-string mongodb://mongo:27017 --cov --cov-report xml
 
   - name: coverage
-    image: python:3.6-alpine
+    image: python:3.7-alpine
     environment:
       CODACY_PROJECT_TOKEN:
         from_secret: CODACY_PROJECT_TOKEN
@@ -73,7 +73,7 @@ steps:
       - npx webpack --config webpack.production.config.babel.js
 
   - name: server
-    image: python:3.6-jessie
+    image: python:3.7-jessie
     commands:
       - pip install -qr requirements.txt
       - mkdir gh_build
