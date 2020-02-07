@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SamplesSettings /> should render when [loading=false] 1`] = `
+<div
+  className="settings-container"
+>
+  <ViewHeader
+    title="Sample Settings"
+  />
+  <Connect(UniqueNames) />
+  <Connect(SampleRights) />
+</div>
+`;
+
+exports[`<SamplesSettings /> should render when [loading=true] 1`] = `<LoadingPlaceholder />`;

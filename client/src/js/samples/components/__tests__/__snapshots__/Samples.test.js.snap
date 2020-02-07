@@ -28,7 +28,15 @@ exports[`<Samples /> should render 1`] = `
       path="/samples/files"
     />
     <Route
-      component={[Function]}
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(SamplesSettings)",
+          "type": [Function],
+        }
+      }
       path="/samples/settings"
     />
     <Route
@@ -45,16 +53,4 @@ exports[`<Samples /> should render 1`] = `
     />
   </Switch>
 </Container>
-`;
-
-exports[`<SamplesSettings /> should render 1`] = `
-<div
-  className="settings-container"
->
-  <ViewHeader
-    title="Sample Settings"
-  />
-  <Connect(UniqueNames) />
-  <Connect(SampleRights) />
-</div>
 `;
