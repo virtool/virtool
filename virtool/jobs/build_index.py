@@ -235,7 +235,10 @@ def get_patched_otus(db, settings: dict, manifest: dict) -> typing.Generator[dic
         yield joined
 
 
-def get_sequences_from_patched_otus(otus: typing.Iterable[dict], data_type: str, sequence_otu_map: dict) -> typing.Generator[dict, None, None]:
+def get_sequences_from_patched_otus(
+        otus: typing.Iterable[dict],
+        data_type: str, sequence_otu_map: dict
+) -> typing.Generator[dict, None, None]:
     """
     Return sequence documents based on an `Iterable` of joined OTU documents. Writes a map of sequence IDs to OTU IDs
     into the passed `sequence_otu_map`.

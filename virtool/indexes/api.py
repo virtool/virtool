@@ -1,3 +1,5 @@
+import asyncio
+
 import virtool.history.db
 import virtool.indexes.db
 import virtool.jobs.db
@@ -83,13 +85,18 @@ async def get(req):
     if not document:
         return not_found()
 
-    document = virtool.utils.base_processor(document)
+    contributors, otus = await asyncio.gather(
+        virtool.indexes.db.get_contributors(db, index_id),
+        virtool.indexes.db.get_otus(db, index_id)
+    )
 
-    document["contributors"] = await virtool.indexes.db.get_contributors(db, index_id)
+    document.update({
+        "change_count": sum(v["change_count"] for v in otus),
+        "contributors": contributors,
+        "otus": otus,
+    })
 
-    document["otus"] = await virtool.indexes.db.get_otus(db, index_id)
-
-    document["change_count"] = sum(v["change_count"] for v in document["otus"])
+    document = await virtool.indexes.db.processor(db, document)
 
     return json_response(document)
 

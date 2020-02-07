@@ -42,7 +42,7 @@ class IntegratedManager:
         self.queue = multiprocessing.Queue()
 
         #: The application database interface.
-        self.dbi = app["db"]
+        self.db = app["db"]
 
         self.db_connection_string = app["settings"]["db_connection_string"]
 
@@ -108,7 +108,7 @@ class IntegratedManager:
         logging.debug("Closed job manager")
 
     async def enqueue(self, job_id):
-        document = await self.dbi.jobs.find_one(job_id, ["task", "args", "proc", "mem"])
+        document = await self.db.jobs.find_one(job_id, ["task", "args", "proc", "mem"])
 
         task_name = document["task"]
 
@@ -126,13 +126,13 @@ class IntegratedManager:
         if operation == "delete":
             await self._dispatch(interface, operation, id_list)
 
-        collection = getattr(self.dbi, interface)
+        collection = getattr(self.db, interface)
 
-        projection = virtool.dispatcher.get_projection(interface)
-        processor = virtool.dispatcher.get_processor(interface)
+        projection = self.db.get_projection(interface)
+        apply_processor = self.db.get_processor(interface)
 
         async for document in collection.find({"_id": {"$in": id_list}}, projection=projection):
-            await self._dispatch(interface, operation, processor(document))
+            await self._dispatch(interface, operation, await apply_processor(document))
 
     async def cancel(self, job_id):
         """
@@ -148,7 +148,7 @@ class IntegratedManager:
             if job["process"] and job["process"].is_alive():
                 job["process"].terminate()
             else:
-                await virtool.jobs.db.cancel(self.dbi, job_id)
+                await virtool.jobs.db.cancel(self.db, job_id)
                 del self._jobs[job_id]
 
 

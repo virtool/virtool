@@ -1,9 +1,27 @@
+import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_get_release(mocker, spawn_client, id_exists, resp_is):
+@pytest.mark.parametrize("error", [None, "400", "404"])
+async def test_get_release(error, mocker, spawn_client, resp_is):
     client = await spawn_client(authorize=True)
+
+    if error != "404":
+        document = {
+            "_id": "foo",
+            "release": {
+               "id": "foo_release"
+            },
+            "remotes_from": {
+                "slug": "virtool/virtool"
+            }
+        }
+
+        if error == "400":
+            del document["remotes_from"]
+
+        await client.db.references.insert_one(document)
 
     m_fetch_and_update_release = mocker.patch(
         "virtool.references.db.fetch_and_update_release",
@@ -14,12 +32,11 @@ async def test_get_release(mocker, spawn_client, id_exists, resp_is):
 
     resp = await client.get("/api/refs/foo/release")
 
-    id_exists.assert_called_with(
-        client.db.references,
-        "foo"
-    )
+    if error == "400":
+        assert await resp_is.bad_request(resp, "Not a remote reference")
+        return
 
-    if not id_exists:
+    if error == "404":
         assert await resp_is.not_found(resp)
         return
 
@@ -141,13 +158,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         }
     )
 
-    m_spawn.assert_called_with(
-        mocker.ANY,
-        m_process().run()
-    )
-
     m_update.assert_called_with(
-        client.app,
+        mocker.ANY,
         static_time.datetime,
         "process",
         "foo",
@@ -156,6 +168,8 @@ async def test_update(error, mocker, spawn_client, check_ref_right, id_exists, r
         },
         "test"
     )
+
+    assert isinstance(m_update.call_args[0][0], aiohttp.web.Request)
 
     assert resp.status == 201
 
@@ -209,8 +223,33 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
         "organism": "virus"
     }
 
-    m_get_otu_count = mocker.patch("virtool.references.db.get_otu_count", make_mocked_coro(22))
-    m_get_unbuilt_count = mocker.patch("virtool.references.db.get_unbuilt_count", make_mocked_coro(5))
+    async def m_attach_computed(dbi, document):
+        return {
+            **document,
+            "contributors": [
+                {"bob": 4},
+                {"fred": 10}
+            ],
+            "internal_control": {
+                "id": "foo",
+                "name": "Foo virus"
+            },
+            "latest_build": {
+                "id": "foo",
+                "created_at": static_time.datetime
+            },
+            "otu_count": 22,
+            "unbuilt_change_count": 5,
+            "users": [{
+                "id": "test",
+                "build": True,
+                "modify": True,
+                "modify_otu": True,
+                "remove": True
+            }]
+        }
+
+    m_attach_computed = mocker.patch("virtool.references.db.attach_computed", m_attach_computed)
 
     resp = await client.post("/api/refs", data)
 
@@ -219,16 +258,6 @@ async def test_create(data_type, mocker, snapshot, spawn_client, test_random_alp
     assert resp.headers["Location"] == f"/api/refs/{test_random_alphanumeric.history[0]}"
 
     snapshot.assert_match(await resp.json())
-
-    m_get_otu_count.assert_called_with(
-        client.db,
-        test_random_alphanumeric.history[0]
-    )
-
-    m_get_unbuilt_count.assert_called_with(
-        client.db,
-        test_random_alphanumeric.history[0]
-    )
 
 
 @pytest.mark.parametrize("data_type", ["genome", "barcode"])

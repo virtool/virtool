@@ -77,50 +77,6 @@ async def default_writer(connection: Connection, message: dict):
     """
     return await connection.send(message)
 
-
-def get_processor(interface: str):
-    """
-    Returns a Virtool-style document processor given an `interface` name (eg. samples). The only `interface` that uses a
-    custom processor is "jobs".
-
-    The function :func:`virtool.utils.base_processor` will be returned for all other interfaces.
-
-    :param interface: the name of the interface
-    :return: a projection suitable for Pymongo or `None`
-
-    :param interface:
-    :return:
-    """
-    if interface == "jobs":
-        return virtool.jobs.db.processor
-
-    return virtool.utils.base_processor
-
-
-def get_projection(interface: str) -> Union[dict, list]:
-    """
-    Returns a Pymongo projection given an `interface` name (eg. samples). If the interface name is unknown or no
-    projection exists for that interface, `None` is returned.
-
-    :param interface: the name of the interface
-    :return: a projection suitable for Pymongo or `None`
-
-    """
-    return {
-        "analyses": virtool.analyses.db.PROJECTION,
-        "files": virtool.files.db.PROJECTION,
-        "history": virtool.history.db.PROJECTION,
-        "hmm": virtool.hmm.db.PROJECTION,
-        "indexes": virtool.indexes.db.PROJECTION,
-        "jobs": virtool.jobs.db.PROJECTION,
-        "otus": virtool.otus.db.PROJECTION,
-        "references": virtool.references.db.PROJECTION,
-        "samples": virtool.samples.db.PROJECTION,
-        "subtractions": virtool.subtractions.db.PROJECTION,
-        "users": virtool.users.db.PROJECTION
-    }.get(interface)
-
-
 class Dispatcher:
 
     def __init__(self):

@@ -13,8 +13,6 @@ def test_compose_password_update(mocker, static_time):
     m_hash_password = mocker.patch("virtool.users.utils.hash_password", return_value="foobar")
 
     update = virtool.account.db.compose_password_update(
-        "bob",
-        "bar",
         "baz"
     )
 

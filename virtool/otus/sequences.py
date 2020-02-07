@@ -13,7 +13,14 @@ import virtool.otus.utils
 import virtool.utils
 
 
-async def check_segment_or_target(db, otu_id: str, isolate_id: str, sequence_id: Union[str, None], ref_id: str, data: dict) -> Union[str, None]:
+async def check_segment_or_target(
+        db,
+        otu_id: str,
+        isolate_id: str,
+        sequence_id: Union[str, None],
+        ref_id: str,
+        data: dict
+) -> Union[str, None]:
     """
     Returns an error message string if the segment or target provided in `data` is not compatible with the parent
     reference (target) or OTU (segment).

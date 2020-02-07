@@ -2,29 +2,127 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 
-async def test_find(mocker, spawn_client, md_proxy):
+async def test_find(mocker, snapshot, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
-    expected = {
-        "documents": [
-            {"id": "bar"},
-            {"id": "foo"}
-        ]
-    }
+    await client.db.indexes.insert_many([
+        {
+            "_id": "bar",
+            "version": 1,
+            "created_at": static_time.datetime,
+            "manifest": {
+                "foo": 2
+            },
+            "ready": False,
+            "has_files": True,
+            "job": {
+                "id": "bar"
+            },
+            "reference": {
+                "id": "bar"
+            },
+            "user": {
+                "id": "bob"
+            },
+            "sequence_otu_map": {
+                "foo": "bar_otu"
+            }
+        },
+        {
+            "_id": "foo",
+            "version": 0,
+            "created_at": static_time.datetime,
+            "manifest": {
+                "foo": 2
+            },
+            "ready": False,
+            "has_files": True,
+            "job": {
+                "id": "foo"
+            },
+            "reference": {
+                "id": "foo"
+            },
+            "user": {
+                "id": "bob"
+            },
+            "sequence_otu_map": {
+                "foo": "foo_otu"
+            }
+        }
+    ])
 
-    m_find = mocker.patch("virtool.indexes.db.find", make_mocked_coro(expected))
+    await client.db.history.insert_many([
+        {
+            "_id": "0",
+            "index": {
+                "id": "bar"
+            },
+            "otu": {
+                "id": "baz"
+            }
+        },
+        {
+            "_id": "1",
+            "index": {
+                "id": "foo"
+            },
+            "otu": {
+                "id": "baz"
+            }
+        },
+        {
+            "_id": "2",
+            "index": {
+                "id": "bar"
+            },
+            "otu": {
+                "id": "bat"
+            }
+        },
+        {
+            "_id": "3",
+            "index": {
+                "id": "bar"
+            },
+            "otu": {
+                "id": "baz"
+            }
+        },
+        {
+            "_id": "4",
+            "index": {
+                "id": "bar"
+            },
+            "otu": {
+                "id": "bad"
+            }
+        },
+        {
+            "_id": "5",
+            "index": {
+                "id": "foo"
+            },
+            "otu": {
+                "id": "boo"
+            }
+        }
+    ])
+
+    mocker.patch("virtool.indexes.db.get_unbuilt_stats", make_mocked_coro({
+        "total_otu_count": 123,
+        "change_count": 12,
+        "modified_otu_count": 3
+    }))
 
     resp = await client.get("/api/indexes")
 
     assert resp.status == 200
-
-    assert await resp.json() == expected
-
-    m_find.assert_called_with(client.db, md_proxy())
+    snapshot.assert_match(await resp.json())
 
 
 @pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, mocker, resp_is, spawn_client, static_time):
+async def test_get(error, mocker, snapshot, resp_is, spawn_client, static_time):
     client = await spawn_client(authorize=True)
 
     if not error:
@@ -41,6 +139,36 @@ async def test_get(error, mocker, resp_is, spawn_client, static_time):
                 "id": "sj82la"
             }
         })
+
+    await client.db.history.insert_many([
+        {
+            "_id": "0",
+            "index": {
+                "id": "foobar"
+            },
+            "otu": {
+                "id": "foo"
+            }
+        },
+        {
+            "_id": "1",
+            "index": {
+                "id": "foobar"
+            },
+            "otu": {
+                "id": "baz"
+            }
+        },
+        {
+            "_id": "2",
+            "index": {
+                "id": "bar"
+            },
+            "otu": {
+                "id": "bat"
+            }
+        }
+    ])
 
     contributors = [
         {
@@ -86,43 +214,7 @@ async def test_get(error, mocker, resp_is, spawn_client, static_time):
     )
 
     assert resp.status == 200
-
-    assert await resp.json() == {
-        "created_at": static_time.iso,
-        "has_files": True,
-        "id": "foobar",
-        "version": 0,
-        "change_count": 4,
-        "otus": [
-            {
-                "id": "kjs8sa99",
-                "name": "Foo",
-                "change_count": 1
-            },
-            {
-                "id": "zxbbvngc",
-                "name": "Test",
-                "change_count": 3
-            }
-        ],
-        "contributors": [
-            {
-                "id": "fred",
-                "count": 1
-            },
-            {
-                "id": "igboyes",
-                "count": 3
-            }
-        ],
-        "ready": False,
-        "job": {
-            "id": "sj82la"
-        },
-        "user": {
-            "id": "test"
-        }
-    }
+    snapshot.assert_match(await resp.json())
 
 
 class TestCreate:

@@ -7,9 +7,9 @@ import virtool.utils
 
 
 @pytest.fixture
-async def create_test_collection(mocker, test_motor):
+def create_test_collection(mocker, test_motor):
     def func(name="samples", projection=None, silent=False) -> virtool.db.core.Collection:
-        processor = mocker.Mock(side_effect=virtool.utils.base_processor)
+        processor = make_mocked_coro(return_value={"id": "foo", "mock": True})
 
         return virtool.db.core.Collection(
             name,
@@ -55,13 +55,23 @@ class TestCollection:
         assert projected == document
 
     @pytest.mark.parametrize("condition", [None, "param_silent", "attr_silent"])
-    async def test_dispatch_conditionally(self, condition, create_test_collection):
+    @pytest.mark.parametrize("has_processor", [True, False])
+    async def test_dispatch_conditionally(self, condition, has_processor, mocker, create_test_collection):
         """
         Test that `dispatch_conditionally` dispatches a message when not suppressed by the `silent` parameter or
         :attr:`Collection.silent`.
 
         """
         collection = create_test_collection(silent=(condition == "attr_silent"))
+
+        collection.apply_processor = make_mocked_coro(return_value={
+            "id": "foo",
+            "name": "Foo",
+            "tags": [
+                "bar",
+                "baz"
+            ]
+        })
 
         document = {
             "_id": "foo",
@@ -83,7 +93,8 @@ class TestCollection:
                     "baz"
                 ]
             })
-            collection.processor.assert_called_with(document)
+
+            collection.apply_processor.assert_called_with(document)
             return
 
         assert collection.dispatch.called is False

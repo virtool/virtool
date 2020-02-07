@@ -185,7 +185,7 @@ def read_fastq(f) -> Generator[tuple, None, list]:
             continue
 
         if had_plus:
-            yield (header, seq, line.rstrip())
+            yield header, seq, line.rstrip()
 
             header = None
             seq = None
@@ -325,7 +325,7 @@ def find_orfs(sequence: str) -> List[dict]:
     return orfs
 
 
-async def initialize_ncbi_blast(settings: dict, sequence: str) -> tuple:
+async def initialize_ncbi_blast(settings: dict, sequence: dict) -> tuple:
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
@@ -528,8 +528,6 @@ async def wait_for_blast_result(app, analysis_id, sequence_index, rid):
             blast.ready = await check_rid(settings, rid)
 
             logger.debug(f"Checked BLAST {rid} ({blast.interval}s)")
-
-            result = None
 
             if blast.ready:
                 try:

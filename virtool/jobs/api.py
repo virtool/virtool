@@ -29,8 +29,7 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.jobs.db.PROJECTION,
-        processor=virtool.jobs.db.processor
+        projection=virtool.jobs.db.PROJECTION
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])

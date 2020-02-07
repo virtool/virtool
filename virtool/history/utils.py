@@ -40,7 +40,12 @@ def compose_create_description(document: dict) -> str:
     return description
 
 
-def compose_edit_description(name: Union[str, None], abbreviation: Union[str, None], old_abbreviation: Union[str, None], schema: Union[dict, None]):
+def compose_edit_description(
+        name: Union[str, None],
+        abbreviation: Union[str, None],
+        old_abbreviation: Union[str, None],
+        schema: Union[dict, None]
+):
     """
     Compose a change description for an edit on an existing OTU.
 
@@ -140,7 +145,7 @@ def join_diff_path(data_path: str, otu_id: str, otu_version: Union[int, str]) ->
 
     :param data_path: the application data path settings
     :param otu_id: the OTU ID to join a diff path for
-    :param otu_verison: the OTU version to join a diff path for
+    :param otu_version: the OTU version to join a diff path for
     :return: the change path
 
     """

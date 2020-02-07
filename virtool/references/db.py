@@ -2,9 +2,10 @@ import asyncio
 import json.decoder
 import logging
 import os
-from typing import Union
+from typing import List, Union
 
 import aiohttp
+import aiojobs.aiohttp
 import pymongo
 import semver
 
@@ -422,13 +423,40 @@ class UpdateRemoteReferenceProcess(virtool.processes.process.Process):
         })
 
 
-def processor(document):
+async def processor(db, document: dict) -> dict:
+    """
+    Process a reference document. This adds a number of fields derived from other collections.
+
+    :param db: the application database client
+    :param document: the document to process
+    :return: the processed document
+
+    """
+    try:
+        ref_id = document["_id"]
+    except KeyError:
+        ref_id = document["id"]
+
+    latest_build, otu_count, unbuilt_count = await asyncio.gather(
+        virtool.references.db.get_latest_build(db, ref_id),
+        virtool.references.db.get_otu_count(db, ref_id),
+        virtool.references.db.get_unbuilt_count(db, ref_id)
+    )
+
+    document.update({
+        "latest_build": latest_build,
+        "otu_count": otu_count,
+        "unbuilt_change_count": unbuilt_count
+    })
+
     try:
         document["installed"] = document.pop("updates")[-1]
     except (KeyError, IndexError):
         pass
 
-    return virtool.utils.base_processor(document)
+    document["id"] = ref_id
+
+    return document
 
 
 async def add_group_or_user(db, ref_id, field, data):
@@ -497,21 +525,14 @@ async def check_right(req, reference, right):
     return False
 
 
-async def check_source_type(db, ref_id, source_type):
+async def check_source_type(db, ref_id: str, source_type: str) -> bool:
     """
     Check if the provided `source_type` is valid based on the current reference source type configuration.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the reference context
-    :type ref_id: str
-
     :param source_type: the source type to check
-    :type source_type: str
-
     :return: source type is valid
-    :rtype: bool
 
     """
     document = await db.references.find_one(ref_id, ["restrict_source_types", "source_types"])
@@ -569,24 +590,15 @@ def compose_base_find_query(user_id: str, administrator: bool, groups: list):
     }
 
 
-async def delete_group_or_user(db, ref_id, subdocument_id, field):
+async def delete_group_or_user(db, ref_id: str, subdocument_id: str, field: str) -> Union[str, None]:
     """
     Delete an existing group or user as decided by the `field` argument.
 
     :param db: the application database client
-    :type db: :class:`virtool.db.iface.DB`
-
     :param ref_id: the id of the reference to modify
-    :type ref_id: str
-
     :param subdocument_id: the id of the group or user to delete
-    :type subdocument_id: str
-
     :param field: the field to modify: 'group' or 'user'
-    :type field: str
-
     :return: the id of the removed subdocument
-    :rtype: str
 
     """
     document = await db.references.find_one({
@@ -609,28 +621,17 @@ async def delete_group_or_user(db, ref_id, subdocument_id, field):
     return subdocument_id
 
 
-async def edit_group_or_user(db, ref_id, subdocument_id, field, data):
+async def edit_group_or_user(db, ref_id: str, subdocument_id: str, field: str, data: dict) -> Union[dict, None]:
     """
     Edit an existing group or user as decided by the `field` argument. Returns `None` if the reference, group, or user
     does not exist.
 
     :param db: the application database client
-    :type db: :class:`virtool.db.iface.DB`
-
     :param ref_id: the id of the reference to modify
-    :type ref_id: str
-
     :param subdocument_id: the id of the group or user to modify
-    :type subdocument_id: str
-
     :param field: the field to modify: 'group' or 'user'
-    :type field: str
-
     :param data: the data to update the group or user with
-    :type data: dict
-
     :return: the modified subdocument
-    :rtype: dict
 
     """
     document = await db.references.find_one({
@@ -730,17 +731,22 @@ async def fetch_and_update_release(app, ref_id: str, ignore_errors: bool = False
     return release
 
 
-async def get_computed(db, ref_id, internal_control_id):
+async def attach_computed(db, document: dict) -> dict:
     """
-    Get all computed data for the specified reference.
+    Get all computed data for the specified reference and attach it to the passed `document`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    :param document: the document to attached computed data to
+    :return: the updated document
 
-    :param ref_id:
-    :param internal_control_id:
-    :return:
     """
+    ref_id = document["_id"]
+
+    try:
+        internal_control_id = document["internal_control"]["id"]
+    except (KeyError, TypeError):
+        internal_control_id = None
+
     contributors, internal_control, latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_contributors(db, ref_id),
         get_internal_control(db, internal_control_id, ref_id),
@@ -749,49 +755,44 @@ async def get_computed(db, ref_id, internal_control_id):
         get_unbuilt_count(db, ref_id)
     )
 
+    users = await virtool.users.db.attach_identicons(db, document["users"])
+
     return {
+        **document,
         "contributors": contributors,
-        "internal_control": internal_control,
+        "internal_control": internal_control or None,
         "latest_build": latest_build,
         "otu_count": otu_count,
-        "unbuilt_change_count": unbuilt_count
+        "unbuilt_change_count": unbuilt_count,
+        "users": users
     }
 
 
-async def get_contributors(db, ref_id):
+async def get_contributors(db, ref_id: str) -> Union[None, List[dict]]:
     """
     Return an list of contributors and their contribution count for a specific ref.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the ref to get contributors for
-    :type ref_id: str
-
     :return: a list of contributors to the ref
-    :rtype: Union[None, List[dict]]
 
     """
     return await virtool.history.db.get_contributors(db, {"reference.id": ref_id})
 
 
-async def get_internal_control(db, internal_control_id, ref_id):
+async def get_internal_control(db, internal_control_id: Union[None, str], ref_id: str) -> Union[None, dict]:
     """
     Return a minimal dict describing the ref internal control given a `otu_id`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param internal_control_id: the id of the otu to create a minimal dict for
-    :type internal_control_id: Union[None, str]
-
     :param ref_id: the id of the reference to look for the control OTU in
-    :type ref_id: str
-
     :return: a minimal dict describing the ref internal control
-    :rtype: Union[None, dict]
 
     """
+    if internal_control_id is None:
+        return None
+
     name = await virtool.db.utils.get_one_field(db.otus, "name", {
         "_id": internal_control_id,
         "reference.id": ref_id
@@ -806,18 +807,13 @@ async def get_internal_control(db, internal_control_id, ref_id):
     }
 
 
-async def get_latest_build(db, ref_id):
+async def get_latest_build(db, ref_id: str) -> Union[dict, None]:
     """
     Return the latest index build for the ref.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the ref to get the latest build for
-    :type ref_id: str
-
     :return: a subset of fields for the latest build
-    :rtype: Union[None, dict]
 
     """
     latest_build = await db.indexes.find_one({
@@ -831,19 +827,14 @@ async def get_latest_build(db, ref_id):
     return virtool.utils.base_processor(latest_build)
 
 
-async def get_manifest(db, ref_id):
+async def get_manifest(db, ref_id: str) -> dict:
     """
     Generate a dict of otu document version numbers keyed by the document id. This is used to make sure only changes
     made at the time the index rebuild was started are included in the build.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to get the current index for
-    :type ref_id: str
-
     :return: a manifest of otu ids and versions
-    :rtype: dict
 
     """
     manifest = dict()
@@ -854,27 +845,13 @@ async def get_manifest(db, ref_id):
     return manifest
 
 
-async def get_newest_update(db, ref_id):
-    updates = await virtool.db.utils.get_one_field(db.references, "updates", ref_id)
-
-    if len(updates):
-        return None
-
-    return updates[-1]
-
-
-async def get_otu_count(db, ref_id):
+async def get_otu_count(db, ref_id: str) -> int:
     """
     Get the number of OTUs associated with the given `ref_id`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the reference to get the current index for
-    :type ref_id: str
-
     :return: the OTU count
-    :rtype: int
 
     """
     return await db.otus.count({
@@ -882,18 +859,13 @@ async def get_otu_count(db, ref_id):
     })
 
 
-async def get_unbuilt_count(db, ref_id):
+async def get_unbuilt_count(db, ref_id: str) -> int:
     """
     Return a count of unbuilt history changes associated with a given `ref_id`.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param ref_id: the id of the ref to count unbuilt changes for
-    :type ref_id: str
-
     :return: the number of unbuilt changes
-    :rtype: int
 
     """
     return await db.history.count({
@@ -902,7 +874,7 @@ async def get_unbuilt_count(db, ref_id):
     })
 
 
-async def create_clone(db, settings, name, clone_from, description, user_id):
+async def create_clone(db, settings: dict, name: str, clone_from: str, description: str, user_id: str) -> dict:
     source = await db.references.find_one(clone_from)
 
     name = name or "Clone of " + source["name"]
@@ -926,8 +898,18 @@ async def create_clone(db, settings, name, clone_from, description, user_id):
     return document
 
 
-async def create_document(db, settings, name, organism, description, data_type, created_at=None, ref_id=None,
-                          user_id=None, users=None):
+async def create_document(
+        db,
+        settings: dict,
+        name: str,
+        organism: Union[str, None],
+        description: str,
+        data_type: Union[str, None],
+        created_at=None,
+        ref_id: Union[str, None] = None,
+        user_id: Union[str, None] = None,
+        users=None
+):
     if ref_id and await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
@@ -964,30 +946,17 @@ async def create_document(db, settings, name, organism, description, data_type, 
     return document
 
 
-async def create_import(db, settings, name, description, import_from, user_id):
+async def create_import(db, settings: dict, name: str, description: str, import_from: str, user_id: str) -> dict:
     """
     Import a previously exported Virtool reference.
 
     :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
     :param settings: the application settings object
-    :type settings: :class:`virtool.app_settings.Settings`
-
     :param name: the name for the new reference
-    :type name: str
-
     :param description: a description for the new reference
-    :type description: str
-
     :param import_from: the uploaded file to import from
-    :type import_from: str
-
     :param user_id: the id of the creating user
-    :type user_id: str
-
     :return: a reference document
-    :rtype: dict
 
     """
     created_at = virtool.utils.timestamp()
@@ -1010,7 +979,18 @@ async def create_import(db, settings, name, description, import_from, user_id):
     return document
 
 
-async def create_remote(db, settings, release, remote_from, user_id):
+async def create_remote(db, settings: dict, release: dict, remote_from: str, user_id: str):
+    """
+    Create a remote reference document in the database.
+
+    :param db: the application database object
+    :param settings: the application settings
+    :param release: the latest release for the remote reference
+    :param remote_from: information about the remote (errors, GitHub slug)
+    :param user_id: the id of the requesting user
+    :return: the new reference document
+
+    """
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
@@ -1024,7 +1004,8 @@ async def create_remote(db, settings, release, remote_from, user_id):
         user_id=user_id
     )
 
-    document.update({
+    return {
+        **document,
         # Connection information for the GitHub remote repo.
         "remotes_from": {
             "errors": [],
@@ -1035,12 +1016,10 @@ async def create_remote(db, settings, release, remote_from, user_id):
         # The update history for the reference. We put the release being installed as the first history item.
         "updates": [virtool.github.create_update_subdocument(release, False, user_id, created_at)],
         "installed": None
-    })
-
-    return document
+    }
 
 
-async def download_and_parse_release(app, url, process_id, progress_handler):
+async def download_and_parse_release(app, url: str, process_id: str, progress_handler: callable):
     db = app["db"]
 
     with virtool.utils.get_temp_dir() as tempdir:
@@ -1094,7 +1073,7 @@ async def edit(db, ref_id: str, data: dict) -> dict:
         "$set": data
     })
 
-    document.update(await virtool.references.db.get_computed(db, ref_id, internal_control_id))
+    document = await asyncio.shield(virtool.references.db.attach_computed(db, document))
 
     if "name" in data:
         await db.analyses.update_many({"reference.id": ref_id}, {
@@ -1102,10 +1081,6 @@ async def edit(db, ref_id: str, data: dict) -> dict:
                 "reference.name": document["name"]
             }
         })
-
-    users = await virtool.db.utils.get_one_field(db.references, "users", ref_id)
-
-    document["users"] = await virtool.users.db.attach_identicons(db, users)
 
     return virtool.utils.base_processor(document)
 
@@ -1153,7 +1128,7 @@ async def export(app, ref_id, scope):
     return virtool.references.utils.clean_export_list(otu_list, scope == "remote")
 
 
-async def finish_remote(app, release, ref_id, created_at, process_id, user_id):
+async def finish_remote(app, release, ref_id: str, created_at: str, process_id: str, user_id: str):
     db = app["db"]
 
     progress_tracker = virtool.processes.process.ProgressTracker(
@@ -1393,8 +1368,8 @@ async def refresh_remotes(app):
     logging.debug("Stopped reference refresher")
 
 
-async def update(app, created_at, process_id, ref_id, release, user_id):
-    db = app["db"]
+async def update(req, created_at, process_id, ref_id, release, user_id):
+    db = req.app["db"]
 
     update_subdocument = virtool.github.create_update_subdocument(
         release,
@@ -1414,6 +1389,10 @@ async def update(app, created_at, process_id, ref_id, release, user_id):
             "updating": True
         }
     })
+
+    p = virtool.references.db.UpdateRemoteReferenceProcess(req.app, process_id)
+
+    await aiojobs.aiohttp.spawn(req, p.run())
 
     return release, update_subdocument
 
