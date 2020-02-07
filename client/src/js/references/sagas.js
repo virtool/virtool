@@ -77,7 +77,10 @@ export function* editRefUser(action) {
 }
 
 export function* removeRefUser(action) {
-    yield apiCall(referenceAPI.removeUser, action, REMOVE_REFERENCE_USER);
+    yield apiCall(referenceAPI.removeUser, action, REMOVE_REFERENCE_USER, {
+        userId: action.userId,
+        refId: action.refId
+    });
 }
 
 export function* addRefGroup(action) {
@@ -89,7 +92,10 @@ export function* editRefGroup(action) {
 }
 
 export function* removeRefGroup(action) {
-    yield apiCall(referenceAPI.removeGroup, action, REMOVE_REFERENCE_GROUP);
+    yield apiCall(referenceAPI.removeGroup, action, REMOVE_REFERENCE_GROUP, {
+        groupId: action.groupId,
+        refId: action.refId
+    });
 }
 
 export function* checkRemoteUpdates(action) {
