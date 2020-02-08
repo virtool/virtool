@@ -93,7 +93,7 @@ exports[`<Bar /> should render 1`] = `
       <DropDown__DropDownItem
         to="/administration"
       >
-        dministration 
+        Administration 
       </DropDown__DropDownItem>
       <DropDown__DropDownItem
         rel="noopener noreferrer"

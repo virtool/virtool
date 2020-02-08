@@ -1,15 +1,8 @@
-import Samples, { SampleFileManager, SampleSettings } from "../Samples";
+import Samples, { SampleFileManager } from "../Samples";
 
 describe("<SampleFileManager />", () => {
     it("should render", () => {
         const wrapper = shallow(<SampleFileManager />);
-        expect(wrapper).toMatchSnapshot();
-    });
-});
-
-describe("<SamplesSettings />", () => {
-    it("should render", () => {
-        const wrapper = shallow(<SampleSettings />);
         expect(wrapper).toMatchSnapshot();
     });
 });

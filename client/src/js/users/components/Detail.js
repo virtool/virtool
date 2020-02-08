@@ -25,6 +25,10 @@ import UserPermissions from "./Permissions";
 import PrimaryGroup from "./PrimaryGroup";
 import UserRole from "./Role";
 
+const AdminIcon = styled(Icon)`
+    padding-left: 10px;
+`;
+
 const UserDetailGroups = styled.div`
     margin-bottom: 15px;
 
@@ -88,7 +92,7 @@ export class UserDetail extends React.Component {
                     <Identicon size={56} hash={identicon} />
                     <UserDetailTitle>
                         <span>{id}</span>
-                        {administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}
+                        {administrator ? <AdminIcon name="user-shield" bsStyle="primary" /> : null}
                         <Link to="/administration/users">Back To List</Link>
                     </UserDetailTitle>
                 </UserDetailHeader>

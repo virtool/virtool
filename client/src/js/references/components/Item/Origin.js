@@ -6,7 +6,7 @@ import { ReferenceItemInfo } from "./Info";
 
 export const ClonedFrom = ({ id, name }) => (
     <ReferenceItemInfo>
-        <strong>Cloned From </strong>
+        <strong>Cloned from </strong>
         <Link to={`/refs/${id}`}>{name}</Link>
         <small>This reference was cloned from another reference in your Virtool instance.</small>
     </ReferenceItemInfo>
@@ -14,7 +14,7 @@ export const ClonedFrom = ({ id, name }) => (
 
 export const ImportedFrom = ({ name }) => (
     <ReferenceItemInfo>
-        <strong>Imported From</strong>
+        <strong>Imported from </strong>
         <span>{name}</span>
         <small>This reference was imported from a Virtool reference file.</small>
     </ReferenceItemInfo>
