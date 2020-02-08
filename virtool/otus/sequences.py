@@ -189,7 +189,7 @@ async def get(db, otu_id: str, isolate_id: str, sequence_id: str) -> Union[dict,
     :return: the sequence document
 
     """
-    if not await db.otus.count({"_id": otu_id, "isolates.id": isolate_id}):
+    if not await db.otus.count_documents({"_id": otu_id, "isolates.id": isolate_id}):
         return None
 
     query = {

@@ -102,7 +102,7 @@ async def check_name(db, settings, name, sample_id=None):
                 "$ne": sample_id
             }
 
-        if await db.samples.count(query):
+        if await db.samples.count_documents(query):
             return "Sample name is already in use"
 
     return None
@@ -205,7 +205,7 @@ async def periodically_prune_old_files(app: aiohttp.web.Application):
         sample_id = sample["_id"]
 
         # Count running analyses that are still using the old non-cache trimmed files.
-        count = await db.analyses.count({
+        count = await db.analyses.count_documents({
             "sample.id": sample_id,
             "ready": False,
             "cache": {
@@ -272,7 +272,7 @@ async def refresh_replacements(db, sample_id: str) -> list:
     for file in files:
         replacement = file.get("replacement")
 
-        if replacement and not await db.files.count({"_id": replacement["id"]}):
+        if replacement and not await db.files.count_documents({"_id": replacement["id"]}):
             file["replacement"] = None
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
@@ -330,7 +330,7 @@ async def remove_samples(db, settings: dict, id_list: list) -> pymongo.results.D
 
 async def validate_force_choice_group(db, data):
     try:
-        if not await db.groups.count({"_id": data["group"]}):
+        if not await db.groups.count_documents({"_id": data["group"]}):
             return "Group does not exist"
 
     except KeyError:

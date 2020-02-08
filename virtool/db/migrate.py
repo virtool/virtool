@@ -121,7 +121,7 @@ async def migrate_status(db, server_version):
             "release": None
         })
     except pymongo.errors.DuplicateKeyError:
-        if await db.hmm.count():
+        if await db.hmm.count_documents({}):
             await db.status.update_one({"_id": "hmm", "installed": {"$exists": False}}, {
                 "$set": {
                     "installed": None

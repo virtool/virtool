@@ -200,7 +200,7 @@ async def create(req):
         return bad_request(name_error_message)
 
     # Make sure a subtraction host was submitted and it exists.
-    if not await db.subtraction.count({"_id": data["subtraction"], "is_host": True}):
+    if not await db.subtraction.count_documents({"_id": data["subtraction"], "is_host": True}):
         return bad_request("Subtraction does not exist")
 
     # Make sure all of the passed file ids exist.
@@ -375,7 +375,7 @@ async def set_rights(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    if not await db.samples.count_documents({"_id": sample_id}):
         return not_found()
 
     user_id = req["client"].user_id
@@ -504,10 +504,10 @@ async def analyze(req):
 
         raise
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await db.references.count_documents({"_id": ref_id}):
         return bad_request("Reference does not exist")
 
-    if not await db.indexes.count({"reference.id": ref_id, "ready": True}):
+    if not await db.indexes.count_documents({"reference.id": ref_id, "ready": True}):
         return bad_request("No ready index")
 
     subtraction_id = data.get("subtraction_id")

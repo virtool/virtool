@@ -275,4 +275,4 @@ class TestRemoveSamples:
 
         assert os.listdir(str(samples_dir)) == []
 
-        assert not await dbi.samples.count()
+        assert not await dbi.samples.count_documents({})

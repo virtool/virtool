@@ -95,7 +95,7 @@ async def install(req):
 
     user_id = req["client"].user_id
 
-    if await db.status.count({"_id": "hmm", "updates.ready": False}):
+    if await db.status.count_documents({"_id": "hmm", "updates.ready": False}):
         return conflict("Install already in progress")
 
     process = await virtool.processes.db.register(

@@ -39,7 +39,7 @@ async def add_subtractions_to_analyses(db):
     :return:
     """
     # Return early if all analyses have subtraction fields.
-    if await db.analyses.count({"subtraction": {"$exists": False}}) == 0:
+    if await db.analyses.count_documents({"subtraction": {"$exists": False}}) == 0:
         return
 
     pipeline = [

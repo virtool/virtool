@@ -221,7 +221,7 @@ async def update_api_key(req):
 
     key_id = req.match_info.get("key_id")
 
-    if not await db.keys.count({"id": key_id}):
+    if not await db.keys.count_documents({"id": key_id}):
         return not_found()
 
     user_id = req["client"].user_id

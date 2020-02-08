@@ -391,7 +391,7 @@ class TestEdit:
 
         assert resp.status == 200
         snapshot.assert_match(await resp.json())
-        assert await client.db.history.count() == 0
+        assert await client.db.history.count_documents({}) == 0
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["modify_otu"])
@@ -433,7 +433,7 @@ async def test_remove(abbreviation, exists, snapshot, spawn_client, check_ref_ri
         return
 
     assert resp.status == 204
-    assert await client.db.otus.find({"_id": "6116cba1"}).count() == 0
+    assert await client.db.otus.count_documents({"_id": "6116cba1"}) == 0
     snapshot.assert_match(await client.db.history.find_one(), "history")
 
 
@@ -793,7 +793,7 @@ class TestSetAsDefault:
 
         snapshot.assert_match(new, "joined")
 
-        assert await client.db.history.count() == 0
+        assert await client.db.history.count_documents({}) == 0
 
     @pytest.mark.parametrize("otu_id,isolate_id", [
         ("6116cba1", "test"),
@@ -827,7 +827,7 @@ class TestRemoveIsolate:
         await client.db.otus.insert_one(test_otu)
         await client.db.sequences.insert_one(test_sequence)
 
-        assert await client.db.otus.find({"isolates.id": "cab8b360"}).count() == 1
+        assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 1
 
         resp = await client.delete("/api/otus/6116cba1/isolates/cab8b360")
 
@@ -836,8 +836,8 @@ class TestRemoveIsolate:
             return
 
         assert resp.status == 204
-        assert await client.db.otus.find({"isolates.id": "cab8b360"}).count() == 0
-        assert await client.db.sequences.count() == 0
+        assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
+        assert await client.db.sequences.count_documents({}) == 0
 
         snapshot.assert_match(await client.db.history.find_one(), "history")
 
@@ -865,8 +865,8 @@ class TestRemoveIsolate:
             return
 
         assert resp.status == 204
-        assert await client.db.otus.find({"isolates.id": "cab8b360"}).count() == 0
-        assert not await client.db.sequences.count()
+        assert await client.db.otus.count_documents({"isolates.id": "cab8b360"}) == 0
+        assert not await client.db.sequences.count_documents({})
 
         snapshot.assert_match(await client.db.otus.find_one({"isolates.id": "bcb9b352"}), "otu")
         snapshot.assert_match(await client.db.history.find_one(), "history")

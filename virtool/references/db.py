@@ -272,7 +272,7 @@ class RemoveReferenceProcess(virtool.processes.process.Process):
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
-        otu_count = await self.db.otus.count({"reference.id": ref_id})
+        otu_count = await self.db.otus.count_documents({"reference.id": ref_id})
 
         tracker = self.get_tracker(otu_count)
 
@@ -467,10 +467,10 @@ async def add_group_or_user(db, ref_id, field, data):
 
     subdocument_id = data.get("group_id") or data["user_id"]
 
-    if field == "groups" and await db.groups.count({"_id": subdocument_id}) == 0:
+    if field == "groups" and await db.groups.count_documents({"_id": subdocument_id}) == 0:
         raise virtool.errors.DatabaseError("group does not exist")
 
-    if field == "users" and await db.users.count({"_id": subdocument_id}) == 0:
+    if field == "users" and await db.users.count_documents({"_id": subdocument_id}) == 0:
         raise virtool.errors.DatabaseError("user does not exist")
 
     if subdocument_id in [s["id"] for s in document[field]]:
@@ -854,7 +854,7 @@ async def get_otu_count(db, ref_id: str) -> int:
     :return: the OTU count
 
     """
-    return await db.otus.count({
+    return await db.otus.count_documents({
         "reference.id": ref_id
     })
 
@@ -868,7 +868,7 @@ async def get_unbuilt_count(db, ref_id: str) -> int:
     :return: the number of unbuilt changes
 
     """
-    return await db.history.count({
+    return await db.history.count_documents({
         "reference.id": ref_id,
         "index.id": "unbuilt"
     })
@@ -910,7 +910,7 @@ async def create_document(
         user_id: Union[str, None] = None,
         users=None
 ):
-    if ref_id and await db.references.count({"_id": ref_id}):
+    if ref_id and await db.references.count_documents({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
     ref_id = ref_id or await virtool.db.utils.get_new_id(db.otus)

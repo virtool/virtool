@@ -133,7 +133,7 @@ async def create_first(req):
     db = req.app["db"]
     data = await req.json()
 
-    if await db.users.count():
+    if await db.users.count_documents({}):
         return conflict("Virtool already has at least one user")
 
     if data["user_id"] == "virtool":

@@ -103,7 +103,7 @@ async def get_release(req):
     if not await virtool.db.utils.id_exists(db.references, ref_id):
         return not_found()
 
-    if not await db.references.count({"_id": ref_id, "remotes_from": {"$exists": True}}):
+    if not await db.references.count_documents({"_id": ref_id, "remotes_from": {"$exists": True}}):
         return bad_request("Not a remote reference")
 
     try:
@@ -210,7 +210,7 @@ async def find_history(req):
 
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await db.references.count_documents({"_id": ref_id}):
         return not_found()
 
     base_query = {
@@ -316,7 +316,7 @@ async def create(req):
     release_id = data.get("release_id") or 11447367
 
     if clone_from:
-        if not await db.references.count({"_id": clone_from}):
+        if not await db.references.count_documents({"_id": clone_from}):
             return bad_request("Source reference does not exist")
 
         manifest = await virtool.references.db.get_manifest(db, clone_from)
@@ -348,7 +348,7 @@ async def create(req):
         await aiojobs.aiohttp.spawn(req, p.run())
 
     elif import_from:
-        if not await db.files.count({"_id": import_from}):
+        if not await db.files.count_documents({"_id": import_from}):
             return not_found("File not found")
 
         path = os.path.join(req.app["settings"]["data_path"], "files", import_from)
@@ -571,7 +571,7 @@ async def list_groups(req):
     db = req.app["db"]
     ref_id = req.match_info["ref_id"]
 
-    if not await db.references.count({"_id": ref_id}):
+    if not await db.references.count_documents({"_id": ref_id}):
         return not_found()
 
     groups = await virtool.db.utils.get_one_field(db.references, "groups", ref_id)

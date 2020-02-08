@@ -107,7 +107,7 @@ async def id_exists(collection, _id):
     :rtype: bool
 
     """
-    return bool(await collection.count({"_id": _id}))
+    return bool(await collection.count_documents({"_id": _id}))
 
 
 async def ids_exist(collection, id_list):
@@ -124,4 +124,4 @@ async def ids_exist(collection, id_list):
     :rtype: bool
 
     """
-    return await collection.count({"_id": {"$in": id_list}}) == len(id_list)
+    return await collection.count_documents({"_id": {"$in": id_list}}) == len(id_list)

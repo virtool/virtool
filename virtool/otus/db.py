@@ -47,7 +47,7 @@ async def check_name_and_abbreviation(
     name_count = 0
 
     if name:
-        name_count = await db.otus.count({
+        name_count = await db.otus.count_documents({
             "lower_name": name.lower(),
             "reference.id": ref_id
         })
@@ -55,7 +55,7 @@ async def check_name_and_abbreviation(
     abbr_count = 0
 
     if abbreviation:
-        abbr_count = await db.otus.count({
+        abbr_count = await db.otus.count_documents({
             "abbreviation": abbreviation,
             "reference.id": ref_id
         })

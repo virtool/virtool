@@ -441,7 +441,7 @@ async def list_sequences(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    if not await db.otus.find({"_id": otu_id, "isolates.id": isolate_id}).count():
+    if not await db.otus.count_documents({"_id": otu_id, "isolates.id": isolate_id}):
         return not_found()
 
     projection = list(virtool.otus.db.SEQUENCE_PROJECTION)
@@ -596,7 +596,7 @@ async def edit_sequence(req):
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference", "segment"])
 
-    if not document or not await db.sequences.count({"_id": sequence_id}):
+    if not document or not await db.sequences.count_documents({"_id": sequence_id}):
         return not_found()
 
     if not await virtool.references.db.check_right(req, document["reference"]["id"], "modify_otu"):
@@ -643,7 +643,7 @@ async def remove_sequence(req):
     isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    if not await db.sequences.count({"_id": sequence_id}):
+    if not await db.sequences.count_documents({"_id": sequence_id}):
         return not_found()
 
     document = await db.otus.find_one({"_id": otu_id, "isolates.id": isolate_id}, ["reference"])
@@ -671,7 +671,7 @@ async def list_history(req):
 
     otu_id = req.match_info["otu_id"]
 
-    if not await db.otus.find({"_id": otu_id}).count():
+    if not await db.otus.count_documents({"_id": otu_id}):
         return not_found()
 
     cursor = db.history.find({"otu.id": otu_id}, projection=virtool.history.db.LIST_PROJECTION)

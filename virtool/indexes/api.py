@@ -120,13 +120,13 @@ async def create(req):
     if not await virtool.references.db.check_right(req, reference, "build"):
         return insufficient_rights()
 
-    if await db.indexes.count({"reference.id": ref_id, "ready": False}):
+    if await db.indexes.count_documents({"reference.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.otus.count({"reference.id": ref_id, "verified": False}):
+    if await db.otus.count_documents({"reference.id": ref_id, "verified": False}):
         return bad_request("There are unverified OTUs")
 
-    if not await db.history.count({"reference.id": ref_id, "index.id": "unbuilt"}):
+    if not await db.history.count_documents({"reference.id": ref_id, "index.id": "unbuilt"}):
         return bad_request("There are no unbuilt changes")
 
     index_id = await virtool.db.utils.get_new_id(db.indexes)
@@ -206,7 +206,7 @@ async def find_history(req):
 
     index_id = req.match_info["index_id"]
 
-    if not await db.indexes.count({"_id": index_id}):
+    if not await db.indexes.count_documents({"_id": index_id}):
         return not_found()
 
     term = req.query.get("term")
