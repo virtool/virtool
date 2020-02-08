@@ -18,7 +18,7 @@ chardet==3.0.4
 coloredlogs==10.0
 configobj==5.0.6
 coverage==4.5.4
-cx-Freeze==6.0b1
+cx-Freeze==6.1
 dictdiffer==0.8.0
 et-xmlfile==1.0.1
 execnet==1.7.1

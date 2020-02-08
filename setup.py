@@ -45,8 +45,7 @@ executables = [
 ]
 
 classifiers=[
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.7"
 ]
 
 importlib.import_module("virtool")
