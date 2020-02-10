@@ -43,36 +43,27 @@ const modalContentClose = keyframes`
     }
 `;
 export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay {...rest} />)`
+    animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.3s;
+    animation-fill-mode: forwards;
     background: hsla(0, 0%, 0%, 0.33);
-    position: fixed;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     overflow: auto;
-
+    position: fixed;
     z-index: 9999;
-
-    animation: ${props => (props.close ? modalOverlayClose : modalOverlayOpen)} 0.3s;
-    animation-fill-mode: forwards;
 `;
 
 export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogContent {...rest} />)`
-    width: 50vw;
-    margin: 10vh auto;
-    background: white;
-    padding: 2rem;
-    outline: none;
-
-    margin-top: -70px;
-
-    box-shadow: rgba(0, 0, 0, 0.5) 0 5px 15px;
-    width: ${props => (props.size == "lg" ? "900px" : "600px")};
-    padding: 0;
-    position: relative;
-
     animation: ${props => (props.close ? modalContentClose : modalContentOpen)} 0.3s;
     animation-fill-mode: forwards;
+    background: white;
+    box-shadow: rgba(0, 0, 0, 0.5) 0 5px 15px;
+    margin: -70px auto;
+    padding: 0;
+    position: relative;
+    width: ${props => (props.size === "lg" ? "900px" : "600px")};
 
     @media (max-width: 991px) {
         width: 600px;
@@ -106,7 +97,7 @@ export class ModalDialog extends React.Component {
     }
 
     static getDerivedStateFromProps(props) {
-        if (props.show == true) {
+        if (props.show === true) {
             return {
                 open: true
             };
