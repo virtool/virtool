@@ -112,7 +112,10 @@ export class ModalDialog extends React.Component {
     onClosed = () => {
         if (this.state.close === true) {
             this.setState({ open: false, close: false });
-            this.props.onExited();
+
+            if (this.props.onExited) {
+                this.props.onExited();
+            }
         }
     };
 

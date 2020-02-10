@@ -2,15 +2,13 @@
 
 exports[`<CreateAnalysis /> should render 1`] = `
 <ModalDialog
+  headerText="Analyze"
   label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader>
-    Analyze
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
@@ -118,15 +116,13 @@ exports[`<CreateAnalysis /> should render 1`] = `
 
 exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
 <ModalDialog
+  headerText="Analyze"
   label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader>
-    Analyze
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
@@ -234,15 +230,13 @@ exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
 
 exports[`<CreateAnalysis /> should render with error 1`] = `
 <ModalDialog
+  headerText="Analyze"
   label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader>
-    Analyze
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
@@ -350,15 +344,13 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
 
 exports[`<CreateAnalysis /> should render with index selected 1`] = `
 <ModalDialog
+  headerText="Analyze"
   label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader>
-    Analyze
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
@@ -480,15 +472,13 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
 
 exports[`<CreateAnalysis /> should render with summary 1`] = `
 <ModalDialog
+  headerText="Analyze"
   label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader>
-    Analyze
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
