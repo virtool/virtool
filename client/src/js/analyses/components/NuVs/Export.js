@@ -6,10 +6,10 @@
  */
 import { forEach, map, reduce, replace } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
+
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Button, ButtonGroup } from "../../../base/index";
+import { Button, ButtonGroup, DialogBody, ModalDialog, DialogFooter } from "../../../base/";
 import { followDynamicDownload, routerLocationHasState } from "../../../utils/utils";
 import { getResults } from "../../selectors";
 import NuVsExportPreview from "./ExportPreview";
@@ -107,13 +107,14 @@ export class NuVsExport extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Export NuVs Data
-                </Modal.Header>
-
+            <ModalDialog
+                headerText="Export NuVs Data"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <ButtonGroup>
                             <Button
                                 type="button"
@@ -132,14 +133,14 @@ export class NuVsExport extends React.Component {
                         </ButtonGroup>
 
                         <NuVsExportPreview mode={this.state.mode} />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Button type="submit" bsStyle="primary" icon="download">
                             Download
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
