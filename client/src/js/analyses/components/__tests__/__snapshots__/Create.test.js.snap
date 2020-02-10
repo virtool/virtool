@@ -1,46 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateAnalysis /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <Modal__DialogHeader>
     Analyze
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <SelectedSamples
         samples={
           Array [
@@ -87,11 +61,8 @@ exports[`<CreateAnalysis /> should render 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -140,52 +111,26 @@ exports[`<CreateAnalysis /> should render 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <Modal__DialogHeader>
     Analyze
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <SelectedSamples
         samples={
           Array [
@@ -232,11 +177,8 @@ exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -285,52 +227,26 @@ exports[`<CreateAnalysis /> should render with algorithm selected 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<CreateAnalysis /> should render with error 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <Modal__DialogHeader>
     Analyze
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <SelectedSamples
         samples={
           Array [
@@ -377,11 +293,8 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
         onSelect={[Function]}
         selected={Array []}
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -430,52 +343,26 @@ exports[`<CreateAnalysis /> should render with error 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<CreateAnalysis /> should render with index selected 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <Modal__DialogHeader>
     Analyze
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <SelectedSamples
         samples={
           Array [
@@ -529,11 +416,8 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           ]
         }
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -589,52 +473,26 @@ exports[`<CreateAnalysis /> should render with index selected 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<CreateAnalysis /> should render with summary 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  label="create"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
+  size="lg"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
+  <Modal__DialogHeader>
     Analyze
-  </ModalHeader>
+  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
-    >
+    <Modal__DialogBody>
       <SelectedSamples
         samples={
           Array [
@@ -688,11 +546,8 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           ]
         }
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
       <Flex
         alignContent="stretch"
         alignItems="center"
@@ -748,7 +603,7 @@ exports[`<CreateAnalysis /> should render with summary 1`] = `
           </Button>
         </FlexItem>
       </Flex>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
