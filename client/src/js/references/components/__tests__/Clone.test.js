@@ -44,6 +44,7 @@ describe("<CloneReference />", () => {
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
+            reference: "foo",
             name: "foo"
         });
     });
@@ -71,6 +72,7 @@ describe("<CloneReference />", () => {
         wrapper.find("ReferenceForm").simulate("change", e);
         expect(wrapper.state()).toEqual({
             ...state,
+            reference: "foo",
             foo: "bar"
         });
     });
@@ -79,7 +81,8 @@ describe("<CloneReference />", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         wrapper.find("ReferenceSelect").simulate("select");
         expect(wrapper.state()).toEqual({
-            ...state
+            ...state,
+            reference: undefined
         });
     });
 
@@ -135,7 +138,7 @@ describe("mapStateToProps()", () => {
         router: {
             location: {
                 state: {
-                    refId: "foo"
+                    id: "foo"
                 }
             }
         },
