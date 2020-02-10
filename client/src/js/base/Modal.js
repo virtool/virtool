@@ -70,7 +70,9 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogHeader = styled(BoxGroupSection)`
+export const DialogHeader = styled(({ modalStyle, ...rest }) => <BoxGroupSection {...rest} />)`
+    background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
+    color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
     display: flex;
     align-items: center;
@@ -80,9 +82,14 @@ export const DialogBody = styled.div`
     padding: 15px;
 `;
 
+<<<<<<< 7f895b5b7da896b0162356599074b00ef990069b
 export const DialogFooter = styled(Box)`
     display: flex;
     justify-content: end;
+=======
+export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
+    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
+>>>>>>> Replace bootstrap modal in base RemoveModal Component
     border-bottom: none;
 `;
 
@@ -144,6 +151,13 @@ export class ModalDialog extends React.Component {
                         onAnimationEnd={this.onClosed}
                         onAnimationStart={this.onOpen}
                     >
+<<<<<<< 7f895b5b7da896b0162356599074b00ef990069b
+=======
+                        <DialogHeader modalStyle={this.props.modalStyle}>
+                            {this.props.headerText}
+                            {CloseButton}
+                        </DialogHeader>
+>>>>>>> Replace bootstrap modal in base RemoveModal Component
                         {this.props.children}
                     </ModalDialogContent>
                 </ModalDialogOverlay>

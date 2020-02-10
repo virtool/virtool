@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Modal } from "react-bootstrap";
+import { DialogBody, ModalDialog, DialogFooter } from "./Modal";
 import { Button } from "./Button";
 
 /**
@@ -13,25 +13,25 @@ import { Button } from "./Button";
  * @param onConfirm {function} a function to call on confirmation
  * @param onHide {function} a function that hides the modal
  */
-export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) => (
-    <Modal show={show} onHide={onHide} dialogClassName="modal-danger">
-        <Modal.Header onHide={onHide} closeButton>
-            Remove {noun}
-        </Modal.Header>
-        <Modal.Body>
-            {message || (
-                <span>
-                    Are you sure you want to remove <strong>{name}</strong>?
-                </span>
-            )}
-        </Modal.Body>
-        <Modal.Footer>
-            <Button bsStyle="danger" icon="check" onClick={onConfirm}>
-                Confirm
-            </Button>
-        </Modal.Footer>
-    </Modal>
-);
+export const RemoveModal = ({ name, noun, show, onConfirm, onHide, message }) => {
+    const headerText = "Remove ".concat(noun);
+    return (
+        <ModalDialog label="Remove" headerText={headerText} show={show} onHide={onHide} modalStyle="danger">
+            <DialogBody>
+                {message || (
+                    <span>
+                        Are you sure you want to remove <strong>{name}</strong>?
+                    </span>
+                )}
+            </DialogBody>
+            <DialogFooter style={{ border: "none" }}>
+                <Button bsStyle="danger" icon="check" onClick={onConfirm}>
+                    Confirm
+                </Button>
+            </DialogFooter>
+        </ModalDialog>
+    );
+};
 
 RemoveModal.propTypes = {
     noun: PropTypes.string,
