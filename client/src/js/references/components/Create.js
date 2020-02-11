@@ -1,11 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import styled from "styled-components";
 import { createReference } from "../actions";
 import { clearError } from "../../errors/actions";
 
-import { Alert, Button, ButtonToolbar } from "../../base";
+import { Alert, Button, ButtonToolbar, DialogFooter } from "../../base";
 import { getTargetChange } from "../../utils/utils";
 import { DataTypeSelection } from "./DataTypeSelection";
 import { ReferenceForm } from "./Form";
@@ -79,13 +78,13 @@ export class CreateReference extends React.Component {
                         onChange={this.handleChange}
                     />
                     <DataTypeSelection onSelect={this.handleChangeDataType} dataType={this.state.dataType} />
-                    <Modal.Footer>
+                    <DialogFooter>
                         <ButtonToolbar>
                             <Button type="submit" icon="save" bsStyle="primary">
                                 Save
                             </Button>
                         </ButtonToolbar>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
             </Container>
         );
