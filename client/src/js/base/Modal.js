@@ -70,12 +70,14 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogHeader = styled(({ modalStyle, ...rest }) => <BoxGroupSection {...rest} />)`
+export const DialogHeader = styled(({ modalStyle, headerBorderBottom, ...rest }) => <BoxGroupSection {...rest} />)`
     background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
     color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    border-bottom: ${props => props.headerBorderBottom} !important;
 `;
 
 export const DialogBody = styled.div`
@@ -151,9 +153,10 @@ export class ModalDialog extends React.Component {
                         onAnimationEnd={this.onClosed}
                         onAnimationStart={this.onOpen}
                     >
-<<<<<<< 7f895b5b7da896b0162356599074b00ef990069b
-=======
-                        <DialogHeader modalStyle={this.props.modalStyle}>
+                        <DialogHeader
+                            modalStyle={this.props.modalStyle}
+                            headerBorderBottom={this.props.headerBorderBottom}
+                        >
                             {this.props.headerText}
                             {CloseButton}
                         </DialogHeader>
