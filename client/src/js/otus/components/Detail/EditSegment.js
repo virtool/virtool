@@ -1,9 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { findIndex, find } from "lodash-es";
-import { Button } from "../../../base";
+import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../base";
 import SegmentForm from "./SegmentForm";
 
 const getInitialState = props => ({
@@ -71,24 +70,25 @@ class EditSegment extends React.Component {
 
     render() {
         return (
-            <Modal
+            <ModalDialog
+                label="EditSegment"
+                headerText="Edit Segment"
                 show={this.props.show}
                 onExited={this.handleExited}
                 onHide={this.props.onHide}
                 onEnter={this.updateState}
             >
-                <Modal.Header closeButton>Edit Segment</Modal.Header>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Button bsStyle="primary" icon="save" type="submit">
                             Save
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
