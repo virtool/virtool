@@ -1,10 +1,10 @@
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import React from "react";
-import { Modal, ProgressBar } from "react-bootstrap";
+import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
-import { Button, Label, Loader } from "../../base";
+import { Button, Label, Loader, DialogBody, ModalDialog, DialogFooter } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 
 import { installSoftwareUpdates } from "../actions";
@@ -45,10 +45,10 @@ export const Process = ({ count, progress, size, step, updating }) => {
         }, 3000);
 
         return (
-            <Modal.Body className="text-center" style={{ padding: "50px 15px" }}>
+            <DialogBody className="text-center" style={{ padding: "50px 15px" }}>
                 <p>Restarting server</p>
                 <Loader color="#3c8786" />
-            </Modal.Body>
+            </DialogBody>
         );
     }
 
@@ -59,7 +59,7 @@ export const Process = ({ count, progress, size, step, updating }) => {
     }
 
     return (
-        <Modal.Body>
+        <DialogBody>
             <ProgressBar now={progress * 100} />
             <p className="text-center">
                 <small>
@@ -67,7 +67,7 @@ export const Process = ({ count, progress, size, step, updating }) => {
                     {ratio}
                 </small>
             </p>
-        </Modal.Body>
+        </DialogBody>
     );
 };
 
@@ -79,29 +79,30 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
     if (process === null) {
         content = (
             <div>
-                <Modal.Body>
+                <DialogBody>
                     <ReleaseMarkdown body={mergedBody} noMargin />
-                </Modal.Body>
+                </DialogBody>
 
-                <Modal.Footer>
+                <DialogFooter>
                     <Button bsStyle="primary" icon="download" onClick={onInstall}>
                         Install
                     </Button>
-                </Modal.Footer>
+                </DialogFooter>
             </div>
         );
     } else {
         content = <Process {...process} size={releases[0].size} updating={updating} />;
     }
+    const header = (
+        <div>
+            Software Update <Label>{releases[0].name}</Label>
+        </div>
+    );
 
     return (
-        <Modal show={show} onHide={onHide}>
-            <Modal.Header onHide={onHide} closeButton>
-                Software Update <Label>{releases[0].name}</Label>
-            </Modal.Header>
-
+        <ModalDialog headerText={header} label="updatesInstall" show={show} onHide={onHide}>
             {content}
-        </Modal>
+        </ModalDialog>
     );
 };
 
