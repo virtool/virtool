@@ -14,6 +14,8 @@ const StyledCreateAPIKeyInfo = styled(InfoAlert)`
     p {
         margin-left: 5px;
     }
+    border-left: none;
+    border-right: none;
 `;
 
 export const CreateAPIKeyInfo = ({ administrator }) => {

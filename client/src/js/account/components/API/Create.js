@@ -6,7 +6,18 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
 
-import { Button, Flex, FlexItem, Icon, Input, InputError, Modal, SaveButton } from "../../../base";
+import {
+    Button,
+    Flex,
+    FlexItem,
+    Icon,
+    Input,
+    InputError,
+    DialogBody,
+    SaveButton,
+    ModalDialog,
+    DialogFooter
+} from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 import CreateAPIKeyInfo from "./CreateInfo";
@@ -72,7 +83,7 @@ export class CreateAPIKey extends React.Component {
 
         if (this.state.show) {
             content = (
-                <Modal.Body className="text-center">
+                <DialogBody className="text-center">
                     <Row>
                         <Col xs={12}>
                             <strong className="text-success">Here is your key.</strong>
@@ -103,14 +114,14 @@ export class CreateAPIKey extends React.Component {
                     <small className={CX("text-primary", { invisible: !this.state.copied })}>
                         <Icon name="check" /> Copied
                     </small>
-                </Modal.Body>
+                </DialogBody>
             );
         } else {
             content = (
                 <React.Fragment>
                     <CreateAPIKeyInfo />
                     <form onSubmit={this.handleSubmit}>
-                        <Modal.Body>
+                        <DialogBody>
                             <InputError
                                 label="Name"
                                 value={this.state.name}
@@ -124,24 +135,26 @@ export class CreateAPIKey extends React.Component {
                                 keyPermissions={this.state.permissions}
                                 onChange={this.handlePermissionChange}
                             />
-                        </Modal.Body>
+                        </DialogBody>
 
-                        <Modal.Footer>
+                        <DialogFooter>
                             <SaveButton />
-                        </Modal.Footer>
+                        </DialogFooter>
                     </form>
                 </React.Fragment>
             );
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create API Key
-                </Modal.Header>
-
+            <ModalDialog
+                headerText="Create API Key"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+                label="CreateAPI"
+            >
                 {content}
-            </Modal>
+            </ModalDialog>
         );
     }
 }
