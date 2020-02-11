@@ -1,9 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import { filter, includes, map } from "lodash-es";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Identicon, ListGroupItem, NoneFound } from "../../../base";
+import { Identicon, ListGroupItem, NoneFound, ModalDialog, DialogBody } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";
@@ -76,21 +75,21 @@ export class AddReferenceMember extends React.Component {
             addMemberComponents = <NoneFound noun={`other ${this.props.noun}s`} noListGroup />;
         }
 
+        const header = "Add ".concat(this.props.noun);
         return (
-            <Modal
+            <ModalDialog
+                headerText={header}
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
+                capitalize="capitalize"
             >
-                <Modal.Header closeButton>
-                    <span className="text-capitalize">Add {this.props.noun}</span>
-                </Modal.Header>
-                <Modal.Body>
+                <DialogBody>
                     {this.props.noun === "user" ? <AddUserSearch /> : null}
                     {addMemberComponents}
-                </Modal.Body>
-            </Modal>
+                </DialogBody>
+            </ModalDialog>
         );
     }
 }

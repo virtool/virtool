@@ -70,7 +70,9 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogHeader = styled(({ modalStyle, headerBorderBottom, ...rest }) => <BoxGroupSection {...rest} />)`
+export const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => (
+    <BoxGroupSection {...rest} />
+))`
     background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
     color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
@@ -78,6 +80,7 @@ export const DialogHeader = styled(({ modalStyle, headerBorderBottom, ...rest })
     align-items: center;
     justify-content: space-between;
     border-bottom: ${props => props.headerBorderBottom} !important;
+    text-transform: ${props => props.capitalize};
 `;
 
 export const DialogBody = styled.div`
@@ -156,6 +159,7 @@ export class ModalDialog extends React.Component {
                         <DialogHeader
                             modalStyle={this.props.modalStyle}
                             headerBorderBottom={this.props.headerBorderBottom}
+                            capitalize={this.props.capitalize}
                         >
                             {this.props.headerText}
                             {CloseButton}
