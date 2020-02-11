@@ -1,9 +1,9 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import { Col, Modal, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { InputError, SaveButton } from "../../base";
+import { InputError, SaveButton, ModalDialog, DialogBody, DialogFooter } from "../../base";
 import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
@@ -66,12 +66,15 @@ class EditSample extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleModalHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Sample
-                </Modal.Header>
+            <ModalDialog
+                label="EditSample"
+                headerText="Edit Sample"
+                show={this.props.show}
+                onEnter={this.handleModalEnter}
+                onHide={this.handleModalHide}
+            >
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <Row>
                             <Col xs={12}>
                                 <InputError
@@ -113,12 +116,12 @@ class EditSample extends React.Component {
                                 />
                             </Col>
                         </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <SaveButton />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
