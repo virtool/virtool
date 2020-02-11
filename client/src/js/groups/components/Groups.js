@@ -5,16 +5,7 @@ import { InputGroup } from "react-bootstrap";
 
 import { connect } from "react-redux";
 import styled from "styled-components";
-import {
-    BoxGroup,
-    Button,
-    InputError,
-    LoadingPlaceholder,
-    Icon,
-    DialogBody,
-    ModalDialog,
-    DialogHeader
-} from "../../base";
+import { BoxGroup, Button, InputError, LoadingPlaceholder, DialogBody, ModalDialog } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
@@ -114,12 +105,8 @@ class Groups extends React.Component {
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
+                headerText="Groups"
             >
-                <DialogHeader>
-                    Groups
-                    <Icon name="times" onClick={this.handleHide} style={{ color: "grey" }} />
-                </DialogHeader>
-
                 <GroupsModalBody>
                     <div>
                         <InputGroup>
