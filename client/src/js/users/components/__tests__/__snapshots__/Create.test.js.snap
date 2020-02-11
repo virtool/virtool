@@ -1,39 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateUser /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  headerText="Create User"
+  label="userCreate"
   onExited={[Function]}
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
-  show={false}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
-    Create User
-  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
@@ -71,14 +43,11 @@ exports[`<CreateUser /> should render 1`] = `
         pullRight={false}
       />
     </Create__CreateUserContainer>
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    <Modal__DialogFooter>
       <SaveButton
         pullRight={true}
       />
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;

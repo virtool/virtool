@@ -2,18 +2,13 @@
 
 exports[`<CreateSample> should render 1`] = `
 <ModalDialog
+  headerText="Create Sample"
   label="sample"
   onExited={[Function]}
   onHide={[Function]}
   show={true}
   size="lg"
 >
-  <Modal__DialogHeader
-    closeButton={true}
-    onHide={[Function]}
-  >
-    Create Sample
-  </Modal__DialogHeader>
   <form
     onSubmit={[Function]}
   >

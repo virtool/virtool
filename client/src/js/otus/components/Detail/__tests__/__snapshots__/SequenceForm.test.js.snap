@@ -4,10 +4,7 @@ exports[`<SequenceForm /> renders correctly 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <Row
       bsClass="row"
       componentClass="div"
@@ -65,12 +62,9 @@ exports[`<SequenceForm /> renders correctly 1`] = `
         />
       </Col>
     </Row>
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
-  >
+  </Modal__DialogBody>
+  <Modal__DialogFooter>
     <SaveButton />
-  </ModalFooter>
+  </Modal__DialogFooter>
 </form>
 `;
