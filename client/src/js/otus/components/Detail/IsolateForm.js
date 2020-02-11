@@ -12,10 +12,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { toLower } from "lodash-es";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils/utils";
-import { InputError, SaveButton } from "../../../base";
+import { InputError, SaveButton, DialogFooter, DialogBody } from "../../../base";
 import { SourceTypeInput } from "./SourceTypeInput";
 
 export class IsolateForm extends React.Component {
@@ -46,7 +46,7 @@ export class IsolateForm extends React.Component {
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
         return (
             <form onSubmit={this.props.onSubmit}>
-                <Modal.Body>
+                <DialogBody>
                     <Row>
                         <Col md={6}>
                             <SourceTypeInput
@@ -69,10 +69,10 @@ export class IsolateForm extends React.Component {
                             <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
                         </Col>
                     </Row>
-                </Modal.Body>
-                <Modal.Footer>
+                </DialogBody>
+                <DialogFooter>
                     <SaveButton />
-                </Modal.Footer>
+                </DialogFooter>
             </form>
         );
     }
