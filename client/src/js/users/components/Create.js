@@ -1,11 +1,10 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Checkbox, device, InputError, SaveButton } from "../../base";
+import { Checkbox, device, InputError, SaveButton, ModalDialog, DialogFooter } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createUser } from "../actions";
@@ -98,10 +97,13 @@ export class CreateUser extends React.PureComponent {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create User
-                </Modal.Header>
+            <ModalDialog
+                headerText="Create User"
+                label="userCreate"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
                 <form onSubmit={this.handleSubmit}>
                     <CreateUserContainer>
                         <InputError
@@ -138,11 +140,11 @@ export class CreateUser extends React.PureComponent {
                         />
                     </CreateUserContainer>
 
-                    <Modal.Footer>
+                    <DialogFooter>
                         <SaveButton pullRight />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
