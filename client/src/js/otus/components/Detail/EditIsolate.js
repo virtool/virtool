@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
+import { ModalDialog } from "../../../base";
 import { editIsolate, hideOTUModal } from "../../actions";
 import IsolateForm from "./IsolateForm";
 
@@ -37,10 +37,14 @@ class EditIsolate extends React.Component {
 
     render() {
         return (
-            <Modal bsStyle="warning" show={this.props.show} onEntered={this.modalEntered} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Isolate
-                </Modal.Header>
+            <ModalDialog
+                headerText="Edit Isolate"
+                label="EditIsolate"
+                moadlStyle="warning"
+                show={this.props.show}
+                onEntered={this.modalEntered}
+                onHide={this.props.onHide}
+            >
                 <IsolateForm
                     sourceType={this.state.sourceType}
                     sourceName={this.state.sourceName}
@@ -49,7 +53,7 @@ class EditIsolate extends React.Component {
                     onChange={this.handleChange}
                     onSubmit={this.handleSubmit}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }
