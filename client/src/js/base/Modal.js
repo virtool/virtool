@@ -1,20 +1,9 @@
 import React from "react";
 import { Modal as BsModal } from "react-bootstrap";
-
 import { DialogOverlay, DialogContent } from "@reach/dialog";
-
 import styled, { keyframes } from "styled-components";
+import { Icon } from "./Icon";
 import { BoxGroupSection, Box } from "./Box";
-import { Alert } from "./Alert";
-
-export const Modal = styled(BsModal)`
-    ${Alert} {
-        border-left: none;
-        border-radius: 0;
-        border-right: none;
-        margin: -1px 0 0;
-    }
-`;
 
 const modalOverlayOpen = keyframes`
     0% {
@@ -85,11 +74,6 @@ export const DialogBody = styled.div`
     padding: 15px;
 `;
 
-<<<<<<< 7f895b5b7da896b0162356599074b00ef990069b
-export const DialogFooter = styled(Box)`
-    display: flex;
-    justify-content: end;
-=======
 export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
     border-left: none;
     border-right: none;
@@ -140,6 +124,17 @@ export class ModalDialog extends React.Component {
     };
 
     render() {
+        const CloseButton = (
+            <Icon
+                name="times"
+                onClick={() => {
+                    this.props.onHide();
+                    this.onClose();
+                }}
+                style={{ color: "grey" }}
+            />
+        );
+
         return (
             <div>
                 <ModalDialogOverlay
@@ -166,7 +161,6 @@ export class ModalDialog extends React.Component {
                             {this.props.headerText}
                             {CloseButton}
                         </DialogHeader>
->>>>>>> Replace bootstrap modal in base RemoveModal Component
                         {this.props.children}
                     </ModalDialogContent>
                 </ModalDialogOverlay>
