@@ -1,8 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { get } from "lodash-es";
 import OTUForm from "../OTUForm";
+import { ModalDialog } from "../../../base";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
 import { getNextState } from "../../utils";
@@ -66,10 +66,13 @@ class EditOTU extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleHide}>
-                <Modal.Header onHide={this.handleHide} closeButton>
-                    Edit OTU
-                </Modal.Header>
+            <ModalDialog
+                headerText="Edit OTU"
+                label="EditOTU"
+                show={this.props.show}
+                onEnter={this.handleModalEnter}
+                onHide={this.handleHide}
+            >
                 <OTUForm
                     name={this.state.name}
                     abbreviation={this.state.abbreviation}
@@ -78,7 +81,7 @@ class EditOTU extends React.Component {
                     errorName={this.state.errorName}
                     errorAbbreviation={this.state.errorAbbreviation}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }
