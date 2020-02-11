@@ -95,7 +95,7 @@ export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} /
     border-right: none;
     border-bottom: none;
     border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
-
+    justify-content: end;
     text-align: right;
     overflow-y: auto;
 `;
