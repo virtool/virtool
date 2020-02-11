@@ -1,12 +1,12 @@
 import React from "react";
-import { Row, Col, Modal } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 
-import { SaveButton, InputError } from "../../../base";
+import { SaveButton, InputError, DialogBody, DialogFooter } from "../../../base";
 import SequenceField from "./SequenceField";
 
 const SegmentForm = props => (
     <form onSubmit={props.handleSubmit}>
-        <Modal.Body>
+        <DialogBody>
             {props.overlay}
             <Row>{props.AccessionSegmentCol}</Row>
             <Row>
@@ -35,10 +35,10 @@ const SegmentForm = props => (
                     />
                 </Col>
             </Row>
-        </Modal.Body>
-        <Modal.Footer>
+        </DialogBody>
+        <DialogFooter>
             <SaveButton />
-        </Modal.Footer>
+        </DialogFooter>
     </form>
 );
 
