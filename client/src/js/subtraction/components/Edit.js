@@ -1,8 +1,7 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { updateSubtraction } from "../actions";
-import { SaveButton, InputError } from "../../base";
+import { SaveButton, InputError, ModalDialog, DialogFooter, DialogBody } from "../../base";
 
 const getInitialState = props => ({
     subtractionId: props.entry.id,
@@ -24,10 +23,15 @@ export class EditSubtraction extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.exited} onExited={this.props.exited}>
-                <Modal.Header closeButton>Edit Subtraction</Modal.Header>
+            <ModalDialog
+                label="SubtractionEdit"
+                headerText="Edit Subtraction"
+                show={this.props.show}
+                onHide={this.props.exited}
+                onExited={this.props.exited}
+            >
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body style={{ margin: "0 0 10px 0" }}>
+                    <DialogBody style={{ margin: "0 0 10px 0" }}>
                         <InputError type="text" label="Unique Name" value={this.state.subtractionId} readOnly />
 
                         <InputError
@@ -38,13 +42,13 @@ export class EditSubtraction extends React.Component {
                         />
 
                         <InputError type="text" label="File" value={this.state.fileId} readOnly />
-                    </Modal.Body>
+                    </DialogBody>
 
-                    <Modal.Footer className="modal-footer">
+                    <DialogFooter className="modal-footer">
                         <SaveButton pullRight />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
