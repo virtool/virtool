@@ -1,10 +1,10 @@
 import React from "react";
-import { Row, Col, Modal } from "react-bootstrap";
-import { InputError, SaveButton } from "../../base";
+import { Row, Col } from "react-bootstrap";
+import { InputError, SaveButton, DialogBody, DialogFooter } from "../../base";
 
 const OTUForm = props => (
     <form onSubmit={props.handleSubmit}>
-        <Modal.Body>
+        <DialogBody>
             <Row>
                 <Col md={8}>
                     <InputError
@@ -25,10 +25,10 @@ const OTUForm = props => (
                     />
                 </Col>
             </Row>
-        </Modal.Body>
-        <Modal.Footer>
+        </DialogBody>
+        <DialogFooter>
             <SaveButton pullRight />
-        </Modal.Footer>
+        </DialogFooter>
     </form>
 );
 
