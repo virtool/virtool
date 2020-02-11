@@ -70,9 +70,7 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => (
-    <BoxGroupSection {...rest} />
-))`
+const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => <BoxGroupSection {...rest} />)`
     background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
     color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
@@ -93,9 +91,13 @@ export const DialogFooter = styled(Box)`
     justify-content: end;
 =======
 export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
-    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
->>>>>>> Replace bootstrap modal in base RemoveModal Component
+    border-left: none;
+    border-right: none;
     border-bottom: none;
+    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
+
+    text-align: right;
+    overflow-y: auto;
 `;
 
 export class ModalDialog extends React.Component {

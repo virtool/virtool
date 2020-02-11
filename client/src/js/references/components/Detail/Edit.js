@@ -1,8 +1,7 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { SaveButton } from "../../../base";
+import { SaveButton, ModalDialog, DialogFooter, DialogBody } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
 import { editReference } from "../../actions";
@@ -69,12 +68,15 @@ export class EditReference extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.handleHide} onEnter={this.handleModalEnter}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Edit Reference
-                </Modal.Header>
+            <ModalDialog
+                label="Edit"
+                headerText="Edit Reference"
+                show={this.props.show}
+                onHide={this.handleHide}
+                onEnter={this.handleModalEnter}
+            >
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <ReferenceForm
                             description={this.state.description}
                             organism={this.state.organism}
@@ -85,13 +87,13 @@ export class EditReference extends React.Component {
                             errorSelect={this.state.errorSelect}
                             onChange={this.handleChange}
                         />
-                    </Modal.Body>
+                    </DialogBody>
 
-                    <Modal.Footer>
+                    <DialogFooter>
                         <SaveButton pullRight />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }
