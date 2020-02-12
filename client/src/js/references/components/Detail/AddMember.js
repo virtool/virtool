@@ -78,6 +78,7 @@ export class AddReferenceMember extends React.Component {
         const header = "Add ".concat(this.props.noun);
         return (
             <ModalDialog
+                label="AddMember"
                 headerText={header}
                 show={this.props.show}
                 onHide={this.props.onHide}

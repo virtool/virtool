@@ -66,6 +66,7 @@ export class AddTarget extends React.Component {
     render() {
         return (
             <ModalDialog
+                submit={this.state.submit}
                 label="AddTarget"
                 headerText="Add target"
                 capitalize="capitalize"

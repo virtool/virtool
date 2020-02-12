@@ -99,7 +99,7 @@ describe("<EditTarget />", () => {
             initialRequired: true
         };
         const wrapper = shallow(<EditTarget {...props} />);
-        wrapper.find("Modal").simulate("enter");
+        wrapper.find("ModalDialog").simulate("enter");
         expect(wrapper.state()).toEqual({ ...state, name: "Foo", description: "Bar", length: 1, required: true });
     });
 });

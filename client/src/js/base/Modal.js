@@ -1,5 +1,4 @@
 import React from "react";
-import { Modal as BsModal } from "react-bootstrap";
 import { DialogOverlay, DialogContent } from "@reach/dialog";
 import styled, { keyframes } from "styled-components";
 import { Icon } from "./Icon";
@@ -97,10 +96,13 @@ export class ModalDialog extends React.Component {
     static getDerivedStateFromProps(props) {
         if (props.show === true) {
             return {
-                open: true
+                open: true,
+                close: false
             };
         }
-        return null;
+        if (props.show === false) {
+            return { close: true };
+        }
     }
 
     onClose = () => {

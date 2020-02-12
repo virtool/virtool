@@ -50,7 +50,7 @@ describe("<CreateUser />", () => {
     it("should call handleModalExited when modal is exited", () => {
         const wrapper = shallow(<CreateUser {...props} />);
         wrapper
-            .find("Modal")
+            .find("ModalDialog")
             .at(0)
             .simulate("exited");
         expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
