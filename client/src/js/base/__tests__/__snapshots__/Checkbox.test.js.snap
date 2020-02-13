@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Checkbox should render 1`] = `
-<Checkbox__StyledContainer>
+<Checkbox__CheckboxContainer>
   <Checkbox__StyledCheckbox
     checked={false}
     onClick={[MockFunction]}
@@ -10,16 +10,18 @@ exports[`Checkbox should render 1`] = `
       checked={false}
       name="check"
     />
-    <Checkbox__StyledInput />
+    <Checkbox__CheckboxInput />
   </Checkbox__StyledCheckbox>
-  <Checkbox__Label>
+  <Checkbox__CheckboxLabel
+    onClick={[MockFunction]}
+  >
     foo
-  </Checkbox__Label>
-</Checkbox__StyledContainer>
+  </Checkbox__CheckboxLabel>
+</Checkbox__CheckboxContainer>
 `;
 
 exports[`Checkbox should render when [props.checked===true] 1`] = `
-<Checkbox__StyledContainer>
+<Checkbox__CheckboxContainer>
   <Checkbox__StyledCheckbox
     checked={true}
     onClick={[MockFunction]}
@@ -28,16 +30,18 @@ exports[`Checkbox should render when [props.checked===true] 1`] = `
       checked={true}
       name="check"
     />
-    <Checkbox__StyledInput />
+    <Checkbox__CheckboxInput />
   </Checkbox__StyledCheckbox>
-  <Checkbox__Label>
+  <Checkbox__CheckboxLabel
+    onClick={[MockFunction]}
+  >
     foo
-  </Checkbox__Label>
-</Checkbox__StyledContainer>
+  </Checkbox__CheckboxLabel>
+</Checkbox__CheckboxContainer>
 `;
 
 exports[`Checkbox should render when [props.label===''] 1`] = `
-<Checkbox__StyledContainer>
+<Checkbox__CheckboxContainer>
   <Checkbox__StyledCheckbox
     checked={false}
     onClick={[MockFunction]}
@@ -46,7 +50,7 @@ exports[`Checkbox should render when [props.label===''] 1`] = `
       checked={false}
       name="check"
     />
-    <Checkbox__StyledInput />
+    <Checkbox__CheckboxInput />
   </Checkbox__StyledCheckbox>
-</Checkbox__StyledContainer>
+</Checkbox__CheckboxContainer>
 `;

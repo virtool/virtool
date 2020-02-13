@@ -3,24 +3,24 @@ import styled from "styled-components";
 import { CustomCheckboxContainer, CustomCheckboxInput } from "@reach/checkbox";
 import { Icon } from "./Icon";
 
-const CheckIcon = styled(Icon)`
-    font-size: 8px;
-    color: ${props => (props.checked ? "white" : "1px solid grey")};
-`;
-
-const Label = styled.span`
-    margin-left: 4px;
-`;
-
-const StyledContainer = styled.div`
+const CheckboxContainer = styled.div`
     display: inline-flex;
-    justify-content: center;
-    align-items: center;
+`;
+
+const CheckIcon = styled(Icon)`
+    font-size: 11px;
+    color: ${props => (props.checked ? "white" : "grey")};
+`;
+
+const CheckboxLabel = styled.span`
+    vertical-align: bottom;
+    cursor: pointer;
+    margin-left: 5px;
 `;
 
 export const StyledCheckbox = styled(CustomCheckboxContainer)`
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
 
@@ -29,27 +29,26 @@ export const StyledCheckbox = styled(CustomCheckboxContainer)`
 
     border-radius: 50%;
 
-    border: ${props => (props.checked ? "none" : "1px solid grey")};
+    border: ${props => (props.checked ? "none" : "1px solid black")};
     opacity: ${props => (props.checked ? 1 : 0.5)};
     background-color: ${props => (props.checked ? "teal" : "white")};
 `;
 
-const StyledInput = styled(CustomCheckboxInput)`
+const CheckboxInput = styled(CustomCheckboxInput)`
     display: none;
 `;
 
-export class Checkbox extends React.Component {
-    render() {
-        return (
-            <StyledContainer>
-                <StyledCheckbox checked={this.props.checked} onClick={this.props.disabled ? null : this.props.onClick}>
-                    <CheckIcon checked={this.props.checked} name="check" />
+export const Checkbox = props => {
+    return (
+        <CheckboxContainer>
+            <StyledCheckbox checked={props.checked} onClick={props.disabled ? null : props.onClick}>
+                <CheckIcon checked={props.checked} name="check" />
 
-                    <StyledInput />
-                </StyledCheckbox>
-
-                {this.props.label ? <Label>{this.props.label}</Label> : null}
-            </StyledContainer>
-        );
-    }
-}
+                <CheckboxInput />
+            </StyledCheckbox>
+            {props.label ? (
+                <CheckboxLabel onClick={props.disabled ? null : props.onClick}>{props.label}</CheckboxLabel>
+            ) : null}
+        </CheckboxContainer>
+    );
+};

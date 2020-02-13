@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { connect } from "react-redux";
 import { BoxGroup, BoxGroupSection, Checkbox } from "../../../base";
 
-export const NameIcon = styled(BoxGroupSection)`
+export const APIPermissionName = styled(BoxGroupSection)`
     display: flex;
     justify-content: space-between;
 `;
@@ -20,14 +20,14 @@ export const APIPermissions = ({ administrator, className, userPermissions, keyP
         const disabled = !administrator && !userPermissions[permission.name];
 
         return (
-            <NameIcon
+            <APIPermissionName
                 key={permission.name}
                 onClick={disabled ? null : () => onChange(permission.name, !permission.allowed)}
                 disabled={disabled}
             >
                 <code>{permission.name}</code>
                 <Checkbox checked={permission.allowed} />
-            </NameIcon>
+            </APIPermissionName>
         );
     });
 

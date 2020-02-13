@@ -1,4 +1,4 @@
-import { APIPermissions, NameIcon } from "../Permissions";
+import { APIPermissions, APIPermissionName } from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;
@@ -37,7 +37,7 @@ describe("<Permissions />", () => {
         props.administrator = true;
         const wrapper = shallow(<APIPermissions {...props} />);
         wrapper
-            .find(NameIcon)
+            .find(APIPermissionName)
             .at(0)
             .simulate("click");
         expect(props.onChange).toHaveBeenCalled();

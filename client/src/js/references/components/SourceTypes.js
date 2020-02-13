@@ -7,7 +7,7 @@ import { updateSetting } from "../../administration/actions";
 import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Checkbox, Icon } from "../../base";
 import { editReference } from "../actions";
 
-const TitleCheckbox = styled.h2`
+const SourceTypesTitle = styled.h2`
     display: flex;
     justify-content: space-between;
 `;
@@ -123,10 +123,10 @@ export class SourceTypes extends React.Component {
         return (
             <BoxGroup>
                 <BoxGroupHeader>
-                    <TitleCheckbox>
+                    <SourceTypesTitle>
                         <span>{title}</span>
                         {checkbox}
-                    </TitleCheckbox>
+                    </SourceTypesTitle>
                     <p>{this.props.global ? globalDescription : localDescription}</p>
                 </BoxGroupHeader>
                 <SourceTypesForm>
