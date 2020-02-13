@@ -103,6 +103,7 @@ export class ModalDialog extends React.Component {
         if (props.show === false) {
             return { close: true };
         }
+        return null;
     }
 
     onClose = () => {
