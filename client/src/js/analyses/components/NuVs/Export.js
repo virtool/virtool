@@ -112,6 +112,7 @@ export class NuVsExport extends React.Component {
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleModalExited}
+                label="NuVsExport"
             >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>

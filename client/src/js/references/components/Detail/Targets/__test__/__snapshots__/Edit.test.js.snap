@@ -3,6 +3,7 @@
 exports[`<EditTarget /> should render 1`] = `
 <ModalDialog
   headerText="Edit target"
+  label="EditReference"
   onEnter={[Function]}
   onHide={[MockFunction]}
   text-capitalize="text-capitalize"

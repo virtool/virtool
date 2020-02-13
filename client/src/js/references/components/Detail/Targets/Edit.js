@@ -63,6 +63,7 @@ export class EditTarget extends React.Component {
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
+                label="EditReference"
             >
                 <DialogBody>
                     <form onSubmit={this.handleSubmit}>
