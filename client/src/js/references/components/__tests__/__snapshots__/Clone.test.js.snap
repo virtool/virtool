@@ -10,6 +10,6 @@ Object {
   "mode": "clone",
   "name": "",
   "organism": "",
-  "reference": "",
+  "reference": "foo",
 }
 `;

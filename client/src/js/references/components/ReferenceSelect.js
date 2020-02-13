@@ -7,7 +7,7 @@ import { ReferenceSelectItem } from "./ReferenceSelectItem";
 const ReferenceSelectList = styled(BoxGroup)`
     border: 1px solid ${props => (props.hasError ? "#d44b40" : "#ddd")};
     margin-bottom: 3px;
-    max-height: 85px;
+    max-height: 200px;
     overflow-y: auto;
 `;
 

@@ -1,9 +1,19 @@
 import { filter, get, map } from "lodash-es";
 import React from "react";
-import { Col, ControlLabel, InputGroup, Modal, Row } from "react-bootstrap";
+import { Col, ControlLabel, InputGroup, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Button, Icon, InputError, LoadingPlaceholder, SaveButton } from "../../../base";
+import {
+    Button,
+    Icon,
+    InputError,
+    LoadingPlaceholder,
+    SaveButton,
+    ModalDialog,
+    DialogHeader,
+    DialogBody,
+    DialogFooter
+} from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
@@ -130,16 +140,17 @@ export class CreateSample extends React.Component {
     render() {
         if (this.props.subtractions === null || this.props.readyReads === null) {
             return (
-                <Modal
-                    bsSize="large"
+                <ModalDialog
+                    label="sample"
+                    size="lg"
                     show={this.props.show}
                     onHide={this.props.onHide}
                     onEnter={this.props.onLoadSubtractionsAndFiles}
                 >
-                    <Modal.Body>
+                    <DialogBody>
                         <LoadingPlaceholder margin="36px" />
-                    </Modal.Body>
-                </Modal>
+                    </DialogBody>
+                </ModalDialog>
             );
         }
 
@@ -162,19 +173,20 @@ export class CreateSample extends React.Component {
         const { errorName, errorSubtraction, errorFile } = this.state;
 
         return (
-            <Modal
-                bsSize="large"
+            <ModalDialog
+                label="sample"
+                size="lg"
                 show={this.props.show}
                 onHide={this.handleHide}
                 onEnter={this.props.onLoadSubtractionsAndFiles}
                 onExited={this.handleModalExited}
             >
-                <Modal.Header onHide={this.handleHide} closeButton>
+                <DialogHeader onHide={this.handleHide} closeButton>
                     Create Sample
-                </Modal.Header>
+                </DialogHeader>
 
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <Row>
                             <Col xs={12} md={6}>
                                 <ControlLabel>Sample Name</ControlLabel>
@@ -261,13 +273,13 @@ export class CreateSample extends React.Component {
                             onSelect={this.handleSelect}
                             error={errorFile}
                         />
-                    </Modal.Body>
+                    </DialogBody>
 
-                    <Modal.Footer>
+                    <DialogFooter>
                         <SaveButton />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

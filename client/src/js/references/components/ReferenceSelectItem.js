@@ -4,7 +4,7 @@ import { Attribution, Badge, BoxGroupSection } from "../../base";
 
 const StyledReferenceSelectItem = styled(BoxGroupSection)`
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 2fr 2fr 1fr;
 `;
 
 export const ReferenceSelectItem = ({ active, reference, onClick }) => (

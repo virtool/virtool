@@ -1,9 +1,17 @@
 import { forEach, xorBy } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { AlgorithmSelect, Button, Flex, FlexItem } from "../../../base";
+import {
+    AlgorithmSelect,
+    Button,
+    Flex,
+    FlexItem,
+    ModalDialog,
+    DialogHeader,
+    DialogBody,
+    DialogFooter
+} from "../../../base";
 import { getDefaultSubtraction, getSelectedDocuments } from "../../../samples/selectors";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
@@ -84,10 +92,10 @@ export class CreateAnalysis extends React.Component {
         const show = !!(this.props.documents && this.props.documents.length);
 
         return (
-            <Modal show={show} onHide={this.props.onHide} onEnter={this.handleEnter}>
-                <Modal.Header>Analyze</Modal.Header>
+            <ModalDialog label="create" size="lg" show={show} onHide={this.props.onHide} onEnter={this.handleEnter}>
+                <DialogHeader>Analyze</DialogHeader>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <SelectedSamples samples={this.props.documents} />
                         <AlgorithmSelect
                             value={algorithm}
@@ -105,8 +113,8 @@ export class CreateAnalysis extends React.Component {
                             selected={selected}
                             error={this.state.error}
                         />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <MultiSummary
@@ -121,9 +129,9 @@ export class CreateAnalysis extends React.Component {
                                 </Button>
                             </FlexItem>
                         </Flex>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

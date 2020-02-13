@@ -32,9 +32,8 @@ const getInitialState = (refId, refArray) => {
             mode: "clone"
         };
     }
-
     return {
-        reference: "",
+        reference: refId,
         name: "",
         description: "",
         dataType: "genome",
@@ -133,7 +132,7 @@ export class CloneReference extends React.Component {
 }
 
 export const mapStateToProps = state => ({
-    refId: state.router.location.state.refId,
+    refId: state.router.location.state.id,
     refDocuments: state.references.documents
 });
 

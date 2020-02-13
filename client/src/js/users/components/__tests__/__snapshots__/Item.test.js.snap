@@ -1,81 +1,67 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
-<withRouter(LinkContainer)
-  style={
-    Object {
-      "paddingLeft": "10px",
-    }
-  }
+<Box__LinkBox
   to="/administration/users/bob"
 >
-  <Box__LinkBox>
-    <Item__StyledUserItem>
-      <Identicon
-        hash="foobar"
-        size={32}
+  <Item__StyledUserItem>
+    <Identicon
+      hash="foobar"
+      size={32}
+    />
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      bob
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      <Icon
+        bsStyle="primary"
+        faStyle="fas"
+        fixedWidth={false}
+        name="user-shield"
+        pullRight={false}
       />
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
-      >
-        bob
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
-      >
-        <Icon
-          bsStyle="primary"
-          faStyle="fas"
-          fixedWidth={false}
-          name="user-shield"
-          pullRight={false}
-        />
-      </FlexItem>
-    </Item__StyledUserItem>
-  </Box__LinkBox>
-</withRouter(LinkContainer)>
+    </FlexItem>
+  </Item__StyledUserItem>
+</Box__LinkBox>
 `;
 
 exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
-<withRouter(LinkContainer)
-  style={
-    Object {
-      "paddingLeft": "10px",
-    }
-  }
+<Box__LinkBox
   to="/administration/users/bob"
 >
-  <Box__LinkBox>
-    <Item__StyledUserItem>
-      <Identicon
-        hash="foobar"
-        size={32}
-      />
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
-      >
-        bob
-      </FlexItem>
-      <FlexItem
-        alignSelf={null}
-        basis="auto"
-        grow={0}
-        pad={10}
-        shrink={1}
-      />
-    </Item__StyledUserItem>
-  </Box__LinkBox>
-</withRouter(LinkContainer)>
+  <Item__StyledUserItem>
+    <Identicon
+      hash="foobar"
+      size={32}
+    />
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      bob
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    />
+  </Item__StyledUserItem>
+</Box__LinkBox>
 `;
