@@ -1,7 +1,7 @@
 import { filter, includes, map, transform } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Box, BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Icon, Label, Loader } from "../../base";
+import { Box, BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Icon, Label, Loader, Checkbox } from "../../base";
 
 const EmptyGroupDetail = styled(Box)`
     align-items: center;
@@ -18,6 +18,12 @@ const PermissionsHeader = styled(BoxGroupHeader)`
     flex-direction: row;
     font-weight: bold;
     justify-content: space-between;
+`;
+
+const PermissionsItem = styled(BoxGroupSection)`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 `;
 
 export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }) => {
@@ -55,9 +61,10 @@ export const GroupDetail = ({ group, pending, users, onRemove, onSetPermission }
         group.permissions,
         (result, value, key) => {
             result.push(
-                <BoxGroupSection key={key} onClick={() => onSetPermission(group.id, key, !value)}>
-                    <code>{key}</code> <Icon faStyle="far" name={value ? "check-square" : "square"} pullRight />
-                </BoxGroupSection>
+                <PermissionsItem key={key} onClick={() => onSetPermission(group.id, key, !value)}>
+                    <code>{key}</code>
+                    <Checkbox checked={value} />
+                </PermissionsItem>
             );
 
             return result;

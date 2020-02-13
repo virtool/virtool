@@ -1,46 +1,56 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Checkbox /> applies given className and style attributes 1`] = `
-<span
-  className="pointer text-muted tester"
-  onClick={null}
-  style={
-    Object {
-      "cursor": "not-allowed",
-      "paddingTop": "100px",
-    }
-  }
->
-  <CheckboxIcon
+exports[`Checkbox should render 1`] = `
+<Checkbox__CheckboxContainer>
+  <Checkbox__StyledCheckbox
     checked={false}
-    className="tester"
-    disabled={true}
-    partial={false}
-    pullRight={false}
-    style={
-      Object {
-        "paddingTop": "100px",
-      }
-    }
-  />
-   
-</span>
+    onClick={[MockFunction]}
+  >
+    <Checkbox__CheckIcon
+      checked={false}
+      name="check"
+    />
+    <Checkbox__CheckboxInput />
+  </Checkbox__StyledCheckbox>
+  <Checkbox__CheckboxLabel
+    onClick={[MockFunction]}
+  >
+    foo
+  </Checkbox__CheckboxLabel>
+</Checkbox__CheckboxContainer>
 `;
 
-exports[`<Checkbox /> renders correctly 1`] = `
-<span
-  className="pointer"
-  style={
-    Object {
-      "cursor": "pointer",
-    }
-  }
->
-  <CheckboxIcon
+exports[`Checkbox should render when [props.checked===true] 1`] = `
+<Checkbox__CheckboxContainer>
+  <Checkbox__StyledCheckbox
+    checked={true}
+    onClick={[MockFunction]}
+  >
+    <Checkbox__CheckIcon
+      checked={true}
+      name="check"
+    />
+    <Checkbox__CheckboxInput />
+  </Checkbox__StyledCheckbox>
+  <Checkbox__CheckboxLabel
+    onClick={[MockFunction]}
+  >
+    foo
+  </Checkbox__CheckboxLabel>
+</Checkbox__CheckboxContainer>
+`;
+
+exports[`Checkbox should render when [props.label===''] 1`] = `
+<Checkbox__CheckboxContainer>
+  <Checkbox__StyledCheckbox
     checked={false}
-    partial={false}
-    pullRight={false}
-  />
-   
-</span>
+    onClick={[MockFunction]}
+  >
+    <Checkbox__CheckIcon
+      checked={false}
+      name="check"
+    />
+    <Checkbox__CheckboxInput />
+  </Checkbox__StyledCheckbox>
+</Checkbox__CheckboxContainer>
 `;

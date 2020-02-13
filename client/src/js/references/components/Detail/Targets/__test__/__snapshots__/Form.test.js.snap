@@ -33,8 +33,6 @@ exports[`<TargetForm /> should render 1`] = `
     checked={false}
     label="Required"
     onClick={[MockFunction]}
-    partial={false}
-    pullRight={false}
   />
 </div>
 `;

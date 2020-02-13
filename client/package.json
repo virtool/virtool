@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@reach/checkbox": "^0.8.0",
     "@reach/dialog": "^0.8.0",
     "@sentry/browser": "^5.10.2",
     "classnames": "^2.2.6",

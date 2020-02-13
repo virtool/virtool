@@ -148,8 +148,6 @@ exports[`<Toolbar /> should render 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -185,8 +183,6 @@ exports[`<Toolbar /> should render 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -382,8 +378,6 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -419,8 +413,6 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -616,8 +608,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -653,8 +643,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -850,8 +838,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -887,8 +873,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1084,8 +1068,6 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1121,8 +1103,6 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1318,8 +1298,6 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
           >
             <Checkbox
               checked={false}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1355,8 +1333,6 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1552,8 +1528,6 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
@@ -1589,8 +1563,6 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
           >
             <Checkbox
               checked={true}
-              partial={false}
-              pullRight={false}
             />
           </FlexItem>
           <FlexItem
