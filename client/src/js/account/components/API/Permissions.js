@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { connect } from "react-redux";
 import { BoxGroup, BoxGroupSection, Checkbox } from "../../../base";
 
-const NameIcon = styled(BoxGroupSection)`
+export const NameIcon = styled(BoxGroupSection)`
     display: flex;
     justify-content: space-between;
 `;

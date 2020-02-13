@@ -67,8 +67,6 @@ exports[`<CreateUser /> should render 1`] = `
         checked={false}
         label="Force user to reset password on login"
         onClick={[Function]}
-        partial={false}
-        pullRight={false}
       />
     </Create__CreateUserContainer>
     <ModalFooter

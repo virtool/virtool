@@ -7,6 +7,11 @@ import { updateSetting } from "../../administration/actions";
 import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Checkbox, Icon } from "../../base";
 import { editReference } from "../actions";
 
+const TitleCheckbox = styled.h2`
+    display: flex;
+    justify-content: space-between;
+`;
+
 const getInitialState = () => ({
     value: "",
     error: null
@@ -32,6 +37,7 @@ export const SourceTypeItem = ({ onRemove, sourceType, disabled }) => (
 
 const SourceTypesCheckbox = styled(Checkbox)`
     margin-left: auto;
+    text-align: right;
 `;
 
 const SourceTypesForm = styled(BoxGroupSection)`
@@ -117,10 +123,10 @@ export class SourceTypes extends React.Component {
         return (
             <BoxGroup>
                 <BoxGroupHeader>
-                    <h2>
+                    <TitleCheckbox>
                         <span>{title}</span>
                         {checkbox}
-                    </h2>
+                    </TitleCheckbox>
                     <p>{this.props.global ? globalDescription : localDescription}</p>
                 </BoxGroupHeader>
                 <SourceTypesForm>

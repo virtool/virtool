@@ -32,8 +32,6 @@ exports[`<Login /> should render 1`] = `
         checked={false}
         label="Remember Me"
         onClick={[Function]}
-        partial={false}
-        pullRight={false}
       />
       <Login__LoginFooter>
         <span />
@@ -83,8 +81,6 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
         checked={true}
         label="Remember Me"
         onClick={[Function]}
-        partial={false}
-        pullRight={false}
       />
       <Login__LoginFooter>
         <span />
@@ -134,8 +130,6 @@ exports[`<Login /> should render filled username and password fields 1`] = `
         checked={false}
         label="Remember Me"
         onClick={[Function]}
-        partial={false}
-        pullRight={false}
       />
       <Login__LoginFooter>
         <span />

@@ -1,5 +1,4 @@
-import { APIPermissions } from "../Permissions";
-import { BoxGroupSection } from "../../../../base";
+import { APIPermissions, NameIcon } from "../Permissions";
 
 describe("<Permissions />", () => {
     let props;
@@ -35,10 +34,11 @@ describe("<Permissions />", () => {
     });
 
     it("should call onChange when permission clicked", () => {
+        props.administrator = true;
         const wrapper = shallow(<APIPermissions {...props} />);
         wrapper
-            .find(BoxGroupSection)
-            .at(1)
+            .find(NameIcon)
+            .at(0)
             .simulate("click");
         expect(props.onChange).toHaveBeenCalled();
     });

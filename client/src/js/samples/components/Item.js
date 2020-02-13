@@ -95,12 +95,8 @@ class SampleEntry extends React.Component {
                             <FlexItem grow={1}>
                                 <Row>
                                     <Col xs={4} sm={5} md={4}>
-                                        <Checkbox
-                                            className="no-select"
-                                            checked={this.props.checked}
-                                            style={{ marginRight: "12px" }}
-                                        />
-                                        <strong>{this.props.name}</strong>
+                                        <Checkbox className="no-select" checked={this.props.checked} />
+                                        <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
                                     </Col>
 
                                     <Col xsHidden smHidden md={3}>

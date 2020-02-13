@@ -35,11 +35,11 @@ exports[`<SourceTypeItem /> should render when [disabled=true] 1`] = `
 exports[`<SourceTypes /> should render when global 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
-    <h2>
+    <SourceTypes__TitleCheckbox>
       <span>
         Default Source Types
       </span>
-    </h2>
+    </SourceTypes__TitleCheckbox>
     <p>
       
     Configure a list of default source types. New references will automatically take these values as their allowed
@@ -119,7 +119,7 @@ exports[`<SourceTypes /> should render when global 1`] = `
 exports[`<SourceTypes /> should render when neither 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
-    <h2>
+    <SourceTypes__TitleCheckbox>
       <span>
          Source Types
       </span>
@@ -128,7 +128,7 @@ exports[`<SourceTypes /> should render when neither 1`] = `
         label="Enable"
         onClick={[Function]}
       />
-    </h2>
+    </SourceTypes__TitleCheckbox>
     <p>
       
     Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
@@ -209,11 +209,11 @@ exports[`<SourceTypes /> should render when neither 1`] = `
 exports[`<SourceTypes /> should render when remote 1`] = `
 <Box__BoxGroup>
   <Box__BoxGroupHeader>
-    <h2>
+    <SourceTypes__TitleCheckbox>
       <span>
          Source Types
       </span>
-    </h2>
+    </SourceTypes__TitleCheckbox>
     <p>
       
     Configure a list of allowable source types. When a user creates a new isolate they will only be able to select a
