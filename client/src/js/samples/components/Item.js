@@ -98,7 +98,7 @@ class SampleEntry extends React.Component {
                                         <Checkbox
                                             className="no-select"
                                             checked={this.props.checked}
-                                            style={{ paddingRight: "12px" }}
+                                            style={{ marginRight: "12px" }}
                                         />
                                         <strong>{this.props.name}</strong>
                                     </Col>

@@ -1,61 +1,39 @@
-import CX from "classnames";
 import React from "react";
-import PropTypes from "prop-types";
+import styled from "styled-components";
+import { CustomCheckboxContainer, CustomCheckboxInput } from "@reach/checkbox";
+import { Icon } from "./Icon";
 
-/**
- * Application icon font.
- *
- * @param checked
- * @param partial
- * @returns {*}
- * @constructor
- */
-export const CheckboxIcon = ({ checked }) => <i className={`far fa-lg fa-${checked ? "check-square" : "square"}`} />;
+const CheckIcon = styled(Icon)`
+    font-size: 8px;
+    color: ${props => (props.checked ? "white" : "1px solid grey")};
+`;
 
-/**
- * A simple checkbox component based on the application icon font.
- *
- * @param props
- * @returns {*} any type
- * @constructor
- */
-export const Checkbox = props => {
-    let className = CX("pointer", {
-        "pull-right": props.pullRight,
-        "labelled-checkbox": props.label,
-        "text-muted": props.disabled
-    });
+const StyledContainer = styled(CustomCheckboxContainer)`
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 
-    if (props.className) {
-        className += ` ${props.className}`;
+    width: 19px;
+    height: 19px;
+
+    border-radius: 50%;
+
+    border: ${props => (props.checked ? "none" : "1px solid grey")};
+    opacity: ${props => (props.checked ? 1 : 0.5)};
+    background-color: ${props => (props.checked ? "teal" : "white")};
+`;
+
+const StyledInput = styled(CustomCheckboxInput)`
+    display: none;
+`;
+
+export class Checkbox extends React.Component {
+    render() {
+        return (
+            <StyledContainer checked={this.props.checked}>
+                <CheckIcon checked={this.props.checked} name="check" />
+                <StyledInput />
+            </StyledContainer>
+        );
     }
-
-    let style = { cursor: props.disabled ? "not-allowed" : "pointer" };
-
-    if (props.style) {
-        style = { ...style, ...props.style };
-    }
-
-    return (
-        <span className={className} onClick={props.disabled ? null : props.onClick} style={style}>
-            <CheckboxIcon {...props} /> {props.label ? <span>{props.label}</span> : null}
-        </span>
-    );
-};
-
-Checkbox.propTypes = {
-    checked: PropTypes.bool,
-    className: PropTypes.string,
-    disabled: PropTypes.bool,
-    label: PropTypes.node,
-    onClick: PropTypes.func,
-    partial: PropTypes.bool,
-    pullRight: PropTypes.bool,
-    style: PropTypes.object
-};
-
-Checkbox.defaultProps = {
-    checked: false,
-    partial: false,
-    pullRight: false
-};
+}
