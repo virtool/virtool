@@ -10,7 +10,6 @@ import {
     LoadingPlaceholder,
     SaveButton,
     ModalDialog,
-    DialogHeader,
     DialogBody,
     DialogFooter
 } from "../../../base";
@@ -174,6 +173,7 @@ export class CreateSample extends React.Component {
 
         return (
             <ModalDialog
+                headerText="Create Sample"
                 label="sample"
                 size="lg"
                 show={this.props.show}
@@ -181,10 +181,6 @@ export class CreateSample extends React.Component {
                 onEnter={this.props.onLoadSubtractionsAndFiles}
                 onExited={this.handleModalExited}
             >
-                <DialogHeader onHide={this.handleHide} closeButton>
-                    Create Sample
-                </DialogHeader>
-
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
                         <Row>

@@ -1,42 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SoftwareInstall /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
+<ModalDialog
+  headerText={
+    <div>
+      Software Update 
+      <ForwardRef(Label)>
+        test
+      </ForwardRef(Label)>
+    </div>
   }
+  label="updatesInstall"
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Software Update 
-    <Label>
-      test
-    </Label>
-  </ModalHeader>
   <Process
     0="one"
     1="two"
@@ -44,5 +21,5 @@ exports[`<SoftwareInstall /> should render 1`] = `
     size={1024}
     updating={false}
   />
-</Modal>
+</ModalDialog>
 `;

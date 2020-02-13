@@ -1,9 +1,8 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button } from "../../base";
+import { Button, ModalDialog, DialogBody, DialogFooter } from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 import { createIndex, getUnbuilt } from "../actions";
@@ -59,22 +58,25 @@ class RebuildIndex extends React.Component {
 
     render() {
         return (
-            <Modal bsSize="large" show={this.props.show} onHide={this.handleHide}>
-                <Modal.Header onHide={this.handleHide} closeButton>
-                    Rebuild Index
-                </Modal.Header>
+            <ModalDialog
+                label="Reubuild"
+                headerText="Rebuild Index"
+                size="lg"
+                show={this.props.show}
+                onHide={this.handleHide}
+            >
                 <form onSubmit={this.save}>
-                    <Modal.Body>
+                    <DialogBody>
                         <RebuildHistory unbuilt={this.props.unbuilt} error={this.state.error} />
                         <RebuildIndexError error={this.state.error} />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Button type="submit" bsStyle="primary" icon="wrench">
                             Start
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

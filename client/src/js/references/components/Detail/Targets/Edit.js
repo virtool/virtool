@@ -1,9 +1,8 @@
 import React from "react";
 
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { findIndex, find } from "lodash-es";
-import { Button } from "../../../../base";
+import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../../base";
 import { editReference } from "../../../actions";
 import { TargetForm } from "./Form";
 
@@ -57,17 +56,15 @@ export class EditTarget extends React.Component {
 
     render() {
         return (
-            <Modal
+            <ModalDialog
+                headerText="Edit target"
+                text-capitalize="text-capitalize"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
             >
-                <Modal.Header closeButton>
-                    <span className="text-capitalize">Edit target</span>
-                </Modal.Header>
-
-                <Modal.Body>
+                <DialogBody>
                     <form onSubmit={this.handleSubmit}>
                         <TargetForm
                             onChange={this.handleChange}
@@ -77,14 +74,14 @@ export class EditTarget extends React.Component {
                             required={this.state.required}
                             errorName={this.errorName}
                         />
-                        <Modal.Footer>
+                        <DialogFooter>
                             <Button type="submit" icon="save" bsStyle="primary">
                                 Submit
                             </Button>
-                        </Modal.Footer>
+                        </DialogFooter>
                     </form>
-                </Modal.Body>
-            </Modal>
+                </DialogBody>
+            </ModalDialog>
         );
     }
 }

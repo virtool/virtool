@@ -10,13 +10,13 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Modal, InputGroup, ControlLabel } from "react-bootstrap";
+import { InputGroup, ControlLabel } from "react-bootstrap";
 import { get, find, concat, map } from "lodash-es";
 import { addSequence, hideOTUModal } from "../../actions";
 
 import { clearError } from "../../../errors/actions";
 
-import { Button, Icon, InputError, Loader, Box } from "../../../base";
+import { Button, Icon, InputError, Loader, Box, ModalDialog, DialogBody } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
 import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
@@ -220,11 +220,14 @@ class AddSequence extends React.Component {
         ) : null;
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Add Sequence
-                </Modal.Header>
-                <Modal.Body>{targetComponent}</Modal.Body>
+            <ModalDialog
+                headerText="Add Sequence"
+                label="AddSequence"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleModalExited}
+            >
+                <DialogBody>{targetComponent}</DialogBody>
                 <SequenceForm
                     host={this.state.host}
                     definition={this.state.definition}
@@ -236,7 +239,7 @@ class AddSequence extends React.Component {
                     errorDefinition={this.state.errorDefinition}
                     errorSequence={this.state.errorSequence}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }

@@ -2,16 +2,7 @@ import { forEach, xorBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import {
-    AlgorithmSelect,
-    Button,
-    Flex,
-    FlexItem,
-    ModalDialog,
-    DialogHeader,
-    DialogBody,
-    DialogFooter
-} from "../../../base";
+import { AlgorithmSelect, Button, Flex, FlexItem, ModalDialog, DialogBody, DialogFooter } from "../../../base";
 import { getDefaultSubtraction, getSelectedDocuments } from "../../../samples/selectors";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
@@ -92,8 +83,14 @@ export class CreateAnalysis extends React.Component {
         const show = !!(this.props.documents && this.props.documents.length);
 
         return (
-            <ModalDialog label="create" size="lg" show={show} onHide={this.props.onHide} onEnter={this.handleEnter}>
-                <DialogHeader>Analyze</DialogHeader>
+            <ModalDialog
+                headerText="Analyze"
+                label="create"
+                size="lg"
+                show={show}
+                onHide={this.props.onHide}
+                onEnter={this.handleEnter}
+            >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
                         <SelectedSamples samples={this.props.documents} />

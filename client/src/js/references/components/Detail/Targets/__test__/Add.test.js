@@ -82,7 +82,7 @@ describe("<AddTarget />", () => {
 
     it("handleExited() should call set to initial state", () => {
         const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("Modal").simulate("exit");
+        wrapper.find("ModalDialog").simulate("exit");
         expect(wrapper.state()).toEqual({ ...state });
     });
 });

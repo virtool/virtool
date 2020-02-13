@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<RemoveModal /> Modal.Footer renders a confirmation button 1`] = `
+exports[`<RemoveModal /> DialogBody renders a confirmation button 1`] = `
 <Button
   bsStyle="danger"
   icon="check"
@@ -11,53 +11,26 @@ exports[`<RemoveModal /> Modal.Footer renders a confirmation button 1`] = `
 </Button>
 `;
 
-exports[`<RemoveModal /> renders a bootstrap Modal component when [show=true] 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogClassName="modal-danger"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
+exports[`<RemoveModal /> renders a ModalDialog component when [show=true] 1`] = `
+<ModalDialog
+  headerText="Remove undefined"
+  label="Remove"
+  modalStyle="danger"
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
-    Remove 
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <span>
       Are you sure you want to remove 
       <strong />
       ?
     </span>
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
+  </Modal__DialogBody>
+  <Modal__DialogFooter
+    style={
+      Object {
+        "border": "none",
+      }
+    }
   >
     <Button
       bsStyle="danger"
@@ -67,57 +40,29 @@ exports[`<RemoveModal /> renders a bootstrap Modal component when [show=true] 1`
     >
       Confirm
     </Button>
-  </ModalFooter>
-</Modal>
+  </Modal__DialogFooter>
+</ModalDialog>
 `;
 
 exports[`<RemoveModal /> renders correctly 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogClassName="modal-danger"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
-  onHide={[Function]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
-  show={false}
+<ModalDialog
+  headerText="Remove undefined"
+  label="Remove"
+  modalStyle="danger"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
-    Remove 
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <span>
       Are you sure you want to remove 
       <strong />
       ?
     </span>
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
+  </Modal__DialogBody>
+  <Modal__DialogFooter
+    style={
+      Object {
+        "border": "none",
+      }
+    }
   >
     <Button
       bsStyle="danger"
@@ -127,6 +72,6 @@ exports[`<RemoveModal /> renders correctly 1`] = `
     >
       Confirm
     </Button>
-  </ModalFooter>
-</Modal>
+  </Modal__DialogFooter>
+</ModalDialog>
 `;

@@ -1,45 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RemoveSequence /> renders correctly 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogClassName="modal-danger"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  headerText="Remove Sequence"
+  label="Remove"
+  modalStyle="danger"
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-    onHide={[MockFunction]}
-  >
-    Remove 
-    Sequence
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <span>
       Are you sure you want to remove the sequence
       <strong>
@@ -53,10 +22,13 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
       </strong>
       ?
     </span>
-  </ModalBody>
-  <ModalFooter
-    bsClass="modal-footer"
-    componentClass="div"
+  </Modal__DialogBody>
+  <Modal__DialogFooter
+    style={
+      Object {
+        "border": "none",
+      }
+    }
   >
     <Button
       bsStyle="danger"
@@ -67,6 +39,6 @@ exports[`<RemoveSequence /> renders correctly 1`] = `
     >
       Confirm
     </Button>
-  </ModalFooter>
-</Modal>
+  </Modal__DialogFooter>
+</ModalDialog>
 `;

@@ -1,45 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<EditSubtraction /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
   onExited={[MockFunction]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
-    Edit Subtraction
-  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
+    <Modal__DialogBody
       style={
         Object {
           "margin": "0 0 10px 0",
@@ -64,16 +36,14 @@ exports[`<EditSubtraction /> should render 1`] = `
         type="text"
         value="bar"
       />
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
+    </Modal__DialogBody>
+    <Modal__DialogFooter
       className="modal-footer"
-      componentClass="div"
     >
       <SaveButton
         pullRight={true}
       />
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;

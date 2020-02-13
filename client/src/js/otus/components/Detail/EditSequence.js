@@ -12,11 +12,9 @@
 import React from "react";
 import { find, union } from "lodash-es";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
-
 import { editSequence, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { InputError } from "../../../base";
+import { InputError, ModalDialog } from "../../../base";
 import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
 import { SegmentCol } from "./SegmentCol";
@@ -134,10 +132,12 @@ class EditSequence extends React.Component {
         }
 
         return (
-            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
-                <Modal.Header onHide={this.handleHide} closeButton>
-                    Edit Sequence
-                </Modal.Header>
+            <ModalDialog
+                headerText="Edit Sequence"
+                show={!!this.props.sequenceId}
+                onEnter={this.handleModalEnter}
+                onHide={this.handleHide}
+            >
                 <SequenceForm
                     host={this.state.host}
                     definition={this.state.definition}
@@ -150,7 +150,7 @@ class EditSequence extends React.Component {
                     errorDefinition={this.state.errorDefinition}
                     errorSequence={this.state.errorSequence}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }

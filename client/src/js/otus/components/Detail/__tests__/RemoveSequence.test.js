@@ -21,13 +21,13 @@ describe("<RemoveSequence />", () => {
     });
 
     it("calls onConfirm when remove confirmed", () => {
-        const wrapper = mount(<RemoveSequence {...props} />);
+        const wrapper = shallow(<RemoveSequence {...props} />);
         wrapper.find(RemoveModal).prop("onConfirm")();
         expect(props.onConfirm).toHaveBeenCalledWith("foo", "bar", "test");
     });
 
     it("calls onHide when hidden", () => {
-        const wrapper = mount(<RemoveSequence {...props} />);
+        const wrapper = shallow(<RemoveSequence {...props} />);
         wrapper.find(RemoveModal).prop("onHide")();
         expect(props.onHide).toHaveBeenCalled();
     });

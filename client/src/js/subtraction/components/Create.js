@@ -1,11 +1,21 @@
 import { filter, get, map } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { BoxGroup, BoxGroupSection, Button, Icon, InputError, NoneFoundSection, RelativeTime } from "../../base";
+import {
+    BoxGroup,
+    BoxGroupSection,
+    Button,
+    Icon,
+    InputError,
+    NoneFoundSection,
+    RelativeTime,
+    ModalDialog,
+    DialogBody,
+    DialogFooter
+} from "../../base";
 import { clearError } from "../../errors/actions";
 
 import { findFiles } from "../../files/actions";
@@ -138,16 +148,16 @@ export class CreateSubtraction extends React.Component {
         );
 
         return (
-            <Modal
+            <ModalDialog
+                label="SubtractionCreate"
+                headerText="Create Subtraction"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleModalEnter}
                 onExited={this.handleModalExited}
             >
-                <Modal.Header>Create Subtraction</Modal.Header>
-
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body style={{ margin: "0 0 10px 0" }}>
+                    <DialogBody style={{ margin: "0 0 10px 0" }}>
                         <InputError
                             type="text"
                             label="Unique Name"
@@ -170,15 +180,15 @@ export class CreateSubtraction extends React.Component {
                         </h5>
                         <BoxGroup>{fileComponents}</BoxGroup>
                         {errorMessage}
-                    </Modal.Body>
+                    </DialogBody>
 
-                    <Modal.Footer className="modal-footer">
+                    <DialogFooter className="modal-footer">
                         <Button type="submit" bsStyle="primary" icon="play" pullRight>
                             Start
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

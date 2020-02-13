@@ -1,20 +1,8 @@
 import React from "react";
-import { Modal as BsModal } from "react-bootstrap";
-
 import { DialogOverlay, DialogContent } from "@reach/dialog";
-
 import styled, { keyframes } from "styled-components";
+import { Icon } from "./Icon";
 import { BoxGroupSection, Box } from "./Box";
-import { Alert } from "./Alert";
-
-export const Modal = styled(BsModal)`
-    ${Alert} {
-        border-left: none;
-        border-radius: 0;
-        border-right: none;
-        margin: -1px 0 0;
-    }
-`;
 
 const modalOverlayOpen = keyframes`
     0% {
@@ -70,20 +58,29 @@ export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogCo
     }
 `;
 
-export const DialogHeader = styled(BoxGroupSection)`
+const DialogHeader = styled(({ modalStyle, headerBorderBottom, capitalize, ...rest }) => <BoxGroupSection {...rest} />)`
+    background-color: ${props => (props.modalStyle === "danger" ? "#d44b40" : "")};
+    color: ${props => (props.modalStyle === "danger" ? "white" : "")};
     height: 55px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    border-bottom: ${props => props.headerBorderBottom} !important;
+    text-transform: ${props => props.capitalize};
 `;
 
 export const DialogBody = styled.div`
     padding: 15px;
 `;
 
-export const DialogFooter = styled(Box)`
-    display: flex;
-    justify-content: end;
+export const DialogFooter = styled(({ modalStyle, ...rest }) => <Box {...rest} />)`
+    border-left: none;
+    border-right: none;
     border-bottom: none;
+    border-top: ${props => (props.modalStyle === "danger" ? "none" : "")}
+    justify-content: end;
+    text-align: right;
+    overflow-y: auto;
 `;
 
 export class ModalDialog extends React.Component {
@@ -99,8 +96,12 @@ export class ModalDialog extends React.Component {
     static getDerivedStateFromProps(props) {
         if (props.show === true) {
             return {
-                open: true
+                open: true,
+                close: false
             };
+        }
+        if (props.show === false) {
+            return { close: true };
         }
         return null;
     }
@@ -112,7 +113,10 @@ export class ModalDialog extends React.Component {
     onClosed = () => {
         if (this.state.close === true) {
             this.setState({ open: false, close: false });
-            this.props.onExited();
+
+            if (this.props.onExited) {
+                this.props.onExited();
+            }
         }
     };
 
@@ -123,6 +127,17 @@ export class ModalDialog extends React.Component {
     };
 
     render() {
+        const CloseButton = (
+            <Icon
+                name="times"
+                onClick={() => {
+                    this.props.onHide();
+                    this.onClose();
+                }}
+                style={{ color: "grey" }}
+            />
+        );
+
         return (
             <div>
                 <ModalDialogOverlay
@@ -141,6 +156,14 @@ export class ModalDialog extends React.Component {
                         onAnimationEnd={this.onClosed}
                         onAnimationStart={this.onOpen}
                     >
+                        <DialogHeader
+                            modalStyle={this.props.modalStyle}
+                            headerBorderBottom={this.props.headerBorderBottom}
+                            capitalize={this.props.capitalize}
+                        >
+                            {this.props.headerText}
+                            {CloseButton}
+                        </DialogHeader>
                         {this.props.children}
                     </ModalDialogContent>
                 </ModalDialogOverlay>

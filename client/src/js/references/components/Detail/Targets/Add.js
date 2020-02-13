@@ -1,7 +1,6 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button } from "../../../../base";
+import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../../base";
 import { editReference } from "../../../actions";
 import { TargetForm } from "./Form";
 
@@ -66,17 +65,18 @@ export class AddTarget extends React.Component {
 
     render() {
         return (
-            <Modal
+            <ModalDialog
+                submit={this.state.submit}
+                label="AddTarget"
+                headerText="Add target"
+                capitalize="capitalize"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
             >
-                <Modal.Header closeButton>
-                    <span className="text-capitalize">Add target</span>
-                </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <TargetForm
                             onChange={this.handleChange}
                             name={this.state.name}
@@ -86,14 +86,14 @@ export class AddTarget extends React.Component {
                             errorName={this.errorName}
                             onClick={this.handleClick}
                         />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Button type="submit" icon="save" bsStyle="primary">
                             Submit
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

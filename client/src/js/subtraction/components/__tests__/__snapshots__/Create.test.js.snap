@@ -1,46 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<CreateSubtraction /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  headerText="Create Subtraction"
+  label="SubtractionCreate"
   onEnter={[Function]}
   onExited={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
   show={true}
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={false}
-    closeLabel="Close"
-  >
-    Create Subtraction
-  </ModalHeader>
   <form
     onSubmit={[Function]}
   >
-    <ModalBody
-      bsClass="modal-body"
-      componentClass="div"
+    <Modal__DialogBody
       style={
         Object {
           "margin": "0 0 10px 0",
@@ -94,11 +66,9 @@ exports[`<CreateSubtraction /> should render 1`] = `
       >
         None
       </div>
-    </ModalBody>
-    <ModalFooter
-      bsClass="modal-footer"
+    </Modal__DialogBody>
+    <Modal__DialogFooter
       className="modal-footer"
-      componentClass="div"
     >
       <Button
         bsStyle="primary"
@@ -109,9 +79,9 @@ exports[`<CreateSubtraction /> should render 1`] = `
       >
         Start
       </Button>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
-</Modal>
+</ModalDialog>
 `;
 
 exports[`<SubtractionFileItem /> should render when [active=false] 1`] = `

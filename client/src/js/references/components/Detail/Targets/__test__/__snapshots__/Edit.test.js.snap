@@ -1,47 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<EditTarget /> should render 1`] = `
-<Modal
-  animation={true}
-  autoFocus={true}
-  backdrop={true}
-  bsClass="modal"
-  dialogComponentClass={[Function]}
-  enforceFocus={true}
-  keyboard={true}
-  manager={
-    ModalManager {
-      "add": [Function],
-      "containers": Array [],
-      "data": Array [],
-      "handleContainerOverflow": true,
-      "hideSiblingNodes": true,
-      "isTopModal": [Function],
-      "modals": Array [],
-      "remove": [Function],
-    }
-  }
+<ModalDialog
+  headerText="Edit target"
   onEnter={[Function]}
   onHide={[MockFunction]}
-  renderBackdrop={[Function]}
-  restoreFocus={true}
-  show={false}
+  text-capitalize="text-capitalize"
 >
-  <ModalHeader
-    bsClass="modal-header"
-    closeButton={true}
-    closeLabel="Close"
-  >
-    <span
-      className="text-capitalize"
-    >
-      Edit target
-    </span>
-  </ModalHeader>
-  <ModalBody
-    bsClass="modal-body"
-    componentClass="div"
-  >
+  <Modal__DialogBody>
     <form
       onSubmit={[Function]}
     >
@@ -52,10 +18,7 @@ exports[`<EditTarget /> should render 1`] = `
         onChange={[Function]}
         required={false}
       />
-      <ModalFooter
-        bsClass="modal-footer"
-        componentClass="div"
-      >
+      <Modal__DialogFooter>
         <Button
           bsStyle="primary"
           icon="save"
@@ -65,8 +28,8 @@ exports[`<EditTarget /> should render 1`] = `
         >
           Submit
         </Button>
-      </ModalFooter>
+      </Modal__DialogFooter>
     </form>
-  </ModalBody>
-</Modal>
+  </Modal__DialogBody>
+</ModalDialog>
 `;

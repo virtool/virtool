@@ -11,7 +11,7 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
+import { ModalDialog } from "../../../base";
 import { addIsolate, hideOTUModal } from "../../actions";
 import IsolateForm from "./IsolateForm";
 
@@ -46,10 +46,13 @@ class AddIsolate extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleExit}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Add Isolate
-                </Modal.Header>
+            <ModalDialog
+                label="AddIsolate"
+                headerText="Add Isolate"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onExited={this.handleExit}
+            >
                 <IsolateForm
                     ref={node => (this.formNode = node)}
                     sourceType={this.state.sourceType}
@@ -59,7 +62,7 @@ class AddIsolate extends React.Component {
                     onChange={this.handleChange}
                     onSubmit={this.handleSubmit}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }

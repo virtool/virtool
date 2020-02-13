@@ -22,10 +22,7 @@ exports[`<CreateReference /> should render 1`] = `
       dataType="genome"
       onSelect={[Function]}
     />
-    <ModalFooter
-      bsClass="modal-footer"
-      componentClass="div"
-    >
+    <Modal__DialogFooter>
       <ButtonToolbar>
         <Button
           bsStyle="primary"
@@ -37,7 +34,7 @@ exports[`<CreateReference /> should render 1`] = `
           Save
         </Button>
       </ButtonToolbar>
-    </ModalFooter>
+    </Modal__DialogFooter>
   </form>
 </Create__Container>
 `;

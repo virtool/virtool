@@ -1,9 +1,8 @@
 import { find } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Alert, SaveButton } from "../../base";
+import { Alert, SaveButton, DialogFooter } from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { cloneReference } from "../actions";
@@ -122,9 +121,9 @@ export class CloneReference extends React.Component {
                         organism={this.state.organism}
                         onChange={this.handleChange}
                     />
-                    <Modal.Footer>
+                    <DialogFooter>
                         <SaveButton disabled={!this.props.refDocuments.length} altText="Clone" />
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
             </Container>
         );

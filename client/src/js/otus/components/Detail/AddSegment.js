@@ -1,9 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 import { find } from "lodash-es";
-import { Button } from "../../../base";
+import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../base";
 import SegmentForm from "./SegmentForm";
 
 const getInitialState = () => ({
@@ -55,19 +54,24 @@ class AddSegment extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onExited={this.handleExited} onHide={this.props.onHide}>
-                <Modal.Header closeButton>Add Segment</Modal.Header>
+            <ModalDialog
+                headerText="Add Segment"
+                label="AddSegment"
+                show={this.props.show}
+                onExited={this.handleExited}
+                onHide={this.props.onHide}
+            >
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <DialogBody>
                         <SegmentForm onChange={this.handleChange} newEntry={this.state.newEntry} />
-                    </Modal.Body>
-                    <Modal.Footer>
+                    </DialogBody>
+                    <DialogFooter>
                         <Button bsStyle="primary" type="submit">
                             Save
                         </Button>
-                    </Modal.Footer>
+                    </DialogFooter>
                 </form>
-            </Modal>
+            </ModalDialog>
         );
     }
 }

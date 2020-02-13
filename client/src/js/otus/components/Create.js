@@ -1,9 +1,9 @@
 import { get } from "lodash-es";
 import React from "react";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import { clearError } from "../../errors/actions";
+import { ModalDialog } from "../../base";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createOTU } from "../actions";
 import { getNextState } from "../utils";
@@ -65,10 +65,13 @@ class CreateOTU extends React.Component {
 
     render() {
         return (
-            <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create OTU
-                </Modal.Header>
+            <ModalDialog
+                label="CreateOTU"
+                headerText="Create OTU"
+                show={this.props.show}
+                onHide={this.handleHide}
+                onExited={this.handleModalExited}
+            >
                 <OTUForm
                     name={this.state.name}
                     abbreviation={this.state.abbreviation}
@@ -77,7 +80,7 @@ class CreateOTU extends React.Component {
                     errorName={this.state.errorName}
                     errorAbbreviation={this.state.errorAbbreviation}
                 />
-            </Modal>
+            </ModalDialog>
         );
     }
 }
