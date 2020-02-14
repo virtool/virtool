@@ -137,6 +137,7 @@ class EditSequence extends React.Component {
                 show={!!this.props.sequenceId}
                 onEnter={this.handleModalEnter}
                 onHide={this.handleHide}
+                label="EditSequence"
             >
                 <SequenceForm
                     host={this.state.host}

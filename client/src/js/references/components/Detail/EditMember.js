@@ -61,6 +61,7 @@ export class EditReferenceMember extends React.Component {
                 show={!!this.props.show}
                 onHide={this.props.onHide}
                 onExited={this.handleExited}
+                label="EditReferenceMember"
             >
                 <DialogBody>{rightComponents}</DialogBody>
                 <DialogFooter>

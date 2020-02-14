@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React from "react";
 import { DialogOverlay, DialogContent } from "@reach/dialog";
 import styled, { keyframes } from "styled-components";
@@ -171,3 +172,16 @@ export class ModalDialog extends React.Component {
         );
     }
 }
+
+ModalDialog.propTypes = {
+    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    capitalize: PropTypes.string,
+    headerBorderBottom: PropTypes.string,
+    modalStyle: PropTypes.string,
+    size: PropTypes.string,
+    label: PropTypes.string.isRequired,
+    onHide: PropTypes.func,
+    onExited: PropTypes.func,
+    onEnter: PropTypes.func,
+    show: PropTypes.bool
+};
