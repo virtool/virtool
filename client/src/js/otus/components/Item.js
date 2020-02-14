@@ -1,28 +1,36 @@
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
 import { get } from "lodash-es";
+import styled from "styled-components";
 import { connect } from "react-redux";
-import { Row, Col } from "react-bootstrap";
 import { ListGroupItem, Icon } from "../../base";
+
+const OUTItems = styled(ListGroupItem)`
+    align-items: end;
+    display: grid;
+
+    grid-template-columns: 3fr 2fr auto;
+
+    @media (max-width: 990px) {
+        grid-template-columns: 1fr 1111fr auto;
+    }
+`;
+
+const Abbreviation = styled.div`
+    @media (max-width: 990px) {
+        font-size: 85%;
+        margin-left: 5px;
+    }
+`;
 
 export const OTUItem = ({ abbreviation, id, name, refId, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
-        <ListGroupItem bsStyle={verified ? null : "warning"}>
-            <Row>
-                <Col xs={11} sm={11} md={7}>
-                    <strong>{name}</strong>
-                    <small className="hidden-md hidden-lg text-muted" style={{ marginLeft: "5px" }}>
-                        {abbreviation}
-                    </small>
-                </Col>
-                <Col xsHidden smHidden md={4}>
-                    {abbreviation}
-                </Col>
-                <Col xs={1} sm={1} md={1}>
-                    {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
-                </Col>
-            </Row>
-        </ListGroupItem>
+        <OUTItems bsStyle={verified ? null : "warning"}>
+            <strong>{name}</strong>
+            <Abbreviation>{abbreviation}</Abbreviation>
+
+            {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
+        </OUTItems>
     </LinkContainer>
 );
 
