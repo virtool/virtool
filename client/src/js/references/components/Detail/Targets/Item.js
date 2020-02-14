@@ -1,27 +1,50 @@
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
-import { BoxGroupSection, Icon, Flex, FlexItem } from "../../../../base";
+import { BoxGroupSection, Icon } from "../../../../base";
 
-const NameIcon = styled.div`
+const TargetItemHeader = styled.h3`
+    align-items: center;
     display: flex;
-    justify-content: space-between;
+    font-size: 14px;
+    font-weight: normal;
+    margin: 3px 0 6px;
+
+    span {
+        margin-left: auto;
+
+        i:not(first-child) {
+            margin-left: 3px;
+        }
+    }
 `;
 
-export const TargetItem = ({ name, description, onEdit, onRemove }) => {
+const TargetItemDescription = styled.p`
+    font-style: ${props => (props.description ? "normal" : "italic")};
+    margin: 0;
+`;
+
+export const TargetItem = ({ canModify, description, name, onEdit, onRemove }) => {
+    const handleEdit = useCallback(() => onEdit(name), [name]);
+    const handleRemove = useCallback(() => onRemove(name), [name]);
+
+    let icons;
+
+    if (canModify) {
+        icons = (
+            <span>
+                <Icon name="edit" bsStyle="warning" tip="Modify" onClick={handleEdit} />
+                <Icon name="trash" bsStyle="danger" tip="Remove" onClick={handleRemove} />
+            </span>
+        );
+    }
+
     return (
         <BoxGroupSection>
-            <NameIcon>
+            <TargetItemHeader>
                 {name}
-                <FlexItem grow={1} shrink={1}>
-                    <Flex alignItems="center" className="pull-right">
-                        <Icon name="edit" bsStyle="warning" tip="Modify" onClick={onEdit} />
-                        <FlexItem pad>
-                            <Icon name="trash" bsStyle="danger" tip="Remove" onClick={onRemove} />
-                        </FlexItem>
-                    </Flex>
-                </FlexItem>
-            </NameIcon>
-            {description}
+                {icons}
+            </TargetItemHeader>
+            <TargetItemDescription description={description}>{description || "No description"}</TargetItemDescription>
         </BoxGroupSection>
     );
 };

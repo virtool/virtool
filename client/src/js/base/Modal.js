@@ -1,9 +1,10 @@
+import { DialogContent, DialogOverlay } from "@reach/dialog";
+import "@reach/dialog/styles.css";
 import PropTypes from "prop-types";
 import React from "react";
-import { DialogOverlay, DialogContent } from "@reach/dialog";
 import styled, { keyframes } from "styled-components";
+import { Box, BoxGroupSection } from "./Box";
 import { Icon } from "./Icon";
-import { BoxGroupSection, Box } from "./Box";
 
 const modalOverlayOpen = keyframes`
     0% {
@@ -174,9 +175,10 @@ export class ModalDialog extends React.Component {
 }
 
 ModalDialog.propTypes = {
-    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     capitalize: PropTypes.string,
+    children: PropTypes.node,
     headerBorderBottom: PropTypes.string,
+    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     modalStyle: PropTypes.string,
     size: PropTypes.string,
     label: PropTypes.string.isRequired,

@@ -1,26 +1,40 @@
-import { mapStateToProps, mapDispatchToProps, Targets, StyledAddTargetsButton } from "../Targets";
+jest.mock("../../../../../utils/utils");
+
+import { checkRefRight } from "../../../../../utils/utils";
+import { mapStateToProps, mapDispatchToProps, Targets } from "../Targets";
 
 describe("<Targets />", () => {
-    const props = {
-        targets: [{ name: "foo" }],
-        onRemove: jest.fn(),
-        refId: "bar"
-    };
+    let props;
 
-    it("should render", () => {
+    beforeEach(() => {
+        props = {
+            canModify: true,
+            targets: [{ name: "foo" }],
+            onRemove: jest.fn(),
+            refId: "bar"
+        };
+    });
+
+    it("should render when [canModify=true]", () => {
         const wrapper = shallow(<Targets {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("add() should update state", () => {
+    it("should render when [canModify=false]", () => {
+        props.canModify = false;
         const wrapper = shallow(<Targets {...props} />);
-        wrapper.find(StyledAddTargetsButton).simulate("click");
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("showAdd() should update state", () => {
+        const wrapper = shallow(<Targets {...props} />);
+        wrapper.find("a").simulate("click");
         expect(wrapper.state()).toEqual({ showAdd: true, showEdit: false });
     });
 
-    it("edit() should update state", () => {
+    it("showEdit() should update state", () => {
         const wrapper = shallow(<Targets {...props} />);
-        wrapper.find("TargetItem").simulate("edit");
+        wrapper.find("TargetItem").prop("onEdit")("foo");
         expect(wrapper.state()).toEqual({
             activeName: "foo",
             showAdd: false,
@@ -30,7 +44,7 @@ describe("<Targets />", () => {
 
     it("handleRemove() should call onRemove()", () => {
         const wrapper = shallow(<Targets {...props} />);
-        wrapper.find("TargetItem").simulate("remove");
+        wrapper.find("TargetItem").prop("onRemove")("foo");
         expect(props.onRemove).toHaveBeenCalledWith("bar", { targets: [] });
     });
 });
@@ -47,12 +61,29 @@ describe("mapStateToProps()", () => {
             }
         }
     };
-    it("should return props", () => {
-        const result = mapStateToProps(state);
-        expect(result).toEqual({
-            0: { name: "foo", description: "bar", required: false },
-            1: { name: "Foo", description: "Bar", required: true },
 
+    it("should return props when user can modify ref", () => {
+        checkRefRight.mockReturnValue(true);
+
+        const result = mapStateToProps(state);
+
+        expect(result).toEqual({
+            canModify: true,
+            refId: "baz",
+            targets: [
+                { name: "foo", description: "bar", required: false },
+                { name: "Foo", description: "Bar", required: true }
+            ]
+        });
+    });
+
+    it("should return props when user cannnot modify ref", () => {
+        checkRefRight.mockReturnValue(false);
+
+        const result = mapStateToProps(state);
+
+        expect(result).toEqual({
+            canModify: false,
             refId: "baz",
             targets: [
                 { name: "foo", description: "bar", required: false },

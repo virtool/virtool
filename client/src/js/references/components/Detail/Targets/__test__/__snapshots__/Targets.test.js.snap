@@ -1,19 +1,50 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Targets /> should render 1`] = `
+exports[`<Targets /> should render when [canModify=false] 1`] = `
 <Box__BoxGroup>
-  <Targets__StyledAddTargets>
+  <Targets__TargetsHeader>
     <h2>
-      Targets
+      <span>
+        Targets
+      </span>
     </h2>
-    <Targets__StyledAddTargetsButton
-      onClick={[Function]}
-    >
-      Add target
-    </Targets__StyledAddTargetsButton>
-  </Targets__StyledAddTargets>
+    <p>
+      Manage the allowable sequence targets for this barcode reference.
+    </p>
+  </Targets__TargetsHeader>
   <div>
     <TargetItem
+      canModify={false}
+      key="foo"
+      name="foo"
+      onEdit={[Function]}
+      onRemove={[Function]}
+    />
+  </div>
+</Box__BoxGroup>
+`;
+
+exports[`<Targets /> should render when [canModify=true] 1`] = `
+<Box__BoxGroup>
+  <Targets__TargetsHeader>
+    <h2>
+      <span>
+        Targets
+      </span>
+      <a
+        href="#"
+        onClick={[Function]}
+      >
+        Add target
+      </a>
+    </h2>
+    <p>
+      Manage the allowable sequence targets for this barcode reference.
+    </p>
+  </Targets__TargetsHeader>
+  <div>
+    <TargetItem
+      canModify={true}
       key="foo"
       name="foo"
       onEdit={[Function]}

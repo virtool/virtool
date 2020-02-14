@@ -1,6 +1,7 @@
+import { CustomCheckboxContainer, CustomCheckboxInput } from "@reach/checkbox";
+import "@reach/checkbox/styles.css";
 import React from "react";
 import styled from "styled-components";
-import { CustomCheckboxContainer, CustomCheckboxInput } from "@reach/checkbox";
 import { Icon } from "./Icon";
 
 const CheckboxContainer = styled.div`

@@ -1,8 +1,8 @@
 import { get } from "lodash-es";
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 
-import { device, Icon, Label, ListGroupItem, RelativeTime } from "../../../base";
+import { Attribution, BoxGroupSection, Icon, Label } from "../../../base";
 
 const methodIconProps = {
     add_isolate: {
@@ -63,8 +63,8 @@ const methodIconProps = {
     }
 };
 
-const getMethodIcon = ({ method_name }) => {
-    const props = get(methodIconProps, method_name, {
+const getMethodIcon = methodName => {
+    const props = get(methodIconProps, methodName, {
         name: "exclamation-triangle",
         bsStyle: "danger"
     });
@@ -72,69 +72,44 @@ const getMethodIcon = ({ method_name }) => {
     return <Icon {...props} />;
 };
 
-const StyledChange = styled(ListGroupItem)`
-    display: flex;
-    flex-flow: row wrap;
-    @media (max-width: ${device.tabelet}) {
-        align-items: flex-start;
-        display: flex;
-        flex-flow: row wrap;
+const StyledChange = styled(BoxGroupSection)`
+    align-items: center;
+    display: grid;
+    grid-template-columns: 42px 2fr 1fr 15px;
+
+    div:first-child {
+        min-width: 42px;
     }
 `;
 
-const IconDescriptionNameDate = styled.div`
-    align-items: start;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    margin-left: 9px;
-    width: 90%;
-
-    @media (max-width: ${device.tabelet}) {
-        flex-flow: row wrap;
-        flex-direction: column;
-    }
-`;
-
-const Name = styled.div`
+const Description = styled.div`
     align-items: center;
     display: flex;
-    flex-flow: row wrap;
-    margin-right: 10px;
-`;
 
-const ChangeIcon = styled.div`
-    display: flex;
-    margin-right: 4px;
-`;
-
-const DateUserId = styled.div`
-    @media (max-width: ${device.tabelet}) {
-        font-size: 12px;
+    i {
+        margin-right: 5px;
     }
 `;
 
-export class Change extends React.Component {
-    handleRevert = () => {
-        this.props.revert(this.props.otu.id, this.props.otu.version, this.props._id);
-    };
+export const Change = ({ id, createdAt, description, methodName, otu, user, onRevert }) => {
+    const handleRevert = useCallback(() => {
+        onRevert(otu.id, otu.version, id);
+    }, [otu.id, otu.version, id]);
 
-    render() {
-        return (
-            <StyledChange>
-                <Label>{this.props.otu.version}</Label>
+    return (
+        <StyledChange>
+            <div>
+                <Label>{otu.version}</Label>
+            </div>
 
-                <IconDescriptionNameDate>
-                    <Name>
-                        <ChangeIcon>{getMethodIcon(this.props)}</ChangeIcon>
-                        <span className="test-1">{this.props.description || "No Description"}</span>
-                    </Name>
-                    <DateUserId>
-                        <RelativeTime style={{ fontSize: 12 }} time={this.props.created_at} /> by
-                        <span> {this.props.user.id}</span>
-                    </DateUserId>
-                </IconDescriptionNameDate>
-            </StyledChange>
-        );
-    }
-}
+            <Description>
+                {getMethodIcon(methodName)}
+                <span className="test-1">{description || "No Description"}</span>
+            </Description>
+
+            <Attribution time={createdAt} user={user.id} verb="" />
+
+            <Icon name="history" tip="Revert" onClick={handleRevert} />
+        </StyledChange>
+    );
+};
