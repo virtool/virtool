@@ -36,6 +36,7 @@ exports[`<App /> renders correctly 1`] = `
     <Connect(ConnectedRouterWithContext)
       history={Object {}}
     >
+      <Memo(GlobalStyleComponent) />
       <Connect(App) />
     </Connect(ConnectedRouterWithContext)>
   </Provider>
