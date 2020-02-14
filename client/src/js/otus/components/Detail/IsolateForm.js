@@ -12,11 +12,17 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { toLower } from "lodash-es";
-import { Row, Col } from "react-bootstrap";
+import styled from "styled-components";
 
 import { formatIsolateName } from "../../../utils/utils";
 import { InputError, SaveButton, DialogFooter, DialogBody } from "../../../base";
 import { SourceTypeInput } from "./SourceTypeInput";
+
+const TypeInputName = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 16px;
+`;
 
 export class IsolateForm extends React.Component {
     static propTypes = {
@@ -47,28 +53,24 @@ export class IsolateForm extends React.Component {
         return (
             <form onSubmit={this.props.onSubmit}>
                 <DialogBody>
-                    <Row>
-                        <Col md={6}>
-                            <SourceTypeInput
-                                restrictSourceTypes={this.props.restrictSourceTypes}
-                                allowedSourceTypes={this.props.allowedSourceTypes}
-                                value={this.props.sourceType}
-                                onChange={this.changeSourceType}
-                            />
-                        </Col>
-                        <Col md={6}>
-                            <InputError
-                                label="Source Name"
-                                value={this.props.sourceName}
-                                onChange={this.changeSourceName}
-                                disabled={this.props.sourceType === "unknown"}
-                                spellCheck="off"
-                            />
-                        </Col>
-                        <Col md={12}>
-                            <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
-                        </Col>
-                    </Row>
+                    <TypeInputName>
+                        <SourceTypeInput
+                            restrictSourceTypes={this.props.restrictSourceTypes}
+                            allowedSourceTypes={this.props.allowedSourceTypes}
+                            value={this.props.sourceType}
+                            onChange={this.changeSourceType}
+                        />
+
+                        <InputError
+                            label="Source Name"
+                            value={this.props.sourceName}
+                            onChange={this.changeSourceName}
+                            disabled={this.props.sourceType === "unknown"}
+                            spellCheck="off"
+                        />
+                    </TypeInputName>
+
+                    <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
                 </DialogBody>
                 <DialogFooter>
                     <SaveButton />
