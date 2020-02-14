@@ -175,9 +175,10 @@ export class ModalDialog extends React.Component {
 }
 
 ModalDialog.propTypes = {
-    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     capitalize: PropTypes.string,
+    children: PropTypes.node,
     headerBorderBottom: PropTypes.string,
+    headerText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     modalStyle: PropTypes.string,
     size: PropTypes.string,
     label: PropTypes.string.isRequired,
