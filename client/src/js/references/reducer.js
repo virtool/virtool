@@ -1,4 +1,4 @@
-import { concat } from "lodash-es";
+import { concat, reject, union, without } from "lodash-es";
 import {
     ADD_REFERENCE_GROUP,
     ADD_REFERENCE_USER,
@@ -18,7 +18,6 @@ import {
     WS_UPDATE_REFERENCE
 } from "../app/actionTypes";
 import { insert, remove, update, updateDocuments, updateMember } from "../utils/reducers";
-import { removeMember } from "./utils";
 
 export const initialState = {
     term: "",
@@ -31,7 +30,9 @@ export const initialState = {
     importFileId: null,
     importFileName: null,
     importUploadId: null,
-    importUploadProgress: 0
+    importUploadProgress: 0,
+    pendingRemoveGroups: [],
+    pendingRemoveUsers: []
 };
 
 export default function referenceReducer(state = initialState, action) {
@@ -47,7 +48,10 @@ export default function referenceReducer(state = initialState, action) {
             const updated = update(state, action, "name");
 
             if (state.detail && state.detail.id === action.data.id) {
-                return { ...state, detail: { ...state.detail, ...action.data } };
+                return {
+                    ...state,
+                    detail: { ...state.detail, ...action.data }
+                };
             }
 
             return updated;
@@ -136,7 +140,10 @@ export default function referenceReducer(state = initialState, action) {
             };
 
         case UPDATE_REMOTE_REFERENCE.SUCCEEDED:
-            return { ...state, detail: { ...state.detail, release: action.data } };
+            return {
+                ...state,
+                detail: { ...state.detail, release: action.data }
+            };
 
         case ADD_REFERENCE_USER.SUCCEEDED:
             return {
@@ -150,27 +157,35 @@ export default function referenceReducer(state = initialState, action) {
         case EDIT_REFERENCE_USER.SUCCEEDED:
             return {
                 ...state,
-                detail: { ...state.detail, users: updateMember(state.detail.users, action) }
+                detail: {
+                    ...state.detail,
+                    users: updateMember(state.detail.users, action)
+                }
             };
 
         case REMOVE_REFERENCE_USER.REQUESTED:
-            return {
-                ...state,
-                detail: {
-                    ...state.detail,
-                    pendingUserRemove:
-                        action.refId === state.detail.id ? concat([], [action.userId]) : state.detail.pendingUserRemove
-                }
-            };
+            if (action.refId === state.detail.id) {
+                return {
+                    ...state,
+                    pendingRemoveUsers: union(state.pendingRemoveUsers, [action.userId])
+                };
+            }
+
+            return state;
 
         case REMOVE_REFERENCE_USER.SUCCEEDED:
-            return {
-                ...state,
-                detail: {
-                    ...state.detail,
-                    users: removeMember(state.detail.users, state.detail.pendingUserRemove)
-                }
-            };
+            if (action.refId === state.detail.id) {
+                return {
+                    ...state,
+                    pendingRemoveUsers: without(state.pendingRemoveUsers, action.userId),
+                    detail: {
+                        ...state.detail,
+                        users: reject(state.detail.users, { id: action.userId })
+                    }
+                };
+            }
+
+            return state;
 
         case ADD_REFERENCE_GROUP.SUCCEEDED:
             return {
@@ -184,29 +199,37 @@ export default function referenceReducer(state = initialState, action) {
         case EDIT_REFERENCE_GROUP.SUCCEEDED:
             return {
                 ...state,
-                detail: { ...state.detail, groups: updateMember(state.detail.groups, action) }
+                detail: {
+                    ...state.detail,
+                    groups: updateMember(state.detail.groups, action)
+                }
             };
 
         case REMOVE_REFERENCE_GROUP.REQUESTED:
-            return {
-                ...state,
-                detail: {
-                    ...state.detail,
-                    pendingGroupRemove:
-                        action.refId === state.detail.id
-                            ? concat([], [action.groupId])
-                            : state.detail.pendingGroupRemove
-                }
-            };
+            if (action.refId === state.detail.id) {
+                return {
+                    ...state,
+                    pendingRemoveGroups: union(state.pendingRemoveGroups, [action.groupId])
+                };
+            }
+
+            return state;
 
         case REMOVE_REFERENCE_GROUP.SUCCEEDED:
-            return {
-                ...state,
-                detail: {
-                    ...state.detail,
-                    groups: removeMember(state.detail.groups, state.detail.pendingRemove)
-                }
-            };
+            if (action.refId === state.detail.id) {
+                return {
+                    ...state,
+                    pendingRemoveGroups: without(state.pendingRemoveGroups, action.groupId),
+                    detail: {
+                        ...state.detail,
+                        groups: reject(state.detail.groups, {
+                            id: action.groupId
+                        })
+                    }
+                };
+            }
+
+            return state;
 
         default:
             return state;

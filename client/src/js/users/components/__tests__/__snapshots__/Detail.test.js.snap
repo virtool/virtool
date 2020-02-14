@@ -11,12 +11,9 @@ exports[`<UserDetail /> should render 1`] = `
       <span>
         bob
       </span>
-      <Icon
+      <Detail__AdminIcon
         bsStyle="primary"
-        faStyle="fas"
-        fixedWidth={false}
         name="user-shield"
-        pullRight={false}
       />
       <Link
         to="/administration/users"
@@ -88,12 +85,9 @@ exports[`<UserDetail /> should render when [canModifyUser=false] 1`] = `
       <span>
         bob
       </span>
-      <Icon
+      <Detail__AdminIcon
         bsStyle="primary"
-        faStyle="fas"
-        fixedWidth={false}
         name="user-shield"
-        pullRight={false}
       />
       <Link
         to="/administration/users"

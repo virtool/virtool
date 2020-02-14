@@ -114,7 +114,7 @@ export class Bar extends React.Component {
                         <DropDownItem to="/account">Account</DropDownItem>
 
                         {this.props.administrator ? (
-                            <DropDownItem to="/administration">dministration </DropDownItem>
+                            <DropDownItem to="/administration">Administration </DropDownItem>
                         ) : null}
 
                         <DropDownItem

@@ -2,11 +2,14 @@ import React from "react";
 import styled from "styled-components";
 import { filter, includes, map } from "lodash-es";
 import { connect } from "react-redux";
-import { Identicon, ListGroupItem, NoneFound, ModalDialog, DialogBody } from "../../../base";
+import { Identicon, ListGroupItem, NoneFound, ModalDialog, DialogBody, Input } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";
-import AddUserSearch from "./AddUserSearch";
+
+const AddUserSearch = ({ term, onChange }) => {
+    return <Input type="text" value={term} onChange={onChange} />;
+};
 
 const getInitialState = () => ({
     id: "",
@@ -37,22 +40,8 @@ export class AddReferenceMember extends React.Component {
         this.state = getInitialState();
     }
 
-    handleChange = (id, key, value) => {
-        this.setState({
-            id,
-            [key]: value
-        });
-    };
-
     handleAdd = id => {
         this.props.onAdd(this.props.refId, id);
-    };
-
-    handleSubmit = () => {
-        if (this.state.id.length) {
-            const idType = this.props.noun === "user" ? "user_id" : "group_id";
-            this.props.onAdd({ ...this.state }, idType);
-        }
     };
 
     handleEnter = () => {
@@ -60,6 +49,7 @@ export class AddReferenceMember extends React.Component {
     };
 
     handleExited = () => {
+        this.props.onChange("");
         this.props.onHide();
         this.setState(getInitialState());
     };
@@ -104,6 +94,7 @@ const mapStateToProps = (state, ownProps) => {
     const documents = map(noun === "user" ? state.users.documents : state.groups.documents);
 
     return {
+        term: state.users.term,
         refId: state.references.detail.id,
         documents: filter(documents, document => !includes(memberIds, document.id))
     };
@@ -120,6 +111,10 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         } else {
             dispatch(listGroups());
         }
+    },
+
+    onChange: term => {
+        dispatch(findUsers(term, 1));
     }
 });
 

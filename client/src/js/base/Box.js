@@ -83,7 +83,12 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
         align-items: center;
         display: flex;
         font-size: 15px;
+        font-weight: bold;
         margin: 0;
+
+        a {
+            text-decoration: none;
+        }
 
         ${Badge} {
             margin-left: 5px;
