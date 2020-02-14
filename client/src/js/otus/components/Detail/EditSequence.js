@@ -18,7 +18,7 @@ import { InputError, ModalDialog } from "../../../base";
 import { getTargetChange } from "../../../utils/utils";
 import SequenceForm from "./SequenceForm";
 import { SegmentCol } from "./SegmentCol";
-import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
+import { StyledAccessionSegmentCol } from "./AccessionSegment";
 
 const getInitialState = props => {
     if (props.sequenceId) {
@@ -128,7 +128,7 @@ class EditSequence extends React.Component {
             </StyledAccessionSegmentCol>
         );
         if (this.props.dataType === "barcode") {
-            AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+            AccessionSegmentCol = AccessionCol;
         }
 
         return (

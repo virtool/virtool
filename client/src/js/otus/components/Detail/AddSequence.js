@@ -19,7 +19,7 @@ import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, Loader, Box, ModalDialog, DialogBody } from "../../../base";
 import { getGenbank } from "../../api";
 import { getTargetChange } from "../../../utils/utils";
-import { StyledAccessionSegmentCol, StyledAccessionCol } from "./AccessionSegment";
+import { StyledAccessionSegmentCol } from "./AccessionSegment";
 import SequenceForm from "./SequenceForm";
 import { SegmentCol } from "./SegmentCol";
 import { TargetInfo } from "./Target";
@@ -211,7 +211,7 @@ class AddSequence extends React.Component {
         );
 
         if (this.props.dataType === "barcode") {
-            AccessionSegmentCol = <StyledAccessionCol>{AccessionCol}</StyledAccessionCol>;
+            AccessionSegmentCol = AccessionCol;
         }
         const targetComponent = this.props.targets ? (
             <Box>
