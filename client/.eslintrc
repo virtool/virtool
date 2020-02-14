@@ -106,7 +106,7 @@
   },
   "overrides": [
     {
-      "files": ["*.test.js", "setupTests.js"],
+      "files": ["*.test.js", "setupTests.js", "webpack.*.config.babel.js"],
       "env": {
         "jest/globals": true
       },
