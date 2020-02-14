@@ -17,6 +17,7 @@
     "fuse.js": "^3.4.6",
     "history": "^4.10.1",
     "identicon.js": "^2.3.3",
+    "identity-obj-proxy": "^3.0.0",
     "lodash-es": "^4.17.15",
     "marked": "^0.8.0",
     "numbro": "^2.1.2",
@@ -91,22 +92,25 @@
     "test": "jest"
   },
   "jest": {
-    "transformIgnorePatterns": [
-      "<rootDir>/node_modules/(?!lodash-es/.*)"
+    "collectCoverageFrom": [
+      "src/js/**/*.{js,jsx}"
     ],
     "moduleFileExtensions": [
       "js",
       "json"
     ],
-    "collectCoverageFrom": [
-      "src/js/**/*.{js,jsx}"
-    ],
+    "moduleNameMapper": {
+      "\\.(css|less|sass|scss)$": "identity-obj-proxy"
+    },
     "setupFilesAfterEnv": [
       "./src/tests/setupTests.js"
     ],
     "snapshotSerializers": [
       "enzyme-to-json/serializer"
     ],
-    "testURL": "https://www.virtool.com/"
+    "testURL": "https://www.virtool.ca",
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!lodash-es/.*)"
+    ]
   }
 }

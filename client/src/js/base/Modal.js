@@ -1,9 +1,10 @@
+import { DialogContent, DialogOverlay } from "@reach/dialog";
+import "@reach/dialog/styles.css";
 import PropTypes from "prop-types";
 import React from "react";
-import { DialogOverlay, DialogContent } from "@reach/dialog";
 import styled, { keyframes } from "styled-components";
+import { Box, BoxGroupSection } from "./Box";
 import { Icon } from "./Icon";
-import { BoxGroupSection, Box } from "./Box";
 
 const modalOverlayOpen = keyframes`
     0% {
