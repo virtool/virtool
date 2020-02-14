@@ -6,6 +6,7 @@ import { WallContainer } from "../wall/Container";
 import Reset from "../wall/Reset";
 import Main from "./Main";
 import { theme } from "./theme";
+import { GlobalStyles } from "./GlobalStyles";
 
 const LazyFirstUser = React.lazy(() => import("../wall/FirstUser"));
 const LazyLogin = React.lazy(() => import("../wall/Login"));
@@ -50,6 +51,7 @@ export default ({ store, history }) => (
     <ThemeProvider theme={theme}>
         <Provider store={store}>
             <ConnectedRouter history={history}>
+                <GlobalStyles />
                 <ConnectedApp />
             </ConnectedRouter>
         </Provider>
