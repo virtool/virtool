@@ -1,52 +1,80 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<TargetItem /> should render 1`] = `
+exports[`<TargetItem /> should render when [canModify=false] 1`] = `
 <Box__BoxGroupSection>
-  <Item__NameIcon>
+  <Item__TargetItemHeader>
     foo
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      shrink={1}
-    >
-      <Flex
-        alignContent="stretch"
-        alignItems="center"
-        className="pull-right"
-        direction="row"
-        justifyContent="flex-start"
-        wrap="nowrap"
-      >
-        <Icon
-          bsStyle="warning"
-          faStyle="fas"
-          fixedWidth={false}
-          name="edit"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Modify"
-        />
-        <FlexItem
-          alignSelf={null}
-          basis="auto"
-          grow={0}
-          pad={true}
-          shrink={1}
-        >
-          <Icon
-            bsStyle="danger"
-            faStyle="fas"
-            fixedWidth={false}
-            name="trash"
-            onClick={[MockFunction]}
-            pullRight={false}
-            tip="Remove"
-          />
-        </FlexItem>
-      </Flex>
-    </FlexItem>
-  </Item__NameIcon>
-  bar
+  </Item__TargetItemHeader>
+  <Item__TargetItemDescription
+    description="bar"
+  >
+    bar
+  </Item__TargetItemDescription>
+</Box__BoxGroupSection>
+`;
+
+exports[`<TargetItem /> should render when [canModify=true] 1`] = `
+<Box__BoxGroupSection>
+  <Item__TargetItemHeader>
+    foo
+    <span>
+      <Icon
+        bsStyle="warning"
+        faStyle="fas"
+        fixedWidth={false}
+        name="edit"
+        onClick={[Function]}
+        pullRight={false}
+        tip="Modify"
+      />
+      <Icon
+        bsStyle="danger"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        pullRight={false}
+        tip="Remove"
+      />
+    </span>
+  </Item__TargetItemHeader>
+  <Item__TargetItemDescription
+    description="bar"
+  >
+    bar
+  </Item__TargetItemDescription>
+</Box__BoxGroupSection>
+`;
+
+exports[`<TargetItem /> should render with no description 1`] = `
+<Box__BoxGroupSection>
+  <Item__TargetItemHeader>
+    foo
+    <span>
+      <Icon
+        bsStyle="warning"
+        faStyle="fas"
+        fixedWidth={false}
+        name="edit"
+        onClick={[Function]}
+        pullRight={false}
+        tip="Modify"
+      />
+      <Icon
+        bsStyle="danger"
+        faStyle="fas"
+        fixedWidth={false}
+        name="trash"
+        onClick={[Function]}
+        pullRight={false}
+        tip="Remove"
+      />
+    </span>
+  </Item__TargetItemHeader>
+  <Item__TargetItemDescription
+    description=""
+  >
+    No description
+  </Item__TargetItemDescription>
 </Box__BoxGroupSection>
 `;
