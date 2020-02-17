@@ -2,7 +2,7 @@ import { capitalize, includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Input, LoadingPlaceholder, Panel } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Input, LoadingPlaceholder, Box } from "../../base";
 import { listGroups } from "../../groups/actions";
 import { updateSampleRights } from "../actions";
 import { getCanModifyRights } from "../selectors";
@@ -29,11 +29,7 @@ export class SampleRights extends React.Component {
         }
 
         if (!this.props.canModifyRights) {
-            return (
-                <Panel>
-                    <Panel.Body>Not allowed</Panel.Body>
-                </Panel>
-            );
+            return <Box>Not allowed</Box>;
         }
 
         const groupRights = this.getValueGroupRights();

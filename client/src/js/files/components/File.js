@@ -5,9 +5,9 @@ import styled from "styled-components";
 
 import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
-import { Icon, ListGroupItem, RelativeTime, device } from "../../base";
+import { Icon, Box, RelativeTime, device } from "../../base";
 
-const StyledFile = styled(ListGroupItem)`
+const StyledFile = styled(Box)`
     display: flex;
     justify-content: space-between;
 `;

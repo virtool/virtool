@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Checkbox, Flex, FlexItem, Icon, ListGroupItem, Loader, RelativeTime } from "../../base";
+import { Checkbox, Flex, FlexItem, Icon, SpacedBox, Loader, RelativeTime } from "../../base";
 import { selectSample } from "../actions";
 
 const StyledItems = styled(FlexItem)`
@@ -103,7 +103,7 @@ class SampleEntry extends React.Component {
                 <div className="sample-checkbox-overlay" onClick={this.handleCheck} />
                 {analyzeIcon}
                 <LinkContainer to={`/samples/${this.props.id}`}>
-                    <ListGroupItem className="spaced">
+                    <SpacedBox>
                         <Flex alignItems="center" style={{ userSelect: "none" }}>
                             <StyledItems grow={1}>
                                 <span>
@@ -117,7 +117,7 @@ class SampleEntry extends React.Component {
                                 {spinner}
                             </StyledItems>
                         </Flex>
-                    </ListGroupItem>
+                    </SpacedBox>
                 </LinkContainer>
             </div>
         );

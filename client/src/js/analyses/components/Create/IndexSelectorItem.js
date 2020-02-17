@@ -1,11 +1,11 @@
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Checkbox, ListGroupItem, BoxGroupSection } from "../../../base";
+import { Checkbox, BoxGroupSection } from "../../../base";
 
 const Label = styled(BoxGroupSection)`
     margin-left: 3px;
 `;
-const StyledIndexSelectorItem = styled(ListGroupItem)`
+const StyledIndexSelectorItem = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
     justify-content: space-between;

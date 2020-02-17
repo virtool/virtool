@@ -19,9 +19,8 @@ const getInitialState = () => ({
     remove: false
 });
 
-const StyledAddMemberItem = styled(ListGroupItem)`
+const StyledAddMemberItem = styled(BoxGroupSection)`
     display: flex;
-
     img {
         margin-right: 8px;
     }
@@ -78,7 +77,7 @@ export class AddReferenceMember extends React.Component {
             >
                 <DialogBody>
                     {this.props.noun === "user" ? <AddUserSearch /> : null}
-                    {addMemberComponents}
+                    <BoxGroup>{addMemberComponents}</BoxGroup>
                 </DialogBody>
             </ModalDialog>
         );

@@ -1,8 +1,7 @@
 import { map } from "lodash-es";
 import styled from "styled-components";
 import React from "react";
-import { ListGroup } from "react-bootstrap";
-import { Button, Icon } from "../../base";
+import { Button, Icon, Box } from "../../base";
 import Install from "./Install";
 import Release from "./Release";
 
@@ -12,7 +11,7 @@ const ReleasesListHeader = styled.div`
     justify-content: space-between;
 `;
 
-const ReleasesListGroup = styled(ListGroup)`
+const ReleasesListGroup = styled(Box)`
     margin: 20px 0 !important;
 `;
 

@@ -1,8 +1,8 @@
 import React from "react";
-import { FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, Flex, FlexItem, Icon, LinkButton, Toolbar } from "../../base";
+import { Button, Flex, FlexItem, Icon, LinkButton, Box, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
 import AlgorithmFilter from "./AlgorithmFilter";
@@ -57,11 +57,10 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
                 </FormGroup>
                 {createButton}
             </Toolbar>
-            <ListGroup style={{ marginBottom: "7px" }}>
-                <ListGroupItem>
-                    <AlgorithmFilter />
-                </ListGroupItem>
-            </ListGroup>
+
+            <Box>
+                <AlgorithmFilter />
+            </Box>
         </div>
     );
 };

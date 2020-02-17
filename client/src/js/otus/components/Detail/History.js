@@ -25,6 +25,9 @@ const HistoryList = ({ canModify, history, revert, unbuilt }) => {
         />
     ));
 
+        return <BoxGroupSection>{changeComponents}</BoxGroupSection>;
+    }
+}
     return (
         <BoxGroup>
             <BoxGroupHeader>

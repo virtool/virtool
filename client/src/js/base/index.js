@@ -25,7 +25,6 @@ export * from "./InputError";
 export * from "./InputSave";
 export * from "./Key";
 export * from "./Label";
-export * from "./ListGroupItem";
 export * from "./Loader";
 export * from "./LoadingPlaceholder";
 export * from "./Logo";

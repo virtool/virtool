@@ -3,9 +3,9 @@ import { LinkContainer } from "react-router-bootstrap";
 import { get } from "lodash-es";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { ListGroupItem, Icon } from "../../base";
+import { SpacedBox, Icon } from "../../base";
 
-const OUTItems = styled(ListGroupItem)`
+const OUTItems = styled(SpacedBox)`
     align-items: end;
     display: grid;
 

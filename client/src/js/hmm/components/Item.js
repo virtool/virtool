@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
 import styled from "styled-components";
-import { device, Label, ListGroupItem } from "../../base";
+import { device, Label, SpacedBox } from "../../base";
 
-const StyledChange = styled(ListGroupItem)`
+const StyledChange = styled(SpacedBox)`
     display: flex;
     justify-content: space-between;
 `;

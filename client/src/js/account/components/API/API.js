@@ -20,9 +20,7 @@ export class APIKeys extends React.Component {
 
         let keyComponents = map(this.props.apiKeys, apiKey => <APIKey key={apiKey.id} apiKey={apiKey} />);
 
-        if (!keyComponents.length) {
-            keyComponents = <NoneFound noun="API keys" />;
-        }
+        keyComponents = <NoneFound noun="API keys" />;
 
         return (
             <div>

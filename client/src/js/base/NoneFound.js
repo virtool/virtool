@@ -1,5 +1,4 @@
 import React from "react";
-import { ListGroup, ListGroupItem } from "react-bootstrap";
 import styled from "styled-components";
 import { Box, BoxGroupSection } from "./Box";
 import { Icon } from "./Icon";
@@ -13,16 +12,16 @@ import { Icon } from "./Icon";
  */
 export const NoneFound = ({ noun, noListGroup, style }) => {
     const item = (
-        <ListGroupItem className="text-center">
+        <Box className="text-center">
             <Icon name="info-circle" /> No {noun} found
-        </ListGroupItem>
+        </Box>
     );
 
     if (noListGroup) {
         return item;
     }
 
-    return <ListGroup style={style}>{item}</ListGroup>;
+    return <Box style={style}>{item}</Box>;
 };
 
 const StyledNoneFoundBox = styled(Box)`

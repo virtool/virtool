@@ -3,9 +3,9 @@ import React from "react";
 import Marked from "marked";
 import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { Button, ListGroupItem } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 
-import { Icon } from "../../base";
+import { Icon, Box } from "../../base";
 
 export const ReleaseMarkdown = ({ body, noMargin = false }) => {
     let html = Marked(body);
@@ -54,7 +54,7 @@ export default class Release extends React.Component {
         }
 
         return (
-            <ListGroupItem>
+            <Box>
                 <div style={{ cursor: "pointer" }} onClick={this.handleClick}>
                     {caret} <strong>{this.props.name}</strong>
                 </div>
@@ -64,7 +64,7 @@ export default class Release extends React.Component {
                 </Button>
 
                 {markdown}
-            </ListGroupItem>
+            </Box>
         );
     }
 }
