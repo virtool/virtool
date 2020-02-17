@@ -1,5 +1,5 @@
 import React from "react";
-import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import { Button, Flex, FlexItem, Icon, LinkButton, Toolbar } from "../../base";
@@ -59,11 +59,7 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
             </Toolbar>
             <ListGroup style={{ marginBottom: "7px" }}>
                 <ListGroupItem>
-                    <Row>
-                        <Col xs={4}>
-                            <AlgorithmFilter />
-                        </Col>
-                    </Row>
+                    <AlgorithmFilter />
                 </ListGroupItem>
             </ListGroup>
         </div>

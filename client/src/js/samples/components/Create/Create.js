@@ -1,6 +1,7 @@
 import { filter, get, map } from "lodash-es";
 import React from "react";
-import { Col, ControlLabel, InputGroup, Row } from "react-bootstrap";
+import styled from "styled-components";
+import { ControlLabel, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
 import {
@@ -23,6 +24,13 @@ import { LibraryTypeSelection } from "./LibraryTypeSelection";
 
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
+
+const StyledInputs = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 13px;
+`;
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
 
@@ -183,8 +191,8 @@ export class CreateSample extends React.Component {
             >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
-                        <Row>
-                            <Col xs={12} md={6}>
+                        <StyledInputs>
+                            <div>
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
                                     <InputError
@@ -194,6 +202,7 @@ export class CreateSample extends React.Component {
                                         autocomplete={false}
                                         error={errorName}
                                     />
+
                                     <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
                                         <Button
                                             type="button"
@@ -204,64 +213,42 @@ export class CreateSample extends React.Component {
                                         </Button>
                                     </InputGroup.Button>
                                 </InputGroup>
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="locale"
-                                    label="Locale"
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
+                            </div>
+                            <InputError
+                                name="locale"
+                                label="Locale"
+                                value={this.state.locale}
+                                onChange={this.handleChange}
+                            />
 
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="isolate"
-                                    label="Isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col md={6}>
-                                <InputError
-                                    name="subtraction"
-                                    type="select"
-                                    label="Default Subtraction"
-                                    value={this.state.subtraction || this.props.defaultSubtraction}
-                                    onChange={this.handleChange}
-                                    error={errorSubtraction}
-                                >
-                                    {subtractionComponents}
-                                </InputError>
-                            </Col>
-                        </Row>
+                            <InputError
+                                name="isolate"
+                                label="Isolate"
+                                value={this.state.isolate}
+                                onChange={this.handleChange}
+                            />
+                            <InputError
+                                name="subtraction"
+                                type="select"
+                                label="Default Subtraction"
+                                value={this.state.subtraction || this.props.defaultSubtraction}
+                                onChange={this.handleChange}
+                                error={errorSubtraction}
+                            >
+                                {subtractionComponents}
+                            </InputError>
 
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="host"
-                                    label="Host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col xs={12} sm={6}>
-                                <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
-                            </Col>
-                        </Row>
+                            <InputError name="host" label="Host" value={this.state.host} onChange={this.handleChange} />
 
-                        <Row>
-                            <Col xs={12}>
-                                <LibraryTypeSelection
-                                    onSelect={this.handleLibrarySelect}
-                                    libraryType={this.state.libraryType}
-                                />
-                            </Col>
+                            <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
+                        </StyledInputs>
 
-                            {userGroup}
-                        </Row>
+                        <LibraryTypeSelection
+                            onSelect={this.handleLibrarySelect}
+                            libraryType={this.state.libraryType}
+                        />
+
+                        {userGroup}
 
                         <ReadSelector
                             files={this.props.readyReads}

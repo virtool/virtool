@@ -1,10 +1,26 @@
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { LoadingPlaceholder } from "../../base";
 import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
+
+const StyledChannels = styled.div`
+    grid-row: 1 / 3;
+`;
+
+const ReleaseChannel = styled.div`
+    display: grid;
+
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 13px;
+
+    div {
+        grid-row: 1 / -1;
+    }
+`;
 
 export class SoftwareUpdateViewer extends React.Component {
     componentDidMount() {
@@ -18,19 +34,17 @@ export class SoftwareUpdateViewer extends React.Component {
 
         return (
             <div className="settings-container">
-                <Row>
-                    <Col xs={12}>
-                        <h5>
-                            <strong>Software Updates</strong>
-                        </h5>
-                    </Col>
-                    <Col xs={12} md={8}>
-                        <Releases />
-                    </Col>
-                    <Col xs={12} md={4}>
+                <h5>
+                    <strong>Software Updates</strong>
+                </h5>
+
+                <ReleaseChannel>
+                    <Releases />
+
+                    <StyledChannels>
                         <Channels />
-                    </Col>
-                </Row>
+                    </StyledChannels>
+                </ReleaseChannel>
             </div>
         );
     }

@@ -1,12 +1,21 @@
 import { find, includes } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
 import { Checkbox, Flex, FlexItem, Icon, ListGroupItem, Loader, RelativeTime } from "../../base";
 import { selectSample } from "../actions";
+
+const StyledItems = styled(FlexItem)`
+    display: grid;
+    grid-template-columns: 2fr 2fr 3fr auto;
+    grid-gap: 30px;
+
+    @media (max-width: 1000px) {
+        grid-template-columns: 3fr 4fr auto;
+    }
+`;
 
 const SampleEntryLabelIcon = styled.span`
     margin-right: 3px;
@@ -42,6 +51,10 @@ export const SampleEntryLabel = ({ icon, label, ready }) => (
 const StyledSampleEntryLabels = styled.div`
     align-items: center;
     display: flex;
+
+    @media (max-width: 1000px) {
+        display: none;
+    }
 `;
 
 export const SampleEntryLabels = ({ nuvs, pathoscope }) => (
@@ -92,26 +105,17 @@ class SampleEntry extends React.Component {
                 <LinkContainer to={`/samples/${this.props.id}`}>
                     <ListGroupItem className="spaced">
                         <Flex alignItems="center" style={{ userSelect: "none" }}>
-                            <FlexItem grow={1}>
-                                <Row>
-                                    <Col xs={4} sm={5} md={4}>
-                                        <Checkbox className="no-select" checked={this.props.checked} />
-                                        <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
-                                    </Col>
-
-                                    <Col xsHidden smHidden md={3}>
-                                        <SampleEntryLabels {...this.props} />
-                                    </Col>
-
-                                    <Col xs={5} sm={5} md={4}>
-                                        Created <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
-                                    </Col>
-
-                                    <Col xs={3} sm={2} md={1}>
-                                        {spinner}
-                                    </Col>
-                                </Row>
-                            </FlexItem>
+                            <StyledItems grow={1}>
+                                <span>
+                                    <Checkbox className="no-select" checked={this.props.checked} />
+                                    <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
+                                </span>
+                                <SampleEntryLabels {...this.props} />
+                                <span>
+                                    Created <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
+                                </span>
+                                {spinner}
+                            </StyledItems>
                         </Flex>
                     </ListGroupItem>
                 </LinkContainer>
