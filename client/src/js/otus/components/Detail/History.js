@@ -2,7 +2,7 @@ import { get, groupBy, map, reverse, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
 import { connect } from "react-redux";
-import { Badge, BoxGroup, BoxGroupHeader, LoadingPlaceholder } from "../../../base";
+import { Badge, BoxGroup, BoxGroupHeader, LoadingPlaceholder, BoxGroupSection } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { getOTUHistory, revert } from "../../actions";
 import { Change } from "./Change.js";
@@ -25,9 +25,8 @@ const HistoryList = ({ canModify, history, revert, unbuilt }) => {
         />
     ));
 
-        return <BoxGroupSection>{changeComponents}</BoxGroupSection>;
-    }
-}
+    return <BoxGroupSection>{changeComponents}</BoxGroupSection>;
+
     return (
         <BoxGroup>
             <BoxGroupHeader>

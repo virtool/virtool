@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { filter, includes, map } from "lodash-es";
 import { connect } from "react-redux";
-import { Identicon, ListGroupItem, NoneFound, ModalDialog, DialogBody, Input } from "../../../base";
+import { Identicon, NoneFound, ModalDialog, DialogBody, Input, BoxGroup, BoxGroupSection } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";

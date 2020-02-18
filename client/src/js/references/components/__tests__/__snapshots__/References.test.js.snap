@@ -18,13 +18,43 @@ exports[`<ReferenceSettings /> should render 1`] = `
 `;
 
 exports[`<References /> should render when [loading=false] 1`] = `
-<References
-  loading={false}
-/>
+<Container>
+  <Switch>
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(ReferenceList)",
+          "type": [Function],
+        }
+      }
+      exact={true}
+      path="/refs"
+    />
+    <Redirect
+      from="/refs/settings/*"
+      to="/refs/settings"
+    />
+    <Route
+      component={[Function]}
+      path="/refs/settings"
+    />
+    <Route
+      component={
+        Object {
+          "$$typeof": Symbol(react.memo),
+          "WrappedComponent": [Function],
+          "compare": null,
+          "displayName": "Connect(ReferenceDetail)",
+          "type": [Function],
+        }
+      }
+      path="/refs/:refId"
+    />
+  </Switch>
+</Container>
 `;
 
-exports[`<References /> should render when [loading=true] 1`] = `
-<References
-  loading={true}
-/>
-`;
+exports[`<References /> should render when [loading=true] 1`] = `<LoadingPlaceholder />`;
