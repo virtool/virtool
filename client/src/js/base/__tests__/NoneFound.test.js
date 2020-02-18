@@ -1,4 +1,3 @@
-import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { NoneFound } from "../NoneFound";
 import { Icon } from "../Icon";
 
@@ -26,25 +25,6 @@ describe("<NoneFound />", () => {
         it("renders correctly", () => {
             expect(wrapper).toMatchSnapshot();
         });
-
-        it("renders a ListGroup", () => {
-            expect(wrapper.find(ListGroup).exists()).toBe(true);
-
-            const message =
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(1)
-                    .text() +
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(2)
-                    .text() +
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(3)
-                    .text();
-            expect(message).toEqual(` No ${noun} found`);
-        });
     });
 
     describe("when supplied [noListGroup=true] prop", () => {
@@ -59,8 +39,8 @@ describe("<NoneFound />", () => {
             expect(wrapper).toMatchSnapshot();
         });
 
-        it("renders a ListGroupItem without ListGroup container", () => {
-            expect(wrapper.find(ListGroupItem).exists()).toBe(true);
+        it("renders a Box without ListGroup container", () => {
+            expect(wrapper.find("Box").exists()).toBe(true);
         });
     });
 });

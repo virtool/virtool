@@ -6,61 +6,23 @@ exports[`<OTUItem /> should render when [verified=false] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <ListGroupItem
-    allowFocus={false}
+  <Item__OUTItems
     bsStyle="warning"
   >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={7}
-        sm={11}
-        xs={11}
-      >
-        <strong>
-          Foo
-        </strong>
-        <small
-          className="hidden-md hidden-lg text-muted"
-          style={
-            Object {
-              "marginLeft": "5px",
-            }
-          }
-        >
-          FB
-        </small>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        FB
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={1}
-        sm={1}
-        xs={1}
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="tag"
-          pullRight={true}
-          tip="This OTU is unverified"
-        />
-      </Col>
-    </Row>
-  </ListGroupItem>
+    <strong>
+      Foo
+    </strong>
+    <Item__Abbreviation>
+      FB
+    </Item__Abbreviation>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="tag"
+      pullRight={true}
+      tip="This OTU is unverified"
+    />
+  </Item__OUTItems>
 </withRouter(LinkContainer)>
 `;
 
@@ -70,52 +32,15 @@ exports[`<OTUItem /> should render when [verified=true] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <ListGroupItem
-    allowFocus={false}
+  <Item__OUTItems
     bsStyle={null}
   >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={7}
-        sm={11}
-        xs={11}
-      >
-        <strong>
-          Foo
-        </strong>
-        <small
-          className="hidden-md hidden-lg text-muted"
-          style={
-            Object {
-              "marginLeft": "5px",
-            }
-          }
-        >
-          FB
-        </small>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        FB
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={1}
-        sm={1}
-        xs={1}
-      />
-    </Row>
-  </ListGroupItem>
+    <strong>
+      Foo
+    </strong>
+    <Item__Abbreviation>
+      FB
+    </Item__Abbreviation>
+  </Item__OUTItems>
 </withRouter(LinkContainer)>
 `;

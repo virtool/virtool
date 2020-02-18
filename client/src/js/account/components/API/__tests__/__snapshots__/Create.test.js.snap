@@ -8,90 +8,57 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
   onHide={[MockFunction]}
   show={true}
 >
-  <Modal__DialogBody
+  <Create__StyledDialogBody
     className="text-center"
   >
-    <Row
-      bsClass="row"
-      componentClass="div"
+    <strong
+      className="text-success"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <strong
-          className="text-success"
-        >
-          Here is your key.
-        </strong>
-      </Col>
-    </Row>
+      Here is your key.
+    </strong>
     <small>
       Make note of it now. For security purposes, it will not be shown again.
     </small>
-    <Row
-      bsClass="row"
-      componentClass="div"
-      style={
-        Object {
-          "marginBottom": "5px",
-          "marginTop": "10px",
-        }
-      }
+    <Create__StyledFlex
+      alignContent="stretch"
+      alignItems="stretch"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        mdOffset={2}
-        xs={12}
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={1}
       >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={1}
-            shrink={1}
-          >
-            <Input
-              autoComplete={true}
-              className="text-center"
-              formGroupStyle={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              readOnly={true}
-              style={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              type="text"
-              value="123abc"
-            />
-          </FlexItem>
-          <CopyToClipboard
-            onCopy={[Function]}
-            text="123abc"
-          >
-            <Button
-              bsStyle="primary"
-              icon="paste"
-              pullRight={false}
-              tipPlacement="top"
-            />
-          </CopyToClipboard>
-        </Flex>
-      </Col>
-    </Row>
+        <Input
+          autoComplete={true}
+          className="text-center"
+          formGroupStyle={
+            Object {
+              "marginBottom": 0,
+            }
+          }
+          readOnly={true}
+          style={
+            Object {
+              "marginBottom": 0,
+            }
+          }
+          type="text"
+          value="123abc"
+        />
+      </FlexItem>
+      <CopyToClipboard
+        onCopy={[Function]}
+        text="123abc"
+      >
+        <Button
+          bsStyle="primary"
+          icon="paste"
+          pullRight={false}
+          tipPlacement="top"
+        />
+      </CopyToClipboard>
+    </Create__StyledFlex>
     <small
       className="text-primary"
     >
@@ -103,7 +70,7 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
       />
        Copied
     </small>
-  </Modal__DialogBody>
+  </Create__StyledDialogBody>
 </ModalDialog>
 `;
 
@@ -154,90 +121,57 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
   onHide={[MockFunction]}
   show={true}
 >
-  <Modal__DialogBody
+  <Create__StyledDialogBody
     className="text-center"
   >
-    <Row
-      bsClass="row"
-      componentClass="div"
+    <strong
+      className="text-success"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <strong
-          className="text-success"
-        >
-          Here is your key.
-        </strong>
-      </Col>
-    </Row>
+      Here is your key.
+    </strong>
     <small>
       Make note of it now. For security purposes, it will not be shown again.
     </small>
-    <Row
-      bsClass="row"
-      componentClass="div"
-      style={
-        Object {
-          "marginBottom": "5px",
-          "marginTop": "10px",
-        }
-      }
+    <Create__StyledFlex
+      alignContent="stretch"
+      alignItems="stretch"
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-        mdOffset={2}
-        xs={12}
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={1}
       >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={1}
-            shrink={1}
-          >
-            <Input
-              autoComplete={true}
-              className="text-center"
-              formGroupStyle={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              readOnly={true}
-              style={
-                Object {
-                  "marginBottom": 0,
-                }
-              }
-              type="text"
-              value="123abc"
-            />
-          </FlexItem>
-          <CopyToClipboard
-            onCopy={[Function]}
-            text="123abc"
-          >
-            <Button
-              bsStyle="primary"
-              icon="paste"
-              pullRight={false}
-              tipPlacement="top"
-            />
-          </CopyToClipboard>
-        </Flex>
-      </Col>
-    </Row>
+        <Input
+          autoComplete={true}
+          className="text-center"
+          formGroupStyle={
+            Object {
+              "marginBottom": 0,
+            }
+          }
+          readOnly={true}
+          style={
+            Object {
+              "marginBottom": 0,
+            }
+          }
+          type="text"
+          value="123abc"
+        />
+      </FlexItem>
+      <CopyToClipboard
+        onCopy={[Function]}
+        text="123abc"
+      >
+        <Button
+          bsStyle="primary"
+          icon="paste"
+          pullRight={false}
+          tipPlacement="top"
+        />
+      </CopyToClipboard>
+    </Create__StyledFlex>
     <small
       className="text-primary invisible"
     >
@@ -249,6 +183,6 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
       />
        Copied
     </small>
-  </Modal__DialogBody>
+  </Create__StyledDialogBody>
 </ModalDialog>
 `;

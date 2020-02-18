@@ -1,13 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<NoneFound /> renders an info Icon component 1`] = `
-<ListGroup
-  bsClass="list-group"
->
-  <ListGroupItem
-    bsClass="list-group-item"
+<Box>
+  <Box
     className="text-center"
-    listItem={false}
   >
     <Icon
       faStyle="fas"
@@ -18,18 +14,14 @@ exports[`<NoneFound /> renders an info Icon component 1`] = `
      No 
     test
      found
-  </ListGroupItem>
-</ListGroup>
+  </Box>
+</Box>
 `;
 
 exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 1`] = `
-<ListGroup
-  bsClass="list-group"
->
-  <ListGroupItem
-    bsClass="list-group-item"
+<Box>
+  <Box
     className="text-center"
-    listItem={false}
   >
     <Icon
       faStyle="fas"
@@ -40,15 +32,13 @@ exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 
      No 
     test
      found
-  </ListGroupItem>
-</ListGroup>
+  </Box>
+</Box>
 `;
 
 exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1`] = `
-<ListGroupItem
-  bsClass="list-group-item"
+<Box
   className="text-center"
-  listItem={false}
 >
   <Icon
     faStyle="fas"
@@ -59,5 +49,5 @@ exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1
    No 
   test
    found
-</ListGroupItem>
+</Box>
 `;
