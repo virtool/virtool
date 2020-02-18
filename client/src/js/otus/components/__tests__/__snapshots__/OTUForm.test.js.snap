@@ -4,7 +4,7 @@ exports[`<OTUForm /> renders correctly 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <OTUForm__NameAbbreviation>
+  <OTUForm__OTUFormFields>
     <InputError
       error=""
       label="Name"
@@ -19,7 +19,7 @@ exports[`<OTUForm /> renders correctly 1`] = `
       onChange={[MockFunction]}
       value="T"
     />
-  </OTUForm__NameAbbreviation>
+  </OTUForm__OTUFormFields>
   <Modal__DialogFooter>
     <SaveButton
       pullRight={true}

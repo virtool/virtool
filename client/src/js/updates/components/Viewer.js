@@ -6,20 +6,13 @@ import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
 
-const StyledChannels = styled.div`
-    grid-row: 1 / 3;
+const SoftwareUpdateViewerBody = styled.div`
+    display: flex;
 `;
 
-const ReleaseChannel = styled.div`
-    display: grid;
-
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    grid-gap: 13px;
-
-    div {
-        grid-row: 1 / -1;
-    }
+const SoftwareUpdateViewerHeader = styled.h3`
+    font-size: 14px;
+    font-weight: bold;
 `;
 
 export class SoftwareUpdateViewer extends React.Component {
@@ -34,17 +27,11 @@ export class SoftwareUpdateViewer extends React.Component {
 
         return (
             <div className="settings-container">
-                <h5>
-                    <strong>Software Updates</strong>
-                </h5>
-
-                <ReleaseChannel>
+                <SoftwareUpdateViewerHeader>Software Updates</SoftwareUpdateViewerHeader>
+                <SoftwareUpdateViewerBody>
                     <Releases />
-
-                    <StyledChannels>
-                        <Channels />
-                    </StyledChannels>
-                </ReleaseChannel>
+                    <Channels />
+                </SoftwareUpdateViewerBody>
             </div>
         );
     }

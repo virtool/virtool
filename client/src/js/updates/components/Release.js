@@ -1,27 +1,19 @@
-import CX from "classnames";
-import React from "react";
-import Marked from "marked";
 import PropTypes from "prop-types";
-import { replace } from "lodash-es";
+import React from "react";
 import { Button } from "react-bootstrap";
+import styled from "styled-components";
+import { BoxGroupSection, Icon } from "../../base";
+import { ReleaseMarkdown } from "./Markdown";
 
-import { Icon, Box } from "../../base";
+const ReleaseName = styled.span`
+    cursor: pointer;
+    flex: 2 0 auto;
+`;
 
-export const ReleaseMarkdown = ({ body, noMargin = false }) => {
-    let html = Marked(body);
-
-    html = replace(
-        html,
-        /#([0-9]+)/g,
-        "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
-    );
-
-    return (
-        <div className={CX("markdown-container", { "no-margin": noMargin })}>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
-    );
-};
+const ReleaseHeader = styled.div`
+    align-items: center;
+    display: flex;
+`;
 
 export default class Release extends React.Component {
     constructor(props) {
@@ -54,17 +46,18 @@ export default class Release extends React.Component {
         }
 
         return (
-            <Box>
-                <div style={{ cursor: "pointer" }} onClick={this.handleClick}>
-                    {caret} <strong>{this.props.name}</strong>
-                </div>
-
-                <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                    <i className="fab fa-github" /> GitHub
-                </Button>
+            <BoxGroupSection>
+                <ReleaseHeader>
+                    <ReleaseName onClick={this.handleClick}>
+                        {caret} <strong>{this.props.name}</strong>
+                    </ReleaseName>
+                    <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
+                        <i className="fab fa-github" /> GitHub
+                    </Button>
+                </ReleaseHeader>
 
                 {markdown}
-            </Box>
+            </BoxGroupSection>
         );
     }
 }

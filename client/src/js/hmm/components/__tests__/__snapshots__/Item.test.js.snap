@@ -1,12 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMItem /> should render 1`] = `
-<withRouter(LinkContainer)
+<Box__LinkBox
   to="/hmm/tester"
 >
-  <Item__StyledChange
-    className="spaced"
-  >
+  <Item__StyledHMMItem>
     <span>
       <strong>
         5
@@ -39,6 +37,6 @@ exports[`<HMMItem /> should render 1`] = `
         ...
       </Item__Tag>
     </Item__NameTag>
-  </Item__StyledChange>
-</withRouter(LinkContainer)>
+  </Item__StyledHMMItem>
+</Box__LinkBox>
 `;

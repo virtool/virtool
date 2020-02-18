@@ -3,10 +3,10 @@ import React from "react";
 import styled from "styled-components";
 import { Icon, InfoLabel, Label, SpacedBox } from "../../../base";
 
-const SegmentItem = styled(SpacedBox)`
-  display: grid;
-  align-items; center;
-  grid-template-columns: 45fr 1fr 10fr;
+const StyledSegment = styled(SpacedBox)`
+    display: grid;
+    align-items: center;
+    grid-template-columns: 45fr 1fr 10fr;
 `;
 
 const RequiredLabel = ({ required }) => {
@@ -57,12 +57,12 @@ export default class Segment extends React.Component {
         }
 
         return (
-            <SegmentItem>
+            <StyledSegment>
                 <strong>{seg.name}</strong>
 
                 <RequiredLabel required={seg.required} />
                 {modifyIcons}
-            </SegmentItem>
+            </StyledSegment>
         );
     }
 }

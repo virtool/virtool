@@ -10,11 +10,17 @@ import { Icon } from "./Icon";
  * @param noun {string} the name of the items of which none were found (eg. samples)
  * @param noListGroup {boolean} don't include a ListGroup in the returned element
  */
+export const StyledItem = styled(Box)`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+`;
+
 export const NoneFound = ({ noun, noListGroup, style }) => {
     const item = (
-        <Box className="text-center">
+        <StyledItem>
             <Icon name="info-circle" /> No {noun} found
-        </Box>
+        </StyledItem>
     );
 
     if (noListGroup) {

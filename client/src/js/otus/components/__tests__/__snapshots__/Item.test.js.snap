@@ -6,15 +6,13 @@ exports[`<OTUItem /> should render when [verified=false] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <Item__OUTItems
-    bsStyle="warning"
-  >
+  <Item__StyledOTUItem>
     <strong>
       Foo
     </strong>
-    <Item__Abbreviation>
+    <Item__OTUItemAbbreviation>
       FB
-    </Item__Abbreviation>
+    </Item__OTUItemAbbreviation>
     <Icon
       faStyle="fas"
       fixedWidth={false}
@@ -22,7 +20,7 @@ exports[`<OTUItem /> should render when [verified=false] 1`] = `
       pullRight={true}
       tip="This OTU is unverified"
     />
-  </Item__OUTItems>
+  </Item__StyledOTUItem>
 </withRouter(LinkContainer)>
 `;
 
@@ -32,15 +30,13 @@ exports[`<OTUItem /> should render when [verified=true] 1`] = `
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <Item__OUTItems
-    bsStyle={null}
-  >
+  <Item__StyledOTUItem>
     <strong>
       Foo
     </strong>
-    <Item__Abbreviation>
+    <Item__OTUItemAbbreviation>
       FB
-    </Item__Abbreviation>
-  </Item__OUTItems>
+    </Item__OTUItemAbbreviation>
+  </Item__StyledOTUItem>
 </withRouter(LinkContainer)>
 `;

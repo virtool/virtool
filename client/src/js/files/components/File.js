@@ -5,9 +5,9 @@ import styled from "styled-components";
 
 import { removeFile } from "../actions";
 import { byteSize, checkAdminOrPermission } from "../../utils/utils";
-import { Icon, Box, RelativeTime, device } from "../../base";
+import { Icon, RelativeTime, SpacedBox, device } from "../../base";
 
-const StyledFile = styled(Box)`
+const StyledFile = styled(SpacedBox)`
     display: flex;
     justify-content: space-between;
 `;
@@ -53,7 +53,7 @@ export const File = ({ canRemove, entry, onRemove }) => {
     }
 
     return (
-        <StyledFile className="spaced">
+        <StyledFile>
             <FileHeader>
                 <strong>{name}</strong>
                 <Creation>{creation}</Creation>

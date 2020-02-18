@@ -3,20 +3,21 @@ import { LinkContainer } from "react-router-bootstrap";
 import { get } from "lodash-es";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { SpacedBox, Icon } from "../../base";
+import { LinkBox, Icon } from "../../base";
 
-const OUTItems = styled(SpacedBox)`
-    align-items: end;
+const StyledOTUItem = styled(LinkBox)`
+    align-items: center;
     display: grid;
 
     grid-template-columns: 3fr 2fr auto;
 
     @media (max-width: 990px) {
-        grid-template-columns: 1fr 1111fr auto;
+        align-items: center;
+        grid-template-columns: 1fr 100fr auto;
     }
 `;
 
-const Abbreviation = styled.div`
+const OTUItemAbbreviation = styled.div`
     @media (max-width: 990px) {
         font-size: 85%;
         margin-left: 5px;
@@ -25,12 +26,12 @@ const Abbreviation = styled.div`
 
 export const OTUItem = ({ abbreviation, id, name, refId, verified }) => (
     <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
-        <OUTItems bsStyle={verified ? null : "warning"}>
+        <StyledOTUItem>
             <strong>{name}</strong>
-            <Abbreviation>{abbreviation}</Abbreviation>
+            <OTUItemAbbreviation>{abbreviation}</OTUItemAbbreviation>
 
             {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
-        </OUTItems>
+        </StyledOTUItem>
     </LinkContainer>
 );
 

@@ -1,41 +1,38 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Release /> should render 1`] = `
-<Box>
-  <div
-    onClick={[Function]}
-    style={
-      Object {
-        "cursor": "pointer",
-      }
-    }
-  >
-    <Icon
-      className="fixed-width"
-      faStyle="fas"
-      fixedWidth={false}
-      name="caret-right"
-      pullRight={false}
-    />
-     
-    <strong>
-      foo
-    </strong>
-  </div>
-  <Button
-    active={false}
-    block={false}
-    bsClass="btn"
-    bsSize="xsmall"
-    bsStyle="default"
-    disabled={false}
-    href="baz"
-    target="_blank"
-  >
-    <i
-      className="fab fa-github"
-    />
-     GitHub
-  </Button>
-</Box>
+<Box__BoxGroupSection>
+  <Release__ReleaseHeader>
+    <Release__ReleaseName
+      onClick={[Function]}
+    >
+      <Icon
+        className="fixed-width"
+        faStyle="fas"
+        fixedWidth={false}
+        name="caret-right"
+        pullRight={false}
+      />
+       
+      <strong>
+        foo
+      </strong>
+    </Release__ReleaseName>
+    <Button
+      active={false}
+      block={false}
+      bsClass="btn"
+      bsSize="xsmall"
+      bsStyle="default"
+      disabled={false}
+      href="baz"
+      target="_blank"
+    >
+      <i
+        className="fab fa-github"
+      />
+       GitHub
+    </Button>
+  </Release__ReleaseHeader>
+</Box__BoxGroupSection>
 `;

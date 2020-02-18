@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { InputError, SaveButton, DialogBody, DialogFooter } from "../../base";
 
-const NameAbbreviation = styled(DialogBody)`
+const OTUFormFields = styled(DialogBody)`
     display: grid;
     grid-template-columns: 9fr 4fr;
     grid-gap: 13px;
@@ -10,7 +10,7 @@ const NameAbbreviation = styled(DialogBody)`
 
 const OTUForm = props => (
     <form onSubmit={props.handleSubmit}>
-        <NameAbbreviation>
+        <OTUFormFields>
             <InputError
                 label="Name"
                 name="name"
@@ -25,7 +25,7 @@ const OTUForm = props => (
                 onChange={props.handleChange}
                 error={props.errorAbbreviation}
             />
-        </NameAbbreviation>
+        </OTUFormFields>
         <DialogFooter>
             <SaveButton pullRight />
         </DialogFooter>

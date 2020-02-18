@@ -10,7 +10,7 @@ describe("<Release />", () => {
 
     it("should call handleClick when div is clicked", () => {
         const wrapper = shallow(<Release {...props} />);
-        wrapper.find("div").simulate("click");
+        wrapper.find("Release__ReleaseName").simulate("click");
 
         expect(wrapper.state().in).toEqual(true);
     });

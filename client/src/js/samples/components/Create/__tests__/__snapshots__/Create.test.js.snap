@@ -13,7 +13,7 @@ exports[`<CreateSample> should render 1`] = `
     onSubmit={[Function]}
   >
     <Modal__DialogBody>
-      <Create__StyledInputs>
+      <Create__CreateSampleFields>
         <div>
           <ControlLabel
             bsClass="control-label"
@@ -102,7 +102,7 @@ exports[`<CreateSample> should render 1`] = `
           type="text"
           value="Unpaired"
         />
-      </Create__StyledInputs>
+      </Create__CreateSampleFields>
       <LibraryTypeSelection
         libraryType="normal"
         onSelect={[Function]}

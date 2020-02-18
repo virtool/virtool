@@ -2,9 +2,7 @@
 
 exports[`<NoneFound /> renders an info Icon component 1`] = `
 <Box>
-  <Box
-    className="text-center"
-  >
+  <NoneFound__StyledItem>
     <Icon
       faStyle="fas"
       fixedWidth={false}
@@ -14,15 +12,13 @@ exports[`<NoneFound /> renders an info Icon component 1`] = `
      No 
     test
      found
-  </Box>
+  </NoneFound__StyledItem>
 </Box>
 `;
 
 exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 1`] = `
 <Box>
-  <Box
-    className="text-center"
-  >
+  <NoneFound__StyledItem>
     <Icon
       faStyle="fas"
       fixedWidth={false}
@@ -32,14 +28,12 @@ exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 
      No 
     test
      found
-  </Box>
+  </NoneFound__StyledItem>
 </Box>
 `;
 
 exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1`] = `
-<Box
-  className="text-center"
->
+<NoneFound__StyledItem>
   <Icon
     faStyle="fas"
     fixedWidth={false}
@@ -49,5 +43,5 @@ exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1
    No 
   test
    found
-</Box>
+</NoneFound__StyledItem>
 `;

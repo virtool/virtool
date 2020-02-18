@@ -5,7 +5,7 @@ import { map } from "lodash-es";
 import styled from "styled-components";
 import { InputError, Checkbox } from "../../../base";
 
-const NameMolecule = styled.div`
+const SegmentFormFields = styled.div`
     display: grid;
     grid-template-columns: 3fr 1fr;
     grid-gap: 13px;
@@ -73,7 +73,7 @@ class SegmentForm extends React.Component {
 
         return (
             <div>
-                <NameMolecule>
+                <SegmentFormFields>
                     <InputError
                         label="Name"
                         value={this.props.newEntry.name}
@@ -89,7 +89,7 @@ class SegmentForm extends React.Component {
                     >
                         {molecules}
                     </InputError>
-                </NameMolecule>
+                </SegmentFormFields>
 
                 <Checkbox label="Segment Required" checked={this.state.isChecked} onClick={this.toggleCheck} pullLeft />
             </div>

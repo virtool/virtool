@@ -1,16 +1,16 @@
 import { find, includes } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Checkbox, Flex, FlexItem, Icon, SpacedBox, Loader, RelativeTime } from "../../base";
+import { Checkbox, Flex, FlexItem, Icon, Loader, RelativeTime, LinkBox } from "../../base";
 import { selectSample } from "../actions";
 
-const StyledItems = styled(FlexItem)`
+const StyledItems = styled(LinkBox)`
     display: grid;
     grid-template-columns: 2fr 2fr 3fr auto;
     grid-gap: 30px;
+    user-select: none;
 
     @media (max-width: 1000px) {
         grid-template-columns: 3fr 4fr auto;
@@ -102,23 +102,17 @@ class SampleEntry extends React.Component {
             <div className="sample-item-container">
                 <div className="sample-checkbox-overlay" onClick={this.handleCheck} />
                 {analyzeIcon}
-                <LinkContainer to={`/samples/${this.props.id}`}>
-                    <SpacedBox>
-                        <Flex alignItems="center" style={{ userSelect: "none" }}>
-                            <StyledItems grow={1}>
-                                <span>
-                                    <Checkbox className="no-select" checked={this.props.checked} />
-                                    <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
-                                </span>
-                                <SampleEntryLabels {...this.props} />
-                                <span>
-                                    Created <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
-                                </span>
-                                {spinner}
-                            </StyledItems>
-                        </Flex>
-                    </SpacedBox>
-                </LinkContainer>
+                <StyledItems to={`/samples/${this.props.id}`}>
+                    <span>
+                        <Checkbox className="no-select" checked={this.props.checked} />
+                        <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
+                    </span>
+                    <SampleEntryLabels {...this.props} />
+                    <span>
+                        Created <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
+                    </span>
+                    {spinner}
+                </StyledItems>
             </div>
         );
     }

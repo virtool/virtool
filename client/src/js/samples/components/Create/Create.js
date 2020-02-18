@@ -25,7 +25,7 @@ import { LibraryTypeSelection } from "./LibraryTypeSelection";
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
-const StyledInputs = styled.div`
+const CreateSampleFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -191,7 +191,7 @@ export class CreateSample extends React.Component {
             >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
-                        <StyledInputs>
+                        <CreateSampleFields>
                             <div>
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
@@ -241,7 +241,7 @@ export class CreateSample extends React.Component {
                             <InputError name="host" label="Host" value={this.state.host} onChange={this.handleChange} />
 
                             <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
-                        </StyledInputs>
+                        </CreateSampleFields>
 
                         <LibraryTypeSelection
                             onSelect={this.handleLibrarySelect}

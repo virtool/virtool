@@ -72,8 +72,21 @@ exports[`<API /> should render two API keys 1`] = `
     </FlexItem>
   </Flex>
   <div>
-    <NoneFound
-      noun="API keys"
+    <Connect(APIKey)
+      apiKey={
+        Object {
+          "id": "foo",
+        }
+      }
+      key="foo"
+    />
+    <Connect(APIKey)
+      apiKey={
+        Object {
+          "id": "bar",
+        }
+      }
+      key="bar"
     />
   </div>
   <Connect(CreateAPIKey) />

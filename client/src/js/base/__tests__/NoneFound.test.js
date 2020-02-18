@@ -1,4 +1,4 @@
-import { NoneFound } from "../NoneFound";
+import { NoneFound, StyledItem } from "../NoneFound";
 import { Icon } from "../Icon";
 
 describe("<NoneFound />", () => {
@@ -40,7 +40,7 @@ describe("<NoneFound />", () => {
         });
 
         it("renders a Box without ListGroup container", () => {
-            expect(wrapper.find("Box").exists()).toBe(true);
+            expect(wrapper.find(StyledItem).exists()).toBe(true);
         });
     });
 });

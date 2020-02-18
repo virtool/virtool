@@ -8,7 +8,7 @@ import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
 
-const IsolateHostLocale = styled.div`
+const EditSampleHostLocale = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -89,7 +89,7 @@ class EditSample extends React.Component {
                             onChange={this.handleChange}
                             error={this.state.error}
                         />
-                        <IsolateHostLocale>
+                        <EditSampleHostLocale>
                             <InputError
                                 label="Isolate"
                                 name="isolate"
@@ -104,7 +104,7 @@ class EditSample extends React.Component {
                                 value={this.state.locale}
                                 onChange={this.handleChange}
                             />
-                        </IsolateHostLocale>
+                        </EditSampleHostLocale>
                     </DialogBody>
                     <DialogFooter>
                         <SaveButton />
