@@ -19,17 +19,31 @@ describe("<SampleRights />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call props.onChangeSampleGroup() when input changes", () => {
+    it("should call props.onChangeSampleGroup() when group SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
-        const e = {
-            target: {
-                value: "users_primary_group"
-            }
-        };
+
         wrapper
-            .find("InputError")
+            .find("SelectBox")
             .at(0)
-            .simulate("change", e);
+            .simulate("click");
+        expect(props.onChangeSampleGroup).toHaveBeenCalledWith("none");
+    });
+    it("should call props.onChangeSampleGroup() when force choice SelectBox is clicked", () => {
+        const wrapper = shallow(<SampleRights {...props} />);
+
+        wrapper
+            .find("SelectBox")
+            .at(1)
+            .simulate("click");
+        expect(props.onChangeSampleGroup).toHaveBeenCalledWith("force_choice");
+    });
+    it("should call props.onChangeSampleGroup() when users primary group SelectBox is clicked", () => {
+        const wrapper = shallow(<SampleRights {...props} />);
+
+        wrapper
+            .find("SelectBox")
+            .at(2)
+            .simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("users_primary_group");
     });
 
@@ -42,7 +56,7 @@ describe("<SampleRights />", () => {
         };
         wrapper
             .find("InputError")
-            .at(scope === "group" ? 1 : 2)
+            .at(scope === "all" ? 1 : 0)
             .simulate("change", e);
         expect(props.onChangeRights).toHaveBeenCalledWith(scope, "r");
     });

@@ -22,56 +22,46 @@ exports[`<SampleRights /> should render 1`] = `
       <span>
         Sample Group
       </span>
-      <Help
-        pullRight={true}
+    </label>
+    <SampleRights__SampleGroupSelection>
+      <SelectBox
+        active=""
+        onClick={[Function]}
       >
+        <strong>
+          None
+        </strong>
         <p>
-          <strong>
-            None
-          </strong>
-          : samples are assigned no group and only
+          Samples are assigned no group and only
           <em>
              all users'
           </em>
            rights apply
         </p>
+      </SelectBox>
+      <SelectBox
+        active={true}
+        onClick={[Function]}
+      >
+        <strong>
+          Force choice
+        </strong>
         <p>
-          <strong>
-            User's primary group
-          </strong>
-          : samples are automatically assigned the creating
-           
-          user's primary group
+          Samples are automatically assigned the creating user's primary group
         </p>
+      </SelectBox>
+      <SelectBox
+        active=""
+        onClick={[Function]}
+      >
+        <strong>
+          User's primary group
+        </strong>
         <p>
-          <strong>
-            Choose
-          </strong>
-          : samples are assigned by the user in the creation form
+          Samples are assigned by the user in the creation form
         </p>
-      </Help>
-    </label>
-    <InputError
-      onChange={[Function]}
-      type="select"
-      value="force_choice"
-    >
-      <option
-        value="none"
-      >
-        None
-      </option>
-      <option
-        value="force_choice"
-      >
-        Force choice
-      </option>
-      <option
-        value="users_primary_group"
-      >
-        User's primary group
-      </option>
-    </InputError>
+      </SelectBox>
+    </SampleRights__SampleGroupSelection>
     <InputError
       label="Group Rights"
       onChange={[Function]}

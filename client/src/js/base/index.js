@@ -18,7 +18,6 @@ export * from "./Code";
 export * from "./Container";
 export * from "./DropDown";
 export * from "./ExternalLink";
-export * from "./Help";
 export * from "./Icon";
 export * from "./Identicon";
 export * from "./Input";
