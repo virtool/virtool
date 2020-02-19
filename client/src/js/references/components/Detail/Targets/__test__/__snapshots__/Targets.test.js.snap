@@ -12,15 +12,13 @@ exports[`<Targets /> should render when [canModify=false] 1`] = `
       Manage the allowable sequence targets for this barcode reference.
     </p>
   </Targets__TargetsHeader>
-  <div>
-    <TargetItem
-      canModify={false}
-      key="foo"
-      name="foo"
-      onEdit={[Function]}
-      onRemove={[Function]}
-    />
-  </div>
+  <TargetItem
+    canModify={false}
+    key="foo"
+    name="foo"
+    onEdit={[Function]}
+    onRemove={[Function]}
+  />
 </Box__BoxGroup>
 `;
 
@@ -42,15 +40,13 @@ exports[`<Targets /> should render when [canModify=true] 1`] = `
       Manage the allowable sequence targets for this barcode reference.
     </p>
   </Targets__TargetsHeader>
-  <div>
-    <TargetItem
-      canModify={true}
-      key="foo"
-      name="foo"
-      onEdit={[Function]}
-      onRemove={[Function]}
-    />
-  </div>
+  <TargetItem
+    canModify={true}
+    key="foo"
+    name="foo"
+    onEdit={[Function]}
+    onRemove={[Function]}
+  />
   <Connect(AddTarget)
     onHide={[Function]}
     show={false}
