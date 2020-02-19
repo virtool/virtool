@@ -7,6 +7,18 @@ import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../
 import { followDownload } from "../../../utils/utils";
 import { TargetInfo } from "./Target";
 
+const SequenceCell = styled.td`
+    padding: 0 !important;
+    font-family: "Roboto Mono", monospace;
+
+    > textarea {
+        width: 100%;
+        margin: 0 0 -4px 0;
+        padding: 5px;
+        border: none;
+    }
+`;
+
 const SequenceHeader = styled.div`
     align-items: center;
     display: flex;
@@ -177,9 +189,9 @@ class Sequence extends React.Component {
                                     <th>
                                         Sequence <Badge>{this.props.sequence.length}</Badge>
                                     </th>
-                                    <td className="sequence-cell">
+                                    <SequenceCell>
                                         <textarea rows="5" value={this.props.sequence} readOnly />
-                                    </td>
+                                    </SequenceCell>
                                 </tr>
                             </tbody>
                         </SequenceTable>
