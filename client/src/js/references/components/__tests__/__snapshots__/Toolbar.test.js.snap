@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReferenceToolbar /> renders when [canCreate=false] 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <div
     className="form-group"
   >
@@ -31,13 +29,11 @@ exports[`<ReferenceToolbar /> renders when [canCreate=false] 1`] = `
       />
     </div>
   </div>
-</div>
+</Toolbar>
 `;
 
 exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <div
     className="form-group"
   >
@@ -83,13 +79,11 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
       pullRight={false}
     />
   </LinkButton>
-</div>
+</Toolbar>
 `;
 
 exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <div
     className="form-group"
   >
@@ -135,5 +129,5 @@ exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
       pullRight={false}
     />
   </LinkButton>
-</div>
+</Toolbar>
 `;

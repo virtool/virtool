@@ -2,7 +2,7 @@ import React from "react";
 import { Col, FormControl, FormGroup, InputGroup, ListGroup, ListGroupItem, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, Flex, FlexItem, Icon, LinkButton } from "../../base";
+import { Button, Flex, FlexItem, Icon, LinkButton, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearSampleSelection, findSamples } from "../actions";
 import AlgorithmFilter from "./AlgorithmFilter";
@@ -41,7 +41,7 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
 
     return (
         <div>
-            <div key="toolbar" className="toolbar" style={{ marginBottom: "7px" }}>
+            <Toolbar>
                 <FormGroup>
                     <InputGroup>
                         <InputGroup.Addon>
@@ -56,7 +56,7 @@ export const SampleSearchToolbar = ({ canCreate, onFind, term, pathoscope, nuvs 
                     </InputGroup>
                 </FormGroup>
                 {createButton}
-            </div>
+            </Toolbar>
             <ListGroup style={{ marginBottom: "7px" }}>
                 <ListGroupItem>
                     <Row>

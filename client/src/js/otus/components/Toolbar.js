@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Icon, Button } from "../../base";
+import { Icon, Button, Toolbar } from "../../base";
 import { checkRefRight } from "../../utils/utils";
 import { findOTUs } from "../actions";
 
@@ -28,9 +28,8 @@ export class OTUToolbar extends React.Component {
                 </LinkContainer>
             );
         }
-
         return (
-            <div className="toolbar">
+            <Toolbar>
                 <div className="form-group">
                     <div className="input-group">
                         <span id="find-addon" className="input-group-addon">
@@ -52,7 +51,7 @@ export class OTUToolbar extends React.Component {
                 </Button>
 
                 {createButton}
-            </div>
+            </Toolbar>
         );
     }
 }

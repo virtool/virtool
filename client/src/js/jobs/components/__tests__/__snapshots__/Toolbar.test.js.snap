@@ -1,9 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <FormGroup
     bsClass="form-group"
   >
@@ -81,13 +79,11 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
       </MenuItem>
     </DropdownMenu>
   </Uncontrolled(Dropdown)>
-</div>
+</Toolbar>
 `;
 
 exports[`<JobsToolbar /> should render without dropdown menu 1`] = `
-<div
-  className="toolbar"
->
+<Toolbar>
   <FormGroup
     bsClass="form-group"
   >
@@ -113,5 +109,5 @@ exports[`<JobsToolbar /> should render without dropdown menu 1`] = `
       />
     </InputGroup>
   </FormGroup>
-</div>
+</Toolbar>
 `;

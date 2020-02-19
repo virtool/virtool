@@ -2,9 +2,7 @@
 
 exports[`<ManageUsers /> renders correctly 1`] = `
 <div>
-  <div
-    className="toolbar"
-  >
+  <Toolbar>
     <FormGroup
       bsClass="form-group"
     >
@@ -62,7 +60,7 @@ exports[`<ManageUsers /> renders correctly 1`] = `
         tipPlacement="top"
       />
     </withRouter(LinkContainer)>
-  </div>
+  </Toolbar>
   <Connect(UsersList) />
   <Connect(CreateUser) />
   <Connect(Groups) />
