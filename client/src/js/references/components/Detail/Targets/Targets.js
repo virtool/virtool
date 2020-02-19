@@ -2,7 +2,7 @@ import { map, reject } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader } from "../../../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, NoneFound } from "../../../../base";
 import { checkRefRight } from "../../../../utils/utils";
 import { editReference } from "../../../actions";
 import AddTarget from "./Add";
@@ -78,6 +78,12 @@ export class Targets extends React.Component {
             );
         }
 
+        const none = (
+            <BoxGroupSection>
+                <NoneFound />
+            </BoxGroupSection>
+        );
+
         return (
             <BoxGroup>
                 <TargetsHeader>
@@ -88,7 +94,7 @@ export class Targets extends React.Component {
                     <p>Manage the allowable sequence targets for this barcode reference.</p>
                 </TargetsHeader>
 
-                <div>{targetComponents}</div>
+                <div>{targetComponents.length ? targetComponents : none}</div>
 
                 {modals}
             </BoxGroup>
