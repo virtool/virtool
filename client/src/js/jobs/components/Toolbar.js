@@ -7,7 +7,7 @@ import { connect } from "react-redux";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearJobs, findJobs } from "../actions";
-import { Icon, Button } from "../../base";
+import { Icon, Button, Toolbar } from "../../base";
 
 /**
  * A toolbar component for the jobs list view.
@@ -37,7 +37,7 @@ export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     }
 
     return (
-        <div className="toolbar">
+        <Toolbar>
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Addon>
@@ -48,7 +48,7 @@ export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
             </FormGroup>
 
             {removalDropdown}
-        </div>
+        </Toolbar>
     );
 };
 

@@ -2,15 +2,7 @@
 
 exports[` 1`] = `
 <div>
-  <div
-    className="toolbar"
-    key="toolbar"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
+  <Toolbar>
     <FormGroup
       bsClass="form-group"
     >
@@ -36,7 +28,7 @@ exports[` 1`] = `
         />
       </InputGroup>
     </FormGroup>
-  </div>
+  </Toolbar>
   <ListGroup
     bsClass="list-group"
     style={
@@ -68,15 +60,7 @@ exports[` 1`] = `
 
 exports[` 2`] = `
 <div>
-  <div
-    className="toolbar"
-    key="toolbar"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
+  <Toolbar>
     <FormGroup
       bsClass="form-group"
     >
@@ -102,7 +86,7 @@ exports[` 2`] = `
         />
       </InputGroup>
     </FormGroup>
-  </div>
+  </Toolbar>
   <ListGroup
     bsClass="list-group"
     style={

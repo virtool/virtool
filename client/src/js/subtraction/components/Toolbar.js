@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
-import { Button, Icon } from "../../base";
+import { Button, Icon, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 
@@ -18,7 +18,7 @@ export const SubtractionToolbar = ({ term, onFind, canModify }) => {
     }
 
     return (
-        <div key="toolbar" className="toolbar">
+        <Toolbar>
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Addon>
@@ -29,7 +29,7 @@ export const SubtractionToolbar = ({ term, onFind, canModify }) => {
             </FormGroup>
 
             {createButton}
-        </div>
+        </Toolbar>
     );
 };
 

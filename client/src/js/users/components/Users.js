@@ -3,7 +3,7 @@ import React from "react";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, LoadingPlaceholder, WarningAlert } from "../../base";
+import { Button, Icon, LoadingPlaceholder, WarningAlert, Toolbar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
 import Groups from "../../groups/components/Groups";
@@ -58,7 +58,7 @@ export class ManageUsers extends React.Component {
 
         return (
             <div>
-                <div className="toolbar">
+                <Toolbar>
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
@@ -75,7 +75,7 @@ export class ManageUsers extends React.Component {
                     <LinkContainer to={{ state: { createUser: true } }}>
                         <Button bsStyle="primary" icon="user-plus" tip="Create User" />
                     </LinkContainer>
-                </div>
+                </Toolbar>
 
                 <UsersList />
 

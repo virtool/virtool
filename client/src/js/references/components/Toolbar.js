@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LinkButton } from "../../base";
+import { Icon, LinkButton, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findReferences } from "../actions";
 
@@ -16,7 +16,7 @@ export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
     }
 
     return (
-        <div className="toolbar">
+        <Toolbar>
             <div className="form-group">
                 <div className="input-group">
                     <span id="find-addon" className="input-group-addon">
@@ -33,7 +33,7 @@ export const ReferenceToolbar = ({ term, onFind, canCreate }) => {
                 </div>
             </div>
             {createButton}
-        </div>
+        </Toolbar>
     );
 };
 
