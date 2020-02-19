@@ -1,8 +1,8 @@
-import React from "react";
-import styled from "styled-components";
 import { filter, includes, map } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
-import { Identicon, ListGroupItem, NoneFound, ModalDialog, DialogBody, Input } from "../../../base";
+import styled from "styled-components";
+import { BoxGroup, BoxGroupSection, DialogBody, Identicon, Input, ModalDialog, NoneFoundSection } from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";
@@ -19,9 +19,8 @@ const getInitialState = () => ({
     remove: false
 });
 
-const StyledAddMemberItem = styled(ListGroupItem)`
+const StyledAddMemberItem = styled(BoxGroupSection)`
     display: flex;
-
     img {
         margin-right: 8px;
     }
@@ -62,7 +61,7 @@ export class AddReferenceMember extends React.Component {
                 <AddMemberItem key={document.id} {...document} onClick={() => this.handleAdd(document.id)} />
             ));
         } else {
-            addMemberComponents = <NoneFound noun={`other ${this.props.noun}s`} noListGroup />;
+            addMemberComponents = <NoneFoundSection noun={`other ${this.props.noun}s`} />;
         }
 
         const header = "Add ".concat(this.props.noun);
@@ -78,7 +77,7 @@ export class AddReferenceMember extends React.Component {
             >
                 <DialogBody>
                     {this.props.noun === "user" ? <AddUserSearch /> : null}
-                    {addMemberComponents}
+                    <BoxGroup>{addMemberComponents}</BoxGroup>
                 </DialogBody>
             </ModalDialog>
         );

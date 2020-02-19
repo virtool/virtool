@@ -1,12 +1,19 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
+import styled from "styled-components";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
 import { InputError, SaveButton, ModalDialog, DialogBody, DialogFooter } from "../../base";
 import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
+
+const EditSampleHostLocale = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-column-gap: 13px;
+`;
 
 const getInitialState = ({ name, isolate, host, locale }) => ({
     name: name || "",
@@ -75,47 +82,29 @@ class EditSample extends React.Component {
             >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
-                        <Row>
-                            <Col xs={12}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.error}
-                                />
-                            </Col>
-                        </Row>
+                        <InputError
+                            label="Name"
+                            name="name"
+                            value={this.state.name}
+                            onChange={this.handleChange}
+                            error={this.state.error}
+                        />
+                        <EditSampleHostLocale>
+                            <InputError
+                                label="Isolate"
+                                name="isolate"
+                                value={this.state.isolate}
+                                onChange={this.handleChange}
+                            />
+                            <InputError label="Host" name="host" value={this.state.host} onChange={this.handleChange} />
 
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    label="Isolate"
-                                    name="isolate"
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    label="Host"
-                                    name="host"
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
-
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <InputError
-                                    name="locale"
-                                    label="Locale"
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
+                            <InputError
+                                name="locale"
+                                label="Locale"
+                                value={this.state.locale}
+                                onChange={this.handleChange}
+                            />
+                        </EditSampleHostLocale>
                     </DialogBody>
                     <DialogFooter>
                         <SaveButton />

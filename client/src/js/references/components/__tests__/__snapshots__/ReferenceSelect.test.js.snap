@@ -28,7 +28,7 @@ exports[`<ReferenceSelect /> should render NoneFound when [references.length=0] 
   <label>
     Source Reference
   </label>
-  <NoneFound
+  <NoneFoundBox
     noun="source references"
   />
 </div>

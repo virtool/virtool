@@ -61,9 +61,7 @@ exports[`<ReadSelector /> should render 1`] = `
       />
     </Toolbar>
     <ReadSelector__ReadSelectorList>
-      <div
-        className="list-group"
-      >
+      <Box__BoxGroup>
         <ReadItem
           id="foo"
           index={0}
@@ -73,7 +71,7 @@ exports[`<ReadSelector /> should render 1`] = `
           selected={true}
           size={1024}
         />
-      </div>
+      </Box__BoxGroup>
     </ReadSelector__ReadSelectorList>
     <div
       className="input-form-error"

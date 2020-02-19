@@ -1,10 +1,10 @@
 import React from "react";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, ViewHeader, ScrollList, NoneFound } from "../../base";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
 import { findHmms } from "../actions";
 import { getTerm } from "../selectors";
-import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
+import HMMItem from "./Item";
 import HMMToolbar from "./Toolbar";
 
 class HMMList extends React.Component {
@@ -42,7 +42,7 @@ class HMMList extends React.Component {
                     />
                 );
             } else {
-                list = <NoneFound noun="HMMs" />;
+                list = <NoneFoundBox noun="HMMs" />;
             }
 
             return (

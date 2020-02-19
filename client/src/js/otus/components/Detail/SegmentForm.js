@@ -1,9 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import { map } from "lodash-es";
+import styled from "styled-components";
 import { InputError, Checkbox } from "../../../base";
+
+const SegmentFormFields = styled.div`
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-gap: 13px;
+`;
 
 class SegmentForm extends React.Component {
     constructor(props) {
@@ -67,36 +73,25 @@ class SegmentForm extends React.Component {
 
         return (
             <div>
-                <Row>
-                    <Col md={9}>
-                        <InputError
-                            label="Name"
-                            value={this.props.newEntry.name}
-                            onChange={this.changeSegName}
-                            error={this.state.error}
-                        />
-                    </Col>
-                    <Col md={3}>
-                        <InputError
-                            type="select"
-                            label="Molecule Type"
-                            value={this.props.newEntry.molecule}
-                            onChange={this.changeMolType}
-                        >
-                            {molecules}
-                        </InputError>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <Checkbox
-                            label="Segment Required"
-                            checked={this.state.isChecked}
-                            onClick={this.toggleCheck}
-                            pullLeft
-                        />
-                    </Col>
-                </Row>
+                <SegmentFormFields>
+                    <InputError
+                        label="Name"
+                        value={this.props.newEntry.name}
+                        onChange={this.changeSegName}
+                        error={this.state.error}
+                    />
+
+                    <InputError
+                        type="select"
+                        label="Molecule Type"
+                        value={this.props.newEntry.molecule}
+                        onChange={this.changeMolType}
+                    >
+                        {molecules}
+                    </InputError>
+                </SegmentFormFields>
+
+                <Checkbox label="Segment Required" checked={this.state.isChecked} onClick={this.toggleCheck} pullLeft />
             </div>
         );
     }

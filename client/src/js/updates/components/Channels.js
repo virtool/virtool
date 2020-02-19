@@ -2,7 +2,7 @@ import { capitalize, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { updateSetting } from "../../administration/actions";
-import { Radio, Box } from "../../base";
+import { Box, Radio } from "../../base";
 
 export const ChannelButton = ({ channel, checked, onClick }) => (
     <Radio

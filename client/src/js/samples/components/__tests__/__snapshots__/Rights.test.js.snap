@@ -157,12 +157,7 @@ exports[`<SampleRights /> should return LoadingPlaceholder when[this.props.group
 `;
 
 exports[`<SampleRights /> should return Not allowed panel when[this.props.canModifyRights=false] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    Not allowed
-  </PanelBody>
-</Panel>
+<Box>
+  Not allowed
+</Box>
 `;

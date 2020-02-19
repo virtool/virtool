@@ -5,63 +5,27 @@ exports[`<SequenceForm /> renders correctly 1`] = `
   onSubmit={[MockFunction]}
 >
   <Modal__DialogBody>
-    <Row
-      bsClass="row"
-      componentClass="div"
+    <SequenceForm__OverlaySegment />
+    <InputError
+      label="Host"
+      name="host"
+      onChange={[MockFunction]}
+      value="test-host"
     />
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <InputError
-          label="Host"
-          name="host"
-          onChange={[MockFunction]}
-          value="test-host"
-        />
-      </Col>
-    </Row>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <InputError
-          error=""
-          label="Definition"
-          name="definition"
-          onChange={[MockFunction]}
-          value="test-definition"
-        />
-      </Col>
-    </Row>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        xs={12}
-      >
-        <SequenceField
-          error=""
-          name="sequence"
-          onChange={[MockFunction]}
-          readOnly={false}
-          sequence="test-sequence"
-        />
-      </Col>
-    </Row>
+    <InputError
+      error=""
+      label="Definition"
+      name="definition"
+      onChange={[MockFunction]}
+      value="test-definition"
+    />
+    <SequenceField
+      error=""
+      name="sequence"
+      onChange={[MockFunction]}
+      readOnly={false}
+      sequence="test-sequence"
+    />
   </Modal__DialogBody>
   <Modal__DialogFooter>
     <SaveButton />

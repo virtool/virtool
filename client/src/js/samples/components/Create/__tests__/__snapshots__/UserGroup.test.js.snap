@@ -1,29 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`SampleUserGroup should render 1`] = `
-<Col
-  bsClass="col"
-  componentClass="div"
-  md={3}
+<InputError
+  label="User Group"
+  onChange={[MockFunction]}
+  type="select"
+  value="bar"
 >
-  <InputError
-    label="User Group"
-    onChange={[MockFunction]}
-    type="select"
-    value="bar"
+  <option
+    key="none"
+    value="none"
   >
-    <option
-      key="none"
-      value="none"
-    >
-      None
-    </option>
-    <UserGroup__SampleUserGroupItem
-      key="foo"
-      value="foo"
-    >
-      foo
-    </UserGroup__SampleUserGroupItem>
-  </InputError>
-</Col>
+    None
+  </option>
+  <UserGroup__SampleUserGroupItem
+    key="foo"
+    value="foo"
+  >
+    foo
+  </UserGroup__SampleUserGroupItem>
+</InputError>
 `;

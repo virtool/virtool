@@ -15,8 +15,7 @@ import { FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import { Button, Icon, Input, ListGroupItem } from "../../../base";
-import { Box } from "../../../base/Box";
+import { Button, Icon, Input, BoxGroup, Box, BoxGroupSection } from "../../../base";
 import { Toolbar } from "../../../base/Toolbar";
 
 import ReadItem from "./ReadItem";
@@ -109,9 +108,9 @@ export default class ReadSelector extends React.PureComponent {
 
         if (!fileComponents.length) {
             fileComponents = (
-                <ListGroupItem className="text-center">
+                <BoxGroupSection className="text-center">
                     <Icon name="info-circle" /> No read files found. <Link to="samples/files">Upload some</Link>.
-                </ListGroupItem>
+                </BoxGroupSection>
             );
         }
 
@@ -158,7 +157,7 @@ export default class ReadSelector extends React.PureComponent {
                         />
                     </Toolbar>
                     <ReadSelectorList>
-                        <div className="list-group">{fileComponents}</div>
+                        <BoxGroup>{fileComponents}</BoxGroup>
                     </ReadSelectorList>
 
                     {errorMessage}

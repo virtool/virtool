@@ -39,7 +39,7 @@ describe("<File />", () => {
     });
 
     it("should have [props.onRemove] called when trash icon clicked", () => {
-        const wrapper = mount(<File {...props} />);
+        const wrapper = shallow(<File {...props} />);
         wrapper.find("Icon").simulate("click");
         expect(props.onRemove).toHaveBeenCalledWith("foo");
     });

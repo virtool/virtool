@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ReleasesList /> should render with one release 1`] = `
-<Fragment>
+<Box__BoxGroup>
   <List__ReleasesListHeader>
     <strong
       className="text-warning"
@@ -25,20 +25,17 @@ exports[`<ReleasesList /> should render with one release 1`] = `
       Install
     </Button>
   </List__ReleasesListHeader>
-  <List__ReleasesListGroup>
-    <Release
-      body="Foo"
-      html_url="FOO"
-      key="foo"
-      name="foo"
-    />
-  </List__ReleasesListGroup>
-  <Connect(SoftwareInstall) />
-</Fragment>
+  <Release
+    body="Foo"
+    html_url="FOO"
+    key="foo"
+    name="foo"
+  />
+</Box__BoxGroup>
 `;
 
 exports[`<ReleasesList /> should render with two releases 1`] = `
-<Fragment>
+<Box__BoxGroup>
   <List__ReleasesListHeader>
     <strong
       className="text-warning"
@@ -63,20 +60,17 @@ exports[`<ReleasesList /> should render with two releases 1`] = `
       Install
     </Button>
   </List__ReleasesListHeader>
-  <List__ReleasesListGroup>
-    <Release
-      body="Foo"
-      html_url="FOO"
-      key="foo"
-      name="foo"
-    />
-    <Release
-      body="Bar"
-      html_url="BAR"
-      key="bar"
-      name="bar"
-    />
-  </List__ReleasesListGroup>
-  <Connect(SoftwareInstall) />
-</Fragment>
+  <Release
+    body="Foo"
+    html_url="FOO"
+    key="foo"
+    name="foo"
+  />
+  <Release
+    body="Bar"
+    html_url="BAR"
+    key="bar"
+    name="bar"
+  />
+</Box__BoxGroup>
 `;

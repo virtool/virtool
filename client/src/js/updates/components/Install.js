@@ -8,7 +8,7 @@ import { Button, Label, Loader, DialogBody, ModalDialog, DialogFooter } from "..
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 
 import { installSoftwareUpdates } from "../actions";
-import { ReleaseMarkdown } from "./Release";
+import { ReleaseMarkdown } from "./Markdown";
 
 export const attemptReload = () => {
     Request.get(`${window.location.origin}/api`).end((err, res) => {
@@ -93,6 +93,7 @@ export const SoftwareInstall = ({ onHide, onInstall, process, releases, show, up
     } else {
         content = <Process {...process} size={releases[0].size} updating={updating} />;
     }
+
     const header = (
         <div>
             Software Update <Label>{releases[0].name}</Label>

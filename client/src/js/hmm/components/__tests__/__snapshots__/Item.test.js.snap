@@ -1,44 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HMMItem /> should render 1`] = `
-<withRouter(LinkContainer)
+<Item__StyledHMMItem
   to="/hmm/tester"
 >
-  <Item__StyledChange
-    className="spaced"
-  >
-    <span>
-      <strong>
-        5
-      </strong>
-    </span>
-    <Item__NameTag>
-      <Item__Name>
-        string1
-      </Item__Name>
-      <Item__Tag>
-        <Label
-          key="0"
-          spaced={true}
-        >
-          Family1
-        </Label>
-        <Label
-          key="1"
-          spaced={true}
-        >
-          Family2
-        </Label>
-        <Label
-          key="2"
-          spaced={true}
-        >
-          Family3
-        </Label>
-         
-        ...
-      </Item__Tag>
-    </Item__NameTag>
-  </Item__StyledChange>
-</withRouter(LinkContainer)>
+  <Item__HMMItemCluster>
+    5
+  </Item__HMMItemCluster>
+  <Item__HMMItemName>
+    string1
+  </Item__HMMItemName>
+  <Item__HMMItemFamilies>
+    <Label
+      key="0"
+      spaced={true}
+    >
+      Family1
+    </Label>
+    <Label
+      key="1"
+      spaced={true}
+    >
+      Family2
+    </Label>
+    <Label
+      key="2"
+      spaced={true}
+    >
+      Family3
+    </Label>
+     
+    ...
+  </Item__HMMItemFamilies>
+</Item__StyledHMMItem>
 `;

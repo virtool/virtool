@@ -1,15 +1,15 @@
-import React from "react";
-import { connect } from "react-redux";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { get, map } from "lodash-es";
+import React from "react";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { connect } from "react-redux";
 
-import { Button, NoneFound } from "../../../base";
+import { Button, NoneFoundBox } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { editOTU } from "../../actions";
-import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
+import Segment from "./Segment";
 
 const getInitialState = props => ({
     segArray: props.schema ? props.schema : [],
@@ -115,7 +115,7 @@ class Schema extends React.Component {
                 </Draggable>
             ));
         } else {
-            segments = <NoneFound noun="segments" noListGroup />;
+            segments = <NoneFoundBox noun="segments" />;
         }
 
         let addButton;

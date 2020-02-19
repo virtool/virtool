@@ -1,121 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<OTUItem /> should render when [verified=false] 1`] = `
-<withRouter(LinkContainer)
-  className="spaced"
+<Item__StyledOTUItem
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <ListGroupItem
-    allowFocus={false}
-    bsStyle="warning"
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={7}
-        sm={11}
-        xs={11}
-      >
-        <strong>
-          Foo
-        </strong>
-        <small
-          className="hidden-md hidden-lg text-muted"
-          style={
-            Object {
-              "marginLeft": "5px",
-            }
-          }
-        >
-          FB
-        </small>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        FB
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={1}
-        sm={1}
-        xs={1}
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="tag"
-          pullRight={true}
-          tip="This OTU is unverified"
-        />
-      </Col>
-    </Row>
-  </ListGroupItem>
-</withRouter(LinkContainer)>
+  <strong>
+    Foo
+  </strong>
+  <Item__OTUItemAbbreviation>
+    FB
+  </Item__OTUItemAbbreviation>
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="tag"
+    pullRight={true}
+    tip="This OTU is unverified"
+  />
+</Item__StyledOTUItem>
 `;
 
 exports[`<OTUItem /> should render when [verified=true] 1`] = `
-<withRouter(LinkContainer)
-  className="spaced"
+<Item__StyledOTUItem
   key="foo"
   to="/refs/baz/otus/foo"
 >
-  <ListGroupItem
-    allowFocus={false}
-    bsStyle={null}
-  >
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={7}
-        sm={11}
-        xs={11}
-      >
-        <strong>
-          Foo
-        </strong>
-        <small
-          className="hidden-md hidden-lg text-muted"
-          style={
-            Object {
-              "marginLeft": "5px",
-            }
-          }
-        >
-          FB
-        </small>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-        smHidden={true}
-        xsHidden={true}
-      >
-        FB
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={1}
-        sm={1}
-        xs={1}
-      />
-    </Row>
-  </ListGroupItem>
-</withRouter(LinkContainer)>
+  <strong>
+    Foo
+  </strong>
+  <Item__OTUItemAbbreviation>
+    FB
+  </Item__OTUItemAbbreviation>
+</Item__StyledOTUItem>
 `;

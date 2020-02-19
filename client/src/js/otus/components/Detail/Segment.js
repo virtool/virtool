@@ -1,7 +1,13 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
+import styled from "styled-components";
 import { Icon, InfoLabel, Label, SpacedBox } from "../../../base";
+
+const StyledSegment = styled(SpacedBox)`
+    display: grid;
+    align-items: center;
+    grid-template-columns: 45fr 1fr 10fr;
+`;
 
 const RequiredLabel = ({ required }) => {
     if (required) {
@@ -51,18 +57,12 @@ export default class Segment extends React.Component {
         }
 
         return (
-            <SpacedBox>
-                <Row>
-                    <Col md={5}>
-                        <strong>{seg.name}</strong>
-                    </Col>
-                    <Col md={4}>{seg.molecule}</Col>
-                    <Col md={2}>
-                        <RequiredLabel required={seg.required} />
-                    </Col>
-                    <Col md={1}>{modifyIcons}</Col>
-                </Row>
-            </SpacedBox>
+            <StyledSegment>
+                <strong>{seg.name}</strong>
+
+                <RequiredLabel required={seg.required} />
+                {modifyIcons}
+            </StyledSegment>
         );
     }
 }

@@ -5,52 +5,31 @@ exports[`<IsolateForm /> should render 1`] = `
   onSubmit={[MockFunction]}
 >
   <Modal__DialogBody>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={6}
-      >
-        <SourceTypeInput
-          allowedSourceTypes={
-            Array [
-              "foo",
-              "bar",
-            ]
-          }
-          onChange={[Function]}
-          restrictSourceTypes={true}
-          value="baz"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={6}
-      >
-        <InputError
-          disabled={false}
-          label="Source Name"
-          onChange={[Function]}
-          spellCheck="off"
-          value="Foo"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={12}
-      >
-        <InputError
-          label="Isolate Name"
-          readOnly={true}
-          value="Baz Foo"
-        />
-      </Col>
-    </Row>
+    <IsolateForm__IsolateFormFields>
+      <SourceTypeInput
+        allowedSourceTypes={
+          Array [
+            "foo",
+            "bar",
+          ]
+        }
+        onChange={[Function]}
+        restrictSourceTypes={true}
+        value="baz"
+      />
+      <InputError
+        disabled={false}
+        label="Source Name"
+        onChange={[Function]}
+        spellCheck="off"
+        value="Foo"
+      />
+    </IsolateForm__IsolateFormFields>
+    <InputError
+      label="Isolate Name"
+      readOnly={true}
+      value="Baz Foo"
+    />
   </Modal__DialogBody>
   <Modal__DialogFooter>
     <SaveButton />

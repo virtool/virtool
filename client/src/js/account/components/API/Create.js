@@ -1,7 +1,7 @@
 import CX from "classnames";
 import { mapValues } from "lodash-es";
 import React from "react";
-import { Col, Row } from "react-bootstrap";
+import styled from "styled-components";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
@@ -22,6 +22,23 @@ import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
 import CreateAPIKeyInfo from "./CreateInfo";
 import APIPermissions from "./Permissions";
+
+const StyledDialogBody = styled(DialogBody)`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 90px;
+    margin-right: 90px;
+
+    strong {
+        margin-bottom: 5px;
+    }
+`;
+
+const StyledFlex = styled(Flex)`
+    margin-top: 15px;
+    margin-bottom: 10px;
+`;
 
 export const getInitialState = props => ({
     name: "",
@@ -83,38 +100,30 @@ export class CreateAPIKey extends React.Component {
 
         if (this.state.show) {
             content = (
-                <DialogBody className="text-center">
-                    <Row>
-                        <Col xs={12}>
-                            <strong className="text-success">Here is your key.</strong>
-                        </Col>
-                    </Row>
+                <StyledDialogBody className="text-center">
+                    <strong className="text-success">Here is your key.</strong>
 
                     <small>Make note of it now. For security purposes, it will not be shown again.</small>
 
-                    <Row style={{ marginTop: "10px", marginBottom: "5px" }}>
-                        <Col xs={12} md={8} mdOffset={2}>
-                            <Flex alignItems="stretch" alignContent="stretch">
-                                <FlexItem grow={1}>
-                                    <Input
-                                        style={{ marginBottom: 0 }}
-                                        formGroupStyle={{ marginBottom: 0 }}
-                                        className="text-center"
-                                        value={this.props.newKey}
-                                        readOnly
-                                    />
-                                </FlexItem>
-                                <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
-                                    <Button icon="paste" bsStyle="primary" />
-                                </CopyToClipboard>
-                            </Flex>
-                        </Col>
-                    </Row>
+                    <StyledFlex alignItems="stretch" alignContent="stretch">
+                        <FlexItem grow={1}>
+                            <Input
+                                style={{ marginBottom: 0 }}
+                                formGroupStyle={{ marginBottom: 0 }}
+                                className="text-center"
+                                value={this.props.newKey}
+                                readOnly
+                            />
+                        </FlexItem>
+                        <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
+                            <Button icon="paste" bsStyle="primary" />
+                        </CopyToClipboard>
+                    </StyledFlex>
 
                     <small className={CX("text-primary", { invisible: !this.state.copied })}>
                         <Icon name="check" /> Copied
                     </small>
-                </DialogBody>
+                </StyledDialogBody>
             );
         } else {
             content = (

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import {
     LoadingPlaceholder,
     NotFound,
-    Panel,
+    Box,
     RelativeTime,
     SubviewHeader,
     SubviewHeaderAttribution,
@@ -34,11 +34,9 @@ export const AnalysisDetail = props => {
 
     if (!detail.ready) {
         return (
-            <Panel>
-                <Panel.Body>
-                    <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
-                </Panel.Body>
-            </Panel>
+            <Box>
+                <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+            </Box>
         );
     }
 

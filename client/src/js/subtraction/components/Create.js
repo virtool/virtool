@@ -8,13 +8,12 @@ import {
     BoxGroup,
     BoxGroupSection,
     Button,
-    Icon,
-    InputError,
-    NoneFoundSection,
-    RelativeTime,
-    ModalDialog,
     DialogBody,
-    DialogFooter
+    DialogFooter,
+    InputError,
+    ModalDialog,
+    NoneFoundSection,
+    RelativeTime
 } from "../../base";
 import { clearError } from "../../errors/actions";
 
@@ -133,8 +132,8 @@ export class CreateSubtraction extends React.Component {
             ));
         } else {
             fileComponents = (
-                <NoneFoundSection>
-                    <Icon name="info-circle" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
+                <NoneFoundSection noun="files">
+                    <Link to="/subtraction/files">Upload some</Link>
                 </NoneFoundSection>
             );
         }

@@ -1,39 +1,25 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { LinkContainer } from "react-router-bootstrap";
 import { keys, map, reject } from "lodash-es";
+import PropTypes from "prop-types";
+import React from "react";
 import styled from "styled-components";
-import { device, Label, ListGroupItem } from "../../base";
+import { Label, LinkBox } from "../../base";
 
-const StyledChange = styled(ListGroupItem)`
+const StyledHMMItem = styled(LinkBox)`
     display: flex;
-    justify-content: space-between;
 `;
 
-const NameTag = styled.div`
-    display: flex;
-    justify-content: space-between;
-    width: 83%;
-
-    @media (max-width: ${device.tabelet}) {
-        flex-flow: row wrap;
-        flex-direction: column;
-        width: 95%;
-    }
+const HMMItemCluster = styled.strong`
+    flex: 0 0 48px;
 `;
 
-const Name = styled.div`
-    display: flex;
-    @media (max-width: ${device.tabelet}) {
-        justify-content: flex-start;
-    }
+const HMMItemName = styled.span`
+    flex: 1 0 auto;
 `;
 
-const Tag = styled.div`
+const HMMItemFamilies = styled.div`
+    align-items: center;
     display: flex;
-    @media (max-width: ${device.tabelet}) {
-        justify-content: flex-start;
-    }
+    margin-left: auto;
 `;
 
 export default function HMMItem({ cluster, families, id, names }) {
@@ -46,19 +32,13 @@ export default function HMMItem({ cluster, families, id, names }) {
     ));
 
     return (
-        <LinkContainer to={`/hmm/${id}`}>
-            <StyledChange className="spaced">
-                <span>
-                    <strong>{cluster}</strong>
-                </span>
-                <NameTag>
-                    <Name>{names[0]}</Name>
-                    <Tag>
-                        {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
-                    </Tag>
-                </NameTag>
-            </StyledChange>
-        </LinkContainer>
+        <StyledHMMItem to={`/hmm/${id}`}>
+            <HMMItemCluster>{cluster}</HMMItemCluster>
+            <HMMItemName>{names[0]}</HMMItemName>
+            <HMMItemFamilies>
+                {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
+            </HMMItemFamilies>
+        </StyledHMMItem>
     );
 }
 

@@ -4,17 +4,15 @@ exports[`<IndexSelectorItem /> should render 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
   onClick={[Function]}
 >
-  <span>
-    <Checkbox
-      checked={true}
-    />
-    <strong>
-      bar
-    </strong>
-  </span>
+  <Checkbox
+    checked={true}
+  />
+  <strong>
+    bar
+  </strong>
   <span>
     Index Version 
-    <IndexSelectorItem__Label />
+    <Label />
   </span>
 </IndexSelectorItem__StyledIndexSelectorItem>
 `;
@@ -23,17 +21,15 @@ exports[`<IndexSelectorItem /> should render when [isSelected = false] 1`] = `
 <IndexSelectorItem__StyledIndexSelectorItem
   onClick={[Function]}
 >
-  <span>
-    <Checkbox
-      checked={false}
-    />
-    <strong>
-      bar
-    </strong>
-  </span>
+  <Checkbox
+    checked={false}
+  />
+  <strong>
+    bar
+  </strong>
   <span>
     Index Version 
-    <IndexSelectorItem__Label />
+    <Label />
   </span>
 </IndexSelectorItem__StyledIndexSelectorItem>
 `;

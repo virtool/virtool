@@ -4,39 +4,22 @@ exports[`<OTUForm /> renders correctly 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
-  <Modal__DialogBody>
-    <Row
-      bsClass="row"
-      componentClass="div"
-    >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={8}
-      >
-        <InputError
-          error=""
-          label="Name"
-          name="name"
-          onChange={[MockFunction]}
-          value="test"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        md={4}
-      >
-        <InputError
-          error=""
-          label="Abbreviation"
-          name="abbreviation"
-          onChange={[MockFunction]}
-          value="T"
-        />
-      </Col>
-    </Row>
-  </Modal__DialogBody>
+  <OTUForm__OTUFormFields>
+    <InputError
+      error=""
+      label="Name"
+      name="name"
+      onChange={[MockFunction]}
+      value="test"
+    />
+    <InputError
+      error=""
+      label="Abbreviation"
+      name="abbreviation"
+      onChange={[MockFunction]}
+      value="T"
+    />
+  </OTUForm__OTUFormFields>
   <Modal__DialogFooter>
     <SaveButton
       pullRight={true}

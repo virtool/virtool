@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, Panel, ScrollList, ViewHeader } from "../../base";
+import { LoadingPlaceholder, Box, ScrollList, ViewHeader } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
@@ -25,14 +25,14 @@ class ReferenceList extends React.Component {
 
         if (!this.props.hasOfficial && this.props.canCreate) {
             installOfficialComponent = (
-                <Panel key="remote" className="card reference-remote">
+                <Box key="remote" className="card reference-remote">
                     <span>
                         <p>Official Remote Reference</p>
                         <Button bsStyle="primary" onClick={this.props.onRemote}>
                             Install
                         </Button>
                     </span>
-                </Panel>
+                </Box>
             );
         }
 

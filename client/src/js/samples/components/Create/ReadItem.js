@@ -3,7 +3,7 @@ import styled from "styled-components";
 import PropTypes from "prop-types";
 
 import { byteSize } from "../../../utils/utils";
-import { Icon, ListGroupItem } from "../../../base";
+import { Icon, BoxGroupSection } from "../../../base";
 
 const ReadIcon = styled.span`
     font-size: 24px;
@@ -15,7 +15,7 @@ const ReadTitle = styled.div`
     display: flex;
 `;
 
-const StyledReadItem = styled(ListGroupItem)`
+const StyledReadItem = styled(BoxGroupSection)`
     align-items: center;
     display: flex;
     justify-content: space-between;

@@ -53,15 +53,10 @@ exports[`<AnalysisDetail /> should render loading when [detail=null] 1`] = `<Loa
 exports[`<AnalysisDetail /> should render message when error is not null 1`] = `<NotFound />`;
 
 exports[`<AnalysisDetail /> should render pending when [detail.ready=false] 1`] = `
-<Panel>
-  <PanelBody
-    bsClass="panel"
-    collapsible={false}
-  >
-    <LoadingPlaceholder
-      margin="1.2rem"
-      message="Analysis in progress"
-    />
-  </PanelBody>
-</Panel>
+<Box>
+  <LoadingPlaceholder
+    margin="1.2rem"
+    message="Analysis in progress"
+  />
+</Box>
 `;

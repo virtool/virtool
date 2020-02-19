@@ -1,66 +1,31 @@
-import { ListGroup, ListGroupItem } from "react-bootstrap";
-import { NoneFound } from "../NoneFound";
-import { Icon } from "../Icon";
+import { NoneFound, NoneFoundBox, NoneFoundSection } from "../NoneFound";
 
 describe("<NoneFound />", () => {
-    let wrapper;
+    it("should render with [noun='files'", () => {
+        const wrapper = shallow(<NoneFound noun="files" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-    it("renders an info Icon component", () => {
-        const noun = "test";
+describe("<NoneFoundBox />", () => {
+    it("should render with [noun='boxes'", () => {
+        const wrapper = shallow(<NoneFoundBox noun="boxes" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-        wrapper = shallow(<NoneFound noun={noun} />);
-
-        expect(wrapper.find(Icon).exists()).toBe(true);
-        expect(wrapper.find(Icon).prop("name")).toEqual("info-circle");
+describe("<NoneFoundSection />", () => {
+    it("should render with [noun='sections'", () => {
+        const wrapper = shallow(<NoneFoundSection noun="sections" />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("when supplied [noListGroup=false] prop", () => {
-        const noun = "test";
-        const noListGroup = false;
-
-        beforeEach(() => {
-            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
-        });
-
-        it("renders correctly", () => {
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("renders a ListGroup", () => {
-            expect(wrapper.find(ListGroup).exists()).toBe(true);
-
-            const message =
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(1)
-                    .text() +
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(2)
-                    .text() +
-                wrapper
-                    .find(ListGroupItem)
-                    .childAt(3)
-                    .text();
-            expect(message).toEqual(` No ${noun} found`);
-        });
-    });
-
-    describe("when supplied [noListGroup=true] prop", () => {
-        const noun = "test";
-        const noListGroup = true;
-
-        beforeEach(() => {
-            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
-        });
-
-        it("renders correctly", () => {
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("renders a ListGroupItem without ListGroup container", () => {
-            expect(wrapper.find(ListGroupItem).exists()).toBe(true);
-        });
+    it("should render with [noun='sections'] and children", () => {
+        const wrapper = shallow(
+            <NoneFoundSection noun="sections">
+                <span>foo</span>
+            </NoneFoundSection>
+        );
+        expect(wrapper).toMatchSnapshot();
     });
 });

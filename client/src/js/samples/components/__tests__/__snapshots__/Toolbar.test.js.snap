@@ -29,32 +29,9 @@ exports[` 1`] = `
       </InputGroup>
     </FormGroup>
   </Toolbar>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={4}
-        >
-          <Connect(AlgorithmFilter) />
-        </Col>
-      </Row>
-    </ListGroupItem>
-  </ListGroup>
+  <Box>
+    <Connect(AlgorithmFilter) />
+  </Box>
 </div>
 `;
 
@@ -87,31 +64,8 @@ exports[` 2`] = `
       </InputGroup>
     </FormGroup>
   </Toolbar>
-  <ListGroup
-    bsClass="list-group"
-    style={
-      Object {
-        "marginBottom": "7px",
-      }
-    }
-  >
-    <ListGroupItem
-      bsClass="list-group-item"
-      listItem={false}
-    >
-      <Row
-        bsClass="row"
-        componentClass="div"
-      >
-        <Col
-          bsClass="col"
-          componentClass="div"
-          xs={4}
-        >
-          <Connect(AlgorithmFilter) />
-        </Col>
-      </Row>
-    </ListGroupItem>
-  </ListGroup>
+  <Box>
+    <Connect(AlgorithmFilter) />
+  </Box>
 </div>
 `;

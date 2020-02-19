@@ -1,10 +1,20 @@
 import React from "react";
-import { Col, Row } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { LoadingPlaceholder } from "../../base";
 import { getSoftwareUpdates } from "../actions";
 import Channels from "./Channels";
 import Releases from "./Releases";
+
+const SoftwareUpdateViewerBody = styled.div`
+    display: flex;
+    align-items: flex-start;
+`;
+
+const SoftwareUpdateViewerHeader = styled.h3`
+    font-size: 14px;
+    font-weight: bold;
+`;
 
 export class SoftwareUpdateViewer extends React.Component {
     componentDidMount() {
@@ -18,19 +28,11 @@ export class SoftwareUpdateViewer extends React.Component {
 
         return (
             <div className="settings-container">
-                <Row>
-                    <Col xs={12}>
-                        <h5>
-                            <strong>Software Updates</strong>
-                        </h5>
-                    </Col>
-                    <Col xs={12} md={8}>
-                        <Releases />
-                    </Col>
-                    <Col xs={12} md={4}>
-                        <Channels />
-                    </Col>
-                </Row>
+                <SoftwareUpdateViewerHeader>Software Updates</SoftwareUpdateViewerHeader>
+                <SoftwareUpdateViewerBody>
+                    <Releases />
+                    <Channels />
+                </SoftwareUpdateViewerBody>
             </div>
         );
     }
