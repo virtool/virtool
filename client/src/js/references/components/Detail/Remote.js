@@ -1,20 +1,26 @@
 import React from "react";
-import { ProgressBar, Row } from "react-bootstrap";
+import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
     Button,
     Flex,
     FlexItem,
     Icon,
     Loader,
-    BoxGroup,
-    BoxGroupSection,
-    BoxGroupHeader,
     RelativeTime
 } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
 import { checkUpdates, updateRemoteReference } from "../../actions";
 import { getProgress } from "../../selectors";
+
+const ReleaseButtonContainer = styled.div`
+    margin: 0;
+    padding-top: 15px;
+`;
 
 const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
     let button;
@@ -22,11 +28,11 @@ const Release = ({ release, checking, updating, onCheckUpdates, onUpdate }) => {
 
     if (!updating && release.newer) {
         button = (
-            <Row style={{ margin: "0", paddingTop: "1rem" }}>
+            <ReleaseButtonContainer>
                 <Button icon="download" bsStyle="primary" onClick={onUpdate} disabled={updating}>
                     Install
                 </Button>
-            </Row>
+            </ReleaseButtonContainer>
         );
 
         updateStats = (

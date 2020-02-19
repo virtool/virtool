@@ -1,7 +1,7 @@
 import { filter, forIn, map, sortBy, split } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, Panel } from "../../../base/index";
+import { NoneFoundBox } from "../../../base/index";
 import { getResults } from "../../selectors";
 import PathoscopeItem from "./Item";
 
@@ -20,7 +20,7 @@ export class PathoscopeList extends React.Component {
     };
 
     render() {
-        if (this.props.results.length) {
+        if (!this.props.results.length) {
             let data = filter(this.props.results, otu =>
                 this.props.filterOTUs ? otu.reads >= (otu.length * 0.8) / this.props.maxReadLength : true
             );
@@ -37,13 +37,7 @@ export class PathoscopeList extends React.Component {
         }
 
         // Show a message if no hits matched the filters.
-        return (
-            <Panel className="text-center">
-                <Panel.Body>
-                    <Icon name="info-circle" /> No hits found.
-                </Panel.Body>
-            </Panel>
-        );
+        return <NoneFoundBox noun="hits" />;
     }
 }
 
