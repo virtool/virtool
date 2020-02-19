@@ -1,8 +1,15 @@
 import React from "react";
+import styled from "styled-components";
 import { includes, map } from "lodash-es";
 import { connect } from "react-redux";
 import { updateSetting, updateSettings } from "../actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Help, InputError } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputError, SelectBox } from "../../base";
+
+const SampleGroupSelection = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 13px;
+`;
 
 const rights = [
     { label: "None", value: "" },
@@ -26,31 +33,35 @@ export const SampleRights = props => {
             <BoxGroupSection>
                 <label className="control-label" style={{ width: "100%" }}>
                     <span>Sample Group</span>
-                    <Help pullRight>
+                </label>
+                <SampleGroupSelection>
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("none")}
+                        active={props.sampleGroup === "none" ? true : ""}
+                    >
+                        <strong>None</strong>
                         <p>
-                            <strong>None</strong>: samples are assigned no group and only
+                            Samples are assigned no group and only
                             <em> all users'</em> rights apply
                         </p>
-                        <p>
-                            <strong>User's primary group</strong>: samples are automatically assigned the creating{" "}
-                            user's primary group
-                        </p>
-                        <p>
-                            <strong>Choose</strong>: samples are assigned by the user in the creation form
-                        </p>
-                    </Help>
-                </label>
+                    </SelectBox>
 
-                <InputError
-                    type="select"
-                    value={props.sampleGroup}
-                    onChange={e => props.onChangeSampleGroup(e.target.value)}
-                >
-                    <option value="none">None</option>
-                    <option value="force_choice">Force choice</option>
-                    <option value="users_primary_group">User's primary group</option>
-                </InputError>
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("force_choice")}
+                        active={props.sampleGroup === "force_choice" ? true : ""}
+                    >
+                        <strong>Force choice</strong>
+                        <p>Samples are automatically assigned the creating user's primary group</p>
+                    </SelectBox>
 
+                    <SelectBox
+                        onClick={() => props.onChangeSampleGroup("users_primary_group")}
+                        active={props.sampleGroup === "users_primary_group" ? true : ""}
+                    >
+                        <strong>User's primary group</strong>
+                        <p>Samples are assigned by the user in the creation form</p>
+                    </SelectBox>
+                </SampleGroupSelection>
                 <InputError
                     type="select"
                     label="Group Rights"
