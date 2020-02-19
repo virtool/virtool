@@ -9,7 +9,6 @@ import ReleasesList from "./List";
 const StyledReleases = styled.div`
     flex: 1 0 auto;
     margin-right: 15px;
-    padding: 10px 15px;
 `;
 
 export const Releases = ({ onShowInstall, releases }) => {

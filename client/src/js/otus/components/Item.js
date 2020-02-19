@@ -1,5 +1,4 @@
 import React from "react";
-import { LinkContainer } from "react-router-bootstrap";
 import { get } from "lodash-es";
 import styled from "styled-components";
 import { connect } from "react-redux";
@@ -25,14 +24,12 @@ const OTUItemAbbreviation = styled.div`
 `;
 
 export const OTUItem = ({ abbreviation, id, name, refId, verified }) => (
-    <LinkContainer to={`/refs/${refId}/otus/${id}`} key={id} className="spaced">
-        <StyledOTUItem>
-            <strong>{name}</strong>
-            <OTUItemAbbreviation>{abbreviation}</OTUItemAbbreviation>
+    <StyledOTUItem key={id} to={`/refs/${refId}/otus/${id}`}>
+        <strong>{name}</strong>
+        <OTUItemAbbreviation>{abbreviation}</OTUItemAbbreviation>
 
-            {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
-        </StyledOTUItem>
-    </LinkContainer>
+        {verified ? null : <Icon name="tag" pullRight tip="This OTU is unverified" />}
+    </StyledOTUItem>
 );
 
 export const mapStateToProps = (state, props) => {

@@ -18,7 +18,7 @@ import { formatIsolateName } from "../../../utils/utils";
 import { InputError, SaveButton, DialogFooter, DialogBody } from "../../../base";
 import { SourceTypeInput } from "./SourceTypeInput";
 
-const IsolateFormField = styled.div`
+const IsolateFormFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 16px;
@@ -53,7 +53,7 @@ export class IsolateForm extends React.Component {
         return (
             <form onSubmit={this.props.onSubmit}>
                 <DialogBody>
-                    <IsolateFormField>
+                    <IsolateFormFields>
                         <SourceTypeInput
                             restrictSourceTypes={this.props.restrictSourceTypes}
                             allowedSourceTypes={this.props.allowedSourceTypes}
@@ -68,7 +68,7 @@ export class IsolateForm extends React.Component {
                             disabled={this.props.sourceType === "unknown"}
                             spellCheck="off"
                         />
-                    </IsolateFormField>
+                    </IsolateFormFields>
 
                     <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
                 </DialogBody>

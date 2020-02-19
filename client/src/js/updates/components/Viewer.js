@@ -8,6 +8,7 @@ import Releases from "./Releases";
 
 const SoftwareUpdateViewerBody = styled.div`
     display: flex;
+    align-items: flex-start;
 `;
 
 const SoftwareUpdateViewerHeader = styled.h3`

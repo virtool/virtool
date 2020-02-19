@@ -5,7 +5,7 @@ exports[`<IsolateForm /> should render 1`] = `
   onSubmit={[MockFunction]}
 >
   <Modal__DialogBody>
-    <IsolateForm__IsolateFormField>
+    <IsolateForm__IsolateFormFields>
       <SourceTypeInput
         allowedSourceTypes={
           Array [
@@ -24,7 +24,7 @@ exports[`<IsolateForm /> should render 1`] = `
         spellCheck="off"
         value="Foo"
       />
-    </IsolateForm__IsolateFormField>
+    </IsolateForm__IsolateFormFields>
     <InputError
       label="Isolate Name"
       readOnly={true}

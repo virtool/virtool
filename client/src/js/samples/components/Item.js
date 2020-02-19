@@ -6,7 +6,7 @@ import { pushState } from "../../app/actions";
 import { Checkbox, Flex, FlexItem, Icon, Loader, RelativeTime, LinkBox } from "../../base";
 import { selectSample } from "../actions";
 
-const StyledItems = styled(LinkBox)`
+const SampleEntryContent = styled(LinkBox)`
     display: grid;
     grid-template-columns: 2fr 2fr 3fr auto;
     grid-gap: 30px;
@@ -102,7 +102,7 @@ class SampleEntry extends React.Component {
             <div className="sample-item-container">
                 <div className="sample-checkbox-overlay" onClick={this.handleCheck} />
                 {analyzeIcon}
-                <StyledItems to={`/samples/${this.props.id}`}>
+                <SampleEntryContent to={`/samples/${this.props.id}`}>
                     <span>
                         <Checkbox className="no-select" checked={this.props.checked} />
                         <strong style={{ marginLeft: "12px" }}>{this.props.name}</strong>
@@ -112,7 +112,7 @@ class SampleEntry extends React.Component {
                         Created <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
                     </span>
                     {spinner}
-                </StyledItems>
+                </SampleEntryContent>
             </div>
         );
     }
