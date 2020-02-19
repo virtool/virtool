@@ -25,7 +25,7 @@ const Permissions = styled.div`
     flex-direction: row;
 `;
 
-const PermissionsPostfix = styled.div`
+const PermissionsSuffix = styled.div`
     @media (max-width: 892px) {
         display: none;
     }
@@ -116,7 +116,7 @@ export class APIKey extends React.Component {
                     <strong>{this.props.apiKey.name}</strong>
                     <Permissions>
                         {permissionCount} perm
-                        <PermissionsPostfix>ission</PermissionsPostfix>
+                        <PermissionsSuffix>ission</PermissionsSuffix>
                         {permissionCount === 1 ? null : "s"}
                     </Permissions>
                     <Create>

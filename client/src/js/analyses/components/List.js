@@ -1,15 +1,15 @@
-import React from "react";
 import { get, map, sortBy } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
+import { NoneFoundBox } from "../../base/index";
+import { getCanModify } from "../../samples/selectors";
 import { routerLocationHasState } from "../../utils/utils";
 
 import { findAnalyses } from "../actions";
-import { getCanModify } from "../../samples/selectors";
-import { NoneFound } from "../../base/index";
 import CreateAnalysis from "./Create/Create";
+import AnalysisHMMAlert from "./HMMAlert";
 import AnalysisItem from "./Item";
 import AnalysesToolbar from "./Toolbar";
-import AnalysisHMMAlert from "./HMMAlert";
 
 export class AnalysesList extends React.Component {
     constructor(props) {
@@ -33,13 +33,14 @@ export class AnalysesList extends React.Component {
                 <AnalysisItem key={index} {...document} />
             ));
         } else {
-            listContent = <NoneFound noun="analyses" noListGroup />;
+            listContent = <NoneFoundBox noun="analyses" />;
         }
 
         return (
             <div>
                 <AnalysisHMMAlert />
                 <AnalysesToolbar />
+
                 {listContent}
 
                 <CreateAnalysis

@@ -40,20 +40,14 @@ exports[`<CreateSubtraction /> should render 1`] = `
         </strong>
       </h5>
       <Box__BoxGroup>
-        <NoneFoundSection>
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="info-circle"
-            pullRight={false}
-          />
-           No files found. 
+        <NoneFoundSection
+          noun="files"
+        >
           <Link
             to="/subtraction/files"
           >
             Upload some
           </Link>
-          .
         </NoneFoundSection>
       </Box__BoxGroup>
       <div

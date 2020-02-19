@@ -58,4 +58,8 @@ exports[`<IndexSelectorList /> should render when [error.length = 0] 1`] = `
 </Box__BoxGroup>
 `;
 
-exports[`<IndexSelectorList /> should render when [indexes.length = 0] 1`] = `<NoneFound />`;
+exports[`<IndexSelectorList /> should render when [indexes.length = 0] 1`] = `
+<NoneFoundBox
+  noun="built references"
+/>
+`;

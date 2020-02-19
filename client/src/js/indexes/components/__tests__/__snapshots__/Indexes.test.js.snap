@@ -31,7 +31,7 @@ exports[`<Indexes /> should render with empty documents array 1`] = `
   <Connect(ReferenceDetailTabs) />
   <Connect(RebuildAlert) />
   <Connect(RebuildIndex) />
-  <NoneFound
+  <NoneFoundBox
     noun="indexes"
   />
   <ScrollList

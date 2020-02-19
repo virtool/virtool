@@ -1,7 +1,7 @@
 import { isEqual } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFound, ScrollList, ViewHeader, WarningAlert } from "../../base";
+import { Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, WarningAlert } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 import CreateSubtraction from "./Create";
@@ -43,11 +43,7 @@ export class SubtractionList extends React.Component {
                 />
             );
         } else {
-            subtractionComponents = (
-                <div className="list-group">
-                    <NoneFound noun="subtractions" noListGroup />
-                </div>
-            );
+            subtractionComponents = <NoneFoundBox noun="subtractions" />;
         }
 
         let alert;

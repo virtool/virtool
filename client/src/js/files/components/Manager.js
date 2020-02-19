@@ -1,7 +1,7 @@
 import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFound, ScrollList, UploadBar, ViewHeader, WarningAlert } from "../../base";
+import { Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, UploadBar, ViewHeader, WarningAlert } from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
 import { filesSelector } from "../selectors";
@@ -36,7 +36,7 @@ class FileManager extends React.Component {
             toolbar = <UploadBar onDrop={this.handleDrop} />;
         } else {
             toolbar = (
-                <WarningAlert level>
+                <WarningAlert>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to upload files.</strong>
@@ -46,13 +46,18 @@ class FileManager extends React.Component {
             );
         }
 
+        let noneFound;
+
+        if (!this.props.documents.length) {
+            noneFound = <NoneFoundBox noun="files" />;
+        }
+
         return (
             <div>
                 <ViewHeader title={`${titleType} Files`} totalCount={this.props.total_count} />
 
                 {toolbar}
-
-                {this.props.documents.length ? null : <NoneFound noun="files" />}
+                {noneFound}
 
                 <ScrollList
                     documents={this.props.documents}

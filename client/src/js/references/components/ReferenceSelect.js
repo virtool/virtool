@@ -1,7 +1,7 @@
 import { map } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { BoxGroup, NoneFound } from "../../base";
+import { BoxGroup, NoneFoundBox } from "../../base";
 import { ReferenceSelectItem } from "./ReferenceSelectItem";
 
 const ReferenceSelectList = styled(BoxGroup)`
@@ -27,7 +27,7 @@ export const ReferenceSelect = ({ references, hasError, selected, onSelect }) =>
                     ))}
                 </ReferenceSelectList>
             ) : (
-                <NoneFound noun="source references" />
+                <NoneFoundBox noun="source references" />
             )}
         </div>
     );

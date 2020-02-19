@@ -1,46 +1,31 @@
-import { NoneFound, StyledItem } from "../NoneFound";
-import { Icon } from "../Icon";
+import { NoneFound, NoneFoundBox, NoneFoundSection } from "../NoneFound";
 
 describe("<NoneFound />", () => {
-    let wrapper;
+    it("should render with [noun='files'", () => {
+        const wrapper = shallow(<NoneFound noun="files" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-    it("renders an info Icon component", () => {
-        const noun = "test";
+describe("<NoneFoundBox />", () => {
+    it("should render with [noun='boxes'", () => {
+        const wrapper = shallow(<NoneFoundBox noun="boxes" />);
+        expect(wrapper).toMatchSnapshot();
+    });
+});
 
-        wrapper = shallow(<NoneFound noun={noun} />);
-
-        expect(wrapper.find(Icon).exists()).toBe(true);
-        expect(wrapper.find(Icon).prop("name")).toEqual("info-circle");
+describe("<NoneFoundSection />", () => {
+    it("should render with [noun='sections'", () => {
+        const wrapper = shallow(<NoneFoundSection noun="sections" />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("when supplied [noListGroup=false] prop", () => {
-        const noun = "test";
-        const noListGroup = false;
-
-        beforeEach(() => {
-            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
-        });
-
-        it("renders correctly", () => {
-            expect(wrapper).toMatchSnapshot();
-        });
-    });
-
-    describe("when supplied [noListGroup=true] prop", () => {
-        const noun = "test";
-        const noListGroup = true;
-
-        beforeEach(() => {
-            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
-        });
-
-        it("renders correctly", () => {
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("renders a Box without ListGroup container", () => {
-            expect(wrapper.find(StyledItem).exists()).toBe(true);
-        });
+    it("should render with [noun='sections'] and children", () => {
+        const wrapper = shallow(
+            <NoneFoundSection noun="sections">
+                <span>foo</span>
+            </NoneFoundSection>
+        );
+        expect(wrapper).toMatchSnapshot();
     });
 });

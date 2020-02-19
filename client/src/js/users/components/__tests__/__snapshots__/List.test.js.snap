@@ -2,10 +2,18 @@
 
 exports[`<UsersList /> should render 1`] = `
 <ScrollList
-  documents={Array []}
+  documents={
+    Array [
+      Object {
+        "id": "fred",
+      },
+    ]
+  }
   onLoadNextPage={[Function]}
   page={2}
   pageCount={5}
   renderRow={[Function]}
 />
 `;
+
+exports[`<UsersList /> should render when [documents=null] 1`] = `<LoadingPlaceholder />`;

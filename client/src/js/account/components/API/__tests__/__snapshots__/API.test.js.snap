@@ -2,19 +2,7 @@
 
 exports[`<API /> should render two API keys 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    direction="row"
-    justifyContent="flex-start"
-    style={
-      Object {
-        "marginBottom": "10px",
-        "marginTop": "-7px",
-      }
-    }
-    wrap="nowrap"
-  >
+  <API__APIKeysHeader>
     <FlexItem
       alignSelf={null}
       basis="auto"
@@ -31,64 +19,44 @@ exports[`<API /> should render two API keys 1`] = `
         <span>
           Manage API keys for accessing the 
         </span>
-        <a
-          href="https://docs.virtool.ca/web-api/authentication.html"
-          rel="noopener noreferrer"
-          target="_blank"
+        <ExternalLink
+          href="https://www.virtool.ca/docs/web-api/authentication.html"
         >
           Virtool API
-        </a>
+        </ExternalLink>
         <span>
           .
         </span>
       </div>
     </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      pad={7}
-      shrink={0}
+    <Link
+      to={
+        Object {
+          "state": Object {
+            "createAPIKey": true,
+          },
+        }
+      }
     >
-      <withRouter(LinkContainer)
-        className="pull-right"
-        to={
-          Object {
-            "state": Object {
-              "createAPIKey": true,
-            },
-          }
-        }
-      >
-        <Button
-          bsStyle="primary"
-          icon="key"
-          pullRight={true}
-          tipPlacement="top"
-        >
-          Create
-        </Button>
-      </withRouter(LinkContainer)>
-    </FlexItem>
-  </Flex>
-  <div>
-    <Connect(APIKey)
-      apiKey={
-        Object {
-          "id": "foo",
-        }
+      Create
+    </Link>
+  </API__APIKeysHeader>
+  <Connect(APIKey)
+    apiKey={
+      Object {
+        "id": "foo",
       }
-      key="foo"
-    />
-    <Connect(APIKey)
-      apiKey={
-        Object {
-          "id": "bar",
-        }
+    }
+    key="foo"
+  />
+  <Connect(APIKey)
+    apiKey={
+      Object {
+        "id": "bar",
       }
-      key="bar"
-    />
-  </div>
+    }
+    key="bar"
+  />
   <Connect(CreateAPIKey) />
 </div>
 `;
@@ -101,19 +69,7 @@ exports[`<API /> should render when loading API keys 1`] = `
 
 exports[`<API /> should render with 0 API keys 1`] = `
 <div>
-  <Flex
-    alignContent="stretch"
-    alignItems="center"
-    direction="row"
-    justifyContent="flex-start"
-    style={
-      Object {
-        "marginBottom": "10px",
-        "marginTop": "-7px",
-      }
-    }
-    wrap="nowrap"
-  >
+  <API__APIKeysHeader>
     <FlexItem
       alignSelf={null}
       basis="auto"
@@ -130,51 +86,31 @@ exports[`<API /> should render with 0 API keys 1`] = `
         <span>
           Manage API keys for accessing the 
         </span>
-        <a
-          href="https://docs.virtool.ca/web-api/authentication.html"
-          rel="noopener noreferrer"
-          target="_blank"
+        <ExternalLink
+          href="https://www.virtool.ca/docs/web-api/authentication.html"
         >
           Virtool API
-        </a>
+        </ExternalLink>
         <span>
           .
         </span>
       </div>
     </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={1}
-      pad={7}
-      shrink={0}
-    >
-      <withRouter(LinkContainer)
-        className="pull-right"
-        to={
-          Object {
-            "state": Object {
-              "createAPIKey": true,
-            },
-          }
+    <Link
+      to={
+        Object {
+          "state": Object {
+            "createAPIKey": true,
+          },
         }
-      >
-        <Button
-          bsStyle="primary"
-          icon="key"
-          pullRight={true}
-          tipPlacement="top"
-        >
-          Create
-        </Button>
-      </withRouter(LinkContainer)>
-    </FlexItem>
-  </Flex>
-  <div>
-    <NoneFound
-      noun="API keys"
-    />
-  </div>
+      }
+    >
+      Create
+    </Link>
+  </API__APIKeysHeader>
+  <NoneFoundBox
+    noun="API keys"
+  />
   <Connect(CreateAPIKey) />
 </div>
 `;

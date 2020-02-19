@@ -1,7 +1,7 @@
 import { map, some } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { NoneFound, BoxGroup } from "../../../base";
+import { BoxGroup, NoneFoundBox } from "../../../base";
 import { IndexSelectorItem } from "./IndexSelectorItem";
 
 const StyledIndexSelectorList = styled.div`
@@ -25,5 +25,5 @@ export const IndexSelectorList = ({ error, indexes, selected, onSelect }) => {
         );
     }
 
-    return <NoneFound />;
+    return <NoneFoundBox noun="built references" />;
 };

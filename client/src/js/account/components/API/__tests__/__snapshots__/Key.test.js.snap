@@ -12,9 +12,9 @@ exports[`<APIKey /> should render when [state.changed=true] 1`] = `
     <Key__Permissions>
       1
        perm
-      <Key__PermissionsPostfix>
+      <Key__PermissionsSuffix>
         ission
-      </Key__PermissionsPostfix>
+      </Key__PermissionsSuffix>
     </Key__Permissions>
     <Key__Create>
       Created 
@@ -41,9 +41,9 @@ exports[`<APIKey /> should render when collapsed 1`] = `
     <Key__Permissions>
       1
        perm
-      <Key__PermissionsPostfix>
+      <Key__PermissionsSuffix>
         ission
-      </Key__PermissionsPostfix>
+      </Key__PermissionsSuffix>
     </Key__Permissions>
     <Key__Create>
       Created 
@@ -70,9 +70,9 @@ exports[`<APIKey /> should render when expanded 1`] = `
     <Key__Permissions>
       1
        perm
-      <Key__PermissionsPostfix>
+      <Key__PermissionsSuffix>
         ission
-      </Key__PermissionsPostfix>
+      </Key__PermissionsSuffix>
     </Key__Permissions>
     <Key__Create>
       Created 

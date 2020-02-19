@@ -2,7 +2,7 @@ import { forEach, includes, pull, slice } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import CreateAnalysis from "../../analyses/components/Create/Create";
-import { LoadingPlaceholder, NoneFound, ScrollList, ViewHeader } from "../../base";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
 import { findHmms } from "../../hmm/actions";
 import { listReadyIndexes } from "../../indexes/actions";
 import { findSamples } from "../actions";
@@ -75,10 +75,10 @@ export class SamplesList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let noSamples;
+        let noneFound;
 
         if (!this.props.documents.length) {
-            noSamples = <NoneFound key="noSample" noun="samples" noListGroup />;
+            noneFound = <NoneFoundBox key="noSample" noun="samples" />;
         }
 
         const { term, pathoscope, nuvs } = this.props;
@@ -89,7 +89,7 @@ export class SamplesList extends React.Component {
 
                 <SampleToolbar />
 
-                {noSamples || (
+                {noneFound || (
                     <ScrollList
                         documents={this.props.documents}
                         page={this.props.page}

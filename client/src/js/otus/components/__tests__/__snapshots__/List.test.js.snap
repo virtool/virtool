@@ -110,8 +110,8 @@ exports[`<OTUsList /> should render when [this.props.documents.length == false] 
     term="bar"
     verified={true}
   />
-  <NoneFound
-    noun="otus"
+  <NoneFoundBox
+    noun="OTUs"
   />
   <ScrollList
     documents={false}

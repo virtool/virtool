@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { ScrollList } from "../../base";
+import { LoadingPlaceholder, NoneFoundBox, ScrollList } from "../../base";
 import { findUsers } from "../actions";
 import { getTerm } from "../selectors";
 import UserItem from "./Item";
@@ -23,15 +23,23 @@ export class UsersList extends React.Component {
     renderRow = index => <UserItem key={index} index={index} />;
 
     render() {
-        return (
-            <ScrollList
-                documents={this.props.documents}
-                onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
-                page={this.props.page}
-                pageCount={this.props.page_count}
-                renderRow={this.renderRow}
-            />
-        );
+        if (this.props.documents === null) {
+            return <LoadingPlaceholder />;
+        }
+
+        if (this.props.documents.length) {
+            return (
+                <ScrollList
+                    documents={this.props.documents}
+                    onLoadNextPage={page => this.props.onLoadNextPage(this.props.term, page)}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                    renderRow={this.renderRow}
+                />
+            );
+        }
+
+        return <NoneFoundBox noun="users" />;
     }
 }
 
