@@ -28,7 +28,7 @@ exports[` 1`] = `
         />
       </InputGroup>
     </FormGroup>
-  </div>
+  </Toolbar>
   <Box>
     <Connect(AlgorithmFilter) />
   </Box>
@@ -63,7 +63,7 @@ exports[` 2`] = `
         />
       </InputGroup>
     </FormGroup>
-  </div>
+  </Toolbar>
   <Box>
     <Connect(AlgorithmFilter) />
   </Box>
