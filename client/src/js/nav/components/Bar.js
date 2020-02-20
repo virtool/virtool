@@ -3,10 +3,11 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 import { logout } from "../../account/actions";
-import { DropDown, DropDownItem, AutoProgressBar, Icon, VTLogo } from "../../base";
+import { AutoProgressBar, Icon, VTLogo } from "../../base";
 import { isHomeActive } from "../utils";
 import { getSoftwareUpdates } from "../../updates/actions";
 import Update from "./Update";
+import { IconDropDown, DropDownItem } from "./IconDropDown";
 
 const NavBarItem = styled(NavLink)`
     color: white;
@@ -110,7 +111,7 @@ export class Bar extends React.Component {
                         <Icon name="book" />
                     </NavBarItem>
 
-                    <DropDown menuName={dropdownTitle}>
+                    <IconDropDown menuName={dropdownTitle}>
                         <DropDownItem to="/account">Account</DropDownItem>
 
                         {this.props.administrator ? (
@@ -127,7 +128,7 @@ export class Bar extends React.Component {
                         <DropDownItem to="#" onClick={this.props.logout}>
                             Logout
                         </DropDownItem>
-                    </DropDown>
+                    </IconDropDown>
 
                     <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
                 </NavBarRight>

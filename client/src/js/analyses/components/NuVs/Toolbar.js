@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import { DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, Toolbar } from "../../../base";
+import { Button, Icon, Toolbar, ButtonDropDown, DropDownItem } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
 import { getFuse, getResults } from "../../selectors";
 
@@ -29,24 +29,19 @@ const SortDropdownButtonTitle = ({ sortKey }) => (
     </span>
 );
 
-const StyledSortDropdownButton = styled(DropdownButton)`
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    width: 132px;
-`;
-
 const SortDropdownButton = ({ sortKey, onSelect }) => (
-    <StyledSortDropdownButton
+    <ButtonDropDown
         id="nuvs-sort-dropdown"
-        key={sortKey}
-        title={<SortDropdownButtonTitle sortKey={sortKey} />}
-        onSelect={onSelect}
+        menuName={
+            <div>
+                <SortDropdownButtonTitle sortKey={sortKey} /> <Icon name="caret-down" style={{ marginLeft: "6px" }} />
+            </div>
+        }
     >
-        <MenuItem eventKey="length">Length</MenuItem>
-        <MenuItem eventKey="e">E-Value</MenuItem>
-        <MenuItem eventKey="orfs">ORFs</MenuItem>
-    </StyledSortDropdownButton>
+        <DropDownItem onClick={() => onSelect("length")}>Length</DropDownItem>
+        <DropDownItem onClick={() => onSelect("e")}>E-Value</DropDownItem>
+        <DropDownItem onClick={() => onSelect("orfs")}>ORFs</DropDownItem>
+    </ButtonDropDown>
 );
 
 const NuVsToolbar = ({
