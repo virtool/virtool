@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { Button, Icon, Toolbar, ButtonDropDown, DropDownItem } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
@@ -37,6 +37,8 @@ const SortDropdownButton = ({ sortKey, onSelect }) => (
                 <SortDropdownButtonTitle sortKey={sortKey} /> <Icon name="caret-down" style={{ marginLeft: "6px" }} />
             </div>
         }
+        right="317px"
+        top="295px"
     >
         <DropDownItem onClick={() => onSelect("length")}>Length</DropDownItem>
         <DropDownItem onClick={() => onSelect("e")}>E-Value</DropDownItem>

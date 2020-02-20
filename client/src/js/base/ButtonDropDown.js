@@ -20,8 +20,9 @@ export const DropDownContent = styled.div`
     text-decoration: none;
     background-color: white;
     box-shadow: 0 8px 16px 0px rgba(0, 0, 0, 0.2);
-    top: 295px;
-    right: 317px;
+
+    top: ${props => props.top};
+    right: ${props => props.right};
     border: 1px solid rgba(173, 173, 173, 173);
 `;
 
@@ -74,7 +75,9 @@ export class ButtonDropDown extends React.Component {
                     {this.props.menuName}
                 </a>
 
-                <DropDownContent visible={this.state.visible}>{this.props.children}</DropDownContent>
+                <DropDownContent top={this.props.top} right={this.props.right} visible={this.state.visible}>
+                    {this.props.children}
+                </DropDownContent>
             </DropDownMenu>
         );
     }

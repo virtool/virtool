@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Dropdown, DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, Flex, FlexItem, Icon, Toolbar } from "../../../base";
+import { Button, Checkbox, Flex, FlexItem, Icon, Toolbar, DropDownItem, ButtonDropDown } from "../../../base";
 import {
     collapseAnalysis,
     setAnalysisSortKey,
@@ -76,36 +76,21 @@ export const PathoscopeToolbar = ({
                 onClick={onToggleShowReads}
             />
 
-            <Dropdown
-                id="pathoscope-filter-dropdown"
-                onSelect={onFilter}
-                className="split-dropdown"
-                pullRight
-                style={{ zIndex: 1 }}
-            >
-                <Button title="Filter" tip="Filter Results" onClick={onFilter} active={filterOTUs || filterIsolates}>
-                    <Icon name="filter" />
-                </Button>
-                <Dropdown.Toggle />
-                <Dropdown.Menu>
-                    <MenuItem eventKey="OTUs">
-                        <Flex>
-                            <FlexItem>
-                                <Checkbox checked={filterOTUs} />
-                            </FlexItem>
-                            <FlexItem pad={5}>OTUs</FlexItem>
-                        </Flex>
-                    </MenuItem>
-                    <MenuItem eventKey="isolates">
-                        <Flex>
-                            <FlexItem>
-                                <Checkbox checked={filterIsolates} />
-                            </FlexItem>
-                            <FlexItem pad={5}>Isolates</FlexItem>
-                        </Flex>
-                    </MenuItem>
-                </Dropdown.Menu>
-            </Dropdown>
+            <Button title="Filter" tip="Filter Results" onClick={onFilter} active={filterOTUs || filterIsolates}>
+                <Icon name="filter" />
+            </Button>
+
+            <ButtonDropDown menuName=<Icon name="sort-down" size="sm" /> right="131px" top="495px">
+                <DropDownItem onClick={() => onFilter("OTUs")}>
+                    <Checkbox checked={filterOTUs} />
+                    OTUs
+                </DropDownItem>
+
+                <DropDownItem onClick={() => onFilter("isolates")}>
+                    <Checkbox checked={filterIsolates} />
+                    Isolates
+                </DropDownItem>
+            </ButtonDropDown>
 
             <DropdownButton
                 id="download-dropdown"
