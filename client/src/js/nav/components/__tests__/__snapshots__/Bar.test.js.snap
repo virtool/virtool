@@ -64,7 +64,7 @@ exports[`<Bar /> should render 1`] = `
         pullRight={false}
       />
     </Bar__NavBarItem>
-    <DropDown
+    <IconDropDown
       menuName={
         <span>
           <Icon
@@ -85,30 +85,30 @@ exports[`<Bar /> should render 1`] = `
         </span>
       }
     >
-      <DropDown__DropDownItem
+      <IconDropDown__DropDownItem
         to="/account"
       >
         Account
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </IconDropDown__DropDownItem>
+      <IconDropDown__DropDownItem
         to="/administration"
       >
         Administration 
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </IconDropDown__DropDownItem>
+      <IconDropDown__DropDownItem
         rel="noopener noreferrer"
         target="_blank"
         to="//gitreports.com/issue/virtool/virtool"
       >
         Report Issue
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </IconDropDown__DropDownItem>
+      <IconDropDown__DropDownItem
         onClick={[MockFunction]}
         to="#"
       >
         Logout
-      </DropDown__DropDownItem>
-    </DropDown>
+      </IconDropDown__DropDownItem>
+    </IconDropDown>
     <AutoProgressBar
       active={false}
       affixed={true}

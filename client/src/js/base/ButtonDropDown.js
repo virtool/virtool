@@ -12,7 +12,7 @@ export const DropDownItem = styled.div`
     }
 `;
 
-export const DropDownContent = styled.div`
+const DropDownContent = styled.div`
     display: ${props => (props.visible ? "flex" : "none")};
 
     position: absolute;

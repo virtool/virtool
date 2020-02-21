@@ -27,11 +27,7 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
       />
     </InputGroup>
   </FormGroup>
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="job-clear-dropdown"
-    pullRight={true}
-  >
+  <Toolbar__StyledToolbar>
     <Button
       bsStyle="default"
       onClick={[Function]}
@@ -46,39 +42,31 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
         pullRight={false}
       />
     </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
+    <ButtonDropDown
+      menuName={
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="sort-down"
+          pullRight={false}
+          size="sm"
+        />
+      }
+      right="35px"
+      top="170px"
     >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="failed"
-        header={false}
-        onSelect={[MockFunction]}
+      <ButtonDropDown__DropDownItem
+        onClick={[Function]}
       >
         Failed
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="complete"
-        header={false}
-        onSelect={[MockFunction]}
+      </ButtonDropDown__DropDownItem>
+      <ButtonDropDown__DropDownItem
+        onClick={[Function]}
       >
         Complete
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+      </ButtonDropDown__DropDownItem>
+    </ButtonDropDown>
+  </Toolbar__StyledToolbar>
 </Toolbar>
 `;
 

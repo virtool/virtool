@@ -4,35 +4,37 @@
  */
 import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearJobs, findJobs } from "../actions";
-import { Icon, Button, Toolbar } from "../../base";
+import { Icon, Button, Toolbar, ButtonDropDown, DropDownItem } from "../../base";
 
 /**
  * A toolbar component for the jobs list view.
  * @param props
  * @returns {*}
  */
+const StyledToolbar = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+`;
+
 export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => {
     let removalDropdown;
 
     if (canRemove) {
         removalDropdown = (
-            <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
+            <StyledToolbar>
                 <Button onClick={() => onClear("finished")} tip="Clear Finished">
                     <Icon name="trash" />
                 </Button>
-                <Dropdown.Toggle />
-                <Dropdown.Menu>
-                    <MenuItem eventKey="failed" onSelect={onClear}>
-                        Failed
-                    </MenuItem>
-                    <MenuItem eventKey="complete" onSelect={onClear}>
-                        Complete
-                    </MenuItem>
-                </Dropdown.Menu>
-            </Dropdown>
+
+                <ButtonDropDown menuName=<Icon name="sort-down" size="sm" /> right="35px" top="170px">
+                    <DropDownItem onClick={() => onClear("failed")}>Failed</DropDownItem>
+                    <DropDownItem onClick={() => onClear("complete")}>Complete</DropDownItem>
+                </ButtonDropDown>
+            </StyledToolbar>
         );
     }
 
