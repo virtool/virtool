@@ -1,8 +1,8 @@
 import React from "react";
 import styled from "styled-components";
-import { Dropdown, DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import { DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, Flex, FlexItem, Icon, Toolbar, DropDownItem, ButtonDropDown } from "../../../base";
+import { Button, Checkbox, Icon, Toolbar, DropDownItem, ButtonDropDown } from "../../../base";
 import {
     collapseAnalysis,
     setAnalysisSortKey,

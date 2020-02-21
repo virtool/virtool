@@ -1,3 +1,4 @@
+import { DropDownItem } from "../../../../base";
 import {
     mapDispatchToProps,
     mapStateToProps,
@@ -28,9 +29,9 @@ describe("<ReferenceDetailHeaderExportButton />", () => {
         const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
         expect(props.onSelect).not.toHaveBeenCalled();
         wrapper
-            .find("MenuItem")
+            .find(DropDownItem)
             .at(0)
-            .simulate("select");
+            .simulate("click");
         expect(props.onSelect).toHaveBeenCalled();
     });
 });

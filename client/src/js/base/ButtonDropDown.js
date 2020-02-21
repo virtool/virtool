@@ -2,10 +2,13 @@ import React from "react";
 import styled from "styled-components";
 
 export const DropDownItem = styled.div`
-    padding: 10px 15px;
+    padding: 10px 17px;
+    padding: ${props => (props.type === "icon" ? "10px" : "")};
     color: black;
     min-width: 160px;
     cursor: pointer;
+
+    font-size: 13px;
 
     &:hover {
         background-color: #f5f5f5;
@@ -14,7 +17,6 @@ export const DropDownItem = styled.div`
 
 const DropDownContent = styled.div`
     display: ${props => (props.visible ? "flex" : "none")};
-
     position: absolute;
     flex-direction: column;
     text-decoration: none;
@@ -30,9 +32,10 @@ const DropDownMenu = styled.div`
     display: flex;
     justify-content: center;
 
-    border: 1px solid #adadad;
-    background-color: ${props => (props.visible ? "#e6e6e6" : "white")};
-    box-shadow: ${props => (props.visible ? "inset 0 3px 5px rgba(0, 0, 0, 0.125)" : "")};
+    border: ${props => (props.type === "icon" ? "" : "1px solid #adadad")};
+    background-color: ${props => (props.visible && props.type !== "icon" ? "#e6e6e6" : "white")};
+    box-shadow: ${props => (props.visible && props.type !== "icon" ? "inset 0 3px 5px rgba(0, 0, 0, 0.125)" : "")};
+
     & > a {
         align-items: center;
         display: flex;
@@ -70,12 +73,17 @@ export class ButtonDropDown extends React.Component {
 
     render() {
         return (
-            <DropDownMenu visible={this.state.visible}>
+            <DropDownMenu visible={this.state.visible} type={this.props.type}>
                 <a onClick={this.handleClick} onBlur={this.handleBlur} href="#">
                     {this.props.menuName}
                 </a>
 
-                <DropDownContent top={this.props.top} right={this.props.right} visible={this.state.visible}>
+                <DropDownContent
+                    top={this.props.top}
+                    right={this.props.right}
+                    visible={this.state.visible}
+                    border={this.props.border}
+                >
                     {this.props.children}
                 </DropDownContent>
             </DropDownMenu>

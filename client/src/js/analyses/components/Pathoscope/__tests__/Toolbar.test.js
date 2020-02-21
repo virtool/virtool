@@ -1,3 +1,4 @@
+import { DropDownItem } from "../../../../base";
 import {
     COLLAPSE_ANALYSIS,
     SET_ANALYSIS_SORT_KEY,
@@ -87,9 +88,9 @@ describe("<Toolbar />", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onFilter).not.toHaveBeenCalled();
         wrapper
-            .find("#pathoscope-filter-dropdown")
-            .props()
-            .onSelect("OTUs");
+            .find(DropDownItem)
+            .at(0)
+            .simulate("click");
         expect(props.onFilter).toHaveBeenCalledWith("OTUs");
     });
 

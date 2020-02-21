@@ -29,15 +29,17 @@ exports[`<ReferenceDetailHeader/> should render 1`] = `
         </strong>
       </Flex>
     </FlexItem>
-    <ReferenceDetailHeaderIcon
-      canModify={true}
-      isRemote={true}
-      onEdit={[MockFunction]}
-    />
-    <ReferenceDetailHeaderExportButton
-      isClone={true}
-      onSelect={[Function]}
-    />
+    <Header__StyledHeaderIcons>
+      <ReferenceDetailHeaderIcon
+        canModify={true}
+        isRemote={true}
+        onEdit={[MockFunction]}
+      />
+      <ReferenceDetailHeaderExportButton
+        isClone={true}
+        onSelect={[Function]}
+      />
+    </Header__StyledHeaderIcons>
   </Flex>
   <div
     className="text-muted"
@@ -86,6 +88,7 @@ exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
         </strong>
       </Flex>
     </FlexItem>
+    <Header__StyledHeaderIcons />
   </Flex>
   <div
     className="text-muted"
@@ -106,80 +109,63 @@ exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
 `;
 
 exports[`<ReferenceDetailHeaderExportButton /> should render 1`] = `
-<Header__ExportDropdown
-  id="dropdown-export-reference"
+<ButtonDropDown
+  menuName={
+    <ForwardRef(Header__DownloadIcon)
+      name="download"
+      tip="Options"
+    />
+  }
+  right="34px"
+  top="115px"
+  type="icon"
 >
-  <CustomToggle
-    bsRole="toggle"
-  />
-  <DropdownMenu
-    bsClass="dropdown-menu"
-    bsRole="menu"
-    pullRight={false}
+  <ButtonDropDown__DropDownItem
+    onClick={[Function]}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="built"
-      header={false}
-      onSelect={[MockFunction]}
-    >
-      <div>
-        Normal
-      </div>
-      <small>
-        Export the reference with the local OTU IDs.
-      </small>
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="remote"
-      header={false}
-      onSelect={[MockFunction]}
-    >
-      <div>
-        Remote
-      </div>
-      <small>
-        Export the reference using the OTU IDs from the source reference for this clone.
-      </small>
-    </MenuItem>
-  </DropdownMenu>
-</Header__ExportDropdown>
+    <div>
+      Normal
+    </div>
+    <small>
+      Export the reference with the local OTU IDs.
+    </small>
+  </ButtonDropDown__DropDownItem>
+  <ButtonDropDown__DropDownItem
+    onSelect={[Function]}
+  >
+    <div>
+      Remote
+    </div>
+    <small>
+      Export the reference using the OTU IDs from the source reference for this clone.
+    </small>
+  </ButtonDropDown__DropDownItem>
+</ButtonDropDown>
 `;
 
 exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = false] 1`] = `
-<Header__ExportDropdown
-  id="dropdown-export-reference"
+<ButtonDropDown
+  menuName={
+    <ForwardRef(Header__DownloadIcon)
+      name="download"
+      tip="Options"
+    />
+  }
+  right="34px"
+  top="115px"
+  type="icon"
 >
-  <CustomToggle
-    bsRole="toggle"
-  />
-  <DropdownMenu
-    bsClass="dropdown-menu"
-    bsRole="menu"
-    pullRight={false}
+  <ButtonDropDown__DropDownItem
+    onClick={[Function]}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="built"
-      header={false}
-      onSelect={[MockFunction]}
-    >
-      <div>
-        Normal
-      </div>
-      <small>
-        Export the reference with the local OTU IDs.
-      </small>
-    </MenuItem>
-  </DropdownMenu>
-</Header__ExportDropdown>
+    <div>
+      Normal
+    </div>
+    <small>
+      Export the reference with the local OTU IDs.
+    </small>
+  </ButtonDropDown__DropDownItem>
+</ButtonDropDown>
 `;
 
 exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `

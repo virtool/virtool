@@ -1,34 +1,17 @@
 import { endsWith } from "lodash-es";
 import React, { useCallback } from "react";
 import styled from "styled-components";
-import { Dropdown, MenuItem } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { Flex, FlexItem, Icon, RelativeTime, ViewHeader } from "../../../base";
+import { Flex, FlexItem, Icon, RelativeTime, ViewHeader, ButtonDropDown, DropDownItem } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 
-class CustomToggle extends React.Component {
-    render() {
-        return (
-            <Icon
-                name="download"
-                tip="Options"
-                onClick={this.props.onClick}
-                style={{ fontSize: "65%", paddingLeft: "5px" }}
-            />
-        );
-    }
-}
-
-const ExportDropdown = styled(Dropdown)`
-    display: inline;
-    line-height: 0.5;
-
-    .dropdown-menu {
-        right: 0;
-        left: auto;
-        min-width: auto;
-    }
+const StyledHeaderIcons = styled.div`
+    display: flex;
+`;
+const DownloadIcon = styled(Icon)`
+    color: grey;
+    font-size: 17px;
 `;
 
 export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
@@ -36,24 +19,21 @@ export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
 
     if (isClone) {
         remoteMenuItem = (
-            <MenuItem eventKey="remote" onSelect={onSelect}>
+            <DropDownItem onSelect={() => onSelect("remote")}>
                 <div>Remote</div>
                 <small>Export the reference using the OTU IDs from the source reference for this clone.</small>
-            </MenuItem>
+            </DropDownItem>
         );
     }
 
     return (
-        <ExportDropdown id="dropdown-export-reference">
-            <CustomToggle bsRole="toggle" />
-            <Dropdown.Menu>
-                <MenuItem eventKey="built" onSelect={onSelect}>
-                    <div>Normal</div>
-                    <small>Export the reference with the local OTU IDs.</small>
-                </MenuItem>
-                {remoteMenuItem}
-            </Dropdown.Menu>
-        </ExportDropdown>
+        <ButtonDropDown type="icon" menuName=<DownloadIcon name="download" tip="Options" /> right="34px" top="115px">
+            <DropDownItem onClick={() => onSelect("built")}>
+                <div>Normal</div>
+                <small>Export the reference with the local OTU IDs.</small>
+            </DropDownItem>
+            {remoteMenuItem}
+        </ButtonDropDown>
     );
 };
 
@@ -107,8 +87,11 @@ export const ReferenceDetailHeader = ({
                         <strong>{name}</strong>
                     </Flex>
                 </FlexItem>
-                {headerIcon}
-                {exportButton}
+
+                <StyledHeaderIcons>
+                    {headerIcon}
+                    {exportButton}
+                </StyledHeaderIcons>
             </Flex>
             <div className="text-muted" style={{ fontSize: "12px" }}>
                 Created <RelativeTime time={createdAt} /> by {userId}

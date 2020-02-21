@@ -5,7 +5,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
+import { InputGroup, FormGroup, FormControl } from "react-bootstrap";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearJobs, findJobs } from "../actions";
 import { Icon, Button, Toolbar, ButtonDropDown, DropDownItem } from "../../base";
