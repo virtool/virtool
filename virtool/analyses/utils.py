@@ -4,6 +4,7 @@ from typing import Union
 import visvalingamwyatt as vw
 
 ALGORITHM_NAMES = (
+    "aodp",
     "nuvs",
     "pathoscope_bowtie"
 )
