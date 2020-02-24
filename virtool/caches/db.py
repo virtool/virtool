@@ -47,7 +47,7 @@ def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = Fa
     try:
         cache_id = virtool.utils.random_alphanumeric(length=8)
 
-        db.caches.insert_one({
+        document = {
             "_id": cache_id,
             "created_at": virtool.utils.timestamp(),
             "files": list(),
@@ -61,13 +61,15 @@ def create(db, sample_id: str, parameters: dict, paired: bool, legacy: bool = Fa
             "sample": {
                 "id": sample_id
             }
-        })
+        }
 
-        return cache_id
+        db.caches.insert_one(document)
+
+        return virtool.utils.base_processor(document)
 
     except pymongo.errors.DuplicateKeyError:
         # Keep trying to add the cache with new ids if the generated id is not unique.
-        return create(db, sample_id, parameters, paired, legacy, program)
+        return create(db, sample_id, parameters, paired, legacy=legacy, program=program)
 
 
 async def get(db, cache_id: str) -> dict:
