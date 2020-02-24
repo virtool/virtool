@@ -162,9 +162,7 @@ class Schema extends React.Component {
                         onHide={this.handleClose}
                         onSubmit={this.handleSubmit}
                     />
-                ) : (
-                    ""
-                )}
+                ) : null}
             </div>
         );
     }
