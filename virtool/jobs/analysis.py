@@ -414,11 +414,6 @@ def get_trimming_parameters(paired: bool, library_type: str, sample_read_length:
             "max_length": 22
         }
 
-    mode = "pe"
-
-    if not paired:
-        mode = "any"
-
     return {
         **virtool.samples.utils.TRIM_PARAMETERS,
         "min_length": min_length

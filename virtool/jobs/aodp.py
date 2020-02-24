@@ -40,7 +40,7 @@ class Job(virtool.jobs.analysis.Job):
             "references",
             self.task_args["ref_id"],
             self.task_args["index_id"],
-            "reference.fa"
+            "ref.fa"
         )
 
     def prepare_index(self):

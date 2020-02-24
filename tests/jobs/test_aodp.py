@@ -12,7 +12,7 @@ TEST_REF_PATH = os.path.join(TEST_FILES_PATH, "aodp", "reference.fa")
 @pytest.fixture
 def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_name):
     index_dir = tmpdir.mkdir("references").mkdir("foo_ref").mkdir("foo_index")
-    shutil.copy(TEST_REF_PATH, str(index_dir))
+    shutil.copy(TEST_REF_PATH, index_dir.join("ref.fa"))
 
     tmpdir.mkdir("samples").mkdir("foo_sample").mkdir("analysis").mkdir("foo_analysis")
 
@@ -37,7 +37,8 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "library_type": "amplicon",
         "paired": False,
         "quality": {
-            "count": 10000
+            "count": 10000,
+            "length": [78, 101]
         },
         "subtraction": {
             "id": "foo_subtraction"
@@ -83,19 +84,5 @@ def test_fetch_index(mock_job):
 
     assert filecmp.cmp(
         TEST_REF_PATH,
-        mock_job.params["index_path"] + ".fa",
+        mock_job.params["local_index_path"],
     )
-
-
-def test_aodp(mock_job):
-    mock_job.check_db()
-    mock_job.proc = 1
-
-    mock_job.aodp()
-
-
-
-
-
-
-

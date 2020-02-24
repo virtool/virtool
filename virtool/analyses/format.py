@@ -81,7 +81,6 @@ async def format_aodp(app, document):
 
     otu_cache = dict()
     sequence_cache = dict()
-    read_occurrences = defaultdict(int)
 
     hits = defaultdict(list)
 
@@ -96,9 +95,7 @@ async def format_aodp(app, document):
 
         otu_id = sequence["otu_id"]
 
-        try:
-            otu = otu_cache[otu_id]
-        except KeyError:
+        if otu_id not in otu_cache:
             otu = await virtool.otus.db.join_and_format(db, otu_id)
             otu_cache[otu_id] = otu
 

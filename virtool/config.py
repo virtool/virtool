@@ -120,7 +120,6 @@ LEGACY_SM_JOB_LIMIT_KEYS = (
 )
 
 LEGACY_LG_JOB_LIMIT_KEYS = (
-    "aodp",
     "pathoscope_bowtie",
     "nuvs"
 )

@@ -7,21 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_add_format_field[uvloop] 1'] = [
-    {
-        '_id': 'foo',
-        'format': 'fastq'
-    },
-    {
-        '_id': 'bar',
-        'format': 'fastq'
-    },
-    {
-        '_id': 'baz',
-        'format': 'fasta'
-    }
-]
-
 snapshots['test_add_missing_field[uvloop] 1'] = [
     {
         '_id': 'foo',
