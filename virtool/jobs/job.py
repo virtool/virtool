@@ -187,7 +187,7 @@ class Job(multiprocessing.Process):
 
         self.flush_log()
 
-    def run_subprocess(self, command: list, stdout_handler=None, stderr_handler=None, env: Optional[dict] = None):
+    def run_subprocess(self, command: list, stdout_handler=None, stderr_handler=None, env: Optional[dict] = None, cwd: Optional[str] = None):
         """
         A utility method for running a the passed `subprocess` command.
 
@@ -214,7 +214,7 @@ class Job(multiprocessing.Process):
             def _stderr_handler(line):
                 self.add_log(line, indent=1)
 
-        self._process = subprocess.Popen(command, stdout=stdout, stderr=subprocess.PIPE, env=env)
+        self._process = subprocess.Popen(command, stdout=stdout, stderr=subprocess.PIPE, env=env, cwd=cwd)
 
         stdout_queue = None
         stdout_thread = None
