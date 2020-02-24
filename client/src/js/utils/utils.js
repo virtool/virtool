@@ -169,6 +169,7 @@ export const getTargetChange = target => ({
  * @type {object}
  */
 export const taskDisplayNames = {
+    aodp: "AODP",
     create_sample: "Create Sample",
     create_subtraction: "Create Subtraction",
     nuvs: "NuVs",

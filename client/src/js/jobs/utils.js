@@ -20,6 +20,20 @@ const prepareQCDescription = {
     description: "Run FastQC if a new cache was created."
 };
 
+const aodpDescriptions = {
+    make_analysis_dir: makeAnalysisDirDescription,
+    prepare_reads: prepareReadsDescription,
+    prepare_index: {
+        title: "Prepare Index",
+        description: "Prepare the reference index for searching."
+    },
+    aodp: {
+        title: "AODP",
+        description: "Run AODP using the amplicon and reference data."
+    },
+    import_results: importResultsDescription
+};
+
 const buildIndexDescriptions = {
     mk_index_dir: {
         title: "Create Directory",
@@ -179,6 +193,7 @@ const updateSampleDescriptions = {
 };
 
 export const stepDescriptions = {
+    aodp: aodpDescriptions,
     build_index: buildIndexDescriptions,
     create_sample: createSampleDescriptions,
     create_subtraction: createSubtractionDescriptions,
