@@ -137,7 +137,6 @@ class Schema extends React.Component {
         return (
             <div>
                 {addButton}
-
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable" direction="vertical">
                         {provided => (
@@ -148,7 +147,6 @@ class Schema extends React.Component {
                         )}
                     </Droppable>
                 </DragDropContext>
-
                 <AddSegment show={this.state.showAdd} onHide={this.handleClose} onSubmit={this.handleSubmit} />
                 <EditSegment
                     show={this.state.showEdit}
@@ -156,12 +154,15 @@ class Schema extends React.Component {
                     onSubmit={this.handleSubmit}
                     curSeg={this.state.selected}
                 />
-                <RemoveSegment
-                    activeName={this.state.selected.name}
-                    show={this.state.showRemove}
-                    onHide={this.handleClose}
-                    onSubmit={this.handleSubmit}
-                />
+
+                {segArray.length ? (
+                    <RemoveSegment
+                        activeName={this.state.selected.name}
+                        show={this.state.showRemove}
+                        onHide={this.handleClose}
+                        onSubmit={this.handleSubmit}
+                    />
+                ) : null}
             </div>
         );
     }
