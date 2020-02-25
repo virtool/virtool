@@ -38,7 +38,6 @@ class Job(virtool.jobs.analysis.Job):
         self._stage_list = [
             self.make_analysis_dir,
             self.prepare_reads,
-            self.prepare_qc,
             self.eliminate_otus,
             self.eliminate_subtraction,
             self.reunite_pairs,

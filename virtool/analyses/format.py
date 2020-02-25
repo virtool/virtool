@@ -8,6 +8,7 @@ import csv
 import io
 import json
 import statistics
+from collections import defaultdict
 
 import aiofiles
 import openpyxl.styles
@@ -16,6 +17,7 @@ import virtool.analyses.db
 import virtool.analyses.utils
 import virtool.db.core
 import virtool.history.db
+import virtool.otus.db
 import virtool.otus.utils
 
 CSV_HEADERS = (
@@ -72,6 +74,59 @@ async def load_results(settings: dict, document: dict) -> dict:
             }
 
     return document
+
+
+async def format_aodp(app, document):
+    db = app["db"]
+
+    otu_cache = dict()
+    sequence_cache = dict()
+
+    hits = defaultdict(list)
+
+    for hit in document["results"]:
+        sequence_id = hit["sequence_id"]
+
+        try:
+            sequence = sequence_cache["sequence_id"]
+        except KeyError:
+            sequence = await db.sequences.find_one(sequence_id, ["otu_id", "isolate_id"])
+            sequence_cache[sequence_id] = sequence
+
+        otu_id = sequence["otu_id"]
+
+        if otu_id not in otu_cache:
+            otu = await virtool.otus.db.join_and_format(db, otu_id)
+            otu_cache[otu_id] = otu
+
+        hits[(otu_id, sequence_id)].append({
+            **hit,
+            "otu_id": otu_id,
+            "isolate_id": sequence["isolate_id"]
+        })
+
+    results = dict()
+
+    for otu_id, otu in otu_cache.items():
+        result = {
+            "id": otu_id,
+            "name": otu["name"],
+            "isolates": otu["isolates"]
+        }
+
+        for isolate in result["isolates"]:
+            for sequence in isolate["sequences"]:
+                key = (otu_id, sequence["id"])
+                sequence["hit"] = hits.get(key)
+
+        results[otu_id] = result
+
+    results = list(results.values())
+
+    return {
+        **document,
+        "results": results
+    }
 
 
 async def format_pathoscope(app, document):
@@ -265,11 +320,15 @@ async def format_analysis(app, document: dict) -> dict:
     """
     algorithm = document.get("algorithm")
 
-    if algorithm == "nuvs":
-        return await format_nuvs(app, document)
+    if algorithm:
+        if algorithm == "nuvs":
+            return await format_nuvs(app, document)
 
-    if algorithm and "pathoscope" in algorithm:
-        return await format_pathoscope(app, document)
+        if "pathoscope" in algorithm:
+            return await format_pathoscope(app, document)
+
+        if algorithm == "aodp":
+            return await format_aodp(app, document)
 
     raise ValueError("Could not determine analysis algorithm")
 

@@ -110,7 +110,7 @@ class Job(virtool.jobs.job.Job):
         """
         sample_id = self.params["sample_id"]
 
-        self.intermediate["cache_id"] = virtool.caches.db.create(
+        self.intermediate["cache"] = virtool.caches.db.create(
             self.db,
             sample_id,
             virtool.samples.utils.LEGACY_TRIM_PARAMETERS,
@@ -118,7 +118,7 @@ class Job(virtool.jobs.job.Job):
             legacy=True
         )
 
-        cache_id = self.intermediate["cache_id"]
+        cache_id = self.intermediate["cache"]["id"]
 
         self.dispatch("caches", "insert", [cache_id])
 
@@ -206,9 +206,10 @@ class Job(virtool.jobs.job.Job):
 
     def cleanup(self):
         # Remove cache
-        cache_id = self.intermediate.get("cache_id")
+        cache = self.intermediate.get("cache")
 
-        if cache_id:
+        if cache:
+            cache_id = cache["id"]
             self.db.delete_one({"_id": cache_id})
             cache_path = virtool.jobs.utils.join_cache_path(self.settings, cache_id)
             self.dispatch("caches", "delete", [cache_id])

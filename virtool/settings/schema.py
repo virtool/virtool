@@ -148,6 +148,14 @@ LEGACY_SCHEMA = {
     },
 
     # Jobs
+    "aodp_proc": {
+        "type": "integer",
+        "default": 8
+    },
+    "aodp_mem": {
+        "type": "integer",
+        "default": 16
+    },
     "pathoscope_bowtie_proc": {
         "type": "integer",
         "default": 8
