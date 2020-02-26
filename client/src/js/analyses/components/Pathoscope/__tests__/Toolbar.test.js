@@ -101,7 +101,10 @@ describe("<Toolbar />", () => {
             }
         };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
-        wrapper.find("FormControl").at(1).simulate("change", e);
+        wrapper
+            .find("FormControl")
+            .at(1)
+            .simulate("change", e);
         expect(props.onSetSortKey).toHaveBeenCalledWith("pi");
     });
 });

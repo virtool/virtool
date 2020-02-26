@@ -82,6 +82,14 @@ export const formatData = detail => {
     if (detail.algorithm === "nuvs") {
         return formatNuVsData(detail);
     }
+
+    if (detail.algorithm === "aodp") {
+        return formatAODPData(detail);
+    }
+};
+
+export const formatAODPData = detail => {
+    return { ...detail };
 };
 
 export const formatNuVsData = detail => {
@@ -188,6 +196,12 @@ export const formatPathoscopeData = detail => {
         subtraction,
         user
     };
+};
+
+export const fuseSearchKeys = {
+    pathoscope_bowtie: ["name", "abbreviation"],
+    nuvs: ["families", "names"],
+    aodp: ["name"]
 };
 
 /**

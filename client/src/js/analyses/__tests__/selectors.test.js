@@ -1,13 +1,4 @@
-import { getMaxReadLength } from "../../samples/selectors";
-import {
-    getAlgorithm,
-    getFilterIds,
-    getFilterOTUs,
-    getFilterSequences,
-    getMatches,
-    getResults,
-    getSortIds
-} from "../selectors";
+import { getFilterIds, getMatches, getResults, getSortIds } from "../selectors";
 
 describe("getResults()", () => {
     it("should return formatted results", () => {

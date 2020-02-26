@@ -3,6 +3,7 @@ import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy
 import { createSelector } from "reselect";
 import createCachedSelector from "re-reselect";
 import { getMaxReadLength } from "../samples/selectors";
+import { fuseSearchKeys } from "./utils";
 
 const getReadCount = state => state.analyses.detail.read_count;
 
@@ -16,12 +17,13 @@ export const getResults = state => state.analyses.detail.results;
 
 export const getMaxSequenceLength = state => state.analyses.detail.maxSequenceLength;
 
+/**
+ * Return a Fuse object for searching through results given an algorithm type. Algorithm type will determine which keys
+ * the search runs over.
+ *
+ */
 export const getFuse = createSelector([getAlgorithm, getResults], (algorithm, results) => {
-    let keys = ["name", "abbreviation"];
-
-    if (algorithm === "nuvs") {
-        keys = ["families", "names"];
-    }
+    const keys = fuseSearchKeys[algorithm];
 
     return new Fuse(results, {
         keys,
