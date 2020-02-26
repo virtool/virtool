@@ -1,9 +1,8 @@
 import React, { useCallback } from "react";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, Toolbar, ButtonDropDown, DropDownItem } from "../../../base";
+import { Button, DropdownButton, DropdownItem, Icon, LinkButton, Toolbar } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
 import { getFuse, getResults } from "../../selectors";
 
@@ -20,30 +19,31 @@ const sortTitles = {
     weight: "Weight"
 };
 
+const StyledSortDropdownButtonTitle = styled.div`
+    align-items: center;
+    display: flex;
+    width: 106px;
+
+    i {
+        margin-left: auto;
+    }
+`;
+
 const SortDropdownButtonTitle = ({ sortKey }) => (
-    <span>
+    <StyledSortDropdownButtonTitle>
         <span>
-            <Icon name="sort" /> Sort:{" "}
+            <Icon name="sort" /> Sort: {sortTitles[sortKey]}
         </span>
-        <span>{sortTitles[sortKey]}</span>
-    </span>
+        <Icon name="caret-down" />
+    </StyledSortDropdownButtonTitle>
 );
 
 const SortDropdownButton = ({ sortKey, onSelect }) => (
-    <ButtonDropDown
-        id="nuvs-sort-dropdown"
-        menuName={
-            <div>
-                <SortDropdownButtonTitle sortKey={sortKey} /> <Icon name="caret-down" style={{ marginLeft: "6px" }} />
-            </div>
-        }
-        right="317px"
-        top="295px"
-    >
-        <DropDownItem onClick={() => onSelect("length")}>Length</DropDownItem>
-        <DropDownItem onClick={() => onSelect("e")}>E-Value</DropDownItem>
-        <DropDownItem onClick={() => onSelect("orfs")}>ORFs</DropDownItem>
-    </ButtonDropDown>
+    <DropdownButton id="nuvs-sort-dropdown" title={<SortDropdownButtonTitle sortKey={sortKey} />}>
+        <DropdownItem onClick={() => onSelect("length")}>Length</DropdownItem>
+        <DropdownItem onClick={() => onSelect("e")}>E-Value</DropdownItem>
+        <DropdownItem onClick={() => onSelect("orfs")}>ORFs</DropdownItem>
+    </DropdownButton>
 );
 
 const NuVsToolbar = ({
@@ -90,9 +90,9 @@ const NuVsToolbar = ({
             <Button icon="filter" onClick={onFilterORFs} active={filterORFs} tip="Hide ORFs that have no HMM hits">
                 Filter ORFs
             </Button>
-            <LinkContainer to={{ state: { export: true } }}>
-                <Button tip="Export" icon="download" />
-            </LinkContainer>
+            <LinkButton to={{ state: { export: true } }} tip="Export">
+                Export
+            </LinkButton>
         </StyledNuVsToolbar>
     );
 };

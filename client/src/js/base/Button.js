@@ -45,6 +45,7 @@ export class Button extends React.Component {
         disabled: PropTypes.bool,
         block: PropTypes.bool,
         pullRight: PropTypes.bool,
+        onBlur: PropTypes.func,
         onClick: PropTypes.func,
         style: PropTypes.object,
         icon: PropTypes.string,
@@ -89,7 +90,7 @@ export class Button extends React.Component {
             <button
                 type={this.props.type}
                 ref={node => (this.buttonNode = node)}
-                onFocus={this.blur}
+                onBlur={this.props.onBlur}
                 className={className}
                 onClick={this.props.onClick}
                 style={this.props.style}

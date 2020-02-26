@@ -1,17 +1,40 @@
 import { endsWith } from "lodash-es";
 import React, { useCallback } from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
-import { Flex, FlexItem, Icon, RelativeTime, ViewHeader, ButtonDropDown, DropDownItem } from "../../../base";
+import { Attribution, DropdownIcon, DropdownItem, Flex, FlexItem, Icon, ViewHeader } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 
 const StyledHeaderIcons = styled.div`
+    align-items: center;
     display: flex;
+
+    i.fas {
+        font-size: 20px;
+        margin-left: 5px;
+    }
 `;
-const DownloadIcon = styled(Icon)`
-    color: grey;
-    font-size: 17px;
+
+const ExportDropdownItem = styled.div`
+    width: 220px;
+
+    &:first-of-type {
+        margin-top: 5px;
+    }
+
+    h5 {
+        font-size: 14px !important;
+        font-weight: bold;
+        margin: 0 0 5px;
+    }
+
+    p {
+        color: ${props => props.theme.color.greyDark};
+        font-size: 12px;
+        line-height: 16px;
+        margin: 0;
+    }
 `;
 
 export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
@@ -19,40 +42,35 @@ export const ReferenceDetailHeaderExportButton = ({ isClone, onSelect }) => {
 
     if (isClone) {
         remoteMenuItem = (
-            <DropDownItem onSelect={() => onSelect("remote")}>
-                <div>Remote</div>
-                <small>Export the reference using the OTU IDs from the source reference for this clone.</small>
-            </DropDownItem>
+            <DropdownItem onClick={() => onSelect("remote")}>
+                <ExportDropdownItem>
+                    <h5>Source</h5>
+                    <p>Export the reference using the OTU IDs from the source reference for this clone.</p>
+                </ExportDropdownItem>
+            </DropdownItem>
         );
     }
 
     return (
-        <ButtonDropDown type="icon" menuName=<DownloadIcon name="download" tip="Options" /> right="34px" top="115px">
-            <DropDownItem onClick={() => onSelect("built")}>
-                <div>Normal</div>
-                <small>Export the reference with the local OTU IDs.</small>
-            </DropDownItem>
+        <DropdownIcon name="download" tip="Export">
+            <DropdownItem onClick={() => onSelect("normal")}>
+                <ExportDropdownItem>
+                    <h5>Normal</h5>
+                    <p>Export the reference with the local OTU IDs.</p>
+                </ExportDropdownItem>
+            </DropdownItem>
             {remoteMenuItem}
-        </ButtonDropDown>
+        </DropdownIcon>
     );
 };
 
 export const ReferenceDetailHeaderIcon = ({ canModify, isRemote, onEdit }) => {
     if (isRemote) {
-        return <Icon bsStyle="default" name="lock" style={{ fontSize: "65%" }} pullRight />;
+        return <Icon bsStyle="default" name="lock" />;
     }
 
     if (canModify) {
-        return (
-            <Icon
-                bsStyle="warning"
-                name="pencil-alt"
-                tip="Edit"
-                onClick={onEdit}
-                pullRight
-                style={{ fontSize: "65%" }}
-            />
-        );
+        return <Icon bsStyle="warning" name="pencil-alt" tip="Edit" onClick={onEdit} />;
     }
 
     return null;
@@ -93,9 +111,7 @@ export const ReferenceDetailHeader = ({
                     {exportButton}
                 </StyledHeaderIcons>
             </Flex>
-            <div className="text-muted" style={{ fontSize: "12px" }}>
-                Created <RelativeTime time={createdAt} /> by {userId}
-            </div>
+            <Attribution time={createdAt} user={userId} />
         </ViewHeader>
     );
 };

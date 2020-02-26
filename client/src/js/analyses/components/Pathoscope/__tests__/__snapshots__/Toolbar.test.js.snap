@@ -8,7 +8,13 @@ exports[` 1`] = `
     name="file-download"
     pullRight={false}
   />
-   Export
+   Export 
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="caret-down"
+    pullRight={false}
+  />
 </span>
 `;
 
@@ -91,64 +97,30 @@ exports[`<Toolbar /> should render 1`] = `
   <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter OTUs
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
   >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -158,12 +130,8 @@ exports[`<Toolbar /> should render 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -173,7 +141,7 @@ exports[`<Toolbar /> should render 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -257,64 +225,30 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
   <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter OTUs
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
   >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -324,12 +258,8 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -339,7 +269,7 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -421,66 +351,32 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     title="Weight Format"
   />
   <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+  >
+    Filter OTUs
+  </Button>
+  <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide isolates with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter Isolates
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
-  >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -490,12 +386,8 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -505,7 +397,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -589,64 +481,30 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
   <Button
     active={false}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter OTUs
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
   >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -656,12 +514,8 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -671,7 +525,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -753,66 +607,32 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
     title="Weight Format"
   />
   <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+  >
+    Filter OTUs
+  </Button>
+  <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide isolates with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter Isolates
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
-  >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -822,12 +642,8 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -837,7 +653,7 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -919,66 +735,32 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     title="Weight Format"
   />
   <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+  >
+    Filter OTUs
+  </Button>
+  <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide isolates with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter Isolates
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
-  >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={false}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -988,12 +770,8 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -1003,7 +781,7 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -1087,64 +865,30 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
   <Button
     active={true}
     bsStyle="default"
-    onClick={[MockFunction]}
+    icon="filter"
+    onClick={[Function]}
     pullRight={false}
-    tip="Filter Results"
+    tip="Hide OTUs with low coverage support"
     tipPlacement="top"
-    title="Filter"
   >
-    <Icon
-      faStyle="fas"
-      fixedWidth={false}
-      name="filter"
-      pullRight={false}
-    />
+    Filter OTUs
   </Button>
-  <ButtonDropDown
-    menuName={
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="sort-down"
-        pullRight={false}
-        size="sm"
-      />
-    }
-    right="131px"
-    top="495px"
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
   >
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      OTUs
-    </ButtonDropDown__DropDownItem>
-    <ButtonDropDown__DropDownItem
-      onClick={[Function]}
-    >
-      <Checkbox
-        checked={true}
-      />
-      Isolates
-    </ButtonDropDown__DropDownItem>
-  </ButtonDropDown>
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -1154,12 +898,8 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -1169,7 +909,7 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;

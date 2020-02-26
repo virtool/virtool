@@ -1,4 +1,3 @@
-import { DropDownItem } from "../../../../base";
 import {
     COLLAPSE_ANALYSIS,
     SET_ANALYSIS_SORT_KEY,
@@ -6,7 +5,7 @@ import {
     TOGGLE_SHOW_PATHOSCOPE_READS,
     TOGGLE_SORT_PATHOSCOPE_DESCENDING
 } from "../../../../app/actionTypes";
-import { PathoscopeDownloadDropdownTitle, PathoscopeToolbar, mapDispatchToProps, mapStateToProps } from "../Toolbar";
+import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
 
 describe("<PathoscopeDownloadDropdownTitle />", () => {
     const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
@@ -88,8 +87,8 @@ describe("<Toolbar />", () => {
         const wrapper = shallow(<PathoscopeToolbar {...props} />);
         expect(props.onFilter).not.toHaveBeenCalled();
         wrapper
-            .find(DropDownItem)
-            .at(0)
+            .find("Button")
+            .at(3)
             .simulate("click");
         expect(props.onFilter).toHaveBeenCalledWith("OTUs");
     });
@@ -99,9 +98,9 @@ describe("<Toolbar />", () => {
         expect(props.onFilter).not.toHaveBeenCalled();
         wrapper
             .find("Button")
-            .at(3)
+            .at(4)
             .simulate("click");
-        expect(props.onFilter).toHaveBeenCalledWith();
+        expect(props.onFilter).toHaveBeenCalledWith("isolates");
     });
 
     it("should call onSetSortKey() when sort key selected", () => {

@@ -27,46 +27,20 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
       />
     </InputGroup>
   </FormGroup>
-  <Toolbar__StyledToolbar>
-    <Button
-      bsStyle="default"
-      onClick={[Function]}
+  <Button
+    bsStyle="default"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Clear Finished"
+    tipPlacement="top"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
       pullRight={false}
-      tip="Clear Finished"
-      tipPlacement="top"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="trash"
-        pullRight={false}
-      />
-    </Button>
-    <ButtonDropDown
-      menuName={
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="sort-down"
-          pullRight={false}
-          size="sm"
-        />
-      }
-      right="35px"
-      top="170px"
-    >
-      <ButtonDropDown__DropDownItem
-        onClick={[Function]}
-      >
-        Failed
-      </ButtonDropDown__DropDownItem>
-      <ButtonDropDown__DropDownItem
-        onClick={[Function]}
-      >
-        Complete
-      </ButtonDropDown__DropDownItem>
-    </ButtonDropDown>
-  </Toolbar__StyledToolbar>
+    />
+  </Button>
 </Toolbar>
 `;
 

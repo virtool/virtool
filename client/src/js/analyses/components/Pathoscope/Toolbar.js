@@ -1,8 +1,8 @@
 import React from "react";
-import styled from "styled-components";
-import { DropdownButton, FormControl, FormGroup, InputGroup, MenuItem } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Checkbox, Icon, Toolbar, DropDownItem, ButtonDropDown } from "../../../base";
+import styled from "styled-components";
+import { Button, DropdownButton, DropdownItem, Icon, Toolbar } from "../../../base";
 import {
     collapseAnalysis,
     setAnalysisSortKey,
@@ -13,7 +13,7 @@ import {
 
 export const PathoscopeDownloadDropdownTitle = () => (
     <span>
-        <Icon name="file-download" /> Export
+        <Icon name="file-download" /> Export <Icon name="caret-down" />
     </span>
 );
 
@@ -76,34 +76,31 @@ export const PathoscopeToolbar = ({
                 onClick={onToggleShowReads}
             />
 
-            <Button title="Filter" tip="Filter Results" onClick={onFilter} active={filterOTUs || filterIsolates}>
-                <Icon name="filter" />
+            <Button
+                active={filterOTUs}
+                icon="filter"
+                tip="Hide OTUs with low coverage support"
+                onClick={() => onFilter("OTUs")}
+            >
+                Filter OTUs
             </Button>
 
-            <ButtonDropDown menuName=<Icon name="sort-down" size="sm" /> right="131px" top="495px">
-                <DropDownItem onClick={() => onFilter("OTUs")}>
-                    <Checkbox checked={filterOTUs} />
-                    OTUs
-                </DropDownItem>
-
-                <DropDownItem onClick={() => onFilter("isolates")}>
-                    <Checkbox checked={filterIsolates} />
-                    Isolates
-                </DropDownItem>
-            </ButtonDropDown>
-
-            <DropdownButton
-                id="download-dropdown"
-                title={<PathoscopeDownloadDropdownTitle />}
-                pullRight
-                style={{ zIndex: 1 }}
+            <Button
+                active={filterIsolates}
+                icon="filter"
+                tip="Hide isolates with low coverage support"
+                onClick={() => onFilter("isolates")}
             >
-                <MenuItem href={`/download/analyses/${analysisId}.csv`}>
+                Filter Isolates
+            </Button>
+
+            <DropdownButton id="download-dropdown" title={<PathoscopeDownloadDropdownTitle />}>
+                <DropdownItem href={`/download/analyses/${analysisId}.csv`}>
                     <Icon name="file-csv" /> CSV
-                </MenuItem>
-                <MenuItem href={`/download/analyses/${analysisId}.xlsx`}>
+                </DropdownItem>
+                <DropdownItem href={`/download/analyses/${analysisId}.xlsx`}>
                     <Icon name="file-excel" /> Excel
-                </MenuItem>
+                </DropdownItem>
             </DropdownButton>
         </StyledPathoscopeToolbar>
     );

@@ -1,13 +1,13 @@
 import React from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import { NavLink } from "react-router-dom";
+import styled from "styled-components";
 import { logout } from "../../account/actions";
-import { AutoProgressBar, Icon, VTLogo } from "../../base";
-import { isHomeActive } from "../utils";
+import { AutoProgressBar, DropdownItem, Icon, VTLogo } from "../../base";
 import { getSoftwareUpdates } from "../../updates/actions";
+import { isHomeActive } from "../utils";
+import { NavDropdown } from "./Dropdown";
 import Update from "./Update";
-import { IconDropDown, DropDownItem } from "./IconDropDown";
 
 const NavBarItem = styled(NavLink)`
     color: white;
@@ -74,12 +74,6 @@ export class Bar extends React.Component {
     }
 
     render() {
-        const dropdownTitle = (
-            <span>
-                <Icon name="user" /> {this.props.id} <Icon name="caret-down" />
-            </span>
-        );
-
         return (
             <NavBar className="vt-header">
                 <NavBarLeft>
@@ -111,24 +105,21 @@ export class Bar extends React.Component {
                         <Icon name="book" />
                     </NavBarItem>
 
-                    <IconDropDown menuName={dropdownTitle}>
-                        <DropDownItem to="/account">Account</DropDownItem>
+                    <NavDropdown userId={this.props.id}>
+                        <DropdownItem to="/account">Account</DropdownItem>
 
-                        {this.props.administrator ? (
-                            <DropDownItem to="/administration">Administration </DropDownItem>
-                        ) : null}
+                        {this.props.administrator && <DropdownItem to="/administration">Administration </DropdownItem>}
 
-                        <DropDownItem
+                        <DropdownItem
                             to="//gitreports.com/issue/virtool/virtool"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
                             Report Issue
-                        </DropDownItem>
-                        <DropDownItem to="#" onClick={this.props.logout}>
-                            Logout
-                        </DropDownItem>
-                    </IconDropDown>
+                        </DropdownItem>
+
+                        <DropdownItem onClick={this.props.logout}>Logout</DropdownItem>
+                    </NavDropdown>
 
                     <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
                 </NavBarRight>

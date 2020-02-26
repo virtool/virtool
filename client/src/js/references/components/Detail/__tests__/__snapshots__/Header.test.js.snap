@@ -41,21 +41,10 @@ exports[`<ReferenceDetailHeader/> should render 1`] = `
       />
     </Header__StyledHeaderIcons>
   </Flex>
-  <div
-    className="text-muted"
-    style={
-      Object {
-        "fontSize": "12px",
-      }
-    }
-  >
-    Created 
-    <RelativeTime
-      time="foo"
-    />
-     by 
-    1
-  </div>
+  <Attribution
+    time="foo"
+    user={1}
+  />
 </ViewHeader>
 `;
 
@@ -90,82 +79,63 @@ exports[`<ReferenceDetailHeader/> should render when[showIcons=false] 1`] = `
     </FlexItem>
     <Header__StyledHeaderIcons />
   </Flex>
-  <div
-    className="text-muted"
-    style={
-      Object {
-        "fontSize": "12px",
-      }
-    }
-  >
-    Created 
-    <RelativeTime
-      time="foo"
-    />
-     by 
-    1
-  </div>
+  <Attribution
+    time="foo"
+    user={1}
+  />
 </ViewHeader>
 `;
 
 exports[`<ReferenceDetailHeaderExportButton /> should render 1`] = `
-<ButtonDropDown
-  menuName={
-    <ForwardRef(Header__DownloadIcon)
-      name="download"
-      tip="Options"
-    />
-  }
-  right="34px"
-  top="115px"
-  type="icon"
+<DropdownIcon
+  name="download"
+  tip="Export"
 >
-  <ButtonDropDown__DropDownItem
+  <DropdownItem
     onClick={[Function]}
   >
-    <div>
-      Normal
-    </div>
-    <small>
-      Export the reference with the local OTU IDs.
-    </small>
-  </ButtonDropDown__DropDownItem>
-  <ButtonDropDown__DropDownItem
-    onSelect={[Function]}
+    <Header__ExportDropdownItem>
+      <h5>
+        Normal
+      </h5>
+      <p>
+        Export the reference with the local OTU IDs.
+      </p>
+    </Header__ExportDropdownItem>
+  </DropdownItem>
+  <DropdownItem
+    onClick={[Function]}
   >
-    <div>
-      Remote
-    </div>
-    <small>
-      Export the reference using the OTU IDs from the source reference for this clone.
-    </small>
-  </ButtonDropDown__DropDownItem>
-</ButtonDropDown>
+    <Header__ExportDropdownItem>
+      <h5>
+        Source
+      </h5>
+      <p>
+        Export the reference using the OTU IDs from the source reference for this clone.
+      </p>
+    </Header__ExportDropdownItem>
+  </DropdownItem>
+</DropdownIcon>
 `;
 
 exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = false] 1`] = `
-<ButtonDropDown
-  menuName={
-    <ForwardRef(Header__DownloadIcon)
-      name="download"
-      tip="Options"
-    />
-  }
-  right="34px"
-  top="115px"
-  type="icon"
+<DropdownIcon
+  name="download"
+  tip="Export"
 >
-  <ButtonDropDown__DropDownItem
+  <DropdownItem
     onClick={[Function]}
   >
-    <div>
-      Normal
-    </div>
-    <small>
-      Export the reference with the local OTU IDs.
-    </small>
-  </ButtonDropDown__DropDownItem>
-</ButtonDropDown>
+    <Header__ExportDropdownItem>
+      <h5>
+        Normal
+      </h5>
+      <p>
+        Export the reference with the local OTU IDs.
+      </p>
+    </Header__ExportDropdownItem>
+  </DropdownItem>
+</DropdownIcon>
 `;
 
 exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `
@@ -174,12 +144,7 @@ exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `
   faStyle="fas"
   fixedWidth={false}
   name="lock"
-  pullRight={true}
-  style={
-    Object {
-      "fontSize": "65%",
-    }
-  }
+  pullRight={false}
 />
 `;
 
@@ -191,12 +156,7 @@ exports[`<ReferenceDetailHeaderIcon /> should render when [canModify=false] 1`] 
   faStyle="fas"
   fixedWidth={false}
   name="lock"
-  pullRight={true}
-  style={
-    Object {
-      "fontSize": "65%",
-    }
-  }
+  pullRight={false}
 />
 `;
 
@@ -207,12 +167,7 @@ exports[`<ReferenceDetailHeaderIcon /> should render when [isRemote=false] 1`] =
   fixedWidth={false}
   name="pencil-alt"
   onClick={[MockFunction]}
-  pullRight={true}
-  style={
-    Object {
-      "fontSize": "65%",
-    }
-  }
+  pullRight={false}
   tip="Edit"
 />
 `;

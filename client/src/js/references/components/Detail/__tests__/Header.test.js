@@ -1,4 +1,4 @@
-import { DropDownItem } from "../../../../base";
+import { DropdownItem } from "../../../../base";
 import {
     mapDispatchToProps,
     mapStateToProps,
@@ -29,7 +29,7 @@ describe("<ReferenceDetailHeaderExportButton />", () => {
         const wrapper = shallow(<ReferenceDetailHeaderExportButton {...props} />);
         expect(props.onSelect).not.toHaveBeenCalled();
         wrapper
-            .find(DropDownItem)
+            .find(DropdownItem)
             .at(0)
             .simulate("click");
         expect(props.onSelect).toHaveBeenCalled();
