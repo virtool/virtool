@@ -3,11 +3,16 @@ import PropTypes from "prop-types";
 import React from "react";
 import Helmet from "react-helmet";
 import styled from "styled-components";
-import { Badge, Flex, FlexItem } from "./index";
+import { Attribution, Badge, Flex, FlexItem } from "./index";
 
 const StyledViewHeader = styled.h2`
     font-size: 26px;
     margin-bottom: 20px;
+
+    ${Attribution} {
+        color: ${props => props.theme.color.greyDark};
+        font-size: 14px;
+    }
 `;
 
 /**

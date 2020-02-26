@@ -8,7 +8,13 @@ exports[` 1`] = `
     name="file-download"
     pullRight={false}
   />
-   Export
+   Export 
+  <Icon
+    faStyle="fas"
+    fixedWidth={false}
+    name="caret-down"
+    pullRight={false}
+  />
 </span>
 `;
 
@@ -88,131 +94,33 @@ exports[`<Toolbar /> should render 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -222,12 +130,8 @@ exports[`<Toolbar /> should render 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -237,7 +141,7 @@ exports[`<Toolbar /> should render 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -318,131 +222,33 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -452,12 +258,8 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -467,7 +269,7 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -548,131 +350,33 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -682,12 +386,8 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -697,7 +397,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -778,131 +478,33 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={false}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -912,12 +514,8 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -927,7 +525,7 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -1008,131 +606,33 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -1142,12 +642,8 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -1157,7 +653,7 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -1238,131 +734,33 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={false}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={false}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -1372,12 +770,8 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -1387,7 +781,7 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;
@@ -1468,131 +862,33 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
     tipPlacement="top"
     title="Weight Format"
   />
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="pathoscope-filter-dropdown"
-    onSelect={[MockFunction]}
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
   >
-    <Button
-      active={true}
-      bsStyle="default"
-      onClick={[MockFunction]}
-      pullRight={false}
-      tip="Filter Results"
-      tipPlacement="top"
-      title="Filter"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="filter"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
-    />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="OTUs"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            OTUs
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="isolates"
-        header={false}
-      >
-        <Flex
-          alignContent="stretch"
-          alignItems="stretch"
-          direction="row"
-          justifyContent="flex-start"
-          wrap="nowrap"
-        >
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            shrink={1}
-          >
-            <Checkbox
-              checked={true}
-            />
-          </FlexItem>
-          <FlexItem
-            alignSelf={null}
-            basis="auto"
-            grow={0}
-            pad={5}
-            shrink={1}
-          >
-            Isolates
-          </FlexItem>
-        </Flex>
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
   <DropdownButton
     id="download-dropdown"
-    pullRight={true}
-    style={
-      Object {
-        "zIndex": 1,
-      }
-    }
     title={<PathoscopeDownloadDropdownTitle />}
   >
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    <DropdownItem
       href="/download/analyses/foo.csv"
     >
       <Icon
@@ -1602,12 +898,8 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
         pullRight={false}
       />
        CSV
-    </MenuItem>
-    <MenuItem
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      header={false}
+    </DropdownItem>
+    <DropdownItem
       href="/download/analyses/foo.xlsx"
     >
       <Icon
@@ -1617,7 +909,7 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
         pullRight={false}
       />
        Excel
-    </MenuItem>
+    </DropdownItem>
   </DropdownButton>
 </Toolbar__StyledPathoscopeToolbar>
 `;

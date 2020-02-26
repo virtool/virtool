@@ -27,58 +27,20 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
       />
     </InputGroup>
   </FormGroup>
-  <Uncontrolled(Dropdown)
-    className="split-dropdown"
-    id="job-clear-dropdown"
-    pullRight={true}
+  <Button
+    bsStyle="default"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Clear Finished"
+    tipPlacement="top"
   >
-    <Button
-      bsStyle="default"
-      onClick={[Function]}
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="trash"
       pullRight={false}
-      tip="Clear Finished"
-      tipPlacement="top"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="trash"
-        pullRight={false}
-      />
-    </Button>
-    <DropdownToggle
-      bsClass="dropdown-toggle"
-      bsRole="toggle"
-      open={false}
-      useAnchor={false}
     />
-    <DropdownMenu
-      bsClass="dropdown-menu"
-      bsRole="menu"
-      pullRight={false}
-    >
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="failed"
-        header={false}
-        onSelect={[MockFunction]}
-      >
-        Failed
-      </MenuItem>
-      <MenuItem
-        bsClass="dropdown"
-        disabled={false}
-        divider={false}
-        eventKey="complete"
-        header={false}
-        onSelect={[MockFunction]}
-      >
-        Complete
-      </MenuItem>
-    </DropdownMenu>
-  </Uncontrolled(Dropdown)>
+  </Button>
 </Toolbar>
 `;
 

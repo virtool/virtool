@@ -64,51 +64,32 @@ exports[`<Bar /> should render 1`] = `
         pullRight={false}
       />
     </Bar__NavBarItem>
-    <DropDown
-      menuName={
-        <span>
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="user"
-            pullRight={false}
-          />
-           
-          foo
-           
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="caret-down"
-            pullRight={false}
-          />
-        </span>
-      }
+    <NavDropdown
+      userId="foo"
     >
-      <DropDown__DropDownItem
+      <DropdownItem
         to="/account"
       >
         Account
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         to="/administration"
       >
         Administration 
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         rel="noopener noreferrer"
         target="_blank"
         to="//gitreports.com/issue/virtool/virtool"
       >
         Report Issue
-      </DropDown__DropDownItem>
-      <DropDown__DropDownItem
+      </DropdownItem>
+      <DropdownItem
         onClick={[MockFunction]}
-        to="#"
       >
         Logout
-      </DropDown__DropDownItem>
-    </DropDown>
+      </DropdownItem>
+    </NavDropdown>
     <AutoProgressBar
       active={false}
       affixed={true}
