@@ -1,15 +1,16 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { Button, DropdownButton, DropdownItem, Icon, Toolbar } from "../../../base";
 import {
-    collapseAnalysis,
     setAnalysisSortKey,
-    setPathoscopeFilter,
-    togglePathoscopeSortDescending,
-    toggleShowPathoscopeReads
+    setSearchIds,
+    toggleAnalysisSortDescending,
+    toggleFilterIsolates,
+    toggleFilterOTUs
 } from "../../actions";
+import { getFuse } from "../../selectors";
 
 export const PathoscopeDownloadDropdownTitle = () => (
     <span>
@@ -23,20 +24,35 @@ const StyledPathoscopeToolbar = styled(Toolbar)`
 `;
 
 export const PathoscopeToolbar = ({
+    id,
     analysisId,
     filterIsolates,
     filterOTUs,
-    showReads,
+    fuse,
     sortDescending,
     sortKey,
-    onCollapse,
-    onFilter,
+    onSearch,
     onSetSortKey,
-    onToggleShowReads,
+    onToggleFilterIsolates,
+    onToggleFilterOTUs,
     onToggleSortDescending
 }) => {
+    const handleChange = useCallback(
+        e => {
+            onSearch(e.target.value, fuse);
+        },
+        [id]
+    );
     return (
         <StyledPathoscopeToolbar>
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name="search" />
+                    </InputGroup.Addon>
+                    <FormControl onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
+                </InputGroup>
+            </FormGroup>
             <FormGroup>
                 <InputGroup>
                     <InputGroup.Button>
@@ -59,28 +75,10 @@ export const PathoscopeToolbar = ({
             </FormGroup>
 
             <Button
-                icon="compress"
-                title="Collapse"
-                tip="Collapse"
-                onClick={onCollapse}
-                className="hidden-xs"
-                disabled={false}
-            />
-
-            <Button
-                icon="chart-pie"
-                title="Weight Format"
-                tip="Weight Format"
-                active={!showReads}
-                className="hidden-xs"
-                onClick={onToggleShowReads}
-            />
-
-            <Button
                 active={filterOTUs}
                 icon="filter"
                 tip="Hide OTUs with low coverage support"
-                onClick={() => onFilter("OTUs")}
+                onClick={onToggleFilterOTUs}
             >
                 Filter OTUs
             </Button>
@@ -89,7 +87,7 @@ export const PathoscopeToolbar = ({
                 active={filterIsolates}
                 icon="filter"
                 tip="Hide isolates with low coverage support"
-                onClick={() => onFilter("isolates")}
+                onClick={onToggleFilterIsolates}
             >
                 Filter Isolates
             </Button>
@@ -107,28 +105,29 @@ export const PathoscopeToolbar = ({
 };
 
 export const mapStateToProps = state => {
-    const { filterIsolates, filterOTUs, showReads, sortDescending, sortKey } = state.analyses;
+    const { filterIsolates, filterOTUs, sortDescending, sortKey } = state.analyses;
     return {
+        id: state.analyses.activeId,
         analysisId: state.analyses.detail.id,
         filterIsolates,
         filterOTUs,
-        showReads,
+        fuse: getFuse(state),
         sortDescending,
         sortKey
     };
 };
 
 export const mapDispatchToProps = dispatch => ({
-    onCollapse: () => {
-        dispatch(collapseAnalysis());
+    onSearch: (term, fuse) => {
+        dispatch(setSearchIds(term ? fuse.search(term) : null));
     },
 
-    onFilter: key => {
-        if (key !== "OTUs" && key !== "isolates") {
-            key = "";
-        }
+    onToggleFilterIsolates: () => {
+        dispatch(toggleFilterIsolates());
+    },
 
-        dispatch(setPathoscopeFilter(key));
+    onToggleFilterOTUs: () => {
+        dispatch(toggleFilterOTUs());
     },
 
     onSetSortKey: key => {
@@ -136,11 +135,7 @@ export const mapDispatchToProps = dispatch => ({
     },
 
     onToggleSortDescending: () => {
-        dispatch(togglePathoscopeSortDescending());
-    },
-
-    onToggleShowReads: () => {
-        dispatch(toggleShowPathoscopeReads());
+        dispatch(toggleAnalysisSortDescending());
     }
 });
 

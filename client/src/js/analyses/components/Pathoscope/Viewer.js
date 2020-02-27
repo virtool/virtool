@@ -1,13 +1,24 @@
 import React from "react";
-import PathoscopeList from "./List";
-import PathoscopeMapping from "./Mapping";
+import styled from "styled-components";
+import PathoscopeDetail from "./Detail";
+import { PathoscopeList } from "./List";
+import Mapping from "./Mapping";
 import PathoscopeToolbar from "./Toolbar";
+
+const PathoscopePanes = styled.div`
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: 300px 1fr;
+`;
 
 export const PathoscopeViewer = () => (
     <div>
-        <PathoscopeMapping />
+        <Mapping />
         <PathoscopeToolbar />
-        <PathoscopeList />
+        <PathoscopePanes>
+            <PathoscopeList />
+            <PathoscopeDetail />
+        </PathoscopePanes>
     </div>
 );
 

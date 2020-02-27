@@ -1,40 +1,34 @@
 import {
-    WS_INSERT_ANALYSIS,
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
-    FIND_ANALYSES,
-    GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS,
     CLEAR_ANALYSIS,
-    COLLAPSE_ANALYSIS,
-    SET_PATHOSCOPE_FILTER,
-    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_READS,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    REMOVE_ANALYSIS,
     SET_ANALYSIS_SORT_KEY,
+    TOGGLE_ANALYSIS_SORT_DESCENDING,
     TOGGLE_FILTER_ORFS,
     TOGGLE_FILTER_SEQUENCES,
-    TOGGLE_RESULT_EXPANDED
+    TOGGLE_SHOW_PATHOSCOPE_READS,
+    WS_INSERT_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
+    WS_UPDATE_ANALYSIS
 } from "../../app/actionTypes";
 import {
-    wsInsertAnalysis,
-    wsUpdateAnalysis,
-    wsRemoveAnalysis,
-    collapseAnalysis,
-    setPathoscopeFilter,
-    setAnalysisSortKey,
-    togglePathoscopeSortDescending,
-    toggleShowPathoscopeReads,
-    findAnalyses,
-    getAnalysis,
-    clearAnalysis,
     analyze,
     blastNuvs,
+    clearAnalysis,
+    findAnalyses,
+    getAnalysis,
     removeAnalysis,
+    setAnalysisSortKey,
+    toggleAnalysisSortDescending,
     toggleFilterORFs,
     toggleFilterSequences,
-    toggleResultExpanded
+    toggleShowPathoscopeReads,
+    wsInsertAnalysis,
+    wsRemoveAnalysis,
+    wsUpdateAnalysis
 } from "../actions";
 
 it("wsInsertAnalysis should return action to insert analysis via websocket", () => {
@@ -63,25 +57,11 @@ it("wsRemoveAnalysis() should return action to remove analysis via websocket", (
     });
 });
 
-it("collapseAnalysis() should return action to close all expanded analyses", () => {
-    const result = collapseAnalysis();
-    expect(result).toEqual({ type: COLLAPSE_ANALYSIS });
-});
-
 it("setAnalysisSortKey() should return action to set sort key", () => {
     const sortKey = "foo";
     expect(setAnalysisSortKey(sortKey)).toEqual({
         type: SET_ANALYSIS_SORT_KEY,
         sortKey
-    });
-});
-
-it("setPathoscopeFilter() should return action to set pathoscope filter", () => {
-    const key = "filter-option";
-    const result = setPathoscopeFilter(key);
-    expect(result).toEqual({
-        type: SET_PATHOSCOPE_FILTER,
-        key
     });
 });
 
@@ -93,17 +73,12 @@ it("toggleFilterSequences() should return action to filter ORFs", () => {
     expect(toggleFilterSequences()).toEqual({ type: TOGGLE_FILTER_SEQUENCES });
 });
 
-it("togglePathoscopeSortDescending() should return action to sort listings", () => {
-    expect(togglePathoscopeSortDescending()).toEqual({ type: TOGGLE_SORT_PATHOSCOPE_DESCENDING });
+it("toggleAnalysisSortDescending() should return action to sort listings", () => {
+    expect(toggleAnalysisSortDescending()).toEqual({ type: TOGGLE_ANALYSIS_SORT_DESCENDING });
 });
 
 it("toggleShowPathoscopeReads() should return action to display reads", () => {
     expect(toggleShowPathoscopeReads()).toEqual({ type: TOGGLE_SHOW_PATHOSCOPE_READS });
-});
-
-it("toggleResultExpanded() should return action to expand result by id", () => {
-    const id = "foo";
-    expect(toggleResultExpanded(id)).toEqual({ type: TOGGLE_RESULT_EXPANDED, id });
 });
 
 it("findAnalyses() should return action to find analyses", () => {

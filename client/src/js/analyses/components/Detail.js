@@ -12,6 +12,7 @@ import {
 } from "../../base/index";
 import { getTaskDisplayName } from "../../utils/utils";
 import { clearAnalysis, getAnalysis } from "../actions";
+import { AODPViewer } from "./AODP/Viewer";
 import AnalysisCache from "./CacheLink";
 import NuVsViewer from "./NuVs/Viewer";
 import PathoscopeViewer from "./Pathoscope/Viewer";
@@ -46,6 +47,8 @@ export const AnalysisDetail = props => {
         content = <PathoscopeViewer />;
     } else if (detail.algorithm === "nuvs") {
         content = <NuVsViewer />;
+    } else if (detail.algorithm === "aodp") {
+        content = <AODPViewer />;
     } else {
         return <div>Unusable analysis detail content</div>;
     }

@@ -17,6 +17,7 @@ export const Box = styled.div`
 
 export const BoxGroup = styled(Box)`
     padding: 0;
+    position: relative;
 
     & > ${Table} {
         border: none;
@@ -69,6 +70,7 @@ export const SuccessBoxGroupSection = styled(BoxGroupSection)`
 export const DangerBoxGroupSection = styled(BoxGroupSection)`
     background-color: #f0c1bd;
     color: #af3227;
+    position: relative;
 `;
 
 export const BoxGroupHeader = styled(BoxGroupSection)`

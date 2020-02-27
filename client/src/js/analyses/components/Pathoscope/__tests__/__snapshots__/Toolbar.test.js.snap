@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
+exports[`<PathoscopeDownloadDropdownTitle /> should render 1`] = `
 <span>
   <Icon
     faStyle="fas"
@@ -20,6 +20,30 @@ exports[` 1`] = `
 
 exports[`<Toolbar /> should render 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[Function]}
+        onKeyDown={[Function]}
+      />
+    </InputGroup>
+  </FormGroup>
   <FormGroup
     bsClass="form-group"
   >
@@ -73,32 +97,10 @@ exports[`<Toolbar /> should render 1`] = `
     </InputGroup>
   </FormGroup>
   <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
@@ -109,7 +111,7 @@ exports[`<Toolbar /> should render 1`] = `
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
@@ -154,6 +156,30 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     <InputGroup
       bsClass="input-group"
     >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[Function]}
+        onKeyDown={[Function]}
+      />
+    </InputGroup>
+  </FormGroup>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
       <InputGroupButton
         bsClass="input-group-btn"
       >
@@ -201,32 +227,10 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     </InputGroup>
   </FormGroup>
   <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
@@ -237,7 +241,7 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
     active={false}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
@@ -282,128 +286,24 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
     <InputGroup
       bsClass="input-group"
     >
-      <InputGroupButton
-        bsClass="input-group-btn"
+      <InputGroupAddon
+        bsClass="input-group-addon"
       >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
           pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
+        />
+      </InputGroupAddon>
       <FormControl
         bsClass="form-control"
-        componentClass="select"
+        componentClass="input"
         onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
+        onKeyDown={[Function]}
+      />
     </InputGroup>
   </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
-    active={false}
-    bsStyle="default"
-    icon="filter"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Hide OTUs with low coverage support"
-    tipPlacement="top"
-  >
-    Filter OTUs
-  </Button>
-  <Button
-    active={true}
-    bsStyle="default"
-    icon="filter"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Hide isolates with low coverage support"
-    tipPlacement="top"
-  >
-    Filter Isolates
-  </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-csv"
-        pullRight={false}
-      />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-excel"
-        pullRight={false}
-      />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
-</Toolbar__StyledPathoscopeToolbar>
-`;
-
-exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=false] 1`] = `
-<Toolbar__StyledPathoscopeToolbar>
   <FormGroup
     bsClass="form-group"
   >
@@ -457,160 +357,10 @@ exports[`<Toolbar /> should render when [filterOTUs=false] and [filterIsolates=f
     </InputGroup>
   </FormGroup>
   <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
     active={false}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Hide OTUs with low coverage support"
-    tipPlacement="top"
-  >
-    Filter OTUs
-  </Button>
-  <Button
-    active={false}
-    bsStyle="default"
-    icon="filter"
-    onClick={[Function]}
-    pullRight={false}
-    tip="Hide isolates with low coverage support"
-    tipPlacement="top"
-  >
-    Filter Isolates
-  </Button>
-  <DropdownButton
-    id="download-dropdown"
-    title={<PathoscopeDownloadDropdownTitle />}
-  >
-    <DropdownItem
-      href="/download/analyses/foo.csv"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-csv"
-        pullRight={false}
-      />
-       CSV
-    </DropdownItem>
-    <DropdownItem
-      href="/download/analyses/foo.xlsx"
-    >
-      <Icon
-        faStyle="fas"
-        fixedWidth={false}
-        name="file-excel"
-        pullRight={false}
-      />
-       Excel
-    </DropdownItem>
-  </DropdownButton>
-</Toolbar__StyledPathoscopeToolbar>
-`;
-
-exports[`<Toolbar /> should render when [showReads=true] 1`] = `
-<Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
-  <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
     onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
-    active={false}
-    bsStyle="default"
-    icon="filter"
-    onClick={[Function]}
     pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
@@ -621,7 +371,7 @@ exports[`<Toolbar /> should render when [showReads=true] 1`] = `
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
@@ -666,6 +416,30 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     <InputGroup
       bsClass="input-group"
     >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[Function]}
+        onKeyDown={[Function]}
+      />
+    </InputGroup>
+  </FormGroup>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
       <InputGroupButton
         bsClass="input-group-btn"
       >
@@ -713,32 +487,10 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     </InputGroup>
   </FormGroup>
   <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
     active={true}
     bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
-    active={false}
-    bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
@@ -749,7 +501,7 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"
@@ -786,8 +538,162 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
 </Toolbar__StyledPathoscopeToolbar>
 `;
 
-exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
+exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[Function]}
+        onKeyDown={[Function]}
+      />
+    </InputGroup>
+  </FormGroup>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupButton
+        bsClass="input-group-btn"
+      >
+        <Button
+          bsStyle="default"
+          onClick={[MockFunction]}
+          pullRight={false}
+          tip="Sort List"
+          tipPlacement="top"
+          title="Sort Direction"
+        >
+          <Icon
+            faStyle="fas"
+            fixedWidth={false}
+            name="sort-amount-down"
+            pullRight={false}
+          />
+        </Button>
+      </InputGroupButton>
+      <FormControl
+        bsClass="form-control"
+        componentClass="select"
+        onChange={[Function]}
+        value="depth"
+      >
+        <option
+          className="text-primary"
+          value="coverage"
+        >
+          Coverage
+        </option>
+        <option
+          className="text-success"
+          value="pi"
+        >
+          Weight
+        </option>
+        <option
+          className="text-danger"
+          value="depth"
+        >
+          Depth
+        </option>
+      </FormControl>
+    </InputGroup>
+  </FormGroup>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Hide OTUs with low coverage support"
+    tipPlacement="top"
+  >
+    Filter OTUs
+  </Button>
+  <Button
+    active={true}
+    bsStyle="default"
+    icon="filter"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Hide isolates with low coverage support"
+    tipPlacement="top"
+  >
+    Filter Isolates
+  </Button>
+  <DropdownButton
+    id="download-dropdown"
+    title={<PathoscopeDownloadDropdownTitle />}
+  >
+    <DropdownItem
+      href="/download/analyses/foo.csv"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-csv"
+        pullRight={false}
+      />
+       CSV
+    </DropdownItem>
+    <DropdownItem
+      href="/download/analyses/foo.xlsx"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="file-excel"
+        pullRight={false}
+      />
+       Excel
+    </DropdownItem>
+  </DropdownButton>
+</Toolbar__StyledPathoscopeToolbar>
+`;
+
+exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
+<Toolbar__StyledPathoscopeToolbar>
+  <FormGroup
+    bsClass="form-group"
+  >
+    <InputGroup
+      bsClass="input-group"
+    >
+      <InputGroupAddon
+        bsClass="input-group-addon"
+      >
+        <Icon
+          faStyle="fas"
+          fixedWidth={false}
+          name="search"
+          pullRight={false}
+        />
+      </InputGroupAddon>
+      <FormControl
+        bsClass="form-control"
+        componentClass="input"
+        onChange={[Function]}
+        onKeyDown={[Function]}
+      />
+    </InputGroup>
+  </FormGroup>
   <FormGroup
     bsClass="form-group"
   >
@@ -841,32 +747,10 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
     </InputGroup>
   </FormGroup>
   <Button
-    bsStyle="default"
-    className="hidden-xs"
-    disabled={false}
-    icon="compress"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Collapse"
-    tipPlacement="top"
-    title="Collapse"
-  />
-  <Button
-    active={true}
-    bsStyle="default"
-    className="hidden-xs"
-    icon="chart-pie"
-    onClick={[MockFunction]}
-    pullRight={false}
-    tip="Weight Format"
-    tipPlacement="top"
-    title="Weight Format"
-  />
-  <Button
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide OTUs with low coverage support"
     tipPlacement="top"
@@ -877,7 +761,7 @@ exports[`<Toolbar /> should render when [sortKey='weight'] 1`] = `
     active={true}
     bsStyle="default"
     icon="filter"
-    onClick={[Function]}
+    onClick={[MockFunction]}
     pullRight={false}
     tip="Hide isolates with low coverage support"
     tipPlacement="top"

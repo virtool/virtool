@@ -4,7 +4,7 @@ describe("getResults()", () => {
     it("should return formatted results", () => {
         const results = [
             {
-                index: 2,
+                id: 2,
                 name: "foo"
             }
         ];
@@ -20,35 +20,37 @@ describe("getResults()", () => {
 });
 
 describe("getFilterIds()", () => {
+    const algorithm = "nuvs";
+
     let results;
 
     beforeEach(() => {
         results = [
             {
                 e: 0.000005,
-                index: 2,
+                id: 2,
                 name: "foo"
             },
             {
                 e: undefined,
-                index: 5,
+                id: 5,
                 name: "bar"
             },
             {
                 e: 0.00012,
-                index: 1,
+                id: 1,
                 name: "baz"
             }
         ];
     });
 
     it("should return filterIds when filtered", () => {
-        const result = getFilterIds.resultFunc(results, true);
+        const result = getFilterIds.resultFunc(algorithm, results, true, true);
         expect(result).toEqual([2, 1]);
     });
 
     it("should return filterIds when unfiltered", () => {
-        const result = getFilterIds.resultFunc(results, false);
+        const result = getFilterIds.resultFunc(algorithm, results, true, false);
         expect(result).toEqual([2, 5, 1]);
     });
 });
@@ -63,25 +65,25 @@ describe("getSortIds()", () => {
                 detail: {
                     results: [
                         {
-                            index: 0,
+                            id: 0,
                             e: 0.01,
                             annotatedOrfCount: 3,
                             sequence: "ATAATAGGGACACATAA"
                         },
                         {
-                            index: 1,
+                            id: 1,
                             e: 3e-22,
                             annotatedOrfCount: 1,
                             sequence: "ATAGATAGGGACACATAGGACACATA"
                         },
                         {
-                            index: 2,
+                            id: 2,
                             e: 5e-112,
                             annotatedOrfCount: 2,
                             sequence: "ATAGGATAGGGACACATAATAGGGACACATAGACACATA"
                         },
                         {
-                            index: 3,
+                            id: 3,
                             e: 4e-12,
                             annotatedOrfCount: 5,
                             sequence: "ATAGGGACACATA"
@@ -108,6 +110,8 @@ describe("getSortIds()", () => {
 });
 
 describe("getMatches()", () => {
+    const algorithm = "nuvs";
+
     let filterIds;
     let searchIds;
     let sortIds;
@@ -120,25 +124,25 @@ describe("getMatches()", () => {
 
         results = [
             {
-                index: 0,
+                id: 0,
                 e: 0.01,
                 annotatedOrfCount: 3,
                 sequence: "ATAATAGGGACACATAA"
             },
             {
-                index: 1,
+                id: 1,
                 e: 3e-22,
                 annotatedOrfCount: 1,
                 sequence: "ATAGATAGGGACACATAGGACACATA"
             },
             {
-                index: 2,
+                id: 2,
                 e: 5e-112,
                 annotatedOrfCount: 2,
                 sequence: "ATAGGATAGGGACACATAATAGGGACACATAGACACATA"
             },
             {
-                index: 3,
+                id: 3,
                 e: 4e-12,
                 annotatedOrfCount: 5,
                 sequence: "ATAGGGACACATA"
@@ -147,19 +151,25 @@ describe("getMatches()", () => {
     });
 
     it("should return ids when restricted by filter", () => {
-        expect(getMatches.resultFunc(results, filterIds, searchIds, sortIds)).toEqual([results[2], results[0]]);
+        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+            results[2],
+            results[0]
+        ]);
     });
 
     it("should return ids when restricted by search", () => {
         searchIds = ["0", "3"];
         filterIds = [0, 3, 2];
-        expect(getMatches.resultFunc(results, filterIds, searchIds, sortIds)).toEqual([results[3], results[0]]);
+        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
+            results[3],
+            results[0]
+        ]);
     });
 
     it("should return ids when search is null", () => {
         searchIds = null;
         filterIds = [0, 3, 2];
-        expect(getMatches.resultFunc(results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
             results[2],
             results[3],
             results[0]
@@ -170,7 +180,7 @@ describe("getMatches()", () => {
         searchIds = null;
         filterIds = [0, 1, 2, 3];
         sortIds = [3, 1, 2, 0];
-        expect(getMatches.resultFunc(results, filterIds, searchIds, sortIds)).toEqual([
+        expect(getMatches.resultFunc(algorithm, results, filterIds, searchIds, sortIds)).toEqual([
             results[3],
             results[1],
             results[2],

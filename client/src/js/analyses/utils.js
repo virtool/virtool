@@ -12,6 +12,7 @@ import {
     reject,
     sortBy,
     sumBy,
+    toNumber,
     uniq
 } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
@@ -81,11 +82,20 @@ export const formatData = detail => {
     if (detail.algorithm === "nuvs") {
         return formatNuVsData(detail);
     }
+
+    if (detail.algorithm === "aodp") {
+        return formatAODPData(detail);
+    }
+};
+
+export const formatAODPData = detail => {
+    return { ...detail };
 };
 
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
         ...result,
+        id: toNumber(result.index),
         annotatedOrfCount: calculateAnnotatedOrfCount(result.orfs),
         e: calculateSequenceMinimumE(result.orfs),
         families: extractFamilies(result.orfs),
@@ -153,7 +163,6 @@ export const formatPathoscopeData = detail => {
                 sequences,
                 maxDepth: max(filled),
                 pi: sumBy(sequences, "pi"),
-                reads: sumBy(sequences, "reads"),
                 depth: median(filled)
             };
         });
@@ -187,6 +196,12 @@ export const formatPathoscopeData = detail => {
         subtraction,
         user
     };
+};
+
+export const fuseSearchKeys = {
+    pathoscope_bowtie: ["name", "abbreviation"],
+    nuvs: ["families", "names"],
+    aodp: ["name"]
 };
 
 /**
