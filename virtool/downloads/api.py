@@ -155,7 +155,7 @@ async def download_reference(req):
 
     ref_id = req.match_info["ref_id"]
 
-    document = await db.references.find_one(ref_id, ["data_type", "organism"])
+    document = await db.references.find_one(ref_id, ["data_type", "organism", "targets"])
 
     if document is None:
         return not_found()
@@ -176,6 +176,11 @@ async def download_reference(req):
         "data_type": document["data_type"],
         "organism": document["organism"]
     }
+
+    try:
+        data["targets"] = document["targets"]
+    except KeyError:
+        pass
 
     # Convert the list of OTUs to a JSON-formatted string.
     json_string = json.dumps(data, cls=CustomEncoder)

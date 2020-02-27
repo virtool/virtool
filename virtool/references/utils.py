@@ -152,6 +152,13 @@ def clean_otu(otu, otu_keys=None, sequence_keys=None):
 
         for sequence in isolate["sequences"]:
             cleaned_sequence = {key: sequence[key] for key in sequence_keys}
+
+            for key in ["segment", "target"]:
+                try:
+                    cleaned_sequence[key] = sequence[key]
+                except KeyError:
+                    pass
+
             cleaned_isolate["sequences"].append(cleaned_sequence)
 
         cleaned["isolates"].append(cleaned_isolate)

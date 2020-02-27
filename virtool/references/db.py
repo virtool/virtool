@@ -168,11 +168,21 @@ class ImportReferenceProcess(virtool.processes.process.Process):
         except (TypeError, KeyError):
             organism = ""
 
+        try:
+            targets = self.import_data["targets"]
+        except (TypeError, KeyError):
+            targets = None
+
+        update_dict = {
+            "data_type": data_type,
+            "organism": organism
+        }
+
+        if targets:
+            update_dict["targets"] = targets
+
         await self.db.references.update_one({"_id": ref_id}, {
-            "$set": {
-                "data_type": data_type,
-                "organism": organism
-            }
+            "$set": update_dict
         })
 
     async def validate(self):
