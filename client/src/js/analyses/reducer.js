@@ -1,26 +1,24 @@
-import { get, map, xor } from "lodash-es";
+import { get, map } from "lodash-es";
 import {
-    WS_INSERT_ANALYSIS,
-    WS_UPDATE_ANALYSIS,
-    WS_REMOVE_ANALYSIS,
     BLAST_NUVS,
+    CLEAR_ANALYSES,
     CLEAR_ANALYSIS,
-    COLLAPSE_ANALYSIS,
     FIND_ANALYSES,
     GET_ANALYSIS,
     LIST_READY_INDEXES,
-    TOGGLE_SORT_PATHOSCOPE_DESCENDING,
-    TOGGLE_SHOW_PATHOSCOPE_READS,
-    SET_PATHOSCOPE_FILTER,
-    SET_ACTIVE_HIT_ID,
-    TOGGLE_FILTER_ORFS,
-    TOGGLE_FILTER_SEQUENCES,
-    SET_SEARCH_IDS,
+    SET_ANALYSIS_ACTIVE_ID,
     SET_ANALYSIS_SORT_KEY,
-    TOGGLE_RESULT_EXPANDED,
-    CLEAR_ANALYSES
+    SET_SEARCH_IDS,
+    TOGGLE_ANALYSIS_SORT_DESCENDING,
+    TOGGLE_FILTER_ISOLATES,
+    TOGGLE_FILTER_ORFS,
+    TOGGLE_FILTER_OTUS,
+    TOGGLE_FILTER_SEQUENCES,
+    WS_INSERT_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
+    WS_UPDATE_ANALYSIS
 } from "../app/actionTypes";
-import { insert, update, remove, updateDocuments } from "../utils/reducers";
+import { insert, remove, update, updateDocuments } from "../utils/reducers";
 import { formatData } from "./utils";
 
 export const initialState = {
@@ -30,35 +28,20 @@ export const initialState = {
     data: null,
     detail: null,
     readyIndexes: null,
+
     sortKey: "coverage",
     sortDescending: true,
 
+    searchIds: null,
+    sortIds: null,
+
     // Pathoscope-specific
-    expanded: [],
     filterOTUs: true,
     filterIsolates: true,
-    showReads: false,
 
     // NuVs specific,
     filterORFs: true,
-    filterSequences: true,
-    searchIds: null
-};
-
-export const setFilter = (state, key) => {
-    if (key) {
-        return {
-            ...state,
-            filterIsolates: key === "isolates" ? !state.filterIsolates : state.filterIsolates,
-            filterOTUs: key === "OTUs" ? !state.filterOTUs : state.filterOTUs
-        };
-    }
-
-    return {
-        ...state,
-        filterIsolates: !(state.filterIsolates || state.filterOTUs),
-        filterOTUs: !(state.filterIsolates || state.filterOTUs)
-    };
+    filterSequences: true
 };
 
 export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
@@ -86,20 +69,21 @@ export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
 export const updateIdLists = (state, action) => {
     const analysisDetailId = get(state, "detail.id", null);
 
+    const detail = formatData(action.data);
+
     if (analysisDetailId === action.data.id) {
         return {
             ...state,
-            detail: formatData(action.data)
+            detail
         };
     }
 
     return {
         ...state,
         activeId: null,
-        expanded: [],
         filterIds: null,
         searchIds: null,
-        detail: formatData(action.data),
+        detail,
         sortKey: action.data.algorithm === "nuvs" ? "length" : "coverage"
     };
 };
@@ -115,20 +99,17 @@ export default function analysesReducer(state = initialState, action) {
         case WS_REMOVE_ANALYSIS:
             return remove(state, action);
 
-        case COLLAPSE_ANALYSIS:
-            return { ...state, expanded: [] };
-
-        case SET_ACTIVE_HIT_ID:
+        case SET_ANALYSIS_ACTIVE_ID:
             return { ...state, activeId: action.id };
-
-        case SET_ANALYSIS_SORT_KEY:
-            return { ...state, sortKey: action.sortKey };
-
-        case SET_PATHOSCOPE_FILTER:
-            return setFilter(state, action.key);
 
         case SET_SEARCH_IDS:
             return { ...state, searchIds: action.ids };
+
+        case TOGGLE_FILTER_OTUS:
+            return { ...state, filterOTUs: !state.filterOTUs };
+
+        case TOGGLE_FILTER_ISOLATES:
+            return { ...state, filterIsolates: !state.filterIsolates };
 
         case TOGGLE_FILTER_ORFS:
             return { ...state, filterORFs: !state.filterORFs };
@@ -137,13 +118,10 @@ export default function analysesReducer(state = initialState, action) {
             return { ...state, filterSequences: !state.filterSequences };
         }
 
-        case TOGGLE_RESULT_EXPANDED:
-            return { ...state, expanded: xor(state.expanded, [action.id]) };
+        case SET_ANALYSIS_SORT_KEY:
+            return { ...state, sortKey: action.sortKey };
 
-        case TOGGLE_SHOW_PATHOSCOPE_READS:
-            return { ...state, showReads: !state.showReads };
-
-        case TOGGLE_SORT_PATHOSCOPE_DESCENDING:
+        case TOGGLE_ANALYSIS_SORT_DESCENDING:
             return { ...state, sortDescending: !state.sortDescending };
 
         case LIST_READY_INDEXES.SUCCEEDED:

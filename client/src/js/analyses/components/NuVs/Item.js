@@ -60,8 +60,8 @@ const mapStateToProps = (state, ownProps) => {
 };
 
 const mapDispatchToProps = dispatch => ({
-    onSetActiveId: index => {
-        dispatch(setActiveHitId(index));
+    onSetActiveId: id => {
+        dispatch(setActiveHitId(id));
     }
 });
 

@@ -1,17 +1,16 @@
-jest.mock("../Item", () => "MockNuVsItem");
 jest.mock("../../../selectors");
 
 import { getMatches, getResults } from "../../../selectors";
-import { NuVsList, mapStateToProps } from "../List";
+import { mapStateToProps, AnalysisViewerList } from "../List";
 
-describe("<NuVsList />", () => {
+describe("<AnalysisViewerList />", () => {
     it("should render", () => {
         const props = {
             shown: 4,
             total: 10,
             children: "foo"
         };
-        const wrapper = shallow(<NuVsList {...props} />);
+        const wrapper = shallow(<AnalysisViewerList {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

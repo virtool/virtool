@@ -10,11 +10,9 @@ describe("<PathoscopeIsolate />", () => {
                 { filled: [1, 2, 3, 4, 5], length: 5, id: "foo", definition: "Foo Hit" },
                 { filled: [1, 2, 3, 4, 5, 4, 2, 3], length: 8, id: "bar", definition: "Bar Hit" }
             ],
-            reads: 102,
-            showReads: false,
-            onScroll: jest.fn()
+            reads: 102
         };
-        const wrapper = mount(<PathoscopeIsolate {...props} />);
+        const wrapper = shallow(<PathoscopeIsolate {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

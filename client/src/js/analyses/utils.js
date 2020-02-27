@@ -12,6 +12,7 @@ import {
     reject,
     sortBy,
     sumBy,
+    toNumber,
     uniq
 } from "lodash-es";
 import { formatIsolateName } from "../utils/utils";
@@ -86,6 +87,7 @@ export const formatData = detail => {
 export const formatNuVsData = detail => {
     const results = map(detail.results, result => ({
         ...result,
+        id: toNumber(result.index),
         annotatedOrfCount: calculateAnnotatedOrfCount(result.orfs),
         e: calculateSequenceMinimumE(result.orfs),
         families: extractFamilies(result.orfs),
@@ -153,7 +155,6 @@ export const formatPathoscopeData = detail => {
                 sequences,
                 maxDepth: max(filled),
                 pi: sumBy(sequences, "pi"),
-                reads: sumBy(sequences, "reads"),
                 depth: median(filled)
             };
         });

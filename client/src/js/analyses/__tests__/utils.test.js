@@ -62,26 +62,6 @@ describe("formatPathoscopeData()", () => {
     });
 });
 
-describe("median()", () => {
-    it("should calculate median", () => {
-        const values = [8, 9, 3, 6, 7, 1, 3];
-        const result = median(values);
-        expect(result).toBe(6);
-    });
-
-    it("should calculate median with zeros", () => {
-        const values = [8, 9, 3, 6, 0, 7, 1, 3, 0];
-        const result = median(values);
-        expect(result).toBe(3);
-    });
-
-    it("should calculate median when no true center", () => {
-        const values = [8, 2, 3, 9, 6, 5, 1, 4];
-        const result = median(values);
-        expect(result).toBe(4.5);
-    });
-});
-
 describe("mergeCoverage()", () => {
     let isolates;
 

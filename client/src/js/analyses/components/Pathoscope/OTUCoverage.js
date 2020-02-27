@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Flex } from "../../../base";
 
 const createChart = (element, data, width) => {
@@ -59,10 +59,18 @@ const createChart = (element, data, width) => {
     }
 };
 
+export const StaticOTUCoverage = ({ id, filled }) => {
+    const el = useRef(null);
+    useEffect(() => createChart(el.current, filled, el.current.scrollWidth), [id]);
+
+    return <div ref={el} />;
+};
+
 export default class OTUCoverage extends React.Component {
     static propTypes = {
         id: PropTypes.string,
-        filled: PropTypes.array
+        filled: PropTypes.array,
+        resize: PropTypes.bool
     };
 
     componentDidMount() {
