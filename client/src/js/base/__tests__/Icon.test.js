@@ -1,4 +1,4 @@
-import { OverlayTrigger } from "react-bootstrap";
+import { TippyTooltip } from "../Tooltip";
 import { Icon } from "../Icon";
 
 describe("<Icon />", () => {
@@ -34,23 +34,14 @@ describe("<Icon />", () => {
     });
 
     describe("when props.tip is supplied", () => {
-        it("renders Tooltip + OverlayTrigger components", () => {
+        it("renders TippyTooltip with title", () => {
             props = {
-                name: "i-test",
-                tip: "test_tip"
+                name: "test",
+                tip: "TippyTooltip"
             };
-            wrapper = mount(
-                <div>
-                    <Icon {...props} />
-                </div>
-            );
 
-            expect(wrapper.find(OverlayTrigger).length).toEqual(1);
-
-            const target = wrapper.find(OverlayTrigger).prop("overlay");
-
-            expect(target.type.name).toEqual("Tooltip");
-            expect(target.props.children).toEqual(props.tip);
+            wrapper = shallow(<Icon {...props} />);
+            expect(wrapper).toMatchSnapshot();
         });
 
         it("renders accordingly to props.tipPlacement (if supplied)", () => {
@@ -61,7 +52,7 @@ describe("<Icon />", () => {
             };
 
             wrapper = shallow(<Icon {...props} />);
-            expect(wrapper.find(OverlayTrigger).prop("placement")).toEqual(props.tipPlacement);
+            expect(wrapper.find(TippyTooltip).prop("position")).toEqual(props.tipPlacement);
         });
     });
 

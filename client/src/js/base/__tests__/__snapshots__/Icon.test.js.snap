@@ -7,3 +7,16 @@ exports[`<Icon /> renders correctly 1`] = `
   style={Object {}}
 />
 `;
+
+exports[`<Icon /> when props.tip is supplied renders TippyTooltip with title 1`] = `
+<TippyTooltip
+  position="top"
+  tip="TippyTooltip"
+>
+  <i
+    className="fas fa-test"
+    onClick={null}
+    style={Object {}}
+  />
+</TippyTooltip>
+`;

@@ -9,7 +9,7 @@ const StyledTooltip = styled(Tooltip)`
 
 export const TippyTooltip = props => {
     return (
-        <StyledTooltip size="big" title={props.tip} arrow={true}>
+        <StyledTooltip size="big" title={props.tip} arrow={true} position={props.position}>
             {props.children}
         </StyledTooltip>
     );

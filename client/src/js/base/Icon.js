@@ -1,8 +1,7 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
-
+import { TippyTooltip } from "./Tooltip";
 /**
  * A component for rendering a font icon. A tooltip can optionally be shown on hover.
  *
@@ -25,12 +24,10 @@ export const Icon = props => {
     const icon = <i className={className} style={style} onClick={props.onClick ? handleClick : null} />;
 
     if (props.tip) {
-        const tooltip = <Tooltip id={props.tip}>{props.tip}</Tooltip>;
-
         return (
-            <OverlayTrigger placement={props.tipPlacement || "top"} overlay={tooltip}>
+            <TippyTooltip position={props.tipPlacement || "top"} tip={props.tip}>
                 {icon}
-            </OverlayTrigger>
+            </TippyTooltip>
         );
     }
 

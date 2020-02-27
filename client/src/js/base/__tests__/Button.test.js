@@ -1,4 +1,4 @@
-import { OverlayTrigger } from "react-bootstrap";
+import { TippyTooltip } from "../Tooltip";
 import { Button } from "../Button";
 import { Icon } from "../Icon";
 
@@ -43,17 +43,17 @@ describe("<Button />", () => {
         ).toEqual(childElement.html());
     });
 
-    it("renders <button> element wrapped in OverlayTrigger when props.tip provided", () => {
+    it("renders <button> element wrapped in TippyTooltip when props.tip provided", () => {
         props = {
             tip: "test tip"
         };
         wrapper = shallow(<Button {...props} />);
         const baseButton = shallow(<Button />);
 
-        expect(wrapper.find(OverlayTrigger).length).toEqual(1);
+        expect(wrapper.find(TippyTooltip).length).toEqual(1);
         expect(
             wrapper
-                .find(OverlayTrigger)
+                .find(TippyTooltip)
                 .children()
                 .html()
         ).toEqual(baseButton.html());
@@ -63,12 +63,8 @@ describe("<Button />", () => {
         props = {
             tip: "test_tip"
         };
-        wrapper = mount(<Button {...props} />);
+        wrapper = shallow(<Button {...props} />);
 
-        const target = wrapper.find(OverlayTrigger).prop("overlay");
-
-        expect(target.type.name).toEqual("Tooltip");
-        expect(target.props.children).toEqual(props.tip);
         expect(wrapper).toMatchSnapshot();
     });
 
