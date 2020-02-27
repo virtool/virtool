@@ -14,6 +14,9 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
         "results": {},
         "sample": {
             "id": "baz"
+        },
+        "subtraction": {
+            "id": "Plum"
         }
     }
 
@@ -63,10 +66,7 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
 
         assert await resp.json() == {
             "id": "foo",
-            "formatted": True,
-            "subtraction": {
-                "id": "Apple"
-            }
+            "formatted": True
         }
 
         m_format_analysis.assert_called_with(
@@ -86,7 +86,7 @@ async def test_get(ready, error, mocker, spawn_client, resp_is):
                 "id": "baz"
             },
             "subtraction": {
-                "id": "Apple"
+                "id": "Plum"
             }
         }
 
