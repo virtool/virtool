@@ -185,6 +185,7 @@ export const formatPathoscopeData = detail => {
         read_count,
         ready,
         subtraction,
+        subtractedCount: detail.subtracted_count,
         user
     };
 };
