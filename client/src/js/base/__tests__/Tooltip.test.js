@@ -1,28 +1,26 @@
-import { TippyTooltip } from "../Tooltip";
+import { Tooltip } from "../Tooltip";
 
-describe("<TippyTooltip />", () => {
-    let props;
-    let wrapper;
+describe("<Tooltip />", () => {
+    const props = {
+        tip: "foo",
+        position: "bar",
+        children: { Foo: "Bar" }
+    };
 
     it("renders correctly", () => {
-        wrapper = shallow(<TippyTooltip />);
-
+        const wrapper = shallow(<Tooltip />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render when tip prop is provided", () => {
-        props = {
-            title: "test-header"
-        };
-        wrapper = shallow(<TippyTooltip {...props} />);
+        props.title = "test-header";
+        const wrapper = shallow(<Tooltip {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render when position tip is provided", () => {
-        props = {
-            position: "bottom"
-        };
-        wrapper = shallow(<TippyTooltip {...props} />);
+        props.position = "bottom";
+        const wrapper = shallow(<Tooltip {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

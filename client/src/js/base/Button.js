@@ -3,7 +3,7 @@ import styled from "styled-components";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { NavLink } from "react-router-dom";
-import { TippyTooltip } from "./Tooltip";
+import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { bsStyles } from "./utils";
 
@@ -104,7 +104,7 @@ export class Button extends React.Component {
         );
 
         if (this.props.tip) {
-            return <TippyTooltip tip={this.props.tip}>{button}</TippyTooltip>;
+            return <Tooltip tip={this.props.tip}>{button}</Tooltip>;
         }
 
         return button;

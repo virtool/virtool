@@ -9,7 +9,7 @@ exports[`<Button /> renders correctly 1`] = `
 `;
 
 exports[`<Button /> renders optional Tooltip when props.tip provided 1`] = `
-<TippyTooltip
+<Tooltip
   tip="test_tip"
 >
   <button
@@ -17,7 +17,7 @@ exports[`<Button /> renders optional Tooltip when props.tip provided 1`] = `
   >
     <div />
   </button>
-</TippyTooltip>
+</Tooltip>
 `;
 
 exports[`<Button /> renders optional icon 1`] = `

@@ -1,4 +1,4 @@
-import { TippyTooltip } from "../Tooltip";
+import { Tooltip } from "../Tooltip";
 import { Button } from "../Button";
 import { Icon } from "../Icon";
 
@@ -43,17 +43,17 @@ describe("<Button />", () => {
         ).toEqual(childElement.html());
     });
 
-    it("renders <button> element wrapped in TippyTooltip when props.tip provided", () => {
+    it("renders <button> element wrapped in Tooltip when props.tip provided", () => {
         props = {
             tip: "test tip"
         };
         wrapper = shallow(<Button {...props} />);
         const baseButton = shallow(<Button />);
 
-        expect(wrapper.find(TippyTooltip).length).toEqual(1);
+        expect(wrapper.find(Tooltip).length).toEqual(1);
         expect(
             wrapper
-                .find(TippyTooltip)
+                .find(Tooltip)
                 .children()
                 .html()
         ).toEqual(baseButton.html());

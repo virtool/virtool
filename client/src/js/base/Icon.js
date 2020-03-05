@@ -1,7 +1,7 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
-import { TippyTooltip } from "./Tooltip";
+import { Tooltip } from "./Tooltip";
 /**
  * A component for rendering a font icon. A tooltip can optionally be shown on hover.
  *
@@ -25,9 +25,9 @@ export const Icon = props => {
 
     if (props.tip) {
         return (
-            <TippyTooltip position={props.tipPlacement || "top"} tip={props.tip}>
+            <Tooltip position={props.tipPlacement || "top"} tip={props.tip}>
                 {icon}
-            </TippyTooltip>
+            </Tooltip>
         );
     }
 

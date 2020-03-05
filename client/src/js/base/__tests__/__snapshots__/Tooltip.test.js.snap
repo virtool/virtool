@@ -1,23 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<TippyTooltip /> renders correctly 1`] = `
+exports[`<Tooltip /> renders correctly 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
   size="big"
 />
 `;
 
-exports[`<TippyTooltip /> should render when position tip is provided 1`] = `
+exports[`<Tooltip /> should render when position tip is provided 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
   position="bottom"
   size="big"
-/>
+  title="foo"
+>
+  <Component />
+</Tooltip__StyledTooltip>
 `;
 
-exports[`<TippyTooltip /> should render when tip prop is provided 1`] = `
+exports[`<Tooltip /> should render when tip prop is provided 1`] = `
 <Tooltip__StyledTooltip
   arrow={true}
+  position="bar"
   size="big"
-/>
+  title="foo"
+>
+  <Component />
+</Tooltip__StyledTooltip>
 `;

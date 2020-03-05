@@ -1,4 +1,4 @@
-import { TippyTooltip } from "../Tooltip";
+import { Tooltip } from "../Tooltip";
 import { Icon } from "../Icon";
 
 describe("<Icon />", () => {
@@ -34,10 +34,10 @@ describe("<Icon />", () => {
     });
 
     describe("when props.tip is supplied", () => {
-        it("renders TippyTooltip with title", () => {
+        it("renders Tooltip with title", () => {
             props = {
                 name: "test",
-                tip: "TippyTooltip"
+                tip: "Tooltip"
             };
 
             wrapper = shallow(<Icon {...props} />);
@@ -52,7 +52,7 @@ describe("<Icon />", () => {
             };
 
             wrapper = shallow(<Icon {...props} />);
-            expect(wrapper.find(TippyTooltip).prop("position")).toEqual(props.tipPlacement);
+            expect(wrapper.find(Tooltip).prop("position")).toEqual(props.tipPlacement);
         });
     });
 
