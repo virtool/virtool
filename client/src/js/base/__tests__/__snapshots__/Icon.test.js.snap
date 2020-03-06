@@ -7,3 +7,16 @@ exports[`<Icon /> renders correctly 1`] = `
   style={Object {}}
 />
 `;
+
+exports[`<Icon /> when props.tip is supplied renders Tooltip with title 1`] = `
+<Tooltip
+  position="top"
+  tip="Tooltip"
+>
+  <i
+    className="fas fa-test"
+    onClick={null}
+    style={Object {}}
+  />
+</Tooltip>
+`;

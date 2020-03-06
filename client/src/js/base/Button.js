@@ -3,7 +3,7 @@ import styled from "styled-components";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { NavLink } from "react-router-dom";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { bsStyles } from "./utils";
 
@@ -104,6 +104,14 @@ export class Button extends React.Component {
         );
 
         if (this.props.tip) {
+            return <Tooltip tip={this.props.tip}>{button}</Tooltip>;
+        }
+
+        return button;
+    }
+}
+
+/*        if (this.props.tip) {
             const tooltip = <Tooltip id={this.props.tip}>{this.props.tip}</Tooltip>;
 
             return (
@@ -111,8 +119,4 @@ export class Button extends React.Component {
                     {button}
                 </OverlayTrigger>
             );
-        }
-
-        return button;
-    }
-}
+        }*/
