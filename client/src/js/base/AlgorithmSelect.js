@@ -5,7 +5,7 @@ import { map } from "lodash-es";
 import { getTaskDisplayName } from "../utils/utils";
 import { Input } from "./";
 
-export const algorithms = ["pathoscope_bowtie", "nuvs"];
+export const algorithms = ["pathoscope_bowtie", "nuvs", "aodp"];
 
 /**
  * An input-based component for selecting an algorithm (eg. pathoscope_bowtie), by its display name
@@ -30,7 +30,7 @@ export const AlgorithmSelect = props => (
 
 AlgorithmSelect.propTypes = {
     noLabel: PropTypes.bool,
-    value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
+    value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs", "aodp"]),
     onChange: PropTypes.func,
     hasHmm: PropTypes.bool
 };

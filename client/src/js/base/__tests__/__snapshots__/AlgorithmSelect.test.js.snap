@@ -22,6 +22,13 @@ exports[`<AlgorithmSelect /> does not crash when no props are supplied 1`] = `
   >
     NuVs
   </option>
+  <option
+    disabled={false}
+    key="aodp"
+    value="aodp"
+  >
+    AODP
+  </option>
 </Input>
 `;
 
@@ -48,6 +55,13 @@ exports[`<AlgorithmSelect /> should render an Input component with valid props 1
     value="nuvs"
   >
     NuVs
+  </option>
+  <option
+    disabled={false}
+    key="aodp"
+    value="aodp"
+  >
+    AODP
   </option>
 </Input>
 `;
