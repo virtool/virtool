@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { ProgressBar } from "../../../base";
+import { TopProgressBar } from "../../../base";
 
 const ReferenceItemProgressPlaceholder = styled.div`
     height: 4px;
@@ -12,5 +12,5 @@ export const ReferenceItemProgress = ({ now }) => {
         return <ReferenceItemProgressPlaceholder />;
     }
 
-    return <ProgressBar bsStyle="warning" now={now} affixed />;
+    return <TopProgressBar marginBottom="none" bsStyle="warning" now={now} />;
 };

@@ -2,9 +2,7 @@
 
 exports[`<UploadItem /> should render when [progress === 0] 1`] = `
 <UploadItem__StyledUploadItem>
-  <ProgressBar
-    affixed={true}
-    bsStyle="primary"
+  <AffixedProgressBar
     now={0}
   />
   <UploadItem__UploadItemTitle>
@@ -15,9 +13,7 @@ exports[`<UploadItem /> should render when [progress === 0] 1`] = `
 
 exports[`<UploadItem /> should render when [progress > 0] 1`] = `
 <UploadItem__StyledUploadItem>
-  <ProgressBar
-    affixed={true}
-    bsStyle="primary"
+  <AffixedProgressBar
     now={51}
   />
   <UploadItem__UploadItemTitle>

@@ -90,12 +90,6 @@ exports[`<Bar /> should render 1`] = `
         Logout
       </DropdownItem>
     </NavDropdown>
-    <AutoProgressBar
-      active={false}
-      affixed={true}
-      interval={80}
-      step={50}
-    />
   </Bar__NavBarRight>
 </Bar__NavBar>
 `;

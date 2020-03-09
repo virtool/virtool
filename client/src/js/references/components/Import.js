@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { find } from "lodash-es";
 import { pushState } from "../../app/actions";
-import { Alert, ProgressBar, SaveButton, UploadBar, DialogBody, DialogFooter } from "../../base";
+import { Alert, TopProgressBar, SaveButton, UploadBar, DialogBody, DialogFooter } from "../../base";
 import { createRandomString, getTargetChange } from "../../utils/utils";
 import { upload } from "../../files/actions";
 import { importReference } from "../actions";
@@ -104,12 +104,7 @@ class ImportReference extends React.Component {
                             Create a reference from a file previously exported from another Virtool reference.
                         </strong>
                     </Alert>
-                    <ProgressBar
-                        bsStyle={progress === 100 ? "success" : "warning"}
-                        now={progress}
-                        affixed
-                        style={{ marginBottom: "10px" }}
-                    />
+                    <TopProgressBar bsStyle={progress === 100 ? "success" : "warning"} now={progress} />
                     <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
                     <ReferenceForm
                         name={this.state.name}

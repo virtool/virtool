@@ -1,37 +1,49 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AutoProgressBar /> should render when [this.state.fill!=0] 1`] = `
-<ProgressBar
-  affixed={true}
+exports[`<AffixedProgressBar /> should render when [bsStyle='danger'] 1`] = `
+<ProgressBar__StyledAffixedProgress
   bsStyle="danger"
-  now={1}
-  onMoved={[Function]}
+  max="100"
+  value={0}
 />
 `;
 
-exports[`<AutoProgressBar /> should render when [this.state.fill=0] 1`] = `
-<div
-  className="progress-affixed-empty"
+exports[`<AffixedProgressBar /> should render when [bsStyle='success'] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  bsStyle="success"
+  max="100"
+  value={0}
 />
 `;
 
-exports[`<ProgressBar /> should render 1`] = `
-<div
-  className="progress progress-affixed"
->
-  <div
-    aria-valuemax="100"
-    aria-valuemin="0"
-    aria-valuenow="1"
-    className="progress-bar progress-bar-danger"
-    role="progressbar"
-    style={
-      Object {
-        "width": "1%",
-      }
-    }
-  >
-    foo
-  </div>
-</div>
+exports[`<AffixedProgressBar /> should render when [bsStyle='warning'] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  bsStyle="warning"
+  max="100"
+  value={0}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [bsStyle='danger'] 1`] = `
+<ProgressBar__StyledProgress
+  bsStyle="danger"
+  max="100"
+  value={0}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [bsStyle='success'] 1`] = `
+<ProgressBar__StyledProgress
+  bsStyle="success"
+  max="100"
+  value={0}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [bsStyle='warning'] 1`] = `
+<ProgressBar__StyledProgress
+  bsStyle="warning"
+  max="100"
+  value={0}
+/>
 `;

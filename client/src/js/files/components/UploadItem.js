@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { ProgressBar } from "../../base";
+import { AffixedProgressBar } from "../../base";
 
 const StyledUploadItem = styled.div`
     padding: 0;
@@ -15,7 +15,7 @@ const UploadItemTitle = styled.div`
 
 export const UploadItem = ({ name, progress }) => (
     <StyledUploadItem>
-        <ProgressBar now={progress} affixed />
+        <AffixedProgressBar now={progress} />
         <UploadItemTitle>{name}</UploadItemTitle>
     </StyledUploadItem>
 );

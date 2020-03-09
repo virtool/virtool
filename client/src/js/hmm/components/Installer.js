@@ -1,9 +1,10 @@
 import { get, replace } from "lodash-es";
 import React from "react";
-import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import styled from "styled-components";
+import { ProgressBar } from "../../base";
+
 import { checkAdminOrPermission } from "../../utils/utils";
 import { installHMMs } from "../actions";
 import { getProcess } from "../selectors";

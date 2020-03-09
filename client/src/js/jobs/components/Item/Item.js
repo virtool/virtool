@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Attribution, LinkBox, ProgressBar } from "../../../base";
+import { Attribution, LinkBox, AffixedProgressBar } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
 import { cancelJob, removeJob } from "../../actions";
 import { JobAction } from "./Action";
@@ -25,7 +25,7 @@ const JobItemHeader = styled.div`
 `;
 
 const JobItemLinkBox = styled(LinkBox)`
-    padding: 0;
+    padding: 5px 0 0 0;
 `;
 
 export const JobItem = ({ id, task, state, progress, created_at, user, canCancel, canRemove, onCancel, onRemove }) => {
@@ -48,7 +48,8 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
     return (
         <JobItemContainer>
             <JobItemLinkBox to={`/jobs/${id}`}>
-                <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
+                <AffixedProgressBar now={progressValue} bsStyle={progressStyle} />
+
                 <JobItemBody>
                     <JobItemHeader>
                         <strong>{getTaskDisplayName(task)}</strong>
