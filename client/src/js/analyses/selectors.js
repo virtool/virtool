@@ -1,8 +1,8 @@
 import Fuse from "fuse.js";
-import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy } from "lodash-es";
+import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy, filter } from "lodash-es";
 import { createSelector } from "reselect";
 import createCachedSelector from "re-reselect";
-import { getMaxReadLength } from "../samples/selectors";
+import { getMaxReadLength, getSampleLibraryType } from "../samples/selectors";
 import { fuseSearchKeys } from "./utils";
 
 const getReadCount = state => state.analyses.detail.read_count;
@@ -54,6 +54,21 @@ export const getFilterIds = createSelector(
 
         // const filteredResults = filterOTUs ? reject(results, { : undefined }) : results;
         return map(results, "id");
+    }
+);
+
+const getReadyIndexes = state => state.analyses.readyIndexes;
+
+export const getCompatibleReadyIndexes = createSelector(
+    [getSampleLibraryType, getReadyIndexes],
+    (libraryType, readyIndexes) => {
+        return filter(readyIndexes, index => {
+            if (index.reference.data_type === "barcode") {
+                return libraryType === "amplicon";
+            }
+
+            return libraryType === "normal" || libraryType === "srna";
+        });
     }
 );
 
