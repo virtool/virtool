@@ -47,10 +47,6 @@ async def get(req):
     if document["ready"]:
         document = await virtool.analyses.format.format_analysis(req.app, document)
 
-    document["subtraction"] = {
-        "id": sample["subtraction"]["id"]
-    }
-
     return json_response(virtool.utils.base_processor(document))
 
 

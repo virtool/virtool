@@ -57,6 +57,8 @@ class Job(virtool.jobs.job.Job):
 
         analysis_path = os.path.join(sample_path, "analysis", self.params["analysis_id"])
 
+        analysis = self.db.analyses.find_one(self.params["analysis_id"], ["subtraction"])
+
         self.params.update({
             # The path to the directory where all analysis result files will be written.
             "analysis_path": analysis_path,
@@ -79,7 +81,7 @@ class Job(virtool.jobs.job.Job):
             "subtraction_path": os.path.join(
                 self.settings["data_path"],
                 "subtractions",
-                sample["subtraction"]["id"].lower().replace(" ", "_"),
+                analysis["subtraction"]["id"].lower().replace(" ", "_"),
                 "reference"
             )
         })

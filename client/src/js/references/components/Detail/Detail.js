@@ -1,5 +1,5 @@
 import { get } from "lodash-es";
-import React from "react";
+import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { Redirect, Route, Switch } from "react-router-dom";
 import { LoadingPlaceholder, NotFound } from "../../../base";
@@ -13,38 +13,35 @@ import EditReference from "./Edit";
 import ReferenceManage from "./Manage";
 import ReferenceSettings from "./Settings";
 
-class ReferenceDetail extends React.Component {
-    constructor(props) {
-        super(props);
-        this.props.onGetReference(this.props.match.params.refId);
+const ReferenceDetail = ({ error, id, match, onGetReference }) => {
+    const matchId = match.params.refId;
+
+    useEffect(() => onGetReference(matchId), [matchId]);
+
+    if (error) {
+        return <NotFound />;
     }
 
-    render = () => {
-        if (this.props.error) {
-            return <NotFound />;
-        }
+    if (!id || id !== matchId) {
+        return <LoadingPlaceholder />;
+    }
 
-        if (!this.props.id || this.props.id !== this.props.match.params.refId) {
-            return <LoadingPlaceholder />;
-        }
+    return (
+        <div>
+            <Switch>
+                <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
+                <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
+                <Redirect from="/refs/:refId" to={`/refs/${id}/manage`} exact />
+                <Route path="/refs/:refId/manage" component={ReferenceManage} />
+                <Route path="/refs/:refId/otus" component={OTUList} />
+                <Route path="/refs/:refId/indexes" component={Indexes} />
+                <Route path="/refs/:refId/settings" component={ReferenceSettings} />
+            </Switch>
 
-        return (
-            <div className="detail-container">
-                <Switch>
-                    <Route path="/refs/:refId/otus/:otuId" component={OTUDetail} />
-                    <Route path="/refs/:refId/indexes/:indexId" component={IndexDetail} />
-                    <Redirect from="/refs/:refId" to={`/refs/${this.props.id}/manage`} exact />
-                    <Route path="/refs/:refId/manage" component={ReferenceManage} />
-                    <Route path="/refs/:refId/otus" component={OTUList} />
-                    <Route path="/refs/:refId/indexes" component={Indexes} />
-                    <Route path="/refs/:refId/settings" component={ReferenceSettings} />
-                </Switch>
-
-                <EditReference />
-            </div>
-        );
-    };
-}
+            <EditReference />
+        </div>
+    );
+};
 
 const mapStateToProps = state => ({
     canModify: checkRefRight(state, "modify"),

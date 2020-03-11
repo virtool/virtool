@@ -68,6 +68,18 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
 
     sequence_otu_map, _ = otu_resource
 
+    dbs.analyses.insert_one({
+        "_id": "baz",
+        "algorithm": "pathoscope_bowtie",
+        "ready": False,
+        "sample": {
+            "id": "foobar"
+        },
+        "subtraction": {
+            "id": "Prunus persica"
+        }
+    })
+
     dbs.jobs.insert_one({
         "_id": "foobar",
         "task": "pathoscope_bowtie",
@@ -131,9 +143,10 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
         }
     })
 
-    dbs.subtraction.insert_one({
-        "_id": "Arabidopsis thaliana",
-    })
+    dbs.subtraction.insert_many([
+        {"_id": "Arabidopsis thaliana"},
+        {"_id": "Prunus persica"},
+    ])
 
     mock_job.check_db()
 
@@ -149,7 +162,7 @@ def test_check_db(tmpdir, paired, dbs, mock_job):
     assert mock_job.params["subtraction_path"] == os.path.join(
         str(tmpdir),
         "subtractions",
-        "arabidopsis_thaliana",
+        "prunus_persica",
         "reference"
     )
 
@@ -311,15 +324,6 @@ def test_pathoscope(snapshot, dbs, mock_job):
 
 def test_import_results(snapshot, dbs, mock_job):
     mock_job.check_db()
-
-    dbs.analyses.insert_one({
-        "_id": "baz",
-        "algorithm": "pathoscope_bowtie",
-        "ready": False,
-        "sample": {
-            "id": "foobar"
-        }
-    })
 
     mock_job.results = {
         "results": "results will be here",
