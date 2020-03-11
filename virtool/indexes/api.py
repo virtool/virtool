@@ -56,14 +56,15 @@ async def find(req):
     ready_indexes = list()
 
     async for agg in db.indexes.aggregate(pipeline):
-        reference_name = await virtool.db.utils.get_one_field(db.references, "name", agg["_id"])
+        reference = await db.references.find_one(agg["_id"], ["data_type", "name"])
 
         ready_indexes.append({
             "id": agg["index"],
             "version": agg["version"],
             "reference": {
                 "id": agg["_id"],
-                "name": reference_name
+                "name": reference["name"],
+                "data_type": reference["data_type"]
             }
         })
 
