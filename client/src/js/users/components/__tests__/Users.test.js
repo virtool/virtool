@@ -4,7 +4,7 @@ describe("<ManageUsers />", () => {
     let props;
     let wrapper;
 
-    it("renders correctly", () => {
+    beforeEach(() => {
         props = {
             isAdmin: true,
             filter: "test",
@@ -15,18 +15,20 @@ describe("<ManageUsers />", () => {
             onClearError: jest.fn(),
             onListGroups: jest.fn()
         };
+    });
+
+    it("should render", () => {
         wrapper = shallow(<ManageUsers {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when componentDidMount is called", () => {
+    it("should call onListGroups() when component renders", () => {
         props.groupsFetched = false;
         shallow(<ManageUsers {...props} />);
-
         expect(props.onListGroups).toHaveBeenCalled();
     });
 
-    it("should render when componentWillUnmount is called", () => {
+    it("should call onClearError() when component unmounts", () => {
         props.error = ["foo"];
         const wrapper = shallow(<ManageUsers {...props} />);
         wrapper.unmount();
@@ -34,26 +36,28 @@ describe("<ManageUsers />", () => {
     });
 });
 
-describe("mapStateToProps", () => {
-    const state = {
-        account: {
-            administrator: true
-        },
-        users: {
-            filter: "foo"
-        },
-        groups: {
-            list: "bar",
-            fetched: true
-        }
-    };
-    const result = mapStateToProps(state);
-    expect(result).toEqual({
-        isAdmin: true,
-        term: "foo",
-        groups: "bar",
-        groupsFetched: true,
-        error: ""
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            account: {
+                administrator: true
+            },
+            users: {
+                filter: "foo"
+            },
+            groups: {
+                list: "bar",
+                fetched: true
+            }
+        };
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            isAdmin: true,
+            term: "foo",
+            groups: "bar",
+            groupsFetched: true,
+            error: ""
+        });
     });
 });
 

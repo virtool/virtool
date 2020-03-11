@@ -8,8 +8,10 @@ import {
 import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
 
 describe("<PathoscopeDownloadDropdownTitle />", () => {
-    const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
-    expect(wrapper).toMatchSnapshot();
+    it("should render", () => {
+        const wrapper = shallow(<PathoscopeDownloadDropdownTitle />);
+        expect(wrapper).toMatchSnapshot();
+    });
 });
 
 describe("<Toolbar />", () => {

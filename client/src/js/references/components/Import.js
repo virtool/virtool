@@ -3,16 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import {
-    AffixedProgressBar,
-    Alert,
-    Box,
-    DialogBody,
-    DialogFooter,
-    SaveButton,
-    TopProgressBar,
-    UploadBar
-} from "../../base";
+import { AffixedProgressBar, Alert, Box, DialogBody, DialogFooter, SaveButton, UploadBar } from "../../base";
 import { clearError } from "../../errors/actions";
 import { upload } from "../../files/actions";
 import { createRandomString, getTargetChange } from "../../utils/utils";

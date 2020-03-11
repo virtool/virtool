@@ -33,34 +33,36 @@ describe("<HMMInstaller />", () => {
     });
 });
 
-describe("mapStateToProps", () => {
-    const state = {
-        processId: 1,
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            processId: 1,
 
-        account: {
-            permissions: { foo: "bar" },
-            administrator: true
-        },
-        hmms: {
-            status: {
-                process: { id: "foo" },
-                release: { id: "bar" },
-                installed: true
+            account: {
+                permissions: { foo: "bar" },
+                administrator: true
+            },
+            hmms: {
+                status: {
+                    process: { id: "foo" },
+                    release: { id: "bar" },
+                    installed: true
+                }
+            },
+            processes: {
+                documents: [{ foo: "bar" }, { id: "foo" }],
+                id: 1,
+                progress: 10
             }
-        },
-        processes: {
-            documents: [{ foo: "bar" }, { id: "foo" }],
-            id: 1,
-            progress: 10
-        }
-    };
+        };
 
-    const result = mapStateToProps(state);
-    expect(result).toEqual({
-        canInstall: true,
-        installed: true,
-        process: { id: "foo" },
-        releaseId: "bar"
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            canInstall: true,
+            installed: true,
+            process: { id: "foo" },
+            releaseId: "bar"
+        });
     });
 });
 

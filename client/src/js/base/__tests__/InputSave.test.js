@@ -1,17 +1,18 @@
-import { FormControl } from "react-bootstrap";
 import { InputSave } from "../InputSave";
-import { Flex, FlexItem, Button } from "../index";
 
 describe("<InputSave />", () => {
+    let e;
     let props;
     let state;
-    const e = {
-        target: {
-            value: "foo"
-        },
-        preventDefault: jest.fn()
-    };
+
     beforeEach(() => {
+        e = {
+            target: {
+                value: "foo"
+            },
+            preventDefault: jest.fn()
+        };
+
         props = {
             name: "test_inputsave",
             onSave: jest.fn(),
@@ -29,6 +30,7 @@ describe("<InputSave />", () => {
             noMargin: true,
             error: "test error"
         };
+
         state = {
             pending: false,
             value: 5

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
+exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
 <div>
   <Toolbar>
     <FormGroup
@@ -25,6 +25,7 @@ exports[` 1`] = `
           onChange={[Function]}
           placeholder="Sample name"
           type="text"
+          value=""
         />
       </InputGroup>
     </FormGroup>
@@ -35,7 +36,7 @@ exports[` 1`] = `
 </div>
 `;
 
-exports[` 2`] = `
+exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
 <div>
   <Toolbar>
     <FormGroup
@@ -60,9 +61,27 @@ exports[` 2`] = `
           onChange={[Function]}
           placeholder="Sample name"
           type="text"
+          value=""
         />
       </InputGroup>
     </FormGroup>
+    <LinkButton
+      tip="Create"
+      to={
+        Object {
+          "state": Object {
+            "createSample": true,
+          },
+        }
+      }
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="plus-square fa-fw"
+        pullRight={false}
+      />
+    </LinkButton>
   </Toolbar>
   <Box>
     <Connect(AlgorithmFilter) />

@@ -45,23 +45,26 @@ describe("<OTUsList />", () => {
     });
 });
 
-describe("mapStateToProps", () => {
-    const state = {
-        otus: { verified: true },
-        references: { detail: { id: "bar" } }
-    };
-    const result = mapStateToProps(state);
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            otus: { verified: true },
+            references: { detail: { id: "bar" } }
+        };
+        const result = mapStateToProps(state);
 
-    expect(result).toEqual({
-        refId: "bar",
-        verified: true
+        expect(result).toEqual({
+            refId: "bar",
+            verified: true
+        });
     });
 });
 
-describe("mapDispatchToProps", () => {
+describe("mapDispatchToProps()", () => {
     const dispatch = jest.fn();
     const props = mapDispatchToProps(dispatch);
-    it("should return onHide in props", () => {
+
+    it("should return onHide() in props", () => {
         props.onHide();
         expect(dispatch).toHaveBeenCalledWith({
             type: PUSH_STATE,
@@ -71,18 +74,14 @@ describe("mapDispatchToProps", () => {
         });
     });
 
-    describe("mapDispatchToProps", () => {
-        const dispatch = jest.fn();
-        const props = mapDispatchToProps(dispatch);
-        it("should return onLoadNextPage in props", () => {
-            props.onLoadNextPage("foo", "bar", true, 1);
-            expect(dispatch).toHaveBeenCalledWith({
-                refId: "foo",
-                term: "bar",
-                verified: true,
-                page: 1,
-                type: "FIND_OTUS_REQUESTED"
-            });
+    it("should return onLoadNextPage() in props", () => {
+        props.onLoadNextPage("foo", "bar", true, 1);
+        expect(dispatch).toHaveBeenCalledWith({
+            refId: "foo",
+            term: "bar",
+            verified: true,
+            page: 1,
+            type: "FIND_OTUS_REQUESTED"
         });
     });
 });

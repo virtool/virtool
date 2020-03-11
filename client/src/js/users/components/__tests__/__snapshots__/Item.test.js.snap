@@ -1,6 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
+exports[`<UserItem /> should render when administrator=false] 1`] = `
+<Box__LinkBox
+  to="/administration/users/bob"
+>
+  <Item__StyledUserItem>
+    <Identicon
+      hash="foobar"
+      size={32}
+    />
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    >
+      bob
+    </FlexItem>
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={0}
+      pad={10}
+      shrink={1}
+    />
+  </Item__StyledUserItem>
+</Box__LinkBox>
+`;
+
+exports[`<UserItem /> should render when administrator=true] 1`] = `
 <Box__LinkBox
   to="/administration/users/bob"
 >
@@ -33,35 +62,6 @@ exports[`<UserItem /> renders with admin icon when [isAdmin=true] 1`] = `
         pullRight={false}
       />
     </FlexItem>
-  </Item__StyledUserItem>
-</Box__LinkBox>
-`;
-
-exports[`<UserItem /> renders without icon when [isAdmin=false] 1`] = `
-<Box__LinkBox
-  to="/administration/users/bob"
->
-  <Item__StyledUserItem>
-    <Identicon
-      hash="foobar"
-      size={32}
-    />
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    >
-      bob
-    </FlexItem>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      pad={10}
-      shrink={1}
-    />
   </Item__StyledUserItem>
 </Box__LinkBox>
 `;

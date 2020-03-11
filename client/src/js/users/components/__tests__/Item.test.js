@@ -1,46 +1,38 @@
-import { Icon } from "../../../base/index";
-import { UserItem, mapStateToProps } from "../Item";
+import { mapStateToProps, UserItem } from "../Item";
 
 describe("<UserItem />", () => {
-    describe("renders", () => {
-        let props;
+    let props;
 
-        beforeEach(() => {
-            props = {
-                id: "bob",
-                identicon: "foobar",
-                administrator: false
-            };
-        });
+    beforeEach(() => {
+        props = {
+            id: "bob",
+            identicon: "foobar",
+            administrator: false
+        };
+    });
 
-        it("with admin icon when [isAdmin=true]", () => {
-            props.administrator = true;
-            const wrapper = shallow(<UserItem {...props} />);
-            expect(wrapper.find(Icon).length).toBe(1);
-            expect(wrapper).toMatchSnapshot();
-        });
-
-        it("without icon when [isAdmin=false]", () => {
-            const wrapper = shallow(<UserItem {...props} />);
-            expect(wrapper.find(Icon).length).toBe(0);
-            expect(wrapper).toMatchSnapshot();
-        });
+    it.each([true, false])("should render when administrator=%p]", administrator => {
+        props.administrator = administrator;
+        const wrapper = shallow(<UserItem {...props} />);
+        expect(wrapper).toMatchSnapshot();
     });
 });
 
-describe("mapStateToProps", () => {
-    const state = {
-        users: {
-            documents: [{ id: "foo", identicon: "bar", administrator: true }]
-        }
-    };
-    const ownProps = {
-        index: 0
-    };
-    const result = mapStateToProps(state, ownProps);
-    expect(result).toEqual({
-        id: "foo",
-        identicon: "bar",
-        administrator: true
+describe("mapStateToProps()", () => {
+    it("should return props", () => {
+        const state = {
+            users: {
+                documents: [{ id: "foo", identicon: "bar", administrator: true }]
+            }
+        };
+        const ownProps = {
+            index: 0
+        };
+        const result = mapStateToProps(state, ownProps);
+        expect(result).toEqual({
+            id: "foo",
+            identicon: "bar",
+            administrator: true
+        });
     });
 });
