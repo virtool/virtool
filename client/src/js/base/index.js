@@ -3,7 +3,6 @@ import { Flex, FlexItem } from "./Flex";
 import { ScrollList } from "./ScrollList";
 import { bsStyles } from "./utils";
 
-export * from "./AlgorithmSelect";
 export * from "./Alert";
 export * from "./Attribution";
 export * from "./Badge";

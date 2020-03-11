@@ -2,10 +2,12 @@ import { forEach, xorBy } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../../app/actions";
-import { AlgorithmSelect, Button, Flex, FlexItem, ModalDialog, DialogBody, DialogFooter } from "../../../base";
-import { getDefaultSubtraction, getSelectedDocuments } from "../../../samples/selectors";
+import { Button, Flex, FlexItem, ModalDialog, DialogBody, DialogFooter } from "../../../base";
+import { getDefaultSubtraction, getSampleLibraryType, getSelectedDocuments } from "../../../samples/selectors";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { analyze } from "../../actions";
+import { getCompatibleReadyIndexes } from "../../selectors";
+import { AlgorithmSelect } from "./AlgorithmSelect";
 import { IndexSelector } from "./IndexSelector";
 import { SelectedSamples } from "./SelectedSamples";
 import { SubtractionSelector } from "./SubtractionSelector";
@@ -95,6 +97,7 @@ export class CreateAnalysis extends React.Component {
                     <DialogBody>
                         <SelectedSamples samples={this.props.documents} />
                         <AlgorithmSelect
+                            libraryType={this.props.libraryType}
                             value={algorithm}
                             onChange={this.handleSelectAlgorithm}
                             hasHmm={this.props.hasHmm}
@@ -137,7 +140,8 @@ const mapStateToProps = state => ({
     defaultSubtraction: getDefaultSubtraction(state),
     documents: getSelectedDocuments(state),
     hasHmm: !!state.hmms.total_count,
-    indexes: state.analyses.readyIndexes,
+    indexes: getCompatibleReadyIndexes(state),
+    libraryType: getSampleLibraryType(state),
     subtractionIds: state.subtraction.ids,
     userId: state.account.id
 });
