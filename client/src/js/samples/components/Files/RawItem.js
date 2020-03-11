@@ -1,18 +1,16 @@
-import React from "react";
-import numbro from "numbro";
-import { connect } from "react-redux";
 import { find, includes } from "lodash-es";
+import numbro from "numbro";
+import React from "react";
 import { useDropzone } from "react-dropzone";
+import { connect } from "react-redux";
 
-import { BoxGroupSection, Flex, FlexItem, Icon, TopProgressBar } from "../../../base";
+import { AffixedProgressBar, BoxGroupSection, Flex, FlexItem, Icon } from "../../../base";
 import { byteSize, createRandomString } from "../../../utils/utils";
 import { uploadSampleFile } from "../../actions";
 
 export const getFileIconName = name => (includes(name, ".gz") ? "file-archive" : "file");
 
-export const SampleRawItemProgress = ({ upload = 0 }) => (
-    <TopProgressBar marginBottom="none" bsStyle="blue" now={upload.progress} />
-);
+export const SampleRawItemProgress = ({ upload = 0 }) => <AffixedProgressBar color="blue" now={upload.progress} />;
 
 export const SampleRawItemStatus = ({ job, raw, replacement, upload }) => {
     if (upload) {

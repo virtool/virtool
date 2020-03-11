@@ -117,7 +117,7 @@ exports[`<HMMInstaller /> should render when [this.props.process exsists] and [t
       Installing
     </Installer__LoadingText>
     <ProgressBar
-      bsStyle="warning"
+      color="green"
       now={NaN}
     />
     <Installer__LoadingText>

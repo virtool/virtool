@@ -6,7 +6,7 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=false] 
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -39,7 +39,7 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=true] 1
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -72,7 +72,7 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=false] 1
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -105,7 +105,7 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=true] 1`
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -138,7 +138,7 @@ exports[`<JobItem /> should render when [state="cancelled"] 1`] = `
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="danger"
+      color="red"
       now={100}
     />
     <Item__JobItemBody>
@@ -173,7 +173,7 @@ exports[`<JobItem /> should render when [state="complete"] 1`] = `
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -208,7 +208,7 @@ exports[`<JobItem /> should render when [state="error"] 1`] = `
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="danger"
+      color="red"
       now={100}
     />
     <Item__JobItemBody>
@@ -243,7 +243,7 @@ exports[`<JobItem /> should render when [state="running"] 1`] = `
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="warning"
+      color="green"
       now={100}
     />
     <Item__JobItemBody>
@@ -278,7 +278,7 @@ exports[`<JobItem /> should render when [state="waiting"] 1`] = `
     to="/jobs/foo"
   >
     <AffixedProgressBar
-      bsStyle="success"
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>

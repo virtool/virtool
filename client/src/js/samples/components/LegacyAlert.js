@@ -2,9 +2,8 @@ import { connect } from "react-redux";
 import { get, last } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
-import { ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Box, BoxTitle, WarningAlert } from "../../base";
+import { Box, BoxTitle, ProgressBar, WarningAlert } from "../../base";
 import { getHasRawFilesOnly, getSampleUpdateJobId } from "../selectors";
 
 const SampleFilesJobStatus = styled.span`

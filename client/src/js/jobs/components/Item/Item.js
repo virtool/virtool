@@ -32,23 +32,23 @@ export const JobItem = ({ id, task, state, progress, created_at, user, canCancel
     const handleCancel = useCallback(() => onCancel(id), [id, canCancel]);
     const handleRemove = useCallback(() => onRemove(id), [id, canRemove]);
 
-    let progressStyle = "success";
-
     const progressValue = progress * 100;
 
+    let progressColor = "blue";
+
     if (state === "running") {
-        progressStyle = "warning";
+        progressColor = "green";
     }
 
     if (state === "error" || state === "cancelled") {
-        progressStyle = "danger";
+        progressColor = "red";
     }
 
     // Create the option components for the selected fields.
     return (
         <JobItemContainer>
             <JobItemLinkBox to={`/jobs/${id}`}>
-                <AffixedProgressBar now={progressValue} bsStyle={progressStyle} />
+                <AffixedProgressBar now={progressValue} color={progressColor} />
 
                 <JobItemBody>
                     <JobItemHeader>

@@ -1,49 +1,87 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AffixedProgressBar /> should render when [bsStyle='danger'] 1`] = `
+exports[`<AffixedProgressBar /> should render 1`] = `
 <ProgressBar__StyledAffixedProgress
-  bsStyle="danger"
   max="100"
-  value={0}
+  value={68}
 />
 `;
 
-exports[`<AffixedProgressBar /> should render when [bsStyle='success'] 1`] = `
+exports[`<AffixedProgressBar /> should render when [bottom=true] 1`] = `
 <ProgressBar__StyledAffixedProgress
-  bsStyle="success"
+  bottom={true}
   max="100"
-  value={0}
+  value={68}
 />
 `;
 
-exports[`<AffixedProgressBar /> should render when [bsStyle='warning'] 1`] = `
+exports[`<AffixedProgressBar /> should render when [color="blue"] 1`] = `
 <ProgressBar__StyledAffixedProgress
-  bsStyle="warning"
+  color="blue"
   max="100"
-  value={0}
+  value={68}
 />
 `;
 
-exports[`<ProgressBar /> should render when [bsStyle='danger'] 1`] = `
-<ProgressBar__StyledProgress
-  bsStyle="danger"
+exports[`<AffixedProgressBar /> should render when [color="green"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="green"
   max="100"
-  value={0}
+  value={68}
 />
 `;
 
-exports[`<ProgressBar /> should render when [bsStyle='success'] 1`] = `
-<ProgressBar__StyledProgress
-  bsStyle="success"
+exports[`<AffixedProgressBar /> should render when [color="orange"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="orange"
   max="100"
-  value={0}
+  value={68}
 />
 `;
 
-exports[`<ProgressBar /> should render when [bsStyle='warning'] 1`] = `
-<ProgressBar__StyledProgress
-  bsStyle="warning"
+exports[`<AffixedProgressBar /> should render when [color="red"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="red"
   max="100"
-  value={0}
+  value={68}
+/>
+`;
+
+exports[`<ProgressBar /> should render 1`] = `
+<ProgressBar__StyledProgress
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="blue"] 1`] = `
+<ProgressBar__StyledProgress
+  color="blue"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="green"] 1`] = `
+<ProgressBar__StyledProgress
+  color="green"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="orange"] 1`] = `
+<ProgressBar__StyledProgress
+  color="orange"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="red"] 1`] = `
+<ProgressBar__StyledProgress
+  color="red"
+  max="100"
+  value={32}
 />
 `;

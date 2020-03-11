@@ -5,14 +5,16 @@ exports[`<App /> renders correctly 1`] = `
   theme={
     Object {
       "color": Object {
-        "green": "#3c763d",
+        "blue": "#2B6CB0",
+        "green": "#38A169",
         "greyDark": "#555",
         "greyLight": "#dddddd",
+        "orange": "#DD6B20",
         "primary": "#3c8786",
         "purple": "#4C51BF",
         "purpleDark": "#6B46C1",
         "purpleLight": "#E9D8FD",
-        "red": "#af3227",
+        "red": "#E53E3E",
         "white": "#fff",
       },
       "fontSize": Object {

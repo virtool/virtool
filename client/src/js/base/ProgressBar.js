@@ -1,12 +1,8 @@
+import { get } from "lodash-es";
 import React from "react";
 import styled from "styled-components";
 
-const progressValueColor = {
-    success: "#60af98",
-    warning: "#be9235",
-    danger: "#af3227",
-    blue: "rgb(7, 104, 157)"
-};
+const getProgressColor = ({ color, theme }) => get(theme, ["color", color], theme.color.blue);
 
 const StyledProgress = styled.progress`
     -webkit-appearance: none;
@@ -15,11 +11,7 @@ const StyledProgress = styled.progress`
     width: 100%;
 
     ::-webkit-progress-value {
-        ${props => {
-            return `
-            background-color: ${progressValueColor[props.bsStyle]};
-          `;
-        }}
+        background-color: ${getProgressColor};
     }
 
     ::-webkit-progress-bar {
@@ -29,41 +21,21 @@ const StyledProgress = styled.progress`
 
 const StyledAffixedProgress = styled(StyledProgress)`
     height: 5px;
+    left: 0;
+    margin: 0;
     position: absolute;
 
-    top: 0;
-    left: 0;
+    ${props => (props.bottom ? "bottom" : "top")}: 0;
 
     ::-webkit-progress-bar {
         background-color: transparent;
     }
 `;
 
-const StyledTopProgressBar = styled(StyledProgress)`
-    height: 4px;
-    display: flex;
-    margin-bottom: ${props => (props.marginBottom === "none" ? 0 : "10px")};
-
-    ::-webkit-progress-bar {
-        background-color: transparent;
-    }
-`;
-
-export const AffixedProgressBar = ({ now, bsStyle }) => {
-    return <StyledAffixedProgress max="100" value={now} bsStyle={bsStyle}></StyledAffixedProgress>;
+export const AffixedProgressBar = ({ now, color, bottom }) => {
+    return <StyledAffixedProgress max="100" value={now} color={color} bottom={bottom} />;
 };
 
-export const ProgressBar = ({ now, bsStyle }) => {
-    return <StyledProgress max="100" value={now} bsStyle={bsStyle}></StyledProgress>;
-};
-
-export const TopProgressBar = ({ now, bsStyle, marginBottom }) => {
-    return (
-        <StyledTopProgressBar
-            max="100"
-            value={now}
-            bsStyle={bsStyle}
-            marginBottom={marginBottom}
-        ></StyledTopProgressBar>
-    );
+export const ProgressBar = ({ now, color }) => {
+    return <StyledProgress max="100" value={now} color={color} />;
 };

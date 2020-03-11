@@ -6,7 +6,8 @@ describe("<UploadItem />", () => {
     beforeEach(() => {
         props = {
             name: "Foo.fa",
-            progress: 0
+            progress: 0,
+            size: 871290
         };
     });
 

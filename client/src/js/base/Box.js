@@ -6,9 +6,10 @@ import { Table } from "./Table";
 export const Box = styled.div`
     border: 1px ${props => props.theme.color.greyLight} solid;
     box-sizing: border-box;
+    cursor: ${props => (props.onClick ? "pointer" : "auto")};
     margin-bottom: 15px;
     padding: 10px 15px;
-    cursor: ${props => (props.onClick ? "pointer" : "auto")};
+    position: relative;
 
     &:hover {
         ${props => (props.onClick ? "background-color: #f7fafc;" : "")}
@@ -42,6 +43,7 @@ export const BoxGroup = styled(Box)`
 export const BoxGroupSection = styled.div`
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
     padding: 10px 15px;
+    position: relative;
 
     ${props => (props.active ? "background-color: #07689d;" : "")}
     ${props => (props.active ? "color: #ffffff;" : "")}

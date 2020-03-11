@@ -2,24 +2,16 @@ import { ProgressBar, AffixedProgressBar } from "../ProgressBar";
 
 describe("<ProgressBar />", () => {
     const props = {
-        now: 0,
-        bsStyle: ""
+        now: 32
     };
 
-    it("should render when [bsStyle='success']", () => {
-        props.bsStyle = "success";
+    it("should render", () => {
         const wrapper = shallow(<ProgressBar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [bsStyle='warning']", () => {
-        props.bsStyle = "warning";
-        const wrapper = shallow(<ProgressBar {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should render when [bsStyle='danger']", () => {
-        props.bsStyle = "danger";
+    it.each(["green", "blue", "red", "orange"])("should render when [color=%p]", color => {
+        props.color = color;
         const wrapper = shallow(<ProgressBar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
@@ -27,24 +19,21 @@ describe("<ProgressBar />", () => {
 
 describe("<AffixedProgressBar />", () => {
     const props = {
-        now: 0,
-        bsStyle: ""
+        now: 68
     };
 
-    it("should render when [bsStyle='success']", () => {
-        props.bsStyle = "success";
+    it("should render", () => {
         const wrapper = shallow(<AffixedProgressBar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [bsStyle='warning']", () => {
-        props.bsStyle = "warning";
-        const wrapper = shallow(<AffixedProgressBar {...props} />);
+    it("should render when [bottom=true]", () => {
+        const wrapper = shallow(<AffixedProgressBar {...props} bottom />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render when [bsStyle='danger']", () => {
-        props.bsStyle = "danger";
+    it.each(["green", "blue", "red", "orange"])("should render when [color=%p]", color => {
+        props.color = color;
         const wrapper = shallow(<AffixedProgressBar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });

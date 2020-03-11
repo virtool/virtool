@@ -6,7 +6,18 @@ exports[`<UploadItem /> should render when [progress === 0] 1`] = `
     now={0}
   />
   <UploadItem__UploadItemTitle>
-    Foo.fa
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="upload"
+      pullRight={false}
+    />
+    <span>
+      Foo.fa
+    </span>
+    <span>
+      871.3KB
+    </span>
   </UploadItem__UploadItemTitle>
 </UploadItem__StyledUploadItem>
 `;
@@ -17,7 +28,18 @@ exports[`<UploadItem /> should render when [progress > 0] 1`] = `
     now={51}
   />
   <UploadItem__UploadItemTitle>
-    Foo.fa
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="upload"
+      pullRight={false}
+    />
+    <span>
+      Foo.fa
+    </span>
+    <span>
+      871.3KB
+    </span>
   </UploadItem__UploadItemTitle>
 </UploadItem__StyledUploadItem>
 `;

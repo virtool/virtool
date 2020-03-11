@@ -51,14 +51,14 @@ export class HMMInstaller extends React.Component {
             const progress = this.props.process.progress * 100;
             const step = replace(this.props.process.step, "_", " ");
 
-            const barStyle = progress === 100 ? "success" : "warning";
+            const progressColor = progress === 100 ? "blue" : "green";
 
             return (
                 <Box>
                     <LoadingBar>
                         <LoadingText>Installing</LoadingText>
 
-                        <ProgressBar bsStyle={barStyle} now={progress} />
+                        <ProgressBar color={progressColor} now={progress} />
 
                         <LoadingText>
                             <small className="text-muted text-capitalize">{step}</small>
