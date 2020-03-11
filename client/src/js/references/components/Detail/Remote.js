@@ -1,5 +1,4 @@
 import React from "react";
-import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import {
@@ -11,6 +10,7 @@ import {
     FlexItem,
     Icon,
     Loader,
+    ProgressBar,
     RelativeTime
 } from "../../../base";
 import { checkRefRight } from "../../../utils/utils";
@@ -103,7 +103,7 @@ const Upgrade = ({ progress }) => (
         </Flex>
 
         <div style={{ paddingTop: "2rem" }}>
-            <ProgressBar bsStyle="success" now={progress} min={0} max={1} />
+            <ProgressBar color="green" now={progress * 100} />
         </div>
     </BoxGroupSection>
 );

@@ -1,10 +1,9 @@
 import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import React from "react";
-import { ProgressBar } from "react-bootstrap";
 import { connect } from "react-redux";
 import Request from "superagent";
 import { pushState } from "../../app/actions";
-import { Button, Label, Loader, DialogBody, ModalDialog, DialogFooter } from "../../base";
+import { Button, Label, Loader, DialogBody, ModalDialog, DialogFooter, ProgressBar } from "../../base";
 import { byteSize, routerLocationHasState } from "../../utils/utils";
 
 import { installSoftwareUpdates } from "../actions";
@@ -60,7 +59,7 @@ export const Process = ({ count, progress, size, step, updating }) => {
 
     return (
         <DialogBody>
-            <ProgressBar now={progress * 100} />
+            <ProgressBar color="green" now={progress * 100} />
             <p className="text-center">
                 <small>
                     <span className="text-capitalize">{step}</span>

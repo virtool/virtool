@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 import { logout } from "../../account/actions";
-import { AutoProgressBar, DropdownItem, Icon, VTLogo } from "../../base";
+import { DropdownItem, Icon, VTLogo } from "../../base";
 import { getSoftwareUpdates } from "../../updates/actions";
 import { isHomeActive } from "../utils";
 import { NavDropdown } from "./Dropdown";
@@ -120,8 +120,6 @@ export class Bar extends React.Component {
 
                         <DropdownItem onClick={this.props.logout}>Logout</DropdownItem>
                     </NavDropdown>
-
-                    <AutoProgressBar step={50} interval={80} active={this.props.pending} affixed />
                 </NavBarRight>
             </NavBar>
         );

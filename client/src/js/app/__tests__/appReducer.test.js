@@ -1,5 +1,5 @@
-import { appReducer } from "../reducer";
 import { CREATE_FIRST_USER, LOGIN, LOGOUT, RESET_PASSWORD } from "../actionTypes";
+import { appReducer } from "../reducer";
 
 describe("App Reducer", () => {
     let state;
@@ -49,11 +49,11 @@ describe("App Reducer", () => {
     it.each([
         [
             { type: LOGIN.SUCCEEDED, data: { reset: true, reset_code: false } },
-            { dev: "foo", first: "bar", login: true, pending: false, login: false, reset: true, resetCode: false }
+            { dev: "foo", first: "bar", pending: false, login: false, reset: true, resetCode: false }
         ],
         [
             { type: LOGIN.FAILED },
-            { dev: "foo", first: "bar", login: true, pending: false, reset: false, resetCode: true, login: true }
+            { dev: "foo", first: "bar", pending: false, reset: false, resetCode: true, login: true }
         ]
     ])(".match(%o, %o)", (action, expected) => {
         const result = appReducer(state, action);
@@ -123,10 +123,3 @@ describe("App Reducer", () => {
         });
     });
 });
-
-// descibe("should handle SET_APP_PENDING", () => {
-//     it("when app is pending, returns true", () => {
-//
-//       const result = reducer(state)
-//     });
-// });

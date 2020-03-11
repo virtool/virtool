@@ -6,8 +6,10 @@ describe("<CloneReference />", () => {
         refDocuments: [{ foo: "bar" }],
         onSubmit: jest.fn()
     };
+
     let state;
     let e;
+
     beforeEach(() => {
         state = {
             reference: "",
@@ -29,6 +31,7 @@ describe("<CloneReference />", () => {
             }
         };
     });
+
     it("should render", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         expect(wrapper.state()).toMatchSnapshot();
@@ -134,20 +137,22 @@ describe("<CloneReference />", () => {
 });
 
 describe("mapStateToProps()", () => {
-    const state = {
-        router: {
-            location: {
-                state: {
-                    id: "foo"
+    it("should return props", () => {
+        const state = {
+            router: {
+                location: {
+                    state: {
+                        id: "foo"
+                    }
                 }
-            }
-        },
-        references: { documents: "bar" }
-    };
-    const result = mapStateToProps(state);
-    expect(result).toEqual({
-        refId: "foo",
-        refDocuments: "bar"
+            },
+            references: { documents: "bar" }
+        };
+        const result = mapStateToProps(state);
+        expect(result).toEqual({
+            refId: "foo",
+            refDocuments: "bar"
+        });
     });
 });
 

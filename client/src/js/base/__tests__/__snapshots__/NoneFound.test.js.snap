@@ -27,9 +27,9 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
         "rules": Array [
           "border:1px ",
           [Function],
-          " solid;box-sizing:border-box;margin-bottom:15px;padding:10px 15px;cursor:",
+          " solid;box-sizing:border-box;cursor:",
           [Function],
-          ";&:hover{",
+          ";margin-bottom:15px;padding:10px 15px;position:relative;&:hover{",
           [Function],
           "}",
         ],

@@ -13,17 +13,13 @@ describe("<SampleSearchToolbar />", () => {
         };
     });
 
-    describe("renders when [canCreate=true]", () => {
+    it.each([true, false])("should render when [canCreate=%p]", canCreate => {
+        props.canCreate = canCreate;
         const wrapper = shallow(<SampleSearchToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    describe("renders when [canCreate=false]", () => {
-        const wrapper = shallow(<SampleSearchToolbar {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("Change in input dispatches filterSamples() action", () => {
+    it("should call onFind() when input changes", () => {
         const wrapper = shallow(<SampleSearchToolbar {...props} />);
         const e = { target: { value: "foo" } };
 

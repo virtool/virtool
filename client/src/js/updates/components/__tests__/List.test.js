@@ -1,7 +1,5 @@
 import React from "react";
 import ReleasesList from "../List.js";
-import Release from "../Release.js";
-import { Releases } from "../Releases.js";
 
 describe("<ReleasesList />", () => {
     let props;

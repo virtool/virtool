@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ManageUsers /> renders correctly 1`] = `
+exports[`<ManageUsers /> should render 1`] = `
 <div>
   <Toolbar>
     <FormGroup

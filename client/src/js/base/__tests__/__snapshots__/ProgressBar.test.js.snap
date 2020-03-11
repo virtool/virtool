@@ -1,37 +1,87 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<AutoProgressBar /> should render when [this.state.fill!=0] 1`] = `
-<ProgressBar
-  affixed={true}
-  bsStyle="danger"
-  now={1}
-  onMoved={[Function]}
+exports[`<AffixedProgressBar /> should render 1`] = `
+<ProgressBar__StyledAffixedProgress
+  max="100"
+  value={68}
 />
 `;
 
-exports[`<AutoProgressBar /> should render when [this.state.fill=0] 1`] = `
-<div
-  className="progress-affixed-empty"
+exports[`<AffixedProgressBar /> should render when [bottom=true] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  bottom={true}
+  max="100"
+  value={68}
+/>
+`;
+
+exports[`<AffixedProgressBar /> should render when [color="blue"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="blue"
+  max="100"
+  value={68}
+/>
+`;
+
+exports[`<AffixedProgressBar /> should render when [color="green"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="green"
+  max="100"
+  value={68}
+/>
+`;
+
+exports[`<AffixedProgressBar /> should render when [color="orange"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="orange"
+  max="100"
+  value={68}
+/>
+`;
+
+exports[`<AffixedProgressBar /> should render when [color="red"] 1`] = `
+<ProgressBar__StyledAffixedProgress
+  color="red"
+  max="100"
+  value={68}
 />
 `;
 
 exports[`<ProgressBar /> should render 1`] = `
-<div
-  className="progress progress-affixed"
->
-  <div
-    aria-valuemax="100"
-    aria-valuemin="0"
-    aria-valuenow="1"
-    className="progress-bar progress-bar-danger"
-    role="progressbar"
-    style={
-      Object {
-        "width": "1%",
-      }
-    }
-  >
-    foo
-  </div>
-</div>
+<ProgressBar__StyledProgress
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="blue"] 1`] = `
+<ProgressBar__StyledProgress
+  color="blue"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="green"] 1`] = `
+<ProgressBar__StyledProgress
+  color="green"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="orange"] 1`] = `
+<ProgressBar__StyledProgress
+  color="orange"
+  max="100"
+  value={32}
+/>
+`;
+
+exports[`<ProgressBar /> should render when [color="red"] 1`] = `
+<ProgressBar__StyledProgress
+  color="red"
+  max="100"
+  value={32}
+/>
 `;

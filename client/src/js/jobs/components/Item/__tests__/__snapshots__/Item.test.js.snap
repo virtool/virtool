@@ -5,9 +5,8 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=false] 
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -39,9 +38,8 @@ exports[`<JobItem /> should render when [canCancel=false] and [canRemove=true] 1
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -73,9 +71,8 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=false] 1
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -107,9 +104,8 @@ exports[`<JobItem /> should render when [canCancel=true] and [canRemove=true] 1`
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -141,9 +137,8 @@ exports[`<JobItem /> should render when [state="cancelled"] 1`] = `
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="danger"
+    <AffixedProgressBar
+      color="red"
       now={100}
     />
     <Item__JobItemBody>
@@ -177,9 +172,8 @@ exports[`<JobItem /> should render when [state="complete"] 1`] = `
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>
@@ -213,9 +207,8 @@ exports[`<JobItem /> should render when [state="error"] 1`] = `
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="danger"
+    <AffixedProgressBar
+      color="red"
       now={100}
     />
     <Item__JobItemBody>
@@ -249,9 +242,8 @@ exports[`<JobItem /> should render when [state="running"] 1`] = `
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="warning"
+    <AffixedProgressBar
+      color="green"
       now={100}
     />
     <Item__JobItemBody>
@@ -285,9 +277,8 @@ exports[`<JobItem /> should render when [state="waiting"] 1`] = `
   <Item__JobItemLinkBox
     to="/jobs/foo"
   >
-    <ProgressBar
-      affixed={true}
-      bsStyle="success"
+    <AffixedProgressBar
+      color="blue"
       now={100}
     />
     <Item__JobItemBody>

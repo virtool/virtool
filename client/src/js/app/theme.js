@@ -1,11 +1,13 @@
 export const theme = {
     color: {
-        green: "#3c763d",
+        blue: "#2B6CB0",
+        green: "#38A169",
         greyLight: "#dddddd",
         greyDark: "#555",
         primary: "#3c8786",
-        red: "#af3227",
+        red: "#E53E3E",
         white: "#fff",
+        orange: "#DD6B20",
         purpleLight: "#E9D8FD",
         purple: "#4C51BF",
         purpleDark: "#6B46C1"
