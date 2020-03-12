@@ -21,6 +21,18 @@ def mock_job(tmpdir, mocker, request, dbs, test_db_connection_string, test_db_na
         "db_name": test_db_name
     }
 
+    dbs.analyses.insert_one({
+        "_id": "foo_analysis",
+        "algorithm": "aodp",
+        "ready": False,
+        "sample": {
+            "id": "foobar"
+        },
+        "subtraction": {
+            "id": "Prunus persica"
+        }
+    })
+
     dbs.indexes.insert_one({
         "_id": "foo_index",
         "manifest": {

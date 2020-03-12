@@ -110,13 +110,3 @@ export class Button extends React.Component {
         return button;
     }
 }
-
-/*        if (this.props.tip) {
-            const tooltip = <Tooltip id={this.props.tip}>{this.props.tip}</Tooltip>;
-
-            return (
-                <OverlayTrigger placement={this.props.tipPlacement} overlay={tooltip}>
-                    {button}
-                </OverlayTrigger>
-            );
-        }*/
