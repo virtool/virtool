@@ -8,6 +8,7 @@ import {
     LIST_READY_INDEXES,
     SET_ANALYSIS_ACTIVE_ID,
     SET_ANALYSIS_SORT_KEY,
+    SET_AODP_FILTER,
     SET_SEARCH_IDS,
     TOGGLE_ANALYSIS_SORT_DESCENDING,
     TOGGLE_FILTER_ISOLATES,
@@ -41,7 +42,10 @@ export const initialState = {
 
     // NuVs specific,
     filterORFs: true,
-    filterSequences: true
+    filterSequences: true,
+
+    //AODP
+    filterAODP: 0.97
 };
 
 export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
@@ -68,7 +72,6 @@ export const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
 
 export const updateIdLists = (state, action) => {
     const analysisDetailId = get(state, "detail.id", null);
-
     const detail = formatData(action.data);
 
     if (analysisDetailId === action.data.id) {
@@ -90,6 +93,9 @@ export const updateIdLists = (state, action) => {
 
 export default function analysesReducer(state = initialState, action) {
     switch (action.type) {
+        case SET_AODP_FILTER:
+            return { ...state, filterAODP: action.filterMin };
+
         case WS_INSERT_ANALYSIS:
             return insert(state, action, state.sortKey, state.sortDescending);
 

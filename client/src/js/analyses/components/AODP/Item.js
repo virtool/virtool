@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
+
 import { setActiveHitId } from "../../actions";
 import { getActiveHit, getMatches } from "../../selectors";
 import { AnalysisViewerItem } from "../Viewer/Item";
@@ -18,6 +19,7 @@ const mapStateToProps = (state, ownProps) => {
     const activeId = getActiveHit(state).id;
     const matches = getMatches(state);
     const match = matches[ownProps.index];
+
     const { id, name } = match;
     return { id, name, active: activeId === id };
 };

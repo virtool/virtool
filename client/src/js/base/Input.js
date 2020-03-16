@@ -58,9 +58,12 @@ export class UnstyledInput extends React.Component {
                 autoFocus={this.props.autoFocus}
                 children={this.props.children}
                 className={this.props.className}
+                max={this.props.max}
+                min={this.props.min}
                 name={this.props.name}
                 placeholder={this.props.placeholder}
                 readOnly={this.props.readOnly}
+                step={this.props.step}
                 type={this.props.type}
                 value={this.props.value}
                 onBlur={this.props.onBlur}

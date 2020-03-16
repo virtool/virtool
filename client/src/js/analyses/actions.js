@@ -8,6 +8,7 @@ import {
     REMOVE_ANALYSIS,
     SET_ANALYSIS_ACTIVE_ID,
     SET_ANALYSIS_SORT_KEY,
+    SET_AODP_FILTER,
     SET_SEARCH_IDS,
     TOGGLE_ANALYSIS_SORT_DESCENDING,
     TOGGLE_FILTER_ISOLATES,
@@ -59,6 +60,13 @@ export const setSearchIds = ids => ({
     type: SET_SEARCH_IDS,
     ids
 });
+
+export const setAODPFilter = filterMin => {
+    return {
+        type: SET_AODP_FILTER,
+        filterMin
+    };
+};
 
 export const setAnalysisSortKey = sortKey => ({
     type: SET_ANALYSIS_SORT_KEY,

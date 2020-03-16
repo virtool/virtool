@@ -70,12 +70,16 @@ export const AnalysisDetail = props => {
     );
 };
 
-export const mapStateToProps = state => ({
-    detail: state.analyses.detail,
-    error: get(state, "errors.GET_ANALYSIS_ERROR", null),
-    quality: state.samples.detail.quality,
-    sampleName: state.samples.detail.name
-});
+export const mapStateToProps = state => {
+    // console.log(state.analyses);
+    // console.log(state.analyses.detail);
+    return {
+        detail: state.analyses.detail,
+        error: get(state, "errors.GET_ANALYSIS_ERROR", null),
+        quality: state.samples.detail.quality,
+        sampleName: state.samples.detail.name
+    };
+};
 
 export const mapDispatchToProps = dispatch => ({
     getAnalysis: analysisId => {
