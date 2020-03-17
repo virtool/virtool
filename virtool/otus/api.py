@@ -614,11 +614,6 @@ async def edit_sequence(req):
     if message:
         return bad_request(message)
 
-    segment = data.get("segment")
-
-    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment does not exist")
-
     sequence_document = await asyncio.shield(virtool.otus.sequences.edit(
         req.app,
         otu_id,
