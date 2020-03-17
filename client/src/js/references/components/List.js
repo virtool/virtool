@@ -1,13 +1,22 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import { connect } from "react-redux";
-import { LoadingPlaceholder, Box, ScrollList, ViewHeader } from "../../base";
+import styled from "styled-components";
+import { Box, LoadingPlaceholder, ScrollList, ViewHeader } from "../../base";
 import { checkAdminOrPermission, routerLocationHasState } from "../../utils/utils";
 import { findReferences, remoteReference } from "../actions";
 import { getHasOfficial, getTerm } from "../selectors";
 import AddReference from "./Add";
 import ReferenceItem from "./Item/Item";
 import ReferenceToolbar from "./Toolbar";
+
+const OfficialReferencePlaceholder = styled(Box)`
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 180px;
+    justify-content: center;
+`;
 
 class ReferenceList extends React.Component {
     componentDidMount() {
@@ -25,14 +34,12 @@ class ReferenceList extends React.Component {
 
         if (!this.props.hasOfficial && this.props.canCreate) {
             installOfficialComponent = (
-                <Box key="remote" className="card reference-remote">
-                    <span>
-                        <p>Official Remote Reference</p>
-                        <Button bsStyle="primary" onClick={this.props.onRemote}>
-                            Install
-                        </Button>
-                    </span>
-                </Box>
+                <OfficialReferencePlaceholder key="remote">
+                    <p>Official Remote Reference</p>
+                    <Button bsStyle="primary" onClick={this.props.onRemote}>
+                        Install
+                    </Button>
+                </OfficialReferencePlaceholder>
             );
         }
 

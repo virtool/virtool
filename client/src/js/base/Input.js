@@ -78,6 +78,7 @@ export const Input = styled(UnstyledInput)`
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
     display: block;
     font-size: ${props => props.theme.fontSize.md};
+    height: auto;
     outline: none;
     padding: 8px 10px;
     position: relative;
