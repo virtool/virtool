@@ -29,4 +29,10 @@ export const GlobalStyles = createGlobalStyle`
         ${tabFocus}
       }
   }  
+  
+  label {
+  display: inline-block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
 `;
