@@ -1,7 +1,10 @@
 import styled from "styled-components";
+import { getColor } from "../app/theme";
+
+export const getLabelColor = props => getColor(props) || props.theme.color.greyDark;
 
 export const Label = styled.span`
-    background-color: #777777;
+    background-color: ${getLabelColor};
     border-radius: 2px;
     color: #ffffff;
     display: inline;
@@ -17,20 +20,4 @@ export const Label = styled.span`
     &:last-of-type {
         margin: 0;
     }
-`;
-
-export const PrimaryLabel = styled(Label)`
-    background-color: #07689d;
-`;
-
-export const DangerLabel = styled(Label)`
-    background-color: #c53030;
-`;
-
-export const InfoLabel = styled(Label)`
-    background-color: #553c9a;
-`;
-
-export const SuccessLabel = styled(Label)`
-    background-color: #2f855a;
 `;

@@ -1,21 +1,22 @@
 import styled from "styled-components";
+import PropTypes from "prop-types";
+import { getLabelColor } from "./Label";
 
 export const Badge = styled.span`
-    background-color: #777777;
+    background-color: ${getLabelColor};
     border-radius: 10px;
+    color: ${props => props.theme.color.white};
     display: inline-block;
     min-width: 10px;
     padding: 3px 7px;
-    font-size: 12px;
+    font-size: ${props => props.theme.fontSize.sm};
     font-weight: bold;
-    color: #ffffff;
     line-height: 1;
+    text-align: center;
     vertical-align: middle;
     white-space: nowrap;
-    text-align: center;
 `;
 
-export const RedBadge = styled(Badge)`
-    background-color: #c53030;
-    color: #ffffff;
-`;
+Badge.propTypes = {
+    color: PropTypes.oneOf(["blue", "green", "red", "orange", "purple"])
+};
