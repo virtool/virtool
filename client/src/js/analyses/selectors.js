@@ -1,5 +1,5 @@
 import Fuse from "fuse.js";
-import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy, filter } from "lodash-es";
+import { get, find, intersection, map, reject, sortBy, toNumber, toString, keyBy, min, filter } from "lodash-es";
 import { createSelector } from "reselect";
 import createCachedSelector from "re-reselect";
 import { getMaxReadLength, getSampleLibraryType } from "../samples/selectors";
@@ -36,10 +36,11 @@ export const getFuse = createSelector([getAlgorithm, getResults], (algorithm, re
 
 export const getFilterOTUs = state => state.analyses.filterOTUs;
 export const getFilterSequences = state => state.analyses.filterSequences;
+export const getAodpFilter = state => state.analyses.aodpFilter;
 
 export const getFilterIds = createSelector(
-    [getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
-    (algorithm, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
+    [getAodpFilter, getAlgorithm, getResults, getFilterOTUs, getFilterSequences, getMaxReadLength, getReadCount],
+    (aodpFilter, algorithm, results, filterOTUs, filterSequences, maxReadLength, readCount) => {
         if (algorithm === "nuvs") {
             const filteredResults = filterSequences ? reject(results, { e: undefined }) : results;
             return map(filteredResults, "id");
@@ -53,6 +54,16 @@ export const getFilterIds = createSelector(
         }
 
         // const filteredResults = filterOTUs ? reject(results, { : undefined }) : results;
+
+        if (algorithm === "aodp" && aodpFilter) {
+            const fil = filter(results, result => {
+                if (min(result.identities) > aodpFilter * 100) {
+                    return result.id;
+                }
+            });
+            return map(fil, fi => fi.id);
+        }
+
         return map(results, "id");
     }
 );

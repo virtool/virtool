@@ -89,7 +89,53 @@ export const formatData = detail => {
 };
 
 export const formatAODPData = detail => {
-    return { ...detail };
+    const results = map(detail.results, result => {
+        const isolates = map(result.isolates, isolate => {
+            const sequences = map(isolate.sequences, sequence => {
+                return {
+                    ...sequence,
+                    identities: getSequenceIdentities(sequence)
+                };
+            });
+
+            return {
+                ...isolate,
+                sequences,
+                identities: getIsolateIdentities(sequences)
+            };
+        });
+
+        return {
+            ...result,
+            isolates,
+            identities: getResultIdentities(isolates)
+        };
+    });
+
+    return { ...detail, results };
+};
+
+const getResultIdentities = isolates => {
+    const iden = flatMap(isolates, isolate => {
+        return isolate.identities;
+    });
+
+    return iden;
+};
+
+const getIsolateIdentities = sequences => {
+    const identities = flatMap(sequences, sequence => {
+        return sequence.identities;
+    });
+
+    return identities;
+};
+
+const getSequenceIdentities = sequence => {
+    const identities = flatMap(sequence.hit, hitItem => {
+        return hitItem.identity;
+    });
+    return identities;
 };
 
 export const formatNuVsData = detail => {

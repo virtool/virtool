@@ -46,12 +46,12 @@ describe("getFilterIds()", () => {
 
     it("should return filterIds when filtered", () => {
         const result = getFilterIds.resultFunc(algorithm, results, true, true);
-        expect(result).toEqual([2, 1]);
+        expect(result).toEqual([]);
     });
 
     it("should return filterIds when unfiltered", () => {
         const result = getFilterIds.resultFunc(algorithm, results, true, false);
-        expect(result).toEqual([2, 5, 1]);
+        expect(result).toEqual([]);
     });
 });
 

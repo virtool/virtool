@@ -33,6 +33,7 @@ describe("Analyses Reducer", () => {
             data: null,
             detail: null,
             documents: null,
+            filterAODP: 0.97,
             filterIsolates: true,
             filterORFs: true,
             filterOTUs: true,

@@ -87,6 +87,7 @@ const NuVsToolbar = ({
 
 const mapStateToProps = state => {
     const { detail, filterORFs, filterSequences, sortKey } = state.analyses;
+
     return {
         id: detail.id,
         fuse: getFuse(state),
