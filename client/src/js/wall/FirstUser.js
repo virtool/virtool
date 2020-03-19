@@ -1,8 +1,17 @@
-import React from "react";
 import { noop } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Input } from "../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Button,
+    Input,
+    InputGroup,
+    InputLabel,
+    PasswordInput
+} from "../base";
 import { createFirstUser } from "../users/actions";
 import { WallContainer } from "./Container";
 
@@ -66,20 +75,14 @@ export class FirstUser extends React.Component {
                     </FirstUserModalHeader>
                     <FirstUserModalBody>
                         <form onSubmit={this.handleSubmit}>
-                            <Input
-                                type="text"
-                                name="username"
-                                label="Username"
-                                value={username}
-                                onChange={this.handleChange}
-                            />
-                            <Input
-                                type="password"
-                                name="password"
-                                label="Password"
-                                value={password}
-                                onChange={this.handleChange}
-                            />
+                            <InputGroup>
+                                <InputLabel>Username</InputLabel>
+                                <Input value={username} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Password</InputLabel>
+                                <PasswordInput value={password} onChange={this.handleChange} />
+                            </InputGroup>
 
                             <Button type="submit" icon="user-plus" bsStyle="primary">
                                 Create User

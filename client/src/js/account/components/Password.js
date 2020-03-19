@@ -7,8 +7,12 @@ import {
     BoxGroup,
     BoxGroupHeader,
     BoxGroupSection,
+    InputContainer,
     InputError,
+    InputGroup,
+    InputLabel,
     LoadingPlaceholder,
+    PasswordInput,
     RelativeTime,
     SaveButton
 } from "../../base";
@@ -16,32 +20,29 @@ import { clearError } from "../../errors/actions";
 import { getTargetChange } from "../../utils/utils";
 import { changePassword } from "../actions";
 
-const FormButton = styled(BoxGroupSection)`
-    overflow: auto;
-`;
+const getInitialState = props => ({
+    oldPassword: "",
+    newPassword: "",
+    errorOldPassword: "",
+    errorNewPassword: "",
+    error: props.error
+});
 
 const ChangePasswordFooter = styled.div`
-    margin-top: 17px;
-    display: flex;
-    justify-content: space-between;
     align-items: start;
+    display: flex;
+    margin-top: 15px;
 
     > span {
         color: ${props => props.theme.color.greyDark};
     }
+
+    button {
+        margin-left: auto;
+    }
 `;
 
-const getInitialState = props => ({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-    errorOldPassword: "",
-    errorNewPassword: "",
-    errorConfirmPassword: "",
-    error: props.error
-});
-
-const deriveState = (props, state) => {
+const collectErrors = (props, state) => {
     const message = get(props, "error.message");
 
     if (message) {
@@ -59,13 +60,6 @@ export class ChangePassword extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
-    }
-
-    componentDidUpdate(prevProps) {
-        // Clears form on successful password change
-        if (this.props.lastPasswordChange !== prevProps.lastPasswordChange) {
-            return getInitialState(this.props);
-        }
     }
 
     handleChange = e => {
@@ -96,11 +90,6 @@ export class ChangePassword extends React.Component {
             });
         }
 
-        if (this.state.confirmPassword !== this.state.newPassword) {
-            hasError = true;
-            this.setState({ errorConfirmPassword: "New passwords do not match" });
-        }
-
         if (!hasError) {
             this.props.onChangePassword(this.state.oldPassword, this.state.newPassword);
         }
@@ -111,54 +100,35 @@ export class ChangePassword extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        const {
-            oldPassword,
-            newPassword,
-            confirmPassword,
-            errorOldPassword,
-            errorNewPassword,
-            errorConfirmPassword
-        } = deriveState(this.props, this.state);
+        const { oldPassword, newPassword, errorOldPassword, errorNewPassword } = collectErrors(this.props, this.state);
 
         return (
             <BoxGroup>
                 <BoxGroupHeader>
                     <h2>Password</h2>
                 </BoxGroupHeader>
-                <FormButton>
-                    <form onSubmit={this.onSubmit}>
-                        <InputError
-                            label="Old Password"
-                            type="password"
-                            name="oldPassword"
-                            value={oldPassword}
-                            onChange={this.handleChange}
-                            error={errorOldPassword}
-                        />
-                        <InputError
-                            label="New password"
-                            type="password"
-                            name="newPassword"
-                            value={newPassword}
-                            onChange={this.handleChange}
-                            error={errorNewPassword}
-                        />
-                        <InputError
-                            label="Confirm New Password"
-                            type="password"
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            onChange={this.handleChange}
-                            error={errorConfirmPassword}
-                        />
-                        <ChangePasswordFooter>
-                            <span>
-                                Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                            </span>
-                            <SaveButton altText="Change" pullRight />
-                        </ChangePasswordFooter>
-                    </form>
-                </FormButton>
+                <BoxGroupSection as="form" onSubmit={this.onSubmit}>
+                    <InputGroup>
+                        <InputLabel>Old Password</InputLabel>
+                        <InputContainer>
+                            <PasswordInput name="oldPassword" value={oldPassword} onChange={this.handleChange} />
+                            <InputError>{errorOldPassword}</InputError>
+                        </InputContainer>
+                    </InputGroup>
+                    <InputGroup>
+                        <InputLabel>New password</InputLabel>
+                        <InputContainer>
+                            <PasswordInput name="newPassword" value={newPassword} onChange={this.handleChange} />
+                            <InputError>{errorNewPassword}</InputError>
+                        </InputContainer>
+                    </InputGroup>
+                    <ChangePasswordFooter>
+                        <span>
+                            Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                        </span>
+                        <SaveButton altText="Change" />
+                    </ChangePasswordFooter>
+                </BoxGroupSection>
             </BoxGroup>
         );
     }

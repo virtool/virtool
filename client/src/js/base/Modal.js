@@ -43,6 +43,10 @@ export const ModalDialogOverlay = styled(({ close, ...rest }) => <DialogOverlay 
     overflow: auto;
     position: fixed;
     z-index: 9999;
+
+    i.fas {
+        z-index: 10000;
+    }
 `;
 
 export const ModalDialogContent = styled(({ close, size, ...rest }) => <DialogContent {...rest} />)`

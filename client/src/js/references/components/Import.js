@@ -3,7 +3,16 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { AffixedProgressBar, Alert, Box, DialogBody, DialogFooter, SaveButton, UploadBar } from "../../base";
+import {
+    AffixedProgressBar,
+    Alert,
+    Box,
+    DialogBody,
+    DialogFooter,
+    InputError,
+    SaveButton,
+    UploadBar
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { upload } from "../../files/actions";
 import { createRandomString, getTargetChange } from "../../utils/utils";
@@ -23,7 +32,14 @@ const getInitialState = () => ({
     mode: "import"
 });
 
+const ImportReferenceDialogBody = styled(DialogBody)`
+    ${InputError} {
+        margin: -10px 0 10px;
+    }
+`;
+
 const ImportReferenceUploadContainer = styled(Box)`
+    border-radius: ${props => props.theme.borderRadius.sm};
     padding: 15px 15px 0;
 `;
 
@@ -103,7 +119,7 @@ class ImportReference extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <DialogBody>
+                <ImportReferenceDialogBody>
                     <Alert>
                         <strong>
                             Create a reference from a file previously exported from another Virtool reference.
@@ -114,6 +130,8 @@ class ImportReference extends React.Component {
                         <AffixedProgressBar color={progress === 100 ? "green" : "orange"} now={progress} />
                         <UploadBar onDrop={this.handleDrop} message={message} style={fileErrorStyle} />
                     </ImportReferenceUploadContainer>
+
+                    <InputError>{this.state.errorFile}</InputError>
 
                     <ReferenceForm
                         name={this.state.name}
@@ -128,7 +146,7 @@ class ImportReference extends React.Component {
                         onChange={this.handleChange}
                         toggle={this.toggleCheck}
                     />
-                </DialogBody>
+                </ImportReferenceDialogBody>
 
                 <DialogFooter>
                     <SaveButton disabled={progress !== 100 && progress !== 0} altText="Import" />

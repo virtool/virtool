@@ -1,4 +1,5 @@
-import { Email } from "../Email";
+import { Input } from "../../../base";
+import { Email, EmailForm } from "../Email";
 
 describe("<Email />", () => {
     let props;
@@ -12,79 +13,60 @@ describe("<Email />", () => {
         };
     });
 
-    it("should render with initial email", () => {
+    it("should render", () => {
         const wrapper = shallow(<Email {...props} />);
-        expect(wrapper.state("email")).toBe(props.email);
         expect(wrapper).toMatchSnapshot();
     });
 
     it("should render without initial email", () => {
         props.email = "";
         const wrapper = shallow(<Email {...props} />);
-        expect(wrapper.state("email")).toBe("");
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render with error in state", () => {
+    it("should render when submitted value is invalid error", () => {
         const wrapper = shallow(<Email {...props} />);
-        wrapper.setState({ error: "Foo error" });
+
+        // Change value and check snapshot.
+        const e = {
+            target: {
+                name: "email",
+                value: "not_an_email"
+            }
+        };
+        wrapper.find(Input).simulate("change", e);
+        expect(wrapper).toMatchSnapshot();
+
+        // Submit and check that error is in snapshot.
+        const preventDefault = jest.fn();
+        wrapper.find(EmailForm).simulate("submit", { preventDefault });
+        expect(preventDefault).toHaveBeenCalledWith();
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render with error in props", () => {
-        props.error = "Bar error";
-        const wrapper = shallow(<Email {...props} />);
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should update state and when input changes", () => {
+    it("should render when when input changes", () => {
         const wrapper = shallow(<Email {...props} />);
         const e = {
             target: {
                 value: "bar@example.com"
             }
         };
-        wrapper.find("InputError").simulate("change", e);
-        expect(wrapper.state("email")).toBe("bar@example.com");
-        expect(props.onClearError).not.toHaveBeenCalled();
+        wrapper.find(Input).simulate("change", e);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onClearError when input changes if there is a preexisting error", () => {
-        props.error = "Invalid email address";
-        const wrapper = shallow(<Email {...props} />);
-        const e = {
-            target: {
-                value: "bar@example.com"
-            }
-        };
-        wrapper.find("InputError").simulate("change", e);
-        expect(props.onClearError).toHaveBeenCalled();
-    });
-
-    it("should call onUpdateEmail() and e.preventDefault() when valid form submitted", () => {
+    it("should call onUpdateEmail() when valid form submitted", () => {
         const wrapper = shallow(<Email {...props} />);
         const email = "baz@example.com";
-        wrapper.setState({ email });
-        const e = {
-            preventDefault: jest.fn()
-        };
-        wrapper.find("form").simulate("submit", e);
-        expect(e.preventDefault).toHaveBeenCalled();
-        expect(props.onUpdateEmail).toHaveBeenCalledWith(email);
-    });
 
-    it("should set error if submitted form has a client-detectable error", () => {
-        const wrapper = shallow(<Email {...props} />);
-        wrapper.setState({ email: "baz" });
-        const e = {
-            preventDefault: jest.fn()
-        };
-        wrapper.find("form").simulate("submit", e);
-        expect(e.preventDefault).toHaveBeenCalled();
-        expect(props.onUpdateEmail).not.toHaveBeenCalledWith();
-        expect(wrapper.state()).toEqual({
-            email: "baz",
-            error: "Please provide a valid email address"
-        });
+        // Set email value and check snapshot.
+        wrapper.setState({ email });
+        expect(wrapper).toMatchSnapshot();
+
+        // Submit and check snapshot.
+        const preventDefault = jest.fn();
+        wrapper.find(EmailForm).simulate("submit", { preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(props.onUpdateEmail).toHaveBeenCalledWith(email);
     });
 });

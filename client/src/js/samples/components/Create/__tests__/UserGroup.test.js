@@ -1,3 +1,4 @@
+import { Select } from "../../../../base";
 import { SampleUserGroup } from "../UserGroup";
 
 describe("SampleUserGroup", () => {
@@ -19,7 +20,7 @@ describe("SampleUserGroup", () => {
             target: "foo"
         };
         const wrapper = shallow(<SampleUserGroup {...props} />);
-        wrapper.find("InputError").simulate("change", e);
+        wrapper.find(Select).simulate("change", e);
         expect(props.onChange).toHaveBeenCalledWith({ target: "foo" });
     });
 });

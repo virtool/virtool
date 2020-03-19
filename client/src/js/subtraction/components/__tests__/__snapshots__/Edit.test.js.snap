@@ -4,38 +4,118 @@ exports[`<EditSubtraction /> should render 1`] = `
 <ModalDialog
   headerText="Edit Subtraction"
   label="SubtractionEdit"
-  onExited={[MockFunction]}
   onHide={[MockFunction]}
   show={true}
 >
   <form
     onSubmit={[Function]}
   >
-    <Modal__DialogBody
-      style={
-        Object {
-          "margin": "0 0 10px 0",
-        }
-      }
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
     >
-      <InputError
-        label="Unique Name"
-        readOnly={true}
-        type="text"
-        value="foo"
+      <SaveButton
+        pullRight={true}
       />
-      <InputError
-        label="Nickname"
-        onChange={[Function]}
-        type="text"
-        value="baz"
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditSubtraction /> should render after nickname is changed 1`] = `
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
+    >
+      <SaveButton
+        pullRight={true}
       />
-      <InputError
-        label="File"
-        readOnly={true}
-        type="text"
-        value="bar"
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditSubtraction /> should render after nickname is changed 2`] = `
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          onChange={[Function]}
+          value="Foo"
+        />
+      </InputGroup>
+    </Modal__DialogBody>
+    <Modal__DialogFooter
+      className="modal-footer"
+    >
+      <SaveButton
+        pullRight={true}
       />
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditSubtraction /> should render when [show=false] 1`] = `
+<ModalDialog
+  headerText="Edit Subtraction"
+  label="SubtractionEdit"
+  onHide={[MockFunction]}
+  show={false}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <InputGroup>
+        <Input__InputLabel>
+          Nickname
+        </Input__InputLabel>
+        <Input
+          onChange={[Function]}
+          value="Peach"
+        />
+      </InputGroup>
     </Modal__DialogBody>
     <Modal__DialogFooter
       className="modal-footer"

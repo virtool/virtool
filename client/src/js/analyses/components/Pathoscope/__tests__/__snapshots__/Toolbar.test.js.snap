@@ -20,82 +20,48 @@ exports[`<PathoscopeDownloadDropdownTitle /> should render 1`] = `
 
 exports[`<Toolbar /> should render 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="coverage"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={true}
     bsStyle="default"
@@ -150,82 +116,48 @@ exports[`<Toolbar /> should render 1`] = `
 
 exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="coverage"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={true}
     bsStyle="default"
@@ -280,82 +212,48 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
 
 exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="coverage"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={false}
     bsStyle="default"
@@ -410,82 +308,48 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
 
 exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="coverage"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="coverage"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={true}
     bsStyle="default"
@@ -540,82 +404,48 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
 
 exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="depth"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="depth"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={true}
     bsStyle="default"
@@ -670,82 +500,48 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
 
 exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
 <Toolbar__StyledPathoscopeToolbar>
-  <FormGroup
-    bsClass="form-group"
+  <SearchInput
+    onChange={[Function]}
+    onKeyDown={[Function]}
+  />
+  <Toolbar__PathoscopeToolbarSelect
+    onChange={[Function]}
+    value="weight"
   >
-    <InputGroup
-      bsClass="input-group"
+    <option
+      className="text-primary"
+      value="coverage"
     >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        onKeyDown={[Function]}
-      />
-    </InputGroup>
-  </FormGroup>
-  <FormGroup
-    bsClass="form-group"
+      Sort: Coverage
+    </option>
+    <option
+      className="text-success"
+      value="pi"
+    >
+      Sort: Weight
+    </option>
+    <option
+      className="text-danger"
+      value="depth"
+    >
+      Sort: Depth
+    </option>
+  </Toolbar__PathoscopeToolbarSelect>
+  <Button
+    bsStyle="default"
+    onClick={[MockFunction]}
+    pullRight={false}
+    tip="Sort List"
+    tipPlacement="top"
+    title="Sort Direction"
   >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupButton
-        bsClass="input-group-btn"
-      >
-        <Button
-          bsStyle="default"
-          onClick={[MockFunction]}
-          pullRight={false}
-          tip="Sort List"
-          tipPlacement="top"
-          title="Sort Direction"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="sort-amount-down"
-            pullRight={false}
-          />
-        </Button>
-      </InputGroupButton>
-      <FormControl
-        bsClass="form-control"
-        componentClass="select"
-        onChange={[Function]}
-        value="weight"
-      >
-        <option
-          className="text-primary"
-          value="coverage"
-        >
-          Coverage
-        </option>
-        <option
-          className="text-success"
-          value="pi"
-        >
-          Weight
-        </option>
-        <option
-          className="text-danger"
-          value="depth"
-        >
-          Depth
-        </option>
-      </FormControl>
-    </InputGroup>
-  </FormGroup>
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="sort-amount-down"
+      pullRight={false}
+    />
+  </Button>
   <Button
     active={true}
     bsStyle="default"

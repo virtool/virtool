@@ -1,9 +1,11 @@
 import { AddTarget, mapStateToProps, mapDispatchToProps } from "../Add";
+import { TargetForm } from "../Form";
 
 describe("<AddTarget />", () => {
     let props;
     let state;
     let e;
+
     beforeEach(() => {
         e = {
             preventDefault: jest.fn()
@@ -14,7 +16,7 @@ describe("<AddTarget />", () => {
             onSubmit: jest.fn(),
             refId: "baz",
             onHide: jest.fn(),
-            show: false,
+            show: true,
             handleChange: jest.fn()
         };
 
@@ -32,58 +34,58 @@ describe("<AddTarget />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleSubmit() should change errorName when [this.state.name=null]", () => {
+    it("should render required when form onClick() prop is called", () => {
         const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state().errorName).toBe("Required Field");
+        wrapper.find(TargetForm).prop("onClick")();
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleSubmit() should change call this.props.onSubmit when this.state.name exists", () => {
+    it("should render error when submitted without name", () => {
         const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.setState({ ...state, name: "Foo" });
+        wrapper.find("form").simulate("submit", e);
+        expect(e.preventDefault).toHaveBeenCalledWith();
+        expect(wrapper).toMatchSnapshot();
+    });
 
-        const update = {
+    it("should call onSubmit() and onHide() when submitted", () => {
+        const wrapper = shallow(<AddTarget {...props} />);
+        wrapper.setState({
+            name: "Foo",
+            description: "Foo description",
+            length: 10,
+            required: true
+        });
+        wrapper.find("form").simulate("submit", e);
+        expect(e.preventDefault).toHaveBeenCalledWith();
+        expect(props.onSubmit).toHaveBeenCalledWith("baz", {
             targets: [
-                ...props.targets,
                 {
+                    description: "bar",
+                    length: 1,
+                    name: "foo",
+                    required: true
+                },
+                {
+                    description: "Foo description",
+                    length: 10,
                     name: "Foo",
-                    description: "",
-                    length: new Number(0),
-                    required: false
+                    required: true
                 }
             ]
-        };
-
-        wrapper.find("form").simulate("submit", e);
-        expect(props.onSubmit).toHaveBeenCalledWith("baz", update);
+        });
+        expect(props.onHide).toHaveBeenCalledWith();
     });
 
-    it("handleSubmit() should call onHide()", () => {
+    it("should reset state when closed", () => {
         const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("form").simulate("submit", e);
-        expect(props.onHide).toHaveBeenCalled();
-    });
-
-    it("handleChange() should change state.name", () => {
-        e.target = {
-            name: "name",
-            value: "Foo"
-        };
-        const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("TargetForm").simulate("change", e);
-        expect(wrapper.state().name).toEqual("Foo");
-    });
-
-    it("handleClick() should change state.required", () => {
-        const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("TargetForm").simulate("click");
-        expect(wrapper.state().required).toEqual(true);
-    });
-
-    it("handleExited() should call set to initial state", () => {
-        const wrapper = shallow(<AddTarget {...props} />);
-        wrapper.find("ModalDialog").simulate("exit");
-        expect(wrapper.state()).toEqual({ ...state });
+        wrapper.setState({
+            name: "Foo",
+            description: "Foo description",
+            length: 10,
+            required: true
+        });
+        wrapper.setProps({ show: false });
+        setTimeout(() => expect(wrapper.state()).toEqual({ ...state }), 500);
     });
 });
 
@@ -113,7 +115,7 @@ describe("mapStateToProps()", () => {
 });
 
 describe("mapDispatchToProps()", () => {
-    it("should return onSubmit in props ", () => {
+    it("should return onSubmit() in props ", () => {
         const dispatch = jest.fn();
         const props = mapDispatchToProps(dispatch);
         props.onSubmit("foo", "bar");

@@ -1,4 +1,5 @@
-import { find, indexOf, map, sortBy } from "lodash-es";
+import { compact, difference, find, get, indexOf, map, sortBy } from "lodash-es";
+import { createSelector } from "reselect";
 import { getTermSelectorFactory } from "../utils/selectors";
 
 const getStateTerm = state => state.otus.term;
@@ -32,9 +33,25 @@ export const getSequences = state => {
     return null;
 };
 
-export const getActiveIsolate = state => {
-    if (state.otus.detail.isolates.length) {
-        return find(state.otus.detail.isolates, { id: state.otus.activeIsolateId });
+export const getSchema = state => get(state, "otus.detail.schema");
+
+export const getAvailableSegmentNames = createSelector([getSchema, getSequences], (schema, sequences) => {
+    const segmentNames = map(schema, "name");
+    const usedSegments = compact(map(sequences, "segment"));
+
+    return difference(segmentNames, usedSegments);
+});
+
+export const getOTUDetailId = state => get(state, "otus.detail.id");
+
+export const getActiveIsolateId = state => state.otus.activeIsolateId;
+
+export const getIsolates = state => get(state, "otus.detail.isolates");
+
+export const getActiveIsolate = createSelector([getActiveIsolateId, getIsolates], (activeIsolateId, isolates) => {
+    if (isolates.length) {
+        return find(isolates, { id: activeIsolateId });
     }
+
     return null;
-};
+});

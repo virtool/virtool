@@ -1,7 +1,9 @@
 jest.mock("../../../../../utils/utils");
 
 import { checkRefRight } from "../../../../../utils/utils";
-import { mapStateToProps, mapDispatchToProps, Targets } from "../Targets";
+import { AddTarget } from "../Add";
+import { TargetItem } from "../Item";
+import { mapDispatchToProps, mapStateToProps, Targets } from "../Targets";
 
 describe("<Targets />", () => {
     let props;
@@ -9,6 +11,7 @@ describe("<Targets />", () => {
     beforeEach(() => {
         props = {
             canModify: true,
+            dataType: "barcode",
             targets: [{ name: "foo" }],
             onRemove: jest.fn(),
             refId: "bar"
@@ -26,15 +29,21 @@ describe("<Targets />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("showAdd() should update state", () => {
+    it("should render null when [dataType!=barcode]", () => {
+        props.dataType = "genome";
+        const wrapper = shallow(<Targets {...props} />);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should show modal when showAdd() is called", () => {
         const wrapper = shallow(<Targets {...props} />);
         wrapper.find("a").simulate("click");
         expect(wrapper.state()).toEqual({ showAdd: true, showEdit: false });
     });
 
-    it("showEdit() should update state", () => {
+    it("should show modal when showEdit() is called", () => {
         const wrapper = shallow(<Targets {...props} />);
-        wrapper.find("TargetItem").prop("onEdit")("foo");
+        wrapper.find(TargetItem).prop("onEdit")("foo");
         expect(wrapper.state()).toEqual({
             activeName: "foo",
             showAdd: false,
@@ -42,9 +51,22 @@ describe("<Targets />", () => {
         });
     });
 
-    it("handleRemove() should call onRemove()", () => {
+    it("should hide modals when handleHide() is called", () => {
         const wrapper = shallow(<Targets {...props} />);
-        wrapper.find("TargetItem").prop("onRemove")("foo");
+        wrapper.setState({
+            showAdd: true,
+            showEdit: true
+        });
+        wrapper.instance().handleHide();
+        expect(wrapper.state()).toEqual({
+            showAdd: false,
+            showEdit: false
+        });
+    });
+
+    it("should call onRemove() when TargetItem removed", () => {
+        const wrapper = shallow(<Targets {...props} />);
+        wrapper.find(TargetItem).prop("onRemove")("foo");
         expect(props.onRemove).toHaveBeenCalledWith("bar", { targets: [] });
     });
 });

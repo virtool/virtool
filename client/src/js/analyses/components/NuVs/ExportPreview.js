@@ -1,12 +1,18 @@
-/**
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- */
-import React from "react";
-import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { Code, Table } from "../../../base";
+import PropTypes from "prop-types";
+import React from "react";
+import styled from "styled-components";
+import { Table } from "../../../base";
+
+export const ExportPreviewCode = styled.div`
+    background-color: #edf2f7;
+    border: 1px solid #cbd5e0;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    color: #4a5568;
+    margin-bottom: 15px;
+    min-height: 20px;
+    padding: 19px;
+`;
 
 export default function NuVsExportPreview({ mode }) {
     let previewHeader = ">sequence_1|17SP002|RNA Polymerase";
@@ -39,7 +45,7 @@ export default function NuVsExportPreview({ mode }) {
     return (
         <div>
             <label>Preview</label>
-            <Code>
+            <ExportPreviewCode>
                 <p style={{ wordWrap: "break-word", marginBottom: 0 }}>
                     <code>{previewHeader}</code>
                 </p>
@@ -49,7 +55,7 @@ export default function NuVsExportPreview({ mode }) {
                         &hellip;
                     </code>
                 </p>
-            </Code>
+            </ExportPreviewCode>
 
             <label>Header Fields</label>
             <Table>

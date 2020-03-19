@@ -1,21 +1,12 @@
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button, Icon, Toolbar } from "../../base";
+import { Button, Icon, SearchInput, Toolbar } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { clearJobs, findJobs } from "../actions";
 
 export const JobsToolbar = ({ onClear, onFind, canRemove, term }) => (
     <Toolbar>
-        <FormGroup>
-            <InputGroup>
-                <InputGroup.Addon>
-                    <Icon name="search" />
-                </InputGroup.Addon>
-                <FormControl value={term} onChange={onFind} placeholder="User or task" />
-            </InputGroup>
-        </FormGroup>
-
+        <SearchInput value={term} onChange={onFind} placeholder="User or task" />
         {canRemove && (
             <Button onClick={() => onClear("finished")} tip="Clear Finished">
                 <Icon name="trash" />

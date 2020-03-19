@@ -10,10 +10,8 @@ import { ReferenceForm } from "../Form";
 const getInitialState = detail => ({
     name: detail.name,
     description: detail.description,
-    dataType: detail.data_type,
     organism: detail.organism,
-    errorName: "",
-    errorDataType: ""
+    errorName: ""
 });
 
 export class EditReference extends React.Component {
@@ -25,7 +23,7 @@ export class EditReference extends React.Component {
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
-        if (name !== "name" && name !== "dataType") {
+        if (name !== "name") {
             return this.setState({ [name]: value });
         }
 
@@ -33,10 +31,6 @@ export class EditReference extends React.Component {
             [name]: value,
             [error]: ""
         });
-    };
-
-    handleHide = () => {
-        this.props.onHide(this.props);
     };
 
     handleModalEnter = () => {
@@ -50,18 +44,9 @@ export class EditReference extends React.Component {
             this.setState({ errorName: "Required Field" });
         }
 
-        if (!this.state.dataType.length) {
-            this.setState({ errorDataType: "Required Field" });
-        }
-
-        if (this.state.name.length && this.state.dataType.length) {
-            this.props.onSubmit(this.props.detail.id, {
-                name: this.state.name,
-                description: this.state.description,
-                data_type: this.state.dataType,
-                organism: this.state.organism,
-                internal_control: this.state.internalControl
-            });
+        if (this.state.name.length) {
+            const { errorName, ...update } = this.state;
+            this.props.onSubmit(this.props.detail.id, update);
             this.props.onHide();
         }
     };
@@ -72,7 +57,7 @@ export class EditReference extends React.Component {
                 label="Edit"
                 headerText="Edit Reference"
                 show={this.props.show}
-                onHide={this.handleHide}
+                onHide={this.props.onHide}
                 onEnter={this.handleModalEnter}
             >
                 <form onSubmit={this.handleSubmit}>
@@ -82,9 +67,7 @@ export class EditReference extends React.Component {
                             organism={this.state.organism}
                             mode={this.state.mode}
                             name={this.state.name}
-                            errorFile={this.state.errorFile}
                             errorName={this.state.errorSelect}
-                            errorSelect={this.state.errorSelect}
                             onChange={this.handleChange}
                         />
                     </DialogBody>

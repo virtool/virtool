@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { connect } from "react-redux";
 import { Collapse } from "react-bootstrap";
+import { connect } from "react-redux";
 import styled from "styled-components";
-import { Badge, BoxGroupSection, Icon, InfoLabel, Label, Table } from "../../../base";
+import { Badge, BoxGroupSection, Icon, Label, Table } from "../../../base";
 import { followDownload } from "../../../utils/utils";
 import { TargetInfo } from "./Target";
 
@@ -22,6 +22,10 @@ const SequenceCell = styled.td`
 const SequenceHeader = styled.div`
     align-items: center;
     display: flex;
+
+    > ${Label} {
+        margin-right: 5px;
+    }
 `;
 
 const SequenceHeaderButtons = styled.span`
@@ -36,13 +40,6 @@ const SequenceHeaderButtons = styled.span`
     i.fas {
         margin-right: 3px;
     }
-`;
-
-const SequenceHeaderDefinition = styled.span`
-    margin-left: 7px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 `;
 
 const SequenceTable = styled(Table)`
@@ -126,11 +123,7 @@ class Sequence extends React.Component {
             );
         }
 
-        let segment;
-
-        if (!this.state.in && this.props.segment) {
-            segment = <InfoLabel className="text-mono">{this.props.segment}</InfoLabel>;
-        }
+        const title = this.props.segment || this.props.definition;
 
         let segmentTargetRow;
 
@@ -147,24 +140,16 @@ class Sequence extends React.Component {
             segmentTargetRow = (
                 <tr>
                     <th>Segment</th>
-                    <td>{segment}</td>
+                    <td>{this.props.segment}</td>
                 </tr>
             );
         }
-
-        const headerRow =
-            this.props.dataType === "barcode" ? (
-                <SequenceHeaderDefinition>{this.props.name}</SequenceHeaderDefinition>
-            ) : (
-                <SequenceHeaderDefinition>{this.props.definition}</SequenceHeaderDefinition>
-            );
 
         return (
             <BoxGroupSection onClick={this.state.in ? null : () => this.setState({ in: true })}>
                 <SequenceHeader>
                     <Label>{accession}</Label>
-                    {headerRow}
-                    {segment}
+                    {title}
                     {buttons}
                 </SequenceHeader>
                 <Collapse in={this.state.in}>

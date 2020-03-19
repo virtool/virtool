@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`<Targets /> should render null when [dataType!=barcode] 1`] = `""`;
+
 exports[`<Targets /> should render when [canModify=false] 1`] = `
 <Box__BoxGroup>
   <Targets__TargetsHeader>

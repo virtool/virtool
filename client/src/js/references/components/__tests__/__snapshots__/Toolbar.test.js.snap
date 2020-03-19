@@ -1,66 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceToolbar /> renders when [canCreate=false] 1`] = `
+exports[`<ReferenceToolbar /> should not render creation button when [canCreate=false] 1`] = `
 <Toolbar>
-  <div
-    className="form-group"
-  >
-    <div
-      className="input-group"
-    >
-      <span
-        className="input-group-addon"
-        id="find-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </span>
-      <input
-        aria-describedby="find-addon"
-        className="form-control"
-        onChange={[MockFunction]}
-        placeholder="Reference name"
-        type="text"
-        value=""
-      />
-    </div>
-  </div>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Reference name"
+    value=""
+  />
 </Toolbar>
 `;
 
-exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
+exports[`<ReferenceToolbar /> should render creation button when [canCreate=true] 1`] = `
 <Toolbar>
-  <div
-    className="form-group"
-  >
-    <div
-      className="input-group"
-    >
-      <span
-        className="input-group-addon"
-        id="find-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </span>
-      <input
-        aria-describedby="find-addon"
-        className="form-control"
-        onChange={[MockFunction]}
-        placeholder="Reference name"
-        type="text"
-        value=""
-      />
-    </div>
-  </div>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Reference name"
+    value=""
+  />
   <LinkButton
     tip="Create"
     to={
@@ -82,35 +38,13 @@ exports[`<ReferenceToolbar /> renders when [canCreate=true] 1`] = `
 </Toolbar>
 `;
 
-exports[`<ReferenceToolbar /> renders when [term='foo'] 1`] = `
+exports[`<ReferenceToolbar /> should render when [term='foo'] 1`] = `
 <Toolbar>
-  <div
-    className="form-group"
-  >
-    <div
-      className="input-group"
-    >
-      <span
-        className="input-group-addon"
-        id="find-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </span>
-      <input
-        aria-describedby="find-addon"
-        className="form-control"
-        onChange={[MockFunction]}
-        placeholder="Reference name"
-        type="text"
-        value="foo"
-      />
-    </div>
-  </div>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Reference name"
+    value="foo"
+  />
   <LinkButton
     tip="Create"
     to={

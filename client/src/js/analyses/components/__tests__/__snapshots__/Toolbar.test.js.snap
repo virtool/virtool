@@ -2,32 +2,10 @@
 
 exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
 <Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        placeholder="User or reference"
-        type="text"
-        value="baz"
-      />
-    </InputGroup>
-  </FormGroup>
+  <SearchInput
+    onChange={[Function]}
+    value="baz"
+  />
   <Button
     bsStyle="primary"
     disabled={true}
@@ -42,32 +20,10 @@ exports[`<AnalysesToolbar /> should render with [canModify=false] 1`] = `
 
 exports[`<AnalysesToolbar /> should render with default props 1`] = `
 <Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[Function]}
-        placeholder="User or reference"
-        type="text"
-        value="baz"
-      />
-    </InputGroup>
-  </FormGroup>
+  <SearchInput
+    onChange={[Function]}
+    value="baz"
+  />
   <Button
     bsStyle="primary"
     disabled={false}

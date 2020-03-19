@@ -1,16 +1,16 @@
+import { find, map, toNumber } from "lodash-es";
 import React from "react";
 
 import { connect } from "react-redux";
-import { findIndex, find } from "lodash-es";
-import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../../base";
+import { Button, DialogBody, DialogFooter, ModalDialog } from "../../../../base";
 import { editReference } from "../../../actions";
 import { TargetForm } from "./Form";
 
-const getInitialState = ({ initialName, initialDescription, initialLength, initialRequired }) => ({
-    name: initialName || "",
-    description: initialDescription || "",
-    length: initialLength || 0,
-    required: initialRequired || false,
+const getInitialState = ({ name, description, length, required }) => ({
+    name: name || "",
+    description: description || "",
+    length: length || 0,
+    required: required || false,
     errorName: ""
 });
 
@@ -23,23 +23,27 @@ export class EditTarget extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
 
-        const targets = this.props.targets;
-        const initialTarget = this.props.initialTarget;
-        const newTarget = [...this.props.targets];
-        newTarget.splice(findIndex(targets, initialTarget), 1, {
-            name: this.state.name,
-            description: this.state.description,
-            length: new Number(this.state.length),
-            required: this.state.required
+        if (!this.state.name) {
+            return this.setState({
+                errorName: "Required field"
+            });
+        }
+
+        const targets = map(this.props.targets, target => {
+            if (this.props.name === target.name) {
+                return {
+                    ...target,
+                    name: this.state.name,
+                    description: this.state.description,
+                    length: toNumber(this.state.length),
+                    required: this.state.required
+                };
+            }
+
+            return target;
         });
 
-        const update = {
-            targets: newTarget
-        };
-
-        if (this.state.name) {
-            this.props.onSubmit(this.props.refId, update);
-        }
+        this.props.onSubmit(this.props.refId, { targets });
         this.props.onHide();
     };
 
@@ -58,15 +62,14 @@ export class EditTarget extends React.Component {
         return (
             <ModalDialog
                 headerText="Edit target"
-                text-capitalize="text-capitalize"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
                 onExited={this.handleExited}
                 label="EditReference"
             >
-                <DialogBody>
-                    <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.handleSubmit}>
+                    <DialogBody>
                         <TargetForm
                             onChange={this.handleChange}
                             name={this.state.name}
@@ -75,13 +78,14 @@ export class EditTarget extends React.Component {
                             required={this.state.required}
                             errorName={this.errorName}
                         />
-                        <DialogFooter>
-                            <Button type="submit" icon="save" bsStyle="primary">
-                                Submit
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogBody>
+                    </DialogBody>
+
+                    <DialogFooter>
+                        <Button type="submit" icon="save" bsStyle="primary">
+                            Submit
+                        </Button>
+                    </DialogFooter>
+                </form>
             </ModalDialog>
         );
     }
@@ -90,24 +94,20 @@ export class EditTarget extends React.Component {
 export const mapStateToProps = (state, ownProps) => {
     const activeName = ownProps.activeName;
 
-    let initialTarget = {};
+    let target = {};
 
     if (activeName) {
-        initialTarget = find(state.references.detail.targets, ["name", ownProps.activeName]);
-        if (!initialTarget) {
-            initialTarget = {};
-        }
+        target = find(state.references.detail.targets, { name: activeName }) || {};
     }
 
-    const { name, description, length, required } = initialTarget;
+    const { name, description, length, required } = target;
 
     return {
-        initialTarget,
+        name,
+        description,
+        length,
+        required,
         targets: state.references.detail.targets,
-        initialName: name,
-        initialDescription: description,
-        initialLength: length,
-        initialRequired: required,
         refId: state.references.detail.id
     };
 };

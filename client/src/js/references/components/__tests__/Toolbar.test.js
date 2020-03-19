@@ -1,4 +1,4 @@
-import { MemoryRouter } from "react-router-dom";
+import { SearchInput } from "../../../base";
 import { ReferenceToolbar } from "../Toolbar";
 
 describe("<ReferenceToolbar />", () => {
@@ -12,31 +12,27 @@ describe("<ReferenceToolbar />", () => {
         };
     });
 
-    it("renders when [canCreate=true]", () => {
+    it("should render creation button when [canCreate=true]", () => {
         const wrapper = shallow(<ReferenceToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders when [canCreate=false]", () => {
+    it("should not render creation button when [canCreate=false]", () => {
         props.canCreate = false;
         const wrapper = shallow(<ReferenceToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("renders when [term='foo']", () => {
+    it("should render when [term='foo']", () => {
         props.term = "foo";
         const wrapper = shallow(<ReferenceToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("calls onFind when input changes", () => {
-        const wrapper = mount(
-            <MemoryRouter>
-                <ReferenceToolbar {...props} />
-            </MemoryRouter>
-        );
+    it("should call onFind() when input changes", () => {
+        const wrapper = shallow(<ReferenceToolbar {...props} />);
         const e = { target: { value: "baz" } };
-        wrapper.find("input").prop("onChange")(e);
+        wrapper.find(SearchInput).simulate("change", e);
         expect(props.onFind).toHaveBeenCalledWith(e);
     });
 });

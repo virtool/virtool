@@ -1,4 +1,5 @@
 import { EditTarget, mapStateToProps, mapDispatchToProps } from "../Edit";
+import { TargetForm } from "../Form";
 
 describe("<EditTarget />", () => {
     let props;
@@ -9,21 +10,34 @@ describe("<EditTarget />", () => {
         e = {
             preventDefault: jest.fn()
         };
+
         props = {
-            initialName: "",
-            initialDescription: "",
-            initialLength: 0,
-            refId: "",
-            initialRequired: false,
+            name: "Bar",
+            description: "Bar description",
+            length: 490,
+            refId: "foo",
+            required: true,
             onSubmit: jest.fn(),
             onHide: jest.fn(),
-
+            show: true,
             targets: [
                 {
-                    name: "",
-                    description: "",
-                    length: 0,
-                    required: ""
+                    name: "Foo",
+                    description: "Foo description",
+                    length: 540,
+                    required: true
+                },
+                {
+                    name: "Bar",
+                    description: "Bar description",
+                    length: 490,
+                    required: true
+                },
+                {
+                    name: "Baz",
+                    description: "Baz description",
+                    length: 490,
+                    required: true
                 }
             ]
         };
@@ -42,65 +56,71 @@ describe("<EditTarget />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleSubmit() should call onSubmit() when this.state.name exists", () => {
+    it("should render error when submitted without name", () => {
         const wrapper = shallow(<EditTarget {...props} />);
         wrapper.setState({
-            name: "Foo",
-            description: "Bar",
-            length: 2,
-            required: true,
-            errorName: ""
+            name: "",
+            description: "This is a test",
+            length: 310,
+            required: false
         });
-        const length = new Number(2);
-
         wrapper.find("form").simulate("submit", e);
-        expect(props.onSubmit).toHaveBeenCalledWith("", {
+        expect(props.onHide).not.toHaveBeenCalled();
+        expect(props.onSubmit).not.toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should should call onSubmit() when name provided", () => {
+        const wrapper = shallow(<EditTarget {...props} />);
+        wrapper.setState({
+            name: "CPN60",
+            description: "This is a test",
+            length: 310,
+            required: false
+        });
+        wrapper.find("form").simulate("submit", e);
+        expect(props.onSubmit).toHaveBeenCalledWith("foo", {
             targets: [
                 {
                     name: "Foo",
-                    description: "Bar",
-                    length,
+                    description: "Foo description",
+                    length: 540,
+                    required: true
+                },
+                {
+                    name: "CPN60",
+                    description: "This is a test",
+                    length: 310,
+                    required: false
+                },
+                {
+                    name: "Baz",
+                    description: "Baz description",
+                    length: 490,
                     required: true
                 }
             ]
         });
+        expect(props.onHide).toHaveBeenCalledWith();
     });
 
-    it("handleSubmit() should not call onSubmit but call onHide this.state.name===null", () => {
-        const wrapper = shallow(<EditTarget {...props} />);
-        wrapper.setState({
-            name: null,
-            description: "Bar",
-            length: 2,
-            required: true,
-            errorName: ""
-        });
-        wrapper.find("form").simulate("submit", e);
-        expect(props.onSubmit).not.toHaveBeenCalled();
-        expect(props.onHide).toHaveBeenCalled();
-    });
-
-    it("handleChange() should update state", () => {
+    it("should update when TargetForm onChange() prop called", () => {
         e.target = {
             name: "name",
             value: "Foo",
             checked: true
         };
         const wrapper = shallow(<EditTarget {...props} />);
-        wrapper.find("TargetForm").simulate("change", e);
-        expect(wrapper.state()).toEqual({ ...state, name: "Foo", required: true });
+        wrapper.find(TargetForm).prop("onChange")(e);
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("handleEnter() should set initial state", () => {
-        props = {
-            initialName: "Foo",
-            initialDescription: "Bar",
-            initialLength: 1,
-            initialRequired: true
-        };
+    it("should set initial state on open", () => {
+        props.show = false;
         const wrapper = shallow(<EditTarget {...props} />);
-        wrapper.find("ModalDialog").simulate("enter");
-        expect(wrapper.state()).toEqual({ ...state, name: "Foo", description: "Bar", length: 1, required: true });
+        wrapper.setState({ name: "CPN60", description: "This is a test" });
+        wrapper.setProps({ show: true });
+        setTimeout(() => expect(wrapper).toMatchSnapshot(), 500);
     });
 });
 
@@ -125,36 +145,34 @@ describe("mapStateToProps()", () => {
         };
     });
 
-    it("should return props when {name: ownProps.activeName} is found in initialTarget", () => {
+    it("should return props when name matches a target", () => {
         const result = mapStateToProps(state, ownProps);
         expect(result).toEqual({
-            initialTarget: { name: "foo", description: "bar", length: 1, required: false },
             targets: [
                 { name: "foo", description: "bar", length: 1, required: false },
                 { name: "Foo", description: "Bar", length: 2, required: true }
             ],
-            initialName: "foo",
-            initialDescription: "bar",
-            initialLength: 1,
-            initialRequired: false,
+            name: "foo",
+            description: "bar",
+            length: 1,
+            required: false,
             refId: "baz"
         });
     });
 
-    it("should return props when {name: ownProps.activeName} is not found in initialTarget", () => {
+    it("should return props when name does not match a target", () => {
         ownProps.activeName = "fee";
         const result = mapStateToProps(state, ownProps);
 
         expect(result).toEqual({
-            initialTarget: {},
             targets: [
                 { name: "foo", description: "bar", length: 1, required: false },
                 { name: "Foo", description: "Bar", length: 2, required: true }
             ],
-            initialName: undefined,
-            initialDescription: undefined,
-            initialLength: undefined,
-            initialRequired: undefined,
+            name: undefined,
+            description: undefined,
+            length: undefined,
+            required: undefined,
             refId: "baz"
         });
     });

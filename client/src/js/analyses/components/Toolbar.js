@@ -1,26 +1,13 @@
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { Button, Icon, Toolbar } from "../../base";
+import { Button, SearchInput, Toolbar } from "../../base";
 import { getCanModify } from "../../samples/selectors";
 import { findAnalyses } from "../actions";
 
 export const AnalysesToolbar = ({ canModify, onFind, onShowCreate, page, sampleId, term }) => (
     <Toolbar>
-        <FormGroup>
-            <InputGroup>
-                <InputGroup.Addon>
-                    <Icon name="search" />
-                </InputGroup.Addon>
-                <FormControl
-                    type="text"
-                    value={term}
-                    onChange={e => onFind(sampleId, e.target.value, page)}
-                    placeholder="User or reference"
-                />
-            </InputGroup>
-        </FormGroup>
+        <SearchInput value={term} onChange={e => onFind(sampleId, e.target.value, page)} />
         <Button
             icon="plus-square fa-fw"
             tip="New Analysis"

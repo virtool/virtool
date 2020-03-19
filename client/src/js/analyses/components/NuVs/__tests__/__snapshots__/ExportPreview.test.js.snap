@@ -5,7 +5,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
   <label>
     Preview
   </label>
-  <Code>
+  <ExportPreview__ExportPreviewCode>
     <p
       style={
         Object {
@@ -30,7 +30,7 @@ exports[`<NuVsExportPreview /> renders correctly otherwise 1`] = `
         …
       </code>
     </p>
-  </Code>
+  </ExportPreview__ExportPreviewCode>
   <label>
     Header Fields
   </label>
@@ -86,7 +86,7 @@ exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
   <label>
     Preview
   </label>
-  <Code>
+  <ExportPreview__ExportPreviewCode>
     <p
       style={
         Object {
@@ -111,7 +111,7 @@ exports[`<NuVsExportPreview /> renders correctly when [mode=contigs] 1`] = `
         …
       </code>
     </p>
-  </Code>
+  </ExportPreview__ExportPreviewCode>
   <label>
     Header Fields
   </label>

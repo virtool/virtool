@@ -1,24 +1,70 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUForm /> renders correctly 1`] = `
+exports[`<OTUForm /> should render 1`] = `
 <form
   onSubmit={[MockFunction]}
 >
   <OTUForm__OTUFormFields>
-    <InputError
-      error=""
-      label="Name"
-      name="name"
-      onChange={[MockFunction]}
-      value="test"
+    <InputGroup>
+      <Input__InputLabel>
+        Name
+      </Input__InputLabel>
+      <Input
+        error=""
+        name="name"
+        onChange={[MockFunction]}
+        value="test"
+      />
+      <Input__InputError />
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Abbreviation
+      </Input__InputLabel>
+      <Input
+        name="abbreviation"
+        onChange={[MockFunction]}
+        value="T"
+      />
+    </InputGroup>
+  </OTUForm__OTUFormFields>
+  <Modal__DialogFooter>
+    <SaveButton
+      pullRight={true}
     />
-    <InputError
-      error=""
-      label="Abbreviation"
-      name="abbreviation"
-      onChange={[MockFunction]}
-      value="T"
-    />
+  </Modal__DialogFooter>
+</form>
+`;
+
+exports[`<OTUForm /> should render with error 1`] = `
+<form
+  onSubmit={[MockFunction]}
+>
+  <OTUForm__OTUFormFields>
+    <InputGroup>
+      <Input__InputLabel>
+        Name
+      </Input__InputLabel>
+      <Input
+        error="Name is used already"
+        name="name"
+        onChange={[MockFunction]}
+        value="test"
+      />
+      <Input__InputError>
+        Name is used already
+      </Input__InputError>
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Abbreviation
+      </Input__InputLabel>
+      <Input
+        name="abbreviation"
+        onChange={[MockFunction]}
+        value="T"
+      />
+    </InputGroup>
   </OTUForm__OTUFormFields>
   <Modal__DialogFooter>
     <SaveButton

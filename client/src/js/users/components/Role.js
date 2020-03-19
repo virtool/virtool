@@ -1,28 +1,23 @@
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { InputError } from "../../base";
+import { InputGroup, InputLabel, Select } from "../../base";
 import { editUser } from "../actions";
 import { getCanModifyUser } from "../selectors";
-
-const StyledUserRole = styled.div`
-    margin-bottom: 15px;
-`;
 
 export const UserRole = ({ canModifyUser, id, role, onSetUserRole }) => {
     if (canModifyUser) {
         return (
-            <StyledUserRole>
-                <label>User Role</label>
-                <InputError type="select" value={role} onChange={e => onSetUserRole(id, e.target.value)}>
+            <InputGroup>
+                <InputLabel>User Role</InputLabel>
+                <Select value={role} onChange={e => onSetUserRole(id, e.target.value)}>
                     <option key="administrator" value="administrator">
                         Administrator
                     </option>
                     <option key="limited" value="limited">
                         Limited
                     </option>
-                </InputError>
-            </StyledUserRole>
+                </Select>
+            </InputGroup>
         );
     }
 

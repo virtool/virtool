@@ -1,13 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<PrimaryGroup /> should render 1`] = `
-<div>
-  <label>
+<InputGroup>
+  <Input__InputLabel>
     Primary Group
-  </label>
-  <InputError
+  </Input__InputLabel>
+  <Select
     onChange={[Function]}
-    type="select"
     value="bar"
   >
     <option
@@ -16,24 +15,24 @@ exports[`<PrimaryGroup /> should render 1`] = `
     >
       None
     </option>
-    <PrimaryGroup__StyledGroupOption
+    <PrimaryGroup__PrimaryGroupOption
       key="foo"
       value="foo"
     >
       Foo
-    </PrimaryGroup__StyledGroupOption>
-    <PrimaryGroup__StyledGroupOption
+    </PrimaryGroup__PrimaryGroupOption>
+    <PrimaryGroup__PrimaryGroupOption
       key="bar"
       value="bar"
     >
       Bar
-    </PrimaryGroup__StyledGroupOption>
-    <PrimaryGroup__StyledGroupOption
+    </PrimaryGroup__PrimaryGroupOption>
+    <PrimaryGroup__PrimaryGroupOption
       key="baz"
       value="baz"
     >
       Baz
-    </PrimaryGroup__StyledGroupOption>
-  </InputError>
-</div>
+    </PrimaryGroup__PrimaryGroupOption>
+  </Select>
+</InputGroup>
 `;

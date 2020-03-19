@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, DropdownButton, DropdownItem, Icon, Toolbar } from "../../../base";
+import { Button, DropdownButton, DropdownItem, Icon, SearchInput, Select, Toolbar } from "../../../base";
 import {
     setAnalysisSortKey,
     setSearchIds,
@@ -21,6 +20,10 @@ export const PathoscopeDownloadDropdownTitle = () => (
 const StyledPathoscopeToolbar = styled(Toolbar)`
     display: flex;
     margin-bottom: 10px !important;
+`;
+
+export const PathoscopeToolbarSelect = styled(Select)`
+    width: 110px;
 `;
 
 export const PathoscopeToolbar = ({
@@ -45,34 +48,22 @@ export const PathoscopeToolbar = ({
     );
     return (
         <StyledPathoscopeToolbar>
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search" />
-                    </InputGroup.Addon>
-                    <FormControl onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
-                </InputGroup>
-            </FormGroup>
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Button>
-                        <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
-                            <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
-                        </Button>
-                    </InputGroup.Button>
-                    <FormControl componentClass="select" value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
-                        <option className="text-primary" value="coverage">
-                            Coverage
-                        </option>
-                        <option className="text-success" value="pi">
-                            Weight
-                        </option>
-                        <option className="text-danger" value="depth">
-                            Depth
-                        </option>
-                    </FormControl>
-                </InputGroup>
-            </FormGroup>
+            <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} />
+            <PathoscopeToolbarSelect value={sortKey} onChange={e => onSetSortKey(e.target.value)}>
+                <option className="text-primary" value="coverage">
+                    Sort: Coverage
+                </option>
+                <option className="text-success" value="pi">
+                    Sort: Weight
+                </option>
+                <option className="text-danger" value="depth">
+                    Sort: Depth
+                </option>
+            </PathoscopeToolbarSelect>
+
+            <Button title="Sort Direction" onClick={onToggleSortDescending} tip="Sort List">
+                <Icon name={sortDescending ? "sort-amount-down" : "sort-amount-up"} />
+            </Button>
 
             <Button
                 active={filterOTUs}

@@ -1,25 +1,25 @@
-import SequenceForm from "../SequenceForm";
+import { SequenceForm } from "../SequenceForm";
 
 describe("<SequenceForm />", () => {
     let props;
-    let wrapper;
 
-    it("renders correctly", () => {
+    beforeEach(() => {
         props = {
-            overlay: null,
-            accessionCol: null,
             host: "test-host",
             definition: "test-definition",
             segment: "test-segment",
+            targetName: "test-target-name",
             sequence: "test-sequence",
-            schema: ["hello", "world"],
             handleChange: jest.fn(),
             handleSubmit: jest.fn(),
             errorSegment: "",
             errorDefinition: "",
             errorSequence: ""
         };
-        wrapper = shallow(<SequenceForm {...props} />);
+    });
+
+    it("should render", () => {
+        const wrapper = shallow(<SequenceForm {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

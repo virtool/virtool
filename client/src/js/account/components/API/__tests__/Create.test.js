@@ -1,4 +1,5 @@
 import { CLEAR_API_KEY, CREATE_API_KEY, PUSH_STATE } from "../../../../app/actionTypes";
+import { Input } from "../../../../base";
 import * as utils from "../../../../utils/utils";
 import { CreateAPIKey, getInitialState, mapDispatchToProps, mapStateToProps } from "../Create";
 
@@ -76,19 +77,23 @@ describe("<CreateAPIKey />", () => {
 
     it("should update [state.name] and [state.error] when input changes", () => {
         const wrapper = shallow(<CreateAPIKey {...props} />);
-        wrapper.find("InputError").prop("onChange")(createMockEvent("foo"));
+        wrapper.find(Input).prop("onChange")(createMockEvent("foo"));
         expect(wrapper.state("name")).toBe("foo");
     });
 
-    describe("handleModalExited()", () => {
-        it("should update state when called", () => {
-            const wrapper = shallow(<CreateAPIKey {...props} />);
-            wrapper.setState({
-                permissions: { foo: true }
-            });
-            wrapper.instance().handleModalExited();
-            expect(wrapper.state()).toEqual(expectedInitialState);
+    it("should display error when name missing during submission", () => {
+        const wrapper = shallow(<CreateAPIKey {...props} />);
+        wrapper.instance().handleSubmit(createMockEvent());
+        expect(wrapper.state("error")).toBe("Provide a name for the key");
+    });
+
+    it("should update state when handleModalExited() called", () => {
+        const wrapper = shallow(<CreateAPIKey {...props} />);
+        wrapper.setState({
+            permissions: { foo: true }
         });
+        wrapper.instance().handleModalExited();
+        expect(wrapper.state()).toEqual(expectedInitialState);
     });
 
     describe("handlePermissionChange()", () => {
@@ -105,12 +110,6 @@ describe("<CreateAPIKey />", () => {
             const e = createMockEvent();
             wrapper.instance().handleSubmit(e);
             expect(e.preventDefault).toHaveBeenCalled();
-        });
-
-        it("should set [state.error='Required Field'] on submit when name missing", () => {
-            const wrapper = shallow(<CreateAPIKey {...props} />);
-            wrapper.instance().handleSubmit(createMockEvent());
-            expect(wrapper.state("error")).toBe("Required Field");
         });
 
         it("should set [state.submitted=true] and call props.onCreate()", () => {

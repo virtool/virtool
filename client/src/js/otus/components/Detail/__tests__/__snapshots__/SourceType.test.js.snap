@@ -1,0 +1,44 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<SourceType /> should render 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Source Type
+  </Input__InputLabel>
+  <Select
+    onChange={[MockFunction]}
+    value="Bar"
+  >
+    <option
+      key="default"
+      value="unknown"
+    >
+      Unknown
+    </option>
+    <option
+      key="foo"
+      value="Foo"
+    >
+      Foo
+    </option>
+    <option
+      key="bar"
+      value="Bar"
+    >
+      Bar
+    </option>
+  </Select>
+</InputGroup>
+`;
+
+exports[`<SourceType /> should render when [restrictSourceTypes=false] 1`] = `
+<InputGroup>
+  <Input__InputLabel>
+    Source type
+  </Input__InputLabel>
+  <Input
+    onChange={[MockFunction]}
+    value="Bar"
+  />
+</InputGroup>
+`;

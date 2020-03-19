@@ -1,13 +1,15 @@
+import { Input } from "../../../../base";
 import { IsolateForm } from "../IsolateForm";
+import { SourceType } from "../SourceType";
 
 describe("<IsolateForm />", () => {
     let props;
 
     beforeEach(() => {
         props = {
-            sourceType: "baz",
-            sourceName: "Foo",
-            allowedSourceTypes: ["foo", "bar"],
+            sourceType: "isolate",
+            sourceName: "A",
+            allowedSourceTypes: ["isolate", "genotype"],
             restrictSourceTypes: true,
             onChange: jest.fn(),
             onSubmit: jest.fn()
@@ -19,45 +21,37 @@ describe("<IsolateForm />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call changeSourceName when input changes", () => {
+    it.each([
+        ["genotype", "genotype", "A"],
+        ["unknown", "unknown", ""]
+    ])("should call onChange() when source type changes to %p", (value, sourceType, sourceName) => {
         const e = {
             target: {
-                value: "bar"
+                value
+            }
+        };
+        const wrapper = shallow(<IsolateForm {...props} />);
+        wrapper.find(SourceType).simulate("change", e);
+        expect(props.onChange).toHaveBeenCalledWith({
+            sourceName,
+            sourceType
+        });
+    });
+
+    it("should call onChange() when source name changes", () => {
+        const e = {
+            target: {
+                value: "B"
             }
         };
         const wrapper = shallow(<IsolateForm {...props} />);
         wrapper
-            .find("InputError")
+            .find(Input)
             .at(0)
-            .prop("onChange")(e);
+            .simulate("change", e);
         expect(props.onChange).toHaveBeenCalledWith({
-            sourceName: "bar",
-            sourceType: "baz"
+            sourceName: "B",
+            sourceType: "isolate"
         });
-    });
-
-    const func = ({ e }) => {
-        const wrapper = shallow(<IsolateForm {...props} />);
-        wrapper.find("SourceTypeInput").prop("onChange")(e);
-        return props.onChange;
-    };
-
-    test.each([
-        [
-            { e: { target: { value: "unknown" } } },
-            {
-                sourceName: "",
-                sourceType: "unknown"
-            }
-        ],
-        [
-            { e: { target: { value: "bar" } } },
-            {
-                sourceName: "Foo",
-                sourceType: "bar"
-            }
-        ]
-    ])(".match(%o, %o)", (input, expected) => {
-        expect(func(input)).toHaveBeenCalledWith(expected);
     });
 });

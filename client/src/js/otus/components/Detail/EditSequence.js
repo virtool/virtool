@@ -1,176 +1,74 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateAdd
- */
-
+import { find } from "lodash-es";
 import React from "react";
-import { find, union } from "lodash-es";
 import { connect } from "react-redux";
-import { editSequence, hideOTUModal } from "../../actions";
+import { ModalDialog } from "../../../base";
 import { clearError } from "../../../errors/actions";
-import { InputError, ModalDialog } from "../../../base";
-import { getTargetChange } from "../../../utils/utils";
-import SequenceForm from "./SequenceForm";
-import { SegmentCol } from "./SegmentCol";
-import { StyledAccessionSegmentCol } from "./AccessionSegment";
-
-const getInitialState = props => {
-    if (props.sequenceId) {
-        const isolate = { ...props.isolate };
-        const sequence = find(isolate.sequences, { id: props.sequenceId });
-
-        return {
-            definition: sequence.definition,
-            host: sequence.host || "",
-            sequence: sequence.sequence,
-            segment: sequence.segment,
-            schema: sequence.segment ? union([sequence.segment], props.schema) : props.schema,
-            autofillPending: false,
-            errorDefinition: "",
-            errorSequence: "",
-            error: props.error
-        };
-    }
-
-    return {
-        definition: "",
-        host: "",
-        sequence: "",
-        segment: "",
-        autofillPending: false,
-        errorDefinition: "",
-        errorSequence: "",
-        error: ""
-    };
-};
+import { editSequence, hideOTUModal } from "../../actions";
+import { getSequences } from "../../selectors";
+import { SequenceForm } from "./SequenceForm";
 
 class EditSequence extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = getInitialState(this.props);
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            return getInitialState(nextProps);
-        }
-        return null;
-    }
-
-    handleChange = e => {
-        const { name, value, error } = getTargetChange(e.target);
-
-        this.setState({
-            [name]: value,
-            [error]: ""
-        });
-
-        if (this.props.error) {
-            this.props.onClearError("EDIT_SEQUENCE_ERROR");
-        }
-    };
-
-    handleModalEnter = () => {
-        this.setState(getInitialState(this.props));
-    };
-
-    handleHide = () => {
-        this.props.onHide();
-
-        if (this.props.error) {
-            this.props.onClearError("EDIT_SEQUENCE_ERROR");
-        }
-    };
-
-    handleSubmit = e => {
-        e.preventDefault();
-
-        if (!this.state.definition.length) {
-            return this.setState({ errorDefinition: "Minimum length is 1" });
-        }
-
-        if (!this.state.sequence.length) {
-            return this.setState({ errorSequence: "Minimum length is 1" });
-        }
-
+    handleSubmit = ({ accession, definition, host, sequence, segment, targetName }) => {
         this.props.onSave(
             this.props.otuId,
             this.props.isolateId,
-            this.props.sequenceId,
-            this.state.definition,
-            this.state.host,
-            this.state.sequence,
-            this.state.segment
+            this.props.id,
+            accession,
+            definition,
+            host,
+            sequence,
+            segment,
+            targetName
         );
     };
 
     render() {
-        let overlay;
-
-        if (this.state.autofillPending) {
-            overlay = (
-                <div className="modal-body-overlay">
-                    <span>Loading</span>
-                </div>
-            );
-        }
-        const AccessionCol = <InputError label="Accession (ID)" name="id" value={this.props.sequenceId} readOnly />;
-        let AccessionSegmentCol = (
-            <StyledAccessionSegmentCol>
-                {AccessionCol}
-                <SegmentCol value={this.state.segment} onChange={this.handleChange} error={this.state.errorSegment} />
-            </StyledAccessionSegmentCol>
-        );
-        if (this.props.dataType === "barcode") {
-            AccessionSegmentCol = AccessionCol;
-        }
+        const { accession, dataType, definition, host, id, sequence } = this.props;
 
         return (
-            <ModalDialog
-                headerText="Edit Sequence"
-                show={!!this.props.sequenceId}
-                onEnter={this.handleModalEnter}
-                onHide={this.handleHide}
-                label="EditSequence"
-            >
+            <ModalDialog headerText="Edit Sequence" show={!!id} onHide={this.props.onHide} label="EditSequence">
                 <SequenceForm
-                    host={this.state.host}
-                    definition={this.state.definition}
-                    sequence={this.state.sequence}
-                    schema={this.state.schema}
-                    overlay={overlay}
-                    AccessionSegmentCol={AccessionSegmentCol}
-                    handleChange={this.handleChange}
-                    handleSubmit={this.handleSubmit}
-                    errorDefinition={this.state.errorDefinition}
-                    errorSequence={this.state.errorSequence}
+                    key={`edit_${id}`}
+                    accession={accession}
+                    definition={definition}
+                    host={host}
+                    sequence={sequence}
+                    dataType={dataType}
+                    onSubmit={this.handleSubmit}
                 />
             </ModalDialog>
         );
     }
 }
 
-const mapStateToProps = state => ({
-    detail: state.otus.detail,
-    isolate: state.otus.activeIsolate,
-    sequenceId: state.otus.editSequence,
-    otuId: state.otus.detail.id,
-    dataType: state.references.detail.data_type
-});
+const mapStateToProps = state => {
+    const id = state.otus.editSequence;
+
+    if (id) {
+        const sequences = getSequences(state);
+        const { accession, definition, host, segment, sequence } = find(sequences, { id });
+
+        return {
+            id,
+            accession,
+            definition,
+            host,
+            sequence,
+            segment,
+            dataType: state.references.detail.dataType
+        };
+    }
+
+    return {};
+};
 
 const mapDispatchToProps = dispatch => ({
     onHide: () => {
         dispatch(hideOTUModal());
     },
 
-    onSave: (otuId, isolateId, sequenceId, definition, host, sequence, segment) => {
-        dispatch(editSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment));
+    onSave: (otuId, isolateId, sequenceId, accession, definition, host, sequence, segment) => {
+        dispatch(editSequence(otuId, isolateId, sequenceId, accession, definition, host, sequence, segment));
     },
 
     onClearError: error => {

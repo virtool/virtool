@@ -1,102 +1,106 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AlgorithmSelect /> should have nuvs disabled when [hasHmm=false] 1`] = `
-<Input
-  autoComplete={true}
-  formGroupStyle={Object {}}
-  label="Algorithm"
-  name="algorithm"
-  onChange={[MockFunction]}
-  type="select"
-  value="pathoscope_bowtie"
->
-  <option
-    disabled={false}
-    key="pathoscope_bowtie"
+<InputGroup>
+  <Input__InputLabel>
+    Algorithm
+  </Input__InputLabel>
+  <Select
+    name="algorithm"
+    onChange={[MockFunction]}
     value="pathoscope_bowtie"
   >
-    PathoscopeBowtie
-  </option>
-  <option
-    disabled={true}
-    key="nuvs"
-    value="nuvs"
-  >
-    NuVs
-  </option>
-</Input>
+    <option
+      disabled={false}
+      key="pathoscope_bowtie"
+      value="pathoscope_bowtie"
+    >
+      PathoscopeBowtie
+    </option>
+    <option
+      disabled={true}
+      key="nuvs"
+      value="nuvs"
+    >
+      NuVs
+    </option>
+  </Select>
+</InputGroup>
 `;
 
 exports[`<AlgorithmSelect /> should render when [libraryType="amplicon"] 1`] = `
-<Input
-  autoComplete={true}
-  formGroupStyle={Object {}}
-  label="Algorithm"
-  name="algorithm"
-  onChange={[MockFunction]}
-  type="select"
-  value="pathoscope_bowtie"
->
-  <option
-    disabled={false}
-    key="aodp"
-    value="aodp"
+<InputGroup>
+  <Input__InputLabel>
+    Algorithm
+  </Input__InputLabel>
+  <Select
+    name="algorithm"
+    onChange={[MockFunction]}
+    value="pathoscope_bowtie"
   >
-    AODP
-  </option>
-</Input>
+    <option
+      disabled={false}
+      key="aodp"
+      value="aodp"
+    >
+      AODP
+    </option>
+  </Select>
+</InputGroup>
 `;
 
 exports[`<AlgorithmSelect /> should render when [libraryType="normal"] 1`] = `
-<Input
-  autoComplete={true}
-  formGroupStyle={Object {}}
-  label="Algorithm"
-  name="algorithm"
-  onChange={[MockFunction]}
-  type="select"
-  value="pathoscope_bowtie"
->
-  <option
-    disabled={false}
-    key="pathoscope_bowtie"
+<InputGroup>
+  <Input__InputLabel>
+    Algorithm
+  </Input__InputLabel>
+  <Select
+    name="algorithm"
+    onChange={[MockFunction]}
     value="pathoscope_bowtie"
   >
-    PathoscopeBowtie
-  </option>
-  <option
-    disabled={false}
-    key="nuvs"
-    value="nuvs"
-  >
-    NuVs
-  </option>
-</Input>
+    <option
+      disabled={false}
+      key="pathoscope_bowtie"
+      value="pathoscope_bowtie"
+    >
+      PathoscopeBowtie
+    </option>
+    <option
+      disabled={false}
+      key="nuvs"
+      value="nuvs"
+    >
+      NuVs
+    </option>
+  </Select>
+</InputGroup>
 `;
 
 exports[`<AlgorithmSelect /> should render when [libraryType="srna"] 1`] = `
-<Input
-  autoComplete={true}
-  formGroupStyle={Object {}}
-  label="Algorithm"
-  name="algorithm"
-  onChange={[MockFunction]}
-  type="select"
-  value="pathoscope_bowtie"
->
-  <option
-    disabled={false}
-    key="pathoscope_bowtie"
+<InputGroup>
+  <Input__InputLabel>
+    Algorithm
+  </Input__InputLabel>
+  <Select
+    name="algorithm"
+    onChange={[MockFunction]}
     value="pathoscope_bowtie"
   >
-    PathoscopeBowtie
-  </option>
-  <option
-    disabled={false}
-    key="nuvs"
-    value="nuvs"
-  >
-    NuVs
-  </option>
-</Input>
+    <option
+      disabled={false}
+      key="pathoscope_bowtie"
+      value="pathoscope_bowtie"
+    >
+      PathoscopeBowtie
+    </option>
+    <option
+      disabled={false}
+      key="nuvs"
+      value="nuvs"
+    >
+      NuVs
+    </option>
+  </Select>
+</InputGroup>
 `;

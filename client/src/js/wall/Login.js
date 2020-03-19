@@ -1,9 +1,9 @@
 import { get } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { login } from "../account/actions";
-import { Box, Button, Checkbox, Input } from "../base";
+import { Box, Button, Checkbox, Input, InputGroup, InputLabel, PasswordInput } from "../base";
 import { clearError } from "../errors/actions";
 import { WallContainer } from "./Container";
 import { WallLogo } from "./Logo";
@@ -28,8 +28,9 @@ const LoginModal = styled(Box)`
     box-shadow: rgba(0, 0, 0, 0.498039) 0 5px 15px 0;
     display: flex;
     margin-bottom: 260px;
+    padding: 10px 15px;
     flex-direction: column;
-    width: 300px;
+    width: 340px;
 `;
 
 export class Login extends React.Component {
@@ -69,21 +70,20 @@ export class Login extends React.Component {
                 <WallLogo height={42} />
                 <LoginModal>
                     <form onSubmit={this.handleSubmit}>
-                        <Input
-                            type="text"
-                            label="Username"
-                            name="username"
-                            value={this.state.username}
-                            onChange={this.handleChange}
-                            autofocus
-                        />
-                        <Input
-                            type="password"
-                            label="Password"
-                            name="password"
-                            value={this.state.password}
-                            onChange={this.handleChange}
-                        />
+                        <InputGroup>
+                            <InputLabel>Username</InputLabel>
+                            <Input
+                                name="username"
+                                value={this.state.username}
+                                onChange={this.handleChange}
+                                autofocus
+                            />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Password</InputLabel>
+                            <PasswordInput name="password" value={this.state.password} onChange={this.handleChange} />
+                        </InputGroup>
+
                         <Checkbox checked={this.state.remember} onClick={this.handleRemember} label="Remember Me" />
 
                         <LoginFooter>
