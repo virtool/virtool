@@ -34,7 +34,7 @@ describe("<AutoProgressBar />", () => {
         const wrapper = shallow(<AutoProgressBar {...props} />);
         wrapper.setState({ ...state, fill: 10 });
         wrapper.setProps({ ...props, interval: 10000 });
-        expect(wrapper.instance().interval).toEqual(9);
+        expect(wrapper.instance().interval).toBe(10);
     });
 
     it("componentDidUpdate() should call window.clearInterval when [this.props.active=false && prevState.active=true]", () => {
