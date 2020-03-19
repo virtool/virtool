@@ -1,5 +1,6 @@
 import { UPDATE_SETTINGS } from "../../../app/actionTypes";
-import { SampleRights, mapStateToProps, mapDispatchToProps } from "../SampleRights";
+import { Select } from "../../../base";
+import { mapDispatchToProps, mapStateToProps, SampleRights } from "../SampleRights";
 
 describe("<SampleRights />", () => {
     let props;
@@ -19,7 +20,7 @@ describe("<SampleRights />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call props.onChangeSampleGroup() when group SelectBox is clicked", () => {
+    it("should call onChangeSampleGroup() when group SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
         wrapper
@@ -28,7 +29,7 @@ describe("<SampleRights />", () => {
             .simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("none");
     });
-    it("should call props.onChangeSampleGroup() when force choice SelectBox is clicked", () => {
+    it("should call onChangeSampleGroup() when force choice SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
         wrapper
@@ -37,7 +38,7 @@ describe("<SampleRights />", () => {
             .simulate("click");
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("force_choice");
     });
-    it("should call props.onChangeSampleGroup() when users primary group SelectBox is clicked", () => {
+    it("should call onChangeSampleGroup() when users primary group SelectBox is clicked", () => {
         const wrapper = shallow(<SampleRights {...props} />);
 
         wrapper
@@ -47,7 +48,7 @@ describe("<SampleRights />", () => {
         expect(props.onChangeSampleGroup).toHaveBeenCalledWith("users_primary_group");
     });
 
-    it.each(["group", "all"])("should call props.onChangeRights() when %p input changes", scope => {
+    it.each(["group", "all"])("should call onChangeRights() when %p input changes", scope => {
         const wrapper = shallow(<SampleRights {...props} />);
         const e = {
             target: {
@@ -55,7 +56,7 @@ describe("<SampleRights />", () => {
             }
         };
         wrapper
-            .find("InputError")
+            .find(Select)
             .at(scope === "all" ? 1 : 0)
             .simulate("change", e);
         expect(props.onChangeRights).toHaveBeenCalledWith(scope, "r");

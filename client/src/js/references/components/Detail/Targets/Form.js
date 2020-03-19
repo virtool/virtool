@@ -1,14 +1,26 @@
 import React from "react";
-import { Input, Checkbox } from "../../../../base";
+import { Checkbox, Input, InputError, InputGroup, InputLabel, TextArea } from "../../../../base";
 
-export const TargetForm = ({ onChange, name, description, length, required, onClick }) => {
+export const TargetForm = ({ description, errorName, length, name, required, onChange, onClick }) => {
     return (
-        <div>
-            <Input label="Name" name="name" value={name} onChange={onChange} />
-            <Input label="Description" name="description" value={description} onChange={onChange} />
-            <Input type="number" label="Length" name="length" value={length} onChange={onChange} />
+        <React.Fragment>
+            <InputGroup>
+                <InputLabel>Name</InputLabel>
+                <Input error={errorName} name="name" value={name} onChange={onChange} />
+                <InputError>{errorName}</InputError>
+            </InputGroup>
+
+            <InputGroup>
+                <InputLabel>Description</InputLabel>
+                <TextArea name="description" value={description} onChange={onChange} />
+            </InputGroup>
+
+            <InputGroup>
+                <InputLabel>Length</InputLabel>
+                <Input type="number" name="length" value={length} onChange={onChange} />
+            </InputGroup>
 
             <Checkbox label="Required" checked={required} onClick={onClick} />
-        </div>
+        </React.Fragment>
     );
 };

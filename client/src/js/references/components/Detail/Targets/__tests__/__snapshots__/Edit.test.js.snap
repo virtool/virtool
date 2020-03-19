@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<EditTarget /> should render 1`] = `
+<ModalDialog
+  headerText="Edit target"
+  label="EditReference"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <TargetForm
+        description="Bar description"
+        length={490}
+        name="Bar"
+        onChange={[Function]}
+        required={true}
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <Button
+        bsStyle="primary"
+        icon="save"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditTarget /> should render error when submitted without name 1`] = `
+<ModalDialog
+  headerText="Edit target"
+  label="EditReference"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <TargetForm
+        description="This is a test"
+        length={310}
+        name=""
+        onChange={[Function]}
+        required={false}
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <Button
+        bsStyle="primary"
+        icon="save"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;
+
+exports[`<EditTarget /> should update when TargetForm onChange() prop called 1`] = `
+<ModalDialog
+  headerText="Edit target"
+  label="EditReference"
+  onEnter={[Function]}
+  onHide={[MockFunction]}
+  show={true}
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <Modal__DialogBody>
+      <TargetForm
+        description="Bar description"
+        length={490}
+        name="Foo"
+        onChange={[Function]}
+        required={true}
+      />
+    </Modal__DialogBody>
+    <Modal__DialogFooter>
+      <Button
+        bsStyle="primary"
+        icon="save"
+        pullRight={false}
+        tipPlacement="top"
+        type="submit"
+      >
+        Submit
+      </Button>
+    </Modal__DialogFooter>
+  </form>
+</ModalDialog>
+`;

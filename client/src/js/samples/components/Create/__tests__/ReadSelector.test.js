@@ -1,4 +1,5 @@
-import ReadSelector from "../ReadSelector";
+import { SearchInput } from "../../../../base";
+import ReadSelector, { ReadSelectorButton } from "../ReadSelector";
 
 describe("<ReadSelector />", () => {
     let props;
@@ -42,7 +43,7 @@ describe("<ReadSelector />", () => {
                 value: "Baz"
             }
         };
-        wrapper.find("Input").simulate("change", e);
+        wrapper.find(SearchInput).simulate("change", e);
         expect(wrapper.state()).toEqual({ filter: "Baz" });
     });
 
@@ -52,7 +53,7 @@ describe("<ReadSelector />", () => {
             preventDefault: jest.fn()
         };
         wrapper
-            .find("Button")
+            .find(ReadSelectorButton)
             .at(0)
             .simulate("click", e);
         expect(wrapper.state()).toEqual({ filter: "" });
@@ -62,7 +63,7 @@ describe("<ReadSelector />", () => {
     it("should call reset when swap Button is clicked", () => {
         const wrapper = shallow(<ReadSelector {...props} />);
         wrapper
-            .find("Button")
+            .find(ReadSelectorButton)
             .at(1)
             .simulate("click");
         expect(props.onSelect).toHaveBeenCalledWith(["bar", "foo"]);

@@ -97,7 +97,7 @@ export class UserDetail extends React.Component {
                     </UserDetailTitle>
                 </UserDetailHeader>
 
-                <Password />
+                <Password key={this.props.lastPasswordChange} />
 
                 <UserDetailGroups>
                     <div>
@@ -124,7 +124,8 @@ export class UserDetail extends React.Component {
 export const mapStateToProps = state => ({
     canModifyUser: getCanModifyUser(state),
     detail: state.users.detail,
-    error: get(state, "errors.GET_USER_ERROR.message", "")
+    error: get(state, "errors.GET_USER_ERROR.message", ""),
+    lastPasswordChange: get(state, "users.detail.last_password_change")
 });
 
 export const mapDispatchToProps = dispatch => ({

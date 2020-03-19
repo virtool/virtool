@@ -11,150 +11,90 @@ exports[`<SampleRights /> should render 1`] = `
     </p>
   </Box__BoxGroupHeader>
   <Box__BoxGroupSection>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="Group"
-      onChange={[Function]}
-      type="select"
-    >
-      <option
-        value="none"
+    <InputGroup>
+      <Input__InputLabel>
+        Group
+      </Input__InputLabel>
+      <Select
+        onChange={[Function]}
       >
-        None
-      </option>
-    </Input>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="Group Rights"
-      name="groupRights"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        value=""
-      >
-        None
-      </option>
-      <option
-        value="r"
-      >
-        Read
-      </option>
-      <option
+        <option
+          value="none"
+        >
+          None
+        </option>
+        <option
+          key="managers"
+          value="managers"
+        >
+          Managers
+        </option>
+        <option
+          key="technicians"
+          value="technicians"
+        >
+          Technicians
+        </option>
+      </Select>
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        Group Rights
+      </Input__InputLabel>
+      <Select
+        name="groupRights"
+        onChange={[Function]}
         value="rw"
       >
-        Read & write
-      </option>
-    </Input>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="All Users' Rights"
-      name="allUsers"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        value=""
-      >
-        None
-      </option>
-      <option
-        value="r"
-      >
-        Read
-      </option>
-      <option
+        <option
+          value=""
+        >
+          None
+        </option>
+        <option
+          value="r"
+        >
+          Read
+        </option>
+        <option
+          value="rw"
+        >
+          Read & write
+        </option>
+      </Select>
+    </InputGroup>
+    <InputGroup>
+      <Input__InputLabel>
+        All Users' Rights
+      </Input__InputLabel>
+      <Select
+        label="All Users' Rights"
+        name="allUsers"
+        onChange={[Function]}
         value="rw"
       >
-        Read & write
-      </option>
-    </Input>
+        <option
+          value=""
+        >
+          None
+        </option>
+        <option
+          value="r"
+        >
+          Read
+        </option>
+        <option
+          value="rw"
+        >
+          Read & write
+        </option>
+      </Select>
+    </InputGroup>
   </Box__BoxGroupSection>
 </Box__BoxGroup>
 `;
 
-exports[`<SampleRights /> should return LoadingPlaceholder when[this.props.groups=null] 1`] = `
-<Box__BoxGroup>
-  <Box__BoxGroupHeader>
-    <h2>
-      Sample Rights
-    </h2>
-    <p>
-      Control who can read and write this sample and which user group owns the sample.
-    </p>
-  </Box__BoxGroupHeader>
-  <Box__BoxGroupSection>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="Group"
-      onChange={[Function]}
-      type="select"
-    >
-      <option
-        value="none"
-      >
-        None
-      </option>
-    </Input>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="Group Rights"
-      name="groupRights"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        value=""
-      >
-        None
-      </option>
-      <option
-        value="r"
-      >
-        Read
-      </option>
-      <option
-        value="rw"
-      >
-        Read & write
-      </option>
-    </Input>
-    <Input
-      autoComplete={true}
-      formGroupStyle={Object {}}
-      label="All Users' Rights"
-      name="allUsers"
-      onChange={[Function]}
-      type="select"
-      value="rw"
-    >
-      <option
-        value=""
-      >
-        None
-      </option>
-      <option
-        value="r"
-      >
-        Read
-      </option>
-      <option
-        value="rw"
-      >
-        Read & write
-      </option>
-    </Input>
-  </Box__BoxGroupSection>
-</Box__BoxGroup>
-`;
+exports[`<SampleRights /> should return LoadingPlaceholder when[this.props.groups=null] 1`] = `<LoadingPlaceholder />`;
 
 exports[`<SampleRights /> should return Not allowed panel when[this.props.canModifyRights=false] 1`] = `
 <Box>

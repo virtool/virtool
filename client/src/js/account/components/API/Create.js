@@ -1,22 +1,25 @@
 import CX from "classnames";
 import { mapValues } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 
 import {
-    Button,
+    DialogBody,
+    DialogFooter,
     Flex,
     FlexItem,
     Icon,
     Input,
+    InputContainer,
     InputError,
-    DialogBody,
-    SaveButton,
+    InputGroup,
+    InputIcon,
+    InputLabel,
     ModalDialog,
-    DialogFooter
+    SaveButton
 } from "../../../base";
 import { routerLocationHasState } from "../../../utils/utils";
 import { clearAPIKey, createAPIKey } from "../../actions";
@@ -80,10 +83,9 @@ export class CreateAPIKey extends React.Component {
         const { name, permissions } = this.state;
 
         if (!this.state.name) {
-            this.setState({
-                error: "Required Field"
+            return this.setState({
+                error: "Provide a name for the key"
             });
-            return;
         }
 
         this.setState({ submitted: true }, () => {
@@ -107,17 +109,19 @@ export class CreateAPIKey extends React.Component {
 
                     <StyledFlex alignItems="stretch" alignContent="stretch">
                         <FlexItem grow={1}>
-                            <Input
-                                style={{ marginBottom: 0 }}
-                                formGroupStyle={{ marginBottom: 0 }}
-                                className="text-center"
-                                value={this.props.newKey}
-                                readOnly
-                            />
+                            <InputContainer align="right">
+                                <Input
+                                    style={{ marginBottom: 0 }}
+                                    formGroupStyle={{ marginBottom: 0 }}
+                                    className="text-center"
+                                    value={this.props.newKey}
+                                    readOnly
+                                />
+                                <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
+                                    <InputIcon name="copy" />
+                                </CopyToClipboard>
+                            </InputContainer>
                         </FlexItem>
-                        <CopyToClipboard text={this.props.newKey} onCopy={this.handleCopy}>
-                            <Button icon="paste" bsStyle="primary" />
-                        </CopyToClipboard>
                     </StyledFlex>
 
                     <small className={CX("text-primary", { invisible: !this.state.copied })}>
@@ -131,12 +135,11 @@ export class CreateAPIKey extends React.Component {
                     <CreateAPIKeyInfo />
                     <form onSubmit={this.handleSubmit}>
                         <DialogBody>
-                            <InputError
-                                label="Name"
-                                value={this.state.name}
-                                onChange={this.handleChange}
-                                error={this.state.error}
-                            />
+                            <InputGroup>
+                                <InputLabel>Name</InputLabel>
+                                <Input label="Name" value={this.state.name} onChange={this.handleChange} />
+                                <InputError>{this.state.error}</InputError>
+                            </InputGroup>
 
                             <label>Permissions</label>
 

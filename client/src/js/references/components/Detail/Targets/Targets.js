@@ -46,6 +46,10 @@ export class Targets extends React.Component {
     };
 
     render() {
+        if (this.props.dataType !== "barcode") {
+            return null;
+        }
+
         const targetComponents = map(this.props.targets, target => (
             <TargetItem
                 key={target.name}
@@ -104,6 +108,7 @@ export class Targets extends React.Component {
 
 export const mapStateToProps = state => ({
     canModify: checkRefRight(state, "modify"),
+    dataType: state.references.detail.data_type,
     refId: state.references.detail.id,
     targets: state.references.detail.targets
 });

@@ -1,35 +1,36 @@
-import styled from "styled-components";
+import { capitalize, map } from "lodash-es";
 import React, { useCallback } from "react";
-import { map, capitalize } from "lodash-es";
 import { connect } from "react-redux";
-import { InputError } from "../../base";
+import styled from "styled-components";
+import { InputGroup, InputLabel, Select } from "../../base";
 import { editUser } from "../actions";
 
-export const StyledGroupOption = styled.option`
+export const PrimaryGroupOption = styled.option`
     text-transform: capitalize;
 `;
 
 export const PrimaryGroup = ({ groups, id, primaryGroup, onSetPrimaryGroup }) => {
-    const handleSetPrimaryGroup = useCallback(e =>
-        onSetPrimaryGroup(id, e.target.value === "none" ? "" : e.target.value)
+    const handleSetPrimaryGroup = useCallback(
+        e => onSetPrimaryGroup(id, e.target.value === "none" ? "" : e.target.value),
+        [id, primaryGroup]
     );
 
     const groupOptions = map(groups, groupId => (
-        <StyledGroupOption key={groupId} value={groupId}>
+        <PrimaryGroupOption key={groupId} value={groupId}>
             {capitalize(groupId)}
-        </StyledGroupOption>
+        </PrimaryGroupOption>
     ));
 
     return (
-        <div>
-            <label>Primary Group</label>
-            <InputError type="select" value={primaryGroup} onChange={handleSetPrimaryGroup}>
+        <InputGroup>
+            <InputLabel>Primary Group</InputLabel>
+            <Select value={primaryGroup} onChange={handleSetPrimaryGroup}>
                 <option key="none" value="none">
                     None
                 </option>
                 {groupOptions}
-            </InputError>
-        </div>
+            </Select>
+        </InputGroup>
     );
 };
 

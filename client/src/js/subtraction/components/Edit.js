@@ -1,24 +1,20 @@
 import React from "react";
 import { connect } from "react-redux";
+import { DialogBody, DialogFooter, Input, InputGroup, InputLabel, ModalDialog, SaveButton } from "../../base";
 import { updateSubtraction } from "../actions";
-import { SaveButton, InputError, ModalDialog, DialogFooter, DialogBody } from "../../base";
-
-const getInitialState = props => ({
-    subtractionId: props.entry.id,
-    fileId: props.entry.file.name,
-    nickname: props.entry.nickname
-});
 
 export class EditSubtraction extends React.Component {
     constructor(props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = {
+            nickname: props.nickname
+        };
     }
 
     handleSubmit = e => {
         e.preventDefault();
-        this.props.onUpdate(this.state.subtractionId, this.state.nickname);
-        this.props.exited();
+        this.props.onUpdate(this.props.id, this.state.nickname);
+        this.props.onHide();
     };
 
     render() {
@@ -27,21 +23,17 @@ export class EditSubtraction extends React.Component {
                 label="SubtractionEdit"
                 headerText="Edit Subtraction"
                 show={this.props.show}
-                onHide={this.props.exited}
-                onExited={this.props.exited}
+                onHide={this.props.onHide}
             >
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody style={{ margin: "0 0 10px 0" }}>
-                        <InputError type="text" label="Unique Name" value={this.state.subtractionId} readOnly />
-
-                        <InputError
-                            type="text"
-                            label="Nickname"
-                            value={this.state.nickname}
-                            onChange={e => this.setState({ nickname: e.target.value })}
-                        />
-
-                        <InputError type="text" label="File" value={this.state.fileId} readOnly />
+                    <DialogBody>
+                        <InputGroup>
+                            <InputLabel>Nickname</InputLabel>
+                            <Input
+                                value={this.state.nickname}
+                                onChange={e => this.setState({ nickname: e.target.value })}
+                            />
+                        </InputGroup>
                     </DialogBody>
 
                     <DialogFooter className="modal-footer">
@@ -53,10 +45,15 @@ export class EditSubtraction extends React.Component {
     }
 }
 
+export const mapStateToProps = state => {
+    const { id, nickname } = state.subtraction.detail;
+    return { id, nickname };
+};
+
 export const mapDispatchToProps = dispatch => ({
     onUpdate: (id, nickname) => {
         dispatch(updateSubtraction(id, nickname));
     }
 });
 
-export default connect(null, mapDispatchToProps)(EditSubtraction);
+export default connect(mapStateToProps, mapDispatchToProps)(EditSubtraction);

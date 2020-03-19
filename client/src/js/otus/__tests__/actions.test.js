@@ -60,13 +60,15 @@ import {
 describe("OTUs Action Creators", () => {
     const otuId = "test-otu";
     const isolateId = "test-isolate";
-    const sequenceId = "test-sequence";
+    const sequenceId = "test-sequence-id";
+    const accession = "test-accession";
     const sourceType = "test-source-type";
     const sourceName = "test-source-name";
     const definition = "test-definition";
     const host = "test-host";
     const sequence = "test-sequence";
     const segment = "test-segment";
+    const target = "test-target";
 
     it("wsInsertOTU: returns action to insert OTU entry via websocket", () => {
         const data = { id: "test" };
@@ -161,26 +163,28 @@ describe("OTUs Action Creators", () => {
     });
 
     it("addSequence: returns action to add a new sequence to an isolate", () => {
-        const result = addSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment);
+        const result = addSequence(otuId, isolateId, accession, definition, host, sequence, segment, target);
         expect(result).toEqual({
             type: ADD_SEQUENCE.REQUESTED,
             otuId,
             isolateId,
-            sequenceId,
+            accession,
             definition,
             host,
             sequence,
-            segment
+            segment,
+            target
         });
     });
 
     it("editSequence: returns action to edit a specific sequence", () => {
-        const result = editSequence(otuId, isolateId, sequenceId, definition, host, sequence, segment);
+        const result = editSequence(otuId, isolateId, sequenceId, accession, definition, host, sequence, segment);
         expect(result).toEqual({
             type: EDIT_SEQUENCE.REQUESTED,
             otuId,
             isolateId,
             sequenceId,
+            accession,
             definition,
             host,
             sequence,

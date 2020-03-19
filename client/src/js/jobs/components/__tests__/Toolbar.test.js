@@ -1,6 +1,9 @@
 import React from "react";
-import { JobsToolbar, mapStateToProps, mapDispatchToProps } from "../Toolbar.js";
 import { CLEAR_JOBS, FIND_JOBS } from "../../../app/actionTypes";
+import { checkAdminOrPermission } from "../../../utils/utils";
+import { JobsToolbar, mapDispatchToProps, mapStateToProps } from "../Toolbar.js";
+
+jest.mock("../../../utils/utils");
 
 describe("<JobsToolbar />", () => {
     let props;
@@ -14,12 +17,12 @@ describe("<JobsToolbar />", () => {
         };
     });
 
-    it("should render with dropdown menu", () => {
+    it("should render when [canRemove=true]", () => {
         const wrapper = shallow(<JobsToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render without dropdown menu", () => {
+    it("should render when [canRemove=false]", () => {
         props.canRemove = false;
         const wrapper = shallow(<JobsToolbar {...props} />);
         expect(wrapper).toMatchSnapshot();
@@ -27,7 +30,8 @@ describe("<JobsToolbar />", () => {
 });
 
 describe("mapStateToProps", () => {
-    it("should return props", () => {
+    it.each([true, false])("should return props with [canRemove=%p]", canRemove => {
+        checkAdminOrPermission.mockReturnValue(canRemove);
         const state = {
             jobs: {
                 term: "bar"
@@ -35,15 +39,14 @@ describe("mapStateToProps", () => {
             account: {
                 administrator: true,
                 permissions: true
-            },
-            canRemove: true
+            }
         };
-
         const props = mapStateToProps(state);
         expect(props).toEqual({
             term: "bar",
-            canRemove: true
+            canRemove
         });
+        expect(checkAdminOrPermission).toHaveBeenCalledWith(state, "remove_job");
     });
 });
 

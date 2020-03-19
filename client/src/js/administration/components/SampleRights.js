@@ -1,9 +1,9 @@
-import React from "react";
-import styled from "styled-components";
 import { includes, map } from "lodash-es";
+import React from "react";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { updateSetting, updateSettings } from "../actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputError, SelectBox } from "../../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, InputGroup, InputLabel, Select, SelectBox } from "../../base";
 
 const SampleGroupSelection = styled.div`
     display: grid;
@@ -62,24 +62,19 @@ export const SampleRights = props => {
                         <p>Samples are assigned by the user in the creation form</p>
                     </SelectBox>
                 </SampleGroupSelection>
-                <InputError
-                    type="select"
-                    label="Group Rights"
-                    value={props.group}
-                    onChange={e => props.onChangeRights("group", e.target.value)}
-                >
-                    {options}
-                </InputError>
+                <InputGroup>
+                    <InputLabel>Group Rights</InputLabel>
+                    <Select value={props.group} onChange={e => props.onChangeRights("group", e.target.value)}>
+                        {options}
+                    </Select>
+                </InputGroup>
 
-                <InputError
-                    name="all"
-                    type="select"
-                    label="All Users' Rights"
-                    value={props.all}
-                    onChange={e => props.onChangeRights("all", e.target.value)}
-                >
-                    {options}
-                </InputError>
+                <InputGroup>
+                    <InputLabel>All Users' Rights</InputLabel>
+                    <Select name="all" value={props.all} onChange={e => props.onChangeRights("all", e.target.value)}>
+                        {options}
+                    </Select>
+                </InputGroup>
             </BoxGroupSection>
         </BoxGroup>
     );

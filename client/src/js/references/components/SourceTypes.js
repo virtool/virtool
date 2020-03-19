@@ -1,10 +1,20 @@
 import { get, includes, map, toLower, without } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { updateSetting } from "../../administration/actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Checkbox, Icon } from "../../base";
+import {
+    BoxGroup,
+    BoxGroupHeader,
+    BoxGroupSection,
+    Checkbox,
+    Icon,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon
+} from "../../base";
 import { editReference } from "../actions";
 
 const SourceTypesTitle = styled.h2`
@@ -40,10 +50,9 @@ const SourceTypesCheckbox = styled(Checkbox)`
     text-align: right;
 `;
 
-const SourceTypesForm = styled(BoxGroupSection)`
-    .form-group {
-        margin: 0;
-    }
+const SourceTypesInputGroup = styled(InputGroup)`
+    margin: 0;
+    min-height: 65px;
 `;
 
 export class SourceTypes extends React.Component {
@@ -78,12 +87,12 @@ export class SourceTypes extends React.Component {
             if (includes(this.props.sourceTypes, newSourceType)) {
                 // Show error if the source type already exists in the list.
                 this.setState({
-                    error: "Source type already exists."
+                    error: "Source type already exists"
                 });
             } else if (includes(newSourceType, " ")) {
                 // Show error if the input string includes a space character.
                 this.setState({
-                    error: "Source types may not contain spaces."
+                    error: "Source types may not contain spaces"
                 });
             } else {
                 const newSourceTypes = this.props.sourceTypes.concat([newSourceType]);
@@ -112,12 +121,6 @@ export class SourceTypes extends React.Component {
             <SourceTypeItem key={sourceType} onRemove={this.handleRemove} sourceType={sourceType} disabled={disabled} />
         ));
 
-        const errorMessage = (
-            <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
-                <span className="input-error-message">{this.state.error ? this.state.error : "None"}</span>
-            </div>
-        );
-
         const title = `${this.props.global ? "Default" : ""} Source Types`;
 
         return (
@@ -129,26 +132,15 @@ export class SourceTypes extends React.Component {
                     </SourceTypesTitle>
                     <p>{this.props.global ? globalDescription : localDescription}</p>
                 </BoxGroupHeader>
-                <SourceTypesForm>
-                    <form onSubmit={this.handleSubmit}>
-                        <FormGroup>
-                            <InputGroup>
-                                <FormControl
-                                    type="text"
-                                    disabled={disabled}
-                                    onChange={this.handleChange}
-                                    value={this.state.value}
-                                />
-                                <InputGroup.Button>
-                                    <Button type="submit" bsStyle="primary" disabled={disabled}>
-                                        <Icon name="plus-square" style={{ paddingLeft: "3px" }} />
-                                    </Button>
-                                </InputGroup.Button>
-                            </InputGroup>
-                            {errorMessage}
-                        </FormGroup>
-                    </form>
-                </SourceTypesForm>
+                <BoxGroupSection as="form" onSubmit={this.handleSubmit}>
+                    <SourceTypesInputGroup>
+                        <InputContainer align="right">
+                            <Input disabled={disabled} onChange={this.handleChange} value={this.state.value} />
+                            <InputIcon bsStyle="primary" name="plus-circle" onClick={this.handleSubmit} />
+                        </InputContainer>
+                        <InputError>{this.state.error}</InputError>
+                    </SourceTypesInputGroup>{" "}
+                </BoxGroupSection>
                 <React.Fragment>{listComponents}</React.Fragment>
             </BoxGroup>
         );

@@ -1,36 +1,64 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<OTUToolbar /> renders correctly 1`] = `
+exports[`<OTUToolbar /> should render 1`] = `
 <Toolbar>
-  <div
-    className="form-group"
-  >
-    <div
-      className="input-group"
-    >
-      <span
-        className="input-group-addon"
-        id="find-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </span>
-      <input
-        aria-describedby="find-addon"
-        className="form-control"
-        onChange={[Function]}
-        placeholder="Name or abbreviation"
-        type="text"
-        value="foo"
-      />
-    </div>
-  </div>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Name or abbreviation"
+    value="foo"
+  />
   <Button
     active={false}
+    bsStyle="default"
+    id="verified-button"
+    onClick={[Function]}
+    pullRight={false}
+    tip="Filter Unverified"
+    tipPlacement="top"
+  >
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="filter"
+      pullRight={false}
+    />
+  </Button>
+  <withRouter(LinkContainer)
+    replace={true}
+    to={
+      Object {
+        "state": Object {
+          "createOTU": true,
+        },
+      }
+    }
+  >
+    <Button
+      bsStyle="primary"
+      pullRight={false}
+      tip="Create"
+      tipPlacement="top"
+    >
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="plus-square"
+        pullRight={false}
+      />
+    </Button>
+  </withRouter(LinkContainer)>
+</Toolbar>
+`;
+
+exports[`<OTUToolbar /> should render when [verified=true] 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[Function]}
+    placeholder="Name or abbreviation"
+    value="foo"
+  />
+  <Button
+    active={true}
     bsStyle="default"
     id="verified-button"
     onClick={[Function]}

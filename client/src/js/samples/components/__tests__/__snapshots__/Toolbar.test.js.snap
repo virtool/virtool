@@ -3,32 +3,11 @@
 exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
 <div>
   <Toolbar>
-    <FormGroup
-      bsClass="form-group"
-    >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search fa-fw"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          onChange={[Function]}
-          placeholder="Sample name"
-          type="text"
-          value=""
-        />
-      </InputGroup>
-    </FormGroup>
+    <SearchInput
+      onChange={[Function]}
+      placeholder="Sample name"
+      value=""
+    />
   </Toolbar>
   <Box>
     <Connect(AlgorithmFilter) />
@@ -39,32 +18,11 @@ exports[`<SampleSearchToolbar /> should render when [canCreate=false] 1`] = `
 exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
 <div>
   <Toolbar>
-    <FormGroup
-      bsClass="form-group"
-    >
-      <InputGroup
-        bsClass="input-group"
-      >
-        <InputGroupAddon
-          bsClass="input-group-addon"
-        >
-          <Icon
-            faStyle="fas"
-            fixedWidth={false}
-            name="search fa-fw"
-            pullRight={false}
-          />
-        </InputGroupAddon>
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          onChange={[Function]}
-          placeholder="Sample name"
-          type="text"
-          value=""
-        />
-      </InputGroup>
-    </FormGroup>
+    <SearchInput
+      onChange={[Function]}
+      placeholder="Sample name"
+      value=""
+    />
     <LinkButton
       tip="Create"
       to={

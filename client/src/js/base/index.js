@@ -12,7 +12,6 @@ export * from "./Breakpoints";
 export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ButtonToolbar";
-export * from "./Code";
 export * from "./Container";
 export * from "./Dropdown";
 export * from "./DropdownButton";

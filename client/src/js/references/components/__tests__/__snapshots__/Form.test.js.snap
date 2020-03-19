@@ -1,104 +1,98 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<ReferenceForm /> should render when [errorFile!=null] 1`] = `
-<div>
-  <div
-    className="input-form-error"
-  >
-    <span
-      className="input-error-message"
-      style={
-        Object {
-          "margin": "0 0 0 0",
-        }
-      }
-    >
-      foo
-    </span>
-  </div>
-  <Form__ReferenceFormInputs
-    mode="clone"
-  >
-    <InputError
+exports[`<ReferenceForm /> should render 1`] = `
+<Fragment>
+  <InputGroup>
+    <Input__InputLabel>
+      Name
+    </Input__InputLabel>
+    <Input
       error="baz"
-      label="Name"
       name="name"
       onChange={[MockFunction]}
-      value="fee"
+      value="Foo"
     />
-  </Form__ReferenceFormInputs>
-  <InputError
-    label="Description"
-    name="description"
-    onChange={[MockFunction]}
-    type="textarea"
-    value="Foo"
-  />
-</div>
+    <Input__InputError>
+      baz
+    </Input__InputError>
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Description
+    </Input__InputLabel>
+    <TextArea
+      name="description"
+      onChange={[MockFunction]}
+      value="Foo reference"
+    />
+  </InputGroup>
+</Fragment>
 `;
 
-exports[`<ReferenceForm /> should render when [errorFile=null] and [errorSelect=null] 1`] = `
-<div>
-  <Form__ReferenceFormInputs
-    mode="clone"
-  >
-    <InputError
-      error="baz"
-      label="Name"
+exports[`<ReferenceForm /> should render error when provided in props 1`] = `
+<Fragment>
+  <InputGroup>
+    <Input__InputLabel>
+      Name
+    </Input__InputLabel>
+    <Input
+      error="Name required"
       name="name"
       onChange={[MockFunction]}
-      value="fee"
+      value="Foo"
     />
-  </Form__ReferenceFormInputs>
-  <InputError
-    label="Description"
-    name="description"
-    onChange={[MockFunction]}
-    type="textarea"
-    value="Foo"
-  />
-</div>
+    <Input__InputError>
+      Name required
+    </Input__InputError>
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Description
+    </Input__InputLabel>
+    <TextArea
+      name="description"
+      onChange={[MockFunction]}
+      value="Foo reference"
+    />
+  </InputGroup>
+</Fragment>
 `;
 
-exports[`<ReferenceForm /> should render when [mode=create] 1`] = `
-<div>
-  <div
-    className="input-form-error"
-  >
-    <span
-      className="input-error-message"
-      style={
-        Object {
-          "margin": "0 0 0 0",
-        }
-      }
-    >
-      foo
-    </span>
-  </div>
-  <Form__ReferenceFormInputs
-    mode="create"
-  >
-    <InputError
+exports[`<ReferenceForm /> should render organism field when [mode=create] 1`] = `
+<Fragment>
+  <InputGroup>
+    <Input__InputLabel>
+      Name
+    </Input__InputLabel>
+    <Input
       error="baz"
-      label="Name"
       name="name"
       onChange={[MockFunction]}
-      value="fee"
+      value="Foo"
     />
-    <InputError
-      label="Organism"
+    <Input__InputError>
+      baz
+    </Input__InputError>
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Organism
+    </Input__InputLabel>
+    <Input
       name="organism"
       onChange={[MockFunction]}
       value="Bar"
     />
-  </Form__ReferenceFormInputs>
-  <InputError
-    label="Description"
-    name="description"
-    onChange={[MockFunction]}
-    type="textarea"
-    value="Foo"
-  />
-</div>
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Description
+    </Input__InputLabel>
+    <TextArea
+      name="description"
+      onChange={[MockFunction]}
+      value="Foo reference"
+    />
+  </InputGroup>
+</Fragment>
 `;

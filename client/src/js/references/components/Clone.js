@@ -85,7 +85,7 @@ export class CloneReference extends React.Component {
             return this.setState({ errorDataType: "Required Field" });
         }
 
-        if (!this.state.reference.length) {
+        if (!this.state.reference) {
             return this.setState({ errorSelect: "Please select a source reference" });
         }
 
@@ -109,7 +109,7 @@ export class CloneReference extends React.Component {
                         references={this.props.refDocuments}
                         onSelect={this.handleSelect}
                         selected={this.state.reference}
-                        hasError={this.state.errorSelect}
+                        error={this.state.errorSelect}
                     />
                     <ReferenceForm
                         description={this.state.description}

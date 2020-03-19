@@ -1,11 +1,20 @@
 import { push } from "connected-react-router";
 import { find, get, includes, map, sortBy } from "lodash-es";
 import React from "react";
-import { InputGroup } from "react-bootstrap";
 
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, Button, InputError, LoadingPlaceholder, DialogBody, ModalDialog } from "../../base";
+import {
+    BoxGroup,
+    DialogBody,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon,
+    LoadingPlaceholder,
+    ModalDialog
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { routerLocationHasState } from "../../utils/utils";
 
@@ -61,7 +70,7 @@ class Groups extends React.Component {
 
         if (this.state.createGroupId === "") {
             this.setState({
-                error: "Group id missing"
+                error: "Name is required"
             });
         } else if (includes(this.state.createGroupId, " ")) {
             this.setState({
@@ -109,21 +118,19 @@ class Groups extends React.Component {
             >
                 <GroupsModalBody>
                     <div>
-                        <InputGroup>
-                            <InputError
-                                type="text"
-                                value={this.state.createGroupId}
-                                onChange={this.handleChange}
-                                placeholder="Group name"
-                                error={error || this.state.error}
-                            />
-                            <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
-                                <Button type="button" icon="plus-square" bsStyle="primary" onClick={this.handleSubmit}>
-                                    &nbsp;Add
-                                </Button>
-                            </InputGroup.Button>
-                        </InputGroup>
-                        <br />
+                        <form onSubmit={this.handleSubmit}>
+                            <InputGroup>
+                                <InputContainer align="right">
+                                    <Input
+                                        value={this.state.createGroupId}
+                                        onChange={this.handleChange}
+                                        placeholder="New"
+                                    />
+                                    <InputIcon name="plus-circle" bsStyle="primary" onClick={this.handleSubmit} />
+                                </InputContainer>
+                                <InputError>{error || this.state.error}</InputError>
+                            </InputGroup>
+                        </form>
                         <BoxGroup>{groupComponents}</BoxGroup>
                     </div>
                     <GroupDetail

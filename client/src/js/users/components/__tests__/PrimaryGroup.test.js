@@ -1,3 +1,4 @@
+import { Select } from "../../../base";
 import { mapDispatchToProps, mapStateToProps, PrimaryGroup } from "../PrimaryGroup";
 
 describe("<PrimaryGroup />", () => {
@@ -15,7 +16,7 @@ describe("<PrimaryGroup />", () => {
 
     it("should call onSetPrimaryGroup() when selection changes", () => {
         const wrapper = shallow(<PrimaryGroup {...props} />);
-        wrapper.find("InputError").simulate("change", { target: { value: "baz" } });
+        wrapper.find(Select).simulate("change", { target: { value: "baz" } });
         expect(props.onSetPrimaryGroup).toHaveBeenCalledWith("bob", "baz");
     });
 });

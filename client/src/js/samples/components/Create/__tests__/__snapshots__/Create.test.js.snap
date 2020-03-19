@@ -14,94 +14,90 @@ exports[`<CreateSample> should render 1`] = `
   >
     <Modal__DialogBody>
       <Create__CreateSampleFields>
-        <div>
-          <ControlLabel
-            bsClass="control-label"
-            srOnly={false}
-          >
+        <InputGroup>
+          <Input__InputLabel>
             Sample Name
-          </ControlLabel>
-          <InputGroup
-            bsClass="input-group"
+          </Input__InputLabel>
+          <Input__InputContainer
+            align="right"
           >
-            <InputError
+            <Input
               autocomplete={false}
               error=""
               name="name"
               onChange={[Function]}
               value=""
             />
-            <InputGroupButton
-              bsClass="input-group-btn"
-              style={
-                Object {
-                  "verticalAlign": "top",
-                  "zIndex": "0",
-                }
-              }
+            <Input__InputIcon
+              disabled={true}
+              name="magic"
+              onClick={[Function]}
+            />
+          </Input__InputContainer>
+          <Input__InputError />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Locale
+          </Input__InputLabel>
+          <Input
+            name="locale"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Isolate
+          </Input__InputLabel>
+          <Input
+            name="isolate"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Default Subtraction
+          </Input__InputLabel>
+          <Select
+            name="subtraction"
+            onChange={[Function]}
+          >
+            <option
+              key="sub_foo"
+              value="sub_foo"
             >
-              <Button
-                bsStyle="default"
-                disabled={true}
-                onClick={[Function]}
-                pullRight={false}
-                tipPlacement="top"
-                type="button"
-              >
-                <Icon
-                  faStyle="fas"
-                  fixedWidth={false}
-                  name="magic"
-                  pullRight={false}
-                />
-              </Button>
-            </InputGroupButton>
-          </InputGroup>
-        </div>
-        <InputError
-          label="Locale"
-          name="locale"
-          onChange={[Function]}
-          value=""
-        />
-        <InputError
-          label="Isolate"
-          name="isolate"
-          onChange={[Function]}
-          value=""
-        />
-        <InputError
-          error=""
-          label="Default Subtraction"
-          name="subtraction"
-          onChange={[Function]}
-          type="select"
-        >
-          <option
-            key="sub_foo"
-            value="sub_foo"
-          >
-            sub_foo
-          </option>
-          <option
-            key="sub_bar"
-            value="sub_bar"
-          >
-            sub_bar
-          </option>
-        </InputError>
-        <InputError
-          label="Host"
-          name="host"
-          onChange={[Function]}
-          value=""
-        />
-        <InputError
-          label="Pairdness"
-          readOnly={true}
-          type="text"
-          value="Unpaired"
-        />
+              sub_foo
+            </option>
+            <option
+              key="sub_bar"
+              value="sub_bar"
+            >
+              sub_bar
+            </option>
+          </Select>
+          <Input__InputError />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Host
+          </Input__InputLabel>
+          <Input
+            name="host"
+            onChange={[Function]}
+            value=""
+          />
+        </InputGroup>
+        <InputGroup>
+          <Input__InputLabel>
+            Pairedness
+          </Input__InputLabel>
+          <Input
+            readOnly={true}
+            value="Unpaired"
+          />
+        </InputGroup>
       </Create__CreateSampleFields>
       <LibraryTypeSelection
         libraryType="normal"

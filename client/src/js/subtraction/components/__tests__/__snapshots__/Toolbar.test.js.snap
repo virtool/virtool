@@ -1,63 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SubtractionToolbar /> renders correctly when [canModify=false] 1`] = `
+exports[`<SubtractionToolbar /> should not render create button when [canModify=false] 1`] = `
 <Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Name"
-        type="text"
-        value="test"
-      />
-    </InputGroup>
-  </FormGroup>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Name"
+    value="foo"
+  />
 </Toolbar>
 `;
 
-exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
+exports[`<SubtractionToolbar /> should render create button when [canModify=true] 1`] = `
 <Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        placeholder="Name"
-        type="text"
-        value="test"
-      />
-    </InputGroup>
-  </FormGroup>
-  <withRouter(LinkContainer)
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="Name"
+    value="foo"
+  />
+  <LinkButton
     to={
       Object {
         "state": Object {
@@ -66,13 +26,13 @@ exports[`<SubtractionToolbar /> renders correctly when [canModify=true] 1`] = `
       }
     }
   >
-    <Button
-      bsStyle="primary"
-      icon="plus-square fa-fw"
+    <Icon
+      faStyle="fas"
+      fixedWidth={false}
+      name="plus-square"
       pullRight={false}
       tip="Create"
-      tipPlacement="top"
     />
-  </withRouter(LinkContainer)>
+  </LinkButton>
 </Toolbar>
 `;

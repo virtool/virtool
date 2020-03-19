@@ -9,25 +9,27 @@ exports[`<Login /> should render 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <Input
-        autoComplete={true}
-        autofocus={true}
-        formGroupStyle={Object {}}
-        label="Username"
-        name="username"
-        onChange={[Function]}
-        type="text"
-        value=""
-      />
-      <Input
-        autoComplete={true}
-        formGroupStyle={Object {}}
-        label="Password"
-        name="password"
-        onChange={[Function]}
-        type="password"
-        value=""
-      />
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
       <Checkbox
         checked={false}
         label="Remember Me"
@@ -58,25 +60,78 @@ exports[`<Login /> should render checked remember checkbox 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <Input
-        autoComplete={true}
-        autofocus={true}
-        formGroupStyle={Object {}}
-        label="Username"
-        name="username"
-        onChange={[Function]}
-        type="text"
-        value=""
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Remember Me"
+        onClick={[Function]}
       />
-      <Input
-        autoComplete={true}
-        formGroupStyle={Object {}}
-        label="Password"
-        name="password"
-        onChange={[Function]}
-        type="password"
-        value=""
-      />
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;
+
+exports[`<Login /> should render checked remember checkbox 2`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
       <Checkbox
         checked={true}
         label="Remember Me"
@@ -107,25 +162,129 @@ exports[`<Login /> should render filled username and password fields 1`] = `
     <form
       onSubmit={[Function]}
     >
-      <Input
-        autoComplete={true}
-        autofocus={true}
-        formGroupStyle={Object {}}
-        label="Username"
-        name="username"
-        onChange={[Function]}
-        type="text"
-        value="bob"
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Remember Me"
+        onClick={[Function]}
       />
-      <Input
-        autoComplete={true}
-        formGroupStyle={Object {}}
-        label="Password"
-        name="password"
-        onChange={[Function]}
-        type="password"
-        value="hello world"
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;
+
+exports[`<Login /> should render filled username and password fields 2`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value="bob"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value=""
+        />
+      </InputGroup>
+      <Checkbox
+        checked={false}
+        label="Remember Me"
+        onClick={[Function]}
       />
+      <Login__LoginFooter>
+        <span />
+        <Button
+          bsStyle="primary"
+          pullRight={false}
+          tipPlacement="top"
+          type="submit"
+        >
+          Login
+        </Button>
+      </Login__LoginFooter>
+    </form>
+  </Login__LoginModal>
+</Container__WallContainer>
+`;
+
+exports[`<Login /> should render filled username and password fields 3`] = `
+<Container__WallContainer>
+  <Logo__WallLogo
+    height={42}
+  />
+  <Login__LoginModal>
+    <form
+      onSubmit={[Function]}
+    >
+      <InputGroup>
+        <Input__InputLabel>
+          Username
+        </Input__InputLabel>
+        <Input
+          autofocus={true}
+          name="username"
+          onChange={[Function]}
+          value="bob"
+        />
+      </InputGroup>
+      <InputGroup>
+        <Input__InputLabel>
+          Password
+        </Input__InputLabel>
+        <PasswordInput
+          name="password"
+          onChange={[Function]}
+          value="foobar"
+        />
+      </InputGroup>
       <Checkbox
         checked={false}
         label="Remember Me"

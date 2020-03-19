@@ -1,3 +1,4 @@
+import { toNumber } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { Button, ModalDialog, DialogBody, DialogFooter } from "../../../../base";
@@ -22,27 +23,20 @@ export class AddTarget extends React.Component {
         e.preventDefault();
 
         if (!this.state.name) {
-            this.setState({ errorName: "Required Field" });
+            return this.setState({ errorName: "Required Field" });
         }
 
-        const newTarget = [
+        const targets = [
             ...this.props.targets,
             {
                 name: this.state.name,
                 description: this.state.description,
-                length: new Number(this.state.length),
+                length: toNumber(this.state.length),
                 required: this.state.required
             }
         ];
 
-        const update = {
-            targets: newTarget
-        };
-
-        if (this.state.name) {
-            this.props.onSubmit(this.props.refId, update);
-        }
-
+        this.props.onSubmit(this.props.refId, { targets });
         this.props.onHide();
     };
 
@@ -69,7 +63,6 @@ export class AddTarget extends React.Component {
                 submit={this.state.submit}
                 label="AddTarget"
                 headerText="Add target"
-                capitalize="capitalize"
                 show={this.props.show}
                 onHide={this.props.onHide}
                 onEnter={this.handleEnter}
@@ -83,7 +76,7 @@ export class AddTarget extends React.Component {
                             description={this.state.description}
                             length={this.state.length}
                             required={this.state.required}
-                            errorName={this.errorName}
+                            errorName={this.state.errorName}
                             onClick={this.handleClick}
                         />
                     </DialogBody>

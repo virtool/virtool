@@ -4,7 +4,17 @@ import { connect } from "react-redux";
 
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
-import { Checkbox, device, InputError, SaveButton, ModalDialog, DialogFooter } from "../../base";
+import {
+    Checkbox,
+    DialogFooter,
+    Input,
+    InputError,
+    InputGroup,
+    InputLabel,
+    ModalDialog,
+    PasswordInput,
+    SaveButton
+} from "../../base";
 import { clearError } from "../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createUser } from "../actions";
@@ -13,24 +23,12 @@ const CreateUserContainer = styled.div`
     margin: 15px;
 `;
 
-const CreateUserPasswords = styled.div`
-    display: grid;
-    grid-gap: 15px;
-    grid-template-columns: 1fr;
-
-    @media (min-width: ${device.desktop}) {
-        grid-template-columns: 1fr 1fr;
-    }
-`;
-
 const getInitialState = () => ({
     userId: "",
     password: "",
-    confirm: "",
     forceReset: false,
     errorUserId: "",
-    errorPassword: "",
-    errorConfirm: ""
+    errorPassword: ""
 });
 
 export class CreateUser extends React.PureComponent {
@@ -85,11 +83,6 @@ export class CreateUser extends React.PureComponent {
             });
         }
 
-        if (this.state.confirm !== this.state.password) {
-            hasError = true;
-            this.setState({ errorConfirm: "Passwords do not match" });
-        }
-
         if (!hasError) {
             this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
         }
@@ -106,32 +99,16 @@ export class CreateUser extends React.PureComponent {
             >
                 <form onSubmit={this.handleSubmit}>
                     <CreateUserContainer>
-                        <InputError
-                            label="Username"
-                            name="userId"
-                            value={this.state.userId}
-                            onChange={this.handleChange}
-                            error={this.state.errorUserId}
-                        />
-
-                        <CreateUserPasswords>
-                            <InputError
-                                type="password"
-                                label="Password"
-                                name="password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                                error={this.state.errorPassword}
-                            />
-                            <InputError
-                                type="password"
-                                label="Confirm"
-                                name="confirm"
-                                value={this.state.confirm}
-                                onChange={this.handleChange}
-                                error={this.state.errorConfirm}
-                            />
-                        </CreateUserPasswords>
+                        <InputGroup>
+                            <InputLabel>Username</InputLabel>
+                            <Input name="userId" value={this.state.userId} onChange={this.handleChange} />
+                            <InputError>{this.state.errorUserId}</InputError>
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Password</InputLabel>
+                            <PasswordInput name="password" value={this.state.password} onChange={this.handleChange} />
+                            <InputError>{this.state.errorPassword}</InputError>
+                        </InputGroup>
 
                         <Checkbox
                             label="Force user to reset password on login"

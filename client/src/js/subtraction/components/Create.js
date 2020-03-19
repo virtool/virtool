@@ -5,15 +5,18 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { pushState } from "../../app/actions";
 import {
+    Attribution,
     BoxGroup,
     BoxGroupSection,
     Button,
     DialogBody,
     DialogFooter,
+    Input,
     InputError,
+    InputGroup,
+    InputLabel,
     ModalDialog,
-    NoneFoundSection,
-    RelativeTime
+    NoneFoundSection
 } from "../../base";
 import { clearError } from "../../errors/actions";
 
@@ -21,9 +24,12 @@ import { findFiles } from "../../files/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createSubtraction } from "../actions";
 
-const SubtractionFileItemTop = styled.div`
+const StyledSubtractionFileItem = styled(BoxGroupSection)`
     display: flex;
-    justify-content: space-between;
+
+    ${Attribution} {
+        margin-left: auto;
+    }
 `;
 
 export class SubtractionFileItem extends React.Component {
@@ -35,24 +41,24 @@ export class SubtractionFileItem extends React.Component {
         const { active, name, uploaded_at, user } = this.props;
 
         return (
-            <BoxGroupSection active={active} onClick={this.handleClick}>
-                <SubtractionFileItemTop>
-                    <strong>{name}</strong>
-                    <span>
-                        Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
-                    </span>
-                </SubtractionFileItemTop>
-            </BoxGroupSection>
+            <StyledSubtractionFileItem active={active} onClick={this.handleClick}>
+                <strong>{name}</strong>
+                <Attribution user={user.id} time={uploaded_at} />
+            </StyledSubtractionFileItem>
         );
     }
 }
 
+const SubtractionFileList = styled(BoxGroup)`
+    margin-bottom: 5px;
+`;
+
 const getInitialState = () => ({
-    subtractionId: "",
     fileId: "",
     nickname: "",
-    errorSubtractionId: "",
-    errorFile: ""
+    subtractionId: "",
+    errorFile: "",
+    errorSubtractionId: ""
 });
 
 export class CreateSubtraction extends React.Component {
@@ -61,20 +67,13 @@ export class CreateSubtraction extends React.Component {
         this.state = getInitialState();
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.errorSubtractionId && nextProps.error) {
-            return { errorSubtractionId: nextProps.error };
-        }
-        return null;
-    }
-
     handleChange = e => {
         const { name, value, error } = getTargetChange(e.target);
 
         this.setState({ [name]: value, [error]: "" });
 
         if (this.props.error) {
-            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -84,8 +83,9 @@ export class CreateSubtraction extends React.Component {
 
     handleModalExited = () => {
         this.setState(getInitialState());
+
         if (this.props.error) {
-            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -117,20 +117,16 @@ export class CreateSubtraction extends React.Component {
     };
 
     render() {
-        const files = filter(this.props.files, { type: "subtraction" });
+        let fileComponents = map(this.props.files, file => (
+            <SubtractionFileItem
+                key={file.id}
+                {...file}
+                active={file.id === this.state.fileId}
+                onClick={this.handleSelectFile}
+            />
+        ));
 
-        let fileComponents;
-
-        if (files.length) {
-            fileComponents = map(files, file => (
-                <SubtractionFileItem
-                    key={file.id}
-                    {...file}
-                    active={file.id === this.state.fileId}
-                    onClick={this.handleSelectFile}
-                />
-            ));
-        } else {
+        if (!fileComponents.length) {
             fileComponents = (
                 <NoneFoundSection noun="files">
                     <Link to="/subtraction/files">Upload some</Link>
@@ -138,13 +134,7 @@ export class CreateSubtraction extends React.Component {
             );
         }
 
-        const inputErrorClassName = this.state.errorFile ? "input-form-error" : "input-form-error-none";
-
-        const errorMessage = (
-            <div className={inputErrorClassName} style={{ margin: "3px 0 0 0" }}>
-                {this.state.errorFile || "None"}
-            </div>
-        );
+        const errorSubtractionId = this.state.errorSubtractionId || this.props.error;
 
         return (
             <ModalDialog
@@ -156,29 +146,28 @@ export class CreateSubtraction extends React.Component {
                 onExited={this.handleModalExited}
             >
                 <form onSubmit={this.handleSubmit}>
-                    <DialogBody style={{ margin: "0 0 10px 0" }}>
-                        <InputError
-                            type="text"
-                            label="Unique Name"
-                            name="subtractionId"
-                            value={this.state.subtractionId}
-                            onChange={this.handleChange}
-                            error={this.state.errorSubtractionId}
-                        />
+                    <DialogBody>
+                        <InputGroup>
+                            <InputLabel>Unique Name</InputLabel>
+                            <Input
+                                error={this.state.errorSubtractionId}
+                                name="subtractionId"
+                                value={this.state.subtractionId}
+                                onChange={this.handleChange}
+                            />
+                            <InputError>{errorSubtractionId}</InputError>
+                        </InputGroup>
 
-                        <InputError
-                            type="text"
-                            label="Nickname"
-                            name="nickname"
-                            value={this.state.nickname}
-                            onChange={this.handleChange}
-                        />
+                        <InputGroup>
+                            <InputLabel>Nickname</InputLabel>
+                            <Input name="nickname" value={this.state.nickname} onChange={this.handleChange} />
+                        </InputGroup>
 
                         <h5>
                             <strong>Files</strong>
                         </h5>
-                        <BoxGroup>{fileComponents}</BoxGroup>
-                        {errorMessage}
+                        <SubtractionFileList>{fileComponents}</SubtractionFileList>
+                        <InputError>{this.state.errorFile}</InputError>
                     </DialogBody>
 
                     <DialogFooter className="modal-footer">
@@ -194,7 +183,7 @@ export class CreateSubtraction extends React.Component {
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createSubtraction"),
-    files: state.files.documents,
+    files: filter(state.files.documents, { type: "subtraction" }),
     error: get(state, "errors.CREATE_SUBTRACTION_ERROR.message", "")
 });
 
@@ -211,8 +200,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(pushState({ createSubtraction: false }));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("CREATE_SUBTRACTION_ERROR"));
     }
 });
 

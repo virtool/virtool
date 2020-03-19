@@ -1,27 +1,28 @@
 import { filter, get, map } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
-import { ControlLabel, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
+import styled from "styled-components";
 import { pushState } from "../../../app/actions";
 import {
-    Button,
-    Icon,
-    InputError,
-    LoadingPlaceholder,
-    SaveButton,
-    ModalDialog,
     DialogBody,
-    DialogFooter
+    DialogFooter,
+    Input,
+    InputContainer,
+    InputError,
+    InputGroup,
+    InputIcon,
+    InputLabel,
+    LoadingPlaceholder,
+    ModalDialog,
+    SaveButton,
+    Select
 } from "../../../base";
 import { clearError } from "../../../errors/actions";
 import { listSubtractionIds } from "../../../subtraction/actions";
 import { getFirstSubtractionId, getSubtractionIds } from "../../../subtraction/selectors";
 import { getTargetChange, routerLocationHasState } from "../../../utils/utils";
-
 import { createSample, findReadFiles } from "../../actions";
 import { LibraryTypeSelection } from "./LibraryTypeSelection";
-
 import ReadSelector from "./ReadSelector";
 import { SampleUserGroup } from "./UserGroup";
 
@@ -29,7 +30,7 @@ const CreateSampleFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    grid-gap: 13px;
+    grid-column-gap: 15px;
 `;
 
 const extensionRegex = /^[a-z0-9]+-(.*)\.f[aq](st)?[aq]?(\.gz)?$/;
@@ -192,55 +193,53 @@ export class CreateSample extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
                         <CreateSampleFields>
-                            <div>
-                                <ControlLabel>Sample Name</ControlLabel>
-                                <InputGroup>
-                                    <InputError
+                            <InputGroup>
+                                <InputLabel>Sample Name</InputLabel>
+                                <InputContainer align="right">
+                                    <Input
+                                        error={errorName}
                                         name="name"
                                         value={this.state.name}
                                         onChange={this.handleChange}
                                         autocomplete={false}
-                                        error={errorName}
                                     />
+                                    <InputIcon
+                                        name="magic"
+                                        onClick={this.autofill}
+                                        disabled={!this.state.selected.length}
+                                    />
+                                </InputContainer>
+                                <InputError>{errorName}</InputError>
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Locale</InputLabel>
+                                <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Isolate</InputLabel>
+                                <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                            </InputGroup>
+                            <InputGroup>
+                                <InputLabel>Default Subtraction</InputLabel>
+                                <Select
+                                    name="subtraction"
+                                    value={this.state.subtraction || this.props.defaultSubtraction}
+                                    onChange={this.handleChange}
+                                >
+                                    {subtractionComponents}
+                                </Select>
+                                <InputError>{errorSubtraction}</InputError>
+                            </InputGroup>
 
-                                    <InputGroup.Button style={{ verticalAlign: "top", zIndex: "0" }}>
-                                        <Button
-                                            type="button"
-                                            onClick={this.autofill}
-                                            disabled={!this.state.selected.length}
-                                        >
-                                            <Icon name="magic" />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </div>
-                            <InputError
-                                name="locale"
-                                label="Locale"
-                                value={this.state.locale}
-                                onChange={this.handleChange}
-                            />
+                            <InputGroup>
+                                <InputLabel>Host</InputLabel>
+                                <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                            </InputGroup>
 
-                            <InputError
-                                name="isolate"
-                                label="Isolate"
-                                value={this.state.isolate}
-                                onChange={this.handleChange}
-                            />
-                            <InputError
-                                name="subtraction"
-                                type="select"
-                                label="Default Subtraction"
-                                value={this.state.subtraction || this.props.defaultSubtraction}
-                                onChange={this.handleChange}
-                                error={errorSubtraction}
-                            >
-                                {subtractionComponents}
-                            </InputError>
-
-                            <InputError name="host" label="Host" value={this.state.host} onChange={this.handleChange} />
-
-                            <InputError type="text" label="Pairdness" value={pairedness} readOnly={true} />
+                            <InputGroup>
+                                <InputLabel>Pairedness</InputLabel>
+                                <Input value={pairedness} readOnly={true} />
+                            </InputGroup>
                         </CreateSampleFields>
 
                         <LibraryTypeSelection

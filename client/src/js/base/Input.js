@@ -19,9 +19,9 @@ export const StyledInputGroup = styled.div`
     min-height: 73px;
 `;
 
-export const InputGroup = ({ children, error }) => (
+export const InputGroup = ({ children, className, error }) => (
     <InputContext.Provider value={error}>
-        <StyledInputGroup>{children}</StyledInputGroup>
+        <StyledInputGroup className={className}>{children}</StyledInputGroup>
     </InputContext.Provider>
 );
 

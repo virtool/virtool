@@ -13,6 +13,10 @@ const StyledViewHeader = styled.h2`
         color: ${props => props.theme.color.greyDark};
         font-size: 14px;
     }
+
+    i.fas {
+        font-size: 20px;
+    }
 `;
 
 /**

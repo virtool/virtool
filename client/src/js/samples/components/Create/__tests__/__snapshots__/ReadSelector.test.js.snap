@@ -13,50 +13,25 @@ exports[`<ReadSelector /> should render 1`] = `
        selected
     </small>
   </ReadSelector__ReadSelectorHeader>
-  <Box>
+  <ReadSelector__ReadSelectorBox
+    error="foo"
+  >
     <Toolbar>
-      <FormGroup
-        bsClass="form-group"
-      >
-        <InputGroup
-          bsClass="input-group"
-        >
-          <Input
-            autoComplete={true}
-            formGroupStyle={Object {}}
-            onChange={[Function]}
-            placeholder="Filename"
-            type="text"
-            value=""
-          />
-          <InputGroupButton
-            bsClass="input-group-btn"
-          >
-            <Button
-              bsStyle="default"
-              onClick={[Function]}
-              pullRight={false}
-              tip="Clear"
-              tipPlacement="top"
-              type="button"
-            >
-              <Icon
-                faStyle="fas"
-                fixedWidth={false}
-                name="redo"
-                pullRight={false}
-              />
-            </Button>
-          </InputGroupButton>
-        </InputGroup>
-      </FormGroup>
-      <Button
-        bsStyle="default"
+      <SearchInput
+        onChange={[Function]}
+        placeholder="Filename"
+        value=""
+      />
+      <ReadSelector__ReadSelectorButton
+        icon="undo"
+        onClick={[Function]}
+        tip="Clear"
+        type="button"
+      />
+      <ReadSelector__ReadSelectorButton
         icon="retweet"
         onClick={[Function]}
-        pullRight={false}
         tip="Swap Orientations"
-        tipPlacement="top"
         type="button"
       />
     </Toolbar>
@@ -73,15 +48,9 @@ exports[`<ReadSelector /> should render 1`] = `
         />
       </Box__BoxGroup>
     </ReadSelector__ReadSelectorList>
-    <div
-      className="input-form-error"
-    >
-      <div
-        className="input-error-message"
-      >
-        foo
-      </div>
-    </div>
-  </Box>
+    <ReadSelector__ReadSelectorError>
+      foo
+    </ReadSelector__ReadSelectorError>
+  </ReadSelector__ReadSelectorBox>
 </div>
 `;
