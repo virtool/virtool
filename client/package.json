@@ -27,7 +27,6 @@
     "react": "^16.12.0",
     "react-beautiful-dnd": "^10.1.0",
     "react-bootstrap": "^0.32.4",
-    "react-bootstrap-typeahead": "^3.2.2",
     "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "^16.12.0",
     "react-dropzone": "^10.0.5",
