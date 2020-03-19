@@ -3,13 +3,12 @@
 exports[`<UserRole /> should render empty when [canModifyUser=false] 1`] = `""`;
 
 exports[`<UserRole /> should render when [role="administrator"] 1`] = `
-<Role__StyledUserRole>
-  <label>
+<InputGroup>
+  <Input__InputLabel>
     User Role
-  </label>
-  <InputError
+  </Input__InputLabel>
+  <Select
     onChange={[Function]}
-    type="select"
     value="administrator"
   >
     <option
@@ -24,18 +23,17 @@ exports[`<UserRole /> should render when [role="administrator"] 1`] = `
     >
       Limited
     </option>
-  </InputError>
-</Role__StyledUserRole>
+  </Select>
+</InputGroup>
 `;
 
 exports[`<UserRole /> should render when [role="limited"] 1`] = `
-<Role__StyledUserRole>
-  <label>
+<InputGroup>
+  <Input__InputLabel>
     User Role
-  </label>
-  <InputError
+  </Input__InputLabel>
+  <Select
     onChange={[Function]}
-    type="select"
     value="limited"
   >
     <option
@@ -50,6 +48,6 @@ exports[`<UserRole /> should render when [role="limited"] 1`] = `
     >
       Limited
     </option>
-  </InputError>
-</Role__StyledUserRole>
+  </Select>
+</InputGroup>
 `;

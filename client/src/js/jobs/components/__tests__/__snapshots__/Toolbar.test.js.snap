@@ -1,32 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
+exports[`<JobsToolbar /> should render when [canRemove=false] 1`] = `
 <Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[MockFunction]}
-        placeholder="User or task"
-        value="foo"
-      />
-    </InputGroup>
-  </FormGroup>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="User or task"
+    value="foo"
+  />
+</Toolbar>
+`;
+
+exports[`<JobsToolbar /> should render when [canRemove=true] 1`] = `
+<Toolbar>
+  <SearchInput
+    onChange={[MockFunction]}
+    placeholder="User or task"
+    value="foo"
+  />
   <Button
     bsStyle="default"
     onClick={[Function]}
@@ -41,35 +31,5 @@ exports[`<JobsToolbar /> should render with dropdown menu 1`] = `
       pullRight={false}
     />
   </Button>
-</Toolbar>
-`;
-
-exports[`<JobsToolbar /> should render without dropdown menu 1`] = `
-<Toolbar>
-  <FormGroup
-    bsClass="form-group"
-  >
-    <InputGroup
-      bsClass="input-group"
-    >
-      <InputGroupAddon
-        bsClass="input-group-addon"
-      >
-        <Icon
-          faStyle="fas"
-          fixedWidth={false}
-          name="search"
-          pullRight={false}
-        />
-      </InputGroupAddon>
-      <FormControl
-        bsClass="form-control"
-        componentClass="input"
-        onChange={[MockFunction]}
-        placeholder="User or task"
-        value="foo"
-      />
-    </InputGroup>
-  </FormGroup>
 </Toolbar>
 `;

@@ -2,14 +2,30 @@ import { filter, includes, map } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupSection, DialogBody, Identicon, Input, ModalDialog, NoneFoundSection } from "../../../base";
+import {
+    BoxGroup,
+    BoxGroupSection,
+    DialogBody,
+    Identicon,
+    Input,
+    InputContainer,
+    InputGroup,
+    InputIcon,
+    ModalDialog,
+    NoneFoundSection
+} from "../../../base";
 import { listGroups } from "../../../groups/actions";
 import { findUsers } from "../../../users/actions";
 import { addReferenceGroup, addReferenceUser } from "../../actions";
 
-const AddUserSearch = ({ term, onChange }) => {
-    return <Input type="text" value={term} onChange={onChange} />;
-};
+const AddUserSearch = ({ term, onChange }) => (
+    <InputGroup>
+        <InputContainer align="left">
+            <InputIcon name="search" />
+            <Input value={term} onChange={e => onChange(e.target.value)} />
+        </InputContainer>
+    </InputGroup>
+);
 
 const getInitialState = () => ({
     id: "",
@@ -32,6 +48,11 @@ const AddMemberItem = ({ id, identicon, onClick }) => (
         {id}
     </StyledAddMemberItem>
 );
+
+const AddReferenceMemberList = styled(BoxGroup)`
+    max-height: 320px;
+    overflow-y: auto;
+`;
 
 export class AddReferenceMember extends React.Component {
     constructor(props) {
@@ -65,6 +86,7 @@ export class AddReferenceMember extends React.Component {
         }
 
         const header = "Add ".concat(this.props.noun);
+
         return (
             <ModalDialog
                 label="AddMember"
@@ -76,8 +98,10 @@ export class AddReferenceMember extends React.Component {
                 capitalize="capitalize"
             >
                 <DialogBody>
-                    {this.props.noun === "user" ? <AddUserSearch /> : null}
-                    <BoxGroup>{addMemberComponents}</BoxGroup>
+                    {this.props.noun === "user" ? (
+                        <AddUserSearch term={this.props.term} onChange={this.props.onChange} />
+                    ) : null}
+                    <AddReferenceMemberList>{addMemberComponents}</AddReferenceMemberList>
                 </DialogBody>
             </ModalDialog>
         );
@@ -104,6 +128,7 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         const actionCreator = ownProps.noun === "user" ? addReferenceUser : addReferenceGroup;
         dispatch(actionCreator(refId, id));
     },
+
     onList: () => {
         if (ownProps.noun === "user") {
             dispatch(findUsers("", 1));

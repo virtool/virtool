@@ -1,24 +1,25 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ReadSelector
- */
-import { filter, includes, indexOf, isEqual, intersection, map, sortBy, toLower, without } from "lodash-es";
+import { filter, includes, indexOf, intersection, isEqual, map, sortBy, toLower, without } from "lodash-es";
 import PropTypes from "prop-types";
 import React from "react";
-import { FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import { Button, Icon, Input, BoxGroup, Box, BoxGroupSection } from "../../../base";
+import { Box, BoxGroup, BoxGroupSection, Button, Icon, InputError, SearchInput } from "../../../base";
 import { Toolbar } from "../../../base/Toolbar";
 
 import ReadItem from "./ReadItem";
+
+const ReadSelectorBox = styled(Box)`
+    ${props => (props.error ? `border-color: ${props.theme.color.red};` : "")};
+`;
+
+export const ReadSelectorButton = styled(Button)`
+    min-width: 44px;
+`;
+
+const ReadSelectorError = styled(InputError)`
+    margin-bottom: 10px;
+`;
 
 const ReadSelectorHeader = styled.h5`
     display: flex;
@@ -90,8 +91,6 @@ export default class ReadSelector extends React.PureComponent {
     };
 
     render() {
-        const error = this.props.error;
-
         const loweredFilter = toLower(this.state.filter);
 
         const files = filter(
@@ -114,14 +113,6 @@ export default class ReadSelector extends React.PureComponent {
             );
         }
 
-        const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
-
-        const errorMessage = (
-            <div className={inputErrorClassName}>
-                <div className="input-error-message">{error ? error : "None"}</div>
-            </div>
-        );
-
         return (
             <div>
                 <ReadSelectorHeader>
@@ -131,37 +122,23 @@ export default class ReadSelector extends React.PureComponent {
                     </small>
                 </ReadSelectorHeader>
 
-                <Box>
+                <ReadSelectorBox error={this.props.error}>
                     <Toolbar>
-                        <FormGroup>
-                            <InputGroup>
-                                <Input
-                                    type="text"
-                                    placeholder="Filename"
-                                    value={this.state.filter}
-                                    onChange={e => this.setState({ filter: e.target.value })}
-                                />
-                                <InputGroup.Button>
-                                    <Button type="button" tip="Clear" onClick={this.reset}>
-                                        <Icon name="redo" />
-                                    </Button>
-                                </InputGroup.Button>
-                            </InputGroup>
-                        </FormGroup>
-                        <Button
-                            type="button"
-                            icon="retweet"
-                            tip="Swap Orientations"
-                            tipPlacement="top"
-                            onClick={this.swap}
+                        <SearchInput
+                            placeholder="Filename"
+                            value={this.state.filter}
+                            onChange={e => this.setState({ filter: e.target.value })}
                         />
+                        <ReadSelectorButton type="button" icon="undo" tip="Clear" onClick={this.reset} />
+                        <ReadSelectorButton type="button" icon="retweet" tip="Swap Orientations" onClick={this.swap} />
                     </Toolbar>
+
                     <ReadSelectorList>
                         <BoxGroup>{fileComponents}</BoxGroup>
                     </ReadSelectorList>
 
-                    {errorMessage}
-                </Box>
+                    <ReadSelectorError>{this.props.error}</ReadSelectorError>
+                </ReadSelectorBox>
             </div>
         );
     }

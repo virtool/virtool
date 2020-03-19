@@ -29,35 +29,34 @@ exports[`<CreateAPIKey /> should render when [props.newKey] and [state.copied] s
         grow={1}
         shrink={1}
       >
-        <Input
-          autoComplete={true}
-          className="text-center"
-          formGroupStyle={
-            Object {
-              "marginBottom": 0,
+        <Input__InputContainer
+          align="right"
+        >
+          <Input
+            className="text-center"
+            formGroupStyle={
+              Object {
+                "marginBottom": 0,
+              }
             }
-          }
-          readOnly={true}
-          style={
-            Object {
-              "marginBottom": 0,
+            readOnly={true}
+            style={
+              Object {
+                "marginBottom": 0,
+              }
             }
-          }
-          type="text"
-          value="123abc"
-        />
+            value="123abc"
+          />
+          <CopyToClipboard
+            onCopy={[Function]}
+            text="123abc"
+          >
+            <Input__InputIcon
+              name="copy"
+            />
+          </CopyToClipboard>
+        </Input__InputContainer>
       </FlexItem>
-      <CopyToClipboard
-        onCopy={[Function]}
-        text="123abc"
-      >
-        <Button
-          bsStyle="primary"
-          icon="paste"
-          pullRight={false}
-          tipPlacement="top"
-        />
-      </CopyToClipboard>
     </Create__StyledFlex>
     <small
       className="text-primary"
@@ -87,12 +86,17 @@ exports[`<CreateAPIKey /> should render when [state.newKey] is empty 1`] = `
     onSubmit={[Function]}
   >
     <Modal__DialogBody>
-      <InputError
-        error=""
-        label="Name"
-        onChange={[Function]}
-        value=""
-      />
+      <InputGroup>
+        <Input__InputLabel>
+          Name
+        </Input__InputLabel>
+        <Input
+          label="Name"
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputError />
+      </InputGroup>
       <label>
         Permissions
       </label>
@@ -142,35 +146,34 @@ exports[`<CreateAPIKey /> should render when [state.newKey] set 1`] = `
         grow={1}
         shrink={1}
       >
-        <Input
-          autoComplete={true}
-          className="text-center"
-          formGroupStyle={
-            Object {
-              "marginBottom": 0,
+        <Input__InputContainer
+          align="right"
+        >
+          <Input
+            className="text-center"
+            formGroupStyle={
+              Object {
+                "marginBottom": 0,
+              }
             }
-          }
-          readOnly={true}
-          style={
-            Object {
-              "marginBottom": 0,
+            readOnly={true}
+            style={
+              Object {
+                "marginBottom": 0,
+              }
             }
-          }
-          type="text"
-          value="123abc"
-        />
+            value="123abc"
+          />
+          <CopyToClipboard
+            onCopy={[Function]}
+            text="123abc"
+          >
+            <Input__InputIcon
+              name="copy"
+            />
+          </CopyToClipboard>
+        </Input__InputContainer>
       </FlexItem>
-      <CopyToClipboard
-        onCopy={[Function]}
-        text="123abc"
-      >
-        <Button
-          bsStyle="primary"
-          icon="paste"
-          pullRight={false}
-          tipPlacement="top"
-        />
-      </CopyToClipboard>
     </Create__StyledFlex>
     <small
       className="text-primary invisible"

@@ -5,14 +5,11 @@ import OTUForm from "../OTUForm";
 import { ModalDialog } from "../../../base";
 import { editOTU, hideOTUModal } from "../../actions";
 import { clearError } from "../../../errors/actions";
-import { getNextState } from "../../utils";
 import { getTargetChange } from "../../../utils/utils";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
     abbreviation,
-    errorName: "",
-    errorAbbreviation: "",
     error: ""
 });
 
@@ -20,10 +17,6 @@ class EditOTU extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState(props);
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = e => {
@@ -50,7 +43,7 @@ class EditOTU extends React.Component {
         }
     };
 
-    handleSave = e => {
+    handleSubmit = e => {
         e.preventDefault();
 
         if (!this.state.name) {
@@ -65,6 +58,8 @@ class EditOTU extends React.Component {
     };
 
     render() {
+        const error = this.state.error || this.props.error || "";
+
         return (
             <ModalDialog
                 headerText="Edit OTU"
@@ -76,10 +71,9 @@ class EditOTU extends React.Component {
                 <OTUForm
                     name={this.state.name}
                     abbreviation={this.state.abbreviation}
-                    handleSubmit={this.handleSave}
-                    handleChange={this.handleChange}
-                    errorName={this.state.errorName}
-                    errorAbbreviation={this.state.errorAbbreviation}
+                    error={error}
+                    onSubmit={this.handleSubmit}
+                    onChange={this.handleChange}
                 />
             </ModalDialog>
         );

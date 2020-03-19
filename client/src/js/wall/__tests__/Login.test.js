@@ -1,4 +1,5 @@
 import { LOGIN } from "../../app/actionTypes";
+import { Checkbox, Input, PasswordInput } from "../../base";
 import { Login, mapStateToProps, mapDispatchToProps } from "../Login";
 
 describe("<Login />", () => {
@@ -17,67 +18,33 @@ describe("<Login />", () => {
 
     it("should render filled username and password fields", () => {
         const wrapper = shallow(<Login {...props} />);
-        wrapper.setState({
-            username: "bob",
-            password: "hello world"
-        });
         expect(wrapper).toMatchSnapshot();
-    });
 
-    it("should render checked remember checkbox", () => {
-        const wrapper = shallow(<Login {...props} />);
-        wrapper.setState({
-            remember: true
-        });
-        expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should set state when username changes", () => {
-        const wrapper = shallow(<Login {...props} />);
-        const username = wrapper.find("Input").at(0);
+        const username = wrapper.find(Input).at(0);
         username.simulate("change", {
             target: {
                 name: "username",
                 value: "bob"
             }
         });
-        expect(wrapper.state()).toEqual({
-            username: "bob",
-            password: "",
-            remember: false
-        });
-    });
+        expect(wrapper).toMatchSnapshot();
 
-    it("should set state when password changes", () => {
-        const wrapper = shallow(<Login {...props} />);
-        const password = wrapper.find("Input").at(1);
+        const password = wrapper.find(PasswordInput);
         password.simulate("change", {
             target: {
                 name: "password",
                 value: "foobar"
             }
         });
-        expect(wrapper.state()).toEqual({
-            username: "",
-            password: "foobar",
-            remember: false
-        });
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should set state when checkbox is clicked", () => {
+    it("should render checked remember checkbox", () => {
         const wrapper = shallow(<Login {...props} />);
-        expect(wrapper.state()).toEqual({
-            username: "",
-            password: "",
-            remember: false
-        });
-        const checkbox = wrapper.find("Checkbox");
-        checkbox.simulate("click");
-        expect(wrapper.state()).toEqual({
-            username: "",
-            password: "",
-            remember: true
-        });
+        expect(wrapper).toMatchSnapshot();
+
+        wrapper.find(Checkbox).simulate("click");
+        expect(wrapper).toMatchSnapshot();
     });
 
     it("should call onLogin() and e.preventDefault() when submitted", () => {

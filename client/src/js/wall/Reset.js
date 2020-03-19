@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { resetPassword } from "../account/actions";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, Input } from "../base";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection, Button, InputGroup, InputLabel, PasswordInput } from "../base";
 import { WallContainer } from "./Container";
 import { WallModalFooter } from "./Footer";
 import { WallLogo } from "./Logo";
@@ -17,7 +17,7 @@ const ResetModal = styled(BoxGroup)`
     display: flex;
     margin-bottom: 260px;
     flex-direction: column;
-    width: 300px;
+    width: 340px;
 `;
 
 export class Reset extends React.Component {
@@ -47,13 +47,14 @@ export class Reset extends React.Component {
                     </BoxGroupHeader>
                     <BoxGroupSection>
                         <form onSubmit={this.handleSubmit}>
-                            <Input
-                                type="password"
-                                label="Password"
-                                name="password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                            />
+                            <InputGroup>
+                                <InputLabel>Password</InputLabel>
+                                <PasswordInput
+                                    name="password"
+                                    value={this.state.password}
+                                    onChange={this.handleChange}
+                                />
+                            </InputGroup>
                             <WallModalFooter>
                                 <span>{this.props.error}</span>
                                 <Button type="submit" bsStyle="primary">

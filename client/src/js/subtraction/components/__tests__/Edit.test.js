@@ -1,51 +1,55 @@
+import { Input, ModalDialog } from "../../../base";
 import { EditSubtraction, mapDispatchToProps } from "../Edit";
 describe("<EditSubtraction />", () => {
-    const e = {
-        preventDefault: jest.fn(),
-        target: {
-            value: "Foo"
-        }
-    };
+    let e;
+    let props;
 
-    const props = {
-        entry: {
-            id: "foo",
-            file: { name: "bar" },
-            nickname: "baz"
-        },
-        onUpdate: jest.fn(),
-        show: true,
-        exited: jest.fn()
-    };
+    beforeEach(() => {
+        e = {
+            preventDefault: jest.fn(),
+            target: {
+                value: "Foo"
+            }
+        };
 
-    const state = {
-        subtractionId: "foo",
-        nickname: "baz",
-        fileId: "bar"
-    };
+        props = {
+            id: "Prunus persica",
+            nickname: "Peach",
+            show: true,
+            onHide: jest.fn(),
+            onUpdate: jest.fn()
+        };
+    });
 
     it("should render", () => {
         const wrapper = shallow(<EditSubtraction {...props} />);
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleSubmit() when form is submitted", () => {
+    it("should render when [show=false]", () => {
+        props.show = false;
         const wrapper = shallow(<EditSubtraction {...props} />);
-        wrapper.find("form").simulate("submit", e);
-        expect(props.onUpdate).toHaveBeenCalledWith("foo", "baz");
-        expect(props.exited).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should change nickname when InputError is changed", () => {
+    it("should render after nickname is changed", () => {
         const wrapper = shallow(<EditSubtraction {...props} />);
-        wrapper
-            .find("InputError")
-            .at(1)
-            .simulate("change", e);
-        expect(wrapper.state()).toEqual({
-            ...state,
-            nickname: "Foo"
-        });
+        expect(wrapper).toMatchSnapshot();
+        wrapper.find(Input).simulate("change", e);
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onUpdate() when form is submitted", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
+        wrapper.find("form").simulate("submit", e);
+        expect(props.onUpdate).toHaveBeenCalledWith("Prunus persica", "Peach");
+        expect(props.onHide).toHaveBeenCalled();
+    });
+
+    it("should call onHide() when closed", () => {
+        const wrapper = shallow(<EditSubtraction {...props} />);
+        wrapper.find(ModalDialog).prop("onHide")();
+        expect(props.onHide).toHaveBeenCalledWith();
     });
 });
 

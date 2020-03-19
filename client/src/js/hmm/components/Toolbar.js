@@ -1,19 +1,13 @@
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Icon } from "../../base";
+import { SearchInput, Toolbar } from "../../base";
 import { findHmms } from "../actions";
 import { getStateTerm } from "../selectors";
 
 export const HMMToolbar = ({ onFind, term }) => (
-    <FormGroup>
-        <InputGroup>
-            <InputGroup.Addon>
-                <Icon name="search" />
-            </InputGroup.Addon>
-            <FormControl type="text" placeholder="Definition" onChange={onFind} value={term} />
-        </InputGroup>
-    </FormGroup>
+    <Toolbar>
+        <SearchInput placeholder="Definition" onChange={onFind} value={term} />
+    </Toolbar>
 );
 
 export const mapStateToProps = state => ({

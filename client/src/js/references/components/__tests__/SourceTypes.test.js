@@ -65,7 +65,7 @@ describe("<SourceTypes />", () => {
         wrapper.setState({ value: "Isolate" });
         wrapper.instance().handleSubmit(mockEvent);
         expect(props.onUpdate).not.toHaveBeenCalled();
-        expect(wrapper.state("error")).toEqual("Source type already exists.");
+        expect(wrapper.state("error")).toEqual("Source type already exists");
     });
 
     it("should not call onUpdate() when submitted source type contains space", () => {
@@ -74,7 +74,7 @@ describe("<SourceTypes />", () => {
         wrapper.setState({ value: "With Spaces" });
         wrapper.instance().handleSubmit(mockEvent);
         expect(props.onUpdate).not.toHaveBeenCalled();
-        expect(wrapper.state("error")).toEqual("Source types may not contain spaces.");
+        expect(wrapper.state("error")).toEqual("Source types may not contain spaces");
     });
 
     it("should call onToggle() when handleEnable() is called and [restrictSourceTypes=true]", () => {

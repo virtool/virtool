@@ -13,7 +13,9 @@ const StyledLinkButton = styled(NavLink)`
     color: #ffffff;
     cursor: pointer;
     display: inline-flex;
+    justify-content: center;
     margin-bottom: 0;
+    min-width: 45px;
     padding: 6px 12px;
     text-align: center;
     white-space: nowrap;
@@ -69,7 +71,7 @@ export class Button extends React.Component {
     };
 
     render() {
-        const className = CX("btn", `btn-${this.props.bsStyle}`, {
+        const className = CX("btn", `btn-${this.props.bsStyle}`, this.props.className, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
             active: this.props.active,

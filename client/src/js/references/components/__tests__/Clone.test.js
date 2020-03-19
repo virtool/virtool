@@ -117,20 +117,20 @@ describe("<CloneReference />", () => {
             errorDataType: "Required Field"
         });
     });
-    it("handleSubmit() should return errorName when [this.state.reference.length=0]", () => {
+    it("handleSubmit() should return errorName when [!!this.state.reference]", () => {
         const wrapper = shallow(<CloneReference {...props} />);
         wrapper.setState({
             ...state,
             name: [{ foo: "bar" }],
             dataType: [{ foo: "bar" }],
-            reference: []
+            reference: ""
         });
         wrapper.find("form").simulate("submit", e);
         expect(wrapper.state()).toEqual({
             ...state,
             name: [{ foo: "bar" }],
             dataType: [{ foo: "bar" }],
-            reference: [],
+            reference: "",
             errorSelect: "Please select a source reference"
         });
     });

@@ -1,14 +1,9 @@
 // Import Bootstrap less 3.37
 @import "./bootstrap.less";
 
-// Import extra NPM module CSS
-@import "./typeahead.css";
-
 // Virtool LESS modules
 @import "./graphics.less";
 @import "./print.less";
-@import "./progress.less";
-@import "./reference.less";
 @import "./setup.less";
 
 // Bootstrap color variables
@@ -24,11 +19,6 @@
 // Bootstrap small-screen breakpoint variable
 @screen-sm: 868px;
 @grid-float-breakpoint: 868px;
-
-// Bootstrap container sizes
-@container-sm: 100vw;
-@container-md: 100vw;
-@container-lg: 100vw;
 
 // Bootstrap collapse menu button color
 @navbar-default-toggle-hover-bg: #60af98;
@@ -61,32 +51,10 @@
 @breadcrumb-padding-horizontal: 0;
 @breadcrumb-padding-vertical: 3px;
 
-.pointer {
-    cursor: pointer;
-}
-
 .fixed-width {
     width: 8px;
     text-align: center;
     display: inline-block;
-}
-
-.list-group-item.spaced {
-    margin-bottom: 10px;
-    box-shadow: 1px 1px 2px 0 #d5d5d5;
-}
-
-.split-dropdown {
-    display: flex;
-}
-
-.split-dropdown > * {
-    flex: auto;
-}
-
-#job-clear-dropdown + .dropdown-menu {
-    min-width: 100px;
-    z-index: 2000;
 }
 
 i.hoverable {
@@ -115,59 +83,6 @@ i.hoverable:hover {
     flex: auto;
     color: white;
     font-size: 24px;
-}
-
-.disable-select {
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-.input-form-error {
-    color: @brand-danger;
-    font-size: 90%;
-    text-align: right;
-}
-
-.input-form-error-none {
-    visibility: hidden;
-    font-size: 90%;
-    text-align: right;
-}
-
-.input-error-message {
-    display: inline-block;
-    margin: 3px 0 0 0;
-}
-
-.form-control-error {
-    border-color: @brand-danger;
-}
-
-textarea {
-    resize: vertical;
-    overflow-y: scroll;
-}
-
-.sequence {
-    font-family: "Roboto Mono", Menlo, monospace;
-}
-
-p.sequence {
-    word-wrap: break-word;
-    width: 100%;
-}
-
-div.page-loading {
-    display: flex;
-    align-content: center;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding-bottom: 300px;
 }
 
 .sample-item-container {
@@ -250,26 +165,6 @@ div.page-loading {
 
 .btn-padded {
     margin-left: 3px;
-}
-
-.modal-danger {
-    .modal-content {
-        border-color: @brand-danger;
-    }
-
-    .modal-footer {
-        border-top: none;
-    }
-
-    .modal-header {
-        background-color: @brand-danger;
-        border-bottom-color: @brand-danger;
-        color: white !important;
-    }
-
-    button.close > span {
-        color: white;
-    }
 }
 
 .with-icon {

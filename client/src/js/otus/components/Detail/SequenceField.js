@@ -1,44 +1,29 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports SequenceField
- */
-
 import React from "react";
-import { Badge, InputError } from "../../../base";
+import PropTypes from "prop-types";
+import styled from "styled-components";
+import { Badge, InputContainer, InputError, InputGroup, InputLabel, TextArea } from "../../../base";
 
-/**
- * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.
- *
- * @class
- */
-const SequenceField = ({ sequence, readOnly, onChange, error }) => (
-    <InputError
-        label={
-            <div>
-                {" "}
-                Sequence <Badge>{sequence.length}</Badge>
-            </div>
-        }
-        name="sequence"
-        className="sequence"
-        type="textarea"
-        value={sequence}
-        onChange={onChange}
-        readOnly={readOnly}
-        rows={5}
-        error={error}
-    />
+export const SequenceFieldTextArea = styled(TextArea)`
+    font-family: "Roboto Mono", monospace;
+`;
+
+const SequenceField = ({ sequence = "", readOnly = false, onChange, error }) => (
+    <InputGroup>
+        <InputLabel>
+            Sequence <Badge>{sequence.length}</Badge>
+        </InputLabel>
+        <InputContainer>
+            <SequenceFieldTextArea name="sequence" value={sequence} onChange={onChange} readOnly={readOnly} />
+            <InputError>{error}</InputError>
+        </InputContainer>
+    </InputGroup>
 );
 
-SequenceField.defaultProps = {
-    sequence: "",
-    readOnly: false
+SequenceField.propTypes = {
+    readOnly: PropTypes.bool,
+    error: PropTypes.string,
+    sequence: PropTypes.string,
+    onChange: PropTypes.func
 };
 
 export default SequenceField;

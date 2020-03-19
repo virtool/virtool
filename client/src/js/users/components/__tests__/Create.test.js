@@ -1,4 +1,5 @@
 import { PUSH_STATE } from "../../../app/actionTypes";
+import { Input, PasswordInput } from "../../../base";
 import { CreateUser, mapDispatchToProps, mapStateToProps } from "../Create";
 
 describe("<CreateUser />", () => {
@@ -13,8 +14,6 @@ describe("<CreateUser />", () => {
         };
 
         state = {
-            confirm: "",
-            errorConfirm: "",
             errorPassword: "",
             errorUserId: "foo",
             forceReset: false,
@@ -28,26 +27,29 @@ describe("<CreateUser />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleChange when InputError is changed", () => {
+    it("should render when name has changed", () => {
         const e = {
-            target: { name: "name", value: "foo" }
+            target: { name: "userId", value: "bob" }
         };
         const wrapper = shallow(<CreateUser {...props} />);
-        wrapper
-            .find("InputError")
-            .at(0)
-            .simulate("change", e);
-
-        expect(wrapper.state()).toEqual({
-            ...state,
-            name: "foo",
-            errorName: ""
-        });
-
+        expect(wrapper).toMatchSnapshot();
+        wrapper.find(Input).simulate("change", e);
         expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call handleModalExited when modal is exited", () => {
+    it("should render when password has changed", () => {
+        const e = {
+            target: { name: "password", value: "password" }
+        };
+        const wrapper = shallow(<CreateUser {...props} />);
+        expect(wrapper).toMatchSnapshot();
+        wrapper.find(PasswordInput).simulate("change", e);
+        expect(props.onClearError).toHaveBeenCalledWith("CREATE_USER_ERROR");
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call handleModalExited() when modal is closed", () => {
         const wrapper = shallow(<CreateUser {...props} />);
         wrapper
             .find("ModalDialog")
@@ -85,22 +87,6 @@ describe("<CreateUser />", () => {
             password: "f",
             confirm: "f",
             errorPassword: "Passwords must contain at least 2 characters"
-        });
-    });
-
-    it("should call handleSubmit when form is submitted and [this.state.confirm !== this.state.password]", () => {
-        const e = {
-            preventDefault: jest.fn()
-        };
-        const wrapper = shallow(<CreateUser {...props} />);
-        wrapper.setState({ userId: "foo", password: "foo", confirm: "bar" });
-        wrapper.find("form").simulate("submit", e);
-        expect(wrapper.state()).toEqual({
-            ...state,
-            userId: "foo",
-            password: "foo",
-            confirm: "bar",
-            errorConfirm: "Passwords do not match"
         });
     });
 });

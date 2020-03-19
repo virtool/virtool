@@ -1,3 +1,4 @@
+import { SearchInput } from "../../../base";
 import { SampleSearchToolbar } from "../Toolbar";
 
 describe("<SampleSearchToolbar />", () => {
@@ -23,7 +24,7 @@ describe("<SampleSearchToolbar />", () => {
         const wrapper = shallow(<SampleSearchToolbar {...props} />);
         const e = { target: { value: "foo" } };
 
-        wrapper.find("FormControl").simulate("change", e);
+        wrapper.find(SearchInput).simulate("change", e);
 
         expect(props.onFind).toHaveBeenCalledWith("foo", props.pathoscope, props.nuvs);
     });

@@ -1,9 +1,8 @@
-import React from "react";
-import PropTypes from "prop-types";
 import { map } from "lodash-es";
-
+import PropTypes from "prop-types";
+import React from "react";
+import { InputGroup, InputLabel, Select } from "../../../base";
 import { getTaskDisplayName } from "../../../utils/utils";
-import { Input } from "../../../base";
 
 export const getCompatibleAlgorithms = libraryType => {
     if (libraryType === "amplicon") {
@@ -18,15 +17,22 @@ export const getCompatibleAlgorithms = libraryType => {
  * (eg. Pathoscope Bowtie).
  *
  */
-export const AlgorithmSelect = ({ hasHmm, libraryType, value, onChange }) => (
-    <Input name="algorithm" type="select" label="Algorithm" value={value} onChange={onChange}>
-        {map(getCompatibleAlgorithms(libraryType), algorithm => (
-            <option key={algorithm} value={algorithm} disabled={algorithm === "nuvs" && !hasHmm}>
-                {getTaskDisplayName(algorithm)}
-            </option>
-        ))}
-    </Input>
-);
+export const AlgorithmSelect = ({ hasHmm, libraryType, value, onChange }) => {
+    const optionComponents = map(getCompatibleAlgorithms(libraryType), algorithm => (
+        <option key={algorithm} value={algorithm} disabled={algorithm === "nuvs" && !hasHmm}>
+            {getTaskDisplayName(algorithm)}
+        </option>
+    ));
+
+    return (
+        <InputGroup>
+            <InputLabel>Algorithm</InputLabel>
+            <Select name="algorithm" value={value} onChange={onChange}>
+                {optionComponents}
+            </Select>
+        </InputGroup>
+    );
+};
 
 AlgorithmSelect.propTypes = {
     libraryType: PropTypes.string.isRequired,

@@ -1,13 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateAdd
- */
 import React from "react";
 import { connect } from "react-redux";
 import { ModalDialog } from "../../../base";
@@ -31,7 +21,6 @@ class EditIsolate extends React.Component {
 
     handleSubmit = e => {
         e.preventDefault();
-
         this.props.onSave(this.props.otuId, this.props.isolateId, this.state.sourceType, this.state.sourceName);
     };
 

@@ -1,5 +1,6 @@
 import { CHANGE_ACCOUNT_PASSWORD, CLEAR_ERROR } from "../../../app/actionTypes";
-import { ChangePassword, mapStateToProps, mapDispatchToProps } from "../Password";
+import { BoxGroupSection, PasswordInput } from "../../../base";
+import { ChangePassword, mapDispatchToProps, mapStateToProps } from "../Password";
 
 describe("<ChangePassword />", () => {
     let props;
@@ -20,7 +21,7 @@ describe("<ChangePassword />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should render with error", () => {
+    it("should render with error in props", () => {
         props.error = {
             status: 400,
             message: "existing error"
@@ -35,7 +36,34 @@ describe("<ChangePassword />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onClearError() input changes and there is a pre-existing error", () => {
+    it("should show error if submitted old password is empty", () => {
+        const wrapper = shallow(<ChangePassword {...props} />);
+        wrapper.setState({
+            newPassword: "new_password"
+        });
+        const e = {
+            preventDefault: jest.fn()
+        };
+        wrapper.find(BoxGroupSection).simulate("submit", e);
+        expect(e.preventDefault).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should show error if submitted password is too short", () => {
+        const wrapper = shallow(<ChangePassword {...props} />);
+        wrapper.setState({
+            oldPassword: "old_password",
+            newPassword: "short"
+        });
+        const e = {
+            preventDefault: jest.fn()
+        };
+        wrapper.find(BoxGroupSection).simulate("submit", e);
+        expect(e.preventDefault).toHaveBeenCalled();
+        expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should call onClearError() when input changes and there is a pre-existing error", () => {
         props.error = {
             status: 422,
             message: "existing error"
@@ -48,109 +76,31 @@ describe("<ChangePassword />", () => {
             }
         };
         wrapper
-            .find("InputError")
+            .find(PasswordInput)
             .at(1)
             .simulate("change", e);
         expect(props.onClearError).toHaveBeenCalled();
     });
 
-    describe("handleSubmit()", () => {
-        let expectedState;
-
-        beforeEach(() => {
-            expectedState = {
-                oldPassword: "",
-                newPassword: "foobar123",
-                confirmPassword: "foobar123",
-                error: null,
-                errorConfirmPassword: "",
-                errorNewPassword: "Passwords must contain at least 8 characters",
-                errorOldPassword: "Please provide your old password"
-            };
+    it("should call onSubmit() when input values are valid", () => {
+        const wrapper = shallow(<ChangePassword {...props} />);
+        wrapper.setState({
+            oldPassword: "old_password",
+            newPassword: "new_password"
         });
-
-        it("should call onSubmit when input values are valid", () => {
-            const wrapper = shallow(<ChangePassword {...props} />);
-            wrapper.setState({
-                oldPassword: "hello1world2",
-                newPassword: "foobar123",
-                confirmPassword: "foobar123"
-            });
-            const e = {
-                preventDefault: jest.fn()
-            };
-            wrapper.find("form").simulate("submit", e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(wrapper.state()).toEqual({
-                ...expectedState,
-                errorNewPassword: "",
-                errorOldPassword: "",
-                oldPassword: "hello1world2"
-            });
-            expect(props.onChangePassword).toHaveBeenCalledWith("hello1world2", "foobar123");
+        const e = {
+            preventDefault: jest.fn()
+        };
+        wrapper.find(BoxGroupSection).simulate("submit", e);
+        expect(e.preventDefault).toHaveBeenCalled();
+        expect(wrapper.state()).toEqual({
+            error: null,
+            errorNewPassword: "",
+            errorOldPassword: "",
+            newPassword: "new_password",
+            oldPassword: "old_password"
         });
-
-        it("should set error if old password field is empty", () => {
-            const wrapper = shallow(<ChangePassword {...props} />);
-            wrapper.setState({
-                newPassword: "foobar123",
-                confirmPassword: "foobar123"
-            });
-            const e = {
-                preventDefault: jest.fn()
-            };
-            wrapper.find("form").simulate("submit", e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(wrapper.state()).toEqual({
-                ...expectedState,
-                errorNewPassword: ""
-            });
-        });
-
-        it("should set error if new passwords don't match", () => {
-            const wrapper = shallow(<ChangePassword {...props} />);
-            wrapper.setState({
-                oldPassword: "hello1world2",
-                newPassword: "foobar124",
-                confirmPassword: "foobar123"
-            });
-            const e = {
-                preventDefault: jest.fn()
-            };
-            wrapper.find("form").simulate("submit", e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(wrapper.state()).toEqual({
-                ...expectedState,
-                newPassword: "foobar124",
-                oldPassword: "hello1world2",
-                errorConfirmPassword: "New passwords do not match",
-                errorNewPassword: "",
-                errorOldPassword: ""
-            });
-        });
-
-        it("should set error if new passwords are too short", () => {
-            const wrapper = shallow(<ChangePassword {...props} />);
-            wrapper.setState({
-                oldPassword: "hello1world2",
-                newPassword: "foobar",
-                confirmPassword: "foobar"
-            });
-            const e = {
-                preventDefault: jest.fn()
-            };
-            wrapper.find("form").simulate("submit", e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(wrapper.state()).toEqual({
-                ...expectedState,
-                newPassword: "foobar",
-                confirmPassword: "foobar",
-                oldPassword: "hello1world2",
-                errorConfirmPassword: "",
-                errorNewPassword: "Passwords must contain at least 8 characters",
-                errorOldPassword: ""
-            });
-        });
+        expect(props.onChangePassword).toHaveBeenCalledWith("old_password", "new_password");
     });
 });
 

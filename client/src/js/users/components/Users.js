@@ -1,9 +1,8 @@
 import { get } from "lodash-es";
 import React from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Button, Icon, LoadingPlaceholder, WarningAlert, Toolbar } from "../../base";
+import { Button, Icon, LoadingPlaceholder, SearchInput, Toolbar, WarningAlert } from "../../base";
 import { clearError } from "../../errors/actions";
 import { listGroups } from "../../groups/actions";
 import Groups from "../../groups/components/Groups";
@@ -59,14 +58,7 @@ export class ManageUsers extends React.Component {
         return (
             <div>
                 <Toolbar>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl type="text" value={this.state.term} onChange={this.props.onFind} />
-                        </InputGroup>
-                    </FormGroup>
+                    <SearchInput name="search" value={this.state.term} onChange={this.props.onFind} />
 
                     <LinkContainer to={{ state: { groups: true } }}>
                         <Button icon="users" tip="Manage Groups" />

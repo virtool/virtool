@@ -1,4 +1,5 @@
 import React from "react";
+import { Input, InputIcon } from "../../../../base";
 import { CreateSample, mapStateToProps, mapDispatchToProps } from "../Create";
 
 describe("<CreateSample>", () => {
@@ -78,7 +79,7 @@ describe("<CreateSample>", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
         wrapper
-            .find("InputError")
+            .find(Input)
             .at(0)
             .simulate("change", e);
         expect(wrapper.state()).toEqual({ ...state, name: "foo" });
@@ -91,7 +92,7 @@ describe("<CreateSample>", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         wrapper.setState(state);
         wrapper
-            .find("InputError")
+            .find(Input)
             .at(0)
             .simulate("change", e);
 
@@ -159,7 +160,7 @@ describe("<CreateSample>", () => {
         const wrapper = shallow(<CreateSample {...props} />);
         const selected = ["abc123-FooBar.fq.gz"];
         wrapper.setState({ ...state, selected });
-        wrapper.find("Button").simulate("click");
+        wrapper.find(InputIcon).simulate("click");
         expect(wrapper.state()).toEqual({ ...state, name: "FooBar", selected });
     });
 

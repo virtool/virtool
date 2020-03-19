@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<TargetForm /> should render 1`] = `
+<Fragment>
+  <InputGroup>
+    <Input__InputLabel>
+      Name
+    </Input__InputLabel>
+    <Input
+      error=""
+      name="name"
+      onChange={[MockFunction]}
+      value="foo"
+    />
+    <Input__InputError />
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Description
+    </Input__InputLabel>
+    <TextArea
+      name="description"
+      onChange={[MockFunction]}
+      value="bar"
+    />
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Length
+    </Input__InputLabel>
+    <Input
+      name="length"
+      onChange={[MockFunction]}
+      type="number"
+      value={1}
+    />
+  </InputGroup>
+  <Checkbox
+    checked={false}
+    label="Required"
+    onClick={[MockFunction]}
+  />
+</Fragment>
+`;
+
+exports[`<TargetForm /> should render with error 1`] = `
+<Fragment>
+  <InputGroup>
+    <Input__InputLabel>
+      Name
+    </Input__InputLabel>
+    <Input
+      error=""
+      name="name"
+      onChange={[MockFunction]}
+      value="foo"
+    />
+    <Input__InputError />
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Description
+    </Input__InputLabel>
+    <TextArea
+      name="description"
+      onChange={[MockFunction]}
+      value="bar"
+    />
+  </InputGroup>
+  <InputGroup>
+    <Input__InputLabel>
+      Length
+    </Input__InputLabel>
+    <Input
+      name="length"
+      onChange={[MockFunction]}
+      type="number"
+      value={1}
+    />
+  </InputGroup>
+  <Checkbox
+    checked={false}
+    label="Required"
+    onClick={[MockFunction]}
+  />
+</Fragment>
+`;

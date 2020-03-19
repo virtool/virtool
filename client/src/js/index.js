@@ -5,6 +5,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./app/App";
 import { createAppStore } from "./app/reducer";
+import "normalize.css";
 
 export * from "../style/style.less";
 

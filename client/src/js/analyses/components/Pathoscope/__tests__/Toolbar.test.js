@@ -4,8 +4,14 @@ import {
     TOGGLE_FILTER_ISOLATES,
     TOGGLE_FILTER_OTUS
 } from "../../../../app/actionTypes";
-import { mapDispatchToProps, mapStateToProps, PathoscopeDownloadDropdownTitle, PathoscopeToolbar } from "../Toolbar";
 import { getFuse } from "../../../selectors";
+import {
+    mapDispatchToProps,
+    mapStateToProps,
+    PathoscopeDownloadDropdownTitle,
+    PathoscopeToolbar,
+    PathoscopeToolbarSelect
+} from "../Toolbar";
 
 jest.mock("../../../selectors");
 
@@ -101,10 +107,7 @@ describe("<Toolbar />", () => {
             }
         };
         expect(props.onSetSortKey).not.toHaveBeenCalled();
-        wrapper
-            .find("FormControl")
-            .at(1)
-            .simulate("change", e);
+        wrapper.find(PathoscopeToolbarSelect).simulate("change", e);
         expect(props.onSetSortKey).toHaveBeenCalledWith("pi");
     });
 });

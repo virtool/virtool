@@ -47,60 +47,29 @@ exports[`<SourceTypes /> should render when global 1`] = `
 
     </p>
   </Box__BoxGroupHeader>
-  <SourceTypes__SourceTypesForm>
-    <form
-      onSubmit={[Function]}
-    >
-      <FormGroup
-        bsClass="form-group"
+  <Box__BoxGroupSection
+    as="form"
+    onSubmit={[Function]}
+  >
+    <SourceTypes__SourceTypesInputGroup>
+      <Input__InputContainer
+        align="right"
       >
-        <InputGroup
-          bsClass="input-group"
-        >
-          <FormControl
-            bsClass="form-control"
-            componentClass="input"
-            disabled={false}
-            onChange={[Function]}
-            type="text"
-            value=""
-          />
-          <InputGroupButton
-            bsClass="input-group-btn"
-          >
-            <Button
-              bsStyle="primary"
-              disabled={false}
-              pullRight={false}
-              tipPlacement="top"
-              type="submit"
-            >
-              <Icon
-                faStyle="fas"
-                fixedWidth={false}
-                name="plus-square"
-                pullRight={false}
-                style={
-                  Object {
-                    "paddingLeft": "3px",
-                  }
-                }
-              />
-            </Button>
-          </InputGroupButton>
-        </InputGroup>
-        <div
-          className="input-form-error-none"
-        >
-          <span
-            className="input-error-message"
-          >
-            None
-          </span>
-        </div>
-      </FormGroup>
-    </form>
-  </SourceTypes__SourceTypesForm>
+        <Input
+          disabled={false}
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputIcon
+          bsStyle="primary"
+          name="plus-circle"
+          onClick={[Function]}
+        />
+      </Input__InputContainer>
+      <Input__InputError />
+    </SourceTypes__SourceTypesInputGroup>
+     
+  </Box__BoxGroupSection>
   <SourceTypeItem
     disabled={false}
     key="isolate"
@@ -137,60 +106,29 @@ exports[`<SourceTypes /> should render when neither 1`] = `
 
     </p>
   </Box__BoxGroupHeader>
-  <SourceTypes__SourceTypesForm>
-    <form
-      onSubmit={[Function]}
-    >
-      <FormGroup
-        bsClass="form-group"
+  <Box__BoxGroupSection
+    as="form"
+    onSubmit={[Function]}
+  >
+    <SourceTypes__SourceTypesInputGroup>
+      <Input__InputContainer
+        align="right"
       >
-        <InputGroup
-          bsClass="input-group"
-        >
-          <FormControl
-            bsClass="form-control"
-            componentClass="input"
-            disabled={false}
-            onChange={[Function]}
-            type="text"
-            value=""
-          />
-          <InputGroupButton
-            bsClass="input-group-btn"
-          >
-            <Button
-              bsStyle="primary"
-              disabled={false}
-              pullRight={false}
-              tipPlacement="top"
-              type="submit"
-            >
-              <Icon
-                faStyle="fas"
-                fixedWidth={false}
-                name="plus-square"
-                pullRight={false}
-                style={
-                  Object {
-                    "paddingLeft": "3px",
-                  }
-                }
-              />
-            </Button>
-          </InputGroupButton>
-        </InputGroup>
-        <div
-          className="input-form-error-none"
-        >
-          <span
-            className="input-error-message"
-          >
-            None
-          </span>
-        </div>
-      </FormGroup>
-    </form>
-  </SourceTypes__SourceTypesForm>
+        <Input
+          disabled={false}
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputIcon
+          bsStyle="primary"
+          name="plus-circle"
+          onClick={[Function]}
+        />
+      </Input__InputContainer>
+      <Input__InputError />
+    </SourceTypes__SourceTypesInputGroup>
+     
+  </Box__BoxGroupSection>
   <SourceTypeItem
     disabled={false}
     key="isolate"
@@ -222,60 +160,29 @@ exports[`<SourceTypes /> should render when remote 1`] = `
 
     </p>
   </Box__BoxGroupHeader>
-  <SourceTypes__SourceTypesForm>
-    <form
-      onSubmit={[Function]}
-    >
-      <FormGroup
-        bsClass="form-group"
+  <Box__BoxGroupSection
+    as="form"
+    onSubmit={[Function]}
+  >
+    <SourceTypes__SourceTypesInputGroup>
+      <Input__InputContainer
+        align="right"
       >
-        <InputGroup
-          bsClass="input-group"
-        >
-          <FormControl
-            bsClass="form-control"
-            componentClass="input"
-            disabled={true}
-            onChange={[Function]}
-            type="text"
-            value=""
-          />
-          <InputGroupButton
-            bsClass="input-group-btn"
-          >
-            <Button
-              bsStyle="primary"
-              disabled={true}
-              pullRight={false}
-              tipPlacement="top"
-              type="submit"
-            >
-              <Icon
-                faStyle="fas"
-                fixedWidth={false}
-                name="plus-square"
-                pullRight={false}
-                style={
-                  Object {
-                    "paddingLeft": "3px",
-                  }
-                }
-              />
-            </Button>
-          </InputGroupButton>
-        </InputGroup>
-        <div
-          className="input-form-error-none"
-        >
-          <span
-            className="input-error-message"
-          >
-            None
-          </span>
-        </div>
-      </FormGroup>
-    </form>
-  </SourceTypes__SourceTypesForm>
+        <Input
+          disabled={true}
+          onChange={[Function]}
+          value=""
+        />
+        <Input__InputIcon
+          bsStyle="primary"
+          name="plus-circle"
+          onClick={[Function]}
+        />
+      </Input__InputContainer>
+      <Input__InputError />
+    </SourceTypes__SourceTypesInputGroup>
+     
+  </Box__BoxGroupSection>
   <SourceTypeItem
     disabled={true}
     key="isolate"

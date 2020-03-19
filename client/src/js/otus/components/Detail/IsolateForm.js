@@ -1,27 +1,16 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateForm
- */
-
-import React from "react";
-import PropTypes from "prop-types";
 import { toLower } from "lodash-es";
+import PropTypes from "prop-types";
+import React from "react";
 import styled from "styled-components";
+import { DialogBody, DialogFooter, Input, InputGroup, InputLabel, SaveButton } from "../../../base";
 
 import { formatIsolateName } from "../../../utils/utils";
-import { InputError, SaveButton, DialogFooter, DialogBody } from "../../../base";
-import { SourceTypeInput } from "./SourceTypeInput";
+import { SourceType } from "./SourceType";
 
 const IsolateFormFields = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-gap: 16px;
+    grid-column-gap: 15px;
 `;
 
 export class IsolateForm extends React.Component {
@@ -34,14 +23,14 @@ export class IsolateForm extends React.Component {
         onSubmit: PropTypes.func
     };
 
-    changeSourceType = e => {
+    handleChangeSourceType = e => {
         this.props.onChange({
             sourceType: toLower(e.target.value),
             sourceName: e.target.value === "unknown" ? "" : this.props.sourceName
         });
     };
 
-    changeSourceName = e => {
+    handleChangeSourceName = e => {
         this.props.onChange({
             sourceName: e.target.value,
             sourceType: this.props.sourceType
@@ -49,28 +38,31 @@ export class IsolateForm extends React.Component {
     };
 
     render() {
-        // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
         return (
             <form onSubmit={this.props.onSubmit}>
                 <DialogBody>
                     <IsolateFormFields>
-                        <SourceTypeInput
+                        <SourceType
                             restrictSourceTypes={this.props.restrictSourceTypes}
                             allowedSourceTypes={this.props.allowedSourceTypes}
                             value={this.props.sourceType}
-                            onChange={this.changeSourceType}
+                            onChange={this.handleChangeSourceType}
                         />
 
-                        <InputError
-                            label="Source Name"
-                            value={this.props.sourceName}
-                            onChange={this.changeSourceName}
-                            disabled={this.props.sourceType === "unknown"}
-                            spellCheck="off"
-                        />
+                        <InputGroup>
+                            <InputLabel>Source Name</InputLabel>
+                            <Input
+                                value={this.props.sourceName}
+                                onChange={this.handleChangeSourceName}
+                                disabled={this.props.sourceType === "unknown"}
+                            />
+                        </InputGroup>
                     </IsolateFormFields>
 
-                    <InputError label="Isolate Name" value={formatIsolateName(this.props)} readOnly />
+                    <InputGroup>
+                        <InputLabel>Isolate Name</InputLabel>
+                        <Input value={formatIsolateName(this.props)} readOnly />
+                    </InputGroup>
                 </DialogBody>
                 <DialogFooter>
                     <SaveButton />

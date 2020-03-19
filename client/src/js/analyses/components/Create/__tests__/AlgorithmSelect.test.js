@@ -1,4 +1,5 @@
 import React from "react";
+import { Select } from "../../../../base";
 import { AlgorithmSelect } from "../AlgorithmSelect";
 
 describe("<AlgorithmSelect />", () => {
@@ -32,7 +33,7 @@ describe("<AlgorithmSelect />", () => {
                 value: "foo"
             }
         };
-        wrapper.find("Input").simulate("change", e);
+        wrapper.find(Select).simulate("change", e);
         expect(props.onChange).toHaveBeenCalledWith(e);
     });
 });

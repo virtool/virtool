@@ -2,18 +2,15 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { clearError } from "../../errors/actions";
 import { ModalDialog } from "../../base";
+import { clearError } from "../../errors/actions";
 import { getTargetChange, routerLocationHasState } from "../../utils/utils";
 import { createOTU } from "../actions";
-import { getNextState } from "../utils";
 import OTUForm from "./OTUForm";
 
 const getInitialState = () => ({
     name: "",
     abbreviation: "",
-    errorName: "",
-    errorAbbreviation: "",
     error: ""
 });
 
@@ -21,10 +18,6 @@ class CreateOTU extends React.Component {
     constructor(props) {
         super(props);
         this.state = getInitialState();
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        return getNextState(prevState.error, nextProps.error);
     }
 
     handleChange = e => {
@@ -54,7 +47,7 @@ class CreateOTU extends React.Component {
 
         if (!this.state.name) {
             return this.setState({
-                errorName: "Required Field"
+                error: "Name required"
             });
         }
 
@@ -64,6 +57,8 @@ class CreateOTU extends React.Component {
     };
 
     render() {
+        const error = this.state.error || this.props.error || "";
+
         return (
             <ModalDialog
                 label="CreateOTU"
@@ -75,10 +70,9 @@ class CreateOTU extends React.Component {
                 <OTUForm
                     name={this.state.name}
                     abbreviation={this.state.abbreviation}
-                    handleSubmit={this.handleSubmit}
-                    handleChange={this.handleChange}
-                    errorName={this.state.errorName}
-                    errorAbbreviation={this.state.errorAbbreviation}
+                    onSubmit={this.handleSubmit}
+                    onChange={this.handleChange}
+                    error={error}
                 />
             </ModalDialog>
         );

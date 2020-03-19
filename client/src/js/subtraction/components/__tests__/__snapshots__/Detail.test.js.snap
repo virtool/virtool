@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SubtractionDetail /> renders correctly 1`] = `
+exports[`<SubtractionDetail /> should not render icons when [canModify=false] 1`] = `
 <div>
   <ViewHeader
-    title="123abc - Subtraction"
+    title="foo - Subtraction"
   >
     <Flex
       alignContent="stretch"
@@ -19,7 +19,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
         shrink={0}
       >
         <strong>
-          123abc
+          foo
         </strong>
       </FlexItem>
       <FlexItem
@@ -27,19 +27,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
         basis="auto"
         grow={1}
         shrink={0}
-      >
-        <small />
-        <small>
-          <Icon
-            bsStyle="warning"
-            faStyle="fas"
-            fixedWidth={false}
-            name="pencil-alt"
-            onClick={[Function]}
-            pullRight={true}
-          />
-        </small>
-      </FlexItem>
+      />
     </Flex>
   </ViewHeader>
   <Table>
@@ -49,7 +37,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           Nickname
         </th>
         <td>
-          test-nickname
+          foo-nickname
         </td>
       </tr>
       <tr>
@@ -57,7 +45,7 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           File
         </th>
         <td>
-          test-file
+          foo-file
         </td>
       </tr>
       <tr>
@@ -79,40 +67,222 @@ exports[`<SubtractionDetail /> renders correctly 1`] = `
           Linked Samples
         </th>
         <td>
-          1
+          2
         </td>
       </tr>
     </tbody>
   </Table>
   <Connect(EditSubtraction)
-    entry={
-      Object {
-        "file": Object {
-          "id": "test-file",
-        },
-        "gc": Object {
-          "a": 0.2,
-          "c": 0.2,
-          "g": 0.2,
-          "n": 0.2,
-          "t": 0.2,
-        },
-        "id": "123abc",
-        "linked_samples": Array [
-          Object {
-            "id": "456def",
-            "name": "test-sample",
-          },
-        ],
-        "nickname": "test-nickname",
-        "ready": true,
-      }
-    }
-    exited={[Function]}
+    onHide={[Function]}
     show={false}
   />
   <Connect(RemoveSubtraction)
-    id="123abc"
+    id="foo"
+  />
+</div>
+`;
+
+exports[`<SubtractionDetail /> should render 1`] = `
+<div>
+  <ViewHeader
+    title="foo - Subtraction"
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="flex-end"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={0}
+      >
+        <strong>
+          foo
+        </strong>
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={0}
+      >
+        <Icon
+          bsStyle="warning"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+          pullRight={true}
+        />
+      </FlexItem>
+    </Flex>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          foo-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          foo-file
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          2
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(EditSubtraction)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction)
+    id="foo"
+  />
+</div>
+`;
+
+exports[`<SubtractionDetail /> should render loading when [detail=null] 1`] = `<LoadingPlaceholder />`;
+
+exports[`<SubtractionDetail /> should render not found on request error 1`] = `<NotFound />`;
+
+exports[`<SubtractionDetail /> should render pending message when subtraction is not ready 1`] = `
+<LoadingPlaceholder
+  message="Subtraction is still being imported"
+/>
+`;
+
+exports[`<SubtractionDetail /> should render remove button when there are no linked samples 1`] = `
+<div>
+  <ViewHeader
+    title="foo - Subtraction"
+  >
+    <Flex
+      alignContent="stretch"
+      alignItems="flex-end"
+      direction="row"
+      justifyContent="flex-start"
+      wrap="nowrap"
+    >
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={0}
+        shrink={0}
+      >
+        <strong>
+          foo
+        </strong>
+      </FlexItem>
+      <FlexItem
+        alignSelf={null}
+        basis="auto"
+        grow={1}
+        shrink={0}
+      >
+        <Icon
+          bsStyle="danger"
+          faStyle="fas"
+          fixedWidth={false}
+          name="trash"
+          onClick={[MockFunction]}
+          pullRight={true}
+          style={
+            Object {
+              "paddingLeft": "5px",
+            }
+          }
+        />
+        <Icon
+          bsStyle="warning"
+          faStyle="fas"
+          fixedWidth={false}
+          name="pencil-alt"
+          onClick={[Function]}
+          pullRight={true}
+        />
+      </FlexItem>
+    </Flex>
+  </ViewHeader>
+  <Table>
+    <tbody>
+      <tr>
+        <th>
+          Nickname
+        </th>
+        <td>
+          foo-nickname
+        </td>
+      </tr>
+      <tr>
+        <th>
+          File
+        </th>
+        <td>
+          foo-file
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Sequence Count
+        </th>
+        <td />
+      </tr>
+      <tr>
+        <th>
+          GC Estimate
+        </th>
+        <td>
+          0.400
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Linked Samples
+        </th>
+        <td>
+          0
+        </td>
+      </tr>
+    </tbody>
+  </Table>
+  <Connect(EditSubtraction)
+    onHide={[Function]}
+    show={false}
+  />
+  <Connect(RemoveSubtraction)
+    id="foo"
   />
 </div>
 `;

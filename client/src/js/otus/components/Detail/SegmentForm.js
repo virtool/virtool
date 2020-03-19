@@ -1,14 +1,16 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import { map } from "lodash-es";
+import PropTypes from "prop-types";
+import React from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
-import { InputError, Checkbox } from "../../../base";
+import { Checkbox, Input, InputContainer, InputError, InputGroup, InputLabel, Select } from "../../../base";
 
-const SegmentFormFields = styled.div`
+const moleculeTypes = ["", "ssDNA", "dsDNA", "ssRNA+", "ssRNA-", "ssRNA", "dsRNA"];
+
+const StyledSegmentForm = styled.div`
     display: grid;
     grid-template-columns: 3fr 1fr;
-    grid-gap: 13px;
+    grid-gap: 15px;
 `;
 
 class SegmentForm extends React.Component {
@@ -38,7 +40,7 @@ class SegmentForm extends React.Component {
         };
     }
 
-    changeSegName = e => {
+    handleChangeName = e => {
         this.props.onChange({
             ...this.props.newEntry,
             name: e.target.value
@@ -46,7 +48,7 @@ class SegmentForm extends React.Component {
         this.setState({ error: "" });
     };
 
-    changeMolType = e => {
+    handleChangeMolecule = e => {
         this.props.onChange({
             ...this.props.newEntry,
             molecule: e.target.value
@@ -54,7 +56,7 @@ class SegmentForm extends React.Component {
         this.setState({ error: "" });
     };
 
-    toggleCheck = () => {
+    toggleRequired = () => {
         this.props.onChange({
             ...this.props.newEntry,
             required: !this.state.isChecked
@@ -63,8 +65,6 @@ class SegmentForm extends React.Component {
     };
 
     render() {
-        const moleculeTypes = ["", "ssDNA", "dsDNA", "ssRNA+", "ssRNA-", "ssRNA", "dsRNA"];
-
         const molecules = map(moleculeTypes, molecule => (
             <option key={molecule} value={molecule}>
                 {molecule || "None"}
@@ -72,27 +72,29 @@ class SegmentForm extends React.Component {
         ));
 
         return (
-            <div>
-                <SegmentFormFields>
-                    <InputError
-                        label="Name"
-                        value={this.props.newEntry.name}
-                        onChange={this.changeSegName}
-                        error={this.state.error}
-                    />
+            <StyledSegmentForm>
+                <InputGroup>
+                    <InputLabel>Name</InputLabel>
+                    <InputContainer>
+                        <Input value={this.props.newEntry.name} onChange={this.handleChangeName} />
+                        <InputError>{this.state.error}</InputError>
+                    </InputContainer>
+                </InputGroup>
 
-                    <InputError
-                        type="select"
-                        label="Molecule Type"
-                        value={this.props.newEntry.molecule}
-                        onChange={this.changeMolType}
-                    >
+                <InputGroup>
+                    <InputLabel>Molecule Type</InputLabel>
+                    <Select value={this.props.newEntry.molecule} onChange={this.handleChangeMolecule}>
                         {molecules}
-                    </InputError>
-                </SegmentFormFields>
+                    </Select>
+                </InputGroup>
 
-                <Checkbox label="Segment Required" checked={this.state.isChecked} onClick={this.toggleCheck} pullLeft />
-            </div>
+                <Checkbox
+                    label="Segment Required"
+                    checked={this.state.isChecked}
+                    onClick={this.toggleRequired}
+                    pullLeft
+                />
+            </StyledSegmentForm>
         );
     }
 }

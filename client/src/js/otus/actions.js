@@ -195,18 +195,19 @@ export const removeIsolate = (otuId, isolateId, nextIsolateId) => ({
  * @func
  * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
- * @param sequenceId {string} unique sequence id
+ * @param accession {string} the accession for the sequence
  * @param definition {string} descriptive definition of the sequence
  * @param host {string} the host the sequence originated from
  * @param sequence {string} an abbreviation for the OTU
  * @param segment {string} the schema segment associated with the OTU
+ * @param target {string} the reference target associated with the sequence
  * @returns {object}
  */
-export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment, target) => ({
+export const addSequence = (otuId, isolateId, accession, definition, host, sequence, segment, target) => ({
     type: ADD_SEQUENCE.REQUESTED,
     otuId,
     isolateId,
-    sequenceId,
+    accession,
     definition,
     host,
     sequence,
@@ -221,17 +222,19 @@ export const addSequence = (otuId, isolateId, sequenceId, definition, host, sequ
  * @param otuId {string} unique OTU id
  * @param isolateId {string} unique isolate id
  * @param sequenceId {string} unique sequence id
+ * @param accession {string} a new accession for the sequence
  * @param definition {string} descriptive definition of the sequence
  * @param host {string} the host the sequence originated from
  * @param sequence {string} an abbreviation for the OTU
  * @param segment {string} the schema segment associated with the OTU
  * @returns {object}
  */
-export const editSequence = (otuId, isolateId, sequenceId, definition, host, sequence, segment) => ({
+export const editSequence = (otuId, isolateId, sequenceId, accession, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
     otuId,
     isolateId,
     sequenceId,
+    accession,
     definition,
     host,
     sequence,

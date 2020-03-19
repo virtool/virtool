@@ -1,19 +1,20 @@
 import { get, pick } from "lodash-es";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
 import { pushState } from "../../app/actions";
-import { InputError, SaveButton, ModalDialog, DialogBody, DialogFooter } from "../../base";
+import {
+    DialogBody,
+    DialogFooter,
+    Input,
+    InputError,
+    InputGroup,
+    InputLabel,
+    ModalDialog,
+    SaveButton
+} from "../../base";
 import { clearError } from "../../errors/actions";
 
 import { editSample } from "../actions";
-
-const EditSampleHostLocale = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    grid-column-gap: 13px;
-`;
 
 const getInitialState = ({ name, isolate, host, locale }) => ({
     name: name || "",
@@ -29,13 +30,6 @@ class EditSample extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (prevState.error !== nextProps.error) {
-            return { error: nextProps.error };
-        }
-        return null;
-    }
-
     handleChange = e => {
         const { name, value } = e.target;
         this.setState({
@@ -44,7 +38,7 @@ class EditSample extends React.Component {
         });
 
         if (this.props.error) {
-            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
     };
 
@@ -54,7 +48,7 @@ class EditSample extends React.Component {
 
     handleModalHide = () => {
         if (this.props.error) {
-            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+            this.props.onClearError();
         }
         this.props.onHide();
     };
@@ -72,6 +66,8 @@ class EditSample extends React.Component {
     };
 
     render() {
+        const error = this.state.error || this.props.error || "";
+
         return (
             <ModalDialog
                 label="EditSample"
@@ -82,29 +78,23 @@ class EditSample extends React.Component {
             >
                 <form onSubmit={this.handleSubmit}>
                     <DialogBody>
-                        <InputError
-                            label="Name"
-                            name="name"
-                            value={this.state.name}
-                            onChange={this.handleChange}
-                            error={this.state.error}
-                        />
-                        <EditSampleHostLocale>
-                            <InputError
-                                label="Isolate"
-                                name="isolate"
-                                value={this.state.isolate}
-                                onChange={this.handleChange}
-                            />
-                            <InputError label="Host" name="host" value={this.state.host} onChange={this.handleChange} />
-
-                            <InputError
-                                name="locale"
-                                label="Locale"
-                                value={this.state.locale}
-                                onChange={this.handleChange}
-                            />
-                        </EditSampleHostLocale>
+                        <InputGroup>
+                            <InputLabel>Name</InputLabel>
+                            <Input name="name" value={this.state.name} onChange={this.handleChange} />
+                            <InputError>{error}</InputError>
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Isolate</InputLabel>
+                            <Input name="isolate" value={this.state.isolate} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Host</InputLabel>
+                            <Input name="host" value={this.state.host} onChange={this.handleChange} />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputLabel>Locale</InputLabel>
+                            <Input name="locale" value={this.state.locale} onChange={this.handleChange} />
+                        </InputGroup>
                     </DialogBody>
                     <DialogFooter>
                         <SaveButton />
@@ -130,8 +120,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(editSample(sampleId, update));
     },
 
-    onClearError: error => {
-        dispatch(clearError(error));
+    onClearError: () => {
+        dispatch(clearError("UPDATE_SAMPLE_ERROR"));
     }
 });
 

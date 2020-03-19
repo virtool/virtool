@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
-import { FormControl, FormGroup, InputGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Button, DropdownButton, DropdownItem, Icon, LinkButton, Toolbar } from "../../../base";
+import { Button, DropdownButton, DropdownItem, Icon, LinkButton, SearchInput, Toolbar } from "../../../base";
 import { setAnalysisSortKey, setSearchIds, toggleFilterORFs, toggleFilterSequences } from "../../actions";
 import { getFuse, getResults } from "../../selectors";
 
@@ -66,18 +65,7 @@ const NuVsToolbar = ({
 
     return (
         <StyledNuVsToolbar>
-            <FormGroup>
-                <InputGroup>
-                    <InputGroup.Addon>
-                        <Icon name="search" />
-                    </InputGroup.Addon>
-                    <FormControl
-                        onChange={handleChange}
-                        onKeyDown={e => e.stopPropagation()}
-                        placeholder="Name or family"
-                    />
-                </InputGroup>
-            </FormGroup>
+            <SearchInput onChange={handleChange} onKeyDown={e => e.stopPropagation()} placeholder="Name or family" />
             <SortDropdownButton sortKey={sortKey} onSelect={onSelect} />
             <Button
                 icon="filter"

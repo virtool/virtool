@@ -1,4 +1,5 @@
 import React from "react";
+import { Select } from "../../../base";
 import { SubtractionSelector } from "../Create/SubtractionSelector";
 
 describe("<SubtractionSelector />", () => {
@@ -20,7 +21,7 @@ describe("<SubtractionSelector />", () => {
     it("should call onChange when change event occur on Input", () => {
         const wrapper = shallow(<SubtractionSelector {...props} />);
         expect(props.onChange).not.toHaveBeenCalled();
-        wrapper.find("Input").simulate("change");
+        wrapper.find(Select).simulate("change");
         expect(props.onChange).toHaveBeenCalled();
     });
 });
