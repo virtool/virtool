@@ -52,7 +52,7 @@ exports[`<ScrollList /> should return LoadingPlaceholder when [documents=null] a
             size="22px"
           >
             <div
-              className="Loader__StyledLoader-sc-338y7h-0 inKmVe"
+              className="Loader__StyledLoader-sc-338y7h-0 cRPClh"
               color="#3c8786"
               size="22px"
             >

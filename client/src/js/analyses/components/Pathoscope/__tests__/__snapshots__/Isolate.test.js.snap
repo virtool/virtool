@@ -43,7 +43,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
   <div>
     <Isolate__PathoscopeIsolateHeader>
       <div
-        className="Isolate__PathoscopeIsolateHeader-sc-2hw4nu-2 fYVhZh"
+        className="Isolate__PathoscopeIsolateHeader-sc-2hw4nu-2 kDplcs"
       >
         Isolate A
         <PathoscopeIsolateWeight
@@ -70,11 +70,11 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
     </Isolate__PathoscopeIsolateHeader>
     <Isolate__PathoscopeChartContainer>
       <div
-        className="Isolate__PathoscopeChartContainer-sc-2hw4nu-0 iQmxBY"
+        className="Isolate__PathoscopeChartContainer-sc-2hw4nu-0 eyChHh"
       >
         <Isolate__PathoscopeChartRibbon>
           <div
-            className="Isolate__PathoscopeChartRibbon-sc-2hw4nu-1 FBzOL"
+            className="Isolate__PathoscopeChartRibbon-sc-2hw4nu-1 gcdAE"
           >
             <CoverageChart
               definition="Foo Hit"
@@ -86,7 +86,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
             >
               <Coverage__StyledCoverageChart>
                 <div
-                  className="Coverage__StyledCoverageChart-umswn9-0 kdvjCs"
+                  className="Coverage__StyledCoverageChart-umswn9-0 fBJPhh"
                 />
               </Coverage__StyledCoverageChart>
             </CoverageChart>
@@ -100,7 +100,7 @@ exports[`<PathoscopeIsolate /> should render 1`] = `
             >
               <Coverage__StyledCoverageChart>
                 <div
-                  className="Coverage__StyledCoverageChart-umswn9-0 kdvjCs"
+                  className="Coverage__StyledCoverageChart-umswn9-0 fBJPhh"
                 />
               </Coverage__StyledCoverageChart>
             </CoverageChart>

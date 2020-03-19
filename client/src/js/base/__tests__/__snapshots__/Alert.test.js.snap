@@ -2,6 +2,6 @@
 
 exports[`<Alert /> should render 1`] = `
 <UnstyledAlert
-  className="Alert-whi9a-0 bksvTi"
+  className="Alert-whi9a-0 gYwvFL"
 />
 `;
