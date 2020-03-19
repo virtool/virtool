@@ -1,110 +1,143 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { ControlLabel, FormControl, FormGroup } from "react-bootstrap";
+import React, { useState } from "react";
+import styled from "styled-components";
+import { Icon } from "./Icon";
 
-/**
- * A reusable composition of form components from react-bootstrap.
- */
-export class Input extends React.Component {
-    static propTypes = {
-        label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        name: PropTypes.string,
-        type: PropTypes.string,
-        rows: PropTypes.number,
-        value: PropTypes.any,
-        min: PropTypes.number,
-        max: PropTypes.number,
-        step: PropTypes.number,
-        readOnly: PropTypes.bool,
-        onInvalid: PropTypes.func,
-        placeholder: PropTypes.any,
-        autoComplete: PropTypes.bool,
-        error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        onHide: PropTypes.func,
-        onBlur: PropTypes.func,
-        onFocus: PropTypes.func,
-        onChange: PropTypes.func,
-        style: PropTypes.object,
-        formGroupStyle: PropTypes.object,
-        children: PropTypes.node,
-        noMargin: PropTypes.bool,
-        disabled: PropTypes.bool
-    };
+const InputContext = React.createContext("");
 
-    static defaultProps = {
-        type: "text",
-        autoComplete: true,
-        formGroupStyle: {}
-    };
+const getInputFocusColor = ({ error }) => (error ? "rgba(229, 62, 62, 0.5)" : "rgba(43, 108, 176, 0.5)");
+
+export const InputError = styled.p`
+    color: ${props => props.theme.color.red};
+    font-size: ${props => props.theme.fontSize.sm};
+    margin: 5px 0 -10px;
+    min-height: 18px;
+    text-align: right;
+`;
+
+export const StyledInputGroup = styled.div`
+    margin: 0 0 15px;
+    min-height: 73px;
+`;
+
+export const InputGroup = ({ children, error }) => (
+    <InputContext.Provider value={error}>
+        <StyledInputGroup>{children}</StyledInputGroup>
+    </InputContext.Provider>
+);
+
+export const InputLabel = styled.label`
+    font-weight: bold;
+`;
+
+export class UnstyledInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.inputRef = React.createRef();
+    }
+
+    static contextType = InputContext;
 
     /**
      * Blurs the <input /> element. Not used internally. It is intended for use by the parent component.
      */
     blur = () => {
-        this.inputNode.blur();
+        this.inputNode.current.blur();
     };
 
     /**
      * Focus the <input /> element.
      */
     focus = () => {
-        this.inputNode.focus();
+        this.inputNode.current.focus();
     };
 
     render() {
-        const formClass = this.props.error ? "form-control-error" : "";
-
-        let componentClass;
-
-        if (this.props.type === "select") {
-            componentClass = "select";
-        }
-
-        if (this.props.type === "textarea") {
-            componentClass = "textarea";
-        }
-
-        const style = this.props.type === "number" ? { ...this.props.style, paddingRight: "12px" } : this.props.style;
-
-        let label;
-
-        if (this.props.label) {
-            label = <ControlLabel>{this.props.label}</ControlLabel>;
-        }
-
-        const groupStyle = { ...this.props.formGroupStyle };
-
-        if (this.props.noMargin) {
-            groupStyle.marginBottom = 0;
-        }
-
         return (
-            <FormGroup style={groupStyle}>
-                {label}
-                <FormControl
-                    className={formClass}
-                    inputRef={ref => (this.inputNode = ref)}
-                    type={this.props.type}
-                    name={this.props.name}
-                    rows={this.props.rows}
-                    value={this.props.value || ""}
-                    min={this.props.min}
-                    max={this.props.max}
-                    step={this.props.step}
-                    onBlur={this.props.onBlur}
-                    onFocus={this.props.onFocus}
-                    onChange={this.props.onChange}
-                    readOnly={this.props.readOnly}
-                    onInvalid={this.props.onInvalid}
-                    placeholder={this.props.placeholder}
-                    autoComplete={this.props.autoComplete ? "on" : "off"}
-                    componentClass={componentClass}
-                    disabled={this.props.disabled}
-                    style={style}
-                >
-                    {this.props.children}
-                </FormControl>
-            </FormGroup>
+            <input
+                ref={this.inputRef}
+                autoFocus={this.props.autoFocus}
+                children={this.props.children}
+                className={this.props.className}
+                name={this.props.name}
+                placeholder={this.props.placeholder}
+                readOnly={this.props.readOnly}
+                type={this.props.type}
+                value={this.props.value}
+                onBlur={this.props.onBlur}
+                onChange={this.props.onChange}
+                onFocus={this.props.onFocus}
+            />
         );
     }
 }
+
+export const Input = styled(UnstyledInput)`
+    background-color: ${props => props.theme.color.white};
+    border: 1px solid ${props => (props.error ? props.theme.color.red : props.theme.color.grey)};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    display: block;
+    font-size: ${props => props.theme.fontSize.md};
+    outline: none;
+    padding: 8px 10px;
+    position: relative;
+    transition: border-color ease-in-out 150ms, box-shadow ease-in-out 150ms;
+    width: 100%;
+
+    :focus {
+        border-color: ${props => (props.error ? props.theme.color.red : props.theme.color.blue)};
+        box-shadow: 0 0 0 2px ${getInputFocusColor};
+    }
+
+    :not(select):read-only {
+        background-color: ${props => props.theme.color.greyLightest};
+    }
+`;
+
+export const Select = props => {
+    const { children, ...rest } = props;
+    return (
+        <Input as="select" {...rest}>
+            {children}
+        </Input>
+    );
+};
+
+export const InputIcon = styled(Icon)`
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+`;
+
+export const SearchInput = props => (
+    <InputContainer align="left">
+        <Input {...props} />
+        <InputIcon name="search" />
+    </InputContainer>
+);
+
+export const PasswordInput = props => {
+    const [show, setShow] = useState(false);
+    return (
+        <InputContainer align="right">
+            <Input type={show ? "text" : "password"} {...props} />
+            <InputIcon name={show ? "eye-slash" : "eye"} onClick={() => setShow(!show)} />
+        </InputContainer>
+    );
+};
+
+export const InputContainer = styled.div`
+    position: relative;
+
+    ${Input} {
+        padding-${props => props.align}: 40px;
+    }
+
+    ${InputIcon} {
+        ${props => props.align}: 0;
+    }
+`;

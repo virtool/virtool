@@ -1,11 +1,12 @@
 import styled from "styled-components";
+import { Input, InputContainer } from "./Input";
 
 export const Toolbar = styled.div`
     display: flex;
     align-items: stretch;
     margin-bottom: 15px;
 
-    .form-group {
+    ${InputContainer}, ${Input} {
         margin-bottom: 0 !important;
         flex: auto;
     }
