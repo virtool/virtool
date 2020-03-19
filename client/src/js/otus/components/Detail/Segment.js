@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 import styled from "styled-components";
-import { Icon, InfoLabel, Label, SpacedBox } from "../../../base";
+import { Icon, Label, SpacedBox } from "../../../base";
 
 const StyledSegment = styled(SpacedBox)`
     display: grid;
@@ -11,7 +11,7 @@ const StyledSegment = styled(SpacedBox)`
 
 const RequiredLabel = ({ required }) => {
     if (required) {
-        return <InfoLabel>Required</InfoLabel>;
+        return <Label color="purple">Required</Label>;
     }
 
     return <Label>Optional</Label>;

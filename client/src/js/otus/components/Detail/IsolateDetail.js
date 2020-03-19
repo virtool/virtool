@@ -2,7 +2,7 @@ import { get } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { BoxGroup, BoxGroupHeader, Icon, SuccessLabel } from "../../../base";
+import { BoxGroup, BoxGroupHeader, Icon, Label } from "../../../base";
 import { checkRefRight, followDownload } from "../../../utils/utils";
 import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
 import EditIsolate from "./EditIsolate";
@@ -40,9 +40,9 @@ export class IsolateDetail extends React.Component {
 
         const defaultIsolateLabel =
             isolate.default & (this.props.dataType !== "barcode") ? (
-                <SuccessLabel bsStyle="success">
+                <Label color="green">
                     <Icon name="star" /> Default Isolate
-                </SuccessLabel>
+                </Label>
             ) : null;
 
         let modifyIcons;

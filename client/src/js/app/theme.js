@@ -1,3 +1,5 @@
+import { get } from "lodash-es";
+
 export const theme = {
     borderRadius: {
         sm: "2px",
@@ -54,3 +56,5 @@ export const theme = {
         column: "15px"
     }
 };
+
+export const getColor = ({ color, theme }) => get(theme, ["color", color]);

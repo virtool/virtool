@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { BoxGroupSection, Flex, FlexItem, Icon, RedBadge, RelativeTime } from "../../../base";
+import { Badge, BoxGroupSection, Flex, FlexItem, Icon, RelativeTime } from "../../../base";
 import { byteSize } from "../../../utils/utils";
 
 const calculateSize = files => byteSize(sumBy(files, "size"));
@@ -31,9 +31,9 @@ export const SampleCacheItem = ({ createdAt, files, hash, id, missing, sampleId 
 
     if (missing) {
         missingBadge = (
-            <RedBadge>
+            <Badge color="red">
                 <Icon name="exclamation-circle" /> Files Missing
-            </RedBadge>
+            </Badge>
         );
     }
 
