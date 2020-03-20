@@ -10,6 +10,7 @@ exports[`<Button /> renders correctly 1`] = `
 
 exports[`<Button /> renders optional Tooltip when props.tip provided 1`] = `
 <Tooltip
+  position="top"
   tip="test_tip"
 >
   <button
