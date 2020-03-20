@@ -23,6 +23,7 @@ const StyledAffixedProgress = styled(StyledProgress)`
     height: 5px;
     left: 0;
     margin: 0;
+    overflow: hidden;
     position: absolute;
 
     ${props => (props.bottom ? "bottom" : "top")}: 0;
@@ -32,9 +33,11 @@ const StyledAffixedProgress = styled(StyledProgress)`
     }
 `;
 
-export const AffixedProgressBar = ({ now, color, bottom }) => {
-    return <StyledAffixedProgress max="100" value={now} color={color} bottom={bottom} />;
+export const _AffixedProgressBar = ({ className, now, color, bottom }) => {
+    return <StyledAffixedProgress className={className} max="100" value={now} color={color} bottom={bottom} />;
 };
+
+export const AffixedProgressBar = styled(_AffixedProgressBar)``;
 
 export const ProgressBar = ({ now, color }) => {
     return <StyledProgress max="100" value={now} color={color} />;

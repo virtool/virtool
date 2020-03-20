@@ -1,49 +1,49 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<AffixedProgressBar /> should render 1`] = `
-<ProgressBar__StyledAffixedProgress
-  max="100"
-  value={68}
+<_AffixedProgressBar
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
+  now={68}
 />
 `;
 
 exports[`<AffixedProgressBar /> should render when [bottom=true] 1`] = `
-<ProgressBar__StyledAffixedProgress
+<_AffixedProgressBar
   bottom={true}
-  max="100"
-  value={68}
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
+  now={68}
 />
 `;
 
 exports[`<AffixedProgressBar /> should render when [color="blue"] 1`] = `
-<ProgressBar__StyledAffixedProgress
+<_AffixedProgressBar
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
   color="blue"
-  max="100"
-  value={68}
+  now={68}
 />
 `;
 
 exports[`<AffixedProgressBar /> should render when [color="green"] 1`] = `
-<ProgressBar__StyledAffixedProgress
+<_AffixedProgressBar
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
   color="green"
-  max="100"
-  value={68}
+  now={68}
 />
 `;
 
 exports[`<AffixedProgressBar /> should render when [color="orange"] 1`] = `
-<ProgressBar__StyledAffixedProgress
+<_AffixedProgressBar
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
   color="orange"
-  max="100"
-  value={68}
+  now={68}
 />
 `;
 
 exports[`<AffixedProgressBar /> should render when [color="red"] 1`] = `
-<ProgressBar__StyledAffixedProgress
+<_AffixedProgressBar
+  className="ProgressBar__AffixedProgressBar-pwv6ii-2 kyYeyG"
   color="red"
-  max="100"
-  value={68}
+  now={68}
 />
 `;
 
