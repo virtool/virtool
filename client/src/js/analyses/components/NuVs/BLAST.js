@@ -3,7 +3,7 @@ import numbro from "numbro";
 import React, { useCallback } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
-import { Box, BoxGroup, BoxGroupHeader, BoxTitle, Button, ExternalLink, Icon, InfoAlert, Table } from "../../../base";
+import { Alert, Box, BoxGroup, BoxGroupHeader, BoxTitle, Button, ExternalLink, Icon, Table } from "../../../base";
 
 import { blastNuvs } from "../../actions";
 import { BLASTError } from "./BLASTError";
@@ -83,13 +83,13 @@ export const NuVsBLAST = ({ analysisId, blast, sequenceIndex, onBlast }) => {
     }
 
     return (
-        <InfoAlert level>
+        <Alert color="purple" level>
             <Icon name="info-circle" />
             <span>This sequence has no BLAST information attached to it.</span>
             <BLASTButton bsSize="small" icon="cloud" onClick={handleBlast}>
                 BLAST at NCBI
             </BLASTButton>
-        </InfoAlert>
+        </Alert>
     );
 };
 

@@ -1,6 +1,7 @@
 jest.mock("../../../../utils/utils");
 
 import { REMOVE_REFERENCE } from "../../../../app/actionTypes";
+import { RemoveBanner } from "../../../../base";
 import { RemoveReference, mapDispatchToProps, mapStateToProps } from "../Remove";
 import { checkRefRight } from "../../../../utils/utils";
 
@@ -26,11 +27,9 @@ describe("<RemoveReference />", () => {
         expect(wrapper).toMatchSnapshot();
     });
 
-    it("should call onConfirm when confirmed", () => {
-        const wrapper = mount(<RemoveReference {...props} />);
-        const banner = wrapper.find("RemoveBanner");
-        expect(banner).toHaveLength(1);
-        banner.first().prop("onClick")();
+    it("should call onConfirm() when confirmed", () => {
+        const wrapper = shallow(<RemoveReference {...props} />);
+        wrapper.find(RemoveBanner).prop("onClick")();
         expect(props.onConfirm).toHaveBeenCalledWith(props.id);
     });
 });

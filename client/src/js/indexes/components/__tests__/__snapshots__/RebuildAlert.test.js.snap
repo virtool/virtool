@@ -1,7 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<RebuildAlert /> should render 1`] = `
-<Alert__WarningAlert
+<Alert
+  color="orange"
   level={true}
 >
   <Icon
@@ -9,12 +10,15 @@ exports[`<RebuildAlert /> should render 1`] = `
     fixedWidth={false}
     name="exclamation-circle"
   />
-  At least one OTU must be added to the database before an index can be built.
-</Alert__WarningAlert>
+  <strong>
+    At least one OTU must be added to the database before an index can be built.
+  </strong>
+</Alert>
 `;
 
 exports[`<RebuildAlert /> should render when [showCountAlert!=0, showIndexAlert=true] 1`] = `
-<Alert__WarningAlert
+<Alert
+  color="orange"
   level={true}
 >
   <Icon
@@ -42,7 +46,7 @@ exports[`<RebuildAlert /> should render when [showCountAlert!=0, showIndexAlert=
        to use the changes in future analyses.
     </span>
   </span>
-</Alert__WarningAlert>
+</Alert>
 `;
 
 exports[`<RebuildAlert /> should return null when [showCountAlert!=0, showIndexAlert=false] 1`] = `""`;

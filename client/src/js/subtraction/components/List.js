@@ -1,7 +1,7 @@
 import { isEqual } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader, WarningAlert } from "../../base";
+import { Alert, Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, ViewHeader } from "../../base";
 import { checkAdminOrPermission } from "../../utils/utils";
 import { findSubtractions } from "../actions";
 import CreateSubtraction from "./Create";
@@ -50,10 +50,10 @@ export class SubtractionList extends React.Component {
 
         if (!this.props.ready_host_count && !this.props.total_count) {
             alert = (
-                <WarningAlert level>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <strong>A host genome must be added before samples can be created and analyzed.</strong>
-                </WarningAlert>
+                </Alert>
             );
         }
 

@@ -14,7 +14,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { device, Icon, Identicon, LoadingPlaceholder, RemoveBanner, WarningAlert } from "../../base";
+import { Alert, device, Icon, Identicon, LoadingPlaceholder, RemoveBanner } from "../../base";
 import { listGroups } from "../../groups/actions";
 
 import { getUser, removeUser } from "../actions";
@@ -70,13 +70,13 @@ export class UserDetail extends React.Component {
     render() {
         if (this.props.error.length) {
             return (
-                <WarningAlert level>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to manage users.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 

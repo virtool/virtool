@@ -1,7 +1,7 @@
 import { capitalize, forEach } from "lodash-es";
 import React from "react";
 import { connect } from "react-redux";
-import { Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, UploadBar, ViewHeader, WarningAlert } from "../../base";
+import { Alert, Icon, LoadingPlaceholder, NoneFoundBox, ScrollList, UploadBar, ViewHeader } from "../../base";
 import { checkAdminOrPermission, createRandomString } from "../../utils/utils";
 import { findFiles, upload } from "../actions";
 import { filesSelector } from "../selectors";
@@ -36,13 +36,13 @@ class FileManager extends React.Component {
             toolbar = <UploadBar onDrop={this.handleDrop} />;
         } else {
             toolbar = (
-                <WarningAlert>
+                <Alert color="orange" level>
                     <Icon name="exclamation-circle" />
                     <span>
                         <strong>You do not have permission to upload files.</strong>
                         <span> Contact an administrator.</span>
                     </span>
-                </WarningAlert>
+                </Alert>
             );
         }
 

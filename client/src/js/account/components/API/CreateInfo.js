@@ -1,27 +1,11 @@
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-import { Icon, InfoAlert } from "../../../base";
-
-const StyledCreateAPIKeyInfo = styled(InfoAlert)`
-    display: flex;
-    margin-bottom: 5px;
-
-    i {
-        line-height: 20px;
-    }
-
-    p {
-        margin-left: 5px;
-    }
-    border-left: none;
-    border-right: none;
-`;
+import { Icon, ModalAlert } from "../../../base";
 
 export const CreateAPIKeyInfo = ({ administrator }) => {
     if (administrator) {
         return (
-            <StyledCreateAPIKeyInfo>
+            <ModalAlert color="purple">
                 <Icon name="user-shield" />
                 <div>
                     <p>
@@ -32,7 +16,7 @@ export const CreateAPIKeyInfo = ({ administrator }) => {
                         permissions.
                     </p>
                 </div>
-            </StyledCreateAPIKeyInfo>
+            </ModalAlert>
         );
     }
 

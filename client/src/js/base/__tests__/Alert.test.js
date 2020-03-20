@@ -1,8 +1,8 @@
 import { Alert } from "../Alert";
 
 describe("<Alert />", () => {
-    it("should render", () => {
-        const wrapper = shallow(<Alert />);
+    it.each(["blue", "green", "red"])("should render when [color=%p]", color => {
+        const wrapper = shallow(<Alert color={color} />);
         expect(wrapper).toMatchSnapshot();
     });
 });

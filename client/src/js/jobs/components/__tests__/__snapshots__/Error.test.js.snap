@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<JobError /> renders correctly with error details 1`] = `
-<Error__StyledJobError>
+<Error__StyledJobError
+  color="red"
+>
   <div>
     Traceback (most recent call last):
   </div>
@@ -31,7 +33,9 @@ exports[`<JobError /> renders correctly with error details 1`] = `
 `;
 
 exports[`<JobError /> renders correctly without error details 1`] = `
-<Error__StyledJobError>
+<Error__StyledJobError
+  color="red"
+>
   <div>
     Traceback (most recent call last):
   </div>

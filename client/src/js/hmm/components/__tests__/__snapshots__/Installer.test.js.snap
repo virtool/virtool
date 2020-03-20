@@ -31,7 +31,8 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
         .
       </p>
       <Installer__Button>
-        <Alert__WarningAlert
+        <Alert
+          color="orange"
           level={true}
         >
           <Icon
@@ -47,7 +48,7 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
                Contact an administrator.
             </span>
           </span>
-        </Alert__WarningAlert>
+        </Alert>
       </Installer__Button>
     </Installer__TextButton>
   </Installer__IconTextButton>
@@ -85,7 +86,8 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
         .
       </p>
       <Installer__Button>
-        <Alert__WarningAlert
+        <Alert
+          color="orange"
           level={true}
         >
           <Icon
@@ -101,7 +103,7 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
                Contact an administrator.
             </span>
           </span>
-        </Alert__WarningAlert>
+        </Alert>
       </Installer__Button>
     </Installer__TextButton>
   </Installer__IconTextButton>
@@ -160,7 +162,8 @@ exports[`<HMMInstaller /> should render when [this.props.process exsists] and [t
         .
       </p>
       <Installer__Button>
-        <Alert__WarningAlert
+        <Alert
+          color="orange"
           level={true}
         >
           <Icon
@@ -176,7 +179,7 @@ exports[`<HMMInstaller /> should render when [this.props.process exsists] and [t
                Contact an administrator.
             </span>
           </span>
-        </Alert__WarningAlert>
+        </Alert>
       </Installer__Button>
     </Installer__TextButton>
   </Installer__IconTextButton>

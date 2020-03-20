@@ -3,7 +3,7 @@ import React from "react";
 import { connect } from "react-redux";
 
 import { Link } from "react-router-dom";
-import { Icon, WarningAlert } from "../../base";
+import { Alert, Icon } from "../../base";
 
 export const AnalysisHMMAlert = ({ installed }) => {
     if (installed) {
@@ -11,14 +11,14 @@ export const AnalysisHMMAlert = ({ installed }) => {
     }
 
     return (
-        <WarningAlert level>
+        <Alert color="orange" level>
             <Icon name="info-circle" />
             <span>
-                <span>HMM data is not installed. </span>
+                <strong>HMM data is not installed. </strong>
                 <Link to="/hmm">Install HMMs</Link>
                 <span> to run NuV analyses.</span>
             </span>
-        </WarningAlert>
+        </Alert>
     );
 };
 
