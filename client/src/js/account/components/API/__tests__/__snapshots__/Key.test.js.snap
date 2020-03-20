@@ -5,27 +5,19 @@ exports[`<APIKey /> should render when [state.changed=true] 1`] = `
   key="123abc"
   onClick={[Function]}
 >
-  <Key__KeyHeader>
+  <Key__APIKeyHeader>
     <strong>
       tester
     </strong>
-    <Key__Permissions>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
+    />
+    <Key__APIKeyPermissions>
       1
-       perm
-      <Key__PermissionsSuffix>
-        ission
-      </Key__PermissionsSuffix>
-    </Key__Permissions>
-    <Key__Create>
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Key__Create>
-    <Key__FormatDate>
-      18-12-14
-    </Key__FormatDate>
-  </Key__KeyHeader>
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose />
+  </Key__APIKeyHeader>
 </Box__SpacedBox>
 `;
 
@@ -34,27 +26,19 @@ exports[`<APIKey /> should render when collapsed 1`] = `
   key="123abc"
   onClick={[Function]}
 >
-  <Key__KeyHeader>
+  <Key__APIKeyHeader>
     <strong>
       tester
     </strong>
-    <Key__Permissions>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
+    />
+    <Key__APIKeyPermissions>
       1
-       perm
-      <Key__PermissionsSuffix>
-        ission
-      </Key__PermissionsSuffix>
-    </Key__Permissions>
-    <Key__Create>
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
-      />
-    </Key__Create>
-    <Key__FormatDate>
-      18-12-14
-    </Key__FormatDate>
-  </Key__KeyHeader>
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose />
+  </Key__APIKeyHeader>
 </Box__SpacedBox>
 `;
 
@@ -63,36 +47,26 @@ exports[`<APIKey /> should render when expanded 1`] = `
   key="123abc"
   onClick={null}
 >
-  <Key__KeyHeader>
+  <Key__APIKeyHeader>
     <strong>
       tester
     </strong>
-    <Key__Permissions>
+    <Attribution
+      time="2018-02-14T17:12:00.000000Z"
+    />
+    <Key__APIKeyPermissions>
       1
-       perm
-      <Key__PermissionsSuffix>
-        ission
-      </Key__PermissionsSuffix>
-    </Key__Permissions>
-    <Key__Create>
-      Created 
-      <RelativeTime
-        time="2018-02-14T17:12:00.000000Z"
+       permission
+    </Key__APIKeyPermissions>
+    <Key__APIKeyClose>
+      <Icon
+        faStyle="fas"
+        fixedWidth={false}
+        name="times"
+        onClick={[Function]}
       />
-    </Key__Create>
-    <Key__FormatDate>
-      18-12-14
-    </Key__FormatDate>
-    <button
-      className="close"
-      onClick={[Function]}
-      type="button"
-    >
-      <span>
-        ×
-      </span>
-    </button>
-  </Key__KeyHeader>
+    </Key__APIKeyClose>
+  </Key__APIKeyHeader>
   <div>
     <Key__KeyAPIPermissions
       keyPermissions={

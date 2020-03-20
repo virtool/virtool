@@ -4,6 +4,7 @@ export const Table = styled.table`
     border-collapse: collapse;
     border-spacing: 0;
     border: 1px solid #dddddd;
+    border-radius: ${props => props.theme.borderRadius.sm};
     display: table;
     margin-bottom: 15px;
     width: 100%;

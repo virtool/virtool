@@ -3,16 +3,17 @@ import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { ExternalLink, FlexItem, LoadingPlaceholder, NoneFoundBox } from "../../../base/index";
+import { Box, ExternalLink, LoadingPlaceholder, NoneFoundBox } from "../../../base/index";
 
 import { getAPIKeys } from "../../actions";
 import CreateAPIKey from "./Create";
 import APIKey from "./Key";
 
-const APIKeysHeader = styled.div`
+const APIKeysHeader = styled(Box)`
     align-items: center;
     display: flex;
-    margin-bottom: 10px;
+    font-weight: bold;
+    margin-bottom: 15px;
 
     > a:last-child {
         font-weight: bold;
@@ -39,15 +40,13 @@ export class APIKeys extends React.Component {
         return (
             <div>
                 <APIKeysHeader>
-                    <FlexItem>
-                        <div style={{ whiteSpace: "wrap" }}>
-                            <span>Manage API keys for accessing the </span>
-                            <ExternalLink href="https://www.virtool.ca/docs/web-api/authentication.html">
-                                Virtool API
-                            </ExternalLink>
-                            <span>.</span>
-                        </div>
-                    </FlexItem>
+                    <div style={{ whiteSpace: "wrap" }}>
+                        <span>Manage API keys for accessing the </span>
+                        <ExternalLink href="https://www.virtool.ca/docs/developer/api_account/">
+                            Virtool API
+                        </ExternalLink>
+                        <span>.</span>
+                    </div>
                     <Link to={{ state: { createAPIKey: true } }}>Create</Link>
                 </APIKeysHeader>
 

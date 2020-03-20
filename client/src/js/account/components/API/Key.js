@@ -1,40 +1,24 @@
 import { isEqual, reduce } from "lodash-es";
-import { format } from "date-fns";
 import React from "react";
-import styled from "styled-components";
 import { connect } from "react-redux";
-
-import { Button, ButtonToolbar, RelativeTime, SpacedBox } from "../../../base/index";
+import styled from "styled-components";
+import { Attribution, Button, ButtonToolbar, Icon, SpacedBox } from "../../../base/index";
 import { removeAPIKey, updateAPIKey } from "../../actions";
 import APIPermissions from "./Permissions";
 
-const FormatDate = styled.div`
-    @media (min-width: 892px) {
-        display: none;
-    }
+const APIKeyClose = styled.div`
+    text-align: right;
 `;
 
-const Create = styled.div`
-    @media (max-width: 892px) {
-        display: none;
-    }
+const APIKeyPermissions = styled.div`
+    text-align: right;
 `;
 
-const Permissions = styled.div`
-    display: flex;
-    flex-direction: row;
+const APIKeyHeader = styled.div`
+    display: grid;
+    grid-template-columns: 3fr 2fr 1fr 1fr;
 `;
 
-const PermissionsSuffix = styled.div`
-    @media (max-width: 892px) {
-        display: none;
-    }
-`;
-
-const KeyHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
-`;
 export const getInitialState = ({ apiKey }) => ({
     in: false,
     changed: false,
@@ -101,30 +85,21 @@ export class APIKey extends React.Component {
                 </div>
             );
 
-            closeButton = (
-                <button type="button" className="close" onClick={this.toggleIn}>
-                    <span>×</span>
-                </button>
-            );
+            closeButton = <Icon name="times" onClick={this.toggleIn} />;
         }
 
         const permissionCount = reduce(this.props.apiKey.permissions, (result, value) => result + (value ? 1 : 0), 0);
 
         return (
             <SpacedBox key={this.props.apiKey.id} onClick={this.state.in ? null : this.toggleIn}>
-                <KeyHeader>
+                <APIKeyHeader>
                     <strong>{this.props.apiKey.name}</strong>
-                    <Permissions>
-                        {permissionCount} perm
-                        <PermissionsSuffix>ission</PermissionsSuffix>
-                        {permissionCount === 1 ? null : "s"}
-                    </Permissions>
-                    <Create>
-                        Created <RelativeTime time={this.props.apiKey.created_at} />
-                    </Create>
-                    <FormatDate>{format(new Date(this.props.apiKey.created_at), "yy-mm-dd")}</FormatDate>
-                    {closeButton}
-                </KeyHeader>
+                    <Attribution time={this.props.apiKey.created_at} />
+                    <APIKeyPermissions>
+                        {permissionCount} permission{permissionCount === 1 ? null : "s"}
+                    </APIKeyPermissions>
+                    <APIKeyClose>{closeButton}</APIKeyClose>
+                </APIKeyHeader>
                 {lower}
             </SpacedBox>
         );

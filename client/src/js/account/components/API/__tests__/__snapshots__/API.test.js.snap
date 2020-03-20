@@ -3,32 +3,25 @@
 exports[`<API /> should render two API keys 1`] = `
 <div>
   <API__APIKeysHeader>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <div
-        style={
-          Object {
-            "whiteSpace": "wrap",
-          }
+    <div
+      style={
+        Object {
+          "whiteSpace": "wrap",
         }
+      }
+    >
+      <span>
+        Manage API keys for accessing the 
+      </span>
+      <ExternalLink
+        href="https://www.virtool.ca/docs/developer/api_account/"
       >
-        <span>
-          Manage API keys for accessing the 
-        </span>
-        <ExternalLink
-          href="https://www.virtool.ca/docs/web-api/authentication.html"
-        >
-          Virtool API
-        </ExternalLink>
-        <span>
-          .
-        </span>
-      </div>
-    </FlexItem>
+        Virtool API
+      </ExternalLink>
+      <span>
+        .
+      </span>
+    </div>
     <Link
       to={
         Object {
@@ -70,32 +63,25 @@ exports[`<API /> should render when loading API keys 1`] = `
 exports[`<API /> should render with 0 API keys 1`] = `
 <div>
   <API__APIKeysHeader>
-    <FlexItem
-      alignSelf={null}
-      basis="auto"
-      grow={0}
-      shrink={1}
-    >
-      <div
-        style={
-          Object {
-            "whiteSpace": "wrap",
-          }
+    <div
+      style={
+        Object {
+          "whiteSpace": "wrap",
         }
+      }
+    >
+      <span>
+        Manage API keys for accessing the 
+      </span>
+      <ExternalLink
+        href="https://www.virtool.ca/docs/developer/api_account/"
       >
-        <span>
-          Manage API keys for accessing the 
-        </span>
-        <ExternalLink
-          href="https://www.virtool.ca/docs/web-api/authentication.html"
-        >
-          Virtool API
-        </ExternalLink>
-        <span>
-          .
-        </span>
-      </div>
-    </FlexItem>
+        Virtool API
+      </ExternalLink>
+      <span>
+        .
+      </span>
+    </div>
     <Link
       to={
         Object {
