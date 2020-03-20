@@ -1,36 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
-<div>
+<General__StyledSampleDetailGeneral>
   <Connect(SampleFileSizeWarning) />
-  <Table>
-    <tbody>
-      <tr>
-        <th>
-          Host
-        </th>
-        <td>
-          Malus domestica
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Isolate
-        </th>
-        <td>
-          Isolate Foo
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Locale
-        </th>
-        <td>
-          Bar
-        </td>
-      </tr>
-    </tbody>
-  </Table>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        General
+      </h2>
+      <p>
+        User-defined information about the sample.
+      </p>
+    </Box__BoxGroupHeader>
+    <Table>
+      <tbody>
+        <tr>
+          <th>
+            Name
+          </th>
+          <td>
+            Foo
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Host
+          </th>
+          <td>
+            Malus domestica
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Isolate
+          </th>
+          <td>
+            Isolate Foo
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Locale
+          </th>
+          <td>
+            Bar
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Box__BoxGroup>
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
@@ -118,40 +136,58 @@ exports[`<SampleDetailGeneral /> should render with [paired=false] 1`] = `
     </Table>
   </Box__BoxGroup>
   <Connect(EditSample) />
-</div>
+</General__StyledSampleDetailGeneral>
 `;
 
 exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
-<div>
+<General__StyledSampleDetailGeneral>
   <Connect(SampleFileSizeWarning) />
-  <Table>
-    <tbody>
-      <tr>
-        <th>
-          Host
-        </th>
-        <td>
-          Malus domestica
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Isolate
-        </th>
-        <td>
-          Isolate Foo
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Locale
-        </th>
-        <td>
-          Bar
-        </td>
-      </tr>
-    </tbody>
-  </Table>
+  <Box__BoxGroup>
+    <Box__BoxGroupHeader>
+      <h2>
+        General
+      </h2>
+      <p>
+        User-defined information about the sample.
+      </p>
+    </Box__BoxGroupHeader>
+    <Table>
+      <tbody>
+        <tr>
+          <th>
+            Name
+          </th>
+          <td>
+            Foo
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Host
+          </th>
+          <td>
+            Malus domestica
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Isolate
+          </th>
+          <td>
+            Isolate Foo
+          </td>
+        </tr>
+        <tr>
+          <th>
+            Locale
+          </th>
+          <td>
+            Bar
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  </Box__BoxGroup>
   <Box__BoxGroup>
     <Box__BoxGroupHeader>
       <h2>
@@ -239,5 +275,5 @@ exports[`<SampleDetailGeneral /> should render with [paired=true] 1`] = `
     </Table>
   </Box__BoxGroup>
   <Connect(EditSample) />
-</div>
+</General__StyledSampleDetailGeneral>
 `;
