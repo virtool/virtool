@@ -1,9 +1,10 @@
 import styled from "styled-components";
+import { getBorder } from "../app/theme";
 
 export const Table = styled.table`
     border-collapse: collapse;
     border-spacing: 0;
-    border: 1px solid #dddddd;
+    border: ${getBorder};
     border-radius: ${props => props.theme.borderRadius.sm};
     display: table;
     margin-bottom: 15px;
@@ -25,7 +26,7 @@ export const Table = styled.table`
 
     td,
     th {
-        border-right: 1px solid #dddddd;
+        border-right: ${getBorder};
         display: table-cell;
         min-width: 250px;
         padding: 8px;
@@ -36,7 +37,7 @@ export const Table = styled.table`
     }
 
     tr {
-        border-bottom: 1px solid #dddddd;
+        border-bottom: ${getBorder};
         display: table-row;
     }
 

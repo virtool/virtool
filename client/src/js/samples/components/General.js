@@ -2,11 +2,10 @@ import numbro from "numbro";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
+import styled from "styled-components";
 import { BoxGroup, BoxGroupHeader, Table } from "../../base";
-import { getCanModify } from "../selectors";
 import EditSample from "./Edit";
 import SampleFileSizeWarning from "./SampleFileSizeWarning.js";
-import styled from "styled-components";
 
 const libraryTypes = {
     normal: "Normal",
