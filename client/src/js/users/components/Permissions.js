@@ -1,13 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports GroupsPermissions
- */
 import { connect } from "react-redux";
 import { transform } from "lodash-es";
 import PropTypes from "prop-types";

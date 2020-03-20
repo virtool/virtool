@@ -24,7 +24,6 @@ exports[`<Welcome /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="globe"
-        pullRight={false}
       />
        Website
     </a>
@@ -51,7 +50,6 @@ exports[`<Welcome /> should render when [version=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="globe"
-        pullRight={false}
       />
        Website
     </a>

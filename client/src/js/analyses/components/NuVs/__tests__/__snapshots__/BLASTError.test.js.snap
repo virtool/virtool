@@ -19,7 +19,6 @@ exports[`<BLASTError /> should render 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="redo"
-      pullRight={false}
     />
      Retry
   </a>

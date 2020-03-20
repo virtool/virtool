@@ -4,7 +4,7 @@ import { Flex, FlexItem, Icon, LinkBox, Loader } from "../../base";
 
 export const SubtractionItemIcon = ({ ready }) => {
     if (ready) {
-        return <Icon name="check" bsStyle="success" />;
+        return <Icon name="check" color="green" />;
     }
 
     return <Loader size="14px" color="#3c8786" />;

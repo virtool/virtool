@@ -3,11 +3,10 @@
 exports[`<Releases /> should render when there are no releases (up-to-date) 1`] = `
 <Releases__StyledReleases>
   <Icon
-    bsStyle="success"
+    color="green"
     faStyle="fas"
     fixedWidth={false}
     name="check"
-    pullRight={false}
   />
   <strong
     className="text-success"

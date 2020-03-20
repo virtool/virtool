@@ -23,7 +23,6 @@ exports[`<ReferenceItemHeader /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="clone"
-        pullRight={false}
         tip="Clone"
       />
     </Link>

@@ -6,14 +6,12 @@ exports[`<PathoscopeDownloadDropdownTitle /> should render 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="file-download"
-    pullRight={false}
   />
    Export 
   <Icon
     faStyle="fas"
     fixedWidth={false}
     name="caret-down"
-    pullRight={false}
   />
 </span>
 `;
@@ -59,7 +57,6 @@ exports[`<Toolbar /> should render 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -95,7 +92,6 @@ exports[`<Toolbar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -106,7 +102,6 @@ exports[`<Toolbar /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>
@@ -155,7 +150,6 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -191,7 +185,6 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -202,7 +195,6 @@ exports[`<Toolbar /> should render when [filterIsolates=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>
@@ -251,7 +243,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -287,7 +278,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -298,7 +288,6 @@ exports[`<Toolbar /> should render when [filterOTUs=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>
@@ -347,7 +336,6 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -383,7 +371,6 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -394,7 +381,6 @@ exports[`<Toolbar /> should render when [sortDescending=false] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>
@@ -443,7 +429,6 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -479,7 +464,6 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -490,7 +474,6 @@ exports[`<Toolbar /> should render when [sortKey="depth"] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>
@@ -539,7 +522,6 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="sort-amount-down"
-      pullRight={false}
     />
   </Button>
   <Button
@@ -575,7 +557,6 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-csv"
-        pullRight={false}
       />
        CSV
     </DropdownItem>
@@ -586,7 +567,6 @@ exports[`<Toolbar /> should render when [sortKey="weight"] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="file-excel"
-        pullRight={false}
       />
        Excel
     </DropdownItem>

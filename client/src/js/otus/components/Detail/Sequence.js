@@ -102,18 +102,13 @@ class Sequence extends React.Component {
                     {this.props.canModify ? (
                         <Icon
                             name="pencil-alt"
-                            bsStyle="warning"
+                            color="orange"
                             tip="Edit Sequence"
                             onClick={this.handleShowEditSequence}
                         />
                     ) : null}
                     {this.props.canModify ? (
-                        <Icon
-                            name="trash"
-                            bsStyle="danger"
-                            tip="Remove Sequence"
-                            onClick={this.handleShowRemoveSequence}
-                        />
+                        <Icon name="trash" color="red" tip="Remove Sequence" onClick={this.handleShowRemoveSequence} />
                     ) : null}
                     <Icon name="download" tip="Download FASTA" onClick={this.handleDownload} />
                     <button type="button" className="close" onClick={this.handleCloseClick}>

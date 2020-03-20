@@ -37,7 +37,7 @@ export const IndexItemIcon = ({ activeId, id, ready }) => {
         if (id === activeId) {
             return (
                 <span className="pull-right">
-                    <Icon name="check" bsStyle="success" /> <strong>Active</strong>
+                    <Icon name="check" color="green" /> <strong>Active</strong>
                 </span>
             );
         }

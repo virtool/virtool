@@ -17,7 +17,6 @@ exports[`<Radio /> FlexItem subcomponent displays provided label 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="circle"
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}
@@ -51,7 +50,6 @@ exports[`<Radio /> FlexItem subcomponent when no label provided, empty component
     faStyle="fas"
     fixedWidth={false}
     name="circle"
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}
@@ -80,7 +78,6 @@ exports[`<Radio /> Icon subcomponent if checked, [name='dot-circle'] 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="dot-circle"
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}
@@ -109,7 +106,6 @@ exports[`<Radio /> Icon subcomponent otherwise [name='circle'] 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="circle"
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}
@@ -139,7 +135,6 @@ exports[`<Radio /> renders a Flex component containing an Icon and a FlexItem co
     fixedWidth={false}
     name="dot-circle"
     onClick={[MockFunction]}
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}
@@ -173,7 +168,6 @@ exports[`<Radio /> renders correctly 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="circle"
-    pullRight={false}
   />
   <FlexItem
     alignSelf={null}

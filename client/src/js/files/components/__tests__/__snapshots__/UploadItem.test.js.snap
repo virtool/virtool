@@ -10,7 +10,6 @@ exports[`<UploadItem /> should render when [progress === 0] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="upload"
-      pullRight={false}
     />
     <span>
       Foo.fa
@@ -32,7 +31,6 @@ exports[`<UploadItem /> should render when [progress > 0] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="upload"
-      pullRight={false}
     />
     <span>
       Foo.fa

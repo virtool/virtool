@@ -59,7 +59,6 @@ exports[`<BLASTResults /> should render 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="redo"
-        pullRight={false}
       />
        Retry
     </a>
@@ -139,7 +138,6 @@ exports[`<NuVsBLAST /> should render alert when no blast data available 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="info-circle"
-    pullRight={false}
   />
   <span>
     This sequence has no BLAST information attached to it.

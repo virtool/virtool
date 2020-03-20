@@ -37,7 +37,6 @@ exports[`<SampleSearchToolbar /> should render when [canCreate=true] 1`] = `
         faStyle="fas"
         fixedWidth={false}
         name="plus-square fa-fw"
-        pullRight={false}
       />
     </LinkButton>
   </Toolbar>

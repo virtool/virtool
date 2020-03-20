@@ -38,7 +38,6 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
             faStyle="fas"
             fixedWidth={false}
             name="exclamation-circle"
-            pullRight={false}
           />
           <span>
             <strong>
@@ -93,7 +92,6 @@ exports[`<HMMInstaller /> should render when [this.props.process = undefined] an
             faStyle="fas"
             fixedWidth={false}
             name="exclamation-circle"
-            pullRight={false}
           />
           <span>
             <strong>
@@ -169,7 +167,6 @@ exports[`<HMMInstaller /> should render when [this.props.process exsists] and [t
             faStyle="fas"
             fixedWidth={false}
             name="exclamation-circle"
-            pullRight={false}
           />
           <span>
             <strong>

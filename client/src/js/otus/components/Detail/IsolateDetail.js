@@ -52,7 +52,7 @@ export class IsolateDetail extends React.Component {
                 <span>
                     <Icon
                         name="pencil-alt"
-                        bsStyle="warning"
+                        color="orange"
                         tip="Edit Isolate"
                         tipPlacement="left"
                         onClick={this.props.showEditIsolate}
@@ -61,7 +61,7 @@ export class IsolateDetail extends React.Component {
                     {!isolate.default & (this.props.dataType !== "barcode") ? (
                         <Icon
                             name="star"
-                            bsStyle="success"
+                            color="green"
                             tip="Set as Default"
                             tipPlacement="left"
                             onClick={this.handleSetDefaultIsolate}
@@ -70,7 +70,7 @@ export class IsolateDetail extends React.Component {
                     ) : null}
                     <Icon
                         name="trash"
-                        bsStyle="danger"
+                        color="red"
                         tip="Remove Isolate"
                         tipPlacement="left"
                         onClick={this.props.showRemoveIsolate}

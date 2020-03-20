@@ -92,7 +92,7 @@ export class UserDetail extends React.Component {
                     <Identicon size={56} hash={identicon} />
                     <UserDetailTitle>
                         <span>{id}</span>
-                        {administrator ? <AdminIcon name="user-shield" bsStyle="primary" /> : null}
+                        {administrator ? <AdminIcon name="user-shield" color="blue" /> : null}
                         <Link to="/administration/users">Back To List</Link>
                     </UserDetailTitle>
                 </UserDetailHeader>

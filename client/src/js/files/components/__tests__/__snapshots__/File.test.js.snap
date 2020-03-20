@@ -17,12 +17,11 @@ exports[`<File /> should render 1`] = `
   </File__FileHeader>
   <div>
     <Icon
-      bsStyle="danger"
+      color="red"
       faStyle="fas"
       fixedWidth={false}
       name="trash"
       onClick={[Function]}
-      pullRight={true}
       style={
         Object {
           "fontSize": "17px",
@@ -68,12 +67,11 @@ exports[`<File /> should render when [user=null] 1`] = `
   </File__FileHeader>
   <div>
     <Icon
-      bsStyle="danger"
+      color="red"
       faStyle="fas"
       fixedWidth={false}
       name="trash"
       onClick={[Function]}
-      pullRight={true}
       style={
         Object {
           "fontSize": "17px",

@@ -63,10 +63,9 @@ export const File = ({ canRemove, entry, onRemove }) => {
                 {canRemove ? (
                     <Icon
                         name="trash"
-                        bsStyle="danger"
+                        color="red"
                         style={{ fontSize: "17px", marginLeft: "9px" }}
                         onClick={handleRemove}
-                        pullRight
                     />
                 ) : null}
             </div>

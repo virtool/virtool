@@ -21,12 +21,11 @@ exports[`<MemberItem /> should render with [canModify=true] 1`] = `
       wrap="nowrap"
     >
       <Icon
-        bsStyle="warning"
+        color="orange"
         faStyle="fas"
         fixedWidth={false}
         name="edit"
         onClick={[Function]}
-        pullRight={false}
         tip="Modify"
       />
       <FlexItem
@@ -37,12 +36,11 @@ exports[`<MemberItem /> should render with [canModify=true] 1`] = `
         shrink={1}
       >
         <Icon
-          bsStyle="danger"
+          color="red"
           faStyle="fas"
           fixedWidth={false}
           name="trash"
           onClick={[Function]}
-          pullRight={false}
           tip="Remove"
         />
       </FlexItem>

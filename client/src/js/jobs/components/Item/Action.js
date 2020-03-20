@@ -18,7 +18,7 @@ export const JobAction = ({ state, canCancel, canRemove, onCancel, onRemove }) =
         if (canCancel) {
             return (
                 <JobActionOverlay>
-                    <Icon bsStyle="danger" name="ban" onClick={onCancel} />
+                    <Icon color="red" name="ban" onClick={onCancel} />
                 </JobActionOverlay>
             );
         }
@@ -29,7 +29,7 @@ export const JobAction = ({ state, canCancel, canRemove, onCancel, onRemove }) =
     if (canRemove) {
         return (
             <JobActionOverlay>
-                <Icon bsStyle="danger" name="trash" onClick={onRemove} />
+                <Icon color="red" name="trash" onClick={onRemove} />
             </JobActionOverlay>
         );
     }

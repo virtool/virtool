@@ -8,7 +8,6 @@ exports[`<SampleFileSizeWarning /> should render when [show=true] 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="exclamation-triangle"
-    pullRight={false}
   />
   <strong>
     The read files in this sample are smaller than expected

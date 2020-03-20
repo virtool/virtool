@@ -14,7 +14,7 @@ export const UserItem = ({ id, identicon, administrator }) => (
         <StyledUserItem>
             <Identicon size={32} hash={identicon} />
             <FlexItem pad={10}>{id}</FlexItem>
-            <FlexItem pad={10}>{administrator ? <Icon name="user-shield" bsStyle="primary" /> : null}</FlexItem>
+            <FlexItem pad={10}>{administrator ? <Icon name="user-shield" color="blue" /> : null}</FlexItem>
         </StyledUserItem>
     </LinkBox>
 );

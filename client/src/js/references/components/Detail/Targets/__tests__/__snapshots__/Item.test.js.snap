@@ -19,21 +19,19 @@ exports[`<TargetItem /> should render when [canModify=true] 1`] = `
     foo
     <span>
       <Icon
-        bsStyle="warning"
+        color="orange"
         faStyle="fas"
         fixedWidth={false}
         name="edit"
         onClick={[Function]}
-        pullRight={false}
         tip="Modify"
       />
       <Icon
-        bsStyle="danger"
+        color="red"
         faStyle="fas"
         fixedWidth={false}
         name="trash"
         onClick={[Function]}
-        pullRight={false}
         tip="Remove"
       />
     </span>
@@ -52,21 +50,19 @@ exports[`<TargetItem /> should render with no description 1`] = `
     foo
     <span>
       <Icon
-        bsStyle="warning"
+        color="orange"
         faStyle="fas"
         fixedWidth={false}
         name="edit"
         onClick={[Function]}
-        pullRight={false}
         tip="Modify"
       />
       <Icon
-        bsStyle="danger"
+        color="red"
         faStyle="fas"
         fixedWidth={false}
         name="trash"
         onClick={[Function]}
-        pullRight={false}
         tip="Remove"
       />
     </span>

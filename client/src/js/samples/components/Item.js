@@ -80,10 +80,9 @@ class SampleEntry extends React.Component {
                         name="chart-area"
                         tip="Quick Analyze"
                         tipPlacement="left"
-                        bsStyle="success"
+                        color="green"
                         onClick={this.props.onQuickAnalyze}
                         style={{ fontSize: "17px", zIndex: 10000 }}
-                        pullRight
                     />
                 </div>
             );

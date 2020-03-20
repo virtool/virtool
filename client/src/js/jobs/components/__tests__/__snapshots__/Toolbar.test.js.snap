@@ -28,7 +28,6 @@ exports[`<JobsToolbar /> should render when [canRemove=true] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="trash"
-      pullRight={false}
     />
   </Button>
 </Toolbar>

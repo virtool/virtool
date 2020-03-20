@@ -58,7 +58,7 @@ class JobDetail extends React.Component {
                             </Flex>
                         </FlexItem>
 
-                        <Icon bsStyle="danger" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
+                        <Icon color="red" name="trash" style={{ fontSize: "18px" }} onClick={this.handleClick} />
                     </Flex>
                     <div className="text-muted" style={{ fontSize: "12px" }}>
                         Started <RelativeTime time={detail.status[0].timestamp} /> by {detail.user.id}

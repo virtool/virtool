@@ -36,11 +36,10 @@ exports[`<AccountProfile /> should render when administrator 1`] = `
           foo
            
           <Icon
-            bsStyle="primary"
+            color="blue"
             faStyle="fas"
             fixedWidth={false}
             name="user-shield"
-            pullRight={false}
           />
         </strong>
       </h5>

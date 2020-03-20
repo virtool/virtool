@@ -140,11 +140,10 @@ exports[`<ReferenceDetailHeaderExportButton /> should render when [isClone = fal
 
 exports[`<ReferenceDetailHeaderIcon /> should render 1`] = `
 <Icon
-  bsStyle="default"
+  color="grey"
   faStyle="fas"
   fixedWidth={false}
   name="lock"
-  pullRight={false}
 />
 `;
 
@@ -152,22 +151,20 @@ exports[`<ReferenceDetailHeaderIcon /> should render when [both canModify=false,
 
 exports[`<ReferenceDetailHeaderIcon /> should render when [canModify=false] 1`] = `
 <Icon
-  bsStyle="default"
+  color="grey"
   faStyle="fas"
   fixedWidth={false}
   name="lock"
-  pullRight={false}
 />
 `;
 
 exports[`<ReferenceDetailHeaderIcon /> should render when [isRemote=false] 1`] = `
 <Icon
-  bsStyle="warning"
+  color="orange"
   faStyle="fas"
   fixedWidth={false}
   name="pencil-alt"
   onClick={[MockFunction]}
-  pullRight={false}
   tip="Edit"
 />
 `;

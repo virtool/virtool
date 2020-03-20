@@ -6,7 +6,6 @@ exports[`<CreateAPIKeyInfo /> should render when administrator 1`] = `
     faStyle="fas"
     fixedWidth={false}
     name="user-shield"
-    pullRight={false}
   />
   <div>
     <p>

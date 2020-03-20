@@ -32,7 +32,6 @@ exports[`<ReferenceToolbar /> should render creation button when [canCreate=true
       faStyle="fas"
       fixedWidth={false}
       name="plus-square fa-fw"
-      pullRight={false}
     />
   </LinkButton>
 </Toolbar>
@@ -60,7 +59,6 @@ exports[`<ReferenceToolbar /> should render when [term='foo'] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="plus-square fa-fw"
-      pullRight={false}
     />
   </LinkButton>
 </Toolbar>

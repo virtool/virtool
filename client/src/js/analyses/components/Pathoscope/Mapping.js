@@ -5,7 +5,6 @@ import { ProgressBar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Box, Flex, FlexItem, Icon, Label } from "../../../base";
-import { getColor } from "../../../base/utils";
 import { toThousand } from "../../../utils/utils";
 
 const StyledAnalysisMappingReference = styled.div`
@@ -38,7 +37,6 @@ export const AnalysisMappingSubtraction = ({ subtraction }) => (
 );
 
 const AnalysisMappingLegendIcon = styled(Icon)`
-    color: ${props => getColor(props.color)};
     margin-right: 3px;
 `;
 
@@ -102,7 +100,7 @@ export const AnalysisMapping = ({ index, reference, subtraction, toReference, to
 
                     <AnalysisMappingLegendLabel>
                         <AnalysisMappingLegendIconReference>
-                            <AnalysisMappingLegendIcon name="circle" color="yellow" />
+                            <AnalysisMappingLegendIcon name="circle" color="orange" />
                             <AnalysisMappingSubtraction subtraction={subtraction} />
                         </AnalysisMappingLegendIconReference>
                         <AnalysisMappingLegendCount>{toThousand(toSubtraction)}</AnalysisMappingLegendCount>

@@ -25,7 +25,6 @@ exports[`<AnalysisItem /> should render 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="equals"
-      pullRight={false}
     />
     <SlashList>
       <li>
@@ -48,7 +47,6 @@ exports[`<AnalysisItem /> should render 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="not-equal"
-      pullRight={false}
     />
     <Link
       to="/subtraction/Prunus persica"
@@ -84,7 +82,6 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="equals"
-      pullRight={false}
     />
     <SlashList>
       <li>
@@ -107,7 +104,6 @@ exports[`<AnalysisItem /> should render when [placeholder=true] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="not-equal"
-      pullRight={false}
     />
     <Link
       to="/subtraction/Prunus persica"
@@ -143,7 +139,6 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="equals"
-      pullRight={false}
     />
     <SlashList>
       <li>
@@ -166,7 +161,6 @@ exports[`<AnalysisItem /> should render when [ready=false] 1`] = `
       faStyle="fas"
       fixedWidth={false}
       name="not-equal"
-      pullRight={false}
     />
     <Link
       to="/subtraction/Prunus persica"

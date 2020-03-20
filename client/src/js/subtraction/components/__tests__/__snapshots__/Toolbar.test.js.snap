@@ -30,7 +30,6 @@ exports[`<SubtractionToolbar /> should render create button when [canModify=true
       faStyle="fas"
       fixedWidth={false}
       name="plus-square"
-      pullRight={false}
       tip="Create"
     />
   </LinkButton>

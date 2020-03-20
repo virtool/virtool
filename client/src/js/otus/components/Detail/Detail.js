@@ -74,7 +74,7 @@ class OTUDetail extends React.Component {
                 <span>
                     <small key="edit-icon" style={{ paddingLeft: "5px" }}>
                         <Icon
-                            bsStyle="warning"
+                            color="orange"
                             name="pencil-alt"
                             tip="Edit OTU"
                             tipPlacement="left"
@@ -84,7 +84,7 @@ class OTUDetail extends React.Component {
 
                     <small key="remove-icon" style={{ paddingLeft: "5px" }}>
                         <Icon
-                            bsStyle="danger"
+                            color="red"
                             name="trash"
                             tip="Remove OTU"
                             tipPlacement="left"
