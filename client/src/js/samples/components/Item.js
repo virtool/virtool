@@ -24,10 +24,10 @@ const SampleEntryLabelIcon = styled.span`
 
 const StyledSampleEntryLabel = styled.div`
     align-items: center;
-    background-color: ${props => (props.ready ? "#07689d" : "#ffffff")};
-    border: 1px solid ${props => (props.ready ? "#07689d" : "#dddddd")};
+    background-color: ${props => props.theme.color[props.ready ? "blueDark" : "white"]};
+    border: 1px solid ${props => props.theme.color[props.ready ? "blueDark" : "greyLight"]};
     border-radius: 2px;
-    color: ${props => (props.ready ? "#ffffff" : "#333333")};
+    color: ${props => props.theme.color[props.ready ? "white" : "greyDarkest"]};
     display: flex;
     font-size: 11px;
     font-weight: bold;

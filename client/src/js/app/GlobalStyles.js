@@ -17,12 +17,12 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     a {
-      color: ${props => props.theme.color.blue};
+      color: ${props => props.theme.color.blueDark};
       text-decoration: none;
     
       &:hover,
       &:focus {
-        color: ${props => props.theme.color.blueDark};
+        color: ${props => props.theme.color.blueDarkest};
       }
     
       &:focus {
