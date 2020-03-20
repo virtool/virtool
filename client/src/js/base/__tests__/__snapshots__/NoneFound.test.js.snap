@@ -24,11 +24,9 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
         "componentId": "Box-x49ol5-0",
         "isStatic": false,
         "rules": Array [
-          "border:1px ",
+          "border:",
           [Function],
-          " solid;border-radius:",
-          [Function],
-          ";box-sizing:border-box;cursor:",
+          ";border-radius:",
           [Function],
           ";margin-bottom:15px;padding:10px 15px;position:relative;&:hover{",
           [Function],

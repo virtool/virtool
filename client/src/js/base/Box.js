@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { getBorder } from "../app/theme";
 import { Badge } from "./Badge";
 import { Table } from "./Table";
 
 export const Box = styled.div`
-    border: 1px ${props => props.theme.color.greyLight} solid;
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
     box-sizing: border-box;
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
     margin-bottom: 15px;
@@ -17,12 +19,12 @@ export const Box = styled.div`
 `;
 
 export const BoxGroup = styled(Box)`
+    border-radius: ${props => props.theme.borderRadius.sm};
     padding: 0;
     position: relative;
 
     & > ${Table} {
         border: none;
-        border-top: 1px solid #dddddd;
         margin: 0;
 
         &:first-child {
@@ -42,6 +44,7 @@ export const BoxGroup = styled(Box)`
 `;
 
 export const BoxGroupSection = styled.div`
+    border-radius: 0;
     cursor: ${props => (props.onClick ? "pointer" : "auto")};
     padding: 10px 15px;
     position: relative;
@@ -60,7 +63,7 @@ export const BoxGroupSection = styled.div`
     }
 
     &:not(:last-child) {
-        border-bottom: 1px #dddddd solid;
+        border-bottom: ${getBorder};
     }
 `;
 
@@ -77,10 +80,10 @@ export const DangerBoxGroupSection = styled(BoxGroupSection)`
 
 export const BoxGroupHeader = styled(BoxGroupSection)`
     align-items: stretch;
-    background-color: #edf2f7;
-    color: #2d3748;
+    background-color: ${props => props.theme.color.greyLightest};
     display: flex;
     flex-direction: column;
+    font-size: ${props => props.theme.fontSize.md};
     padding: 15px 15px 12px;
 
     h2 {
@@ -100,9 +103,8 @@ export const BoxGroupHeader = styled(BoxGroupSection)`
     }
 
     p {
-        color: ${props => props.theme.color.greyDark};
+        color: ${props => props.theme.color.greyDarkest};
         margin: 5px 0 0;
-        font-size: ${props => props.theme.fontSize.sm};
     }
 `;
 
@@ -121,8 +123,9 @@ export const SpacedBox = styled(Box)`
 `;
 
 export const LinkBox = styled(Link)`
-    border: 1px ${props => props.theme.color.greyLight} solid;
-    box-shadow: 1px 1px 2px 0 #d5d5d5;
+    border: ${getBorder};
+    border-radius: ${props => props.theme.borderRadius.sm};
+    box-shadow: ${props => props.theme.boxShadow.sm};
     box-sizing: border-box;
     color: #333333 !important;
     cursor: pointer;
