@@ -105,10 +105,13 @@ export const formatAODPData = detail => {
             };
         });
 
+        const identities = getResultIdentities(isolates);
+
         return {
             ...result,
             isolates,
-            identities: getResultIdentities(isolates)
+            identities,
+            identity: max(identities)
         };
     });
 

@@ -88,30 +88,33 @@ export const getSearchIds = state => state.analyses.searchIds;
 export const getSortKey = state => state.analyses.sortKey;
 
 export const getSortIds = createSelector([getAlgorithm, getResults, getSortKey], (algorithm, results, sortKey) => {
-    if (sortKey === "e") {
-        return map(sortBy(results, "e"), "id");
-    }
-    if (sortKey === "orfs") {
-        return map(sortBy(results, "annotatedOrfCount").reverse(), "id");
-    }
+    console.log(sortKey);
 
-    if (sortKey === "length") {
-        return map(sortBy(results, "sequence.length").reverse(), "id");
-    }
+    switch (sortKey) {
+        case "e":
+            return map(sortBy(results, "e"), "id");
 
-    if (sortKey === "depth") {
-        return map(sortBy(results, "depth"), "id");
-    }
+        case "orfs":
+            return map(sortBy(results, "annotatedOrfCount").reverse(), "id");
 
-    if (sortKey === "coverage") {
-        return map(sortBy(results, "coverage").reverse(), "id");
-    }
+        case "length":
+            return map(sortBy(results, "sequence.length").reverse(), "id");
 
-    if (sortKey === "weight") {
-        return map(sortBy(results, "pi"), "id");
-    }
+        case "depth":
+            return map(sortBy(results, "depth"), "id");
 
-    return map(results, "id");
+        case "coverage":
+            return map(sortBy(results, "coverage").reverse(), "id");
+
+        case "weight":
+            return map(sortBy(results, "pi"), "id");
+
+        case "identity":
+            return map(sortBy(results, "identity").reverse(), "id");
+
+        default:
+            return map(results, "id");
+    }
 });
 
 export const getMatches = createSelector(
