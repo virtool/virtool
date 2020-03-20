@@ -26,7 +26,7 @@ exports[`<NoneFoundBox /> should render with [noun='boxes' 1`] = `
         "rules": Array [
           "border:",
           [Function],
-          " solid;border-radius:",
+          ";border-radius:",
           [Function],
           ";box-sizing:border-box;cursor:",
           [Function],
